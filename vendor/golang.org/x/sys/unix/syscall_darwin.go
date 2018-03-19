@@ -36,6 +36,7 @@ func Getwd() (string, error) {
 	return "", ENOTSUP
 }
 
+// SockaddrDatalink implements the Sockaddr interface for AF_LINK type sockets.
 type SockaddrDatalink struct {
 	Len    uint8
 	Family uint8
@@ -74,18 +75,6 @@ func nametomib(name string) (mib []_C_int, err error) {
 		return nil, err
 	}
 	return buf[0 : n/siz], nil
-}
-
-func direntIno(buf []byte) (uint64, bool) {
-	return readInt(buf, unsafe.Offsetof(Dirent{}.Ino), unsafe.Sizeof(Dirent{}.Ino))
-}
-
-func direntReclen(buf []byte) (uint64, bool) {
-	return readInt(buf, unsafe.Offsetof(Dirent{}.Reclen), unsafe.Sizeof(Dirent{}.Reclen))
-}
-
-func direntNamlen(buf []byte) (uint64, bool) {
-	return readInt(buf, unsafe.Offsetof(Dirent{}.Namlen), unsafe.Sizeof(Dirent{}.Namlen))
 }
 
 //sys   ptrace(request int, pid int, addr uintptr, data uintptr) (err error)
@@ -341,6 +330,7 @@ func Uname(uname *Utsname) error {
 //sys	Flock(fd int, how int) (err error)
 //sys	Fpathconf(fd int, name int) (val int, err error)
 //sys	Fstat(fd int, stat *Stat_t) (err error) = SYS_FSTAT64
+//sys	Fstatat(fd int, path string, stat *Stat_t, flags int) (err error) = SYS_FSTATAT64
 //sys	Fstatfs(fd int, stat *Statfs_t) (err error) = SYS_FSTATFS64
 //sys	Fsync(fd int) (err error)
 //sys	Ftruncate(fd int, length int64) (err error)

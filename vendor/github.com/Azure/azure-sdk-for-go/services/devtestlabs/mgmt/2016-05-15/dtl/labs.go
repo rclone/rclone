@@ -109,8 +109,8 @@ func (client LabsClient) ClaimAnyVMResponder(resp *http.Response) (result autore
 
 // CreateEnvironment create virtual machines in a lab. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. name is the name of the lab. labVirtualMachineCreationParameter
-// is properties for creating a virtual machine.
+// resourceGroupName is the name of the resource group. name is the name of the lab.
+// labVirtualMachineCreationParameter is properties for creating a virtual machine.
 func (client LabsClient) CreateEnvironment(ctx context.Context, resourceGroupName string, name string, labVirtualMachineCreationParameter LabVirtualMachineCreationParameter) (result LabsCreateEnvironmentFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: labVirtualMachineCreationParameter,
@@ -124,7 +124,7 @@ func (client LabsClient) CreateEnvironment(ctx context.Context, resourceGroupNam
 						}},
 					}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "dtl.LabsClient", "CreateEnvironment")
+		return result, validation.NewError("dtl.LabsClient", "CreateEnvironment", err.Error())
 	}
 
 	req, err := client.CreateEnvironmentPreparer(ctx, resourceGroupName, name, labVirtualMachineCreationParameter)
@@ -332,8 +332,8 @@ func (client LabsClient) DeleteResponder(resp *http.Response) (result autorest.R
 // ExportResourceUsage exports the lab resource usage into a storage account This operation can take a while to
 // complete.
 //
-// resourceGroupName is the name of the resource group. name is the name of the lab. exportResourceUsageParameters is
-// the parameters of the export operation.
+// resourceGroupName is the name of the resource group. name is the name of the lab. exportResourceUsageParameters
+// is the parameters of the export operation.
 func (client LabsClient) ExportResourceUsage(ctx context.Context, resourceGroupName string, name string, exportResourceUsageParameters ExportResourceUsageParameters) (result LabsExportResourceUsageFuture, err error) {
 	req, err := client.ExportResourceUsagePreparer(ctx, resourceGroupName, name, exportResourceUsageParameters)
 	if err != nil {
@@ -543,8 +543,8 @@ func (client LabsClient) GetResponder(resp *http.Response) (result Lab, err erro
 //
 // resourceGroupName is the name of the resource group. expand is specify the $expand query. Example:
 // 'properties($select=defaultStorageAccount)' filter is the filter to apply to the operation. top is the maximum
-// number of resources to return from the operation. orderby is the ordering expression for the results, using OData
-// notation.
+// number of resources to return from the operation. orderby is the ordering expression for the results, using
+// OData notation.
 func (client LabsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationLabPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, expand, filter, top, orderby)
@@ -649,9 +649,9 @@ func (client LabsClient) ListByResourceGroupComplete(ctx context.Context, resour
 
 // ListBySubscription list labs in a subscription.
 //
-// expand is specify the $expand query. Example: 'properties($select=defaultStorageAccount)' filter is the filter to
-// apply to the operation. top is the maximum number of resources to return from the operation. orderby is the ordering
-// expression for the results, using OData notation.
+// expand is specify the $expand query. Example: 'properties($select=defaultStorageAccount)' filter is the filter
+// to apply to the operation. top is the maximum number of resources to return from the operation. orderby is the
+// ordering expression for the results, using OData notation.
 func (client LabsClient) ListBySubscription(ctx context.Context, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationLabPage, err error) {
 	result.fn = client.listBySubscriptionNextResults
 	req, err := client.ListBySubscriptionPreparer(ctx, expand, filter, top, orderby)

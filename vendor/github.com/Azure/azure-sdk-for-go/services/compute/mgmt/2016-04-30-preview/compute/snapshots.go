@@ -63,7 +63,7 @@ func (client SnapshotsClient) CreateOrUpdate(ctx context.Context, resourceGroupN
 								}},
 						}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "compute.SnapshotsClient", "CreateOrUpdate")
+		return result, validation.NewError("compute.SnapshotsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, snapshotName, snapshot)
@@ -277,7 +277,7 @@ func (client SnapshotsClient) GrantAccess(ctx context.Context, resourceGroupName
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: grantAccessData,
 			Constraints: []validation.Constraint{{Target: "grantAccessData.DurationInSeconds", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "compute.SnapshotsClient", "GrantAccess")
+		return result, validation.NewError("compute.SnapshotsClient", "GrantAccess", err.Error())
 	}
 
 	req, err := client.GrantAccessPreparer(ctx, resourceGroupName, snapshotName, grantAccessData)
@@ -601,7 +601,8 @@ func (client SnapshotsClient) RevokeAccessResponder(resp *http.Response) (result
 // Update updates (patches) a snapshot.
 //
 // resourceGroupName is the name of the resource group. snapshotName is the name of the snapshot within the given
-// subscription and resource group. snapshot is snapshot object supplied in the body of the Patch snapshot operation.
+// subscription and resource group. snapshot is snapshot object supplied in the body of the Patch snapshot
+// operation.
 func (client SnapshotsClient) Update(ctx context.Context, resourceGroupName string, snapshotName string, snapshot SnapshotUpdate) (result SnapshotsUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, snapshotName, snapshot)
 	if err != nil {

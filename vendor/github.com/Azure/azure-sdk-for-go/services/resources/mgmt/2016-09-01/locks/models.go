@@ -158,46 +158,45 @@ func (mlo *ManagementLockObject) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ManagementLockProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var managementLockProperties ManagementLockProperties
+				err = json.Unmarshal(*v, &managementLockProperties)
+				if err != nil {
+					return err
+				}
+				mlo.ManagementLockProperties = &managementLockProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				mlo.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				mlo.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				mlo.Name = &name
+			}
 		}
-		mlo.ManagementLockProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		mlo.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		mlo.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		mlo.Name = &name
 	}
 
 	return nil

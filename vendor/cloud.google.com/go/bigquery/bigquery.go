@@ -152,5 +152,5 @@ func retryableError(err error) bool {
 	if len(e.Errors) > 0 {
 		reason = e.Errors[0].Reason
 	}
-	return reason == "backendError" || reason == "rateLimitExceeded"
+	return e.Code == http.StatusBadGateway || reason == "backendError" || reason == "rateLimitExceeded"
 }

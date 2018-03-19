@@ -20,12 +20,12 @@ import (
 	"runtime"
 	"time"
 
-	"google.golang.org/api/iterator"
+	"cloud.google.com/go/internal/version"
+	vkit "cloud.google.com/go/pubsub/apiv1"
+	"golang.org/x/net/context"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
-
-	"golang.org/x/net/context"
 )
 
 const (
@@ -46,11 +46,12 @@ const prodAddr = "https://pubsub.googleapis.com/"
 // A Client may be shared by multiple goroutines.
 type Client struct {
 	projectID string
-	s         service
+	pubc      *vkit.PublisherClient
+	subc      *vkit.SubscriberClient
 }
 
 // NewClient creates a new PubSub client.
-func NewClient(ctx context.Context, projectID string, opts ...option.ClientOption) (*Client, error) {
+func NewClient(ctx context.Context, projectID string, opts ...option.ClientOption) (c *Client, err error) {
 	var o []option.ClientOption
 	// Environment variables for gcloud emulator:
 	// https://cloud.google.com/sdk/gcloud/reference/beta/emulators/pubsub/
@@ -64,28 +65,31 @@ func NewClient(ctx context.Context, projectID string, opts ...option.ClientOptio
 		o = []option.ClientOption{
 			// Create multiple connections to increase throughput.
 			option.WithGRPCConnectionPool(runtime.GOMAXPROCS(0)),
-
-			// TODO(grpc/grpc-go#1388) using connection pool without WithBlock
-			// can cause RPCs to fail randomly. We can delete this after the issue is fixed.
-			option.WithGRPCDialOption(grpc.WithBlock()),
-
 			option.WithGRPCDialOption(grpc.WithKeepaliveParams(keepalive.ClientParameters{
 				Time: 5 * time.Minute,
 			})),
 		}
+		o = append(o, openCensusOptions()...)
 	}
 	o = append(o, opts...)
-	s, err := newPubSubService(ctx, o)
+	pubc, err := vkit.NewPublisherClient(ctx, o...)
 	if err != nil {
-		return nil, fmt.Errorf("constructing pubsub client: %v", err)
+		return nil, fmt.Errorf("pubsub: %v", err)
 	}
-
-	c := &Client{
+	subc, err := vkit.NewSubscriberClient(ctx, option.WithGRPCConn(pubc.Connection()))
+	if err != nil {
+		// Should never happen, since we are passing in the connection.
+		// If it does, we cannot close, because the user may have passed in their
+		// own connection originally.
+		return nil, fmt.Errorf("pubsub: %v", err)
+	}
+	pubc.SetGoogleClientInfo("gccl", version.Repo)
+	subc.SetGoogleClientInfo("gccl", version.Repo)
+	return &Client{
 		projectID: projectID,
-		s:         s,
-	}
-
-	return c, nil
+		pubc:      pubc,
+		subc:      subc,
+	}, nil
 }
 
 // Close releases any resources held by the client,
@@ -94,58 +98,12 @@ func NewClient(ctx context.Context, projectID string, opts ...option.ClientOptio
 // If the client is available for the lifetime of the program, then Close need not be
 // called at exit.
 func (c *Client) Close() error {
-	return c.s.close()
+	// Return the first error, because the first call closes the connection.
+	err := c.pubc.Close()
+	_ = c.subc.Close()
+	return err
 }
 
 func (c *Client) fullyQualifiedProjectName() string {
 	return fmt.Sprintf("projects/%s", c.projectID)
-}
-
-// pageToken stores the next page token for a server response which is split over multiple pages.
-type pageToken struct {
-	tok      string
-	explicit bool
-}
-
-func (pt *pageToken) set(tok string) {
-	pt.tok = tok
-	pt.explicit = true
-}
-
-func (pt *pageToken) get() string {
-	return pt.tok
-}
-
-// more returns whether further pages should be fetched from the server.
-func (pt *pageToken) more() bool {
-	return pt.tok != "" || !pt.explicit
-}
-
-// stringsIterator provides an iterator API for a sequence of API page fetches that return lists of strings.
-type stringsIterator struct {
-	ctx     context.Context
-	strings []string
-	token   pageToken
-	fetch   func(ctx context.Context, tok string) (*stringsPage, error)
-}
-
-// Next returns the next string. If there are no more strings, iterator.Done will be returned.
-func (si *stringsIterator) Next() (string, error) {
-	for len(si.strings) == 0 && si.token.more() {
-		page, err := si.fetch(si.ctx, si.token.get())
-		if err != nil {
-			return "", err
-		}
-		si.token.set(page.tok)
-		si.strings = page.strings
-	}
-
-	if len(si.strings) == 0 {
-		return "", iterator.Done
-	}
-
-	s := si.strings[0]
-	si.strings = si.strings[1:]
-
-	return s, nil
 }

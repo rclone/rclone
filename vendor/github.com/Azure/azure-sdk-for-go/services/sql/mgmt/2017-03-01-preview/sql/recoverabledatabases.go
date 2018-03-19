@@ -43,9 +43,9 @@ func NewRecoverableDatabasesClientWithBaseURI(baseURI string, subscriptionID str
 
 // Get gets a recoverable database, which is a resource representing a database's geo backup
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database
 func (client RecoverableDatabasesClient) Get(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result RecoverableDatabase, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, databaseName)
 	if err != nil {
@@ -112,8 +112,8 @@ func (client RecoverableDatabasesClient) GetResponder(resp *http.Response) (resu
 
 // ListByServer gets a list of recoverable databases
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
 func (client RecoverableDatabasesClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result RecoverableDatabaseListResult, err error) {
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)
 	if err != nil {

@@ -84,13 +84,17 @@ func main() {
 		return strings.EqualFold(path.Base(subject.(string)), "README.md")
 	})
 
+	stableAPIPaths := []string{}
+
 	tuples := collection.SelectMany(literateFiles,
 		// The following function compiles the regexp which finds Go related package tags in a literate file, and creates a collection.Unfolder.
 		// This function has been declared this way so that the relatively expensive act of compiling a regexp is only done once.
 		func() collection.Unfolder {
-			const patternText = "```" + `\s+yaml\s+\$\(\s*tag\s*\)\s*==\s*'([\d\w\-\.]+)'\s*&&\s*\$\(go\)[\w\d\-\s:]*\s+output-folder:\s+\$\(go-sdk-folder\)([\w\d\-_\\/\.]+)\s+[\w\d\-\s:]*` + "```"
+			const goSettingsPatternText = "```" + `\s+yaml\s+\$\(\s*tag\s*\)\s*==\s*'([\d\w\-\.]+)'\s*&&\s*\$\(go\)[\w\d\-\s:]*\s+output-folder:\s+\$\(go-sdk-folder\)([\w\d\-_\\/\.]+)\s+[\w\d\-\s:]*` + "```"
+			goConfigPattern := regexp.MustCompile(goSettingsPatternText)
 
-			goConfigPattern := regexp.MustCompile(patternText)
+			const packagePatternText = `(?ms)\s+yaml\s+\$\(\s*tag\s*\)\s*==\s*'([\d\w\-\.]+)'\s*^input-file:(\s+.*?)\x60`
+			packageConfigPattern := regexp.MustCompile(packagePatternText)
 
 			// This function is a collection.Unfolder which takes a literate file as a path, and retrieves all configuration which applies to a package tag and Go.
 			return func(subject interface{}) collection.Enumerator {
@@ -110,11 +114,26 @@ func main() {
 					if len(matches) == 0 {
 						statusLog.Printf("Skipping %q because there were no package tags with go configuration found.", subject.(string))
 					} else {
+						packageMatches := packageConfigPattern.FindAllStringSubmatch(string(targetContents), -1)
+						outputAPIFolders := map[string]string{}
+
 						for _, submatch := range matches {
+
+							packageName := normalizePath(submatch[1])
+							outputFolder := normalizePath(submatch[2])
+							leafFolder := getLeafOutputFolder(outputFolder)
+							isStableAPI := isStableAPI(packageName, packageMatches)
+							_, ok := outputAPIFolders[leafFolder]
+
+							if !ok && isStableAPI {
+								outputAPIFolders[leafFolder] = packageName
+								stableAPIPaths = append(stableAPIPaths, path.Join(getRelativeOutputBase(), strings.Trim(outputFolder, "/")))
+							}
+
 							results <- generationTuple{
 								fileName:     subject.(string),
-								packageName:  normalizePath(submatch[1]),
-								outputFolder: normalizePath(submatch[2]),
+								packageName:  packageName,
+								outputFolder: outputFolder,
 							}
 						}
 					}
@@ -133,7 +152,6 @@ func main() {
 		var generatedCount, formattedCount, builtCount, vettedCount uint
 
 		done := make(chan struct{})
-
 		// Call AutoRest for each of the tags in each of the literate files, generating a Go package for calling that service.
 		generated := tuples.Enumerate(done).ParallelSelect(func(subject interface{}) interface{} {
 			tuple := subject.(generationTuple)
@@ -144,11 +162,11 @@ func main() {
 				"--verbose",
 				"--tag=" + tuple.packageName,
 				"--use=" + autorestVer,
+				"--use-onever",
 			}
 
 			if packageVersion != "" {
 				args = append(args, fmt.Sprintf("--package-version='%s'", packageVersion))
-				args = append(args, fmt.Sprintf("--user-agent='Azure-SDK-For-Go/%s services'", packageVersion))
 			}
 
 			logFileLoc := filepath.Join(logDirBase, tuple.outputFolder)
@@ -229,11 +247,15 @@ func main() {
 			// Intenionally Left Blank
 		}
 
+		// Write list of stable apis.
+		writeListToFile(path.Join(outputBase, "profiles", "latest", "stableApis.txt"), stableAPIPaths)
+
 		fmt.Println("Execution Time: ", time.Now().Sub(start))
 		fmt.Println("Generated: ", generatedCount)
 		fmt.Println("Formatted: ", formattedCount)
 		fmt.Println("Built: ", builtCount)
 		fmt.Println("Vetted: ", vettedCount)
+		fmt.Println("Stable APIs count: ", len(stableAPIPaths))
 		close(done)
 	}
 }
@@ -326,6 +348,11 @@ func getDefaultOutputBase() string {
 	return normalizePath(path.Join(goPath(), "src", "github.com", "Azure", "azure-sdk-for-go"))
 }
 
+// getDefaultOutputBase returns the default location of the Azure-SDK-for-Go on your filesystem relative to the 'GOPATH/src'.
+func getRelativeOutputBase() string {
+	return normalizePath(path.Join("github.com", "Azure", "azure-sdk-for-go"))
+}
+
 // trimGoPath operates like strings.TrimPrefix, where the prefix is always the value of GOPATH in the
 // environment in which this program is being executed.
 func trimGoPath(location string) string {
@@ -339,7 +366,35 @@ func normalizePath(location string) (result string) {
 	return
 }
 
+//getLeafOutputFolder returns the leaf of a given path.
+func getLeafOutputFolder(location string) string {
+	_, leaf := filepath.Split(location)
+	return leaf
+}
+
+//isStableAPI returns true if for the given package name there are no preview input files.
+func isStableAPI(packageName string, packageInputFiles [][]string) bool {
+	for _, packageDefinition := range packageInputFiles {
+		if !strings.Contains(normalizePath(packageDefinition[2]), "/preview/") && packageName == packageDefinition[1] {
+			return true
+		}
+	}
+	return false
+}
+
 // isntNil is a simple `collection.Predicate` which filters out `nil` objects from an Enumerator.
 func isntNil(subject interface{}) bool {
 	return subject != nil
+}
+
+// writeListToFile prints a list of strings to the specified filepath.
+func writeListToFile(filepath string, list []string) error {
+	outputFile, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	for _, el := range list {
+		fmt.Fprintln(outputFile, el)
+	}
+	return nil
 }

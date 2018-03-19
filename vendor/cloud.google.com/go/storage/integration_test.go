@@ -1766,6 +1766,265 @@ func TestIntegration_Public(t *testing.T) {
 	}
 }
 
+func TestIntegration_ReadCRC(t *testing.T) {
+	// Test that the checksum is handled correctly when reading files.
+	// For gzipped files, see https://github.com/GoogleCloudPlatform/google-cloud-dotnet/issues/1641.
+	if testing.Short() {
+		t.Skip("Integration tests skipped in short mode")
+	}
+	const (
+		// This is an uncompressed file.
+		// See https://cloud.google.com/storage/docs/public-datasets/landsat
+		uncompressedBucket = "gcp-public-data-landsat"
+		uncompressedObject = "LC08/PRE/044/034/LC80440342016259LGN00/LC80440342016259LGN00_MTL.txt"
+
+		gzippedBucket   = "storage-library-test-bucket"
+		gzippedObject   = "gzipped-text.txt"
+		gzippedContents = "hello world" // uncompressed contents of the file
+	)
+	ctx := context.Background()
+	client, err := NewClient(ctx, option.WithoutAuthentication())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+
+	for _, test := range []struct {
+		desc           string
+		obj            *ObjectHandle
+		offset, length int64
+		readCompressed bool // don't decompress a gzipped file
+
+		wantErr     bool
+		wantCheck   bool // Should Reader try to check the CRC?
+		wantChecked bool // Did Reader actually check the CRC?
+	}{
+		{
+			desc:           "uncompressed, entire file",
+			obj:            client.Bucket(uncompressedBucket).Object(uncompressedObject),
+			offset:         0,
+			length:         -1,
+			readCompressed: false,
+			wantCheck:      true,
+			wantChecked:    true,
+		},
+		{
+			desc:           "uncompressed, entire file, don't decompress",
+			obj:            client.Bucket(uncompressedBucket).Object(uncompressedObject),
+			offset:         0,
+			length:         -1,
+			readCompressed: true,
+			wantCheck:      true,
+			wantChecked:    true,
+		},
+		{
+			desc:           "uncompressed, suffix",
+			obj:            client.Bucket(uncompressedBucket).Object(uncompressedObject),
+			offset:         1,
+			length:         -1,
+			readCompressed: false,
+			wantCheck:      false,
+			wantChecked:    false,
+		},
+		{
+			desc:           "uncompressed, prefix",
+			obj:            client.Bucket(uncompressedBucket).Object(uncompressedObject),
+			offset:         0,
+			length:         18,
+			readCompressed: false,
+			wantCheck:      false,
+			wantChecked:    false,
+		},
+		{
+			// When a gzipped file is unzipped by GCS, we can't verify the checksum
+			// because it was computed against the zipped contents. There is no
+			// header that indicates that a gzipped file is being served unzipped.
+			// But our CRC check only happens if there is a Content-Length header,
+			// and that header is absent for this read.
+			desc:           "compressed, entire file, server unzips",
+			obj:            client.Bucket(gzippedBucket).Object(gzippedObject),
+			offset:         0,
+			length:         -1,
+			readCompressed: false,
+			wantCheck:      true,
+			wantChecked:    false,
+		},
+		{
+			// When we read a gzipped file uncompressed, it's like reading a regular file:
+			// the served content and the CRC match.
+			desc:           "compressed, entire file, read compressed",
+			obj:            client.Bucket(gzippedBucket).Object(gzippedObject),
+			offset:         0,
+			length:         -1,
+			readCompressed: true,
+			wantCheck:      true,
+			wantChecked:    true,
+		},
+		{
+			desc:           "compressed, partial, server unzips",
+			obj:            client.Bucket(gzippedBucket).Object(gzippedObject),
+			offset:         1,
+			length:         8,
+			readCompressed: false,
+			wantErr:        true, // GCS can't serve part of a gzipped object
+			wantCheck:      false,
+			wantChecked:    false,
+		},
+		{
+			desc:           "compressed, partial, read compressed",
+			obj:            client.Bucket(gzippedBucket).Object(gzippedObject),
+			offset:         1,
+			length:         8,
+			readCompressed: true,
+			wantCheck:      false,
+			wantChecked:    false,
+		},
+	} {
+		obj := test.obj.ReadCompressed(test.readCompressed)
+		r, err := obj.NewRangeReader(ctx, test.offset, test.length)
+		if err != nil {
+			if test.wantErr {
+				continue
+			}
+			t.Fatalf("%s: %v", test.desc, err)
+		}
+		if got, want := r.checkCRC, test.wantCheck; got != want {
+			t.Errorf("%s, checkCRC: got %t, want %t", test.desc, got, want)
+		}
+		_, err = ioutil.ReadAll(r)
+		_ = r.Close()
+		if err != nil {
+			t.Fatalf("%s: %v", test.desc, err)
+		}
+		if got, want := r.checkedCRC, test.wantChecked; got != want {
+			t.Errorf("%s, checkedCRC: got %t, want %t", test.desc, got, want)
+		}
+	}
+}
+
+func TestIntegration_CancelWrite(t *testing.T) {
+	// Verify that canceling the writer's context immediately stops uploading an object.
+	if testing.Short() {
+		t.Skip("Integration tests skipped in short mode")
+	}
+	ctx := context.Background()
+	client, bucket := testConfig(ctx, t)
+	defer client.Close()
+	bkt := client.Bucket(bucket)
+
+	cctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	obj := bkt.Object("cancel-write")
+	w := obj.NewWriter(cctx)
+	w.ChunkSize = googleapi.MinUploadChunkSize
+	buf := make([]byte, w.ChunkSize)
+	// Write the first chunk. This is read in its entirety before sending the request
+	// (see google.golang.org/api/gensupport.PrepareUpload), so we expect it to return
+	// without error.
+	_, err := w.Write(buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Now cancel the context.
+	cancel()
+	// The next Write should return context.Canceled.
+	_, err = w.Write(buf)
+	if err != context.Canceled {
+		t.Fatalf("got %v, wanted context.Canceled", err)
+	}
+	// The Close should too.
+	err = w.Close()
+	if err != context.Canceled {
+		t.Fatalf("got %v, wanted context.Canceled", err)
+	}
+}
+
+func TestIntegration_UpdateCORS(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Integration tests skipped in short mode")
+	}
+
+	uidSpace := testutil.NewUIDSpace("integration-test")
+
+	ctx := context.Background()
+	client, _ := testConfig(ctx, t)
+	defer client.Close()
+
+	initialSettings := []CORS{
+		{
+			MaxAge:          time.Hour,
+			Methods:         []string{"POST"},
+			Origins:         []string{"some-origin.com"},
+			ResponseHeaders: []string{"foo-bar"},
+		},
+	}
+
+	for _, test := range []struct {
+		input []CORS
+		want  []CORS
+	}{
+		{
+			input: []CORS{
+				{
+					MaxAge:          time.Hour,
+					Methods:         []string{"GET"},
+					Origins:         []string{"*"},
+					ResponseHeaders: []string{"some-header"},
+				},
+			},
+			want: []CORS{
+				{
+					MaxAge:          time.Hour,
+					Methods:         []string{"GET"},
+					Origins:         []string{"*"},
+					ResponseHeaders: []string{"some-header"},
+				},
+			},
+		},
+		{
+			input: []CORS{},
+			want:  nil,
+		},
+		{
+			input: nil,
+			want: []CORS{
+				{
+					MaxAge:          time.Hour,
+					Methods:         []string{"POST"},
+					Origins:         []string{"some-origin.com"},
+					ResponseHeaders: []string{"foo-bar"},
+				},
+			},
+		},
+	} {
+		bkt := client.Bucket(uidSpace.New())
+		defer func(b *BucketHandle) {
+			err := b.Delete(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}(bkt)
+		err := bkt.Create(ctx, testutil.ProjID(), &BucketAttrs{CORS: initialSettings})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		_, err = bkt.Update(ctx, BucketAttrsToUpdate{CORS: test.input})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		attrs, err := bkt.Attrs(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if diff := testutil.Diff(attrs.CORS, test.want); diff != "" {
+			t.Errorf("input: %v\ngot=-, want=+:\n%s", test.input, diff)
+		}
+	}
+}
+
 func writeObject(ctx context.Context, obj *ObjectHandle, contentType string, contents []byte) error {
 	w := obj.NewWriter(ctx)
 	w.ContentType = contentType

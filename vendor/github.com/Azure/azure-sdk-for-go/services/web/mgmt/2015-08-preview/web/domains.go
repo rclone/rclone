@@ -41,8 +41,8 @@ func NewDomainsClientWithBaseURI(baseURI string, subscriptionID string) DomainsC
 
 // CreateOrUpdateDomain sends the create or update domain request.
 //
-// resourceGroupName is &gt;Name of the resource group domainName is name of the domain domain is domain registration
-// information
+// resourceGroupName is &gt;Name of the resource group domainName is name of the domain domain is domain
+// registration information
 func (client DomainsClient) CreateOrUpdateDomain(ctx context.Context, resourceGroupName string, domainName string, domain Domain) (result Domain, err error) {
 	req, err := client.CreateOrUpdateDomainPreparer(ctx, resourceGroupName, domainName, domain)
 	if err != nil {
@@ -110,8 +110,8 @@ func (client DomainsClient) CreateOrUpdateDomainResponder(resp *http.Response) (
 
 // DeleteDomain sends the delete domain request.
 //
-// resourceGroupName is name of the resource group domainName is name of the domain forceHardDeleteDomain is if true
-// then the domain will be deleted immediately instead of after 24 hours
+// resourceGroupName is name of the resource group domainName is name of the domain forceHardDeleteDomain is if
+// true then the domain will be deleted immediately instead of after 24 hours
 func (client DomainsClient) DeleteDomain(ctx context.Context, resourceGroupName string, domainName string, forceHardDeleteDomain *bool) (result SetObject, err error) {
 	req, err := client.DeleteDomainPreparer(ctx, resourceGroupName, domainName, forceHardDeleteDomain)
 	if err != nil {
@@ -407,8 +407,8 @@ func (client DomainsClient) GetDomainsComplete(ctx context.Context, resourceGrou
 
 // UpdateDomain sends the update domain request.
 //
-// resourceGroupName is &gt;Name of the resource group domainName is name of the domain domain is domain registration
-// information
+// resourceGroupName is &gt;Name of the resource group domainName is name of the domain domain is domain
+// registration information
 func (client DomainsClient) UpdateDomain(ctx context.Context, resourceGroupName string, domainName string, domain Domain) (result Domain, err error) {
 	req, err := client.UpdateDomainPreparer(ctx, resourceGroupName, domainName, domain)
 	if err != nil {

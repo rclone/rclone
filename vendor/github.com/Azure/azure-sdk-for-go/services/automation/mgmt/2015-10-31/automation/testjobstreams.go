@@ -42,13 +42,13 @@ func NewTestJobStreamsClientWithBaseURI(baseURI string, subscriptionID string, r
 
 // Get retrieve a test job streams identified by runbook name and stream id.
 //
-// automationAccountName is the automation account name. runbookName is the runbook name. jobStreamID is the job stream
-// id.
+// automationAccountName is the automation account name. runbookName is the runbook name. jobStreamID is the job
+// stream id.
 func (client TestJobStreamsClient) Get(ctx context.Context, automationAccountName string, runbookName string, jobStreamID string) (result JobStream, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.TestJobStreamsClient", "Get")
+		return result, validation.NewError("automation.TestJobStreamsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, runbookName, jobStreamID)
@@ -117,13 +117,13 @@ func (client TestJobStreamsClient) GetResponder(resp *http.Response) (result Job
 
 // ListByTestJob retrieve a list of test job streams identified by runbook name.
 //
-// automationAccountName is the automation account name. runbookName is the runbook name. filter is the filter to apply
-// on the operation.
+// automationAccountName is the automation account name. runbookName is the runbook name. filter is the filter to
+// apply on the operation.
 func (client TestJobStreamsClient) ListByTestJob(ctx context.Context, automationAccountName string, runbookName string, filter string) (result JobStreamListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.TestJobStreamsClient", "ListByTestJob")
+		return result, validation.NewError("automation.TestJobStreamsClient", "ListByTestJob", err.Error())
 	}
 
 	result.fn = client.listByTestJobNextResults

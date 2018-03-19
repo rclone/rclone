@@ -363,6 +363,94 @@ func (c *Glue) BatchDeleteTableWithContext(ctx aws.Context, input *BatchDeleteTa
 	return out, req.Send()
 }
 
+const opBatchDeleteTableVersion = "BatchDeleteTableVersion"
+
+// BatchDeleteTableVersionRequest generates a "aws/request.Request" representing the
+// client's request for the BatchDeleteTableVersion operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See BatchDeleteTableVersion for more information on using the BatchDeleteTableVersion
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the BatchDeleteTableVersionRequest method.
+//    req, resp := client.BatchDeleteTableVersionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchDeleteTableVersion
+func (c *Glue) BatchDeleteTableVersionRequest(input *BatchDeleteTableVersionInput) (req *request.Request, output *BatchDeleteTableVersionOutput) {
+	op := &request.Operation{
+		Name:       opBatchDeleteTableVersion,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &BatchDeleteTableVersionInput{}
+	}
+
+	output = &BatchDeleteTableVersionOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// BatchDeleteTableVersion API operation for AWS Glue.
+//
+// Deletes a specified batch of versions of a table.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation BatchDeleteTableVersion for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeEntityNotFoundException "EntityNotFoundException"
+//   A specified entity does not exist
+//
+//   * ErrCodeInvalidInputException "InvalidInputException"
+//   The input provided was not valid.
+//
+//   * ErrCodeInternalServiceException "InternalServiceException"
+//   An internal service error occurred.
+//
+//   * ErrCodeOperationTimeoutException "OperationTimeoutException"
+//   The operation timed out.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchDeleteTableVersion
+func (c *Glue) BatchDeleteTableVersion(input *BatchDeleteTableVersionInput) (*BatchDeleteTableVersionOutput, error) {
+	req, out := c.BatchDeleteTableVersionRequest(input)
+	return out, req.Send()
+}
+
+// BatchDeleteTableVersionWithContext is the same as BatchDeleteTableVersion with the addition of
+// the ability to pass a context and additional request options.
+//
+// See BatchDeleteTableVersion for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) BatchDeleteTableVersionWithContext(ctx aws.Context, input *BatchDeleteTableVersionInput, opts ...request.Option) (*BatchDeleteTableVersionOutput, error) {
+	req, out := c.BatchDeleteTableVersionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opBatchGetPartition = "BatchGetPartition"
 
 // BatchGetPartitionRequest generates a "aws/request.Request" representing the
@@ -580,8 +668,9 @@ func (c *Glue) CreateClassifierRequest(input *CreateClassifierInput) (req *reque
 
 // CreateClassifier API operation for AWS Glue.
 //
-// Creates a classifier in the user's account. This may be either a GrokClassifier
-// or an XMLClassifier.
+// Creates a classifier in the user's account. This may be a GrokClassifier,
+// an XMLClassifier, or abbrev JsonClassifier, depending on which field of the
+// request is present.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -684,6 +773,9 @@ func (c *Glue) CreateConnectionRequest(input *CreateConnectionInput) (req *reque
 //
 //   * ErrCodeOperationTimeoutException "OperationTimeoutException"
 //   The operation timed out.
+//
+//   * ErrCodeResourceNumberLimitExceededException "ResourceNumberLimitExceededException"
+//   A resource numerical limit was exceeded.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateConnection
 func (c *Glue) CreateConnection(input *CreateConnectionInput) (*CreateConnectionOutput, error) {
@@ -1524,6 +1616,9 @@ func (c *Glue) CreateUserDefinedFunctionRequest(input *CreateUserDefinedFunction
 //   * ErrCodeOperationTimeoutException "OperationTimeoutException"
 //   The operation timed out.
 //
+//   * ErrCodeResourceNumberLimitExceededException "ResourceNumberLimitExceededException"
+//   A resource numerical limit was exceeded.
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateUserDefinedFunction
 func (c *Glue) CreateUserDefinedFunction(input *CreateUserDefinedFunctionInput) (*CreateUserDefinedFunctionOutput, error) {
 	req, out := c.CreateUserDefinedFunctionRequest(input)
@@ -2231,6 +2326,94 @@ func (c *Glue) DeleteTable(input *DeleteTableInput) (*DeleteTableOutput, error) 
 // for more information on using Contexts.
 func (c *Glue) DeleteTableWithContext(ctx aws.Context, input *DeleteTableInput, opts ...request.Option) (*DeleteTableOutput, error) {
 	req, out := c.DeleteTableRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteTableVersion = "DeleteTableVersion"
+
+// DeleteTableVersionRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteTableVersion operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteTableVersion for more information on using the DeleteTableVersion
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteTableVersionRequest method.
+//    req, resp := client.DeleteTableVersionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteTableVersion
+func (c *Glue) DeleteTableVersionRequest(input *DeleteTableVersionInput) (req *request.Request, output *DeleteTableVersionOutput) {
+	op := &request.Operation{
+		Name:       opDeleteTableVersion,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteTableVersionInput{}
+	}
+
+	output = &DeleteTableVersionOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteTableVersion API operation for AWS Glue.
+//
+// Deletes a specified version of a table.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation DeleteTableVersion for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeEntityNotFoundException "EntityNotFoundException"
+//   A specified entity does not exist
+//
+//   * ErrCodeInvalidInputException "InvalidInputException"
+//   The input provided was not valid.
+//
+//   * ErrCodeInternalServiceException "InternalServiceException"
+//   An internal service error occurred.
+//
+//   * ErrCodeOperationTimeoutException "OperationTimeoutException"
+//   The operation timed out.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteTableVersion
+func (c *Glue) DeleteTableVersion(input *DeleteTableVersionInput) (*DeleteTableVersionOutput, error) {
+	req, out := c.DeleteTableVersionRequest(input)
+	return out, req.Send()
+}
+
+// DeleteTableVersionWithContext is the same as DeleteTableVersion with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteTableVersion for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) DeleteTableVersionWithContext(ctx aws.Context, input *DeleteTableVersionInput, opts ...request.Option) (*DeleteTableVersionOutput, error) {
+	req, out := c.DeleteTableVersionRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -4787,6 +4970,94 @@ func (c *Glue) GetTableWithContext(ctx aws.Context, input *GetTableInput, opts .
 	return out, req.Send()
 }
 
+const opGetTableVersion = "GetTableVersion"
+
+// GetTableVersionRequest generates a "aws/request.Request" representing the
+// client's request for the GetTableVersion operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetTableVersion for more information on using the GetTableVersion
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetTableVersionRequest method.
+//    req, resp := client.GetTableVersionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetTableVersion
+func (c *Glue) GetTableVersionRequest(input *GetTableVersionInput) (req *request.Request, output *GetTableVersionOutput) {
+	op := &request.Operation{
+		Name:       opGetTableVersion,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetTableVersionInput{}
+	}
+
+	output = &GetTableVersionOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetTableVersion API operation for AWS Glue.
+//
+// Retrieves a specified version of a table.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation GetTableVersion for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeEntityNotFoundException "EntityNotFoundException"
+//   A specified entity does not exist
+//
+//   * ErrCodeInvalidInputException "InvalidInputException"
+//   The input provided was not valid.
+//
+//   * ErrCodeInternalServiceException "InternalServiceException"
+//   An internal service error occurred.
+//
+//   * ErrCodeOperationTimeoutException "OperationTimeoutException"
+//   The operation timed out.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetTableVersion
+func (c *Glue) GetTableVersion(input *GetTableVersionInput) (*GetTableVersionOutput, error) {
+	req, out := c.GetTableVersionRequest(input)
+	return out, req.Send()
+}
+
+// GetTableVersionWithContext is the same as GetTableVersion with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetTableVersion for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) GetTableVersionWithContext(ctx aws.Context, input *GetTableVersionInput, opts ...request.Option) (*GetTableVersionOutput, error) {
+	req, out := c.GetTableVersionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetTableVersions = "GetTableVersions"
 
 // GetTableVersionsRequest generates a "aws/request.Request" representing the
@@ -6389,7 +6660,8 @@ func (c *Glue) UpdateClassifierRequest(input *UpdateClassifierInput) (req *reque
 
 // UpdateClassifier API operation for AWS Glue.
 //
-// Modifies an existing classifier (either a GrokClassifier or an XMLClassifier).
+// Modifies an existing classifier (a GrokClassifier, XMLClassifier, or JsonClassifier,
+// depending on which field is present).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -7128,6 +7400,9 @@ func (c *Glue) UpdateTableRequest(input *UpdateTableInput) (req *request.Request
 //   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
 //   Two processes are trying to modify a resource simultaneously.
 //
+//   * ErrCodeResourceNumberLimitExceededException "ResourceNumberLimitExceededException"
+//   A resource numerical limit was exceeded.
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateTable
 func (c *Glue) UpdateTable(input *UpdateTableInput) (*UpdateTableOutput, error) {
 	req, out := c.UpdateTableRequest(input)
@@ -7330,7 +7605,6 @@ func (c *Glue) UpdateUserDefinedFunctionWithContext(ctx aws.Context, input *Upda
 }
 
 // Defines an action to be initiated by a trigger.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Action
 type Action struct {
 	_ struct{} `type:"structure"`
 
@@ -7387,7 +7661,6 @@ func (s *Action) SetJobName(v string) *Action {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchCreatePartitionRequest
 type BatchCreatePartitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7483,7 +7756,6 @@ func (s *BatchCreatePartitionInput) SetTableName(v string) *BatchCreatePartition
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchCreatePartitionResponse
 type BatchCreatePartitionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7507,7 +7779,6 @@ func (s *BatchCreatePartitionOutput) SetErrors(v []*PartitionError) *BatchCreate
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchDeleteConnectionRequest
 type BatchDeleteConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7559,7 +7830,6 @@ func (s *BatchDeleteConnectionInput) SetConnectionNameList(v []*string) *BatchDe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchDeleteConnectionResponse
 type BatchDeleteConnectionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7593,7 +7863,6 @@ func (s *BatchDeleteConnectionOutput) SetSucceeded(v []*string) *BatchDeleteConn
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchDeletePartitionRequest
 type BatchDeletePartitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7689,7 +7958,6 @@ func (s *BatchDeletePartitionInput) SetTableName(v string) *BatchDeletePartition
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchDeletePartitionResponse
 type BatchDeletePartitionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7713,7 +7981,6 @@ func (s *BatchDeletePartitionOutput) SetErrors(v []*PartitionError) *BatchDelete
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchDeleteTableRequest
 type BatchDeleteTableInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7721,7 +7988,8 @@ type BatchDeleteTableInput struct {
 	// the AWS account ID is used by default.
 	CatalogId *string `min:"1" type:"string"`
 
-	// The name of the catalog database where the tables to delete reside.
+	// The name of the catalog database where the tables to delete reside. For Hive
+	// compatibility, this name is entirely lowercase.
 	//
 	// DatabaseName is a required field
 	DatabaseName *string `min:"1" type:"string" required:"true"`
@@ -7782,7 +8050,6 @@ func (s *BatchDeleteTableInput) SetTablesToDelete(v []*string) *BatchDeleteTable
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchDeleteTableResponse
 type BatchDeleteTableOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7806,7 +8073,115 @@ func (s *BatchDeleteTableOutput) SetErrors(v []*TableError) *BatchDeleteTableOut
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchGetPartitionRequest
+type BatchDeleteTableVersionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the Data Catalog where the tables reside. If none is supplied,
+	// the AWS account ID is used by default.
+	CatalogId *string `min:"1" type:"string"`
+
+	// The database in the catalog in which the table resides. For Hive compatibility,
+	// this name is entirely lowercase.
+	//
+	// DatabaseName is a required field
+	DatabaseName *string `min:"1" type:"string" required:"true"`
+
+	// The name of the table. For Hive compatibility, this name is entirely lowercase.
+	//
+	// TableName is a required field
+	TableName *string `min:"1" type:"string" required:"true"`
+
+	// A list of the IDs of versions to be deleted.
+	//
+	// VersionIds is a required field
+	VersionIds []*string `type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchDeleteTableVersionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchDeleteTableVersionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchDeleteTableVersionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchDeleteTableVersionInput"}
+	if s.CatalogId != nil && len(*s.CatalogId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("CatalogId", 1))
+	}
+	if s.DatabaseName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DatabaseName"))
+	}
+	if s.DatabaseName != nil && len(*s.DatabaseName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DatabaseName", 1))
+	}
+	if s.TableName == nil {
+		invalidParams.Add(request.NewErrParamRequired("TableName"))
+	}
+	if s.TableName != nil && len(*s.TableName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TableName", 1))
+	}
+	if s.VersionIds == nil {
+		invalidParams.Add(request.NewErrParamRequired("VersionIds"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCatalogId sets the CatalogId field's value.
+func (s *BatchDeleteTableVersionInput) SetCatalogId(v string) *BatchDeleteTableVersionInput {
+	s.CatalogId = &v
+	return s
+}
+
+// SetDatabaseName sets the DatabaseName field's value.
+func (s *BatchDeleteTableVersionInput) SetDatabaseName(v string) *BatchDeleteTableVersionInput {
+	s.DatabaseName = &v
+	return s
+}
+
+// SetTableName sets the TableName field's value.
+func (s *BatchDeleteTableVersionInput) SetTableName(v string) *BatchDeleteTableVersionInput {
+	s.TableName = &v
+	return s
+}
+
+// SetVersionIds sets the VersionIds field's value.
+func (s *BatchDeleteTableVersionInput) SetVersionIds(v []*string) *BatchDeleteTableVersionInput {
+	s.VersionIds = v
+	return s
+}
+
+type BatchDeleteTableVersionOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of errors encountered while trying to delete the specified table versions.
+	Errors []*TableVersionError `type:"list"`
+}
+
+// String returns the string representation
+func (s BatchDeleteTableVersionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchDeleteTableVersionOutput) GoString() string {
+	return s.String()
+}
+
+// SetErrors sets the Errors field's value.
+func (s *BatchDeleteTableVersionOutput) SetErrors(v []*TableVersionError) *BatchDeleteTableVersionOutput {
+	s.Errors = v
+	return s
+}
+
 type BatchGetPartitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7902,7 +8277,6 @@ func (s *BatchGetPartitionInput) SetTableName(v string) *BatchGetPartitionInput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchGetPartitionResponse
 type BatchGetPartitionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7937,7 +8311,6 @@ func (s *BatchGetPartitionOutput) SetUnprocessedKeys(v []*PartitionValueList) *B
 }
 
 // Records an error that occurred when attempting to stop a specified JobRun.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchStopJobRunError
 type BatchStopJobRunError struct {
 	_ struct{} `type:"structure"`
 
@@ -7979,7 +8352,6 @@ func (s *BatchStopJobRunError) SetJobRunId(v string) *BatchStopJobRunError {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchStopJobRunRequest
 type BatchStopJobRunInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8038,7 +8410,6 @@ func (s *BatchStopJobRunInput) SetJobRunIds(v []*string) *BatchStopJobRunInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchStopJobRunResponse
 type BatchStopJobRunOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8073,7 +8444,6 @@ func (s *BatchStopJobRunOutput) SetSuccessfulSubmissions(v []*BatchStopJobRunSuc
 }
 
 // Records a successful request to stop a specified JobRun.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchStopJobRunSuccessfulSubmission
 type BatchStopJobRunSuccessfulSubmission struct {
 	_ struct{} `type:"structure"`
 
@@ -8107,7 +8477,6 @@ func (s *BatchStopJobRunSuccessfulSubmission) SetJobRunId(v string) *BatchStopJo
 }
 
 // Specifies a table definition in the Data Catalog.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CatalogEntry
 type CatalogEntry struct {
 	_ struct{} `type:"structure"`
 
@@ -8167,7 +8536,6 @@ func (s *CatalogEntry) SetTableName(v string) *CatalogEntry {
 }
 
 // A structure containing migration status information.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CatalogImportStatus
 type CatalogImportStatus struct {
 	_ struct{} `type:"structure"`
 
@@ -8215,14 +8583,16 @@ func (s *CatalogImportStatus) SetImportedBy(v string) *CatalogImportStatus {
 // file is in a format it can handle, and if it is, the classifier creates a
 // schema in the form of a StructType object that matches that data format.
 //
-// A classifier can be either a grok classifier or an XML classifier, specified
-// in one or the other field of the Classifier object.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Classifier
+// A classifier can be a grok classifier, an XML classifier, or a JSON classifier,
+// asspecified in one of the fields in the Classifier object.
 type Classifier struct {
 	_ struct{} `type:"structure"`
 
 	// A GrokClassifier object.
 	GrokClassifier *GrokClassifier `type:"structure"`
+
+	// A JsonClassifier object.
+	JsonClassifier *JsonClassifier `type:"structure"`
 
 	// An XMLClassifier object.
 	XMLClassifier *XMLClassifier `type:"structure"`
@@ -8244,6 +8614,12 @@ func (s *Classifier) SetGrokClassifier(v *GrokClassifier) *Classifier {
 	return s
 }
 
+// SetJsonClassifier sets the JsonClassifier field's value.
+func (s *Classifier) SetJsonClassifier(v *JsonClassifier) *Classifier {
+	s.JsonClassifier = v
+	return s
+}
+
 // SetXMLClassifier sets the XMLClassifier field's value.
 func (s *Classifier) SetXMLClassifier(v *XMLClassifier) *Classifier {
 	s.XMLClassifier = v
@@ -8251,7 +8627,6 @@ func (s *Classifier) SetXMLClassifier(v *XMLClassifier) *Classifier {
 }
 
 // Represents a directional edge in a directed acyclic graph (DAG).
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CodeGenEdge
 type CodeGenEdge struct {
 	_ struct{} `type:"structure"`
 
@@ -8320,7 +8695,6 @@ func (s *CodeGenEdge) SetTargetParameter(v string) *CodeGenEdge {
 }
 
 // Represents a node in a directed acyclic graph (DAG)
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CodeGenNode
 type CodeGenNode struct {
 	_ struct{} `type:"structure"`
 
@@ -8410,7 +8784,6 @@ func (s *CodeGenNode) SetNodeType(v string) *CodeGenNode {
 }
 
 // An argument or property of a node.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CodeGenNodeArg
 type CodeGenNodeArg struct {
 	_ struct{} `type:"structure"`
 
@@ -8473,7 +8846,6 @@ func (s *CodeGenNodeArg) SetValue(v string) *CodeGenNodeArg {
 }
 
 // A column in a Table.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Column
 type Column struct {
 	_ struct{} `type:"structure"`
 
@@ -8534,7 +8906,6 @@ func (s *Column) SetType(v string) *Column {
 }
 
 // Defines a condition under which a trigger fires.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Condition
 type Condition struct {
 	_ struct{} `type:"structure"`
 
@@ -8592,7 +8963,6 @@ func (s *Condition) SetState(v string) *Condition {
 }
 
 // Defines a connection to a data source.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Connection
 type Connection struct {
 	_ struct{} `type:"structure"`
 
@@ -8691,16 +9061,19 @@ func (s *Connection) SetPhysicalConnectionRequirements(v *PhysicalConnectionRequ
 }
 
 // A structure used to specify a connection to create or update.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ConnectionInput
 type ConnectionInput struct {
 	_ struct{} `type:"structure"`
 
 	// A list of key-value pairs used as parameters for this connection.
-	ConnectionProperties map[string]*string `type:"map"`
+	//
+	// ConnectionProperties is a required field
+	ConnectionProperties map[string]*string `type:"map" required:"true"`
 
 	// The type of the connection. Currently, only JDBC is supported; SFTP is not
 	// supported.
-	ConnectionType *string `type:"string" enum:"ConnectionType"`
+	//
+	// ConnectionType is a required field
+	ConnectionType *string `type:"string" required:"true" enum:"ConnectionType"`
 
 	// Description of the connection.
 	Description *string `type:"string"`
@@ -8709,7 +9082,9 @@ type ConnectionInput struct {
 	MatchCriteria []*string `type:"list"`
 
 	// The name of the connection.
-	Name *string `min:"1" type:"string"`
+	//
+	// Name is a required field
+	Name *string `min:"1" type:"string" required:"true"`
 
 	// A map of physical connection requirements, such as VPC and SecurityGroup,
 	// needed for making this connection successfully.
@@ -8729,6 +9104,15 @@ func (s ConnectionInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *ConnectionInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "ConnectionInput"}
+	if s.ConnectionProperties == nil {
+		invalidParams.Add(request.NewErrParamRequired("ConnectionProperties"))
+	}
+	if s.ConnectionType == nil {
+		invalidParams.Add(request.NewErrParamRequired("ConnectionType"))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
 	if s.Name != nil && len(*s.Name) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
 	}
@@ -8781,7 +9165,6 @@ func (s *ConnectionInput) SetPhysicalConnectionRequirements(v *PhysicalConnectio
 }
 
 // Specifies the connections used by a job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ConnectionsList
 type ConnectionsList struct {
 	_ struct{} `type:"structure"`
 
@@ -8808,7 +9191,6 @@ func (s *ConnectionsList) SetConnections(v []*string) *ConnectionsList {
 // Specifies a crawler program that examines a data source and uses classifiers
 // to try to determine its schema. If successful, the crawler records metadata
 // concerning the data source in the AWS Glue Data Catalog.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Crawler
 type Crawler struct {
 	_ struct{} `type:"structure"`
 
@@ -8980,7 +9362,6 @@ func (s *Crawler) SetVersion(v int64) *Crawler {
 }
 
 // Metrics for a specified crawler.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CrawlerMetrics
 type CrawlerMetrics struct {
 	_ struct{} `type:"structure"`
 
@@ -9069,7 +9450,6 @@ func (s *CrawlerMetrics) SetTimeLeftSeconds(v float64) *CrawlerMetrics {
 }
 
 // Specifies data stores to crawl.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CrawlerTargets
 type CrawlerTargets struct {
 	_ struct{} `type:"structure"`
 
@@ -9102,12 +9482,14 @@ func (s *CrawlerTargets) SetS3Targets(v []*S3Target) *CrawlerTargets {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateClassifierRequest
 type CreateClassifierInput struct {
 	_ struct{} `type:"structure"`
 
 	// A GrokClassifier object specifying the classifier to create.
 	GrokClassifier *CreateGrokClassifierRequest `type:"structure"`
+
+	// A JsonClassifier object specifying the classifier to create.
+	JsonClassifier *CreateJsonClassifierRequest `type:"structure"`
 
 	// An XMLClassifier object specifying the classifier to create.
 	XMLClassifier *CreateXMLClassifierRequest `type:"structure"`
@@ -9131,6 +9513,11 @@ func (s *CreateClassifierInput) Validate() error {
 			invalidParams.AddNested("GrokClassifier", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.JsonClassifier != nil {
+		if err := s.JsonClassifier.Validate(); err != nil {
+			invalidParams.AddNested("JsonClassifier", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.XMLClassifier != nil {
 		if err := s.XMLClassifier.Validate(); err != nil {
 			invalidParams.AddNested("XMLClassifier", err.(request.ErrInvalidParams))
@@ -9149,13 +9536,18 @@ func (s *CreateClassifierInput) SetGrokClassifier(v *CreateGrokClassifierRequest
 	return s
 }
 
+// SetJsonClassifier sets the JsonClassifier field's value.
+func (s *CreateClassifierInput) SetJsonClassifier(v *CreateJsonClassifierRequest) *CreateClassifierInput {
+	s.JsonClassifier = v
+	return s
+}
+
 // SetXMLClassifier sets the XMLClassifier field's value.
 func (s *CreateClassifierInput) SetXMLClassifier(v *CreateXMLClassifierRequest) *CreateClassifierInput {
 	s.XMLClassifier = v
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateClassifierResponse
 type CreateClassifierOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9170,7 +9562,6 @@ func (s CreateClassifierOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateConnectionRequest
 type CreateConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9227,7 +9618,6 @@ func (s *CreateConnectionInput) SetConnectionInput(v *ConnectionInput) *CreateCo
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateConnectionResponse
 type CreateConnectionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9242,7 +9632,6 @@ func (s CreateConnectionOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateCrawlerRequest
 type CreateCrawlerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9395,7 +9784,6 @@ func (s *CreateCrawlerInput) SetTargets(v *CrawlerTargets) *CreateCrawlerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateCrawlerResponse
 type CreateCrawlerOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9410,7 +9798,6 @@ func (s CreateCrawlerOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateDatabaseRequest
 type CreateDatabaseInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9467,7 +9854,6 @@ func (s *CreateDatabaseInput) SetDatabaseInput(v *DatabaseInput) *CreateDatabase
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateDatabaseResponse
 type CreateDatabaseOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9482,7 +9868,6 @@ func (s CreateDatabaseOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateDevEndpointRequest
 type CreateDevEndpointInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9601,7 +9986,6 @@ func (s *CreateDevEndpointInput) SetSubnetId(v string) *CreateDevEndpointInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateDevEndpointResponse
 type CreateDevEndpointOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9745,7 +10129,6 @@ func (s *CreateDevEndpointOutput) SetZeppelinRemoteSparkInterpreterPort(v int64)
 }
 
 // Specifies a grok classifier for CreateClassifier to create.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateGrokClassifierRequest
 type CreateGrokClassifierRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -9828,7 +10211,6 @@ func (s *CreateGrokClassifierRequest) SetName(v string) *CreateGrokClassifierReq
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateJobRequest
 type CreateJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9977,7 +10359,6 @@ func (s *CreateJobInput) SetRole(v string) *CreateJobInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateJobResponse
 type CreateJobOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10001,7 +10382,64 @@ func (s *CreateJobOutput) SetName(v string) *CreateJobOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreatePartitionRequest
+// Specifies a JSON classifier for CreateClassifier to create.
+type CreateJsonClassifierRequest struct {
+	_ struct{} `type:"structure"`
+
+	// A JsonPath string defining the JSON data for the classifier to classify.
+	// AWS Glue supports a subset of JsonPath, as described in Writing JsonPath
+	// Custom Classifiers (https://docs.aws.amazon.com/glue/latest/dg/custom-classifier.html#custom-classifier-json).
+	//
+	// JsonPath is a required field
+	JsonPath *string `type:"string" required:"true"`
+
+	// The name of the classifier.
+	//
+	// Name is a required field
+	Name *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateJsonClassifierRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateJsonClassifierRequest) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateJsonClassifierRequest) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateJsonClassifierRequest"}
+	if s.JsonPath == nil {
+		invalidParams.Add(request.NewErrParamRequired("JsonPath"))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetJsonPath sets the JsonPath field's value.
+func (s *CreateJsonClassifierRequest) SetJsonPath(v string) *CreateJsonClassifierRequest {
+	s.JsonPath = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *CreateJsonClassifierRequest) SetName(v string) *CreateJsonClassifierRequest {
+	s.Name = &v
+	return s
+}
+
 type CreatePartitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10092,7 +10530,6 @@ func (s *CreatePartitionInput) SetTableName(v string) *CreatePartitionInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreatePartitionResponse
 type CreatePartitionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10107,7 +10544,6 @@ func (s CreatePartitionOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateScriptRequest
 type CreateScriptInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10179,7 +10615,6 @@ func (s *CreateScriptInput) SetLanguage(v string) *CreateScriptInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateScriptResponse
 type CreateScriptOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10212,7 +10647,6 @@ func (s *CreateScriptOutput) SetScalaCode(v string) *CreateScriptOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateTableRequest
 type CreateTableInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10220,7 +10654,8 @@ type CreateTableInput struct {
 	// the AWS account ID is used by default.
 	CatalogId *string `min:"1" type:"string"`
 
-	// The catalog database in which to create the new table.
+	// The catalog database in which to create the new table. For Hive compatibility,
+	// this name is entirely lowercase.
 	//
 	// DatabaseName is a required field
 	DatabaseName *string `min:"1" type:"string" required:"true"`
@@ -10286,7 +10721,6 @@ func (s *CreateTableInput) SetTableInput(v *TableInput) *CreateTableInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateTableResponse
 type CreateTableOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10301,7 +10735,6 @@ func (s CreateTableOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateTriggerRequest
 type CreateTriggerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10420,7 +10853,6 @@ func (s *CreateTriggerInput) SetType(v string) *CreateTriggerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateTriggerResponse
 type CreateTriggerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10444,7 +10876,6 @@ func (s *CreateTriggerOutput) SetName(v string) *CreateTriggerOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateUserDefinedFunctionRequest
 type CreateUserDefinedFunctionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10518,7 +10949,6 @@ func (s *CreateUserDefinedFunctionInput) SetFunctionInput(v *UserDefinedFunction
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateUserDefinedFunctionResponse
 type CreateUserDefinedFunctionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10534,7 +10964,6 @@ func (s CreateUserDefinedFunctionOutput) GoString() string {
 }
 
 // Specifies an XML classifier for CreateClassifier to create.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateXMLClassifierRequest
 type CreateXMLClassifierRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -10605,7 +11034,6 @@ func (s *CreateXMLClassifierRequest) SetRowTag(v string) *CreateXMLClassifierReq
 
 // The Database object represents a logical grouping of tables that may reside
 // in a Hive metastore or an RDBMS.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Database
 type Database struct {
 	_ struct{} `type:"structure"`
 
@@ -10618,7 +11046,8 @@ type Database struct {
 	// The location of the database (for example, an HDFS path).
 	LocationUri *string `min:"1" type:"string"`
 
-	// Name of the database.
+	// Name of the database. For Hive compatibility, this is folded to lowercase
+	// when it is stored.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -10667,8 +11096,7 @@ func (s *Database) SetParameters(v map[string]*string) *Database {
 	return s
 }
 
-// The structure used to create or updata a database.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DatabaseInput
+// The structure used to create or update a database.
 type DatabaseInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10678,7 +11106,8 @@ type DatabaseInput struct {
 	// The location of the database (for example, an HDFS path).
 	LocationUri *string `min:"1" type:"string"`
 
-	// Name of the database.
+	// Name of the database. For Hive compatibility, this is folded to lowercase
+	// when it is stored.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -10740,7 +11169,6 @@ func (s *DatabaseInput) SetParameters(v map[string]*string) *DatabaseInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteClassifierRequest
 type DeleteClassifierInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10782,7 +11210,6 @@ func (s *DeleteClassifierInput) SetName(v string) *DeleteClassifierInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteClassifierResponse
 type DeleteClassifierOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10797,7 +11224,6 @@ func (s DeleteClassifierOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteConnectionRequest
 type DeleteConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10852,7 +11278,6 @@ func (s *DeleteConnectionInput) SetConnectionName(v string) *DeleteConnectionInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteConnectionResponse
 type DeleteConnectionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10867,7 +11292,6 @@ func (s DeleteConnectionOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteCrawlerRequest
 type DeleteCrawlerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10909,7 +11333,6 @@ func (s *DeleteCrawlerInput) SetName(v string) *DeleteCrawlerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteCrawlerResponse
 type DeleteCrawlerOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10924,7 +11347,6 @@ func (s DeleteCrawlerOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteDatabaseRequest
 type DeleteDatabaseInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10932,7 +11354,8 @@ type DeleteDatabaseInput struct {
 	// the AWS account ID is used by default.
 	CatalogId *string `min:"1" type:"string"`
 
-	// The name of the Database to delete.
+	// The name of the Database to delete. For Hive compatibility, this must be
+	// all lowercase.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -10979,7 +11402,6 @@ func (s *DeleteDatabaseInput) SetName(v string) *DeleteDatabaseInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteDatabaseResponse
 type DeleteDatabaseOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10994,7 +11416,6 @@ func (s DeleteDatabaseOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteDevEndpointRequest
 type DeleteDevEndpointInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11033,7 +11454,6 @@ func (s *DeleteDevEndpointInput) SetEndpointName(v string) *DeleteDevEndpointInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteDevEndpointResponse
 type DeleteDevEndpointOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -11048,7 +11468,6 @@ func (s DeleteDevEndpointOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteJobRequest
 type DeleteJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11090,7 +11509,6 @@ func (s *DeleteJobInput) SetJobName(v string) *DeleteJobInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteJobResponse
 type DeleteJobOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11114,7 +11532,6 @@ func (s *DeleteJobOutput) SetJobName(v string) *DeleteJobOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeletePartitionRequest
 type DeletePartitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11200,7 +11617,6 @@ func (s *DeletePartitionInput) SetTableName(v string) *DeletePartitionInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeletePartitionResponse
 type DeletePartitionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -11215,7 +11631,6 @@ func (s DeletePartitionOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteTableRequest
 type DeleteTableInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11223,12 +11638,14 @@ type DeleteTableInput struct {
 	// the AWS account ID is used by default.
 	CatalogId *string `min:"1" type:"string"`
 
-	// The name of the catalog database in which the table resides.
+	// The name of the catalog database in which the table resides. For Hive compatibility,
+	// this name is entirely lowercase.
 	//
 	// DatabaseName is a required field
 	DatabaseName *string `min:"1" type:"string" required:"true"`
 
-	// The name of the table to be deleted.
+	// The name of the table to be deleted. For Hive compatibility, this name is
+	// entirely lowercase.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -11287,7 +11704,6 @@ func (s *DeleteTableInput) SetName(v string) *DeleteTableInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteTableResponse
 type DeleteTableOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -11302,7 +11718,109 @@ func (s DeleteTableOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteTriggerRequest
+type DeleteTableVersionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the Data Catalog where the tables reside. If none is supplied,
+	// the AWS account ID is used by default.
+	CatalogId *string `min:"1" type:"string"`
+
+	// The database in the catalog in which the table resides. For Hive compatibility,
+	// this name is entirely lowercase.
+	//
+	// DatabaseName is a required field
+	DatabaseName *string `min:"1" type:"string" required:"true"`
+
+	// The name of the table. For Hive compatibility, this name is entirely lowercase.
+	//
+	// TableName is a required field
+	TableName *string `min:"1" type:"string" required:"true"`
+
+	// The ID of the table version to be deleted.
+	//
+	// VersionId is a required field
+	VersionId *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteTableVersionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteTableVersionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteTableVersionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteTableVersionInput"}
+	if s.CatalogId != nil && len(*s.CatalogId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("CatalogId", 1))
+	}
+	if s.DatabaseName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DatabaseName"))
+	}
+	if s.DatabaseName != nil && len(*s.DatabaseName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DatabaseName", 1))
+	}
+	if s.TableName == nil {
+		invalidParams.Add(request.NewErrParamRequired("TableName"))
+	}
+	if s.TableName != nil && len(*s.TableName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TableName", 1))
+	}
+	if s.VersionId == nil {
+		invalidParams.Add(request.NewErrParamRequired("VersionId"))
+	}
+	if s.VersionId != nil && len(*s.VersionId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("VersionId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCatalogId sets the CatalogId field's value.
+func (s *DeleteTableVersionInput) SetCatalogId(v string) *DeleteTableVersionInput {
+	s.CatalogId = &v
+	return s
+}
+
+// SetDatabaseName sets the DatabaseName field's value.
+func (s *DeleteTableVersionInput) SetDatabaseName(v string) *DeleteTableVersionInput {
+	s.DatabaseName = &v
+	return s
+}
+
+// SetTableName sets the TableName field's value.
+func (s *DeleteTableVersionInput) SetTableName(v string) *DeleteTableVersionInput {
+	s.TableName = &v
+	return s
+}
+
+// SetVersionId sets the VersionId field's value.
+func (s *DeleteTableVersionInput) SetVersionId(v string) *DeleteTableVersionInput {
+	s.VersionId = &v
+	return s
+}
+
+type DeleteTableVersionOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteTableVersionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteTableVersionOutput) GoString() string {
+	return s.String()
+}
+
 type DeleteTriggerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11344,7 +11862,6 @@ func (s *DeleteTriggerInput) SetName(v string) *DeleteTriggerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteTriggerResponse
 type DeleteTriggerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11368,7 +11885,6 @@ func (s *DeleteTriggerOutput) SetName(v string) *DeleteTriggerOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteUserDefinedFunctionRequest
 type DeleteUserDefinedFunctionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11440,7 +11956,6 @@ func (s *DeleteUserDefinedFunctionInput) SetFunctionName(v string) *DeleteUserDe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteUserDefinedFunctionResponse
 type DeleteUserDefinedFunctionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -11456,7 +11971,6 @@ func (s DeleteUserDefinedFunctionOutput) GoString() string {
 }
 
 // A development endpoint where a developer can remotely debug ETL scripts.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DevEndpoint
 type DevEndpoint struct {
 	_ struct{} `type:"structure"`
 
@@ -11644,7 +12158,6 @@ func (s *DevEndpoint) SetZeppelinRemoteSparkInterpreterPort(v int64) *DevEndpoin
 }
 
 // Custom libraries to be loaded into a DevEndpoint.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DevEndpointCustomLibraries
 type DevEndpointCustomLibraries struct {
 	_ struct{} `type:"structure"`
 
@@ -11688,7 +12201,6 @@ func (s *DevEndpointCustomLibraries) SetExtraPythonLibsS3Path(v string) *DevEndp
 }
 
 // Contains details about an error.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ErrorDetail
 type ErrorDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -11722,7 +12234,6 @@ func (s *ErrorDetail) SetErrorMessage(v string) *ErrorDetail {
 }
 
 // An execution property of a job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ExecutionProperty
 type ExecutionProperty struct {
 	_ struct{} `type:"structure"`
 
@@ -11748,7 +12259,6 @@ func (s *ExecutionProperty) SetMaxConcurrentRuns(v int64) *ExecutionProperty {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetCatalogImportStatusRequest
 type GetCatalogImportStatusInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11786,7 +12296,6 @@ func (s *GetCatalogImportStatusInput) SetCatalogId(v string) *GetCatalogImportSt
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetCatalogImportStatusResponse
 type GetCatalogImportStatusOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11810,7 +12319,6 @@ func (s *GetCatalogImportStatusOutput) SetImportStatus(v *CatalogImportStatus) *
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetClassifierRequest
 type GetClassifierInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11852,7 +12360,6 @@ func (s *GetClassifierInput) SetName(v string) *GetClassifierInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetClassifierResponse
 type GetClassifierOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11876,7 +12383,6 @@ func (s *GetClassifierOutput) SetClassifier(v *Classifier) *GetClassifierOutput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetClassifiersRequest
 type GetClassifiersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11922,7 +12428,6 @@ func (s *GetClassifiersInput) SetNextToken(v string) *GetClassifiersInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetClassifiersResponse
 type GetClassifiersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11955,7 +12460,6 @@ func (s *GetClassifiersOutput) SetNextToken(v string) *GetClassifiersOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetConnectionRequest
 type GetConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12010,7 +12514,6 @@ func (s *GetConnectionInput) SetName(v string) *GetConnectionInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetConnectionResponse
 type GetConnectionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12035,7 +12538,6 @@ func (s *GetConnectionOutput) SetConnection(v *Connection) *GetConnectionOutput 
 }
 
 // Filters the connection definitions returned by the GetConnections API.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetConnectionsFilter
 type GetConnectionsFilter struct {
 	_ struct{} `type:"structure"`
 
@@ -12070,7 +12572,6 @@ func (s *GetConnectionsFilter) SetMatchCriteria(v []*string) *GetConnectionsFilt
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetConnectionsRequest
 type GetConnectionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12138,7 +12639,6 @@ func (s *GetConnectionsInput) SetNextToken(v string) *GetConnectionsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetConnectionsResponse
 type GetConnectionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12172,7 +12672,6 @@ func (s *GetConnectionsOutput) SetNextToken(v string) *GetConnectionsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetCrawlerRequest
 type GetCrawlerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12214,7 +12713,6 @@ func (s *GetCrawlerInput) SetName(v string) *GetCrawlerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetCrawlerMetricsRequest
 type GetCrawlerMetricsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12269,7 +12767,6 @@ func (s *GetCrawlerMetricsInput) SetNextToken(v string) *GetCrawlerMetricsInput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetCrawlerMetricsResponse
 type GetCrawlerMetricsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12303,7 +12800,6 @@ func (s *GetCrawlerMetricsOutput) SetNextToken(v string) *GetCrawlerMetricsOutpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetCrawlerResponse
 type GetCrawlerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12327,7 +12823,6 @@ func (s *GetCrawlerOutput) SetCrawler(v *Crawler) *GetCrawlerOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetCrawlersRequest
 type GetCrawlersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12373,7 +12868,6 @@ func (s *GetCrawlersInput) SetNextToken(v string) *GetCrawlersInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetCrawlersResponse
 type GetCrawlersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12407,7 +12901,6 @@ func (s *GetCrawlersOutput) SetNextToken(v string) *GetCrawlersOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDatabaseRequest
 type GetDatabaseInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12415,7 +12908,8 @@ type GetDatabaseInput struct {
 	// the AWS account ID is used by default.
 	CatalogId *string `min:"1" type:"string"`
 
-	// The name of the database to retrieve.
+	// The name of the database to retrieve. For Hive compatibility, this should
+	// be all lowercase.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -12462,7 +12956,6 @@ func (s *GetDatabaseInput) SetName(v string) *GetDatabaseInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDatabaseResponse
 type GetDatabaseOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12486,7 +12979,6 @@ func (s *GetDatabaseOutput) SetDatabase(v *Database) *GetDatabaseOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDatabasesRequest
 type GetDatabasesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12545,7 +13037,6 @@ func (s *GetDatabasesInput) SetNextToken(v string) *GetDatabasesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDatabasesResponse
 type GetDatabasesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12581,7 +13072,6 @@ func (s *GetDatabasesOutput) SetNextToken(v string) *GetDatabasesOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDataflowGraphRequest
 type GetDataflowGraphInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12605,7 +13095,6 @@ func (s *GetDataflowGraphInput) SetPythonScript(v string) *GetDataflowGraphInput
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDataflowGraphResponse
 type GetDataflowGraphOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12638,7 +13127,6 @@ func (s *GetDataflowGraphOutput) SetDagNodes(v []*CodeGenNode) *GetDataflowGraph
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDevEndpointRequest
 type GetDevEndpointInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12677,7 +13165,6 @@ func (s *GetDevEndpointInput) SetEndpointName(v string) *GetDevEndpointInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDevEndpointResponse
 type GetDevEndpointOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12701,7 +13188,6 @@ func (s *GetDevEndpointOutput) SetDevEndpoint(v *DevEndpoint) *GetDevEndpointOut
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDevEndpointsRequest
 type GetDevEndpointsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12747,7 +13233,6 @@ func (s *GetDevEndpointsInput) SetNextToken(v string) *GetDevEndpointsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDevEndpointsResponse
 type GetDevEndpointsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12780,7 +13265,6 @@ func (s *GetDevEndpointsOutput) SetNextToken(v string) *GetDevEndpointsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetJobRequest
 type GetJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12822,7 +13306,6 @@ func (s *GetJobInput) SetJobName(v string) *GetJobInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetJobResponse
 type GetJobOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12846,7 +13329,6 @@ func (s *GetJobOutput) SetJob(v *Job) *GetJobOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetJobRunRequest
 type GetJobRunInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12914,7 +13396,6 @@ func (s *GetJobRunInput) SetRunId(v string) *GetJobRunInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetJobRunResponse
 type GetJobRunOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12938,7 +13419,6 @@ func (s *GetJobRunOutput) SetJobRun(v *JobRun) *GetJobRunOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetJobRunsRequest
 type GetJobRunsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13001,7 +13481,6 @@ func (s *GetJobRunsInput) SetNextToken(v string) *GetJobRunsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetJobRunsResponse
 type GetJobRunsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -13034,7 +13513,6 @@ func (s *GetJobRunsOutput) SetNextToken(v string) *GetJobRunsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetJobsRequest
 type GetJobsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13080,7 +13558,6 @@ func (s *GetJobsInput) SetNextToken(v string) *GetJobsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetJobsResponse
 type GetJobsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -13113,7 +13590,6 @@ func (s *GetJobsOutput) SetNextToken(v string) *GetJobsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetMappingRequest
 type GetMappingInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13190,7 +13666,6 @@ func (s *GetMappingInput) SetSource(v *CatalogEntry) *GetMappingInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetMappingResponse
 type GetMappingOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -13216,7 +13691,6 @@ func (s *GetMappingOutput) SetMapping(v []*MappingEntry) *GetMappingOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetPartitionRequest
 type GetPartitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13302,7 +13776,6 @@ func (s *GetPartitionInput) SetTableName(v string) *GetPartitionInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetPartitionResponse
 type GetPartitionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -13326,7 +13799,6 @@ func (s *GetPartitionOutput) SetPartition(v *Partition) *GetPartitionOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetPartitionsRequest
 type GetPartitionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13442,7 +13914,6 @@ func (s *GetPartitionsInput) SetTableName(v string) *GetPartitionsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetPartitionsResponse
 type GetPartitionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -13476,7 +13947,6 @@ func (s *GetPartitionsOutput) SetPartitions(v []*Partition) *GetPartitionsOutput
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetPlanRequest
 type GetPlanInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13576,7 +14046,6 @@ func (s *GetPlanInput) SetSource(v *CatalogEntry) *GetPlanInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetPlanResponse
 type GetPlanOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -13609,7 +14078,6 @@ func (s *GetPlanOutput) SetScalaCode(v string) *GetPlanOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetTableRequest
 type GetTableInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13617,12 +14085,14 @@ type GetTableInput struct {
 	// the AWS account ID is used by default.
 	CatalogId *string `min:"1" type:"string"`
 
-	// The name of the database in the catalog in which the table resides.
+	// The name of the database in the catalog in which the table resides. For Hive
+	// compatibility, this name is entirely lowercase.
 	//
 	// DatabaseName is a required field
 	DatabaseName *string `min:"1" type:"string" required:"true"`
 
-	// The name of the table for which to retrieve the definition.
+	// The name of the table for which to retrieve the definition. For Hive compatibility,
+	// this name is entirely lowercase.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -13681,7 +14151,6 @@ func (s *GetTableInput) SetName(v string) *GetTableInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetTableResponse
 type GetTableOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -13705,7 +14174,113 @@ func (s *GetTableOutput) SetTable(v *Table) *GetTableOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetTableVersionsRequest
+type GetTableVersionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the Data Catalog where the tables reside. If none is supplied,
+	// the AWS account ID is used by default.
+	CatalogId *string `min:"1" type:"string"`
+
+	// The database in the catalog in which the table resides. For Hive compatibility,
+	// this name is entirely lowercase.
+	//
+	// DatabaseName is a required field
+	DatabaseName *string `min:"1" type:"string" required:"true"`
+
+	// The name of the table. For Hive compatibility, this name is entirely lowercase.
+	//
+	// TableName is a required field
+	TableName *string `min:"1" type:"string" required:"true"`
+
+	// The ID value of the table version to be retrieved.
+	VersionId *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s GetTableVersionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetTableVersionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetTableVersionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetTableVersionInput"}
+	if s.CatalogId != nil && len(*s.CatalogId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("CatalogId", 1))
+	}
+	if s.DatabaseName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DatabaseName"))
+	}
+	if s.DatabaseName != nil && len(*s.DatabaseName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DatabaseName", 1))
+	}
+	if s.TableName == nil {
+		invalidParams.Add(request.NewErrParamRequired("TableName"))
+	}
+	if s.TableName != nil && len(*s.TableName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TableName", 1))
+	}
+	if s.VersionId != nil && len(*s.VersionId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("VersionId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCatalogId sets the CatalogId field's value.
+func (s *GetTableVersionInput) SetCatalogId(v string) *GetTableVersionInput {
+	s.CatalogId = &v
+	return s
+}
+
+// SetDatabaseName sets the DatabaseName field's value.
+func (s *GetTableVersionInput) SetDatabaseName(v string) *GetTableVersionInput {
+	s.DatabaseName = &v
+	return s
+}
+
+// SetTableName sets the TableName field's value.
+func (s *GetTableVersionInput) SetTableName(v string) *GetTableVersionInput {
+	s.TableName = &v
+	return s
+}
+
+// SetVersionId sets the VersionId field's value.
+func (s *GetTableVersionInput) SetVersionId(v string) *GetTableVersionInput {
+	s.VersionId = &v
+	return s
+}
+
+type GetTableVersionOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The requested table version.
+	TableVersion *TableVersion `type:"structure"`
+}
+
+// String returns the string representation
+func (s GetTableVersionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetTableVersionOutput) GoString() string {
+	return s.String()
+}
+
+// SetTableVersion sets the TableVersion field's value.
+func (s *GetTableVersionOutput) SetTableVersion(v *TableVersion) *GetTableVersionOutput {
+	s.TableVersion = v
+	return s
+}
+
 type GetTableVersionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13713,7 +14288,8 @@ type GetTableVersionsInput struct {
 	// the AWS account ID is used by default.
 	CatalogId *string `min:"1" type:"string"`
 
-	// The database in the catalog in which the table resides.
+	// The database in the catalog in which the table resides. For Hive compatibility,
+	// this name is entirely lowercase.
 	//
 	// DatabaseName is a required field
 	DatabaseName *string `min:"1" type:"string" required:"true"`
@@ -13724,7 +14300,7 @@ type GetTableVersionsInput struct {
 	// A continuation token, if this is not the first call.
 	NextToken *string `type:"string"`
 
-	// The name of the table.
+	// The name of the table. For Hive compatibility, this name is entirely lowercase.
 	//
 	// TableName is a required field
 	TableName *string `min:"1" type:"string" required:"true"`
@@ -13798,7 +14374,6 @@ func (s *GetTableVersionsInput) SetTableName(v string) *GetTableVersionsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetTableVersionsResponse
 type GetTableVersionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -13832,7 +14407,6 @@ func (s *GetTableVersionsOutput) SetTableVersions(v []*TableVersion) *GetTableVe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetTablesRequest
 type GetTablesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13840,7 +14414,8 @@ type GetTablesInput struct {
 	// the AWS account ID is used by default.
 	CatalogId *string `min:"1" type:"string"`
 
-	// The database in the catalog whose tables to list.
+	// The database in the catalog whose tables to list. For Hive compatibility,
+	// this name is entirely lowercase.
 	//
 	// DatabaseName is a required field
 	DatabaseName *string `min:"1" type:"string" required:"true"`
@@ -13918,7 +14493,6 @@ func (s *GetTablesInput) SetNextToken(v string) *GetTablesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetTablesResponse
 type GetTablesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -13951,7 +14525,6 @@ func (s *GetTablesOutput) SetTableList(v []*Table) *GetTablesOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetTriggerRequest
 type GetTriggerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13993,7 +14566,6 @@ func (s *GetTriggerInput) SetName(v string) *GetTriggerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetTriggerResponse
 type GetTriggerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -14017,7 +14589,6 @@ func (s *GetTriggerOutput) SetTrigger(v *Trigger) *GetTriggerOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetTriggersRequest
 type GetTriggersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -14077,7 +14648,6 @@ func (s *GetTriggersInput) SetNextToken(v string) *GetTriggersInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetTriggersResponse
 type GetTriggersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -14110,7 +14680,6 @@ func (s *GetTriggersOutput) SetTriggers(v []*Trigger) *GetTriggersOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetUserDefinedFunctionRequest
 type GetUserDefinedFunctionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -14182,7 +14751,6 @@ func (s *GetUserDefinedFunctionInput) SetFunctionName(v string) *GetUserDefinedF
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetUserDefinedFunctionResponse
 type GetUserDefinedFunctionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -14206,7 +14774,6 @@ func (s *GetUserDefinedFunctionOutput) SetUserDefinedFunction(v *UserDefinedFunc
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetUserDefinedFunctionsRequest
 type GetUserDefinedFunctionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -14300,7 +14867,6 @@ func (s *GetUserDefinedFunctionsInput) SetPattern(v string) *GetUserDefinedFunct
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetUserDefinedFunctionsResponse
 type GetUserDefinedFunctionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -14335,7 +14901,6 @@ func (s *GetUserDefinedFunctionsOutput) SetUserDefinedFunctions(v []*UserDefined
 }
 
 // A classifier that uses grok patterns.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GrokClassifier
 type GrokClassifier struct {
 	_ struct{} `type:"structure"`
 
@@ -14422,7 +14987,6 @@ func (s *GrokClassifier) SetVersion(v int64) *GrokClassifier {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ImportCatalogToGlueRequest
 type ImportCatalogToGlueInput struct {
 	_ struct{} `type:"structure"`
 
@@ -14460,7 +15024,6 @@ func (s *ImportCatalogToGlueInput) SetCatalogId(v string) *ImportCatalogToGlueIn
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ImportCatalogToGlueResponse
 type ImportCatalogToGlueOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -14476,7 +15039,6 @@ func (s ImportCatalogToGlueOutput) GoString() string {
 }
 
 // Specifies a JDBC data store to crawl.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/JdbcTarget
 type JdbcTarget struct {
 	_ struct{} `type:"structure"`
 
@@ -14520,7 +15082,6 @@ func (s *JdbcTarget) SetPath(v string) *JdbcTarget {
 }
 
 // Specifies a job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Job
 type Job struct {
 	_ struct{} `type:"structure"`
 
@@ -14660,7 +15221,6 @@ func (s *Job) SetRole(v string) *Job {
 }
 
 // Defines a point which a job can resume processing.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/JobBookmarkEntry
 type JobBookmarkEntry struct {
 	_ struct{} `type:"structure"`
 
@@ -14721,7 +15281,6 @@ func (s *JobBookmarkEntry) SetVersion(v int64) *JobBookmarkEntry {
 }
 
 // Specifies code that executes a job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/JobCommand
 type JobCommand struct {
 	_ struct{} `type:"structure"`
 
@@ -14755,7 +15314,6 @@ func (s *JobCommand) SetScriptLocation(v string) *JobCommand {
 }
 
 // Contains information about a job run.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/JobRun
 type JobRun struct {
 	_ struct{} `type:"structure"`
 
@@ -14906,7 +15464,6 @@ func (s *JobRun) SetTriggerName(v string) *JobRun {
 
 // Specifies information used to update an existing job. Note that the previous
 // job definition will be completely overwritten by this information.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/JobUpdate
 type JobUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -15018,8 +15575,73 @@ func (s *JobUpdate) SetRole(v string) *JobUpdate {
 	return s
 }
 
+// A classifier for JSON content.
+type JsonClassifier struct {
+	_ struct{} `type:"structure"`
+
+	// The time this classifier was registered.
+	CreationTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// A JsonPath string defining the JSON data for the classifier to classify.
+	// AWS Glue supports a subset of JsonPath, as described in Writing JsonPath
+	// Custom Classifiers (https://docs.aws.amazon.com/glue/latest/dg/custom-classifier.html#custom-classifier-json).
+	//
+	// JsonPath is a required field
+	JsonPath *string `type:"string" required:"true"`
+
+	// The time this classifier was last updated.
+	LastUpdated *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The name of the classifier.
+	//
+	// Name is a required field
+	Name *string `min:"1" type:"string" required:"true"`
+
+	// The version of this classifier.
+	Version *int64 `type:"long"`
+}
+
+// String returns the string representation
+func (s JsonClassifier) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s JsonClassifier) GoString() string {
+	return s.String()
+}
+
+// SetCreationTime sets the CreationTime field's value.
+func (s *JsonClassifier) SetCreationTime(v time.Time) *JsonClassifier {
+	s.CreationTime = &v
+	return s
+}
+
+// SetJsonPath sets the JsonPath field's value.
+func (s *JsonClassifier) SetJsonPath(v string) *JsonClassifier {
+	s.JsonPath = &v
+	return s
+}
+
+// SetLastUpdated sets the LastUpdated field's value.
+func (s *JsonClassifier) SetLastUpdated(v time.Time) *JsonClassifier {
+	s.LastUpdated = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *JsonClassifier) SetName(v string) *JsonClassifier {
+	s.Name = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *JsonClassifier) SetVersion(v int64) *JsonClassifier {
+	s.Version = &v
+	return s
+}
+
 // Status and error information about the most recent crawl.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/LastCrawlInfo
 type LastCrawlInfo struct {
 	_ struct{} `type:"structure"`
 
@@ -15089,7 +15711,6 @@ func (s *LastCrawlInfo) SetStatus(v string) *LastCrawlInfo {
 }
 
 // The location of resources.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Location
 type Location struct {
 	_ struct{} `type:"structure"`
 
@@ -15153,7 +15774,6 @@ func (s *Location) SetS3(v []*CodeGenNodeArg) *Location {
 }
 
 // Defines a mapping.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/MappingEntry
 type MappingEntry struct {
 	_ struct{} `type:"structure"`
 
@@ -15223,7 +15843,6 @@ func (s *MappingEntry) SetTargetType(v string) *MappingEntry {
 }
 
 // Specifies the sort order of a sorted column.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Order
 type Order struct {
 	_ struct{} `type:"structure"`
 
@@ -15281,7 +15900,6 @@ func (s *Order) SetSortOrder(v int64) *Order {
 }
 
 // Represents a slice of table data.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Partition
 type Partition struct {
 	_ struct{} `type:"structure"`
 
@@ -15369,7 +15987,6 @@ func (s *Partition) SetValues(v []*string) *Partition {
 }
 
 // Contains information about a partition error.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/PartitionError
 type PartitionError struct {
 	_ struct{} `type:"structure"`
 
@@ -15403,7 +16020,6 @@ func (s *PartitionError) SetPartitionValues(v []*string) *PartitionError {
 }
 
 // The structure used to create and update a partion.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/PartitionInput
 type PartitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -15479,7 +16095,6 @@ func (s *PartitionInput) SetValues(v []*string) *PartitionInput {
 }
 
 // Contains a list of values defining partitions.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/PartitionValueList
 type PartitionValueList struct {
 	_ struct{} `type:"structure"`
 
@@ -15519,11 +16134,10 @@ func (s *PartitionValueList) SetValues(v []*string) *PartitionValueList {
 }
 
 // Specifies the physical requirements for a connection.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/PhysicalConnectionRequirements
 type PhysicalConnectionRequirements struct {
 	_ struct{} `type:"structure"`
 
-	// The connection's availability zone.
+	// The connection's availability zone. This field is deprecated and has no effect.
 	AvailabilityZone *string `min:"1" type:"string"`
 
 	// The security group ID list used by the connection.
@@ -15579,7 +16193,6 @@ func (s *PhysicalConnectionRequirements) SetSubnetId(v string) *PhysicalConnecti
 
 // A job run that was used in the predicate of a conditional trigger that triggered
 // this job run.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Predecessor
 type Predecessor struct {
 	_ struct{} `type:"structure"`
 
@@ -15613,7 +16226,6 @@ func (s *Predecessor) SetRunId(v string) *Predecessor {
 }
 
 // Defines the predicate of the trigger, which determines when it fires.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Predicate
 type Predicate struct {
 	_ struct{} `type:"structure"`
 
@@ -15666,7 +16278,6 @@ func (s *Predicate) SetLogical(v string) *Predicate {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ResetJobBookmarkRequest
 type ResetJobBookmarkInput struct {
 	_ struct{} `type:"structure"`
 
@@ -15705,7 +16316,6 @@ func (s *ResetJobBookmarkInput) SetJobName(v string) *ResetJobBookmarkInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ResetJobBookmarkResponse
 type ResetJobBookmarkOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -15730,7 +16340,6 @@ func (s *ResetJobBookmarkOutput) SetJobBookmarkEntry(v *JobBookmarkEntry) *Reset
 }
 
 // URIs for function resources.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ResourceUri
 type ResourceUri struct {
 	_ struct{} `type:"structure"`
 
@@ -15777,7 +16386,6 @@ func (s *ResourceUri) SetUri(v string) *ResourceUri {
 }
 
 // Specifies a data store in Amazon S3.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/S3Target
 type S3Target struct {
 	_ struct{} `type:"structure"`
 
@@ -15812,7 +16420,6 @@ func (s *S3Target) SetPath(v string) *S3Target {
 }
 
 // A scheduling object using a cron statement to schedule an event.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Schedule
 type Schedule struct {
 	_ struct{} `type:"structure"`
 
@@ -15849,7 +16456,6 @@ func (s *Schedule) SetState(v string) *Schedule {
 }
 
 // Crawler policy for update and deletion behavior.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/SchemaChangePolicy
 type SchemaChangePolicy struct {
 	_ struct{} `type:"structure"`
 
@@ -15884,7 +16490,6 @@ func (s *SchemaChangePolicy) SetUpdateBehavior(v string) *SchemaChangePolicy {
 
 // Defines a non-overlapping region of a table's partitions, allowing multiple
 // requests to be executed in parallel.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Segment
 type Segment struct {
 	_ struct{} `type:"structure"`
 
@@ -15944,7 +16549,6 @@ func (s *Segment) SetTotalSegments(v int64) *Segment {
 
 // Information about a serialization/deserialization program (SerDe) which serves
 // as an extractor and loader.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/SerDeInfo
 type SerDeInfo struct {
 	_ struct{} `type:"structure"`
 
@@ -16004,7 +16608,6 @@ func (s *SerDeInfo) SetSerializationLibrary(v string) *SerDeInfo {
 
 // Specifies skewed values in a table. Skewed are ones that occur with very
 // high frequency.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/SkewedInfo
 type SkewedInfo struct {
 	_ struct{} `type:"structure"`
 
@@ -16046,7 +16649,6 @@ func (s *SkewedInfo) SetSkewedColumnValues(v []*string) *SkewedInfo {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StartCrawlerRequest
 type StartCrawlerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -16088,7 +16690,6 @@ func (s *StartCrawlerInput) SetName(v string) *StartCrawlerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StartCrawlerResponse
 type StartCrawlerOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -16103,7 +16704,6 @@ func (s StartCrawlerOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StartCrawlerScheduleRequest
 type StartCrawlerScheduleInput struct {
 	_ struct{} `type:"structure"`
 
@@ -16145,7 +16745,6 @@ func (s *StartCrawlerScheduleInput) SetCrawlerName(v string) *StartCrawlerSchedu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StartCrawlerScheduleResponse
 type StartCrawlerScheduleOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -16160,7 +16759,6 @@ func (s StartCrawlerScheduleOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StartJobRunRequest
 type StartJobRunInput struct {
 	_ struct{} `type:"structure"`
 
@@ -16248,7 +16846,6 @@ func (s *StartJobRunInput) SetJobRunId(v string) *StartJobRunInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StartJobRunResponse
 type StartJobRunOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -16272,7 +16869,6 @@ func (s *StartJobRunOutput) SetJobRunId(v string) *StartJobRunOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StartTriggerRequest
 type StartTriggerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -16314,7 +16910,6 @@ func (s *StartTriggerInput) SetName(v string) *StartTriggerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StartTriggerResponse
 type StartTriggerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -16338,7 +16933,6 @@ func (s *StartTriggerOutput) SetName(v string) *StartTriggerOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StopCrawlerRequest
 type StopCrawlerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -16380,7 +16974,6 @@ func (s *StopCrawlerInput) SetName(v string) *StopCrawlerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StopCrawlerResponse
 type StopCrawlerOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -16395,7 +16988,6 @@ func (s StopCrawlerOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StopCrawlerScheduleRequest
 type StopCrawlerScheduleInput struct {
 	_ struct{} `type:"structure"`
 
@@ -16437,7 +17029,6 @@ func (s *StopCrawlerScheduleInput) SetCrawlerName(v string) *StopCrawlerSchedule
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StopCrawlerScheduleResponse
 type StopCrawlerScheduleOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -16452,7 +17043,6 @@ func (s StopCrawlerScheduleOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StopTriggerRequest
 type StopTriggerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -16494,7 +17084,6 @@ func (s *StopTriggerInput) SetName(v string) *StopTriggerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StopTriggerResponse
 type StopTriggerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -16519,7 +17108,6 @@ func (s *StopTriggerOutput) SetName(v string) *StopTriggerOutput {
 }
 
 // Describes the physical storage of table data.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StorageDescriptor
 type StorageDescriptor struct {
 	_ struct{} `type:"structure"`
 
@@ -16684,7 +17272,6 @@ func (s *StorageDescriptor) SetStoredAsSubDirectories(v bool) *StorageDescriptor
 }
 
 // Represents a collection of related data organized in columns and rows.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Table
 type Table struct {
 	_ struct{} `type:"structure"`
 
@@ -16694,7 +17281,8 @@ type Table struct {
 	// Person or entity who created the table.
 	CreatedBy *string `min:"1" type:"string"`
 
-	// Name of the metadata database where the table metadata resides.
+	// Name of the metadata database where the table metadata resides. For Hive
+	// compatibility, this must be all lowercase.
 	DatabaseName *string `min:"1" type:"string"`
 
 	// Description of the table.
@@ -16707,7 +17295,7 @@ type Table struct {
 	// Last time column statistics were computed for this table.
 	LastAnalyzedTime *time.Time `type:"timestamp" timestampFormat:"unix"`
 
-	// Name of the table.
+	// Name of the table. For Hive compatibility, this must be entirely lowercase.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -16849,14 +17437,13 @@ func (s *Table) SetViewOriginalText(v string) *Table {
 }
 
 // An error record for table operations.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/TableError
 type TableError struct {
 	_ struct{} `type:"structure"`
 
 	// Detail about the error.
 	ErrorDetail *ErrorDetail `type:"structure"`
 
-	// Name of the table.
+	// Name of the table. For Hive compatibility, this must be entirely lowercase.
 	TableName *string `min:"1" type:"string"`
 }
 
@@ -16883,7 +17470,6 @@ func (s *TableError) SetTableName(v string) *TableError {
 }
 
 // Structure used to create or update the table.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/TableInput
 type TableInput struct {
 	_ struct{} `type:"structure"`
 
@@ -16896,7 +17482,8 @@ type TableInput struct {
 	// Last time column statistics were computed for this table.
 	LastAnalyzedTime *time.Time `type:"timestamp" timestampFormat:"unix"`
 
-	// Name of the table.
+	// Name of the table. For Hive compatibility, this is folded to lowercase when
+	// it is stored.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -17045,7 +17632,6 @@ func (s *TableInput) SetViewOriginalText(v string) *TableInput {
 }
 
 // Specifies a version of a table.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/TableVersion
 type TableVersion struct {
 	_ struct{} `type:"structure"`
 
@@ -17078,8 +17664,49 @@ func (s *TableVersion) SetVersionId(v string) *TableVersion {
 	return s
 }
 
+// An error record for table-version operations.
+type TableVersionError struct {
+	_ struct{} `type:"structure"`
+
+	// Detail about the error.
+	ErrorDetail *ErrorDetail `type:"structure"`
+
+	// The name of the table in question.
+	TableName *string `min:"1" type:"string"`
+
+	// The ID value of the version in question.
+	VersionId *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s TableVersionError) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TableVersionError) GoString() string {
+	return s.String()
+}
+
+// SetErrorDetail sets the ErrorDetail field's value.
+func (s *TableVersionError) SetErrorDetail(v *ErrorDetail) *TableVersionError {
+	s.ErrorDetail = v
+	return s
+}
+
+// SetTableName sets the TableName field's value.
+func (s *TableVersionError) SetTableName(v string) *TableVersionError {
+	s.TableName = &v
+	return s
+}
+
+// SetVersionId sets the VersionId field's value.
+func (s *TableVersionError) SetVersionId(v string) *TableVersionError {
+	s.VersionId = &v
+	return s
+}
+
 // Information about a specific trigger.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/Trigger
 type Trigger struct {
 	_ struct{} `type:"structure"`
 
@@ -17171,7 +17798,6 @@ func (s *Trigger) SetType(v string) *Trigger {
 
 // A structure used to provide information used to update a trigger. This object
 // will update the the previous trigger definition by overwriting it completely.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/TriggerUpdate
 type TriggerUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -17262,12 +17888,14 @@ func (s *TriggerUpdate) SetSchedule(v string) *TriggerUpdate {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateClassifierRequest
 type UpdateClassifierInput struct {
 	_ struct{} `type:"structure"`
 
 	// A GrokClassifier object with updated fields.
 	GrokClassifier *UpdateGrokClassifierRequest `type:"structure"`
+
+	// A JsonClassifier object with updated fields.
+	JsonClassifier *UpdateJsonClassifierRequest `type:"structure"`
 
 	// An XMLClassifier object with updated fields.
 	XMLClassifier *UpdateXMLClassifierRequest `type:"structure"`
@@ -17291,6 +17919,11 @@ func (s *UpdateClassifierInput) Validate() error {
 			invalidParams.AddNested("GrokClassifier", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.JsonClassifier != nil {
+		if err := s.JsonClassifier.Validate(); err != nil {
+			invalidParams.AddNested("JsonClassifier", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.XMLClassifier != nil {
 		if err := s.XMLClassifier.Validate(); err != nil {
 			invalidParams.AddNested("XMLClassifier", err.(request.ErrInvalidParams))
@@ -17309,13 +17942,18 @@ func (s *UpdateClassifierInput) SetGrokClassifier(v *UpdateGrokClassifierRequest
 	return s
 }
 
+// SetJsonClassifier sets the JsonClassifier field's value.
+func (s *UpdateClassifierInput) SetJsonClassifier(v *UpdateJsonClassifierRequest) *UpdateClassifierInput {
+	s.JsonClassifier = v
+	return s
+}
+
 // SetXMLClassifier sets the XMLClassifier field's value.
 func (s *UpdateClassifierInput) SetXMLClassifier(v *UpdateXMLClassifierRequest) *UpdateClassifierInput {
 	s.XMLClassifier = v
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateClassifierResponse
 type UpdateClassifierOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -17330,7 +17968,6 @@ func (s UpdateClassifierOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateConnectionRequest
 type UpdateConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17404,7 +18041,6 @@ func (s *UpdateConnectionInput) SetName(v string) *UpdateConnectionInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateConnectionResponse
 type UpdateConnectionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -17419,7 +18055,6 @@ func (s UpdateConnectionOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateCrawlerRequest
 type UpdateCrawlerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17436,7 +18071,7 @@ type UpdateCrawlerInput struct {
 	// table, rather than detect this information separately for each partition.
 	// Use the following JSON string to specify that behavior:
 	//
-	// Example:  '{ "Version": 1.0, "CrawlerOutput": { "Partitions": { "AddOrUpdateBehavior":
+	// Example: '{ "Version": 1.0, "CrawlerOutput": { "Partitions": { "AddOrUpdateBehavior":
 	// "InheritFromTable" } } }'
 	Configuration *string `type:"string"`
 
@@ -17557,7 +18192,6 @@ func (s *UpdateCrawlerInput) SetTargets(v *CrawlerTargets) *UpdateCrawlerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateCrawlerResponse
 type UpdateCrawlerOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -17572,7 +18206,6 @@ func (s UpdateCrawlerOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateCrawlerScheduleRequest
 type UpdateCrawlerScheduleInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17626,7 +18259,6 @@ func (s *UpdateCrawlerScheduleInput) SetSchedule(v string) *UpdateCrawlerSchedul
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateCrawlerScheduleResponse
 type UpdateCrawlerScheduleOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -17641,7 +18273,6 @@ func (s UpdateCrawlerScheduleOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateDatabaseRequest
 type UpdateDatabaseInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17655,7 +18286,8 @@ type UpdateDatabaseInput struct {
 	// DatabaseInput is a required field
 	DatabaseInput *DatabaseInput `type:"structure" required:"true"`
 
-	// The name of the metadata database to update in the catalog.
+	// The name of the database to update in the catalog. For Hive compatibility,
+	// this is folded to lowercase.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -17716,7 +18348,6 @@ func (s *UpdateDatabaseInput) SetName(v string) *UpdateDatabaseInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateDatabaseResponse
 type UpdateDatabaseOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -17731,7 +18362,6 @@ func (s UpdateDatabaseOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateDevEndpointRequest
 type UpdateDevEndpointInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17798,7 +18428,6 @@ func (s *UpdateDevEndpointInput) SetUpdateEtlLibraries(v bool) *UpdateDevEndpoin
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateDevEndpointResponse
 type UpdateDevEndpointOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -17814,7 +18443,6 @@ func (s UpdateDevEndpointOutput) GoString() string {
 }
 
 // Specifies a grok classifier to update when passed to UpdateClassifier.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateGrokClassifierRequest
 type UpdateGrokClassifierRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -17887,7 +18515,6 @@ func (s *UpdateGrokClassifierRequest) SetName(v string) *UpdateGrokClassifierReq
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateJobRequest
 type UpdateJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17943,7 +18570,6 @@ func (s *UpdateJobInput) SetJobUpdate(v *JobUpdate) *UpdateJobInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateJobResponse
 type UpdateJobOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -17967,7 +18593,59 @@ func (s *UpdateJobOutput) SetJobName(v string) *UpdateJobOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdatePartitionRequest
+// Specifies a JSON classifier to be updated.
+type UpdateJsonClassifierRequest struct {
+	_ struct{} `type:"structure"`
+
+	// A JsonPath string defining the JSON data for the classifier to classify.
+	// AWS Glue supports a subset of JsonPath, as described in Writing JsonPath
+	// Custom Classifiers (https://docs.aws.amazon.com/glue/latest/dg/custom-classifier.html#custom-classifier-json).
+	JsonPath *string `type:"string"`
+
+	// The name of the classifier.
+	//
+	// Name is a required field
+	Name *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateJsonClassifierRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateJsonClassifierRequest) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateJsonClassifierRequest) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateJsonClassifierRequest"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetJsonPath sets the JsonPath field's value.
+func (s *UpdateJsonClassifierRequest) SetJsonPath(v string) *UpdateJsonClassifierRequest {
+	s.JsonPath = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *UpdateJsonClassifierRequest) SetName(v string) *UpdateJsonClassifierRequest {
+	s.Name = &v
+	return s
+}
+
 type UpdatePartitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -18072,7 +18750,6 @@ func (s *UpdatePartitionInput) SetTableName(v string) *UpdatePartitionInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdatePartitionResponse
 type UpdatePartitionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -18087,7 +18764,6 @@ func (s UpdatePartitionOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateTableRequest
 type UpdateTableInput struct {
 	_ struct{} `type:"structure"`
 
@@ -18095,10 +18771,16 @@ type UpdateTableInput struct {
 	// the AWS account ID is used by default.
 	CatalogId *string `min:"1" type:"string"`
 
-	// The name of the catalog database in which the table resides.
+	// The name of the catalog database in which the table resides. For Hive compatibility,
+	// this name is entirely lowercase.
 	//
 	// DatabaseName is a required field
 	DatabaseName *string `min:"1" type:"string" required:"true"`
+
+	// By default, UpdateTable always creates an archived version of the table before
+	// updating it. If skipArchive is set to true, however, UpdateTable does not
+	// create the archived version.
+	SkipArchive *bool `type:"boolean"`
 
 	// An updated TableInput object to define the metadata table in the catalog.
 	//
@@ -18155,13 +18837,18 @@ func (s *UpdateTableInput) SetDatabaseName(v string) *UpdateTableInput {
 	return s
 }
 
+// SetSkipArchive sets the SkipArchive field's value.
+func (s *UpdateTableInput) SetSkipArchive(v bool) *UpdateTableInput {
+	s.SkipArchive = &v
+	return s
+}
+
 // SetTableInput sets the TableInput field's value.
 func (s *UpdateTableInput) SetTableInput(v *TableInput) *UpdateTableInput {
 	s.TableInput = v
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateTableResponse
 type UpdateTableOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -18176,7 +18863,6 @@ func (s UpdateTableOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateTriggerRequest
 type UpdateTriggerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -18237,7 +18923,6 @@ func (s *UpdateTriggerInput) SetTriggerUpdate(v *TriggerUpdate) *UpdateTriggerIn
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateTriggerResponse
 type UpdateTriggerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -18261,7 +18946,6 @@ func (s *UpdateTriggerOutput) SetTrigger(v *Trigger) *UpdateTriggerOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateUserDefinedFunctionRequest
 type UpdateUserDefinedFunctionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -18352,7 +19036,6 @@ func (s *UpdateUserDefinedFunctionInput) SetFunctionName(v string) *UpdateUserDe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateUserDefinedFunctionResponse
 type UpdateUserDefinedFunctionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -18368,7 +19051,6 @@ func (s UpdateUserDefinedFunctionOutput) GoString() string {
 }
 
 // Specifies an XML classifier to be updated.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateXMLClassifierRequest
 type UpdateXMLClassifierRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -18433,7 +19115,6 @@ func (s *UpdateXMLClassifierRequest) SetRowTag(v string) *UpdateXMLClassifierReq
 }
 
 // Represents the equivalent of a Hive user-defined function (UDF) definition.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UserDefinedFunction
 type UserDefinedFunction struct {
 	_ struct{} `type:"structure"`
 
@@ -18503,7 +19184,6 @@ func (s *UserDefinedFunction) SetResourceUris(v []*ResourceUri) *UserDefinedFunc
 }
 
 // A structure used to create or updata a user-defined function.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UserDefinedFunctionInput
 type UserDefinedFunctionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -18593,7 +19273,6 @@ func (s *UserDefinedFunctionInput) SetResourceUris(v []*ResourceUri) *UserDefine
 }
 
 // A classifier for XML content.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/XMLClassifier
 type XMLClassifier struct {
 	_ struct{} `type:"structure"`
 

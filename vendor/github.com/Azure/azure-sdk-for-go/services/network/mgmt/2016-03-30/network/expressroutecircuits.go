@@ -246,8 +246,8 @@ func (client ExpressRouteCircuitsClient) GetResponder(resp *http.Response) (resu
 // GetPeeringStats the Liststats ExpressRouteCircuit opertion retrieves all the stats from a ExpressRouteCircuits in a
 // resource group.
 //
-// resourceGroupName is the name of the resource group. circuitName is the name of the circuit. peeringName is the name
-// of the peering.
+// resourceGroupName is the name of the resource group. circuitName is the name of the circuit. peeringName is the
+// name of the peering.
 func (client ExpressRouteCircuitsClient) GetPeeringStats(ctx context.Context, resourceGroupName string, circuitName string, peeringName string) (result ExpressRouteCircuitStats, err error) {
 	req, err := client.GetPeeringStatsPreparer(ctx, resourceGroupName, circuitName, peeringName)
 	if err != nil {
@@ -565,8 +565,8 @@ func (client ExpressRouteCircuitsClient) ListAllComplete(ctx context.Context) (r
 // ListArpTable the ListArpTable from ExpressRouteCircuit opertion retrieves the currently advertised arp table
 // associated with the ExpressRouteCircuits in a resource group.
 //
-// resourceGroupName is the name of the resource group. circuitName is the name of the circuit. peeringName is the name
-// of the peering. devicePath is the path of the device.
+// resourceGroupName is the name of the resource group. circuitName is the name of the circuit. peeringName is the
+// name of the peering. devicePath is the path of the device.
 func (client ExpressRouteCircuitsClient) ListArpTable(ctx context.Context, resourceGroupName string, circuitName string, peeringName string, devicePath string) (result ExpressRouteCircuitsListArpTableFuture, err error) {
 	req, err := client.ListArpTablePreparer(ctx, resourceGroupName, circuitName, peeringName, devicePath)
 	if err != nil {
@@ -637,8 +637,8 @@ func (client ExpressRouteCircuitsClient) ListArpTableResponder(resp *http.Respon
 // ListRoutesTable the ListRoutesTable from ExpressRouteCircuit opertion retrieves the currently advertised routes
 // table associated with the ExpressRouteCircuits in a resource group.
 //
-// resourceGroupName is the name of the resource group. circuitName is the name of the circuit. peeringName is the name
-// of the peering. devicePath is the path of the device.
+// resourceGroupName is the name of the resource group. circuitName is the name of the circuit. peeringName is the
+// name of the peering. devicePath is the path of the device.
 func (client ExpressRouteCircuitsClient) ListRoutesTable(ctx context.Context, resourceGroupName string, circuitName string, peeringName string, devicePath string) (result ExpressRouteCircuitsListRoutesTableFuture, err error) {
 	req, err := client.ListRoutesTablePreparer(ctx, resourceGroupName, circuitName, peeringName, devicePath)
 	if err != nil {
@@ -709,8 +709,8 @@ func (client ExpressRouteCircuitsClient) ListRoutesTableResponder(resp *http.Res
 // ListRoutesTableSummary the ListRoutesTable from ExpressRouteCircuit opertion retrieves the currently advertised
 // routes table associated with the ExpressRouteCircuits in a resource group.
 //
-// resourceGroupName is the name of the resource group. circuitName is the name of the circuit. peeringName is the name
-// of the peering. devicePath is the path of the device.
+// resourceGroupName is the name of the resource group. circuitName is the name of the circuit. peeringName is the
+// name of the peering. devicePath is the path of the device.
 func (client ExpressRouteCircuitsClient) ListRoutesTableSummary(ctx context.Context, resourceGroupName string, circuitName string, peeringName string, devicePath string) (result ExpressRouteCircuitsListRoutesTableSummaryFuture, err error) {
 	req, err := client.ListRoutesTableSummaryPreparer(ctx, resourceGroupName, circuitName, peeringName, devicePath)
 	if err != nil {

@@ -44,8 +44,8 @@ func NewAuthorizationPoliciesClientWithBaseURI(baseURI string, subscriptionID st
 
 // CreateOrUpdate creates an authorization policy or updates an existing authorization policy.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. authorizationPolicyName is the
-// name of the policy. parameters is parameters supplied to the CreateOrUpdate authorization policy operation.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. authorizationPolicyName is
+// the name of the policy. parameters is parameters supplied to the CreateOrUpdate authorization policy operation.
 func (client AuthorizationPoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, authorizationPolicyName string, parameters AuthorizationPolicyResourceFormat) (result AuthorizationPolicyResourceFormat, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: authorizationPolicyName,
@@ -57,7 +57,7 @@ func (client AuthorizationPoliciesClient) CreateOrUpdate(ctx context.Context, re
 				Chain: []validation.Constraint{{Target: "parameters.AuthorizationPolicy.Permissions", Name: validation.Null, Rule: true,
 					Chain: []validation.Constraint{{Target: "parameters.AuthorizationPolicy.Permissions", Name: validation.UniqueItems, Rule: true, Chain: nil}}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "customerinsights.AuthorizationPoliciesClient", "CreateOrUpdate")
+		return result, validation.NewError("customerinsights.AuthorizationPoliciesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, hubName, authorizationPolicyName, parameters)
@@ -127,8 +127,8 @@ func (client AuthorizationPoliciesClient) CreateOrUpdateResponder(resp *http.Res
 
 // Get gets an authorization policy in the hub.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. authorizationPolicyName is the
-// name of the policy.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. authorizationPolicyName is
+// the name of the policy.
 func (client AuthorizationPoliciesClient) Get(ctx context.Context, resourceGroupName string, hubName string, authorizationPolicyName string) (result AuthorizationPolicyResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, authorizationPolicyName)
 	if err != nil {
@@ -289,8 +289,8 @@ func (client AuthorizationPoliciesClient) ListByHubComplete(ctx context.Context,
 
 // RegeneratePrimaryKey regenerates the primary policy key of the specified authorization policy.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. authorizationPolicyName is the
-// name of the policy.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. authorizationPolicyName is
+// the name of the policy.
 func (client AuthorizationPoliciesClient) RegeneratePrimaryKey(ctx context.Context, resourceGroupName string, hubName string, authorizationPolicyName string) (result AuthorizationPolicy, err error) {
 	req, err := client.RegeneratePrimaryKeyPreparer(ctx, resourceGroupName, hubName, authorizationPolicyName)
 	if err != nil {
@@ -357,8 +357,8 @@ func (client AuthorizationPoliciesClient) RegeneratePrimaryKeyResponder(resp *ht
 
 // RegenerateSecondaryKey regenerates the secondary policy key of the specified authorization policy.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. authorizationPolicyName is the
-// name of the policy.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. authorizationPolicyName is
+// the name of the policy.
 func (client AuthorizationPoliciesClient) RegenerateSecondaryKey(ctx context.Context, resourceGroupName string, hubName string, authorizationPolicyName string) (result AuthorizationPolicy, err error) {
 	req, err := client.RegenerateSecondaryKeyPreparer(ctx, resourceGroupName, hubName, authorizationPolicyName)
 	if err != nil {

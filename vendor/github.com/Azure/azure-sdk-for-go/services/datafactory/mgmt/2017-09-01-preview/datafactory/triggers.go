@@ -45,8 +45,8 @@ func NewTriggersClientWithBaseURI(baseURI string, subscriptionID string) Trigger
 // CreateOrUpdate creates or updates a trigger.
 //
 // resourceGroupName is the resource group name. factoryName is the factory name. triggerName is the trigger name.
-// trigger is trigger resource definition. ifMatch is eTag of the trigger entity.  Should only be specified for update,
-// for which it should match existing entity or can be * for unconditional update.
+// trigger is trigger resource definition. ifMatch is eTag of the trigger entity.  Should only be specified for
+// update, for which it should match existing entity or can be * for unconditional update.
 func (client TriggersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, factoryName string, triggerName string, trigger TriggerResource, ifMatch string) (result TriggerResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -63,7 +63,7 @@ func (client TriggersClient) CreateOrUpdate(ctx context.Context, resourceGroupNa
 				{Target: "triggerName", Name: validation.Pattern, Rule: `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$`, Chain: nil}}},
 		{TargetValue: trigger,
 			Constraints: []validation.Constraint{{Target: "trigger.Properties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.TriggersClient", "CreateOrUpdate")
+		return result, validation.NewError("datafactory.TriggersClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, factoryName, triggerName, trigger, ifMatch)
@@ -152,7 +152,7 @@ func (client TriggersClient) Delete(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "triggerName", Name: validation.MaxLength, Rule: 260, Chain: nil},
 				{Target: "triggerName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "triggerName", Name: validation.Pattern, Rule: `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.TriggersClient", "Delete")
+		return result, validation.NewError("datafactory.TriggersClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, factoryName, triggerName)
@@ -234,7 +234,7 @@ func (client TriggersClient) Get(ctx context.Context, resourceGroupName string, 
 			Constraints: []validation.Constraint{{Target: "triggerName", Name: validation.MaxLength, Rule: 260, Chain: nil},
 				{Target: "triggerName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "triggerName", Name: validation.Pattern, Rule: `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.TriggersClient", "Get")
+		return result, validation.NewError("datafactory.TriggersClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, factoryName, triggerName)
@@ -313,7 +313,7 @@ func (client TriggersClient) ListByFactory(ctx context.Context, resourceGroupNam
 			Constraints: []validation.Constraint{{Target: "factoryName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "factoryName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "factoryName", Name: validation.Pattern, Rule: `^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.TriggersClient", "ListByFactory")
+		return result, validation.NewError("datafactory.TriggersClient", "ListByFactory", err.Error())
 	}
 
 	result.fn = client.listByFactoryNextResults
@@ -424,7 +424,7 @@ func (client TriggersClient) ListRuns(ctx context.Context, resourceGroupName str
 			Constraints: []validation.Constraint{{Target: "triggerName", Name: validation.MaxLength, Rule: 260, Chain: nil},
 				{Target: "triggerName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "triggerName", Name: validation.Pattern, Rule: `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.TriggersClient", "ListRuns")
+		return result, validation.NewError("datafactory.TriggersClient", "ListRuns", err.Error())
 	}
 
 	result.fn = client.listRunsNextResults
@@ -537,7 +537,7 @@ func (client TriggersClient) Start(ctx context.Context, resourceGroupName string
 			Constraints: []validation.Constraint{{Target: "triggerName", Name: validation.MaxLength, Rule: 260, Chain: nil},
 				{Target: "triggerName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "triggerName", Name: validation.Pattern, Rule: `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.TriggersClient", "Start")
+		return result, validation.NewError("datafactory.TriggersClient", "Start", err.Error())
 	}
 
 	req, err := client.StartPreparer(ctx, resourceGroupName, factoryName, triggerName)
@@ -621,7 +621,7 @@ func (client TriggersClient) Stop(ctx context.Context, resourceGroupName string,
 			Constraints: []validation.Constraint{{Target: "triggerName", Name: validation.MaxLength, Rule: 260, Chain: nil},
 				{Target: "triggerName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "triggerName", Name: validation.Pattern, Rule: `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.TriggersClient", "Stop")
+		return result, validation.NewError("datafactory.TriggersClient", "Stop", err.Error())
 	}
 
 	req, err := client.StopPreparer(ctx, resourceGroupName, factoryName, triggerName)

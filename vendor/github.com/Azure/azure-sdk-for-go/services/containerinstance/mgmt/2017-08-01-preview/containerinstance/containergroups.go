@@ -43,8 +43,8 @@ func NewContainerGroupsClientWithBaseURI(baseURI string, subscriptionID string) 
 // CreateOrUpdate create or update container groups with specified configurations.
 //
 // resourceGroupName is the name of the resource group to contain the container group to be created or updated.
-// containerGroupName is the name of the container group to be created or updated. containerGroup is the properties of
-// the container group to be created or updated.
+// containerGroupName is the name of the container group to be created or updated. containerGroup is the properties
+// of the container group to be created or updated.
 func (client ContainerGroupsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, containerGroupName string, containerGroup ContainerGroup) (result ContainerGroup, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: containerGroup,
@@ -55,7 +55,7 @@ func (client ContainerGroupsClient) CreateOrUpdate(ctx context.Context, resource
 							{Target: "containerGroup.ContainerGroupProperties.IPAddress.Type", Name: validation.Null, Rule: true, Chain: nil},
 						}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerinstance.ContainerGroupsClient", "CreateOrUpdate")
+		return result, validation.NewError("containerinstance.ContainerGroupsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, containerGroupName, containerGroup)

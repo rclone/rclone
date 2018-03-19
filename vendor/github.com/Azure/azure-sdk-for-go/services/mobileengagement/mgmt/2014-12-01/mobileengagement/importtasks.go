@@ -42,8 +42,8 @@ func NewImportTasksClientWithBaseURI(baseURI string, subscriptionID string) Impo
 
 // Create creates a job to import the specified data to a storageUrl.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name.
 func (client ImportTasksClient) Create(ctx context.Context, resourceGroupName string, appCollection string, appName string, parameters ImportTask) (result ImportTaskResult, err error) {
 	req, err := client.CreatePreparer(ctx, resourceGroupName, appCollection, appName, parameters)
 	if err != nil {
@@ -181,13 +181,13 @@ func (client ImportTasksClient) GetResponder(resp *http.Response) (result Import
 
 // List get the list of import jobs.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. skip is control paging of import jobs, start results at the given offset, defaults to 0 (1st page of
-// data). top is control paging of import jobs, number of import jobs to return with each call. By default, it returns
-// all import jobs with a default paging of 20.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. skip is control paging of import jobs, start results at the given offset, defaults to
+// 0 (1st page of data). top is control paging of import jobs, number of import jobs to return with each call. By
+// default, it returns all import jobs with a default paging of 20.
 // The response contains a `nextLink` property describing the path to get the next page if there are more results.
-// The maximum paging limit for $top is 40. orderby is sort results by an expression which looks like `$orderby=jobId
-// asc` (default when not specified).
+// The maximum paging limit for $top is 40. orderby is sort results by an expression which looks like
+// `$orderby=jobId asc` (default when not specified).
 // The syntax is orderby={property} {direction} or just orderby={property}.
 // Properties that can be specified for sorting: jobId, errorDetails, dateCreated, jobStatus, and dateCreated.
 // The available directions are asc (for ascending order) and desc (for descending order).
@@ -203,7 +203,7 @@ func (client ImportTasksClient) List(ctx context.Context, resourceGroupName stri
 				Chain: []validation.Constraint{{Target: "top", Name: validation.InclusiveMaximum, Rule: 40, Chain: nil},
 					{Target: "top", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.ImportTasksClient", "List")
+		return result, validation.NewError("mobileengagement.ImportTasksClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults
@@ -243,9 +243,13 @@ func (client ImportTasksClient) ListPreparer(ctx context.Context, resourceGroupN
 	}
 	if skip != nil {
 		queryParameters["$skip"] = autorest.Encode("query", *skip)
+	} else {
+		queryParameters["$skip"] = autorest.Encode("query", 0)
 	}
 	if top != nil {
 		queryParameters["$top"] = autorest.Encode("query", *top)
+	} else {
+		queryParameters["$top"] = autorest.Encode("query", 20)
 	}
 	if len(orderby) > 0 {
 		queryParameters["$orderby"] = autorest.Encode("query", orderby)

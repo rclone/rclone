@@ -31,19 +31,22 @@ type DatabaseAccountRegionClient struct {
 }
 
 // NewDatabaseAccountRegionClient creates an instance of the DatabaseAccountRegionClient client.
-func NewDatabaseAccountRegionClient(subscriptionID string, filter string, filter1 string, databaseRid string, collectionRid string, region string) DatabaseAccountRegionClient {
-	return NewDatabaseAccountRegionClientWithBaseURI(DefaultBaseURI, subscriptionID, filter, filter1, databaseRid, collectionRid, region)
+func NewDatabaseAccountRegionClient(subscriptionID string) DatabaseAccountRegionClient {
+	return NewDatabaseAccountRegionClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
 // NewDatabaseAccountRegionClientWithBaseURI creates an instance of the DatabaseAccountRegionClient client.
-func NewDatabaseAccountRegionClientWithBaseURI(baseURI string, subscriptionID string, filter string, filter1 string, databaseRid string, collectionRid string, region string) DatabaseAccountRegionClient {
-	return DatabaseAccountRegionClient{NewWithBaseURI(baseURI, subscriptionID, filter, filter1, databaseRid, collectionRid, region)}
+func NewDatabaseAccountRegionClientWithBaseURI(baseURI string, subscriptionID string) DatabaseAccountRegionClient {
+	return DatabaseAccountRegionClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
 // ListMetrics retrieves the metrics determined by the given filter for the given database account and region.
 //
-// resourceGroupName is name of an Azure resource group. accountName is cosmos DB database account name.
-func (client DatabaseAccountRegionClient) ListMetrics(ctx context.Context, resourceGroupName string, accountName string) (result MetricListResult, err error) {
+// resourceGroupName is name of an Azure resource group. accountName is cosmos DB database account name. region is
+// cosmos DB region, with spaces between words and each word capitalized. filter is an OData filter expression that
+// describes a subset of metrics to return. The parameters that can be filtered are name.value (name of the metric,
+// can have an or of multiple names), startTime, endTime, and timeGrain. The supported operator is eq.
+func (client DatabaseAccountRegionClient) ListMetrics(ctx context.Context, resourceGroupName string, accountName string, region string, filter string) (result MetricListResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
@@ -52,10 +55,10 @@ func (client DatabaseAccountRegionClient) ListMetrics(ctx context.Context, resou
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "documentdb.DatabaseAccountRegionClient", "ListMetrics")
+		return result, validation.NewError("documentdb.DatabaseAccountRegionClient", "ListMetrics", err.Error())
 	}
 
-	req, err := client.ListMetricsPreparer(ctx, resourceGroupName, accountName)
+	req, err := client.ListMetricsPreparer(ctx, resourceGroupName, accountName, region, filter)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "documentdb.DatabaseAccountRegionClient", "ListMetrics", nil, "Failure preparing request")
 		return
@@ -77,17 +80,17 @@ func (client DatabaseAccountRegionClient) ListMetrics(ctx context.Context, resou
 }
 
 // ListMetricsPreparer prepares the ListMetrics request.
-func (client DatabaseAccountRegionClient) ListMetricsPreparer(ctx context.Context, resourceGroupName string, accountName string) (*http.Request, error) {
+func (client DatabaseAccountRegionClient) ListMetricsPreparer(ctx context.Context, resourceGroupName string, accountName string, region string, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"accountName":       autorest.Encode("path", accountName),
-		"region":            autorest.Encode("path", client.Region),
+		"region":            autorest.Encode("path", region),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
 
 	const APIVersion = "2015-04-08"
 	queryParameters := map[string]interface{}{
-		"$filter":     autorest.Encode("query", client.Filter),
+		"$filter":     autorest.Encode("query", filter),
 		"api-version": APIVersion,
 	}
 

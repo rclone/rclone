@@ -493,7 +493,7 @@ func TestParseJSONTag(t *testing.T) {
 			t.Fatalf("parsing json:\n got err: %v\ntag: %q", err, tc.tag)
 		}
 		if !reflect.DeepEqual(got, tc.want) {
-			t.Errorf("parseJSONTage:\ngot :%s\nwant:%s", got, tc.want)
+			t.Errorf("parseJSONTage:\ngot :%v\nwant:%v", got, tc.want)
 		}
 	}
 }

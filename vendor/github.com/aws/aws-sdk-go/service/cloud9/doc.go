@@ -6,24 +6,18 @@
 // AWS Cloud9 is a collection of tools that you can use to code, build, run,
 // test, debug, and release software in the cloud.
 //
-// In the background, these tools are available through development environments
-// running on Amazon Elastic Compute Cloud (Amazon EC2) instances (known as
-// Amazon EC2 environments), your own servers (known as SSH environments), or
-// a combination. This enables you to create and switch between multiple environments,
-// with each environment set up for a specific development project.
-//
-// For more information about AWS Cloud9, see the AWS Cloud9 User Guide.
+// For more information about AWS Cloud9, see the AWS Cloud9 User Guide (https://docs.aws.amazon.com/cloud9/latest/user-guide).
 //
 // AWS Cloud9 supports these operations:
 //
 //    * CreateEnvironmentEC2: Creates an AWS Cloud9 development environment,
-//    launches an Amazon EC2 instance, and then hosts the environment on the
-//    instance.
+//    launches an Amazon EC2 instance, and then connects from the instance to
+//    the environment.
 //
 //    * CreateEnvironmentMembership: Adds an environment member to an environment.
 //
-//    * DeleteEnvironment: Deletes an environment. If the environment is hosted
-//    on an Amazon EC2 instance, also terminates the instance.
+//    * DeleteEnvironment: Deletes an environment. If an Amazon EC2 instance
+//    is connected to the environment, also terminates the instance.
 //
 //    * DeleteEnvironmentMembership: Deletes an environment member from an environment.
 //

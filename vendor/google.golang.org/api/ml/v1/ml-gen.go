@@ -1,4 +1,4 @@
-// Package ml provides access to the Google Cloud Machine Learning Engine.
+// Package ml provides access to the Cloud Machine Learning Engine.
 //
 // See https://cloud.google.com/ml/
 //
@@ -381,9 +381,40 @@ func (s *GoogleCloudMlV1__Capability) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+type GoogleCloudMlV1__Config struct {
+	// TpuServiceAccount: The service account Cloud ML uses to run on TPU
+	// node.
+	TpuServiceAccount string `json:"tpuServiceAccount,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "TpuServiceAccount")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "TpuServiceAccount") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudMlV1__Config) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudMlV1__Config
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GoogleCloudMlV1__GetConfigResponse: Returns service account
 // information associated with a project.
 type GoogleCloudMlV1__GetConfigResponse struct {
+	Config *GoogleCloudMlV1__Config `json:"config,omitempty"`
+
 	// ServiceAccount: The service account Cloud ML uses to access resources
 	// in the project.
 	ServiceAccount string `json:"serviceAccount,omitempty"`
@@ -395,7 +426,7 @@ type GoogleCloudMlV1__GetConfigResponse struct {
 	// server.
 	googleapi.ServerResponse `json:"-"`
 
-	// ForceSendFields is a list of field names (e.g. "ServiceAccount") to
+	// ForceSendFields is a list of field names (e.g. "Config") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -403,13 +434,12 @@ type GoogleCloudMlV1__GetConfigResponse struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "ServiceAccount") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
+	// NullFields is a list of field names (e.g. "Config") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
 }
 
@@ -437,6 +467,9 @@ type GoogleCloudMlV1__HyperparameterOutput struct {
 
 	// Hyperparameters: The hyperparameters given to this trial.
 	Hyperparameters map[string]string `json:"hyperparameters,omitempty"`
+
+	// IsTrialStoppedEarly: True if the trial is stopped early.
+	IsTrialStoppedEarly bool `json:"isTrialStoppedEarly,omitempty"`
 
 	// TrialId: The trial id for these results.
 	TrialId string `json:"trialId,omitempty"`
@@ -467,6 +500,11 @@ func (s *GoogleCloudMlV1__HyperparameterOutput) MarshalJSON() ([]byte, error) {
 // GoogleCloudMlV1__HyperparameterSpec: Represents a set of
 // hyperparameters to optimize.
 type GoogleCloudMlV1__HyperparameterSpec struct {
+	// EnableTrialEarlyStopping: Optional. Indicates if the hyperparameter
+	// tuning job enables auto trial
+	// early stopping.
+	EnableTrialEarlyStopping bool `json:"enableTrialEarlyStopping,omitempty"`
+
 	// Goal: Required. The type of goal to use for tuning. Available types
 	// are
 	// `MAXIMIZE` and `MINIMIZE`.
@@ -516,20 +554,29 @@ type GoogleCloudMlV1__HyperparameterSpec struct {
 	// Params: Required. The set of parameters to tune.
 	Params []*GoogleCloudMlV1__ParameterSpec `json:"params,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Goal") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
+	// ResumePreviousJobId: Optional. The prior hyperparameter tuning job id
+	// that users hope to
+	// continue with. The job id will be used to find the corresponding
+	// vizier
+	// study guid and resume the study.
+	ResumePreviousJobId string `json:"resumePreviousJobId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "EnableTrialEarlyStopping") to unconditionally include in API
+	// requests. By default, fields with empty values are omitted from API
+	// requests. However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Goal") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "EnableTrialEarlyStopping")
+	// to include in API requests with the JSON null value. By default,
+	// fields with empty values are omitted from API requests. However, any
+	// field with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
@@ -551,32 +598,8 @@ type GoogleCloudMlV1__Job struct {
 	// cancellation.
 	ErrorMessage string `json:"errorMessage,omitempty"`
 
-	// Etag: `etag` is used for optimistic concurrency control as a way to
-	// help
-	// prevent simultaneous updates of a job from overwriting each other.
-	// It is strongly suggested that systems make use of the `etag` in
-	// the
-	// read-modify-write cycle to perform job updates in order to avoid
-	// race
-	// conditions: An `etag` is returned in the response to `GetJob`,
-	// and
-	// systems are expected to put that etag in the request to `UpdateJob`
-	// to
-	// ensure that their change will be applied to the same version of the
-	// job.
-	Etag string `json:"etag,omitempty"`
-
 	// JobId: Required. The user-specified id of the job.
 	JobId string `json:"jobId,omitempty"`
-
-	// Labels: Optional. One or more labels that you can add, to organize
-	// your jobs.
-	// Each label is a key-value pair, where both the key and the value
-	// are
-	// arbitrary strings that you supply.
-	// For more information, see the documentation on
-	// <a href="/ml-engine/docs/how-tos/resource-labels">using labels</a>.
-	Labels map[string]string `json:"labels,omitempty"`
 
 	// PredictionInput: Input parameters to create a prediction job.
 	PredictionInput *GoogleCloudMlV1__PredictionInput `json:"predictionInput,omitempty"`
@@ -877,30 +900,6 @@ type GoogleCloudMlV1__Model struct {
 	// it was created.
 	Description string `json:"description,omitempty"`
 
-	// Etag: `etag` is used for optimistic concurrency control as a way to
-	// help
-	// prevent simultaneous updates of a model from overwriting each
-	// other.
-	// It is strongly suggested that systems make use of the `etag` in
-	// the
-	// read-modify-write cycle to perform model updates in order to avoid
-	// race
-	// conditions: An `etag` is returned in the response to `GetModel`,
-	// and
-	// systems are expected to put that etag in the request to `UpdateModel`
-	// to
-	// ensure that their change will be applied to the model as intended.
-	Etag string `json:"etag,omitempty"`
-
-	// Labels: Optional. One or more labels that you can add, to organize
-	// your models.
-	// Each label is a key-value pair, where both the key and the value
-	// are
-	// arbitrary strings that you supply.
-	// For more information, see the documentation on
-	// <a href="/ml-engine/docs/how-tos/resource-labels">using labels</a>.
-	Labels map[string]string `json:"labels,omitempty"`
-
 	// Name: Required. The name specified for the model when it was
 	// created.
 	//
@@ -971,11 +970,6 @@ type GoogleCloudMlV1__OperationMetadata struct {
 	// operation has been made.
 	IsCancellationRequested bool `json:"isCancellationRequested,omitempty"`
 
-	// Labels: The user labels, inherited from the model or the model
-	// version being
-	// operated on.
-	Labels map[string]string `json:"labels,omitempty"`
-
 	// ModelName: Contains the name of the model associated with the
 	// operation.
 	ModelName string `json:"modelName,omitempty"`
@@ -1041,7 +1035,8 @@ type GoogleCloudMlV1__ParameterSpec struct {
 	// should not contain more than 1,000 values.
 	DiscreteValues []float64 `json:"discreteValues,omitempty"`
 
-	// MaxValue: Required if typeis `DOUBLE` or `INTEGER`. This field
+	// MaxValue: Required if type is `DOUBLE` or `INTEGER`. This
+	// field
 	// should be unset if type is `CATEGORICAL`. This value should be
 	// integers if
 	// type is `INTEGER`.
@@ -1364,7 +1359,7 @@ type GoogleCloudMlV1__TrainingInput struct {
 	// training outputs
 	// and other data needed for training. This path is passed to your
 	// TensorFlow
-	// program as the 'job_dir' command-line argument. The benefit of
+	// program as the '--job-dir' command-line argument. The benefit of
 	// specifying
 	// this field is that Cloud ML validates the path for use in training.
 	JobDir string `json:"jobDir,omitempty"`
@@ -1671,8 +1666,6 @@ func (s *GoogleCloudMlV1__TrainingOutput) UnmarshalJSON(data []byte) error {
 // calling
 // [projects.models.versions.list](/ml-engine/reference/rest/v1/p
 // rojects.models.versions/list).
-//
-// LINT.IfChange
 type GoogleCloudMlV1__Version struct {
 	// AutoScaling: Automatically scale the number of nodes used to serve
 	// the model in
@@ -1713,20 +1706,16 @@ type GoogleCloudMlV1__Version struct {
 	// cancellation.
 	ErrorMessage string `json:"errorMessage,omitempty"`
 
-	// Etag: `etag` is used for optimistic concurrency control as a way to
-	// help
-	// prevent simultaneous updates of a model from overwriting each
-	// other.
-	// It is strongly suggested that systems make use of the `etag` in
-	// the
-	// read-modify-write cycle to perform model updates in order to avoid
-	// race
-	// conditions: An `etag` is returned in the response to `GetVersion`,
-	// and
-	// systems are expected to put that etag in the request to
-	// `UpdateVersion` to
-	// ensure that their change will be applied to the model as intended.
-	Etag string `json:"etag,omitempty"`
+	// Framework: The ML framework used to train this version of the model.
+	// If not specified,
+	// defaults to `TENSORFLOW`
+	//
+	// Possible values:
+	//   "FRAMEWORK_UNSPECIFIED"
+	//   "TENSORFLOW"
+	//   "SCIKIT_LEARN"
+	//   "XGBOOST"
+	Framework string `json:"framework,omitempty"`
 
 	// IsDefault: Output only. If true, this version will be used to handle
 	// prediction
@@ -1737,15 +1726,6 @@ type GoogleCloudMlV1__Version struct {
 	// [projects.methods.versions.setDefault](/ml-engine/reference/re
 	// st/v1/projects.models.versions/setDefault).
 	IsDefault bool `json:"isDefault,omitempty"`
-
-	// Labels: Optional. One or more labels that you can add, to organize
-	// your model
-	// versions. Each label is a key-value pair, where both the key and the
-	// value
-	// are arbitrary strings that you supply.
-	// For more information, see the documentation on
-	// <a href="/ml-engine/docs/how-tos/resource-labels">using labels</a>.
-	Labels map[string]string `json:"labels,omitempty"`
 
 	// LastUseTime: Output only. The time the version was last used for
 	// prediction.
@@ -1770,6 +1750,14 @@ type GoogleCloudMlV1__Version struct {
 	// The version name must be unique within the model it is created in.
 	Name string `json:"name,omitempty"`
 
+	// PythonVersion: Optional. The version of Python used in prediction. If
+	// not set, the default
+	// version is '2.7'. Python '3.5' is available when `runtime_version` is
+	// set
+	// to '1.4' and above. Python '2.7' works with all supported runtime
+	// versions.
+	PythonVersion string `json:"pythonVersion,omitempty"`
+
 	// RuntimeVersion: Optional. The Google Cloud ML runtime version to use
 	// for this deployment.
 	// If not set, Google Cloud ML will choose a version.
@@ -1780,11 +1768,18 @@ type GoogleCloudMlV1__Version struct {
 	// Possible values:
 	//   "UNKNOWN" - The version state is unspecified.
 	//   "READY" - The version is ready for prediction.
-	//   "CREATING" - The version is in the process of creation.
+	//   "CREATING" - The version is being created. New UpdateVersion and
+	// DeleteVersion
+	// requests will fail if a version is in the CREATING state.
 	//   "FAILED" - The version failed to be created, possibly
 	// cancelled.
 	// `error_message` should contain the details of the failure.
-	//   "DELETING" - The version is in the process of deletion.
+	//   "DELETING" - The version is being deleted. New UpdateVersion and
+	// DeleteVersion
+	// requests will fail if a version is in the DELETING state.
+	//   "UPDATING" - The version is being updated. New UpdateVersion and
+	// DeleteVersion
+	// requests will fail if a version is in the UPDATING state.
 	State string `json:"state,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1827,7 +1822,7 @@ func (s *GoogleCloudMlV1__Version) MarshalJSON() ([]byte, error) {
 // log_types
 // specified in each AuditConfig are enabled, and the exempted_members
 // in each
-// AuditConfig are exempted.
+// AuditLogConfig are exempted.
 //
 // Example Policy with multiple AuditConfigs:
 //
@@ -1877,8 +1872,6 @@ type GoogleIamV1__AuditConfig struct {
 	// permission.
 	// Next ID: 4
 	AuditLogConfigs []*GoogleIamV1__AuditLogConfig `json:"auditLogConfigs,omitempty"`
-
-	ExemptedMembers []string `json:"exemptedMembers,omitempty"`
 
 	// Service: Specifies a service that will be enabled for audit
 	// logging.
@@ -1974,15 +1967,6 @@ func (s *GoogleIamV1__AuditLogConfig) MarshalJSON() ([]byte, error) {
 
 // GoogleIamV1__Binding: Associates `members` with a `role`.
 type GoogleIamV1__Binding struct {
-	// Condition: The condition that is associated with this binding.
-	// NOTE: an unsatisfied condition will not allow user access via
-	// current
-	// binding. Different bindings, including their conditions, are
-	// examined
-	// independently.
-	// This field is GOOGLE_INTERNAL.
-	Condition *GoogleType__Expr `json:"condition,omitempty"`
-
 	// Members: Specifies the identities requesting access for a Cloud
 	// Platform resource.
 	// `members` can have the following values:
@@ -2024,7 +2008,7 @@ type GoogleIamV1__Binding struct {
 	// Required
 	Role string `json:"role,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Condition") to
+	// ForceSendFields is a list of field names (e.g. "Members") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -2032,7 +2016,7 @@ type GoogleIamV1__Binding struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Condition") to include in
+	// NullFields is a list of field names (e.g. "Members") to include in
 	// API requests with the JSON null value. By default, fields with empty
 	// values are omitted from API requests. However, any field with an
 	// empty value appearing in NullFields will be sent to the server as
@@ -2111,8 +2095,6 @@ type GoogleIamV1__Policy struct {
 	// existing
 	// policy is overwritten blindly.
 	Etag string `json:"etag,omitempty"`
-
-	IamOwned bool `json:"iamOwned,omitempty"`
 
 	// Version: Deprecated.
 	Version int64 `json:"version,omitempty"`
@@ -2502,60 +2484,6 @@ type GoogleRpc__Status struct {
 
 func (s *GoogleRpc__Status) MarshalJSON() ([]byte, error) {
 	type NoMethod GoogleRpc__Status
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// GoogleType__Expr: Represents an expression text. Example:
-//
-//     title: "User account presence"
-//     description: "Determines whether the request has a user account"
-//     expression: "size(request.user) > 0"
-type GoogleType__Expr struct {
-	// Description: An optional description of the expression. This is a
-	// longer text which
-	// describes the expression, e.g. when hovered over it in a UI.
-	Description string `json:"description,omitempty"`
-
-	// Expression: Textual representation of an expression in
-	// Common Expression Language syntax.
-	//
-	// The application context of the containing message determines
-	// which
-	// well-known feature set of CEL is supported.
-	Expression string `json:"expression,omitempty"`
-
-	// Location: An optional string indicating the location of the
-	// expression for error
-	// reporting, e.g. a file name and a position in the file.
-	Location string `json:"location,omitempty"`
-
-	// Title: An optional title for the expression, i.e. a short string
-	// describing
-	// its purpose. This can be used e.g. in UIs which allow to enter
-	// the
-	// expression.
-	Title string `json:"title,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Description") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Description") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *GoogleType__Expr) MarshalJSON() ([]byte, error) {
-	type NoMethod GoogleType__Expr
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3619,178 +3547,6 @@ func (c *ProjectsJobsListCall) Pages(ctx context.Context, f func(*GoogleCloudMlV
 		}
 		c.PageToken(x.NextPageToken)
 	}
-}
-
-// method id "ml.projects.jobs.patch":
-
-type ProjectsJobsPatchCall struct {
-	s                    *Service
-	name                 string
-	googlecloudmlv1__job *GoogleCloudMlV1__Job
-	urlParams_           gensupport.URLParams
-	ctx_                 context.Context
-	header_              http.Header
-}
-
-// Patch: Updates a specific job resource.
-//
-// Currently the only supported fields to update are `labels`.
-func (r *ProjectsJobsService) Patch(name string, googlecloudmlv1__job *GoogleCloudMlV1__Job) *ProjectsJobsPatchCall {
-	c := &ProjectsJobsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.name = name
-	c.googlecloudmlv1__job = googlecloudmlv1__job
-	return c
-}
-
-// UpdateMask sets the optional parameter "updateMask": Required.
-// Specifies the path, relative to `Job`, of the field to update.
-// To adopt etag mechanism, include `etag` field in the mask, and
-// include the
-// `etag` value in your job resource.
-//
-// For example, to change the labels of a job, the `update_mask`
-// parameter
-// would be specified as `labels`, `etag`, and the
-// `PATCH` request body would specify the new value, as follows:
-//     {
-//       "labels": {
-//          "owner": "Google",
-//          "color": "Blue"
-//       }
-//       "etag": "33a64df551425fcc55e4d42a148795d9f25f89d4"
-//     }
-// If `etag` matches the one on the server, the labels of the job will
-// be
-// replaced with the given ones, and the server end `etag` will
-// be
-// recalculated.
-//
-// Currently the only supported update masks are `labels` and `etag`.
-func (c *ProjectsJobsPatchCall) UpdateMask(updateMask string) *ProjectsJobsPatchCall {
-	c.urlParams_.Set("updateMask", updateMask)
-	return c
-}
-
-// Fields allows partial responses to be retrieved. See
-// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
-// for more information.
-func (c *ProjectsJobsPatchCall) Fields(s ...googleapi.Field) *ProjectsJobsPatchCall {
-	c.urlParams_.Set("fields", googleapi.CombineFields(s))
-	return c
-}
-
-// Context sets the context to be used in this call's Do method. Any
-// pending HTTP request will be aborted if the provided context is
-// canceled.
-func (c *ProjectsJobsPatchCall) Context(ctx context.Context) *ProjectsJobsPatchCall {
-	c.ctx_ = ctx
-	return c
-}
-
-// Header returns an http.Header that can be modified by the caller to
-// add HTTP headers to the request.
-func (c *ProjectsJobsPatchCall) Header() http.Header {
-	if c.header_ == nil {
-		c.header_ = make(http.Header)
-	}
-	return c.header_
-}
-
-func (c *ProjectsJobsPatchCall) doRequest(alt string) (*http.Response, error) {
-	reqHeaders := make(http.Header)
-	for k, v := range c.header_ {
-		reqHeaders[k] = v
-	}
-	reqHeaders.Set("User-Agent", c.s.userAgent())
-	var body io.Reader = nil
-	body, err := googleapi.WithoutDataWrapper.JSONReader(c.googlecloudmlv1__job)
-	if err != nil {
-		return nil, err
-	}
-	reqHeaders.Set("Content-Type", "application/json")
-	c.urlParams_.Set("alt", alt)
-	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
-	urls += "?" + c.urlParams_.Encode()
-	req, _ := http.NewRequest("PATCH", urls, body)
-	req.Header = reqHeaders
-	googleapi.Expand(req.URL, map[string]string{
-		"name": c.name,
-	})
-	return gensupport.SendRequest(c.ctx_, c.s.client, req)
-}
-
-// Do executes the "ml.projects.jobs.patch" call.
-// Exactly one of *GoogleCloudMlV1__Job or error will be non-nil. Any
-// non-2xx status code is an error. Response headers are in either
-// *GoogleCloudMlV1__Job.ServerResponse.Header or (if a response was
-// returned at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
-// because http.StatusNotModified was returned.
-func (c *ProjectsJobsPatchCall) Do(opts ...googleapi.CallOption) (*GoogleCloudMlV1__Job, error) {
-	gensupport.SetOptions(c.urlParams_, opts...)
-	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, &googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer googleapi.CloseBody(res)
-	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
-	}
-	ret := &GoogleCloudMlV1__Job{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	if err := gensupport.DecodeResponse(target, res); err != nil {
-		return nil, err
-	}
-	return ret, nil
-	// {
-	//   "description": "Updates a specific job resource.\n\nCurrently the only supported fields to update are `labels`.",
-	//   "flatPath": "v1/projects/{projectsId}/jobs/{jobsId}",
-	//   "httpMethod": "PATCH",
-	//   "id": "ml.projects.jobs.patch",
-	//   "parameterOrder": [
-	//     "name"
-	//   ],
-	//   "parameters": {
-	//     "name": {
-	//       "description": "Required. The job name.",
-	//       "location": "path",
-	//       "pattern": "^projects/[^/]+/jobs/[^/]+$",
-	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "updateMask": {
-	//       "description": "Required. Specifies the path, relative to `Job`, of the field to update.\nTo adopt etag mechanism, include `etag` field in the mask, and include the\n`etag` value in your job resource.\n\nFor example, to change the labels of a job, the `update_mask` parameter\nwould be specified as `labels`, `etag`, and the\n`PATCH` request body would specify the new value, as follows:\n    {\n      \"labels\": {\n         \"owner\": \"Google\",\n         \"color\": \"Blue\"\n      }\n      \"etag\": \"33a64df551425fcc55e4d42a148795d9f25f89d4\"\n    }\nIf `etag` matches the one on the server, the labels of the job will be\nreplaced with the given ones, and the server end `etag` will be\nrecalculated.\n\nCurrently the only supported update masks are `labels` and `etag`.",
-	//       "format": "google-fieldmask",
-	//       "location": "query",
-	//       "type": "string"
-	//     }
-	//   },
-	//   "path": "v1/{+name}",
-	//   "request": {
-	//     "$ref": "GoogleCloudMlV1__Job"
-	//   },
-	//   "response": {
-	//     "$ref": "GoogleCloudMlV1__Job"
-	//   },
-	//   "scopes": [
-	//     "https://www.googleapis.com/auth/cloud-platform"
-	//   ]
-	// }
-
 }
 
 // method id "ml.projects.jobs.setIamPolicy":
@@ -5227,16 +4983,10 @@ func (r *ProjectsModelsService) Patch(name string, googlecloudmlv1__model *Googl
 //         "name":"version_1"
 //       }
 //     }
-// In this example, the model is blindly overwritten since no etag is
-// given.
 //
-// To adopt etag mechanism, include `etag` field in the mask, and
-// include the
-// `etag` value in your model resource.
-//
-// Currently the supported update masks are
-// `description`,
-// `default_version.name`, `labels`, and `etag`.
+// Currently the supported update masks are `description`
+// and
+// `default_version.name`.
 func (c *ProjectsModelsPatchCall) UpdateMask(updateMask string) *ProjectsModelsPatchCall {
 	c.urlParams_.Set("updateMask", updateMask)
 	return c
@@ -5344,7 +5094,7 @@ func (c *ProjectsModelsPatchCall) Do(opts ...googleapi.CallOption) (*GoogleLongr
 	//       "type": "string"
 	//     },
 	//     "updateMask": {
-	//       "description": "Required. Specifies the path, relative to `Model`, of the field to update.\n\nFor example, to change the description of a model to \"foo\" and set its\ndefault version to \"version_1\", the `update_mask` parameter would be\nspecified as `description`, `default_version.name`, and the `PATCH`\nrequest body would specify the new value, as follows:\n    {\n      \"description\": \"foo\",\n      \"defaultVersion\": {\n        \"name\":\"version_1\"\n      }\n    }\nIn this example, the model is blindly overwritten since no etag is given.\n\nTo adopt etag mechanism, include `etag` field in the mask, and include the\n`etag` value in your model resource.\n\nCurrently the supported update masks are `description`,\n`default_version.name`, `labels`, and `etag`.",
+	//       "description": "Required. Specifies the path, relative to `Model`, of the field to update.\n\nFor example, to change the description of a model to \"foo\" and set its\ndefault version to \"version_1\", the `update_mask` parameter would be\nspecified as `description`, `default_version.name`, and the `PATCH`\nrequest body would specify the new value, as follows:\n    {\n      \"description\": \"foo\",\n      \"defaultVersion\": {\n        \"name\":\"version_1\"\n      }\n    }\n\nCurrently the supported update masks are `description` and\n`default_version.name`.",
 	//       "format": "google-fieldmask",
 	//       "location": "query",
 	//       "type": "string"
@@ -6326,16 +6076,8 @@ func (r *ProjectsModelsVersionsService) Patch(name string, googlecloudmlv1__vers
 //     {
 //       "description": "foo"
 //     }
-// In this example, the version is blindly overwritten since no etag is
-// given.
 //
-// To adopt etag mechanism, include `etag` field in the mask, and
-// include the
-// `etag` value in your version resource.
-//
-// Currently the only supported update masks are `description`,
-// `labels`, and
-// `etag`, and `expire_time`.
+// Currently the only supported update mask is`description`.
 func (c *ProjectsModelsVersionsPatchCall) UpdateMask(updateMask string) *ProjectsModelsVersionsPatchCall {
 	c.urlParams_.Set("updateMask", updateMask)
 	return c
@@ -6443,7 +6185,7 @@ func (c *ProjectsModelsVersionsPatchCall) Do(opts ...googleapi.CallOption) (*Goo
 	//       "type": "string"
 	//     },
 	//     "updateMask": {
-	//       "description": "Required. Specifies the path, relative to `Version`, of the field to\nupdate. Must be present and non-empty.\n\nFor example, to change the description of a version to \"foo\", the\n`update_mask` parameter would be specified as `description`, and the\n`PATCH` request body would specify the new value, as follows:\n    {\n      \"description\": \"foo\"\n    }\nIn this example, the version is blindly overwritten since no etag is given.\n\nTo adopt etag mechanism, include `etag` field in the mask, and include the\n`etag` value in your version resource.\n\nCurrently the only supported update masks are `description`, `labels`, and\n`etag`, and `expire_time`.",
+	//       "description": "Required. Specifies the path, relative to `Version`, of the field to\nupdate. Must be present and non-empty.\n\nFor example, to change the description of a version to \"foo\", the\n`update_mask` parameter would be specified as `description`, and the\n`PATCH` request body would specify the new value, as follows:\n    {\n      \"description\": \"foo\"\n    }\n\nCurrently the only supported update mask is`description`.",
 	//       "format": "google-fieldmask",
 	//       "location": "query",
 	//       "type": "string"

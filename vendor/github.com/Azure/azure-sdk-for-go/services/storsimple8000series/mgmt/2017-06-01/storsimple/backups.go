@@ -43,7 +43,8 @@ func NewBackupsClientWithBaseURI(baseURI string, subscriptionID string) BackupsC
 // Clone clones the backup element as a new volume.
 //
 // deviceName is the device name backupName is the backup name. backupElementName is the backup element name.
-// parameters is the clone request object. resourceGroupName is the resource group name managerName is the manager name
+// parameters is the clone request object. resourceGroupName is the resource group name managerName is the manager
+// name
 func (client BackupsClient) Clone(ctx context.Context, deviceName string, backupName string, backupElementName string, parameters CloneRequest, resourceGroupName string, managerName string) (result BackupsCloneFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -61,7 +62,7 @@ func (client BackupsClient) Clone(ctx context.Context, deviceName string, backup
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.BackupsClient", "Clone")
+		return result, validation.NewError("storsimple.BackupsClient", "Clone", err.Error())
 	}
 
 	req, err := client.ClonePreparer(ctx, deviceName, backupName, backupElementName, parameters, resourceGroupName, managerName)
@@ -141,7 +142,7 @@ func (client BackupsClient) Delete(ctx context.Context, deviceName string, backu
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.BackupsClient", "Delete")
+		return result, validation.NewError("storsimple.BackupsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, deviceName, backupName, resourceGroupName, managerName)
@@ -211,14 +212,14 @@ func (client BackupsClient) DeleteResponder(resp *http.Response) (result autores
 
 // ListByDevice retrieves all the backups in a device.
 //
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name filter is
-// oData Filter options
+// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// filter is oData Filter options
 func (client BackupsClient) ListByDevice(ctx context.Context, deviceName string, resourceGroupName string, managerName string, filter string) (result BackupListPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.BackupsClient", "ListByDevice")
+		return result, validation.NewError("storsimple.BackupsClient", "ListByDevice", err.Error())
 	}
 
 	result.fn = client.listByDeviceNextResults
@@ -324,7 +325,7 @@ func (client BackupsClient) Restore(ctx context.Context, deviceName string, back
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.BackupsClient", "Restore")
+		return result, validation.NewError("storsimple.BackupsClient", "Restore", err.Error())
 	}
 
 	req, err := client.RestorePreparer(ctx, deviceName, backupName, resourceGroupName, managerName)

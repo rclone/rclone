@@ -162,7 +162,21 @@ struct sockaddr_hci {
         sa_family_t     hci_family;
         unsigned short  hci_dev;
         unsigned short  hci_channel;
-};;
+};
+
+// copied from /usr/include/bluetooth/bluetooth.h
+#define BDADDR_BREDR           0x00
+#define BDADDR_LE_PUBLIC       0x01
+#define BDADDR_LE_RANDOM       0x02
+
+// copied from /usr/include/bluetooth/l2cap.h
+struct sockaddr_l2 {
+	sa_family_t	l2_family;
+	unsigned short	l2_psm;
+	uint8_t		l2_bdaddr[6];
+	unsigned short	l2_cid;
+	uint8_t		l2_bdaddr_type;
+};
 
 // copied from /usr/include/linux/un.h
 struct my_sockaddr_un {
@@ -310,6 +324,8 @@ type RawSockaddrNetlink C.struct_sockaddr_nl
 
 type RawSockaddrHCI C.struct_sockaddr_hci
 
+type RawSockaddrL2 C.struct_sockaddr_l2
+
 type RawSockaddrCAN C.struct_sockaddr_can
 
 type RawSockaddrALG C.struct_sockaddr_alg
@@ -358,6 +374,7 @@ const (
 	SizeofSockaddrLinklayer = C.sizeof_struct_sockaddr_ll
 	SizeofSockaddrNetlink   = C.sizeof_struct_sockaddr_nl
 	SizeofSockaddrHCI       = C.sizeof_struct_sockaddr_hci
+	SizeofSockaddrL2        = C.sizeof_struct_sockaddr_l2
 	SizeofSockaddrCAN       = C.sizeof_struct_sockaddr_can
 	SizeofSockaddrALG       = C.sizeof_struct_sockaddr_alg
 	SizeofSockaddrVM        = C.sizeof_struct_sockaddr_vm
@@ -380,97 +397,123 @@ const (
 // Netlink routing and interface messages
 
 const (
-	IFA_UNSPEC          = C.IFA_UNSPEC
-	IFA_ADDRESS         = C.IFA_ADDRESS
-	IFA_LOCAL           = C.IFA_LOCAL
-	IFA_LABEL           = C.IFA_LABEL
-	IFA_BROADCAST       = C.IFA_BROADCAST
-	IFA_ANYCAST         = C.IFA_ANYCAST
-	IFA_CACHEINFO       = C.IFA_CACHEINFO
-	IFA_MULTICAST       = C.IFA_MULTICAST
-	IFLA_UNSPEC         = C.IFLA_UNSPEC
-	IFLA_ADDRESS        = C.IFLA_ADDRESS
-	IFLA_BROADCAST      = C.IFLA_BROADCAST
-	IFLA_IFNAME         = C.IFLA_IFNAME
-	IFLA_MTU            = C.IFLA_MTU
-	IFLA_LINK           = C.IFLA_LINK
-	IFLA_QDISC          = C.IFLA_QDISC
-	IFLA_STATS          = C.IFLA_STATS
-	IFLA_COST           = C.IFLA_COST
-	IFLA_PRIORITY       = C.IFLA_PRIORITY
-	IFLA_MASTER         = C.IFLA_MASTER
-	IFLA_WIRELESS       = C.IFLA_WIRELESS
-	IFLA_PROTINFO       = C.IFLA_PROTINFO
-	IFLA_TXQLEN         = C.IFLA_TXQLEN
-	IFLA_MAP            = C.IFLA_MAP
-	IFLA_WEIGHT         = C.IFLA_WEIGHT
-	IFLA_OPERSTATE      = C.IFLA_OPERSTATE
-	IFLA_LINKMODE       = C.IFLA_LINKMODE
-	IFLA_LINKINFO       = C.IFLA_LINKINFO
-	IFLA_NET_NS_PID     = C.IFLA_NET_NS_PID
-	IFLA_IFALIAS        = C.IFLA_IFALIAS
-	IFLA_MAX            = C.IFLA_MAX
-	RT_SCOPE_UNIVERSE   = C.RT_SCOPE_UNIVERSE
-	RT_SCOPE_SITE       = C.RT_SCOPE_SITE
-	RT_SCOPE_LINK       = C.RT_SCOPE_LINK
-	RT_SCOPE_HOST       = C.RT_SCOPE_HOST
-	RT_SCOPE_NOWHERE    = C.RT_SCOPE_NOWHERE
-	RT_TABLE_UNSPEC     = C.RT_TABLE_UNSPEC
-	RT_TABLE_COMPAT     = C.RT_TABLE_COMPAT
-	RT_TABLE_DEFAULT    = C.RT_TABLE_DEFAULT
-	RT_TABLE_MAIN       = C.RT_TABLE_MAIN
-	RT_TABLE_LOCAL      = C.RT_TABLE_LOCAL
-	RT_TABLE_MAX        = C.RT_TABLE_MAX
-	RTA_UNSPEC          = C.RTA_UNSPEC
-	RTA_DST             = C.RTA_DST
-	RTA_SRC             = C.RTA_SRC
-	RTA_IIF             = C.RTA_IIF
-	RTA_OIF             = C.RTA_OIF
-	RTA_GATEWAY         = C.RTA_GATEWAY
-	RTA_PRIORITY        = C.RTA_PRIORITY
-	RTA_PREFSRC         = C.RTA_PREFSRC
-	RTA_METRICS         = C.RTA_METRICS
-	RTA_MULTIPATH       = C.RTA_MULTIPATH
-	RTA_FLOW            = C.RTA_FLOW
-	RTA_CACHEINFO       = C.RTA_CACHEINFO
-	RTA_TABLE           = C.RTA_TABLE
-	RTN_UNSPEC          = C.RTN_UNSPEC
-	RTN_UNICAST         = C.RTN_UNICAST
-	RTN_LOCAL           = C.RTN_LOCAL
-	RTN_BROADCAST       = C.RTN_BROADCAST
-	RTN_ANYCAST         = C.RTN_ANYCAST
-	RTN_MULTICAST       = C.RTN_MULTICAST
-	RTN_BLACKHOLE       = C.RTN_BLACKHOLE
-	RTN_UNREACHABLE     = C.RTN_UNREACHABLE
-	RTN_PROHIBIT        = C.RTN_PROHIBIT
-	RTN_THROW           = C.RTN_THROW
-	RTN_NAT             = C.RTN_NAT
-	RTN_XRESOLVE        = C.RTN_XRESOLVE
-	RTNLGRP_NONE        = C.RTNLGRP_NONE
-	RTNLGRP_LINK        = C.RTNLGRP_LINK
-	RTNLGRP_NOTIFY      = C.RTNLGRP_NOTIFY
-	RTNLGRP_NEIGH       = C.RTNLGRP_NEIGH
-	RTNLGRP_TC          = C.RTNLGRP_TC
-	RTNLGRP_IPV4_IFADDR = C.RTNLGRP_IPV4_IFADDR
-	RTNLGRP_IPV4_MROUTE = C.RTNLGRP_IPV4_MROUTE
-	RTNLGRP_IPV4_ROUTE  = C.RTNLGRP_IPV4_ROUTE
-	RTNLGRP_IPV4_RULE   = C.RTNLGRP_IPV4_RULE
-	RTNLGRP_IPV6_IFADDR = C.RTNLGRP_IPV6_IFADDR
-	RTNLGRP_IPV6_MROUTE = C.RTNLGRP_IPV6_MROUTE
-	RTNLGRP_IPV6_ROUTE  = C.RTNLGRP_IPV6_ROUTE
-	RTNLGRP_IPV6_IFINFO = C.RTNLGRP_IPV6_IFINFO
-	RTNLGRP_IPV6_PREFIX = C.RTNLGRP_IPV6_PREFIX
-	RTNLGRP_IPV6_RULE   = C.RTNLGRP_IPV6_RULE
-	RTNLGRP_ND_USEROPT  = C.RTNLGRP_ND_USEROPT
-	SizeofNlMsghdr      = C.sizeof_struct_nlmsghdr
-	SizeofNlMsgerr      = C.sizeof_struct_nlmsgerr
-	SizeofRtGenmsg      = C.sizeof_struct_rtgenmsg
-	SizeofNlAttr        = C.sizeof_struct_nlattr
-	SizeofRtAttr        = C.sizeof_struct_rtattr
-	SizeofIfInfomsg     = C.sizeof_struct_ifinfomsg
-	SizeofIfAddrmsg     = C.sizeof_struct_ifaddrmsg
-	SizeofRtMsg         = C.sizeof_struct_rtmsg
-	SizeofRtNexthop     = C.sizeof_struct_rtnexthop
+	IFA_UNSPEC           = C.IFA_UNSPEC
+	IFA_ADDRESS          = C.IFA_ADDRESS
+	IFA_LOCAL            = C.IFA_LOCAL
+	IFA_LABEL            = C.IFA_LABEL
+	IFA_BROADCAST        = C.IFA_BROADCAST
+	IFA_ANYCAST          = C.IFA_ANYCAST
+	IFA_CACHEINFO        = C.IFA_CACHEINFO
+	IFA_MULTICAST        = C.IFA_MULTICAST
+	IFLA_UNSPEC          = C.IFLA_UNSPEC
+	IFLA_ADDRESS         = C.IFLA_ADDRESS
+	IFLA_BROADCAST       = C.IFLA_BROADCAST
+	IFLA_IFNAME          = C.IFLA_IFNAME
+	IFLA_MTU             = C.IFLA_MTU
+	IFLA_LINK            = C.IFLA_LINK
+	IFLA_QDISC           = C.IFLA_QDISC
+	IFLA_STATS           = C.IFLA_STATS
+	IFLA_COST            = C.IFLA_COST
+	IFLA_PRIORITY        = C.IFLA_PRIORITY
+	IFLA_MASTER          = C.IFLA_MASTER
+	IFLA_WIRELESS        = C.IFLA_WIRELESS
+	IFLA_PROTINFO        = C.IFLA_PROTINFO
+	IFLA_TXQLEN          = C.IFLA_TXQLEN
+	IFLA_MAP             = C.IFLA_MAP
+	IFLA_WEIGHT          = C.IFLA_WEIGHT
+	IFLA_OPERSTATE       = C.IFLA_OPERSTATE
+	IFLA_LINKMODE        = C.IFLA_LINKMODE
+	IFLA_LINKINFO        = C.IFLA_LINKINFO
+	IFLA_NET_NS_PID      = C.IFLA_NET_NS_PID
+	IFLA_IFALIAS         = C.IFLA_IFALIAS
+	IFLA_NUM_VF          = C.IFLA_NUM_VF
+	IFLA_VFINFO_LIST     = C.IFLA_VFINFO_LIST
+	IFLA_STATS64         = C.IFLA_STATS64
+	IFLA_VF_PORTS        = C.IFLA_VF_PORTS
+	IFLA_PORT_SELF       = C.IFLA_PORT_SELF
+	IFLA_AF_SPEC         = C.IFLA_AF_SPEC
+	IFLA_GROUP           = C.IFLA_GROUP
+	IFLA_NET_NS_FD       = C.IFLA_NET_NS_FD
+	IFLA_EXT_MASK        = C.IFLA_EXT_MASK
+	IFLA_PROMISCUITY     = C.IFLA_PROMISCUITY
+	IFLA_NUM_TX_QUEUES   = C.IFLA_NUM_TX_QUEUES
+	IFLA_NUM_RX_QUEUES   = C.IFLA_NUM_RX_QUEUES
+	IFLA_CARRIER         = C.IFLA_CARRIER
+	IFLA_PHYS_PORT_ID    = C.IFLA_PHYS_PORT_ID
+	IFLA_CARRIER_CHANGES = C.IFLA_CARRIER_CHANGES
+	IFLA_PHYS_SWITCH_ID  = C.IFLA_PHYS_SWITCH_ID
+	IFLA_LINK_NETNSID    = C.IFLA_LINK_NETNSID
+	IFLA_PHYS_PORT_NAME  = C.IFLA_PHYS_PORT_NAME
+	IFLA_PROTO_DOWN      = C.IFLA_PROTO_DOWN
+	IFLA_GSO_MAX_SEGS    = C.IFLA_GSO_MAX_SEGS
+	IFLA_GSO_MAX_SIZE    = C.IFLA_GSO_MAX_SIZE
+	IFLA_PAD             = C.IFLA_PAD
+	IFLA_XDP             = C.IFLA_XDP
+	IFLA_EVENT           = C.IFLA_EVENT
+	IFLA_NEW_NETNSID     = C.IFLA_NEW_NETNSID
+	IFLA_IF_NETNSID      = C.IFLA_IF_NETNSID
+	IFLA_MAX             = C.IFLA_MAX
+	RT_SCOPE_UNIVERSE    = C.RT_SCOPE_UNIVERSE
+	RT_SCOPE_SITE        = C.RT_SCOPE_SITE
+	RT_SCOPE_LINK        = C.RT_SCOPE_LINK
+	RT_SCOPE_HOST        = C.RT_SCOPE_HOST
+	RT_SCOPE_NOWHERE     = C.RT_SCOPE_NOWHERE
+	RT_TABLE_UNSPEC      = C.RT_TABLE_UNSPEC
+	RT_TABLE_COMPAT      = C.RT_TABLE_COMPAT
+	RT_TABLE_DEFAULT     = C.RT_TABLE_DEFAULT
+	RT_TABLE_MAIN        = C.RT_TABLE_MAIN
+	RT_TABLE_LOCAL       = C.RT_TABLE_LOCAL
+	RT_TABLE_MAX         = C.RT_TABLE_MAX
+	RTA_UNSPEC           = C.RTA_UNSPEC
+	RTA_DST              = C.RTA_DST
+	RTA_SRC              = C.RTA_SRC
+	RTA_IIF              = C.RTA_IIF
+	RTA_OIF              = C.RTA_OIF
+	RTA_GATEWAY          = C.RTA_GATEWAY
+	RTA_PRIORITY         = C.RTA_PRIORITY
+	RTA_PREFSRC          = C.RTA_PREFSRC
+	RTA_METRICS          = C.RTA_METRICS
+	RTA_MULTIPATH        = C.RTA_MULTIPATH
+	RTA_FLOW             = C.RTA_FLOW
+	RTA_CACHEINFO        = C.RTA_CACHEINFO
+	RTA_TABLE            = C.RTA_TABLE
+	RTN_UNSPEC           = C.RTN_UNSPEC
+	RTN_UNICAST          = C.RTN_UNICAST
+	RTN_LOCAL            = C.RTN_LOCAL
+	RTN_BROADCAST        = C.RTN_BROADCAST
+	RTN_ANYCAST          = C.RTN_ANYCAST
+	RTN_MULTICAST        = C.RTN_MULTICAST
+	RTN_BLACKHOLE        = C.RTN_BLACKHOLE
+	RTN_UNREACHABLE      = C.RTN_UNREACHABLE
+	RTN_PROHIBIT         = C.RTN_PROHIBIT
+	RTN_THROW            = C.RTN_THROW
+	RTN_NAT              = C.RTN_NAT
+	RTN_XRESOLVE         = C.RTN_XRESOLVE
+	RTNLGRP_NONE         = C.RTNLGRP_NONE
+	RTNLGRP_LINK         = C.RTNLGRP_LINK
+	RTNLGRP_NOTIFY       = C.RTNLGRP_NOTIFY
+	RTNLGRP_NEIGH        = C.RTNLGRP_NEIGH
+	RTNLGRP_TC           = C.RTNLGRP_TC
+	RTNLGRP_IPV4_IFADDR  = C.RTNLGRP_IPV4_IFADDR
+	RTNLGRP_IPV4_MROUTE  = C.RTNLGRP_IPV4_MROUTE
+	RTNLGRP_IPV4_ROUTE   = C.RTNLGRP_IPV4_ROUTE
+	RTNLGRP_IPV4_RULE    = C.RTNLGRP_IPV4_RULE
+	RTNLGRP_IPV6_IFADDR  = C.RTNLGRP_IPV6_IFADDR
+	RTNLGRP_IPV6_MROUTE  = C.RTNLGRP_IPV6_MROUTE
+	RTNLGRP_IPV6_ROUTE   = C.RTNLGRP_IPV6_ROUTE
+	RTNLGRP_IPV6_IFINFO  = C.RTNLGRP_IPV6_IFINFO
+	RTNLGRP_IPV6_PREFIX  = C.RTNLGRP_IPV6_PREFIX
+	RTNLGRP_IPV6_RULE    = C.RTNLGRP_IPV6_RULE
+	RTNLGRP_ND_USEROPT   = C.RTNLGRP_ND_USEROPT
+	SizeofNlMsghdr       = C.sizeof_struct_nlmsghdr
+	SizeofNlMsgerr       = C.sizeof_struct_nlmsgerr
+	SizeofRtGenmsg       = C.sizeof_struct_rtgenmsg
+	SizeofNlAttr         = C.sizeof_struct_nlattr
+	SizeofRtAttr         = C.sizeof_struct_rtattr
+	SizeofIfInfomsg      = C.sizeof_struct_ifinfomsg
+	SizeofIfAddrmsg      = C.sizeof_struct_ifaddrmsg
+	SizeofRtMsg          = C.sizeof_struct_rtmsg
+	SizeofRtNexthop      = C.sizeof_struct_rtnexthop
 )
 
 type NlMsghdr C.struct_nlmsghdr
@@ -642,4 +685,12 @@ type cpuMask C.__cpu_mask
 const (
 	_CPU_SETSIZE = C.__CPU_SETSIZE
 	_NCPUBITS    = C.__NCPUBITS
+)
+
+// Bluetooth
+
+const (
+	BDADDR_BREDR     = C.BDADDR_BREDR
+	BDADDR_LE_PUBLIC = C.BDADDR_LE_PUBLIC
+	BDADDR_LE_RANDOM = C.BDADDR_LE_RANDOM
 )

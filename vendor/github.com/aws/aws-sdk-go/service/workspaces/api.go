@@ -1332,7 +1332,6 @@ func (c *WorkSpaces) TerminateWorkspacesWithContext(ctx aws.Context, input *Term
 }
 
 // Information about the compute type.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/ComputeType
 type ComputeType struct {
 	_ struct{} `type:"structure"`
 
@@ -1356,7 +1355,6 @@ func (s *ComputeType) SetName(v string) *ComputeType {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/CreateTagsRequest
 type CreateTagsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1422,7 +1420,6 @@ func (s *CreateTagsInput) SetTags(v []*Tag) *CreateTagsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/CreateTagsResult
 type CreateTagsOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1437,7 +1434,6 @@ func (s CreateTagsOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/CreateWorkspacesRequest
 type CreateWorkspacesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1489,7 +1485,6 @@ func (s *CreateWorkspacesInput) SetWorkspaces(v []*WorkspaceRequest) *CreateWork
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/CreateWorkspacesResult
 type CreateWorkspacesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1527,7 +1522,6 @@ func (s *CreateWorkspacesOutput) SetPendingRequests(v []*Workspace) *CreateWorks
 }
 
 // Information about defaults used to create a WorkSpace.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/DefaultWorkspaceCreationProperties
 type DefaultWorkspaceCreationProperties struct {
 	_ struct{} `type:"structure"`
 
@@ -1588,7 +1582,6 @@ func (s *DefaultWorkspaceCreationProperties) SetUserEnabledAsLocalAdministrator(
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/DeleteTagsRequest
 type DeleteTagsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1644,7 +1637,6 @@ func (s *DeleteTagsInput) SetTagKeys(v []*string) *DeleteTagsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/DeleteTagsResult
 type DeleteTagsOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1659,7 +1651,6 @@ func (s DeleteTagsOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/DescribeTagsRequest
 type DescribeTagsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1701,7 +1692,6 @@ func (s *DescribeTagsInput) SetResourceId(v string) *DescribeTagsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/DescribeTagsResult
 type DescribeTagsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1725,7 +1715,6 @@ func (s *DescribeTagsOutput) SetTagList(v []*Tag) *DescribeTagsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/DescribeWorkspaceBundlesRequest
 type DescribeWorkspaceBundlesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1789,7 +1778,6 @@ func (s *DescribeWorkspaceBundlesInput) SetOwner(v string) *DescribeWorkspaceBun
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/DescribeWorkspaceBundlesResult
 type DescribeWorkspaceBundlesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1824,7 +1812,6 @@ func (s *DescribeWorkspaceBundlesOutput) SetNextToken(v string) *DescribeWorkspa
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/DescribeWorkspaceDirectoriesRequest
 type DescribeWorkspaceDirectoriesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1875,7 +1862,6 @@ func (s *DescribeWorkspaceDirectoriesInput) SetNextToken(v string) *DescribeWork
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/DescribeWorkspaceDirectoriesResult
 type DescribeWorkspaceDirectoriesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1910,7 +1896,6 @@ func (s *DescribeWorkspaceDirectoriesOutput) SetNextToken(v string) *DescribeWor
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/DescribeWorkspacesConnectionStatusRequest
 type DescribeWorkspacesConnectionStatusInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1960,7 +1945,6 @@ func (s *DescribeWorkspacesConnectionStatusInput) SetWorkspaceIds(v []*string) *
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/DescribeWorkspacesConnectionStatusResult
 type DescribeWorkspacesConnectionStatusOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1994,7 +1978,6 @@ func (s *DescribeWorkspacesConnectionStatusOutput) SetWorkspacesConnectionStatus
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/DescribeWorkspacesRequest
 type DescribeWorkspacesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2094,7 +2077,6 @@ func (s *DescribeWorkspacesInput) SetWorkspaceIds(v []*string) *DescribeWorkspac
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/DescribeWorkspacesResult
 type DescribeWorkspacesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2133,7 +2115,6 @@ func (s *DescribeWorkspacesOutput) SetWorkspaces(v []*Workspace) *DescribeWorksp
 }
 
 // Information about a WorkSpace that could not be created.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/FailedCreateWorkspaceRequest
 type FailedCreateWorkspaceRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -2178,7 +2159,6 @@ func (s *FailedCreateWorkspaceRequest) SetWorkspaceRequest(v *WorkspaceRequest) 
 // Information about a WorkSpace that could not be rebooted (RebootWorkspaces),
 // rebuilt (RebuildWorkspaces), terminated (TerminateWorkspaces), started (StartWorkspaces),
 // or stopped (StopWorkspaces).
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/FailedWorkspaceChangeRequest
 type FailedWorkspaceChangeRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -2221,7 +2201,6 @@ func (s *FailedWorkspaceChangeRequest) SetWorkspaceId(v string) *FailedWorkspace
 }
 
 // Information about a WorkSpace modification.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/ModificationState
 type ModificationState struct {
 	_ struct{} `type:"structure"`
 
@@ -2254,7 +2233,6 @@ func (s *ModificationState) SetState(v string) *ModificationState {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/ModifyWorkspacePropertiesRequest
 type ModifyWorkspacePropertiesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2307,7 +2285,6 @@ func (s *ModifyWorkspacePropertiesInput) SetWorkspaceProperties(v *WorkspaceProp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/ModifyWorkspacePropertiesResult
 type ModifyWorkspacePropertiesOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2323,7 +2300,6 @@ func (s ModifyWorkspacePropertiesOutput) GoString() string {
 }
 
 // Information used to reboot a WorkSpace.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/RebootRequest
 type RebootRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -2362,7 +2338,6 @@ func (s *RebootRequest) SetWorkspaceId(v string) *RebootRequest {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/RebootWorkspacesRequest
 type RebootWorkspacesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2414,7 +2389,6 @@ func (s *RebootWorkspacesInput) SetRebootWorkspaceRequests(v []*RebootRequest) *
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/RebootWorkspacesResult
 type RebootWorkspacesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2439,7 +2413,6 @@ func (s *RebootWorkspacesOutput) SetFailedRequests(v []*FailedWorkspaceChangeReq
 }
 
 // Information used to rebuild a WorkSpace.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/RebuildRequest
 type RebuildRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -2478,7 +2451,6 @@ func (s *RebuildRequest) SetWorkspaceId(v string) *RebuildRequest {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/RebuildWorkspacesRequest
 type RebuildWorkspacesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2530,7 +2502,6 @@ func (s *RebuildWorkspacesInput) SetRebuildWorkspaceRequests(v []*RebuildRequest
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/RebuildWorkspacesResult
 type RebuildWorkspacesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2555,7 +2526,6 @@ func (s *RebuildWorkspacesOutput) SetFailedRequests(v []*FailedWorkspaceChangeRe
 }
 
 // Information about the root volume for a WorkSpace bundle.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/RootStorage
 type RootStorage struct {
 	_ struct{} `type:"structure"`
 
@@ -2580,7 +2550,6 @@ func (s *RootStorage) SetCapacity(v string) *RootStorage {
 }
 
 // Information used to start a WorkSpace.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/StartRequest
 type StartRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -2604,7 +2573,6 @@ func (s *StartRequest) SetWorkspaceId(v string) *StartRequest {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/StartWorkspacesRequest
 type StartWorkspacesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2646,7 +2614,6 @@ func (s *StartWorkspacesInput) SetStartWorkspaceRequests(v []*StartRequest) *Sta
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/StartWorkspacesResult
 type StartWorkspacesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2671,7 +2638,6 @@ func (s *StartWorkspacesOutput) SetFailedRequests(v []*FailedWorkspaceChangeRequ
 }
 
 // Information used to stop a WorkSpace.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/StopRequest
 type StopRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -2695,7 +2661,6 @@ func (s *StopRequest) SetWorkspaceId(v string) *StopRequest {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/StopWorkspacesRequest
 type StopWorkspacesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2737,7 +2702,6 @@ func (s *StopWorkspacesInput) SetStopWorkspaceRequests(v []*StopRequest) *StopWo
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/StopWorkspacesResult
 type StopWorkspacesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2762,7 +2726,6 @@ func (s *StopWorkspacesOutput) SetFailedRequests(v []*FailedWorkspaceChangeReque
 }
 
 // Information about a tag.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/Tag
 type Tag struct {
 	_ struct{} `type:"structure"`
 
@@ -2814,7 +2777,6 @@ func (s *Tag) SetValue(v string) *Tag {
 }
 
 // Information used to terminate a WorkSpace.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/TerminateRequest
 type TerminateRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -2853,7 +2815,6 @@ func (s *TerminateRequest) SetWorkspaceId(v string) *TerminateRequest {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/TerminateWorkspacesRequest
 type TerminateWorkspacesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2905,7 +2866,6 @@ func (s *TerminateWorkspacesInput) SetTerminateWorkspaceRequests(v []*TerminateR
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/TerminateWorkspacesResult
 type TerminateWorkspacesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2930,7 +2890,6 @@ func (s *TerminateWorkspacesOutput) SetFailedRequests(v []*FailedWorkspaceChange
 }
 
 // Information about the user storage for a WorkSpace bundle.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/UserStorage
 type UserStorage struct {
 	_ struct{} `type:"structure"`
 
@@ -2955,7 +2914,6 @@ func (s *UserStorage) SetCapacity(v string) *UserStorage {
 }
 
 // Information about a WorkSpace.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/Workspace
 type Workspace struct {
 	_ struct{} `type:"structure"`
 
@@ -3107,7 +3065,6 @@ func (s *Workspace) SetWorkspaceProperties(v *WorkspaceProperties) *Workspace {
 }
 
 // Information about a WorkSpace bundle.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/WorkspaceBundle
 type WorkspaceBundle struct {
 	_ struct{} `type:"structure"`
 
@@ -3187,7 +3144,6 @@ func (s *WorkspaceBundle) SetUserStorage(v *UserStorage) *WorkspaceBundle {
 }
 
 // Describes the connection status of a WorkSpace.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/WorkspaceConnectionStatus
 type WorkspaceConnectionStatus struct {
 	_ struct{} `type:"structure"`
 
@@ -3241,7 +3197,6 @@ func (s *WorkspaceConnectionStatus) SetWorkspaceId(v string) *WorkspaceConnectio
 
 // Contains information about an AWS Directory Service directory for use with
 // Amazon WorkSpaces.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/WorkspaceDirectory
 type WorkspaceDirectory struct {
 	_ struct{} `type:"structure"`
 
@@ -3367,7 +3322,6 @@ func (s *WorkspaceDirectory) SetWorkspaceSecurityGroupId(v string) *WorkspaceDir
 }
 
 // Information about a WorkSpace.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/WorkspaceProperties
 type WorkspaceProperties struct {
 	_ struct{} `type:"structure"`
 
@@ -3430,7 +3384,6 @@ func (s *WorkspaceProperties) SetUserVolumeSizeGib(v int64) *WorkspaceProperties
 }
 
 // Information used to create a WorkSpace.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workspaces-2015-04-08/WorkspaceRequest
 type WorkspaceRequest struct {
 	_ struct{} `type:"structure"`
 

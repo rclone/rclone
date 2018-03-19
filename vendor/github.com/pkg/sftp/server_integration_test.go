@@ -426,7 +426,7 @@ func runSftpClient(t *testing.T, script string, path string, host string, port i
 		return "", err
 	}
 	err = cmd.Wait()
-	return string(stdout.Bytes()), err
+	return stdout.String(), err
 }
 
 func TestServerCompareSubsystems(t *testing.T) {
@@ -468,15 +468,17 @@ ls -l /usr/bin/
 		if goLine != opLine {
 			goWords := spaceRegex.Split(goLine, -1)
 			opWords := spaceRegex.Split(opLine, -1)
-			// allow words[2] and [3] to be different as these are users & groups
-			// also allow words[1] to differ as the link count for directories like
-			// proc is unstable during testing as processes are created/destroyed.
+			// some fields are allowed to be different..
+			// words[2] and [3] as these are users & groups
+			// words[1] as the link count for directories like proc is unstable
+			// during testing as processes are created/destroyed.
+			// words[7] as timestamp on dirs can very for things like /tmp
 			for j, goWord := range goWords {
 				if j > len(opWords) {
 					bad = true
 				}
 				opWord := opWords[j]
-				if goWord != opWord && j != 1 && j != 2 && j != 3 {
+				if goWord != opWord && j != 1 && j != 2 && j != 3 && j != 7 {
 					bad = true
 				}
 			}

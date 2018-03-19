@@ -49,7 +49,7 @@ func (client TenantAccessClient) Get(ctx context.Context, resourceGroupName stri
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.TenantAccessClient", "Get")
+		return result, validation.NewError("apimanagement.TenantAccessClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName)
@@ -123,7 +123,7 @@ func (client TenantAccessClient) RegeneratePrimaryKey(ctx context.Context, resou
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.TenantAccessClient", "RegeneratePrimaryKey")
+		return result, validation.NewError("apimanagement.TenantAccessClient", "RegeneratePrimaryKey", err.Error())
 	}
 
 	req, err := client.RegeneratePrimaryKeyPreparer(ctx, resourceGroupName, serviceName)
@@ -196,7 +196,7 @@ func (client TenantAccessClient) RegenerateSecondaryKey(ctx context.Context, res
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.TenantAccessClient", "RegenerateSecondaryKey")
+		return result, validation.NewError("apimanagement.TenantAccessClient", "RegenerateSecondaryKey", err.Error())
 	}
 
 	req, err := client.RegenerateSecondaryKeyPreparer(ctx, resourceGroupName, serviceName)
@@ -271,7 +271,7 @@ func (client TenantAccessClient) Update(ctx context.Context, resourceGroupName s
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.TenantAccessClient", "Update")
+		return result, validation.NewError("apimanagement.TenantAccessClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serviceName, parameters, ifMatch)

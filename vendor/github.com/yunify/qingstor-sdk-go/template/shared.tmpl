@@ -293,6 +293,17 @@
             {{end}}
         {{end}}
     }
+    {{range $keyStatus, $valueStatus := $operation.Responses -}}
+        {{if eq $valueStatus.Body.Type "binary"}}
+            // Close will close the underlay body.
+            func (o *{{$opID}}Output) Close() (err error) {
+                if o.Body != nil {
+                    return o.Body.Close()
+                }
+                return
+            }
+        {{end}}
+    {{end}}
 {{end}}
 
 {{define "SubServiceInitParams"}}

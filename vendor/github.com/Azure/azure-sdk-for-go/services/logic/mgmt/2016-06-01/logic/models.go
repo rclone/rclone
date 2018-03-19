@@ -737,7 +737,7 @@ type ContentLink struct {
 	// ContentHash - The content hash.
 	ContentHash *ContentHash `json:"contentHash,omitempty"`
 	// Metadata - The metadata.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
 }
 
 // Correlation the correlation property.
@@ -1076,8 +1076,8 @@ type EdifactValidationSettings struct {
 	TrailingSeparatorPolicy TrailingSeparatorPolicy `json:"trailingSeparatorPolicy,omitempty"`
 }
 
-// ErrorProperties error properties indicate why the Logic service was not able to process the incoming request. The
-// reason is provided in the error message.
+// ErrorProperties error properties indicate why the Logic service was not able to process the incoming request.
+// The reason is provided in the error message.
 type ErrorProperties struct {
 	// Code - Error code.
 	Code *string `json:"code,omitempty"`
@@ -1085,8 +1085,8 @@ type ErrorProperties struct {
 	Message *string `json:"message,omitempty"`
 }
 
-// ErrorResponse error reponse indicates Logic service is not able to process the incoming request. The error property
-// contains the error details.
+// ErrorResponse error reponse indicates Logic service is not able to process the incoming request. The error
+// property contains the error details.
 type ErrorResponse struct {
 	// Error - The error properties.
 	Error *ErrorProperties `json:"error,omitempty"`
@@ -1109,6 +1109,10 @@ type GetCallbackURLParameters struct {
 // IntegrationAccount the integration account.
 type IntegrationAccount struct {
 	autorest.Response `json:"-"`
+	// Properties - The integration account properties.
+	Properties interface{} `json:"properties,omitempty"`
+	// Sku - The sku.
+	Sku *IntegrationAccountSku `json:"sku,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - Gets the resource name.
@@ -1118,16 +1122,39 @@ type IntegrationAccount struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// Properties - The integration account properties.
-	Properties *map[string]interface{} `json:"properties,omitempty"`
-	// Sku - The sku.
-	Sku *IntegrationAccountSku `json:"sku,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for IntegrationAccount.
+func (ia IntegrationAccount) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	objectMap["properties"] = ia.Properties
+	if ia.Sku != nil {
+		objectMap["sku"] = ia.Sku
+	}
+	if ia.ID != nil {
+		objectMap["id"] = ia.ID
+	}
+	if ia.Name != nil {
+		objectMap["name"] = ia.Name
+	}
+	if ia.Type != nil {
+		objectMap["type"] = ia.Type
+	}
+	if ia.Location != nil {
+		objectMap["location"] = ia.Location
+	}
+	if ia.Tags != nil {
+		objectMap["tags"] = ia.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // IntegrationAccountAgreement the integration account agreement.
 type IntegrationAccountAgreement struct {
 	autorest.Response `json:"-"`
+	// IntegrationAccountAgreementProperties - The integration account agreement properties.
+	*IntegrationAccountAgreementProperties `json:"properties,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - Gets the resource name.
@@ -1137,9 +1164,31 @@ type IntegrationAccountAgreement struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// IntegrationAccountAgreementProperties - The integration account agreement properties.
-	*IntegrationAccountAgreementProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for IntegrationAccountAgreement.
+func (iaa IntegrationAccountAgreement) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if iaa.IntegrationAccountAgreementProperties != nil {
+		objectMap["properties"] = iaa.IntegrationAccountAgreementProperties
+	}
+	if iaa.ID != nil {
+		objectMap["id"] = iaa.ID
+	}
+	if iaa.Name != nil {
+		objectMap["name"] = iaa.Name
+	}
+	if iaa.Type != nil {
+		objectMap["type"] = iaa.Type
+	}
+	if iaa.Location != nil {
+		objectMap["location"] = iaa.Location
+	}
+	if iaa.Tags != nil {
+		objectMap["tags"] = iaa.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for IntegrationAccountAgreement struct.
@@ -1149,66 +1198,63 @@ func (iaa *IntegrationAccountAgreement) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties IntegrationAccountAgreementProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var integrationAccountAgreementProperties IntegrationAccountAgreementProperties
+				err = json.Unmarshal(*v, &integrationAccountAgreementProperties)
+				if err != nil {
+					return err
+				}
+				iaa.IntegrationAccountAgreementProperties = &integrationAccountAgreementProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				iaa.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				iaa.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				iaa.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				iaa.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				iaa.Tags = tags
+			}
 		}
-		iaa.IntegrationAccountAgreementProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		iaa.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		iaa.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		iaa.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		iaa.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		iaa.Tags = &tags
 	}
 
 	return nil
@@ -1229,8 +1275,8 @@ type IntegrationAccountAgreementListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
-// IntegrationAccountAgreementListResultIterator provides access to a complete listing of IntegrationAccountAgreement
-// values.
+// IntegrationAccountAgreementListResultIterator provides access to a complete listing of
+// IntegrationAccountAgreement values.
 type IntegrationAccountAgreementListResultIterator struct {
 	i    int
 	page IntegrationAccountAgreementListResultPage
@@ -1330,7 +1376,7 @@ type IntegrationAccountAgreementProperties struct {
 	// ChangedTime - The changed time.
 	ChangedTime *date.Time `json:"changedTime,omitempty"`
 	// Metadata - The metadata.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
 	// AgreementType - The agreement type. Possible values include: 'NotSpecified', 'AS2', 'X12', 'Edifact'
 	AgreementType AgreementType `json:"agreementType,omitempty"`
 	// HostPartner - The integration account partner that is set as host partner for this agreement.
@@ -1348,6 +1394,8 @@ type IntegrationAccountAgreementProperties struct {
 // IntegrationAccountCertificate the integration account certificate.
 type IntegrationAccountCertificate struct {
 	autorest.Response `json:"-"`
+	// IntegrationAccountCertificateProperties - The integration account certificate properties.
+	*IntegrationAccountCertificateProperties `json:"properties,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - Gets the resource name.
@@ -1357,9 +1405,31 @@ type IntegrationAccountCertificate struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// IntegrationAccountCertificateProperties - The integration account certificate properties.
-	*IntegrationAccountCertificateProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for IntegrationAccountCertificate.
+func (iac IntegrationAccountCertificate) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if iac.IntegrationAccountCertificateProperties != nil {
+		objectMap["properties"] = iac.IntegrationAccountCertificateProperties
+	}
+	if iac.ID != nil {
+		objectMap["id"] = iac.ID
+	}
+	if iac.Name != nil {
+		objectMap["name"] = iac.Name
+	}
+	if iac.Type != nil {
+		objectMap["type"] = iac.Type
+	}
+	if iac.Location != nil {
+		objectMap["location"] = iac.Location
+	}
+	if iac.Tags != nil {
+		objectMap["tags"] = iac.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for IntegrationAccountCertificate struct.
@@ -1369,66 +1439,63 @@ func (iac *IntegrationAccountCertificate) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties IntegrationAccountCertificateProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var integrationAccountCertificateProperties IntegrationAccountCertificateProperties
+				err = json.Unmarshal(*v, &integrationAccountCertificateProperties)
+				if err != nil {
+					return err
+				}
+				iac.IntegrationAccountCertificateProperties = &integrationAccountCertificateProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				iac.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				iac.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				iac.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				iac.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				iac.Tags = tags
+			}
 		}
-		iac.IntegrationAccountCertificateProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		iac.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		iac.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		iac.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		iac.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		iac.Tags = &tags
 	}
 
 	return nil
@@ -1544,7 +1611,7 @@ type IntegrationAccountCertificateProperties struct {
 	// ChangedTime - The changed time.
 	ChangedTime *date.Time `json:"changedTime,omitempty"`
 	// Metadata - The metadata.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
 	// Key - The key details in the key vault.
 	Key *KeyVaultKeyReference `json:"key,omitempty"`
 	// PublicCertificate - The public certificate.
@@ -1656,6 +1723,8 @@ func (page IntegrationAccountListResultPage) Values() []IntegrationAccount {
 // IntegrationAccountMap the integration account map.
 type IntegrationAccountMap struct {
 	autorest.Response `json:"-"`
+	// IntegrationAccountMapProperties - The integration account map properties.
+	*IntegrationAccountMapProperties `json:"properties,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - Gets the resource name.
@@ -1665,9 +1734,31 @@ type IntegrationAccountMap struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// IntegrationAccountMapProperties - The integration account map properties.
-	*IntegrationAccountMapProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for IntegrationAccountMap.
+func (iam IntegrationAccountMap) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if iam.IntegrationAccountMapProperties != nil {
+		objectMap["properties"] = iam.IntegrationAccountMapProperties
+	}
+	if iam.ID != nil {
+		objectMap["id"] = iam.ID
+	}
+	if iam.Name != nil {
+		objectMap["name"] = iam.Name
+	}
+	if iam.Type != nil {
+		objectMap["type"] = iam.Type
+	}
+	if iam.Location != nil {
+		objectMap["location"] = iam.Location
+	}
+	if iam.Tags != nil {
+		objectMap["tags"] = iam.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for IntegrationAccountMap struct.
@@ -1677,66 +1768,63 @@ func (iam *IntegrationAccountMap) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties IntegrationAccountMapProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var integrationAccountMapProperties IntegrationAccountMapProperties
+				err = json.Unmarshal(*v, &integrationAccountMapProperties)
+				if err != nil {
+					return err
+				}
+				iam.IntegrationAccountMapProperties = &integrationAccountMapProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				iam.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				iam.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				iam.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				iam.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				iam.Tags = tags
+			}
 		}
-		iam.IntegrationAccountMapProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		iam.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		iam.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		iam.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		iam.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		iam.Tags = &tags
 	}
 
 	return nil
@@ -1867,7 +1955,7 @@ type IntegrationAccountMapProperties struct {
 	// ContentLink - The content link.
 	ContentLink *ContentLink `json:"contentLink,omitempty"`
 	// Metadata - The metadata.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
 }
 
 // IntegrationAccountMapPropertiesParametersSchema the parameters schema of integration account map.
@@ -1879,6 +1967,8 @@ type IntegrationAccountMapPropertiesParametersSchema struct {
 // IntegrationAccountPartner the integration account partner.
 type IntegrationAccountPartner struct {
 	autorest.Response `json:"-"`
+	// IntegrationAccountPartnerProperties - The integration account partner properties.
+	*IntegrationAccountPartnerProperties `json:"properties,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - Gets the resource name.
@@ -1888,9 +1978,31 @@ type IntegrationAccountPartner struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// IntegrationAccountPartnerProperties - The integration account partner properties.
-	*IntegrationAccountPartnerProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for IntegrationAccountPartner.
+func (iap IntegrationAccountPartner) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if iap.IntegrationAccountPartnerProperties != nil {
+		objectMap["properties"] = iap.IntegrationAccountPartnerProperties
+	}
+	if iap.ID != nil {
+		objectMap["id"] = iap.ID
+	}
+	if iap.Name != nil {
+		objectMap["name"] = iap.Name
+	}
+	if iap.Type != nil {
+		objectMap["type"] = iap.Type
+	}
+	if iap.Location != nil {
+		objectMap["location"] = iap.Location
+	}
+	if iap.Tags != nil {
+		objectMap["tags"] = iap.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for IntegrationAccountPartner struct.
@@ -1900,66 +2012,63 @@ func (iap *IntegrationAccountPartner) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties IntegrationAccountPartnerProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var integrationAccountPartnerProperties IntegrationAccountPartnerProperties
+				err = json.Unmarshal(*v, &integrationAccountPartnerProperties)
+				if err != nil {
+					return err
+				}
+				iap.IntegrationAccountPartnerProperties = &integrationAccountPartnerProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				iap.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				iap.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				iap.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				iap.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				iap.Tags = tags
+			}
 		}
-		iap.IntegrationAccountPartnerProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		iap.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		iap.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		iap.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		iap.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		iap.Tags = &tags
 	}
 
 	return nil
@@ -2083,7 +2192,7 @@ type IntegrationAccountPartnerProperties struct {
 	// ChangedTime - The changed time.
 	ChangedTime *date.Time `json:"changedTime,omitempty"`
 	// Metadata - The metadata.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
 	// Content - The partner content.
 	Content *PartnerContent `json:"content,omitempty"`
 }
@@ -2091,6 +2200,8 @@ type IntegrationAccountPartnerProperties struct {
 // IntegrationAccountSchema the integration account schema.
 type IntegrationAccountSchema struct {
 	autorest.Response `json:"-"`
+	// IntegrationAccountSchemaProperties - The integration account schema properties.
+	*IntegrationAccountSchemaProperties `json:"properties,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - Gets the resource name.
@@ -2100,9 +2211,31 @@ type IntegrationAccountSchema struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// IntegrationAccountSchemaProperties - The integration account schema properties.
-	*IntegrationAccountSchemaProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for IntegrationAccountSchema.
+func (ias IntegrationAccountSchema) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ias.IntegrationAccountSchemaProperties != nil {
+		objectMap["properties"] = ias.IntegrationAccountSchemaProperties
+	}
+	if ias.ID != nil {
+		objectMap["id"] = ias.ID
+	}
+	if ias.Name != nil {
+		objectMap["name"] = ias.Name
+	}
+	if ias.Type != nil {
+		objectMap["type"] = ias.Type
+	}
+	if ias.Location != nil {
+		objectMap["location"] = ias.Location
+	}
+	if ias.Tags != nil {
+		objectMap["tags"] = ias.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for IntegrationAccountSchema struct.
@@ -2112,66 +2245,63 @@ func (ias *IntegrationAccountSchema) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties IntegrationAccountSchemaProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var integrationAccountSchemaProperties IntegrationAccountSchemaProperties
+				err = json.Unmarshal(*v, &integrationAccountSchemaProperties)
+				if err != nil {
+					return err
+				}
+				ias.IntegrationAccountSchemaProperties = &integrationAccountSchemaProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ias.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ias.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ias.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				ias.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				ias.Tags = tags
+			}
 		}
-		ias.IntegrationAccountSchemaProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		ias.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ias.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		ias.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		ias.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		ias.Tags = &tags
 	}
 
 	return nil
@@ -2192,7 +2322,8 @@ type IntegrationAccountSchemaListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
-// IntegrationAccountSchemaListResultIterator provides access to a complete listing of IntegrationAccountSchema values.
+// IntegrationAccountSchemaListResultIterator provides access to a complete listing of IntegrationAccountSchema
+// values.
 type IntegrationAccountSchemaListResultIterator struct {
 	i    int
 	page IntegrationAccountSchemaListResultPage
@@ -2300,7 +2431,7 @@ type IntegrationAccountSchemaProperties struct {
 	// ChangedTime - The changed time.
 	ChangedTime *date.Time `json:"changedTime,omitempty"`
 	// Metadata - The metadata.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
 	// Content - The content.
 	Content *string `json:"content,omitempty"`
 	// ContentType - The content type.
@@ -2312,6 +2443,8 @@ type IntegrationAccountSchemaProperties struct {
 // IntegrationAccountSession the integration account session.
 type IntegrationAccountSession struct {
 	autorest.Response `json:"-"`
+	// IntegrationAccountSessionProperties - The integration account session properties.
+	*IntegrationAccountSessionProperties `json:"properties,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - Gets the resource name.
@@ -2321,9 +2454,31 @@ type IntegrationAccountSession struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// IntegrationAccountSessionProperties - The integration account session properties.
-	*IntegrationAccountSessionProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for IntegrationAccountSession.
+func (ias IntegrationAccountSession) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ias.IntegrationAccountSessionProperties != nil {
+		objectMap["properties"] = ias.IntegrationAccountSessionProperties
+	}
+	if ias.ID != nil {
+		objectMap["id"] = ias.ID
+	}
+	if ias.Name != nil {
+		objectMap["name"] = ias.Name
+	}
+	if ias.Type != nil {
+		objectMap["type"] = ias.Type
+	}
+	if ias.Location != nil {
+		objectMap["location"] = ias.Location
+	}
+	if ias.Tags != nil {
+		objectMap["tags"] = ias.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for IntegrationAccountSession struct.
@@ -2333,66 +2488,63 @@ func (ias *IntegrationAccountSession) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties IntegrationAccountSessionProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var integrationAccountSessionProperties IntegrationAccountSessionProperties
+				err = json.Unmarshal(*v, &integrationAccountSessionProperties)
+				if err != nil {
+					return err
+				}
+				ias.IntegrationAccountSessionProperties = &integrationAccountSessionProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ias.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ias.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ias.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				ias.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				ias.Tags = tags
+			}
 		}
-		ias.IntegrationAccountSessionProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		ias.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ias.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		ias.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		ias.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		ias.Tags = &tags
 	}
 
 	return nil
@@ -2514,7 +2666,7 @@ type IntegrationAccountSessionProperties struct {
 	// ChangedTime - The changed time.
 	ChangedTime *date.Time `json:"changedTime,omitempty"`
 	// Content - The session content.
-	Content *map[string]interface{} `json:"content,omitempty"`
+	Content interface{} `json:"content,omitempty"`
 }
 
 // IntegrationAccountSku the integration account sku.
@@ -2561,8 +2713,8 @@ type OperationDisplay struct {
 	Operation *string `json:"operation,omitempty"`
 }
 
-// OperationListResult result of the request to list Logic operations. It contains a list of operations and a URL link
-// to get the next set of results.
+// OperationListResult result of the request to list Logic operations. It contains a list of operations and a URL
+// link to get the next set of results.
 type OperationListResult struct {
 	autorest.Response `json:"-"`
 	// Value - List of Logic operations supported by the Logic resource provider.
@@ -2709,7 +2861,28 @@ type Resource struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // ResourceReference the resource reference.
@@ -2741,7 +2914,7 @@ type RetryHistory struct {
 // SetObject ...
 type SetObject struct {
 	autorest.Response `json:"-"`
-	Value             *map[string]interface{} `json:"value,omitempty"`
+	Value             interface{} `json:"value,omitempty"`
 }
 
 // Sku the sku type.
@@ -2761,6 +2934,8 @@ type SubResource struct {
 // Workflow the workflow type.
 type Workflow struct {
 	autorest.Response `json:"-"`
+	// WorkflowProperties - The workflow properties.
+	*WorkflowProperties `json:"properties,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - Gets the resource name.
@@ -2770,9 +2945,31 @@ type Workflow struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// WorkflowProperties - The workflow properties.
-	*WorkflowProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Workflow.
+func (w Workflow) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if w.WorkflowProperties != nil {
+		objectMap["properties"] = w.WorkflowProperties
+	}
+	if w.ID != nil {
+		objectMap["id"] = w.ID
+	}
+	if w.Name != nil {
+		objectMap["name"] = w.Name
+	}
+	if w.Type != nil {
+		objectMap["type"] = w.Type
+	}
+	if w.Location != nil {
+		objectMap["location"] = w.Location
+	}
+	if w.Tags != nil {
+		objectMap["tags"] = w.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Workflow struct.
@@ -2782,66 +2979,63 @@ func (w *Workflow) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties WorkflowProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var workflowProperties WorkflowProperties
+				err = json.Unmarshal(*v, &workflowProperties)
+				if err != nil {
+					return err
+				}
+				w.WorkflowProperties = &workflowProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				w.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				w.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				w.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				w.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				w.Tags = tags
+			}
 		}
-		w.WorkflowProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		w.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		w.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		w.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		w.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		w.Tags = &tags
 	}
 
 	return nil
@@ -2957,16 +3151,16 @@ func (page WorkflowListResultPage) Values() []Workflow {
 
 // WorkflowOutputParameter the workflow output parameter.
 type WorkflowOutputParameter struct {
+	// Error - Gets the error.
+	Error interface{} `json:"error,omitempty"`
 	// Type - The type. Possible values include: 'ParameterTypeNotSpecified', 'ParameterTypeString', 'ParameterTypeSecureString', 'ParameterTypeInt', 'ParameterTypeFloat', 'ParameterTypeBool', 'ParameterTypeArray', 'ParameterTypeObject', 'ParameterTypeSecureObject'
 	Type ParameterType `json:"type,omitempty"`
 	// Value - The value.
-	Value *map[string]interface{} `json:"value,omitempty"`
+	Value interface{} `json:"value,omitempty"`
 	// Metadata - The metadata.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
 	// Description - The description.
 	Description *string `json:"description,omitempty"`
-	// Error - Gets the error.
-	Error *map[string]interface{} `json:"error,omitempty"`
 }
 
 // WorkflowParameter the workflow parameters.
@@ -2974,9 +3168,9 @@ type WorkflowParameter struct {
 	// Type - The type. Possible values include: 'ParameterTypeNotSpecified', 'ParameterTypeString', 'ParameterTypeSecureString', 'ParameterTypeInt', 'ParameterTypeFloat', 'ParameterTypeBool', 'ParameterTypeArray', 'ParameterTypeObject', 'ParameterTypeSecureObject'
 	Type ParameterType `json:"type,omitempty"`
 	// Value - The value.
-	Value *map[string]interface{} `json:"value,omitempty"`
+	Value interface{} `json:"value,omitempty"`
 	// Metadata - The metadata.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
 	// Description - The description.
 	Description *string `json:"description,omitempty"`
 }
@@ -3000,22 +3194,52 @@ type WorkflowProperties struct {
 	// IntegrationAccount - The integration account.
 	IntegrationAccount *ResourceReference `json:"integrationAccount,omitempty"`
 	// Definition - The definition.
-	Definition *map[string]interface{} `json:"definition,omitempty"`
+	Definition interface{} `json:"definition,omitempty"`
 	// Parameters - The parameters.
-	Parameters *map[string]*WorkflowParameter `json:"parameters,omitempty"`
+	Parameters map[string]*WorkflowParameter `json:"parameters"`
+}
+
+// MarshalJSON is the custom marshaler for WorkflowProperties.
+func (wp WorkflowProperties) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	objectMap["provisioningState"] = wp.ProvisioningState
+	if wp.CreatedTime != nil {
+		objectMap["createdTime"] = wp.CreatedTime
+	}
+	if wp.ChangedTime != nil {
+		objectMap["changedTime"] = wp.ChangedTime
+	}
+	objectMap["state"] = wp.State
+	if wp.Version != nil {
+		objectMap["version"] = wp.Version
+	}
+	if wp.AccessEndpoint != nil {
+		objectMap["accessEndpoint"] = wp.AccessEndpoint
+	}
+	if wp.Sku != nil {
+		objectMap["sku"] = wp.Sku
+	}
+	if wp.IntegrationAccount != nil {
+		objectMap["integrationAccount"] = wp.IntegrationAccount
+	}
+	objectMap["definition"] = wp.Definition
+	if wp.Parameters != nil {
+		objectMap["parameters"] = wp.Parameters
+	}
+	return json.Marshal(objectMap)
 }
 
 // WorkflowRun the workflow run.
 type WorkflowRun struct {
 	autorest.Response `json:"-"`
-	// ID - The resource id.
-	ID *string `json:"id,omitempty"`
 	// WorkflowRunProperties - The workflow run properties.
 	*WorkflowRunProperties `json:"properties,omitempty"`
 	// Name - Gets the workflow run name.
 	Name *string `json:"name,omitempty"`
 	// Type - Gets the workflow run type.
 	Type *string `json:"type,omitempty"`
+	// ID - The resource id.
+	ID *string `json:"id,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for WorkflowRun struct.
@@ -3025,46 +3249,45 @@ func (wr *WorkflowRun) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties WorkflowRunProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var workflowRunProperties WorkflowRunProperties
+				err = json.Unmarshal(*v, &workflowRunProperties)
+				if err != nil {
+					return err
+				}
+				wr.WorkflowRunProperties = &workflowRunProperties
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				wr.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				wr.Type = &typeVar
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				wr.ID = &ID
+			}
 		}
-		wr.WorkflowRunProperties = &properties
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		wr.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		wr.Type = &typeVar
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		wr.ID = &ID
 	}
 
 	return nil
@@ -3073,14 +3296,14 @@ func (wr *WorkflowRun) UnmarshalJSON(body []byte) error {
 // WorkflowRunAction the workflow run action.
 type WorkflowRunAction struct {
 	autorest.Response `json:"-"`
-	// ID - The resource id.
-	ID *string `json:"id,omitempty"`
 	// WorkflowRunActionProperties - The workflow run action properties.
 	*WorkflowRunActionProperties `json:"properties,omitempty"`
 	// Name - Gets the workflow run action name.
 	Name *string `json:"name,omitempty"`
 	// Type - Gets the workflow run action type.
 	Type *string `json:"type,omitempty"`
+	// ID - The resource id.
+	ID *string `json:"id,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for WorkflowRunAction struct.
@@ -3090,46 +3313,45 @@ func (wra *WorkflowRunAction) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties WorkflowRunActionProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var workflowRunActionProperties WorkflowRunActionProperties
+				err = json.Unmarshal(*v, &workflowRunActionProperties)
+				if err != nil {
+					return err
+				}
+				wra.WorkflowRunActionProperties = &workflowRunActionProperties
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				wra.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				wra.Type = &typeVar
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				wra.ID = &ID
+			}
 		}
-		wra.WorkflowRunActionProperties = &properties
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		wra.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		wra.Type = &typeVar
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		wra.ID = &ID
 	}
 
 	return nil
@@ -3254,7 +3476,7 @@ type WorkflowRunActionProperties struct {
 	// Code - Gets the code.
 	Code *string `json:"code,omitempty"`
 	// Error - Gets the error.
-	Error *map[string]interface{} `json:"error,omitempty"`
+	Error interface{} `json:"error,omitempty"`
 	// TrackingID - Gets the tracking id.
 	TrackingID *string `json:"trackingId,omitempty"`
 	// Correlation - The correlation properties.
@@ -3264,7 +3486,7 @@ type WorkflowRunActionProperties struct {
 	// OutputsLink - Gets the link to outputs.
 	OutputsLink *ContentLink `json:"outputsLink,omitempty"`
 	// TrackedProperties - Gets the tracked properties.
-	TrackedProperties *map[string]interface{} `json:"trackedProperties,omitempty"`
+	TrackedProperties interface{} `json:"trackedProperties,omitempty"`
 	// RetryHistory - Gets the retry histories.
 	RetryHistory *[]RetryHistory `json:"retryHistory,omitempty"`
 }
@@ -3388,7 +3610,7 @@ type WorkflowRunProperties struct {
 	// Code - Gets the code.
 	Code *string `json:"code,omitempty"`
 	// Error - Gets the error.
-	Error *map[string]interface{} `json:"error,omitempty"`
+	Error interface{} `json:"error,omitempty"`
 	// CorrelationID - Gets the correlation id.
 	CorrelationID *string `json:"correlationId,omitempty"`
 	// Correlation - The run correlation.
@@ -3398,9 +3620,44 @@ type WorkflowRunProperties struct {
 	// Trigger - Gets the fired trigger.
 	Trigger *WorkflowRunTrigger `json:"trigger,omitempty"`
 	// Outputs - Gets the outputs.
-	Outputs *map[string]*WorkflowOutputParameter `json:"outputs,omitempty"`
+	Outputs map[string]*WorkflowOutputParameter `json:"outputs"`
 	// Response - Gets the response of the flow run.
 	Response *WorkflowRunTrigger `json:"response,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for WorkflowRunProperties.
+func (wrp WorkflowRunProperties) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if wrp.StartTime != nil {
+		objectMap["startTime"] = wrp.StartTime
+	}
+	if wrp.EndTime != nil {
+		objectMap["endTime"] = wrp.EndTime
+	}
+	objectMap["status"] = wrp.Status
+	if wrp.Code != nil {
+		objectMap["code"] = wrp.Code
+	}
+	objectMap["error"] = wrp.Error
+	if wrp.CorrelationID != nil {
+		objectMap["correlationId"] = wrp.CorrelationID
+	}
+	if wrp.Correlation != nil {
+		objectMap["correlation"] = wrp.Correlation
+	}
+	if wrp.Workflow != nil {
+		objectMap["workflow"] = wrp.Workflow
+	}
+	if wrp.Trigger != nil {
+		objectMap["trigger"] = wrp.Trigger
+	}
+	if wrp.Outputs != nil {
+		objectMap["outputs"] = wrp.Outputs
+	}
+	if wrp.Response != nil {
+		objectMap["response"] = wrp.Response
+	}
+	return json.Marshal(objectMap)
 }
 
 // WorkflowRunTrigger the workflow run trigger.
@@ -3408,11 +3665,11 @@ type WorkflowRunTrigger struct {
 	// Name - Gets the name.
 	Name *string `json:"name,omitempty"`
 	// Inputs - Gets the inputs.
-	Inputs *map[string]interface{} `json:"inputs,omitempty"`
+	Inputs interface{} `json:"inputs,omitempty"`
 	// InputsLink - Gets the link to inputs.
 	InputsLink *ContentLink `json:"inputsLink,omitempty"`
 	// Outputs - Gets the outputs.
-	Outputs *map[string]interface{} `json:"outputs,omitempty"`
+	Outputs interface{} `json:"outputs,omitempty"`
 	// OutputsLink - Gets the link to outputs.
 	OutputsLink *ContentLink `json:"outputsLink,omitempty"`
 	// StartTime - Gets the start time.
@@ -3428,22 +3685,22 @@ type WorkflowRunTrigger struct {
 	// Status - Gets the status. Possible values include: 'WorkflowStatusNotSpecified', 'WorkflowStatusPaused', 'WorkflowStatusRunning', 'WorkflowStatusWaiting', 'WorkflowStatusSucceeded', 'WorkflowStatusSkipped', 'WorkflowStatusSuspended', 'WorkflowStatusCancelled', 'WorkflowStatusFailed', 'WorkflowStatusFaulted', 'WorkflowStatusTimedOut', 'WorkflowStatusAborted', 'WorkflowStatusIgnored'
 	Status WorkflowStatus `json:"status,omitempty"`
 	// Error - Gets the error.
-	Error *map[string]interface{} `json:"error,omitempty"`
+	Error interface{} `json:"error,omitempty"`
 	// TrackedProperties - Gets the tracked properties.
-	TrackedProperties *map[string]interface{} `json:"trackedProperties,omitempty"`
+	TrackedProperties interface{} `json:"trackedProperties,omitempty"`
 }
 
 // WorkflowTrigger the workflow trigger.
 type WorkflowTrigger struct {
 	autorest.Response `json:"-"`
-	// ID - The resource id.
-	ID *string `json:"id,omitempty"`
 	// WorkflowTriggerProperties - The workflow trigger properties.
 	*WorkflowTriggerProperties `json:"properties,omitempty"`
 	// Name - Gets the workflow trigger name.
 	Name *string `json:"name,omitempty"`
 	// Type - Gets the workflow trigger type.
 	Type *string `json:"type,omitempty"`
+	// ID - The resource id.
+	ID *string `json:"id,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for WorkflowTrigger struct.
@@ -3453,46 +3710,45 @@ func (wt *WorkflowTrigger) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties WorkflowTriggerProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var workflowTriggerProperties WorkflowTriggerProperties
+				err = json.Unmarshal(*v, &workflowTriggerProperties)
+				if err != nil {
+					return err
+				}
+				wt.WorkflowTriggerProperties = &workflowTriggerProperties
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				wt.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				wt.Type = &typeVar
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				wt.ID = &ID
+			}
 		}
-		wt.WorkflowTriggerProperties = &properties
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		wt.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		wt.Type = &typeVar
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		wt.ID = &ID
 	}
 
 	return nil
@@ -3524,14 +3780,14 @@ type WorkflowTriggerFilter struct {
 // WorkflowTriggerHistory the workflow trigger history.
 type WorkflowTriggerHistory struct {
 	autorest.Response `json:"-"`
-	// ID - The resource id.
-	ID *string `json:"id,omitempty"`
 	// WorkflowTriggerHistoryProperties - Gets the workflow trigger history properties.
 	*WorkflowTriggerHistoryProperties `json:"properties,omitempty"`
 	// Name - Gets the workflow trigger history name.
 	Name *string `json:"name,omitempty"`
 	// Type - Gets the workflow trigger history type.
 	Type *string `json:"type,omitempty"`
+	// ID - The resource id.
+	ID *string `json:"id,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for WorkflowTriggerHistory struct.
@@ -3541,46 +3797,45 @@ func (wth *WorkflowTriggerHistory) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties WorkflowTriggerHistoryProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var workflowTriggerHistoryProperties WorkflowTriggerHistoryProperties
+				err = json.Unmarshal(*v, &workflowTriggerHistoryProperties)
+				if err != nil {
+					return err
+				}
+				wth.WorkflowTriggerHistoryProperties = &workflowTriggerHistoryProperties
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				wth.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				wth.Type = &typeVar
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				wth.ID = &ID
+			}
 		}
-		wth.WorkflowTriggerHistoryProperties = &properties
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		wth.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		wth.Type = &typeVar
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		wth.ID = &ID
 	}
 
 	return nil
@@ -3705,7 +3960,7 @@ type WorkflowTriggerHistoryProperties struct {
 	// Code - Gets the code.
 	Code *string `json:"code,omitempty"`
 	// Error - Gets the error.
-	Error *map[string]interface{} `json:"error,omitempty"`
+	Error interface{} `json:"error,omitempty"`
 	// TrackingID - Gets the tracking id.
 	TrackingID *string `json:"trackingId,omitempty"`
 	// Correlation - The run correlation.
@@ -3875,6 +4130,8 @@ type WorkflowTriggerRecurrence struct {
 // WorkflowVersion the workflow version.
 type WorkflowVersion struct {
 	autorest.Response `json:"-"`
+	// WorkflowVersionProperties - The workflow version properties.
+	*WorkflowVersionProperties `json:"properties,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - Gets the resource name.
@@ -3884,9 +4141,31 @@ type WorkflowVersion struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// WorkflowVersionProperties - The workflow version properties.
-	*WorkflowVersionProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for WorkflowVersion.
+func (wv WorkflowVersion) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if wv.WorkflowVersionProperties != nil {
+		objectMap["properties"] = wv.WorkflowVersionProperties
+	}
+	if wv.ID != nil {
+		objectMap["id"] = wv.ID
+	}
+	if wv.Name != nil {
+		objectMap["name"] = wv.Name
+	}
+	if wv.Type != nil {
+		objectMap["type"] = wv.Type
+	}
+	if wv.Location != nil {
+		objectMap["location"] = wv.Location
+	}
+	if wv.Tags != nil {
+		objectMap["tags"] = wv.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for WorkflowVersion struct.
@@ -3896,66 +4175,63 @@ func (wv *WorkflowVersion) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties WorkflowVersionProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var workflowVersionProperties WorkflowVersionProperties
+				err = json.Unmarshal(*v, &workflowVersionProperties)
+				if err != nil {
+					return err
+				}
+				wv.WorkflowVersionProperties = &workflowVersionProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				wv.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				wv.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				wv.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				wv.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				wv.Tags = tags
+			}
 		}
-		wv.WorkflowVersionProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		wv.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		wv.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		wv.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		wv.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		wv.Tags = &tags
 	}
 
 	return nil
@@ -4080,9 +4356,38 @@ type WorkflowVersionProperties struct {
 	// IntegrationAccount - The integration account.
 	IntegrationAccount *ResourceReference `json:"integrationAccount,omitempty"`
 	// Definition - The definition.
-	Definition *map[string]interface{} `json:"definition,omitempty"`
+	Definition interface{} `json:"definition,omitempty"`
 	// Parameters - The parameters.
-	Parameters *map[string]*WorkflowParameter `json:"parameters,omitempty"`
+	Parameters map[string]*WorkflowParameter `json:"parameters"`
+}
+
+// MarshalJSON is the custom marshaler for WorkflowVersionProperties.
+func (wvp WorkflowVersionProperties) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if wvp.CreatedTime != nil {
+		objectMap["createdTime"] = wvp.CreatedTime
+	}
+	if wvp.ChangedTime != nil {
+		objectMap["changedTime"] = wvp.ChangedTime
+	}
+	objectMap["state"] = wvp.State
+	if wvp.Version != nil {
+		objectMap["version"] = wvp.Version
+	}
+	if wvp.AccessEndpoint != nil {
+		objectMap["accessEndpoint"] = wvp.AccessEndpoint
+	}
+	if wvp.Sku != nil {
+		objectMap["sku"] = wvp.Sku
+	}
+	if wvp.IntegrationAccount != nil {
+		objectMap["integrationAccount"] = wvp.IntegrationAccount
+	}
+	objectMap["definition"] = wvp.Definition
+	if wvp.Parameters != nil {
+		objectMap["parameters"] = wvp.Parameters
+	}
+	return json.Marshal(objectMap)
 }
 
 // X12AcknowledgementSettings the X12 agreement acknowledgement settings.

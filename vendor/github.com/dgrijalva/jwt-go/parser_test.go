@@ -247,6 +247,46 @@ func TestParser_Parse(t *testing.T) {
 	}
 }
 
+func TestParser_ParseUnverified(t *testing.T) {
+	privateKey := test.LoadRSAPrivateKeyFromDisk("test/sample_key")
+
+	// Iterate over test data set and run tests
+	for _, data := range jwtTestData {
+		// If the token string is blank, use helper function to generate string
+		if data.tokenString == "" {
+			data.tokenString = test.MakeSampleToken(data.claims, privateKey)
+		}
+
+		// Parse the token
+		var token *jwt.Token
+		var err error
+		var parser = data.parser
+		if parser == nil {
+			parser = new(jwt.Parser)
+		}
+		// Figure out correct claims type
+		switch data.claims.(type) {
+		case jwt.MapClaims:
+			token, _, err = parser.ParseUnverified(data.tokenString, jwt.MapClaims{})
+		case *jwt.StandardClaims:
+			token, _, err = parser.ParseUnverified(data.tokenString, &jwt.StandardClaims{})
+		}
+
+		if err != nil {
+			t.Errorf("[%v] Invalid token", data.name)
+		}
+
+		// Verify result matches expectation
+		if !reflect.DeepEqual(data.claims, token.Claims) {
+			t.Errorf("[%v] Claims mismatch. Expecting: %v  Got: %v", data.name, data.claims, token.Claims)
+		}
+
+		if data.valid && err != nil {
+			t.Errorf("[%v] Error while verifying token: %T:%v", data.name, err, err)
+		}
+	}
+}
+
 // Helper method for benchmarking various methods
 func benchmarkSigning(b *testing.B, method jwt.SigningMethod, key interface{}) {
 	t := jwt.New(method)

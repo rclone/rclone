@@ -57,7 +57,7 @@ func (client IdentityProvidersClient) CreateOrUpdate(ctx context.Context, resour
 					Chain: []validation.Constraint{{Target: "parameters.ClientSecret", Name: validation.MinLength, Rule: 1, Chain: nil}}},
 				{Target: "parameters.AllowedTenants", Name: validation.Null, Rule: false,
 					Chain: []validation.Constraint{{Target: "parameters.AllowedTenants", Name: validation.MaxItems, Rule: 32, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.IdentityProvidersClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.IdentityProvidersClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, identityProviderName, parameters)
@@ -127,15 +127,15 @@ func (client IdentityProvidersClient) CreateOrUpdateResponder(resp *http.Respons
 // Delete deletes the specified identity provider configuration.
 //
 // resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// identityProviderName is identity Provider Type identifier. ifMatch is the entity state (Etag) version of the backend
-// to delete. A value of "*" can be used for If-Match to unconditionally apply the operation.
+// identityProviderName is identity Provider Type identifier. ifMatch is the entity state (Etag) version of the
+// backend to delete. A value of "*" can be used for If-Match to unconditionally apply the operation.
 func (client IdentityProvidersClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, identityProviderName IdentityProviderNameType, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.IdentityProvidersClient", "Delete")
+		return result, validation.NewError("apimanagement.IdentityProvidersClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, identityProviderName, ifMatch)
@@ -211,7 +211,7 @@ func (client IdentityProvidersClient) Get(ctx context.Context, resourceGroupName
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.IdentityProvidersClient", "Get")
+		return result, validation.NewError("apimanagement.IdentityProvidersClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, identityProviderName)
@@ -286,7 +286,7 @@ func (client IdentityProvidersClient) ListByService(ctx context.Context, resourc
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.IdentityProvidersClient", "ListByService")
+		return result, validation.NewError("apimanagement.IdentityProvidersClient", "ListByService", err.Error())
 	}
 
 	req, err := client.ListByServicePreparer(ctx, resourceGroupName, serviceName)
@@ -354,16 +354,16 @@ func (client IdentityProvidersClient) ListByServiceResponder(resp *http.Response
 // Update updates an existing IdentityProvider configuration.
 //
 // resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// identityProviderName is identity Provider Type identifier. parameters is update parameters. ifMatch is the entity
-// state (Etag) version of the identity provider configuration to update. A value of "*" can be used for If-Match to
-// unconditionally apply the operation.
+// identityProviderName is identity Provider Type identifier. parameters is update parameters. ifMatch is the
+// entity state (Etag) version of the identity provider configuration to update. A value of "*" can be used for
+// If-Match to unconditionally apply the operation.
 func (client IdentityProvidersClient) Update(ctx context.Context, resourceGroupName string, serviceName string, identityProviderName IdentityProviderNameType, parameters IdentityProviderUpdateParameters, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.IdentityProvidersClient", "Update")
+		return result, validation.NewError("apimanagement.IdentityProvidersClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serviceName, identityProviderName, parameters, ifMatch)

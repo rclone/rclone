@@ -48,7 +48,7 @@ func (client SecretsClient) CreateOrUpdate(ctx context.Context, resourceGroupNam
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: secret,
 			Constraints: []validation.Constraint{{Target: "secret.SecretProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "dtl.SecretsClient", "CreateOrUpdate")
+		return result, validation.NewError("dtl.SecretsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, labName, userName, name, secret)
@@ -262,8 +262,8 @@ func (client SecretsClient) GetResponder(resp *http.Response) (result Secret, er
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
 // user profile. expand is specify the $expand query. Example: 'properties($select=value)' filter is the filter to
-// apply to the operation. top is the maximum number of resources to return from the operation. orderby is the ordering
-// expression for the results, using OData notation.
+// apply to the operation. top is the maximum number of resources to return from the operation. orderby is the
+// ordering expression for the results, using OData notation.
 func (client SecretsClient) List(ctx context.Context, resourceGroupName string, labName string, userName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationSecretPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, userName, expand, filter, top, orderby)

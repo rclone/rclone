@@ -131,6 +131,23 @@ func ExampleClient_Query_parameters() {
 	// TODO: Call Query.Run or Query.Read.
 }
 
+// This example demonstrates how to run a query job on a table
+// with a customer-managed encryption key. The same
+// applies to load and copy jobs as well.
+func ExampleClient_Query_encryptionKey() {
+	ctx := context.Background()
+	client, err := bigquery.NewClient(ctx, "project-id")
+	if err != nil {
+		// TODO: Handle error.
+	}
+	q := client.Query("select name, num from t1")
+	// TODO: Replace this key with a key you have created in Cloud KMS.
+	keyName := "projects/P/locations/L/keyRings/R/cryptoKeys/K"
+	q.DestinationEncryptionConfig = &bigquery.EncryptionConfig{KMSKeyName: keyName}
+	// TODO: set other options on the Query.
+	// TODO: Call Query.Run or Query.Read.
+}
+
 func ExampleQuery_Read() {
 	ctx := context.Background()
 	client, err := bigquery.NewClient(ctx, "project-id")
@@ -399,7 +416,8 @@ func ExampleInferSchema_tags() {
 		Size     float64
 		Count    int    `bigquery:"number"`
 		Secret   []byte `bigquery:"-"`
-		Optional bool   `bigquery:",nullable"`
+		Optional bigquery.NullBool
+		OptBytes []byte `bigquery:",nullable"`
 	}
 	schema, err := bigquery.InferSchema(Item{})
 	if err != nil {
@@ -414,6 +432,7 @@ func ExampleInferSchema_tags() {
 	// Size FLOAT true
 	// number INTEGER true
 	// Optional BOOLEAN false
+	// OptBytes BYTES false
 }
 
 func ExampleTable_Create() {
@@ -446,6 +465,33 @@ func ExampleTable_Create_initialize() {
 			Name:           "My New Table",
 			Schema:         schema,
 			ExpirationTime: time.Now().Add(24 * time.Hour),
+		}); err != nil {
+		// TODO: Handle error.
+	}
+}
+
+// This example demonstrates how to create a table with
+// a customer-managed encryption key.
+func ExampleTable_Create_encryptionKey() {
+	ctx := context.Background()
+	// Infer table schema from a Go type.
+	schema, err := bigquery.InferSchema(Item{})
+	if err != nil {
+		// TODO: Handle error.
+	}
+	client, err := bigquery.NewClient(ctx, "project-id")
+	if err != nil {
+		// TODO: Handle error.
+	}
+	t := client.Dataset("my_dataset").Table("new-table")
+
+	// TODO: Replace this key with a key you have created in Cloud KMS.
+	keyName := "projects/P/locations/L/keyRings/R/cryptoKeys/K"
+	if err := t.Create(ctx,
+		&bigquery.TableMetadata{
+			Name:             "My New Table",
+			Schema:           schema,
+			EncryptionConfig: &bigquery.EncryptionConfig{KMSKeyName: keyName},
 		}); err != nil {
 		// TODO: Handle error.
 	}
@@ -754,6 +800,30 @@ func ExampleUploader_Put_struct() {
 	}
 	// Schema is inferred from the score type.
 	if err := u.Put(ctx, scores); err != nil {
+		// TODO: Handle error.
+	}
+}
+
+func ExampleUploader_Put_valuesSaver() {
+	ctx := context.Background()
+	client, err := bigquery.NewClient(ctx, "project-id")
+	if err != nil {
+		// TODO: Handle error.
+	}
+
+	u := client.Dataset("my_dataset").Table("my_table").Uploader()
+
+	var vss []*bigquery.ValuesSaver
+	for i, name := range []string{"n1", "n2", "n3"} {
+		// Assume schema holds the table's schema.
+		vss = append(vss, &bigquery.ValuesSaver{
+			Schema:   schema,
+			InsertID: name,
+			Row:      []bigquery.Value{name, int64(i)},
+		})
+	}
+
+	if err := u.Put(ctx, vss); err != nil {
 		// TODO: Handle error.
 	}
 }

@@ -253,7 +253,7 @@ func main() {
 
 		// should save it as soon as you get it since Refresh won't be called for some time
 		if tokenCachePath != "" {
-			saveToken(spt.Token)
+			saveToken(spt.Token())
 		}
 	}
 

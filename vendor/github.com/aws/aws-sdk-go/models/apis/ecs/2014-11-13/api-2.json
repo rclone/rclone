@@ -670,7 +670,8 @@
         "exitCode":{"shape":"BoxedInteger"},
         "reason":{"shape":"String"},
         "networkBindings":{"shape":"NetworkBindings"},
-        "networkInterfaces":{"shape":"NetworkInterfaces"}
+        "networkInterfaces":{"shape":"NetworkInterfaces"},
+        "healthStatus":{"shape":"HealthStatus"}
       }
     },
     "ContainerDefinition":{
@@ -702,7 +703,8 @@
         "dockerSecurityOptions":{"shape":"StringList"},
         "dockerLabels":{"shape":"DockerLabelsMap"},
         "ulimits":{"shape":"UlimitList"},
-        "logConfiguration":{"shape":"LogConfiguration"}
+        "logConfiguration":{"shape":"LogConfiguration"},
+        "healthCheck":{"shape":"HealthCheck"}
       }
     },
     "ContainerDefinitions":{
@@ -1049,6 +1051,25 @@
     "Failures":{
       "type":"list",
       "member":{"shape":"Failure"}
+    },
+    "HealthCheck":{
+      "type":"structure",
+      "required":["command"],
+      "members":{
+        "command":{"shape":"StringList"},
+        "interval":{"shape":"BoxedInteger"},
+        "timeout":{"shape":"BoxedInteger"},
+        "retries":{"shape":"BoxedInteger"},
+        "startPeriod":{"shape":"BoxedInteger"}
+      }
+    },
+    "HealthStatus":{
+      "type":"string",
+      "enum":[
+        "HEALTHY",
+        "UNHEALTHY",
+        "UNKNOWN"
+      ]
     },
     "HostEntry":{
       "type":"structure",
@@ -1682,7 +1703,8 @@
         "group":{"shape":"String"},
         "launchType":{"shape":"LaunchType"},
         "platformVersion":{"shape":"String"},
-        "attachments":{"shape":"Attachments"}
+        "attachments":{"shape":"Attachments"},
+        "healthStatus":{"shape":"HealthStatus"}
       }
     },
     "TaskDefinition":{

@@ -39,39 +39,44 @@ var encryptedKeyPriv = &PrivateKey{
 }
 
 func TestDecryptingEncryptedKey(t *testing.T) {
-	const encryptedKeyHex = "c18c032a67d68660df41c70104005789d0de26b6a50c985a02a13131ca829c413a35d0e6fa8d6842599252162808ac7439c72151c8c6183e76923fe3299301414d0c25a2f06a2257db3839e7df0ec964773f6e4c4ac7ff3b48c444237166dd46ba8ff443a5410dc670cb486672fdbe7c9dfafb75b4fea83af3a204fe2a7dfa86bd20122b4f3d2646cbeecb8f7be8"
-	const expectedKeyHex = "d930363f7e0308c333b9618617ea728963d8df993665ae7be1092d4926fd864b"
+	for i, encryptedKeyHex := range []string{
+		"c18c032a67d68660df41c70104005789d0de26b6a50c985a02a13131ca829c413a35d0e6fa8d6842599252162808ac7439c72151c8c6183e76923fe3299301414d0c25a2f06a2257db3839e7df0ec964773f6e4c4ac7ff3b48c444237166dd46ba8ff443a5410dc670cb486672fdbe7c9dfafb75b4fea83af3a204fe2a7dfa86bd20122b4f3d2646cbeecb8f7be8",
+		// MPI can be shorter than the length of the key.
+		"c18b032a67d68660df41c70103f8e520c52ae9807183c669ce26e772e482dc5d8cf60e6f59316e145be14d2e5221ee69550db1d5618a8cb002a719f1f0b9345bde21536d410ec90ba86cac37748dec7933eb7f9873873b2d61d3321d1cd44535014f6df58f7bc0c7afb5edc38e1a974428997d2f747f9a173bea9ca53079b409517d332df62d805564cffc9be6",
+	} {
+		const expectedKeyHex = "d930363f7e0308c333b9618617ea728963d8df993665ae7be1092d4926fd864b"
 
-	p, err := Read(readerFromHex(encryptedKeyHex))
-	if err != nil {
-		t.Errorf("error from Read: %s", err)
-		return
-	}
-	ek, ok := p.(*EncryptedKey)
-	if !ok {
-		t.Errorf("didn't parse an EncryptedKey, got %#v", p)
-		return
-	}
+		p, err := Read(readerFromHex(encryptedKeyHex))
+		if err != nil {
+			t.Errorf("#%d: error from Read: %s", i, err)
+			return
+		}
+		ek, ok := p.(*EncryptedKey)
+		if !ok {
+			t.Errorf("#%d: didn't parse an EncryptedKey, got %#v", i, p)
+			return
+		}
 
-	if ek.KeyId != 0x2a67d68660df41c7 || ek.Algo != PubKeyAlgoRSA {
-		t.Errorf("unexpected EncryptedKey contents: %#v", ek)
-		return
-	}
+		if ek.KeyId != 0x2a67d68660df41c7 || ek.Algo != PubKeyAlgoRSA {
+			t.Errorf("#%d: unexpected EncryptedKey contents: %#v", i, ek)
+			return
+		}
 
-	err = ek.Decrypt(encryptedKeyPriv, nil)
-	if err != nil {
-		t.Errorf("error from Decrypt: %s", err)
-		return
-	}
+		err = ek.Decrypt(encryptedKeyPriv, nil)
+		if err != nil {
+			t.Errorf("#%d: error from Decrypt: %s", i, err)
+			return
+		}
 
-	if ek.CipherFunc != CipherAES256 {
-		t.Errorf("unexpected EncryptedKey contents: %#v", ek)
-		return
-	}
+		if ek.CipherFunc != CipherAES256 {
+			t.Errorf("#%d: unexpected EncryptedKey contents: %#v", i, ek)
+			return
+		}
 
-	keyHex := fmt.Sprintf("%x", ek.Key)
-	if keyHex != expectedKeyHex {
-		t.Errorf("bad key, got %s want %x", keyHex, expectedKeyHex)
+		keyHex := fmt.Sprintf("%x", ek.Key)
+		if keyHex != expectedKeyHex {
+			t.Errorf("#%d: bad key, got %s want %s", i, keyHex, expectedKeyHex)
+		}
 	}
 }
 
@@ -121,7 +126,7 @@ func TestEncryptingEncryptedKey(t *testing.T) {
 
 	keyHex := fmt.Sprintf("%x", ek.Key)
 	if keyHex != expectedKeyHex {
-		t.Errorf("bad key, got %s want %x", keyHex, expectedKeyHex)
+		t.Errorf("bad key, got %s want %s", keyHex, expectedKeyHex)
 	}
 }
 

@@ -51,7 +51,7 @@ func (client QuotaByPeriodKeysClient) Get(ctx context.Context, resourceGroupName
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.QuotaByPeriodKeysClient", "Get")
+		return result, validation.NewError("apimanagement.QuotaByPeriodKeysClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, quotaCounterKey, quotaPeriodKey)
@@ -121,15 +121,15 @@ func (client QuotaByPeriodKeysClient) GetResponder(resp *http.Response) (result 
 // Update updates an existing quota counter value in the specified service instance.
 //
 // resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// quotaCounterKey is quota counter key identifier. quotaPeriodKey is quota period key identifier. parameters is the
-// value of the Quota counter to be applied on the specified period.
+// quotaCounterKey is quota counter key identifier. quotaPeriodKey is quota period key identifier. parameters is
+// the value of the Quota counter to be applied on the specified period.
 func (client QuotaByPeriodKeysClient) Update(ctx context.Context, resourceGroupName string, serviceName string, quotaCounterKey string, quotaPeriodKey string, parameters QuotaCounterValueContract) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.QuotaByPeriodKeysClient", "Update")
+		return result, validation.NewError("apimanagement.QuotaByPeriodKeysClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serviceName, quotaCounterKey, quotaPeriodKey, parameters)

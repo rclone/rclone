@@ -45,19 +45,18 @@ func NewBackupLongTermRetentionVaultsClientWithBaseURI(baseURI string, subscript
 
 // CreateOrUpdate updates a server backup long term retention vault
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. backupLongTermRetentionVaultName is
-// the name of the backup long term retention vault parameters is the required parameters to update a backup long term
-// retention vault
-func (client BackupLongTermRetentionVaultsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, backupLongTermRetentionVaultName string, parameters BackupLongTermRetentionVault) (result BackupLongTermRetentionVaultsCreateOrUpdateFuture, err error) {
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. parameters is the required
+// parameters to update a backup long term retention vault
+func (client BackupLongTermRetentionVaultsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, parameters BackupLongTermRetentionVault) (result BackupLongTermRetentionVaultsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.BackupLongTermRetentionVaultProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.BackupLongTermRetentionVaultProperties.RecoveryServicesVaultResourceID", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "sql.BackupLongTermRetentionVaultsClient", "CreateOrUpdate")
+		return result, validation.NewError("sql.BackupLongTermRetentionVaultsClient", "CreateOrUpdate", err.Error())
 	}
 
-	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, backupLongTermRetentionVaultName, parameters)
+	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.BackupLongTermRetentionVaultsClient", "CreateOrUpdate", nil, "Failure preparing request")
 		return
@@ -73,9 +72,9 @@ func (client BackupLongTermRetentionVaultsClient) CreateOrUpdate(ctx context.Con
 }
 
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
-func (client BackupLongTermRetentionVaultsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, backupLongTermRetentionVaultName string, parameters BackupLongTermRetentionVault) (*http.Request, error) {
+func (client BackupLongTermRetentionVaultsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, parameters BackupLongTermRetentionVault) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
-		"backupLongTermRetentionVaultName": autorest.Encode("path", backupLongTermRetentionVaultName),
+		"backupLongTermRetentionVaultName": autorest.Encode("path", "RegisteredVault"),
 		"resourceGroupName":                autorest.Encode("path", resourceGroupName),
 		"serverName":                       autorest.Encode("path", serverName),
 		"subscriptionId":                   autorest.Encode("path", client.SubscriptionID),
@@ -126,11 +125,10 @@ func (client BackupLongTermRetentionVaultsClient) CreateOrUpdateResponder(resp *
 
 // Get gets a server backup long term retention vault
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. backupLongTermRetentionVaultName is
-// the name of the Azure SQL Server backup LongTermRetention vault
-func (client BackupLongTermRetentionVaultsClient) Get(ctx context.Context, resourceGroupName string, serverName string, backupLongTermRetentionVaultName string) (result BackupLongTermRetentionVault, err error) {
-	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, backupLongTermRetentionVaultName)
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
+func (client BackupLongTermRetentionVaultsClient) Get(ctx context.Context, resourceGroupName string, serverName string) (result BackupLongTermRetentionVault, err error) {
+	req, err := client.GetPreparer(ctx, resourceGroupName, serverName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.BackupLongTermRetentionVaultsClient", "Get", nil, "Failure preparing request")
 		return
@@ -152,9 +150,9 @@ func (client BackupLongTermRetentionVaultsClient) Get(ctx context.Context, resou
 }
 
 // GetPreparer prepares the Get request.
-func (client BackupLongTermRetentionVaultsClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, backupLongTermRetentionVaultName string) (*http.Request, error) {
+func (client BackupLongTermRetentionVaultsClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
-		"backupLongTermRetentionVaultName": autorest.Encode("path", backupLongTermRetentionVaultName),
+		"backupLongTermRetentionVaultName": autorest.Encode("path", "RegisteredVault"),
 		"resourceGroupName":                autorest.Encode("path", resourceGroupName),
 		"serverName":                       autorest.Encode("path", serverName),
 		"subscriptionId":                   autorest.Encode("path", client.SubscriptionID),
@@ -195,8 +193,8 @@ func (client BackupLongTermRetentionVaultsClient) GetResponder(resp *http.Respon
 
 // ListByServer gets server backup long term retention vaults in a server
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
 func (client BackupLongTermRetentionVaultsClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result BackupLongTermRetentionVaultListResult, err error) {
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)
 	if err != nil {

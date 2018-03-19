@@ -43,14 +43,14 @@ func NewSetDefinitionsClientWithBaseURI(baseURI string, subscriptionID string) S
 
 // CreateOrUpdate creates or updates a policy set definition.
 //
-// policySetDefinitionName is the name of the policy set definition to create. parameters is the policy set definition
-// properties.
+// policySetDefinitionName is the name of the policy set definition to create. parameters is the policy set
+// definition properties.
 func (client SetDefinitionsClient) CreateOrUpdate(ctx context.Context, policySetDefinitionName string, parameters SetDefinition) (result SetDefinition, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.SetDefinitionProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.SetDefinitionProperties.PolicyDefinitions", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "policy.SetDefinitionsClient", "CreateOrUpdate")
+		return result, validation.NewError("policy.SetDefinitionsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, policySetDefinitionName, parameters)
@@ -118,14 +118,14 @@ func (client SetDefinitionsClient) CreateOrUpdateResponder(resp *http.Response) 
 
 // CreateOrUpdateAtManagementGroup creates or updates a policy set definition at management group level.
 //
-// policySetDefinitionName is the name of the policy set definition to create. parameters is the policy set definition
-// properties. managementGroupID is the ID of the management group.
+// policySetDefinitionName is the name of the policy set definition to create. parameters is the policy set
+// definition properties. managementGroupID is the ID of the management group.
 func (client SetDefinitionsClient) CreateOrUpdateAtManagementGroup(ctx context.Context, policySetDefinitionName string, parameters SetDefinition, managementGroupID string) (result SetDefinition, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.SetDefinitionProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.SetDefinitionProperties.PolicyDefinitions", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "policy.SetDefinitionsClient", "CreateOrUpdateAtManagementGroup")
+		return result, validation.NewError("policy.SetDefinitionsClient", "CreateOrUpdateAtManagementGroup", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateAtManagementGroupPreparer(ctx, policySetDefinitionName, parameters, managementGroupID)

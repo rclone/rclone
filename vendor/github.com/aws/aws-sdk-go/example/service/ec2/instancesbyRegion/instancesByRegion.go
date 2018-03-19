@@ -60,9 +60,9 @@ func main() {
 		if err != nil {
 			fmt.Println("Error", err)
 		} else {
-			fmt.Printf("\n\n\nFetching instace details  for region: %s with criteria: %s**\n ", region, instanceCriteria)
+			fmt.Printf("\n\n\nFetching instance details for region: %s with criteria: %s**\n ", region, instanceCriteria)
 			if len(result.Reservations) == 0 {
-				fmt.Printf("There is no instance for the for region %s with the matching Criteria:%s  \n", region, instanceCriteria)
+				fmt.Printf("There is no instance for the region: %s with the matching criteria:%s  \n", region, instanceCriteria)
 			}
 			for _, reservation := range result.Reservations {
 

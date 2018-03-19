@@ -45,9 +45,9 @@ var scalarTests = []struct {
 	{time.Date(2016, 3, 20, 4, 22, 9, 5000, time.FixedZone("neg1-2", -3720)),
 		"2016-03-20 04:22:09.000005-01:02",
 		timestampParamType},
-	{civil.Date{2016, 3, 20}, "2016-03-20", dateParamType},
-	{civil.Time{4, 5, 6, 789000000}, "04:05:06.789000", timeParamType},
-	{civil.DateTime{civil.Date{2016, 3, 20}, civil.Time{4, 5, 6, 789000000}},
+	{civil.Date{Year: 2016, Month: 3, Day: 20}, "2016-03-20", dateParamType},
+	{civil.Time{Hour: 4, Minute: 5, Second: 6, Nanosecond: 789000000}, "04:05:06.789000", timeParamType},
+	{civil.DateTime{Date: civil.Date{Year: 2016, Month: 3, Day: 20}, Time: civil.Time{Hour: 4, Minute: 5, Second: 6, Nanosecond: 789000000}},
 		"2016-03-20 04:05:06.789000",
 		dateTimeParamType},
 }

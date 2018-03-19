@@ -18,7 +18,6 @@ package spanner
 
 import (
 	"math"
-	"reflect"
 	"testing"
 	"time"
 
@@ -158,7 +157,7 @@ func TestBindParams(t *testing.T) {
 	} {
 		st.Params["var"] = test.val
 		var got sppb.ExecuteSqlRequest
-		if err := st.bindParams(&got); !reflect.DeepEqual(err, test.wantErr) {
+		if err := st.bindParams(&got); !testEqual(err, test.wantErr) {
 			t.Errorf("value %#v:\ngot:  %v\nwant: %v", test.val, err, test.wantErr)
 		}
 	}

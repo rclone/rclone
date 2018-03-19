@@ -14,7 +14,7 @@
 
 // Package container contains a deprecated Google Container Engine client.
 //
-// Deprecated: Use google.golang.org/api/container instead.
+// Deprecated: Use cloud.google.com/go/container/apiv1 instead.
 package container // import "cloud.google.com/go/container"
 
 import (

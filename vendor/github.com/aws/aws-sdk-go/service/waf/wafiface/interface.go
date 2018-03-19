@@ -120,6 +120,10 @@ type WAFAPI interface {
 	DeleteIPSetWithContext(aws.Context, *waf.DeleteIPSetInput, ...request.Option) (*waf.DeleteIPSetOutput, error)
 	DeleteIPSetRequest(*waf.DeleteIPSetInput) (*request.Request, *waf.DeleteIPSetOutput)
 
+	DeletePermissionPolicy(*waf.DeletePermissionPolicyInput) (*waf.DeletePermissionPolicyOutput, error)
+	DeletePermissionPolicyWithContext(aws.Context, *waf.DeletePermissionPolicyInput, ...request.Option) (*waf.DeletePermissionPolicyOutput, error)
+	DeletePermissionPolicyRequest(*waf.DeletePermissionPolicyInput) (*request.Request, *waf.DeletePermissionPolicyOutput)
+
 	DeleteRateBasedRule(*waf.DeleteRateBasedRuleInput) (*waf.DeleteRateBasedRuleOutput, error)
 	DeleteRateBasedRuleWithContext(aws.Context, *waf.DeleteRateBasedRuleInput, ...request.Option) (*waf.DeleteRateBasedRuleOutput, error)
 	DeleteRateBasedRuleRequest(*waf.DeleteRateBasedRuleInput) (*request.Request, *waf.DeleteRateBasedRuleOutput)
@@ -175,6 +179,10 @@ type WAFAPI interface {
 	GetIPSet(*waf.GetIPSetInput) (*waf.GetIPSetOutput, error)
 	GetIPSetWithContext(aws.Context, *waf.GetIPSetInput, ...request.Option) (*waf.GetIPSetOutput, error)
 	GetIPSetRequest(*waf.GetIPSetInput) (*request.Request, *waf.GetIPSetOutput)
+
+	GetPermissionPolicy(*waf.GetPermissionPolicyInput) (*waf.GetPermissionPolicyOutput, error)
+	GetPermissionPolicyWithContext(aws.Context, *waf.GetPermissionPolicyInput, ...request.Option) (*waf.GetPermissionPolicyOutput, error)
+	GetPermissionPolicyRequest(*waf.GetPermissionPolicyInput) (*request.Request, *waf.GetPermissionPolicyOutput)
 
 	GetRateBasedRule(*waf.GetRateBasedRuleInput) (*waf.GetRateBasedRuleOutput, error)
 	GetRateBasedRuleWithContext(aws.Context, *waf.GetRateBasedRuleInput, ...request.Option) (*waf.GetRateBasedRuleOutput, error)
@@ -275,6 +283,10 @@ type WAFAPI interface {
 	ListXssMatchSets(*waf.ListXssMatchSetsInput) (*waf.ListXssMatchSetsOutput, error)
 	ListXssMatchSetsWithContext(aws.Context, *waf.ListXssMatchSetsInput, ...request.Option) (*waf.ListXssMatchSetsOutput, error)
 	ListXssMatchSetsRequest(*waf.ListXssMatchSetsInput) (*request.Request, *waf.ListXssMatchSetsOutput)
+
+	PutPermissionPolicy(*waf.PutPermissionPolicyInput) (*waf.PutPermissionPolicyOutput, error)
+	PutPermissionPolicyWithContext(aws.Context, *waf.PutPermissionPolicyInput, ...request.Option) (*waf.PutPermissionPolicyOutput, error)
+	PutPermissionPolicyRequest(*waf.PutPermissionPolicyInput) (*request.Request, *waf.PutPermissionPolicyOutput)
 
 	UpdateByteMatchSet(*waf.UpdateByteMatchSetInput) (*waf.UpdateByteMatchSetOutput, error)
 	UpdateByteMatchSetWithContext(aws.Context, *waf.UpdateByteMatchSetInput, ...request.Option) (*waf.UpdateByteMatchSetOutput, error)

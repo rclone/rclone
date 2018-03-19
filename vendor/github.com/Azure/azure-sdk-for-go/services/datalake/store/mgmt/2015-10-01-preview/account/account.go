@@ -44,7 +44,7 @@ func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 // resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. name is the
 // name of the Data Lake Store account to create. parameters is parameters supplied to create the Data Lake Store
 // account.
-func (client Client) Create(ctx context.Context, resourceGroupName string, name string, parameters DataLakeStoreAccount) (result AccountCreateFuture, err error) {
+func (client Client) Create(ctx context.Context, resourceGroupName string, name string, parameters DataLakeStoreAccount) (result CreateFuture, err error) {
 	req, err := client.CreatePreparer(ctx, resourceGroupName, name, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "account.Client", "Create", nil, "Failure preparing request")
@@ -85,7 +85,7 @@ func (client Client) CreatePreparer(ctx context.Context, resourceGroupName strin
 
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) CreateSender(req *http.Request) (future AccountCreateFuture, err error) {
+func (client Client) CreateSender(req *http.Request) (future CreateFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -113,9 +113,9 @@ func (client Client) CreateResponder(resp *http.Response) (result DataLakeStoreA
 
 // CreateOrUpdateFirewallRule creates or updates the specified firewall rule.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName is
-// the name of the Data Lake Store account to which to add the firewall rule. name is the name of the firewall rule to
-// create or update. parameters is parameters supplied to create the create firewall rule.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName
+// is the name of the Data Lake Store account to which to add the firewall rule. name is the name of the firewall
+// rule to create or update. parameters is parameters supplied to create the create firewall rule.
 func (client Client) CreateOrUpdateFirewallRule(ctx context.Context, resourceGroupName string, accountName string, name string, parameters FirewallRule) (result FirewallRule, err error) {
 	req, err := client.CreateOrUpdateFirewallRulePreparer(ctx, resourceGroupName, accountName, name, parameters)
 	if err != nil {
@@ -184,9 +184,9 @@ func (client Client) CreateOrUpdateFirewallRuleResponder(resp *http.Response) (r
 
 // Delete deletes the specified Data Lake Store account.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName is
-// the name of the Data Lake Store account to delete.
-func (client Client) Delete(ctx context.Context, resourceGroupName string, accountName string) (result AccountDeleteFuture, err error) {
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName
+// is the name of the Data Lake Store account to delete.
+func (client Client) Delete(ctx context.Context, resourceGroupName string, accountName string) (result DeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "account.Client", "Delete", nil, "Failure preparing request")
@@ -225,7 +225,7 @@ func (client Client) DeletePreparer(ctx context.Context, resourceGroupName strin
 
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) DeleteSender(req *http.Request) (future AccountDeleteFuture, err error) {
+func (client Client) DeleteSender(req *http.Request) (future DeleteFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -252,9 +252,9 @@ func (client Client) DeleteResponder(resp *http.Response) (result autorest.Respo
 
 // DeleteFirewallRule deletes the specified firewall rule from the specified Data Lake Store account
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName is
-// the name of the Data Lake Store account from which to delete the firewall rule. firewallRuleName is the name of the
-// firewall rule to delete.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName
+// is the name of the Data Lake Store account from which to delete the firewall rule. firewallRuleName is the name
+// of the firewall rule to delete.
 func (client Client) DeleteFirewallRule(ctx context.Context, resourceGroupName string, accountName string, firewallRuleName string) (result autorest.Response, err error) {
 	req, err := client.DeleteFirewallRulePreparer(ctx, resourceGroupName, accountName, firewallRuleName)
 	if err != nil {
@@ -320,8 +320,8 @@ func (client Client) DeleteFirewallRuleResponder(resp *http.Response) (result au
 
 // EnableKeyVault attempts to enable a user managed key vault for encryption of the specified Data Lake Store account.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName is
-// the name of the Data Lake Store account to attempt to enable the Key Vault for.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName
+// is the name of the Data Lake Store account to attempt to enable the Key Vault for.
 func (client Client) EnableKeyVault(ctx context.Context, resourceGroupName string, accountName string) (result autorest.Response, err error) {
 	req, err := client.EnableKeyVaultPreparer(ctx, resourceGroupName, accountName)
 	if err != nil {
@@ -386,8 +386,8 @@ func (client Client) EnableKeyVaultResponder(resp *http.Response) (result autore
 
 // Get gets the specified Data Lake Store account.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName is
-// the name of the Data Lake Store account to retrieve.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName
+// is the name of the Data Lake Store account to retrieve.
 func (client Client) Get(ctx context.Context, resourceGroupName string, accountName string) (result DataLakeStoreAccount, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountName)
 	if err != nil {
@@ -453,9 +453,9 @@ func (client Client) GetResponder(resp *http.Response) (result DataLakeStoreAcco
 
 // GetFirewallRule gets the specified Data Lake Store firewall rule.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName is
-// the name of the Data Lake Store account from which to get the firewall rule. firewallRuleName is the name of the
-// firewall rule to retrieve.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName
+// is the name of the Data Lake Store account from which to get the firewall rule. firewallRuleName is the name of
+// the firewall rule to retrieve.
 func (client Client) GetFirewallRule(ctx context.Context, resourceGroupName string, accountName string, firewallRuleName string) (result FirewallRule, err error) {
 	req, err := client.GetFirewallRulePreparer(ctx, resourceGroupName, accountName, firewallRuleName)
 	if err != nil {
@@ -524,17 +524,17 @@ func (client Client) GetFirewallRuleResponder(resp *http.Response) (result Firew
 // results, if any.
 //
 // filter is oData filter. Optional. top is the number of items to return. Optional. skip is the number of items to
-// skip over before returning elements. Optional. expand is oData expansion. Expand related resources in line with the
-// retrieved resources, e.g. Categories/$expand=Products would expand Product data in line with each Category entry.
-// Optional. selectParameter is oData Select statement. Limits the properties on each entry to just those requested,
-// e.g. Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more comma-separated
-// expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g.
-// Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true or false to request a count of
-// the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional. search is
-// a free form search. A free-text search expression to match for whether a particular entry should be included in the
-// feed, e.g. Categories?$search=blue OR green. Optional. formatParameter is the desired return format. Return the
-// response in particular formatxii without access to request headers for standard content-type negotiation (e.g
-// Orders?$format=json). Optional.
+// skip over before returning elements. Optional. expand is oData expansion. Expand related resources in line with
+// the retrieved resources, e.g. Categories/$expand=Products would expand Product data in line with each Category
+// entry. Optional. selectParameter is oData Select statement. Limits the properties on each entry to just those
+// requested, e.g. Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more
+// comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the
+// values sorted, e.g. Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true or false
+// to request a count of the matching resources included with the resources in the response, e.g.
+// Categories?$count=true. Optional. search is a free form search. A free-text search expression to match for
+// whether a particular entry should be included in the feed, e.g. Categories?$search=blue OR green. Optional.
+// formatParameter is the desired return format. Return the response in particular formatxii without access to
+// request headers for standard content-type negotiation (e.g Orders?$format=json). Optional.
 func (client Client) List(ctx context.Context, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (result DataLakeStoreAccountListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, filter, top, skip, expand, selectParameter, orderby, count, search, formatParameter)
@@ -654,19 +654,19 @@ func (client Client) ListComplete(ctx context.Context, filter string, top *int32
 // ListByResourceGroup lists the Data Lake Store accounts within a specific resource group. The response includes a
 // link to the next page of results, if any.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account(s). filter is
-// oData filter. Optional. top is the number of items to return. Optional. skip is the number of items to skip over
-// before returning elements. Optional. expand is oData expansion. Expand related resources in line with the retrieved
-// resources, e.g. Categories/$expand=Products would expand Product data in line with each Category entry. Optional.
-// selectParameter is oData Select statement. Limits the properties on each entry to just those requested, e.g.
-// Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more comma-separated
-// expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g.
-// Categories?$orderby=CategoryName desc. Optional. count is a Boolean value of true or false to request a count of the
-// matching resources included with the resources in the response, e.g. Categories?$count=true. Optional. search is a
-// free form search. A free-text search expression to match for whether a particular entry should be included in the
-// feed, e.g. Categories?$search=blue OR green. Optional. formatParameter is the desired return format. Return the
-// response in particular formatxii without access to request headers for standard content-type negotiation (e.g
-// Orders?$format=json). Optional.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account(s). filter
+// is oData filter. Optional. top is the number of items to return. Optional. skip is the number of items to skip
+// over before returning elements. Optional. expand is oData expansion. Expand related resources in line with the
+// retrieved resources, e.g. Categories/$expand=Products would expand Product data in line with each Category
+// entry. Optional. selectParameter is oData Select statement. Limits the properties on each entry to just those
+// requested, e.g. Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more
+// comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the
+// values sorted, e.g. Categories?$orderby=CategoryName desc. Optional. count is a Boolean value of true or false
+// to request a count of the matching resources included with the resources in the response, e.g.
+// Categories?$count=true. Optional. search is a free form search. A free-text search expression to match for
+// whether a particular entry should be included in the feed, e.g. Categories?$search=blue OR green. Optional.
+// formatParameter is the desired return format. Return the response in particular formatxii without access to
+// request headers for standard content-type negotiation (e.g Orders?$format=json). Optional.
 func (client Client) ListByResourceGroup(ctx context.Context, resourceGroupName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (result DataLakeStoreAccountListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, filter, top, skip, expand, selectParameter, orderby, count, search, formatParameter)
@@ -786,8 +786,8 @@ func (client Client) ListByResourceGroupComplete(ctx context.Context, resourceGr
 
 // ListFirewallRules lists the Data Lake Store firewall rules within the specified Data Lake Store account.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName is
-// the name of the Data Lake Store account from which to get the firewall rules.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName
+// is the name of the Data Lake Store account from which to get the firewall rules.
 func (client Client) ListFirewallRules(ctx context.Context, resourceGroupName string, accountName string) (result DataLakeStoreFirewallRuleListResultPage, err error) {
 	result.fn = client.listFirewallRulesNextResults
 	req, err := client.ListFirewallRulesPreparer(ctx, resourceGroupName, accountName)
@@ -884,7 +884,7 @@ func (client Client) ListFirewallRulesComplete(ctx context.Context, resourceGrou
 // resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. name is the
 // name of the Data Lake Store account to update. parameters is parameters supplied to update the Data Lake Store
 // account.
-func (client Client) Update(ctx context.Context, resourceGroupName string, name string, parameters DataLakeStoreAccount) (result AccountUpdateFuture, err error) {
+func (client Client) Update(ctx context.Context, resourceGroupName string, name string, parameters DataLakeStoreAccount) (result UpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, name, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "account.Client", "Update", nil, "Failure preparing request")
@@ -925,7 +925,7 @@ func (client Client) UpdatePreparer(ctx context.Context, resourceGroupName strin
 
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) UpdateSender(req *http.Request) (future AccountUpdateFuture, err error) {
+func (client Client) UpdateSender(req *http.Request) (future UpdateFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req

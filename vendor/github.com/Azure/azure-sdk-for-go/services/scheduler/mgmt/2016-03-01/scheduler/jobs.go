@@ -42,8 +42,8 @@ func NewJobsClientWithBaseURI(baseURI string, subscriptionID string) JobsClient 
 
 // CreateOrUpdate provisions a new job or updates an existing job.
 //
-// resourceGroupName is the resource group name. jobCollectionName is the job collection name. jobName is the job name.
-// job is the job definition.
+// resourceGroupName is the resource group name. jobCollectionName is the job collection name. jobName is the job
+// name. job is the job definition.
 func (client JobsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, jobCollectionName string, jobName string, job JobDefinition) (result JobDefinition, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, jobCollectionName, jobName, job)
 	if err != nil {
@@ -112,7 +112,8 @@ func (client JobsClient) CreateOrUpdateResponder(resp *http.Response) (result Jo
 
 // Delete deletes a job.
 //
-// resourceGroupName is the resource group name. jobCollectionName is the job collection name. jobName is the job name.
+// resourceGroupName is the resource group name. jobCollectionName is the job collection name. jobName is the job
+// name.
 func (client JobsClient) Delete(ctx context.Context, resourceGroupName string, jobCollectionName string, jobName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, jobCollectionName, jobName)
 	if err != nil {
@@ -178,7 +179,8 @@ func (client JobsClient) DeleteResponder(resp *http.Response) (result autorest.R
 
 // Get gets a job.
 //
-// resourceGroupName is the resource group name. jobCollectionName is the job collection name. jobName is the job name.
+// resourceGroupName is the resource group name. jobCollectionName is the job collection name. jobName is the job
+// name.
 func (client JobsClient) Get(ctx context.Context, resourceGroupName string, jobCollectionName string, jobName string) (result JobDefinition, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, jobCollectionName, jobName)
 	if err != nil {
@@ -255,7 +257,7 @@ func (client JobsClient) List(ctx context.Context, resourceGroupName string, job
 				Chain: []validation.Constraint{{Target: "top", Name: validation.InclusiveMaximum, Rule: 100, Chain: nil},
 					{Target: "top", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "scheduler.JobsClient", "List")
+		return result, validation.NewError("scheduler.JobsClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults
@@ -359,9 +361,9 @@ func (client JobsClient) ListComplete(ctx context.Context, resourceGroupName str
 
 // ListJobHistory lists job history.
 //
-// resourceGroupName is the resource group name. jobCollectionName is the job collection name. jobName is the job name.
-// top is the number of job history to request, in the of range of [1..100]. skip is the (0-based) index of the job
-// history list from which to begin requesting entries. filter is the filter to apply on the job state.
+// resourceGroupName is the resource group name. jobCollectionName is the job collection name. jobName is the job
+// name. top is the number of job history to request, in the of range of [1..100]. skip is the (0-based) index of
+// the job history list from which to begin requesting entries. filter is the filter to apply on the job state.
 func (client JobsClient) ListJobHistory(ctx context.Context, resourceGroupName string, jobCollectionName string, jobName string, top *int32, skip *int32, filter string) (result JobHistoryListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: top,
@@ -369,7 +371,7 @@ func (client JobsClient) ListJobHistory(ctx context.Context, resourceGroupName s
 				Chain: []validation.Constraint{{Target: "top", Name: validation.InclusiveMaximum, Rule: 100, Chain: nil},
 					{Target: "top", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "scheduler.JobsClient", "ListJobHistory")
+		return result, validation.NewError("scheduler.JobsClient", "ListJobHistory", err.Error())
 	}
 
 	result.fn = client.listJobHistoryNextResults
@@ -474,8 +476,8 @@ func (client JobsClient) ListJobHistoryComplete(ctx context.Context, resourceGro
 
 // Patch patches an existing job.
 //
-// resourceGroupName is the resource group name. jobCollectionName is the job collection name. jobName is the job name.
-// job is the job definition.
+// resourceGroupName is the resource group name. jobCollectionName is the job collection name. jobName is the job
+// name. job is the job definition.
 func (client JobsClient) Patch(ctx context.Context, resourceGroupName string, jobCollectionName string, jobName string, job JobDefinition) (result JobDefinition, err error) {
 	req, err := client.PatchPreparer(ctx, resourceGroupName, jobCollectionName, jobName, job)
 	if err != nil {
@@ -544,7 +546,8 @@ func (client JobsClient) PatchResponder(resp *http.Response) (result JobDefiniti
 
 // Run runs a job.
 //
-// resourceGroupName is the resource group name. jobCollectionName is the job collection name. jobName is the job name.
+// resourceGroupName is the resource group name. jobCollectionName is the job collection name. jobName is the job
+// name.
 func (client JobsClient) Run(ctx context.Context, resourceGroupName string, jobCollectionName string, jobName string) (result autorest.Response, err error) {
 	req, err := client.RunPreparer(ctx, resourceGroupName, jobCollectionName, jobName)
 	if err != nil {

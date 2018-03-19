@@ -44,12 +44,12 @@ func NewDatabaseThreatDetectionPoliciesClientWithBaseURI(baseURI string, subscri
 
 // CreateOrUpdate creates or updates a database's threat detection policy.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database for which database Threat Detection policy is defined. securityAlertPolicyName is the name of the security
-// alert policy. parameters is the database Threat Detection policy.
-func (client DatabaseThreatDetectionPoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, databaseName string, securityAlertPolicyName string, parameters DatabaseSecurityAlertPolicy) (result DatabaseSecurityAlertPolicy, err error) {
-	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, databaseName, securityAlertPolicyName, parameters)
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database for which database Threat Detection policy is defined. parameters is the database Threat Detection
+// policy.
+func (client DatabaseThreatDetectionPoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters DatabaseSecurityAlertPolicy) (result DatabaseSecurityAlertPolicy, err error) {
+	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, databaseName, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.DatabaseThreatDetectionPoliciesClient", "CreateOrUpdate", nil, "Failure preparing request")
 		return
@@ -71,11 +71,11 @@ func (client DatabaseThreatDetectionPoliciesClient) CreateOrUpdate(ctx context.C
 }
 
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
-func (client DatabaseThreatDetectionPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, securityAlertPolicyName string, parameters DatabaseSecurityAlertPolicy) (*http.Request, error) {
+func (client DatabaseThreatDetectionPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters DatabaseSecurityAlertPolicy) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"databaseName":            autorest.Encode("path", databaseName),
 		"resourceGroupName":       autorest.Encode("path", resourceGroupName),
-		"securityAlertPolicyName": autorest.Encode("path", securityAlertPolicyName),
+		"securityAlertPolicyName": autorest.Encode("path", "default"),
 		"serverName":              autorest.Encode("path", serverName),
 		"subscriptionId":          autorest.Encode("path", client.SubscriptionID),
 	}
@@ -117,12 +117,11 @@ func (client DatabaseThreatDetectionPoliciesClient) CreateOrUpdateResponder(resp
 
 // Get gets a database's threat detection policy.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database for which database Threat Detection policy is defined. securityAlertPolicyName is the name of the security
-// alert policy.
-func (client DatabaseThreatDetectionPoliciesClient) Get(ctx context.Context, resourceGroupName string, serverName string, databaseName string, securityAlertPolicyName string) (result DatabaseSecurityAlertPolicy, err error) {
-	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, databaseName, securityAlertPolicyName)
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database for which database Threat Detection policy is defined.
+func (client DatabaseThreatDetectionPoliciesClient) Get(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result DatabaseSecurityAlertPolicy, err error) {
+	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, databaseName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.DatabaseThreatDetectionPoliciesClient", "Get", nil, "Failure preparing request")
 		return
@@ -144,11 +143,11 @@ func (client DatabaseThreatDetectionPoliciesClient) Get(ctx context.Context, res
 }
 
 // GetPreparer prepares the Get request.
-func (client DatabaseThreatDetectionPoliciesClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, securityAlertPolicyName string) (*http.Request, error) {
+func (client DatabaseThreatDetectionPoliciesClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"databaseName":            autorest.Encode("path", databaseName),
 		"resourceGroupName":       autorest.Encode("path", resourceGroupName),
-		"securityAlertPolicyName": autorest.Encode("path", securityAlertPolicyName),
+		"securityAlertPolicyName": autorest.Encode("path", "default"),
 		"serverName":              autorest.Encode("path", serverName),
 		"subscriptionId":          autorest.Encode("path", client.SubscriptionID),
 	}

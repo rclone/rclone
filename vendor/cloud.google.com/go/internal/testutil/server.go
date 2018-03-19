@@ -18,8 +18,10 @@ package testutil
 
 import (
 	"net"
+	"strconv"
 
 	grpc "google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 )
 
 // A Server is an in-process gRPC server, listening on a system-chosen port on
@@ -70,4 +72,33 @@ func (s *Server) Start() {
 func (s *Server) Close() {
 	s.Gsrv.Stop()
 	s.l.Close()
+}
+
+// PageBounds converts an incoming page size and token from an RPC request into
+// slice bounds and the outgoing next-page token.
+//
+// PageBounds assumes that the complete, unpaginated list of items exists as a
+// single slice. In addition to the page size and token, PageBounds needs the
+// length of that slice.
+//
+// PageBounds's first two return values should be used to construct a sub-slice of
+// the complete, unpaginated slice. E.g. if the complete slice is s, then
+// s[from:to] is the desired page. Its third return value should be set as the
+// NextPageToken field of the RPC response.
+func PageBounds(pageSize int, pageToken string, length int) (from, to int, nextPageToken string, err error) {
+	from, to = 0, length
+	if pageToken != "" {
+		from, err = strconv.Atoi(pageToken)
+		if err != nil {
+			return 0, 0, "", grpc.Errorf(codes.InvalidArgument, "bad page token: %v", err)
+		}
+		if from >= length {
+			return length, length, "", nil
+		}
+	}
+	if pageSize > 0 && from+pageSize < length {
+		to = from + pageSize
+		nextPageToken = strconv.Itoa(to)
+	}
+	return from, to, nextPageToken, nil
 }

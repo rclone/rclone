@@ -42,8 +42,8 @@ func NewTopicsClientWithBaseURI(baseURI string, subscriptionID string) TopicsCli
 
 // CreateOrUpdate asynchronously creates a new topic with the specified parameters.
 //
-// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the topic
-// topicInfo is topic information
+// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the
+// topic topicInfo is topic information
 func (client TopicsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, topicName string, topicInfo Topic) (result TopicsCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, topicName, topicInfo)
 	if err != nil {
@@ -113,7 +113,8 @@ func (client TopicsClient) CreateOrUpdateResponder(resp *http.Response) (result 
 
 // Delete delete existing topic
 //
-// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the topic
+// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the
+// topic
 func (client TopicsClient) Delete(ctx context.Context, resourceGroupName string, topicName string) (result TopicsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, topicName)
 	if err != nil {
@@ -180,7 +181,8 @@ func (client TopicsClient) DeleteResponder(resp *http.Response) (result autorest
 
 // Get get properties of a topic
 //
-// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the topic
+// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the
+// topic
 func (client TopicsClient) Get(ctx context.Context, resourceGroupName string, topicName string) (result Topic, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, topicName)
 	if err != nil {
@@ -373,8 +375,9 @@ func (client TopicsClient) ListBySubscriptionResponder(resp *http.Response) (res
 
 // ListEventTypes list event types for a topic
 //
-// resourceGroupName is the name of the resource group within the user's subscription. providerNamespace is namespace
-// of the provider of the topic resourceTypeName is name of the topic type resourceName is name of the topic
+// resourceGroupName is the name of the resource group within the user's subscription. providerNamespace is
+// namespace of the provider of the topic resourceTypeName is name of the topic type resourceName is name of the
+// topic
 func (client TopicsClient) ListEventTypes(ctx context.Context, resourceGroupName string, providerNamespace string, resourceTypeName string, resourceName string) (result EventTypesListResult, err error) {
 	req, err := client.ListEventTypesPreparer(ctx, resourceGroupName, providerNamespace, resourceTypeName, resourceName)
 	if err != nil {
@@ -442,7 +445,8 @@ func (client TopicsClient) ListEventTypesResponder(resp *http.Response) (result 
 
 // ListSharedAccessKeys list the two keys used to publish to a topic
 //
-// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the topic
+// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the
+// topic
 func (client TopicsClient) ListSharedAccessKeys(ctx context.Context, resourceGroupName string, topicName string) (result TopicSharedAccessKeys, err error) {
 	req, err := client.ListSharedAccessKeysPreparer(ctx, resourceGroupName, topicName)
 	if err != nil {
@@ -508,13 +512,13 @@ func (client TopicsClient) ListSharedAccessKeysResponder(resp *http.Response) (r
 
 // RegenerateKey regenerate a shared access key for a topic
 //
-// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the topic
-// regenerateKeyRequest is request body to regenerate key
+// resourceGroupName is the name of the resource group within the user's subscription. topicName is name of the
+// topic regenerateKeyRequest is request body to regenerate key
 func (client TopicsClient) RegenerateKey(ctx context.Context, resourceGroupName string, topicName string, regenerateKeyRequest TopicRegenerateKeyRequest) (result TopicSharedAccessKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: regenerateKeyRequest,
 			Constraints: []validation.Constraint{{Target: "regenerateKeyRequest.KeyName", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "eventgrid.TopicsClient", "RegenerateKey")
+		return result, validation.NewError("eventgrid.TopicsClient", "RegenerateKey", err.Error())
 	}
 
 	req, err := client.RegenerateKeyPreparer(ctx, resourceGroupName, topicName, regenerateKeyRequest)

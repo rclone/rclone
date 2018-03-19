@@ -522,16 +522,16 @@ func (client PolicyAssignmentsClient) ListComplete(ctx context.Context, filter s
 
 // ListForResource gets policy assignments of the resource.
 //
-// resourceGroupName is the name of the resource group. resourceProviderNamespace is the name of the resource provider.
-// parentResourcePath is the parent resource path. resourceType is the resource type. resourceName is the resource
-// name. filter is the filter to apply on the operation.
+// resourceGroupName is the name of the resource group. resourceProviderNamespace is the name of the resource
+// provider. parentResourcePath is the parent resource path. resourceType is the resource type. resourceName is the
+// resource name. filter is the filter to apply on the operation.
 func (client PolicyAssignmentsClient) ListForResource(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string, filter string) (result PolicyAssignmentListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.PolicyAssignmentsClient", "ListForResource")
+		return result, validation.NewError("resources.PolicyAssignmentsClient", "ListForResource", err.Error())
 	}
 
 	result.fn = client.listForResourceNextResults
@@ -639,7 +639,7 @@ func (client PolicyAssignmentsClient) ListForResourceGroup(ctx context.Context, 
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.PolicyAssignmentsClient", "ListForResourceGroup")
+		return result, validation.NewError("resources.PolicyAssignmentsClient", "ListForResourceGroup", err.Error())
 	}
 
 	result.fn = client.listForResourceGroupNextResults

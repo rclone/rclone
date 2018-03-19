@@ -60,6 +60,7 @@ func New(client *http.Client) (*Service, error) {
 	}
 	s := &Service{client: client, BasePath: basePath}
 	s.Images = NewImagesService(s)
+	s.Operations = NewOperationsService(s)
 	return s, nil
 }
 
@@ -69,6 +70,8 @@ type Service struct {
 	UserAgent string // optional additional User-Agent fragment
 
 	Images *ImagesService
+
+	Operations *OperationsService
 }
 
 func (s *Service) userAgent() string {
@@ -84,6 +87,15 @@ func NewImagesService(s *Service) *ImagesService {
 }
 
 type ImagesService struct {
+	s *Service
+}
+
+func NewOperationsService(s *Service) *OperationsService {
+	rs := &OperationsService{s: s}
+	return rs
+}
+
+type OperationsService struct {
 	s *Service
 }
 
@@ -299,6 +311,9 @@ type Block struct {
 	//   and the vertice order will still be (0, 1, 2, 3).
 	BoundingBox *BoundingPoly `json:"boundingBox,omitempty"`
 
+	// Confidence: Confidence of the OCR results on the block. Range [0, 1].
+	Confidence float64 `json:"confidence,omitempty"`
+
 	// Paragraphs: List of paragraphs in this block (if this blocks is of
 	// type text).
 	Paragraphs []*Paragraph `json:"paragraphs,omitempty"`
@@ -329,6 +344,20 @@ func (s *Block) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+func (s *Block) UnmarshalJSON(data []byte) error {
+	type NoMethod Block
+	var s1 struct {
+		Confidence gensupport.JSONFloat64 `json:"confidence"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.Confidence = float64(s1.Confidence)
+	return nil
+}
+
 // BoundingPoly: A bounding polygon for the detected image annotation.
 type BoundingPoly struct {
 	// Vertices: The bounding polygon vertices.
@@ -355,6 +384,11 @@ func (s *BoundingPoly) MarshalJSON() ([]byte, error) {
 	type NoMethod BoundingPoly
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// CancelOperationRequest: The request message for
+// Operations.CancelOperation.
+type CancelOperationRequest struct {
 }
 
 // Color: Represents a color in the RGBA color space. This
@@ -851,6 +885,24 @@ func (s *DominantColorsAnnotation) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// Empty: A generic empty message that you can re-use to avoid defining
+// duplicated
+// empty messages in your APIs. A typical example is to use it as the
+// request
+// or the response type of an API method. For instance:
+//
+//     service Foo {
+//       rpc Bar(google.protobuf.Empty) returns
+// (google.protobuf.Empty);
+//     }
+//
+// The JSON representation for `Empty` is empty JSON object `{}`.
+type Empty struct {
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+}
+
 // EntityAnnotation: Set of detected entity features.
 type EntityAnnotation struct {
 	// BoundingPoly: Image region to which this entity belongs. Not
@@ -1178,6 +1230,12 @@ type Feature struct {
 	// `TEXT_DETECTION`, `DOCUMENT_TEXT_DETECTION`, or `CROP_HINTS`.
 	MaxResults int64 `json:"maxResults,omitempty"`
 
+	// Model: Model to use for the feature.
+	// Supported values: "builtin/stable" (the default if unset)
+	// and
+	// "builtin/latest".
+	Model string `json:"model,omitempty"`
+
 	// Type: The feature type.
 	//
 	// Possible values:
@@ -1223,6 +1281,205 @@ type Feature struct {
 
 func (s *Feature) MarshalJSON() ([]byte, error) {
 	type NoMethod Feature
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVisionV1p2beta1AsyncAnnotateFileResponse: The response for
+// a single offline file annotation request.
+type GoogleCloudVisionV1p2beta1AsyncAnnotateFileResponse struct {
+	// OutputConfig: The output location and metadata from
+	// AsyncAnnotateFileRequest.
+	OutputConfig *GoogleCloudVisionV1p2beta1OutputConfig `json:"outputConfig,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "OutputConfig") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "OutputConfig") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p2beta1AsyncAnnotateFileResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p2beta1AsyncAnnotateFileResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVisionV1p2beta1AsyncBatchAnnotateFilesResponse: Response
+// to an async batch file annotation request.
+type GoogleCloudVisionV1p2beta1AsyncBatchAnnotateFilesResponse struct {
+	// Responses: The list of file annotation responses, one for each
+	// request in
+	// AsyncBatchAnnotateFilesRequest.
+	Responses []*GoogleCloudVisionV1p2beta1AsyncAnnotateFileResponse `json:"responses,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Responses") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Responses") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p2beta1AsyncBatchAnnotateFilesResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p2beta1AsyncBatchAnnotateFilesResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVisionV1p2beta1GcsDestination: The Google Cloud Storage
+// location where the output will be written to.
+type GoogleCloudVisionV1p2beta1GcsDestination struct {
+	// Uri: Google Cloud Storage URI where the results will be stored.
+	// Results will
+	// be in JSON format and preceded by its corresponding input URI. This
+	// field
+	// can either represent a single file, or a prefix for multiple
+	// outputs.
+	// Prefixes must end in a `/`.
+	//
+	// Examples:
+	//
+	// *    File: gs://bucket-name/filename.json
+	// *    Prefix: gs://bucket-name/prefix/here/
+	// *    File: gs://bucket-name/prefix/here
+	//
+	// If multiple outputs, each response is still AnnotateFileResponse,
+	// each of
+	// which contains some subset of the full list of
+	// AnnotateImageResponse.
+	// Multiple outputs can happen if, for example, the output JSON is too
+	// large
+	// and overflows into multiple sharded files.
+	Uri string `json:"uri,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Uri") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Uri") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p2beta1GcsDestination) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p2beta1GcsDestination
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVisionV1p2beta1OperationMetadata: Contains metadata for
+// the BatchAnnotateImages operation.
+type GoogleCloudVisionV1p2beta1OperationMetadata struct {
+	// CreateTime: The time when the batch request was received.
+	CreateTime string `json:"createTime,omitempty"`
+
+	// State: Current state of the batch operation.
+	//
+	// Possible values:
+	//   "STATE_UNSPECIFIED" - Invalid.
+	//   "CREATED" - Request is received.
+	//   "RUNNING" - Request is actively being processed.
+	//   "DONE" - The batch processing is done.
+	//   "CANCELLED" - The batch processing was cancelled.
+	State string `json:"state,omitempty"`
+
+	// UpdateTime: The time when the operation result was last updated.
+	UpdateTime string `json:"updateTime,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CreateTime") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CreateTime") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p2beta1OperationMetadata) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p2beta1OperationMetadata
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVisionV1p2beta1OutputConfig: The desired output location
+// and metadata.
+type GoogleCloudVisionV1p2beta1OutputConfig struct {
+	// BatchSize: The max number of response protos to put into each output
+	// JSON file on GCS.
+	// The valid range is [1, 100]. If not specified, the default value is
+	// 20.
+	//
+	// For example, for one pdf file with 100 pages, 100 response protos
+	// will
+	// be generated. If `batch_size` = 20, then 5 json files each
+	// containing 20 response protos will be written under the
+	// prefix
+	// `gcs_destination`.`uri`.
+	//
+	// Currently, batch_size only applies to GcsDestination, with potential
+	// future
+	// support for other output configurations.
+	BatchSize int64 `json:"batchSize,omitempty"`
+
+	// GcsDestination: The Google Cloud Storage location to write the
+	// output(s) to.
+	GcsDestination *GoogleCloudVisionV1p2beta1GcsDestination `json:"gcsDestination,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BatchSize") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BatchSize") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p2beta1OutputConfig) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p2beta1OutputConfig
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -1290,6 +1547,9 @@ type ImageContext struct {
 	// LatLongRect: lat/long rectangle that specifies the location of the
 	// image.
 	LatLongRect *LatLongRect `json:"latLongRect,omitempty"`
+
+	// WebDetectionParams: Parameters for web detection.
+	WebDetectionParams *WebDetectionParams `json:"webDetectionParams,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CropHintsParams") to
 	// unconditionally include in API requests. By default, fields with
@@ -1565,6 +1825,43 @@ func (s *LatLongRect) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// ListOperationsResponse: The response message for
+// Operations.ListOperations.
+type ListOperationsResponse struct {
+	// NextPageToken: The standard List next-page token.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// Operations: A list of operations that matches the specified filter in
+	// the request.
+	Operations []*Operation `json:"operations,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "NextPageToken") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "NextPageToken") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListOperationsResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod ListOperationsResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // LocationInfo: Detected entity location information.
 type LocationInfo struct {
 	// LatLng: lat/long location coordinates.
@@ -1593,18 +1890,100 @@ func (s *LocationInfo) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// Operation: This resource represents a long-running operation that is
+// the result of a
+// network API call.
+type Operation struct {
+	// Done: If the value is `false`, it means the operation is still in
+	// progress.
+	// If `true`, the operation is completed, and either `error` or
+	// `response` is
+	// available.
+	Done bool `json:"done,omitempty"`
+
+	// Error: The error result of the operation in case of failure or
+	// cancellation.
+	Error *Status `json:"error,omitempty"`
+
+	// Metadata: Service-specific metadata associated with the operation.
+	// It typically
+	// contains progress information and common metadata such as create
+	// time.
+	// Some services might not provide such metadata.  Any method that
+	// returns a
+	// long-running operation should document the metadata type, if any.
+	Metadata googleapi.RawMessage `json:"metadata,omitempty"`
+
+	// Name: The server-assigned name, which is only unique within the same
+	// service that
+	// originally returns it. If you use the default HTTP mapping,
+	// the
+	// `name` should have the format of `operations/some/unique/name`.
+	Name string `json:"name,omitempty"`
+
+	// Response: The normal response of the operation in case of success.
+	// If the original
+	// method returns no data on success, such as `Delete`, the response
+	// is
+	// `google.protobuf.Empty`.  If the original method is
+	// standard
+	// `Get`/`Create`/`Update`, the response should be the resource.  For
+	// other
+	// methods, the response should have the type `XxxResponse`, where
+	// `Xxx`
+	// is the original method name.  For example, if the original method
+	// name
+	// is `TakeSnapshot()`, the inferred response type
+	// is
+	// `TakeSnapshotResponse`.
+	Response googleapi.RawMessage `json:"response,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Done") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Done") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Operation) MarshalJSON() ([]byte, error) {
+	type NoMethod Operation
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Page: Detected page from OCR.
 type Page struct {
 	// Blocks: List of blocks of text, images etc on this page.
 	Blocks []*Block `json:"blocks,omitempty"`
 
-	// Height: Page height in pixels.
+	// Confidence: Confidence of the OCR results on the page. Range [0, 1].
+	Confidence float64 `json:"confidence,omitempty"`
+
+	// Height: Page height. For PDFs the unit is points. For images
+	// (including
+	// TIFFs) the unit is pixels.
 	Height int64 `json:"height,omitempty"`
 
 	// Property: Additional information detected on the page.
 	Property *TextProperty `json:"property,omitempty"`
 
-	// Width: Page width in pixels.
+	// Width: Page width. For PDFs the unit is points. For images
+	// (including
+	// TIFFs) the unit is pixels.
 	Width int64 `json:"width,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Blocks") to
@@ -1630,6 +2009,20 @@ func (s *Page) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+func (s *Page) UnmarshalJSON(data []byte) error {
+	type NoMethod Page
+	var s1 struct {
+		Confidence gensupport.JSONFloat64 `json:"confidence"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.Confidence = float64(s1.Confidence)
+	return nil
+}
+
 // Paragraph: Structural unit of text representing a number of words in
 // certain order.
 type Paragraph struct {
@@ -1653,6 +2046,10 @@ type Paragraph struct {
 	//      1----0
 	//   and the vertice order will still be (0, 1, 2, 3).
 	BoundingBox *BoundingPoly `json:"boundingBox,omitempty"`
+
+	// Confidence: Confidence of the OCR results for the paragraph. Range
+	// [0, 1].
+	Confidence float64 `json:"confidence,omitempty"`
 
 	// Property: Additional information detected for the paragraph.
 	Property *TextProperty `json:"property,omitempty"`
@@ -1681,6 +2078,20 @@ func (s *Paragraph) MarshalJSON() ([]byte, error) {
 	type NoMethod Paragraph
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *Paragraph) UnmarshalJSON(data []byte) error {
+	type NoMethod Paragraph
+	var s1 struct {
+		Confidence gensupport.JSONFloat64 `json:"confidence"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.Confidence = float64(s1.Confidence)
+	return nil
 }
 
 // Position: A 3D position in the image, used primarily for Face
@@ -1813,6 +2224,28 @@ type SafeSearchAnnotation struct {
 	//   "VERY_LIKELY" - It is very likely that the image belongs to the
 	// specified vertical.
 	Medical string `json:"medical,omitempty"`
+
+	// Racy: Likelihood that the request image contains racy content. Racy
+	// content may
+	// include (but is not limited to) skimpy or sheer clothing,
+	// strategically
+	// covered nudity, lewd or provocative poses, or close-ups of
+	// sensitive
+	// body areas.
+	//
+	// Possible values:
+	//   "UNKNOWN" - Unknown likelihood.
+	//   "VERY_UNLIKELY" - It is very unlikely that the image belongs to the
+	// specified vertical.
+	//   "UNLIKELY" - It is unlikely that the image belongs to the specified
+	// vertical.
+	//   "POSSIBLE" - It is possible that the image belongs to the specified
+	// vertical.
+	//   "LIKELY" - It is likely that the image belongs to the specified
+	// vertical.
+	//   "VERY_LIKELY" - It is very likely that the image belongs to the
+	// specified vertical.
+	Racy string `json:"racy,omitempty"`
 
 	// Spoof: Spoof likelihood. The likelihood that an modification
 	// was made to the image's canonical version to make it appear
@@ -2013,6 +2446,10 @@ type Symbol struct {
 	//   and the vertice order will still be (0, 1, 2, 3).
 	BoundingBox *BoundingPoly `json:"boundingBox,omitempty"`
 
+	// Confidence: Confidence of the OCR results for the symbol. Range [0,
+	// 1].
+	Confidence float64 `json:"confidence,omitempty"`
+
 	// Property: Additional information detected for the symbol.
 	Property *TextProperty `json:"property,omitempty"`
 
@@ -2040,6 +2477,20 @@ func (s *Symbol) MarshalJSON() ([]byte, error) {
 	type NoMethod Symbol
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *Symbol) UnmarshalJSON(data []byte) error {
+	type NoMethod Symbol
+	var s1 struct {
+		Confidence gensupport.JSONFloat64 `json:"confidence"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.Confidence = float64(s1.Confidence)
+	return nil
 }
 
 // TextAnnotation: TextAnnotation contains a structured representation
@@ -2152,6 +2603,9 @@ func (s *Vertex) MarshalJSON() ([]byte, error) {
 
 // WebDetection: Relevant information for the image from the Internet.
 type WebDetection struct {
+	// BestGuessLabels: Best guess text labels for the request image.
+	BestGuessLabels []*WebLabel `json:"bestGuessLabels,omitempty"`
+
 	// FullMatchingImages: Fully matching images from the Internet.
 	// Can include resized copies of the query image.
 	FullMatchingImages []*WebImage `json:"fullMatchingImages,omitempty"`
@@ -2174,15 +2628,15 @@ type WebDetection struct {
 	// WebEntities: Deduced entities from similar images on the Internet.
 	WebEntities []*WebEntity `json:"webEntities,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "FullMatchingImages")
-	// to unconditionally include in API requests. By default, fields with
+	// ForceSendFields is a list of field names (e.g. "BestGuessLabels") to
+	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "FullMatchingImages") to
+	// NullFields is a list of field names (e.g. "BestGuessLabels") to
 	// include in API requests with the JSON null value. By default, fields
 	// with empty values are omitted from API requests. However, any field
 	// with an empty value appearing in NullFields will be sent to the
@@ -2194,6 +2648,36 @@ type WebDetection struct {
 
 func (s *WebDetection) MarshalJSON() ([]byte, error) {
 	type NoMethod WebDetection
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// WebDetectionParams: Parameters for web detection request.
+type WebDetectionParams struct {
+	// IncludeGeoResults: Whether to include results derived from the geo
+	// information in the image.
+	IncludeGeoResults bool `json:"includeGeoResults,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "IncludeGeoResults")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "IncludeGeoResults") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *WebDetectionParams) MarshalJSON() ([]byte, error) {
+	type NoMethod WebDetectionParams
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2292,15 +2776,19 @@ func (s *WebImage) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// WebPage: Metadata for web pages.
-type WebPage struct {
-	// Score: (Deprecated) Overall relevancy score for the web page.
-	Score float64 `json:"score,omitempty"`
+// WebLabel: Label to provide extra metadata for the web detection.
+type WebLabel struct {
+	// Label: Label for extra metadata.
+	Label string `json:"label,omitempty"`
 
-	// Url: The result web page URL.
-	Url string `json:"url,omitempty"`
+	// LanguageCode: The BCP-47 language code for `label`, such as "en-US"
+	// or "sr-Latn".
+	// For more information,
+	// see
+	// http://www.unicode.org/reports/tr35/#Unicode_locale_identifier.
+	LanguageCode string `json:"languageCode,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Score") to
+	// ForceSendFields is a list of field names (e.g. "Label") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -2308,12 +2796,59 @@ type WebPage struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Score") to include in API
+	// NullFields is a list of field names (e.g. "Label") to include in API
 	// requests with the JSON null value. By default, fields with empty
 	// values are omitted from API requests. However, any field with an
 	// empty value appearing in NullFields will be sent to the server as
 	// null. It is an error if a field in this list has a non-empty value.
 	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *WebLabel) MarshalJSON() ([]byte, error) {
+	type NoMethod WebLabel
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// WebPage: Metadata for web pages.
+type WebPage struct {
+	// FullMatchingImages: Fully matching images on the page.
+	// Can include resized copies of the query image.
+	FullMatchingImages []*WebImage `json:"fullMatchingImages,omitempty"`
+
+	// PageTitle: Title for the web page, may contain HTML markups.
+	PageTitle string `json:"pageTitle,omitempty"`
+
+	// PartialMatchingImages: Partial matching images on the page.
+	// Those images are similar enough to share some key-point features.
+	// For
+	// example an original image will likely have partial matching for
+	// its
+	// crops.
+	PartialMatchingImages []*WebImage `json:"partialMatchingImages,omitempty"`
+
+	// Score: (Deprecated) Overall relevancy score for the web page.
+	Score float64 `json:"score,omitempty"`
+
+	// Url: The result web page URL.
+	Url string `json:"url,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "FullMatchingImages")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "FullMatchingImages") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
@@ -2360,6 +2895,9 @@ type Word struct {
 	//   and the vertice order will still be (0, 1, 2, 3).
 	BoundingBox *BoundingPoly `json:"boundingBox,omitempty"`
 
+	// Confidence: Confidence of the OCR results for the word. Range [0, 1].
+	Confidence float64 `json:"confidence,omitempty"`
+
 	// Property: Additional information detected for the word.
 	Property *TextProperty `json:"property,omitempty"`
 
@@ -2388,6 +2926,20 @@ func (s *Word) MarshalJSON() ([]byte, error) {
 	type NoMethod Word
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *Word) UnmarshalJSON(data []byte) error {
+	type NoMethod Word
+	var s1 struct {
+		Confidence gensupport.JSONFloat64 `json:"confidence"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.Confidence = float64(s1.Confidence)
+	return nil
 }
 
 // method id "vision.images.annotate":
@@ -2509,4 +3061,647 @@ func (c *ImagesAnnotateCall) Do(opts ...googleapi.CallOption) (*BatchAnnotateIma
 	//   ]
 	// }
 
+}
+
+// method id "vision.operations.cancel":
+
+type OperationsCancelCall struct {
+	s                      *Service
+	name                   string
+	canceloperationrequest *CancelOperationRequest
+	urlParams_             gensupport.URLParams
+	ctx_                   context.Context
+	header_                http.Header
+}
+
+// Cancel: Starts asynchronous cancellation on a long-running operation.
+//  The server
+// makes a best effort to cancel the operation, but success is
+// not
+// guaranteed.  If the server doesn't support this method, it
+// returns
+// `google.rpc.Code.UNIMPLEMENTED`.  Clients can
+// use
+// Operations.GetOperation or
+// other methods to check whether the cancellation succeeded or whether
+// the
+// operation completed despite cancellation. On successful
+// cancellation,
+// the operation is not deleted; instead, it becomes an operation
+// with
+// an Operation.error value with a google.rpc.Status.code of
+// 1,
+// corresponding to `Code.CANCELLED`.
+func (r *OperationsService) Cancel(name string, canceloperationrequest *CancelOperationRequest) *OperationsCancelCall {
+	c := &OperationsCancelCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.canceloperationrequest = canceloperationrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *OperationsCancelCall) Fields(s ...googleapi.Field) *OperationsCancelCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *OperationsCancelCall) Context(ctx context.Context) *OperationsCancelCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *OperationsCancelCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *OperationsCancelCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.canceloperationrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}:cancel")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "vision.operations.cancel" call.
+// Exactly one of *Empty or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Empty.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *OperationsCancelCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Empty{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Starts asynchronous cancellation on a long-running operation.  The server\nmakes a best effort to cancel the operation, but success is not\nguaranteed.  If the server doesn't support this method, it returns\n`google.rpc.Code.UNIMPLEMENTED`.  Clients can use\nOperations.GetOperation or\nother methods to check whether the cancellation succeeded or whether the\noperation completed despite cancellation. On successful cancellation,\nthe operation is not deleted; instead, it becomes an operation with\nan Operation.error value with a google.rpc.Status.code of 1,\ncorresponding to `Code.CANCELLED`.",
+	//   "flatPath": "v1/operations/{operationsId}:cancel",
+	//   "httpMethod": "POST",
+	//   "id": "vision.operations.cancel",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "The name of the operation resource to be cancelled.",
+	//       "location": "path",
+	//       "pattern": "^operations/.+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}:cancel",
+	//   "request": {
+	//     "$ref": "CancelOperationRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "Empty"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-vision"
+	//   ]
+	// }
+
+}
+
+// method id "vision.operations.delete":
+
+type OperationsDeleteCall struct {
+	s          *Service
+	name       string
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Delete: Deletes a long-running operation. This method indicates that
+// the client is
+// no longer interested in the operation result. It does not cancel
+// the
+// operation. If the server doesn't support this method, it
+// returns
+// `google.rpc.Code.UNIMPLEMENTED`.
+func (r *OperationsService) Delete(name string) *OperationsDeleteCall {
+	c := &OperationsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *OperationsDeleteCall) Fields(s ...googleapi.Field) *OperationsDeleteCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *OperationsDeleteCall) Context(ctx context.Context) *OperationsDeleteCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *OperationsDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *OperationsDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("DELETE", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "vision.operations.delete" call.
+// Exactly one of *Empty or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Empty.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *OperationsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Empty{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Deletes a long-running operation. This method indicates that the client is\nno longer interested in the operation result. It does not cancel the\noperation. If the server doesn't support this method, it returns\n`google.rpc.Code.UNIMPLEMENTED`.",
+	//   "flatPath": "v1/operations/{operationsId}",
+	//   "httpMethod": "DELETE",
+	//   "id": "vision.operations.delete",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "The name of the operation resource to be deleted.",
+	//       "location": "path",
+	//       "pattern": "^operations/.+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "Empty"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-vision"
+	//   ]
+	// }
+
+}
+
+// method id "vision.operations.get":
+
+type OperationsGetCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Gets the latest state of a long-running operation.  Clients can
+// use this
+// method to poll the operation result at intervals as recommended by
+// the API
+// service.
+func (r *OperationsService) Get(name string) *OperationsGetCall {
+	c := &OperationsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *OperationsGetCall) Fields(s ...googleapi.Field) *OperationsGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *OperationsGetCall) IfNoneMatch(entityTag string) *OperationsGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *OperationsGetCall) Context(ctx context.Context) *OperationsGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *OperationsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *OperationsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "vision.operations.get" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *OperationsGetCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Gets the latest state of a long-running operation.  Clients can use this\nmethod to poll the operation result at intervals as recommended by the API\nservice.",
+	//   "flatPath": "v1/operations/{operationsId}",
+	//   "httpMethod": "GET",
+	//   "id": "vision.operations.get",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "The name of the operation resource.",
+	//       "location": "path",
+	//       "pattern": "^operations/.+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-vision"
+	//   ]
+	// }
+
+}
+
+// method id "vision.operations.list":
+
+type OperationsListCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists operations that match the specified filter in the
+// request. If the
+// server doesn't support this method, it returns
+// `UNIMPLEMENTED`.
+//
+// NOTE: the `name` binding allows API services to override the
+// binding
+// to use different resource name schemes, such as `users/*/operations`.
+// To
+// override the binding, API services can add a binding such
+// as
+// "/v1/{name=users/*}/operations" to their service configuration.
+// For backwards compatibility, the default name includes the
+// operations
+// collection id, however overriding users must ensure the name
+// binding
+// is the parent resource, without the operations collection id.
+func (r *OperationsService) List(name string) *OperationsListCall {
+	c := &OperationsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Filter sets the optional parameter "filter": The standard list
+// filter.
+func (c *OperationsListCall) Filter(filter string) *OperationsListCall {
+	c.urlParams_.Set("filter", filter)
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": The standard list
+// page size.
+func (c *OperationsListCall) PageSize(pageSize int64) *OperationsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": The standard list
+// page token.
+func (c *OperationsListCall) PageToken(pageToken string) *OperationsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *OperationsListCall) Fields(s ...googleapi.Field) *OperationsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *OperationsListCall) IfNoneMatch(entityTag string) *OperationsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *OperationsListCall) Context(ctx context.Context) *OperationsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *OperationsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *OperationsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "vision.operations.list" call.
+// Exactly one of *ListOperationsResponse or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *ListOperationsResponse.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *OperationsListCall) Do(opts ...googleapi.CallOption) (*ListOperationsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListOperationsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Lists operations that match the specified filter in the request. If the\nserver doesn't support this method, it returns `UNIMPLEMENTED`.\n\nNOTE: the `name` binding allows API services to override the binding\nto use different resource name schemes, such as `users/*/operations`. To\noverride the binding, API services can add a binding such as\n`\"/v1/{name=users/*}/operations\"` to their service configuration.\nFor backwards compatibility, the default name includes the operations\ncollection id, however overriding users must ensure the name binding\nis the parent resource, without the operations collection id.",
+	//   "flatPath": "v1/operations",
+	//   "httpMethod": "GET",
+	//   "id": "vision.operations.list",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "filter": {
+	//       "description": "The standard list filter.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "name": {
+	//       "description": "The name of the operation's parent resource.",
+	//       "location": "path",
+	//       "pattern": "^operations$",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "The standard list page size.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "The standard list page token.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "ListOperationsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-vision"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *OperationsListCall) Pages(ctx context.Context, f func(*ListOperationsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
 }

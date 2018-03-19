@@ -83,6 +83,16 @@ func ExampleRoute53_ChangeResourceRecordSets_shared00() {
 			Changes: []*route53.Change{
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						Name: aws.String("example.com"),
+						ResourceRecords: []*route53.ResourceRecord{
+							{
+								Value: aws.String("192.0.2.44"),
+							},
+						},
+						TTL:  aws.Int64(60),
+						Type: aws.String("A"),
+					},
 				},
 			},
 			Comment: aws.String("Web server for example.com"),
@@ -130,9 +140,35 @@ func ExampleRoute53_ChangeResourceRecordSets_shared01() {
 			Changes: []*route53.Change{
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						HealthCheckId: aws.String("abcdef11-2222-3333-4444-555555fedcba"),
+						Name:          aws.String("example.com"),
+						ResourceRecords: []*route53.ResourceRecord{
+							{
+								Value: aws.String("192.0.2.44"),
+							},
+						},
+						SetIdentifier: aws.String("Seattle data center"),
+						TTL:           aws.Int64(60),
+						Type:          aws.String("A"),
+						Weight:        aws.Int64(100),
+					},
 				},
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						HealthCheckId: aws.String("abcdef66-7777-8888-9999-000000fedcba"),
+						Name:          aws.String("example.com"),
+						ResourceRecords: []*route53.ResourceRecord{
+							{
+								Value: aws.String("192.0.2.45"),
+							},
+						},
+						SetIdentifier: aws.String("Portland data center"),
+						TTL:           aws.Int64(60),
+						Type:          aws.String("A"),
+						Weight:        aws.Int64(200),
+					},
 				},
 			},
 			Comment: aws.String("Web servers for example.com"),
@@ -179,6 +215,15 @@ func ExampleRoute53_ChangeResourceRecordSets_shared02() {
 			Changes: []*route53.Change{
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						AliasTarget: &route53.AliasTarget{
+							DNSName:              aws.String("d123rk29d0stfj.cloudfront.net"),
+							EvaluateTargetHealth: aws.Bool(false),
+							HostedZoneId:         aws.String("Z2FDTNDATAQYW2"),
+						},
+						Name: aws.String("example.com"),
+						Type: aws.String("A"),
+					},
 				},
 			},
 			Comment: aws.String("CloudFront distribution for example.com"),
@@ -227,9 +272,31 @@ func ExampleRoute53_ChangeResourceRecordSets_shared03() {
 			Changes: []*route53.Change{
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						AliasTarget: &route53.AliasTarget{
+							DNSName:              aws.String("example-com-123456789.us-east-2.elb.amazonaws.com "),
+							EvaluateTargetHealth: aws.Bool(true),
+							HostedZoneId:         aws.String("Z3AADJGX6KTTL2"),
+						},
+						Name:          aws.String("example.com"),
+						SetIdentifier: aws.String("Ohio region"),
+						Type:          aws.String("A"),
+						Weight:        aws.Int64(100),
+					},
 				},
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						AliasTarget: &route53.AliasTarget{
+							DNSName:              aws.String("example-com-987654321.us-west-2.elb.amazonaws.com "),
+							EvaluateTargetHealth: aws.Bool(true),
+							HostedZoneId:         aws.String("Z1H1FL5HABSF5"),
+						},
+						Name:          aws.String("example.com"),
+						SetIdentifier: aws.String("Oregon region"),
+						Type:          aws.String("A"),
+						Weight:        aws.Int64(200),
+					},
 				},
 			},
 			Comment: aws.String("ELB load balancers for example.com"),
@@ -277,9 +344,35 @@ func ExampleRoute53_ChangeResourceRecordSets_shared04() {
 			Changes: []*route53.Change{
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						HealthCheckId: aws.String("abcdef11-2222-3333-4444-555555fedcba"),
+						Name:          aws.String("example.com"),
+						Region:        aws.String("us-east-2"),
+						ResourceRecords: []*route53.ResourceRecord{
+							{
+								Value: aws.String("192.0.2.44"),
+							},
+						},
+						SetIdentifier: aws.String("Ohio region"),
+						TTL:           aws.Int64(60),
+						Type:          aws.String("A"),
+					},
 				},
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						HealthCheckId: aws.String("abcdef66-7777-8888-9999-000000fedcba"),
+						Name:          aws.String("example.com"),
+						Region:        aws.String("us-west-2"),
+						ResourceRecords: []*route53.ResourceRecord{
+							{
+								Value: aws.String("192.0.2.45"),
+							},
+						},
+						SetIdentifier: aws.String("Oregon region"),
+						TTL:           aws.Int64(60),
+						Type:          aws.String("A"),
+					},
 				},
 			},
 			Comment: aws.String("EC2 instances for example.com"),
@@ -327,9 +420,31 @@ func ExampleRoute53_ChangeResourceRecordSets_shared05() {
 			Changes: []*route53.Change{
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						AliasTarget: &route53.AliasTarget{
+							DNSName:              aws.String("example-com-123456789.us-east-2.elb.amazonaws.com "),
+							EvaluateTargetHealth: aws.Bool(true),
+							HostedZoneId:         aws.String("Z3AADJGX6KTTL2"),
+						},
+						Name:          aws.String("example.com"),
+						Region:        aws.String("us-east-2"),
+						SetIdentifier: aws.String("Ohio region"),
+						Type:          aws.String("A"),
+					},
 				},
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						AliasTarget: &route53.AliasTarget{
+							DNSName:              aws.String("example-com-987654321.us-west-2.elb.amazonaws.com "),
+							EvaluateTargetHealth: aws.Bool(true),
+							HostedZoneId:         aws.String("Z1H1FL5HABSF5"),
+						},
+						Name:          aws.String("example.com"),
+						Region:        aws.String("us-west-2"),
+						SetIdentifier: aws.String("Oregon region"),
+						Type:          aws.String("A"),
+					},
 				},
 			},
 			Comment: aws.String("ELB load balancers for example.com"),
@@ -378,9 +493,35 @@ func ExampleRoute53_ChangeResourceRecordSets_shared06() {
 			Changes: []*route53.Change{
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						Failover:      aws.String("PRIMARY"),
+						HealthCheckId: aws.String("abcdef11-2222-3333-4444-555555fedcba"),
+						Name:          aws.String("example.com"),
+						ResourceRecords: []*route53.ResourceRecord{
+							{
+								Value: aws.String("192.0.2.44"),
+							},
+						},
+						SetIdentifier: aws.String("Ohio region"),
+						TTL:           aws.Int64(60),
+						Type:          aws.String("A"),
+					},
 				},
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						Failover:      aws.String("SECONDARY"),
+						HealthCheckId: aws.String("abcdef66-7777-8888-9999-000000fedcba"),
+						Name:          aws.String("example.com"),
+						ResourceRecords: []*route53.ResourceRecord{
+							{
+								Value: aws.String("192.0.2.45"),
+							},
+						},
+						SetIdentifier: aws.String("Oregon region"),
+						TTL:           aws.Int64(60),
+						Type:          aws.String("A"),
+					},
 				},
 			},
 			Comment: aws.String("Failover configuration for example.com"),
@@ -429,9 +570,31 @@ func ExampleRoute53_ChangeResourceRecordSets_shared07() {
 			Changes: []*route53.Change{
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						AliasTarget: &route53.AliasTarget{
+							DNSName:              aws.String("example-com-123456789.us-east-2.elb.amazonaws.com "),
+							EvaluateTargetHealth: aws.Bool(true),
+							HostedZoneId:         aws.String("Z3AADJGX6KTTL2"),
+						},
+						Failover:      aws.String("PRIMARY"),
+						Name:          aws.String("example.com"),
+						SetIdentifier: aws.String("Ohio region"),
+						Type:          aws.String("A"),
+					},
 				},
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						AliasTarget: &route53.AliasTarget{
+							DNSName:              aws.String("example-com-987654321.us-west-2.elb.amazonaws.com "),
+							EvaluateTargetHealth: aws.Bool(true),
+							HostedZoneId:         aws.String("Z1H1FL5HABSF5"),
+						},
+						Failover:      aws.String("SECONDARY"),
+						Name:          aws.String("example.com"),
+						SetIdentifier: aws.String("Oregon region"),
+						Type:          aws.String("A"),
+					},
 				},
 			},
 			Comment: aws.String("Failover alias configuration for example.com"),
@@ -480,15 +643,71 @@ func ExampleRoute53_ChangeResourceRecordSets_shared08() {
 			Changes: []*route53.Change{
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						GeoLocation: &route53.GeoLocation{
+							ContinentCode: aws.String("NA"),
+						},
+						Name: aws.String("example.com"),
+						ResourceRecords: []*route53.ResourceRecord{
+							{
+								Value: aws.String("192.0.2.44"),
+							},
+						},
+						SetIdentifier: aws.String("North America"),
+						TTL:           aws.Int64(60),
+						Type:          aws.String("A"),
+					},
 				},
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						GeoLocation: &route53.GeoLocation{
+							ContinentCode: aws.String("SA"),
+						},
+						Name: aws.String("example.com"),
+						ResourceRecords: []*route53.ResourceRecord{
+							{
+								Value: aws.String("192.0.2.45"),
+							},
+						},
+						SetIdentifier: aws.String("South America"),
+						TTL:           aws.Int64(60),
+						Type:          aws.String("A"),
+					},
 				},
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						GeoLocation: &route53.GeoLocation{
+							ContinentCode: aws.String("EU"),
+						},
+						Name: aws.String("example.com"),
+						ResourceRecords: []*route53.ResourceRecord{
+							{
+								Value: aws.String("192.0.2.46"),
+							},
+						},
+						SetIdentifier: aws.String("Europe"),
+						TTL:           aws.Int64(60),
+						Type:          aws.String("A"),
+					},
 				},
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						GeoLocation: &route53.GeoLocation{
+							CountryCode: aws.String("*"),
+						},
+						Name: aws.String("example.com"),
+						ResourceRecords: []*route53.ResourceRecord{
+							{
+								Value: aws.String("192.0.2.47"),
+							},
+						},
+						SetIdentifier: aws.String("Other locations"),
+						TTL:           aws.Int64(60),
+						Type:          aws.String("A"),
+					},
 				},
 			},
 			Comment: aws.String("Geolocation configuration for example.com"),
@@ -537,15 +756,67 @@ func ExampleRoute53_ChangeResourceRecordSets_shared09() {
 			Changes: []*route53.Change{
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						AliasTarget: &route53.AliasTarget{
+							DNSName:              aws.String("example-com-123456789.us-east-2.elb.amazonaws.com "),
+							EvaluateTargetHealth: aws.Bool(true),
+							HostedZoneId:         aws.String("Z3AADJGX6KTTL2"),
+						},
+						GeoLocation: &route53.GeoLocation{
+							ContinentCode: aws.String("NA"),
+						},
+						Name:          aws.String("example.com"),
+						SetIdentifier: aws.String("North America"),
+						Type:          aws.String("A"),
+					},
 				},
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						AliasTarget: &route53.AliasTarget{
+							DNSName:              aws.String("example-com-234567890.sa-east-1.elb.amazonaws.com "),
+							EvaluateTargetHealth: aws.Bool(true),
+							HostedZoneId:         aws.String("Z2P70J7HTTTPLU"),
+						},
+						GeoLocation: &route53.GeoLocation{
+							ContinentCode: aws.String("SA"),
+						},
+						Name:          aws.String("example.com"),
+						SetIdentifier: aws.String("South America"),
+						Type:          aws.String("A"),
+					},
 				},
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						AliasTarget: &route53.AliasTarget{
+							DNSName:              aws.String("example-com-234567890.eu-central-1.elb.amazonaws.com "),
+							EvaluateTargetHealth: aws.Bool(true),
+							HostedZoneId:         aws.String("Z215JYRZR1TBD5"),
+						},
+						GeoLocation: &route53.GeoLocation{
+							ContinentCode: aws.String("EU"),
+						},
+						Name:          aws.String("example.com"),
+						SetIdentifier: aws.String("Europe"),
+						Type:          aws.String("A"),
+					},
 				},
 				{
 					Action: aws.String("CREATE"),
+					ResourceRecordSet: &route53.ResourceRecordSet{
+						AliasTarget: &route53.AliasTarget{
+							DNSName:              aws.String("example-com-234567890.ap-southeast-1.elb.amazonaws.com "),
+							EvaluateTargetHealth: aws.Bool(true),
+							HostedZoneId:         aws.String("Z1LMS91P8CMLE5"),
+						},
+						GeoLocation: &route53.GeoLocation{
+							CountryCode: aws.String("*"),
+						},
+						Name:          aws.String("example.com"),
+						SetIdentifier: aws.String("Other locations"),
+						Type:          aws.String("A"),
+					},
 				},
 			},
 			Comment: aws.String("Geolocation alias configuration for example.com"),

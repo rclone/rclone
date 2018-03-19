@@ -99,10 +99,6 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/stacktic/dropbox"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/stretchr/testify"
 
 [[constraint]]
@@ -150,5 +146,5 @@
   name = "github.com/okzk/sdnotify"
 
 [[constraint]]
+  branch = "master"
   name = "github.com/sevlyar/go-daemon"
-  version = "0.1.2"

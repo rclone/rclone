@@ -43,9 +43,9 @@ func NewElasticPoolActivitiesClientWithBaseURI(baseURI string, subscriptionID st
 
 // ListByElasticPool returns elastic pool activities.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. elasticPoolName is the name of the
-// elastic pool for which to get the current activity.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. elasticPoolName is the name
+// of the elastic pool for which to get the current activity.
 func (client ElasticPoolActivitiesClient) ListByElasticPool(ctx context.Context, resourceGroupName string, serverName string, elasticPoolName string) (result ElasticPoolActivityListResult, err error) {
 	req, err := client.ListByElasticPoolPreparer(ctx, resourceGroupName, serverName, elasticPoolName)
 	if err != nil {

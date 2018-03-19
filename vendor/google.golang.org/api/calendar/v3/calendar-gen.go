@@ -787,6 +787,10 @@ type ConferenceData struct {
 	// HTML. The maximum length is 2048 characters. Optional.
 	Notes string `json:"notes,omitempty"`
 
+	// Parameters: Additional properties related to a conference. An example
+	// would be a solution-specific setting for enabling video streaming.
+	Parameters *ConferenceParameters `json:"parameters,omitempty"`
+
 	// Signature: The signature of the conference data.
 	// Genereated on server side. Must be preserved while copying the
 	// conference data between events, otherwise the conference data will
@@ -814,6 +818,60 @@ type ConferenceData struct {
 
 func (s *ConferenceData) MarshalJSON() ([]byte, error) {
 	type NoMethod ConferenceData
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type ConferenceParameters struct {
+	// AddOnParameters: Additional add-on specific data.
+	AddOnParameters *ConferenceParametersAddOnParameters `json:"addOnParameters,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AddOnParameters") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AddOnParameters") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ConferenceParameters) MarshalJSON() ([]byte, error) {
+	type NoMethod ConferenceParameters
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type ConferenceParametersAddOnParameters struct {
+	Parameters map[string]string `json:"parameters,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Parameters") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Parameters") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ConferenceParametersAddOnParameters) MarshalJSON() ([]byte, error) {
+	type NoMethod ConferenceParametersAddOnParameters
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }

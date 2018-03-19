@@ -43,8 +43,8 @@ func NewSuppressionsClientWithBaseURI(baseURI string, subscriptionID string) Sup
 // referred to as a suppression. Use this API to create or update the snoozed or dismissed status of a recommendation.
 //
 // resourceURI is the fully qualified Azure Resource Manager identifier of the resource to which the recommendation
-// applies. recommendationID is the recommendation ID. name is the name of the suppression. suppressionContract is the
-// snoozed or dismissed attribute; for example, the snooze duration.
+// applies. recommendationID is the recommendation ID. name is the name of the suppression. suppressionContract is
+// the snoozed or dismissed attribute; for example, the snooze duration.
 func (client SuppressionsClient) Create(ctx context.Context, resourceURI string, recommendationID string, name string, suppressionContract SuppressionContract) (result SuppressionContract, err error) {
 	req, err := client.CreatePreparer(ctx, resourceURI, recommendationID, name, suppressionContract)
 	if err != nil {

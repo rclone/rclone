@@ -1513,7 +1513,6 @@ func (c *MQ) UpdateUserWithContext(ctx aws.Context, input *UpdateUserRequest, op
 }
 
 // Returns information about all brokers.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/BrokerInstance
 type BrokerInstance struct {
 	_ struct{} `type:"structure"`
 
@@ -1547,7 +1546,6 @@ func (s *BrokerInstance) SetEndpoints(v []*string) *BrokerInstance {
 }
 
 // The Amazon Resource Name (ARN) of the broker.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/BrokerSummary
 type BrokerSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -1624,7 +1622,6 @@ func (s *BrokerSummary) SetHostInstanceType(v string) *BrokerSummary {
 }
 
 // Returns information about all configurations.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/Configuration
 type Configuration struct {
 	_ struct{} `type:"structure"`
 
@@ -1706,7 +1703,6 @@ func (s *Configuration) SetName(v string) *Configuration {
 }
 
 // A list of information about the configuration.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/ConfigurationId
 type ConfigurationId struct {
 	_ struct{} `type:"structure"`
 
@@ -1740,7 +1736,6 @@ func (s *ConfigurationId) SetRevision(v int64) *ConfigurationId {
 }
 
 // Returns information about the specified configuration revision.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/ConfigurationRevision
 type ConfigurationRevision struct {
 	_ struct{} `type:"structure"`
 
@@ -1774,7 +1769,6 @@ func (s *ConfigurationRevision) SetRevision(v int64) *ConfigurationRevision {
 }
 
 // Broker configuration information
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/Configurations
 type Configurations struct {
 	_ struct{} `type:"structure"`
 
@@ -1816,7 +1810,6 @@ func (s *Configurations) SetPending(v *ConfigurationId) *Configurations {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/CreateBrokerRequest
 type CreateBrokerRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -1942,7 +1935,6 @@ func (s *CreateBrokerRequest) SetUsers(v []*User) *CreateBrokerRequest {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/CreateBrokerResponse
 type CreateBrokerResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -1973,7 +1965,6 @@ func (s *CreateBrokerResponse) SetBrokerId(v string) *CreateBrokerResponse {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/CreateConfigurationRequest
 type CreateConfigurationRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -2013,7 +2004,6 @@ func (s *CreateConfigurationRequest) SetName(v string) *CreateConfigurationReque
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/CreateConfigurationResponse
 type CreateConfigurationResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -2061,7 +2051,6 @@ func (s *CreateConfigurationResponse) SetName(v string) *CreateConfigurationResp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/CreateUserResponse
 type CreateUserOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2076,7 +2065,6 @@ func (s CreateUserOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/CreateUserRequest
 type CreateUserRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -2149,7 +2137,6 @@ func (s *CreateUserRequest) SetUsername(v string) *CreateUserRequest {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/DeleteBrokerRequest
 type DeleteBrokerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2186,7 +2173,6 @@ func (s *DeleteBrokerInput) SetBrokerId(v string) *DeleteBrokerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/DeleteBrokerResponse
 type DeleteBrokerResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -2209,7 +2195,6 @@ func (s *DeleteBrokerResponse) SetBrokerId(v string) *DeleteBrokerResponse {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/DeleteUserRequest
 type DeleteUserInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2258,7 +2243,6 @@ func (s *DeleteUserInput) SetUsername(v string) *DeleteUserInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/DeleteUserResponse
 type DeleteUserOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2273,7 +2257,6 @@ func (s DeleteUserOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/DescribeBrokerRequest
 type DescribeBrokerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2310,7 +2293,6 @@ func (s *DescribeBrokerInput) SetBrokerId(v string) *DescribeBrokerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/DescribeBrokerResponse
 type DescribeBrokerResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -2462,7 +2444,6 @@ func (s *DescribeBrokerResponse) SetUsers(v []*UserSummary) *DescribeBrokerRespo
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/DescribeConfigurationRequest
 type DescribeConfigurationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2499,7 +2480,6 @@ func (s *DescribeConfigurationInput) SetConfigurationId(v string) *DescribeConfi
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/DescribeConfigurationResponse
 type DescribeConfigurationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2572,7 +2552,6 @@ func (s *DescribeConfigurationOutput) SetName(v string) *DescribeConfigurationOu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/DescribeConfigurationRevisionRequest
 type DescribeConfigurationRevisionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2621,7 +2600,6 @@ func (s *DescribeConfigurationRevisionInput) SetConfigurationRevision(v string) 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/DescribeConfigurationRevisionResponse
 type DescribeConfigurationRevisionResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -2660,7 +2638,6 @@ func (s *DescribeConfigurationRevisionResponse) SetDescription(v string) *Descri
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/DescribeUserRequest
 type DescribeUserInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2709,7 +2686,6 @@ func (s *DescribeUserInput) SetUsername(v string) *DescribeUserInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/DescribeUserResponse
 type DescribeUserResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -2766,7 +2742,6 @@ func (s *DescribeUserResponse) SetUsername(v string) *DescribeUserResponse {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/ListBrokersRequest
 type ListBrokersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2810,7 +2785,6 @@ func (s *ListBrokersInput) SetNextToken(v string) *ListBrokersInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/ListBrokersResponse
 type ListBrokersResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -2841,7 +2815,6 @@ func (s *ListBrokersResponse) SetNextToken(v string) *ListBrokersResponse {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/ListConfigurationRevisionsRequest
 type ListConfigurationRevisionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2897,7 +2870,6 @@ func (s *ListConfigurationRevisionsInput) SetNextToken(v string) *ListConfigurat
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/ListConfigurationRevisionsResponse
 type ListConfigurationRevisionsResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -2944,7 +2916,6 @@ func (s *ListConfigurationRevisionsResponse) SetRevisions(v []*ConfigurationRevi
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/ListConfigurationsRequest
 type ListConfigurationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2988,7 +2959,6 @@ func (s *ListConfigurationsInput) SetNextToken(v string) *ListConfigurationsInpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/ListConfigurationsResponse
 type ListConfigurationsResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -3027,7 +2997,6 @@ func (s *ListConfigurationsResponse) SetNextToken(v string) *ListConfigurationsR
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/ListUsersRequest
 type ListUsersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3083,7 +3052,6 @@ func (s *ListUsersInput) SetNextToken(v string) *ListUsersInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/ListUsersResponse
 type ListUsersResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -3130,7 +3098,6 @@ func (s *ListUsersResponse) SetUsers(v []*UserSummary) *ListUsersResponse {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/RebootBrokerRequest
 type RebootBrokerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3167,7 +3134,6 @@ func (s *RebootBrokerInput) SetBrokerId(v string) *RebootBrokerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/RebootBrokerResponse
 type RebootBrokerOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3184,7 +3150,6 @@ func (s RebootBrokerOutput) GoString() string {
 
 // Returns information about the XML element or attribute that was sanitized
 // in the configuration.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/SanitizationWarning
 type SanitizationWarning struct {
 	_ struct{} `type:"structure"`
 
@@ -3232,7 +3197,6 @@ func (s *SanitizationWarning) SetReason(v string) *SanitizationWarning {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/UpdateBrokerRequest
 type UpdateBrokerRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -3278,7 +3242,6 @@ func (s *UpdateBrokerRequest) SetConfiguration(v *ConfigurationId) *UpdateBroker
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/UpdateBrokerResponse
 type UpdateBrokerResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -3310,7 +3273,6 @@ func (s *UpdateBrokerResponse) SetConfiguration(v *ConfigurationId) *UpdateBroke
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/UpdateConfigurationRequest
 type UpdateConfigurationRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -3363,7 +3325,6 @@ func (s *UpdateConfigurationRequest) SetDescription(v string) *UpdateConfigurati
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/UpdateConfigurationResponse
 type UpdateConfigurationResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -3419,7 +3380,6 @@ func (s *UpdateConfigurationResponse) SetWarnings(v []*SanitizationWarning) *Upd
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/UpdateUserResponse
 type UpdateUserOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3434,7 +3394,6 @@ func (s UpdateUserOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/UpdateUserRequest
 type UpdateUserRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -3508,7 +3467,6 @@ func (s *UpdateUserRequest) SetUsername(v string) *UpdateUserRequest {
 }
 
 // An ActiveMQ user associated with the broker.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/User
 type User struct {
 	_ struct{} `type:"structure"`
 
@@ -3567,7 +3525,6 @@ func (s *User) SetUsername(v string) *User {
 
 // Returns information about the status of the changes pending for the ActiveMQ
 // user.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/UserPendingChanges
 type UserPendingChanges struct {
 	_ struct{} `type:"structure"`
 
@@ -3613,7 +3570,6 @@ func (s *UserPendingChanges) SetPendingChange(v string) *UserPendingChanges {
 }
 
 // Returns a list of all ActiveMQ users.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/UserSummary
 type UserSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -3651,7 +3607,6 @@ func (s *UserSummary) SetUsername(v string) *UserSummary {
 
 // The scheduled time period relative to UTC during which Amazon MQ begins to
 // apply pending updates or patches to the broker.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mq-2017-11-27/WeeklyStartTime
 type WeeklyStartTime struct {
 	_ struct{} `type:"structure"`
 

@@ -53,7 +53,7 @@ func (client PublicIPAddressesClient) CreateOrUpdate(ctx context.Context, resour
 						Chain: []validation.Constraint{{Target: "parameters.PublicIPAddressPropertiesFormat.IPConfiguration.IPConfigurationPropertiesFormat.PublicIPAddress", Name: validation.Null, Rule: false, Chain: nil}}},
 					}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "network.PublicIPAddressesClient", "CreateOrUpdate")
+		return result, validation.NewError("network.PublicIPAddressesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, publicIPAddressName, parameters)
@@ -191,8 +191,8 @@ func (client PublicIPAddressesClient) DeleteResponder(resp *http.Response) (resu
 
 // Get the Get publicIpAddress operation retreives information about the specified pubicIpAddress
 //
-// resourceGroupName is the name of the resource group. publicIPAddressName is the name of the subnet. expand is expand
-// references resources.
+// resourceGroupName is the name of the resource group. publicIPAddressName is the name of the subnet. expand is
+// expand references resources.
 func (client PublicIPAddressesClient) Get(ctx context.Context, resourceGroupName string, publicIPAddressName string, expand string) (result PublicIPAddress, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, publicIPAddressName, expand)
 	if err != nil {

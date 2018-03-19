@@ -199,6 +199,11 @@ type CorpusQuery struct {
 	// be Groups.
 	GroupsQuery *HeldGroupsQuery `json:"groupsQuery,omitempty"`
 
+	// HangoutsChatQuery: Details pertaining to Hangouts Chat holds. If set,
+	// corpus must be
+	// Hangouts Chat.
+	HangoutsChatQuery *HeldHangoutsChatQuery `json:"hangoutsChatQuery,omitempty"`
+
 	// MailQuery: Details pertaining to mail holds. If set, corpus must be
 	// mail.
 	MailQuery *HeldMailQuery `json:"mailQuery,omitempty"`
@@ -283,7 +288,7 @@ func (s *HeldAccount) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// HeldDriveQuery: Query options for drive holds.
+// HeldDriveQuery: Query options for Drive holds.
 type HeldDriveQuery struct {
 	// IncludeTeamDriveFiles: If true, include files in Team Drives in the
 	// hold.
@@ -352,6 +357,34 @@ func (s *HeldGroupsQuery) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// HeldHangoutsChatQuery: Query options for hangouts chat holds.
+type HeldHangoutsChatQuery struct {
+	// IncludeRooms: If true, include rooms the user has participated in.
+	IncludeRooms bool `json:"includeRooms,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "IncludeRooms") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "IncludeRooms") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *HeldHangoutsChatQuery) MarshalJSON() ([]byte, error) {
+	type NoMethod HeldHangoutsChatQuery
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // HeldMailQuery: Query options for mail holds.
 type HeldMailQuery struct {
 	// EndTime: The end time range for the search query. These timestamps
@@ -398,7 +431,7 @@ type HeldOrgUnit struct {
 	// immutable.
 	HoldTime string `json:"holdTime,omitempty"`
 
-	// OrgUnitId: The org unit's immutable ID as provided by the admin SDK.
+	// OrgUnitId: The org unit's immutable ID as provided by the Admin SDK.
 	OrgUnitId string `json:"orgUnitId,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "HoldTime") to
@@ -445,6 +478,7 @@ type Hold struct {
 	//   "DRIVE" - Drive.
 	//   "MAIL" - Mail.
 	//   "GROUPS" - Groups.
+	//   "HANGOUTS_CHAT" - Hangouts Chat.
 	Corpus string `json:"corpus,omitempty"`
 
 	// HoldId: The unique immutable ID of the hold. Assigned during
@@ -2498,6 +2532,18 @@ func (r *MattersHoldsService) Get(matterId string, holdId string) *MattersHoldsG
 	return c
 }
 
+// View sets the optional parameter "view": Specifies which parts of the
+// Hold to return.
+//
+// Possible values:
+//   "HOLD_VIEW_UNSPECIFIED"
+//   "BASIC_HOLD"
+//   "FULL_HOLD"
+func (c *MattersHoldsGetCall) View(view string) *MattersHoldsGetCall {
+	c.urlParams_.Set("view", view)
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -2613,6 +2659,16 @@ func (c *MattersHoldsGetCall) Do(opts ...googleapi.CallOption) (*Hold, error) {
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"
+	//     },
+	//     "view": {
+	//       "description": "Specifies which parts of the Hold to return.",
+	//       "enum": [
+	//         "HOLD_VIEW_UNSPECIFIED",
+	//         "BASIC_HOLD",
+	//         "FULL_HOLD"
+	//       ],
+	//       "location": "query",
+	//       "type": "string"
 	//     }
 	//   },
 	//   "path": "v1/matters/{matterId}/holds/{holdId}",
@@ -2660,6 +2716,18 @@ func (c *MattersHoldsListCall) PageSize(pageSize int64) *MattersHoldsListCall {
 // An empty token means start from the beginning.
 func (c *MattersHoldsListCall) PageToken(pageToken string) *MattersHoldsListCall {
 	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// View sets the optional parameter "view": Specifies which parts of the
+// Hold to return.
+//
+// Possible values:
+//   "HOLD_VIEW_UNSPECIFIED"
+//   "BASIC_HOLD"
+//   "FULL_HOLD"
+func (c *MattersHoldsListCall) View(view string) *MattersHoldsListCall {
+	c.urlParams_.Set("view", view)
 	return c
 }
 
@@ -2779,6 +2847,16 @@ func (c *MattersHoldsListCall) Do(opts ...googleapi.CallOption) (*ListHoldsRespo
 	//     },
 	//     "pageToken": {
 	//       "description": "The pagination token as returned in the response.\nAn empty token means start from the beginning.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "view": {
+	//       "description": "Specifies which parts of the Hold to return.",
+	//       "enum": [
+	//         "HOLD_VIEW_UNSPECIFIED",
+	//         "BASIC_HOLD",
+	//         "FULL_HOLD"
+	//       ],
 	//       "location": "query",
 	//       "type": "string"
 	//     }

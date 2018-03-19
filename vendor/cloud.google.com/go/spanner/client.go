@@ -41,9 +41,6 @@ const (
 	// xGoogHeaderKey is the name of the metadata header used to indicate client
 	// information.
 	xGoogHeaderKey = "x-goog-api-client"
-
-	// numChannels is the default value for NumChannels of client
-	numChannels = 4
 )
 
 const (
@@ -82,8 +79,8 @@ type Client struct {
 
 // ClientConfig has configurations for the client.
 type ClientConfig struct {
-	// NumChannels is the number of GRPC channels.
-	// If zero, numChannels is used.
+	// NumChannels is the number of gRPC channels.
+	// If zero, a reasonable default is used based on the execution environment.
 	NumChannels int
 	co          []option.ClientOption
 	// SessionPoolConfig is the configuration for session pool.
@@ -114,7 +111,10 @@ func NewClient(ctx context.Context, database string, opts ...option.ClientOption
 
 // NewClientWithConfig creates a client to a database. A valid database name has the
 // form projects/PROJECT_ID/instances/INSTANCE_ID/databases/DATABASE_ID.
-func NewClientWithConfig(ctx context.Context, database string, config ClientConfig, opts ...option.ClientOption) (*Client, error) {
+func NewClientWithConfig(ctx context.Context, database string, config ClientConfig, opts ...option.ClientOption) (_ *Client, err error) {
+	ctx = traceStartSpan(ctx, "cloud.google.com/go/spanner.NewClient")
+	defer func() { traceEndSpan(ctx, err) }()
+
 	// Validate database path.
 	if err := validDatabaseName(database); err != nil {
 		return nil, err
@@ -243,7 +243,9 @@ func checkNestedTxn(ctx context.Context) error {
 // To limit the number of retries, set a deadline on the Context rather than
 // using a fixed limit on the number of attempts. ReadWriteTransaction will
 // retry as needed until that deadline is met.
-func (c *Client) ReadWriteTransaction(ctx context.Context, f func(context.Context, *ReadWriteTransaction) error) (time.Time, error) {
+func (c *Client) ReadWriteTransaction(ctx context.Context, f func(context.Context, *ReadWriteTransaction) error) (commitTimestamp time.Time, err error) {
+	ctx = traceStartSpan(ctx, "cloud.google.com/go/spanner.ReadWriteTransaction")
+	defer func() { traceEndSpan(ctx, err) }()
 	if err := checkNestedTxn(ctx); err != nil {
 		return time.Time{}, err
 	}
@@ -251,7 +253,7 @@ func (c *Client) ReadWriteTransaction(ctx context.Context, f func(context.Contex
 		ts time.Time
 		sh *sessionHandle
 	)
-	err := runRetryableNoWrap(ctx, func(ctx context.Context) error {
+	err = runRetryableNoWrap(ctx, func(ctx context.Context) error {
 		var (
 			err error
 			t   *ReadWriteTransaction
@@ -273,6 +275,8 @@ func (c *Client) ReadWriteTransaction(ctx context.Context, f func(context.Contex
 			}
 		}
 		t.txReadOnly.txReadEnv = t
+		tracePrintf(ctx, map[string]interface{}{"transactionID": string(sh.getTransactionID())},
+			"Starting transaction attempt")
 		if err = t.begin(ctx); err != nil {
 			// Mask error from begin operation as retryable error.
 			return errRetry(err)
@@ -313,7 +317,7 @@ func ApplyAtLeastOnce() ApplyOption {
 }
 
 // Apply applies a list of mutations atomically to the database.
-func (c *Client) Apply(ctx context.Context, ms []*Mutation, opts ...ApplyOption) (time.Time, error) {
+func (c *Client) Apply(ctx context.Context, ms []*Mutation, opts ...ApplyOption) (commitTimestamp time.Time, err error) {
 	ao := &applyOption{}
 	for _, opt := range opts {
 		opt(ao)
@@ -324,6 +328,9 @@ func (c *Client) Apply(ctx context.Context, ms []*Mutation, opts ...ApplyOption)
 			return nil
 		})
 	}
+
+	ctx = traceStartSpan(ctx, "cloud.google.com/go/spanner.Apply")
+	defer func() { traceEndSpan(ctx, err) }()
 	t := &writeOnlyTransaction{c.idleSessions}
 	return t.applyAtLeastOnce(ctx, ms...)
 }

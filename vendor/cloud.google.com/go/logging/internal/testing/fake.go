@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -88,15 +87,18 @@ func (h *loggingHandler) DeleteLog(_ context.Context, req *logpb.DeleteLogReques
 	return &emptypb.Empty{}, nil
 }
 
-// The only project ID that WriteLogEntries will accept.
+// The only IDs that WriteLogEntries will accept.
 // Important for testing Ping.
-const validProjectID = "PROJECT_ID"
+const (
+	validProjectID = "PROJECT_ID"
+	validOrgID     = "433637338589"
+)
 
 // WriteLogEntries writes log entries to Stackdriver Logging. All log entries in
 // Stackdriver Logging are written by this method.
 func (h *loggingHandler) WriteLogEntries(_ context.Context, req *logpb.WriteLogEntriesRequest) (*logpb.WriteLogEntriesResponse, error) {
-	if !strings.HasPrefix(req.LogName, "projects/"+validProjectID+"/") {
-		return nil, fmt.Errorf("bad project ID: %q", req.LogName)
+	if !strings.HasPrefix(req.LogName, "projects/"+validProjectID+"/") && !strings.HasPrefix(req.LogName, "organizations/"+validOrgID+"/") {
+		return nil, fmt.Errorf("bad LogName: %q", req.LogName)
 	}
 	// TODO(jba): support insertId?
 	h.mu.Lock()
@@ -142,7 +144,7 @@ func (h *loggingHandler) ListLogEntries(_ context.Context, req *logpb.ListLogEnt
 		return nil, err
 	}
 
-	from, to, nextPageToken, err := getPage(int(req.PageSize), req.PageToken, len(entries))
+	from, to, nextPageToken, err := testutil.PageBounds(int(req.PageSize), req.PageToken, len(entries))
 	if err != nil {
 		return nil, err
 	}
@@ -150,35 +152,6 @@ func (h *loggingHandler) ListLogEntries(_ context.Context, req *logpb.ListLogEnt
 		Entries:       entries[from:to],
 		NextPageToken: nextPageToken,
 	}, nil
-}
-
-// getPage converts an incoming page size and token from an RPC request into
-// slice bounds and the outgoing next-page token.
-//
-// getPage assumes that the complete, unpaginated list of items exists as a
-// single slice. In addition to the page size and token, getPage needs the
-// length of that slice.
-//
-// getPage's first two return values should be used to construct a sub-slice of
-// the complete, unpaginated slice. E.g. if the complete slice is s, then
-// s[from:to] is the desired page. Its third return value should be set as the
-// NextPageToken field of the RPC response.
-func getPage(pageSize int, pageToken string, length int) (from, to int, nextPageToken string, err error) {
-	from, to = 0, length
-	if pageToken != "" {
-		from, err = strconv.Atoi(pageToken)
-		if err != nil {
-			return 0, 0, "", invalidArgument("bad page token")
-		}
-		if from >= length {
-			return length, length, "", nil
-		}
-	}
-	if pageSize > 0 && from+pageSize < length {
-		to = from + pageSize
-		nextPageToken = strconv.Itoa(to)
-	}
-	return from, to, nextPageToken, nil
 }
 
 func (h *loggingHandler) filterEntries(filter string) ([]*logpb.LogEntry, error) {
@@ -268,12 +241,16 @@ func (h *loggingHandler) ListMonitoredResourceDescriptors(context.Context, *logp
 func (h *loggingHandler) ListLogs(_ context.Context, req *logpb.ListLogsRequest) (*logpb.ListLogsResponse, error) {
 	// Return fixed, fake response.
 	logNames := []string{"a", "b", "c"}
-	from, to, npt, err := getPage(int(req.PageSize), req.PageToken, len(logNames))
+	from, to, npt, err := testutil.PageBounds(int(req.PageSize), req.PageToken, len(logNames))
 	if err != nil {
 		return nil, err
 	}
+	var lns []string
+	for _, ln := range logNames[from:to] {
+		lns = append(lns, req.Parent+"/logs/"+ln)
+	}
 	return &logpb.ListLogsResponse{
-		LogNames:      logNames[from:to],
+		LogNames:      lns,
 		NextPageToken: npt,
 	}, nil
 }
@@ -329,7 +306,7 @@ func (h *configHandler) ListSinks(_ context.Context, req *logpb.ListSinksRequest
 	h.mu.Unlock() // safe because no *logpb.LogSink is ever modified
 	// Since map iteration varies, sort the sinks.
 	sort.Sort(sinksByName(sinks))
-	from, to, nextPageToken, err := getPage(int(req.PageSize), req.PageToken, len(sinks))
+	from, to, nextPageToken, err := testutil.PageBounds(int(req.PageSize), req.PageToken, len(sinks))
 	if err != nil {
 		return nil, err
 	}
@@ -396,7 +373,7 @@ func (h *metricHandler) ListLogMetrics(_ context.Context, req *logpb.ListLogMetr
 	h.mu.Unlock() // safe because no *logpb.LogMetric is ever modified
 	// Since map iteration varies, sort the metrics.
 	sort.Sort(metricsByName(metrics))
-	from, to, nextPageToken, err := getPage(int(req.PageSize), req.PageToken, len(metrics))
+	from, to, nextPageToken, err := testutil.PageBounds(int(req.PageSize), req.PageToken, len(metrics))
 	if err != nil {
 		return nil, err
 	}

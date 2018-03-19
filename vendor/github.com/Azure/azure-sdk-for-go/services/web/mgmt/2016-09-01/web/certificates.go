@@ -53,7 +53,7 @@ func (client CertificatesClient) CreateOrUpdate(ctx context.Context, resourceGro
 		{TargetValue: certificateEnvelope,
 			Constraints: []validation.Constraint{{Target: "certificateEnvelope.CertificateProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "certificateEnvelope.CertificateProperties.Password", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.CertificatesClient", "CreateOrUpdate")
+		return result, validation.NewError("web.CertificatesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, name, certificateEnvelope)
@@ -129,7 +129,7 @@ func (client CertificatesClient) Delete(ctx context.Context, resourceGroupName s
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.CertificatesClient", "Delete")
+		return result, validation.NewError("web.CertificatesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, name)
@@ -202,7 +202,7 @@ func (client CertificatesClient) Get(ctx context.Context, resourceGroupName stri
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.CertificatesClient", "Get")
+		return result, validation.NewError("web.CertificatesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, name)
@@ -366,7 +366,7 @@ func (client CertificatesClient) ListByResourceGroup(ctx context.Context, resour
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.CertificatesClient", "ListByResourceGroup")
+		return result, validation.NewError("web.CertificatesClient", "ListByResourceGroup", err.Error())
 	}
 
 	result.fn = client.listByResourceGroupNextResults
@@ -468,7 +468,7 @@ func (client CertificatesClient) Update(ctx context.Context, resourceGroupName s
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.CertificatesClient", "Update")
+		return result, validation.NewError("web.CertificatesClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, name, certificateEnvelope)

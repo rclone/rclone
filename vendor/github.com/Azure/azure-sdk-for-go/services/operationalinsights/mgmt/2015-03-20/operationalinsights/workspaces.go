@@ -50,7 +50,7 @@ func (client WorkspacesClient) GetSchema(ctx context.Context, resourceGroupName 
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.WorkspacesClient", "GetSchema")
+		return result, validation.NewError("operationalinsights.WorkspacesClient", "GetSchema", err.Error())
 	}
 
 	req, err := client.GetSchemaPreparer(ctx, resourceGroupName, workspaceName)
@@ -129,7 +129,7 @@ func (client WorkspacesClient) GetSearchResults(ctx context.Context, resourceGro
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Query", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.WorkspacesClient", "GetSearchResults")
+		return result, validation.NewError("operationalinsights.WorkspacesClient", "GetSearchResults", err.Error())
 	}
 
 	req, err := client.GetSearchResultsPreparer(ctx, resourceGroupName, workspaceName, parameters)
@@ -272,7 +272,7 @@ func (client WorkspacesClient) UpdateSearchResults(ctx context.Context, resource
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.WorkspacesClient", "UpdateSearchResults")
+		return result, validation.NewError("operationalinsights.WorkspacesClient", "UpdateSearchResults", err.Error())
 	}
 
 	req, err := client.UpdateSearchResultsPreparer(ctx, resourceGroupName, workspaceName, ID)

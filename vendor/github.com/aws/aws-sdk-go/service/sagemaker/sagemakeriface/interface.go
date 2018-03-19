@@ -80,6 +80,10 @@ type SageMakerAPI interface {
 	CreateNotebookInstanceWithContext(aws.Context, *sagemaker.CreateNotebookInstanceInput, ...request.Option) (*sagemaker.CreateNotebookInstanceOutput, error)
 	CreateNotebookInstanceRequest(*sagemaker.CreateNotebookInstanceInput) (*request.Request, *sagemaker.CreateNotebookInstanceOutput)
 
+	CreateNotebookInstanceLifecycleConfig(*sagemaker.CreateNotebookInstanceLifecycleConfigInput) (*sagemaker.CreateNotebookInstanceLifecycleConfigOutput, error)
+	CreateNotebookInstanceLifecycleConfigWithContext(aws.Context, *sagemaker.CreateNotebookInstanceLifecycleConfigInput, ...request.Option) (*sagemaker.CreateNotebookInstanceLifecycleConfigOutput, error)
+	CreateNotebookInstanceLifecycleConfigRequest(*sagemaker.CreateNotebookInstanceLifecycleConfigInput) (*request.Request, *sagemaker.CreateNotebookInstanceLifecycleConfigOutput)
+
 	CreatePresignedNotebookInstanceUrl(*sagemaker.CreatePresignedNotebookInstanceUrlInput) (*sagemaker.CreatePresignedNotebookInstanceUrlOutput, error)
 	CreatePresignedNotebookInstanceUrlWithContext(aws.Context, *sagemaker.CreatePresignedNotebookInstanceUrlInput, ...request.Option) (*sagemaker.CreatePresignedNotebookInstanceUrlOutput, error)
 	CreatePresignedNotebookInstanceUrlRequest(*sagemaker.CreatePresignedNotebookInstanceUrlInput) (*request.Request, *sagemaker.CreatePresignedNotebookInstanceUrlOutput)
@@ -104,6 +108,10 @@ type SageMakerAPI interface {
 	DeleteNotebookInstanceWithContext(aws.Context, *sagemaker.DeleteNotebookInstanceInput, ...request.Option) (*sagemaker.DeleteNotebookInstanceOutput, error)
 	DeleteNotebookInstanceRequest(*sagemaker.DeleteNotebookInstanceInput) (*request.Request, *sagemaker.DeleteNotebookInstanceOutput)
 
+	DeleteNotebookInstanceLifecycleConfig(*sagemaker.DeleteNotebookInstanceLifecycleConfigInput) (*sagemaker.DeleteNotebookInstanceLifecycleConfigOutput, error)
+	DeleteNotebookInstanceLifecycleConfigWithContext(aws.Context, *sagemaker.DeleteNotebookInstanceLifecycleConfigInput, ...request.Option) (*sagemaker.DeleteNotebookInstanceLifecycleConfigOutput, error)
+	DeleteNotebookInstanceLifecycleConfigRequest(*sagemaker.DeleteNotebookInstanceLifecycleConfigInput) (*request.Request, *sagemaker.DeleteNotebookInstanceLifecycleConfigOutput)
+
 	DeleteTags(*sagemaker.DeleteTagsInput) (*sagemaker.DeleteTagsOutput, error)
 	DeleteTagsWithContext(aws.Context, *sagemaker.DeleteTagsInput, ...request.Option) (*sagemaker.DeleteTagsOutput, error)
 	DeleteTagsRequest(*sagemaker.DeleteTagsInput) (*request.Request, *sagemaker.DeleteTagsOutput)
@@ -123,6 +131,10 @@ type SageMakerAPI interface {
 	DescribeNotebookInstance(*sagemaker.DescribeNotebookInstanceInput) (*sagemaker.DescribeNotebookInstanceOutput, error)
 	DescribeNotebookInstanceWithContext(aws.Context, *sagemaker.DescribeNotebookInstanceInput, ...request.Option) (*sagemaker.DescribeNotebookInstanceOutput, error)
 	DescribeNotebookInstanceRequest(*sagemaker.DescribeNotebookInstanceInput) (*request.Request, *sagemaker.DescribeNotebookInstanceOutput)
+
+	DescribeNotebookInstanceLifecycleConfig(*sagemaker.DescribeNotebookInstanceLifecycleConfigInput) (*sagemaker.DescribeNotebookInstanceLifecycleConfigOutput, error)
+	DescribeNotebookInstanceLifecycleConfigWithContext(aws.Context, *sagemaker.DescribeNotebookInstanceLifecycleConfigInput, ...request.Option) (*sagemaker.DescribeNotebookInstanceLifecycleConfigOutput, error)
+	DescribeNotebookInstanceLifecycleConfigRequest(*sagemaker.DescribeNotebookInstanceLifecycleConfigInput) (*request.Request, *sagemaker.DescribeNotebookInstanceLifecycleConfigOutput)
 
 	DescribeTrainingJob(*sagemaker.DescribeTrainingJobInput) (*sagemaker.DescribeTrainingJobOutput, error)
 	DescribeTrainingJobWithContext(aws.Context, *sagemaker.DescribeTrainingJobInput, ...request.Option) (*sagemaker.DescribeTrainingJobOutput, error)
@@ -148,6 +160,13 @@ type SageMakerAPI interface {
 
 	ListModelsPages(*sagemaker.ListModelsInput, func(*sagemaker.ListModelsOutput, bool) bool) error
 	ListModelsPagesWithContext(aws.Context, *sagemaker.ListModelsInput, func(*sagemaker.ListModelsOutput, bool) bool, ...request.Option) error
+
+	ListNotebookInstanceLifecycleConfigs(*sagemaker.ListNotebookInstanceLifecycleConfigsInput) (*sagemaker.ListNotebookInstanceLifecycleConfigsOutput, error)
+	ListNotebookInstanceLifecycleConfigsWithContext(aws.Context, *sagemaker.ListNotebookInstanceLifecycleConfigsInput, ...request.Option) (*sagemaker.ListNotebookInstanceLifecycleConfigsOutput, error)
+	ListNotebookInstanceLifecycleConfigsRequest(*sagemaker.ListNotebookInstanceLifecycleConfigsInput) (*request.Request, *sagemaker.ListNotebookInstanceLifecycleConfigsOutput)
+
+	ListNotebookInstanceLifecycleConfigsPages(*sagemaker.ListNotebookInstanceLifecycleConfigsInput, func(*sagemaker.ListNotebookInstanceLifecycleConfigsOutput, bool) bool) error
+	ListNotebookInstanceLifecycleConfigsPagesWithContext(aws.Context, *sagemaker.ListNotebookInstanceLifecycleConfigsInput, func(*sagemaker.ListNotebookInstanceLifecycleConfigsOutput, bool) bool, ...request.Option) error
 
 	ListNotebookInstances(*sagemaker.ListNotebookInstancesInput) (*sagemaker.ListNotebookInstancesOutput, error)
 	ListNotebookInstancesWithContext(aws.Context, *sagemaker.ListNotebookInstancesInput, ...request.Option) (*sagemaker.ListNotebookInstancesOutput, error)
@@ -193,6 +212,10 @@ type SageMakerAPI interface {
 	UpdateNotebookInstance(*sagemaker.UpdateNotebookInstanceInput) (*sagemaker.UpdateNotebookInstanceOutput, error)
 	UpdateNotebookInstanceWithContext(aws.Context, *sagemaker.UpdateNotebookInstanceInput, ...request.Option) (*sagemaker.UpdateNotebookInstanceOutput, error)
 	UpdateNotebookInstanceRequest(*sagemaker.UpdateNotebookInstanceInput) (*request.Request, *sagemaker.UpdateNotebookInstanceOutput)
+
+	UpdateNotebookInstanceLifecycleConfig(*sagemaker.UpdateNotebookInstanceLifecycleConfigInput) (*sagemaker.UpdateNotebookInstanceLifecycleConfigOutput, error)
+	UpdateNotebookInstanceLifecycleConfigWithContext(aws.Context, *sagemaker.UpdateNotebookInstanceLifecycleConfigInput, ...request.Option) (*sagemaker.UpdateNotebookInstanceLifecycleConfigOutput, error)
+	UpdateNotebookInstanceLifecycleConfigRequest(*sagemaker.UpdateNotebookInstanceLifecycleConfigInput) (*request.Request, *sagemaker.UpdateNotebookInstanceLifecycleConfigOutput)
 
 	WaitUntilEndpointDeleted(*sagemaker.DescribeEndpointInput) error
 	WaitUntilEndpointDeletedWithContext(aws.Context, *sagemaker.DescribeEndpointInput, ...request.WaiterOption) error

@@ -42,8 +42,8 @@ func NewAppliancesClientWithBaseURI(baseURI string, subscriptionID string) Appli
 
 // CreateOrUpdate creates a new appliance.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. applianceName is the name of the
-// appliance. parameters is parameters supplied to the create or update an appliance.
+// resourceGroupName is the name of the resource group. The name is case insensitive. applianceName is the name of
+// the appliance. parameters is parameters supplied to the create or update an appliance.
 func (client AppliancesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, applianceName string, parameters Appliance) (result AppliancesCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -64,7 +64,7 @@ func (client AppliancesClient) CreateOrUpdate(ctx context.Context, resourceGroup
 					}},
 				{Target: "parameters.Kind", Name: validation.Null, Rule: true,
 					Chain: []validation.Constraint{{Target: "parameters.Kind", Name: validation.Pattern, Rule: `^[-\w\._,\(\)]+$`, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "managedapplications.AppliancesClient", "CreateOrUpdate")
+		return result, validation.NewError("managedapplications.AppliancesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, applianceName, parameters)
@@ -152,7 +152,7 @@ func (client AppliancesClient) CreateOrUpdateByID(ctx context.Context, appliance
 					}},
 				{Target: "parameters.Kind", Name: validation.Null, Rule: true,
 					Chain: []validation.Constraint{{Target: "parameters.Kind", Name: validation.Pattern, Rule: `^[-\w\._,\(\)]+$`, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "managedapplications.AppliancesClient", "CreateOrUpdateByID")
+		return result, validation.NewError("managedapplications.AppliancesClient", "CreateOrUpdateByID", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateByIDPreparer(ctx, applianceID, parameters)
@@ -221,8 +221,8 @@ func (client AppliancesClient) CreateOrUpdateByIDResponder(resp *http.Response) 
 
 // Delete deletes the appliance.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. applianceName is the name of the
-// appliance.
+// resourceGroupName is the name of the resource group. The name is case insensitive. applianceName is the name of
+// the appliance.
 func (client AppliancesClient) Delete(ctx context.Context, resourceGroupName string, applianceName string) (result AppliancesDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -232,7 +232,7 @@ func (client AppliancesClient) Delete(ctx context.Context, resourceGroupName str
 		{TargetValue: applianceName,
 			Constraints: []validation.Constraint{{Target: "applianceName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "applianceName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "managedapplications.AppliancesClient", "Delete")
+		return result, validation.NewError("managedapplications.AppliancesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, applianceName)
@@ -367,8 +367,8 @@ func (client AppliancesClient) DeleteByIDResponder(resp *http.Response) (result 
 
 // Get gets the appliance.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. applianceName is the name of the
-// appliance.
+// resourceGroupName is the name of the resource group. The name is case insensitive. applianceName is the name of
+// the appliance.
 func (client AppliancesClient) Get(ctx context.Context, resourceGroupName string, applianceName string) (result Appliance, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -378,7 +378,7 @@ func (client AppliancesClient) Get(ctx context.Context, resourceGroupName string
 		{TargetValue: applianceName,
 			Constraints: []validation.Constraint{{Target: "applianceName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "applianceName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "managedapplications.AppliancesClient", "Get")
+		return result, validation.NewError("managedapplications.AppliancesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, applianceName)
@@ -518,7 +518,7 @@ func (client AppliancesClient) ListByResourceGroup(ctx context.Context, resource
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "managedapplications.AppliancesClient", "ListByResourceGroup")
+		return result, validation.NewError("managedapplications.AppliancesClient", "ListByResourceGroup", err.Error())
 	}
 
 	result.fn = client.listByResourceGroupNextResults
@@ -702,8 +702,8 @@ func (client AppliancesClient) ListBySubscriptionComplete(ctx context.Context) (
 
 // Update updates an existing appliance. The only value that can be updated via PATCH currently is the tags.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. applianceName is the name of the
-// appliance. parameters is parameters supplied to update an existing appliance.
+// resourceGroupName is the name of the resource group. The name is case insensitive. applianceName is the name of
+// the appliance. parameters is parameters supplied to update an existing appliance.
 func (client AppliancesClient) Update(ctx context.Context, resourceGroupName string, applianceName string, parameters *Appliance) (result Appliance, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -713,7 +713,7 @@ func (client AppliancesClient) Update(ctx context.Context, resourceGroupName str
 		{TargetValue: applianceName,
 			Constraints: []validation.Constraint{{Target: "applianceName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "applianceName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "managedapplications.AppliancesClient", "Update")
+		return result, validation.NewError("managedapplications.AppliancesClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, applianceName, parameters)

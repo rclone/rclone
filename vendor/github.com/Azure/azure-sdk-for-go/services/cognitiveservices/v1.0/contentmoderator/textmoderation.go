@@ -115,8 +115,8 @@ func (client TextModerationClient) DetectLanguageResponder(resp *http.Response) 
 // ScreenText detects profanity in more than 100 languages and match against custom and shared blacklists.
 //
 // language is language of the terms. textContentType is the content type. textContent is content to screen.
-// autocorrect is autocorrect text. pii is detect personal identifiable information. listID is the list Id. classify is
-// classify input.
+// autocorrect is autocorrect text. pii is detect personal identifiable information. listID is the list Id.
+// classify is classify input.
 func (client TextModerationClient) ScreenText(ctx context.Context, language string, textContentType string, textContent string, autocorrect *bool, pii *bool, listID string, classify *bool) (result Screen, err error) {
 	req, err := client.ScreenTextPreparer(ctx, language, textContentType, textContent, autocorrect, pii, listID, classify)
 	if err != nil {
@@ -150,15 +150,21 @@ func (client TextModerationClient) ScreenTextPreparer(ctx context.Context, langu
 	}
 	if autocorrect != nil {
 		queryParameters["autocorrect"] = autorest.Encode("query", *autocorrect)
+	} else {
+		queryParameters["autocorrect"] = autorest.Encode("query", false)
 	}
 	if pii != nil {
 		queryParameters["PII"] = autorest.Encode("query", *pii)
+	} else {
+		queryParameters["PII"] = autorest.Encode("query", false)
 	}
 	if len(listID) > 0 {
 		queryParameters["listId"] = autorest.Encode("query", listID)
 	}
 	if classify != nil {
 		queryParameters["classify"] = autorest.Encode("query", *classify)
+	} else {
+		queryParameters["classify"] = autorest.Encode("query", false)
 	}
 
 	preparer := autorest.CreatePreparer(

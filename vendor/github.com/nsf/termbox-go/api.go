@@ -307,7 +307,7 @@ func PollEvent() Event {
 	// Constant governing macOS specific behavior. See https://github.com/nsf/termbox-go/issues/132
 	// This is an arbitrary delay which hopefully will be enough time for any lagging
 	// partial escape sequences to come through.
-	const esc_wait_delay = 50 * time.Millisecond
+	const esc_wait_delay = 100 * time.Millisecond
 
 	var event Event
 	var esc_wait_timer *time.Timer

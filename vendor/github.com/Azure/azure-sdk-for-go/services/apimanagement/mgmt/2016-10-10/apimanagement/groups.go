@@ -42,8 +42,9 @@ func NewGroupsClientWithBaseURI(baseURI string, subscriptionID string) GroupsCli
 
 // CreateOrUpdate creates or Updates a group.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. groupID
-// is group identifier. Must be unique in the current API Management service instance. parameters is create parameters.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// groupID is group identifier. Must be unique in the current API Management service instance. parameters is create
+// parameters.
 func (client GroupsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, groupID string, parameters GroupCreateParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -59,7 +60,7 @@ func (client GroupsClient) CreateOrUpdate(ctx context.Context, resourceGroupName
 				Chain: []validation.Constraint{{Target: "parameters.Name", Name: validation.MaxLength, Rule: 300, Chain: nil},
 					{Target: "parameters.Name", Name: validation.MinLength, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.GroupsClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.GroupsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, groupID, parameters)
@@ -128,10 +129,10 @@ func (client GroupsClient) CreateOrUpdateResponder(resp *http.Response) (result 
 
 // Delete deletes specific group of the API Management service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. groupID
-// is group identifier. Must be unique in the current API Management service instance. ifMatch is eTag of the Group
-// Entity. ETag should match the current entity state from the header response of the GET request or it should be * for
-// unconditional update.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// groupID is group identifier. Must be unique in the current API Management service instance. ifMatch is eTag of
+// the Group Entity. ETag should match the current entity state from the header response of the GET request or it
+// should be * for unconditional update.
 func (client GroupsClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, groupID string, ifMatch string) (result ErrorBodyContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -142,7 +143,7 @@ func (client GroupsClient) Delete(ctx context.Context, resourceGroupName string,
 			Constraints: []validation.Constraint{{Target: "groupID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "groupID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "groupID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.GroupsClient", "Delete")
+		return result, validation.NewError("apimanagement.GroupsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, groupID, ifMatch)
@@ -211,8 +212,8 @@ func (client GroupsClient) DeleteResponder(resp *http.Response) (result ErrorBod
 
 // Get gets the details of the group specified by its identifier.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. groupID
-// is group identifier. Must be unique in the current API Management service instance.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// groupID is group identifier. Must be unique in the current API Management service instance.
 func (client GroupsClient) Get(ctx context.Context, resourceGroupName string, serviceName string, groupID string) (result GroupContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -223,7 +224,7 @@ func (client GroupsClient) Get(ctx context.Context, resourceGroupName string, se
 			Constraints: []validation.Constraint{{Target: "groupID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "groupID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "groupID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.GroupsClient", "Get")
+		return result, validation.NewError("apimanagement.GroupsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, groupID)
@@ -291,14 +292,14 @@ func (client GroupsClient) GetResponder(resp *http.Response) (result GroupContra
 
 // ListByService lists a collection of groups defined within a service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. filter
-// is | Field       | Supported operators    | Supported functions                         |
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// filter is | Field       | Supported operators    | Supported functions                         |
 // |-------------|------------------------|---------------------------------------------|
 // | id          | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | name        | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | description | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | type        | eq, ne                 | N/A                                         | top is number of records to
-// return. skip is number of records to skip.
+// | type        | eq, ne                 | N/A                                         | top is number of records
+// to return. skip is number of records to skip.
 func (client GroupsClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result GroupCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -311,7 +312,7 @@ func (client GroupsClient) ListByService(ctx context.Context, resourceGroupName 
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.GroupsClient", "ListByService")
+		return result, validation.NewError("apimanagement.GroupsClient", "ListByService", err.Error())
 	}
 
 	result.fn = client.listByServiceNextResults
@@ -415,10 +416,10 @@ func (client GroupsClient) ListByServiceComplete(ctx context.Context, resourceGr
 
 // Update updates the details of the group specified by its identifier.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. groupID
-// is group identifier. Must be unique in the current API Management service instance. parameters is update parameters.
-// ifMatch is eTag of the Group Entity. ETag should match the current entity state from the header response of the GET
-// request or it should be * for unconditional update.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// groupID is group identifier. Must be unique in the current API Management service instance. parameters is update
+// parameters. ifMatch is eTag of the Group Entity. ETag should match the current entity state from the header
+// response of the GET request or it should be * for unconditional update.
 func (client GroupsClient) Update(ctx context.Context, resourceGroupName string, serviceName string, groupID string, parameters GroupUpdateParameters, ifMatch string) (result ErrorBodyContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -429,7 +430,7 @@ func (client GroupsClient) Update(ctx context.Context, resourceGroupName string,
 			Constraints: []validation.Constraint{{Target: "groupID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "groupID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "groupID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.GroupsClient", "Update")
+		return result, validation.NewError("apimanagement.GroupsClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serviceName, groupID, parameters, ifMatch)

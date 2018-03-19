@@ -39,9 +39,9 @@ func NewLocationsClientWithBaseURI(baseURI string, subscriptionID string) Locati
 	return LocationsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
-// GetCapability gets subscription-level properties and limits for Data Lake Analytics specified by Resource location.
+// GetCapability gets subscription-level properties and limits for Data Lake Analytics specified by resource location.
 //
-// location is the Resource location without whitespace.
+// location is the resource location without whitespace.
 func (client LocationsClient) GetCapability(ctx context.Context, location string) (result CapabilityInformation, err error) {
 	req, err := client.GetCapabilityPreparer(ctx, location)
 	if err != nil {

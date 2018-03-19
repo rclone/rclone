@@ -41,8 +41,8 @@ func NewRouteTablesClientWithBaseURI(baseURI string, subscriptionID string) Rout
 
 // CreateOrUpdate the Put RouteTable operation creates/updates a route tablein the specified resource group.
 //
-// resourceGroupName is the name of the resource group. routeTableName is the name of the route table. parameters is
-// parameters supplied to the create/update Route Table operation
+// resourceGroupName is the name of the resource group. routeTableName is the name of the route table. parameters
+// is parameters supplied to the create/update Route Table operation
 func (client RouteTablesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, routeTableName string, parameters RouteTable) (result RouteTablesCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, routeTableName, parameters)
 	if err != nil {
@@ -179,8 +179,8 @@ func (client RouteTablesClient) DeleteResponder(resp *http.Response) (result aut
 
 // Get the Get RouteTables operation retrieves information about the specified route table.
 //
-// resourceGroupName is the name of the resource group. routeTableName is the name of the route table. expand is expand
-// references resources.
+// resourceGroupName is the name of the resource group. routeTableName is the name of the route table. expand is
+// expand references resources.
 func (client RouteTablesClient) Get(ctx context.Context, resourceGroupName string, routeTableName string, expand string) (result RouteTable, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, routeTableName, expand)
 	if err != nil {

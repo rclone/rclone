@@ -1260,8 +1260,8 @@ const (
 	ServiceKindStateless ServiceKind = "Stateless"
 )
 
-// ServiceKindBasicDeployedServiceReplicaDetailInfo enumerates the values for service kind basic deployed service
-// replica detail info.
+// ServiceKindBasicDeployedServiceReplicaDetailInfo enumerates the values for service kind basic deployed
+// service replica detail info.
 type ServiceKindBasicDeployedServiceReplicaDetailInfo string
 
 const (
@@ -1345,7 +1345,8 @@ const (
 	ServiceKindBasicServicePartitionInfoServiceKindStateless ServiceKindBasicServicePartitionInfo = "Stateless"
 )
 
-// ServiceKindBasicServiceUpdateDescription enumerates the values for service kind basic service update description.
+// ServiceKindBasicServiceUpdateDescription enumerates the values for service kind basic service update
+// description.
 type ServiceKindBasicServiceUpdateDescription string
 
 const (
@@ -1978,8 +1979,8 @@ type AadMetadataObject struct {
 	Metadata *AadMetadata `json:"metadata,omitempty"`
 }
 
-// ApplicationCapacityDescription describes capacity information for services of this application. This description can
-// be used for describing the following.
+// ApplicationCapacityDescription describes capacity information for services of this application. This description
+// can be used for describing the following.
 // - Reserving the capacity for the services on the nodes
 // - Limiting the total number of nodes that services of this application can run on
 // - Limiting the custom capacity metrics to limit the total consumption of this metric by the services of this
@@ -2001,45 +2002,52 @@ type ApplicationDescription struct {
 	ApplicationCapacity *ApplicationCapacityDescription `json:"ApplicationCapacity,omitempty"`
 }
 
-// ApplicationHealth represents the health of the application. Contains the application aggregated health state and the
-// service and deployed application health states.
+// ApplicationHealth represents the health of the application. Contains the application aggregated health state and
+// the service and deployed application health states.
 type ApplicationHealth struct {
 	autorest.Response `json:"-"`
-	// AggregatedHealthState - Possible values include: 'AggregatedHealthState1Invalid', 'AggregatedHealthState1Ok', 'AggregatedHealthState1Warning', 'AggregatedHealthState1Error', 'AggregatedHealthState1Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	// HealthEvents - The list of health events reported on the entity.
-	HealthEvents         *[]HealthEvent             `json:"HealthEvents,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
-	HealthStatistics     *HealthStatistics          `json:"HealthStatistics,omitempty"`
-	Name                 *string                    `json:"Name,omitempty"`
+	Name              *string `json:"Name,omitempty"`
 	// ServiceHealthStates - Service health states as found in the health store.
 	ServiceHealthStates *[]ServiceHealthState `json:"ServiceHealthStates,omitempty"`
 	// DeployedApplicationHealthStates - Deployed application health states as found in the health store.
 	DeployedApplicationHealthStates *[]DeployedApplicationHealthState `json:"DeployedApplicationHealthStates,omitempty"`
+	// AggregatedHealthState - Possible values include: 'AggregatedHealthState1Invalid', 'AggregatedHealthState1Ok', 'AggregatedHealthState1Warning', 'AggregatedHealthState1Error', 'AggregatedHealthState1Unknown'
+	AggregatedHealthState AggregatedHealthState1 `json:"AggregatedHealthState,omitempty"`
+	// HealthEvents - The list of health events reported on the entity.
+	HealthEvents         *[]HealthEvent             `json:"HealthEvents,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	HealthStatistics     *HealthStatistics          `json:"HealthStatistics,omitempty"`
 }
 
-// ApplicationHealthEvaluation represents health evaluation for an application, containing information about the data
-// and the algorithm used by the health store to evaluate health.
+// ApplicationHealthEvaluation represents health evaluation for an application, containing information about the
+// data and the algorithm used by the health store to evaluate health.
 type ApplicationHealthEvaluation struct {
+	ApplicationName      *string                    `json:"ApplicationName,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
-	Kind                 KindBasicHealthEvaluation  `json:"Kind,omitempty"`
-	ApplicationName      *string                    `json:"ApplicationName,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ApplicationHealthEvaluation.
 func (ahe ApplicationHealthEvaluation) MarshalJSON() ([]byte, error) {
 	ahe.Kind = KindApplication
-	type Alias ApplicationHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ahe),
-	})
+	objectMap := make(map[string]interface{})
+	if ahe.ApplicationName != nil {
+		objectMap["ApplicationName"] = ahe.ApplicationName
+	}
+	if ahe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = ahe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = ahe.AggregatedHealthState
+	if ahe.Description != nil {
+		objectMap["Description"] = ahe.Description
+	}
+	objectMap["Kind"] = ahe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for ApplicationHealthEvaluation.
@@ -2152,14 +2160,14 @@ func (ahe ApplicationHealthEvaluation) AsBasicHealthEvaluation() (BasicHealthEva
 	return &ahe, true
 }
 
-// ApplicationHealthPolicies defines the application health policy map used to evaluate the health of an application or
-// one of its children entities.
+// ApplicationHealthPolicies defines the application health policy map used to evaluate the health of an
+// application or one of its children entities.
 type ApplicationHealthPolicies struct {
 	ApplicationHealthPolicyMap *[]ApplicationHealthPolicyMapItem `json:"ApplicationHealthPolicyMap,omitempty"`
 }
 
-// ApplicationHealthPolicy defines a health policy used to evaluate the health of an application or one of its children
-// entities.
+// ApplicationHealthPolicy defines a health policy used to evaluate the health of an application or one of its
+// children entities.
 type ApplicationHealthPolicy struct {
 	// ConsiderWarningAsError - Indicates whether warnings are treated with the same severity as errors.
 	ConsiderWarningAsError *bool `json:"ConsiderWarningAsError,omitempty"`
@@ -2178,37 +2186,37 @@ type ApplicationHealthPolicyMapItem struct {
 	Value *ApplicationHealthPolicy `json:"Value,omitempty"`
 }
 
-// ApplicationHealthState represents the health state of an application, which contains the application identifier and
-// the aggregated health state.
+// ApplicationHealthState represents the health state of an application, which contains the application identifier
+// and the aggregated health state.
 type ApplicationHealthState struct {
+	Name *string `json:"Name,omitempty"`
 	// AggregatedHealthState - Possible values include: 'AggregatedHealthState2Invalid', 'AggregatedHealthState2Ok', 'AggregatedHealthState2Warning', 'AggregatedHealthState2Error', 'AggregatedHealthState2Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	Name                  *string               `json:"Name,omitempty"`
+	AggregatedHealthState AggregatedHealthState2 `json:"AggregatedHealthState,omitempty"`
 }
 
 // ApplicationHealthStateChunk represents the health state chunk of a application.
 // The application health state chunk contains the application name, its aggregated health state and any children
 // services and deployed applications that respect the filters in cluster health chunk query description.
 type ApplicationHealthStateChunk struct {
-	// HealthState - Possible values include: 'HealthState2Invalid', 'HealthState2Ok', 'HealthState2Warning', 'HealthState2Error', 'HealthState2Unknown'
-	HealthState                          HealthState                              `json:"HealthState,omitempty"`
 	ApplicationName                      *string                                  `json:"ApplicationName,omitempty"`
 	ApplicationTypeName                  *string                                  `json:"ApplicationTypeName,omitempty"`
 	ServiceHealthStateChunks             *ServiceHealthStateChunkList             `json:"ServiceHealthStateChunks,omitempty"`
 	DeployedApplicationHealthStateChunks *DeployedApplicationHealthStateChunkList `json:"DeployedApplicationHealthStateChunks,omitempty"`
+	// HealthState - Possible values include: 'HealthState2Invalid', 'HealthState2Ok', 'HealthState2Warning', 'HealthState2Error', 'HealthState2Unknown'
+	HealthState HealthState2 `json:"HealthState,omitempty"`
 }
 
-// ApplicationHealthStateChunkList the list of application health state chunks in the cluster that respect the input
-// filters in the chunk query. Returned by get cluster health state chunks query.
+// ApplicationHealthStateChunkList the list of application health state chunks in the cluster that respect the
+// input filters in the chunk query. Returned by get cluster health state chunks query.
 type ApplicationHealthStateChunkList struct {
-	// TotalCount - Total number of entity health state objects that match the specified filters from the cluster health chunk query description.
-	TotalCount *int64 `json:"TotalCount,omitempty"`
 	// Items - The list of application health state chunks that respect the input filters in the chunk query.
 	Items *[]ApplicationHealthStateChunk `json:"Items,omitempty"`
+	// TotalCount - Total number of entity health state objects that match the specified filters from the cluster health chunk query description.
+	TotalCount *int64 `json:"TotalCount,omitempty"`
 }
 
-// ApplicationHealthStateFilter defines matching criteria to determine whether a application should be included in the
-// cluster health chunk.
+// ApplicationHealthStateFilter defines matching criteria to determine whether a application should be included in
+// the cluster health chunk.
 // One filter can match zero, one or multiple applications, depending on its properties.
 type ApplicationHealthStateFilter struct {
 	// ApplicationNameFilter - The name of the application that matches the filter, as a fabric uri. The filter is applied only to the specified application, if it exists.
@@ -2280,8 +2288,8 @@ type ApplicationLoadInfo struct {
 	ApplicationLoadMetricInformation *[]ApplicationMetricDescription `json:"ApplicationLoadMetricInformation,omitempty"`
 }
 
-// ApplicationMetricDescription describes capacity information for a custom resource balancing metric. This can be used
-// to limit the total consumption of this metric by the services of this application.
+// ApplicationMetricDescription describes capacity information for a custom resource balancing metric. This can be
+// used to limit the total consumption of this metric by the services of this application.
 type ApplicationMetricDescription struct {
 	// Name - The name of the metric.
 	Name *string `json:"Name,omitempty"`
@@ -2319,31 +2327,41 @@ type ApplicationParameter struct {
 	Value *string `json:"Value,omitempty"`
 }
 
-// ApplicationsHealthEvaluation represents health evaluation for applications, containing health evaluations for each
-// unhealthy application that impacted current aggregated health state.
+// ApplicationsHealthEvaluation represents health evaluation for applications, containing health evaluations for
+// each unhealthy application that impacted current aggregated health state.
 type ApplicationsHealthEvaluation struct {
+	// MaxPercentUnhealthyApplications - Maximum allowed percentage of unhealthy applications from the ClusterHealthPolicy.
+	MaxPercentUnhealthyApplications *int32 `json:"MaxPercentUnhealthyApplications,omitempty"`
+	// TotalCount - Total number of applications from the health store.
+	TotalCount           *int64                     `json:"TotalCount,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
 	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
-	// MaxPercentUnhealthyApplications - Maximum allowed percentage of unhealthy applications from the ClusterHealthPolicy.
-	MaxPercentUnhealthyApplications *int32 `json:"MaxPercentUnhealthyApplications,omitempty"`
-	// TotalCount - Total number of applications from the health store.
-	TotalCount           *int64                     `json:"TotalCount,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ApplicationsHealthEvaluation.
 func (ahe ApplicationsHealthEvaluation) MarshalJSON() ([]byte, error) {
 	ahe.Kind = KindApplications
-	type Alias ApplicationsHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ahe),
-	})
+	objectMap := make(map[string]interface{})
+	if ahe.MaxPercentUnhealthyApplications != nil {
+		objectMap["MaxPercentUnhealthyApplications"] = ahe.MaxPercentUnhealthyApplications
+	}
+	if ahe.TotalCount != nil {
+		objectMap["TotalCount"] = ahe.TotalCount
+	}
+	if ahe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = ahe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = ahe.AggregatedHealthState
+	if ahe.Description != nil {
+		objectMap["Description"] = ahe.Description
+	}
+	objectMap["Kind"] = ahe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for ApplicationsHealthEvaluation.
@@ -2461,29 +2479,42 @@ func (ahe ApplicationsHealthEvaluation) AsBasicHealthEvaluation() (BasicHealthEv
 // returns unhealthy aggregated health state, either Error or Warning. It contains health evaluations for each
 // unhealthy application of the included application type that impacted current aggregated health state.
 type ApplicationTypeApplicationsHealthEvaluation struct {
-	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
-	Description *string `json:"Description,omitempty"`
-	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
-	Kind                KindBasicHealthEvaluation `json:"Kind,omitempty"`
-	ApplicationTypeName *string                   `json:"ApplicationTypeName,omitempty"`
+	ApplicationTypeName *string `json:"ApplicationTypeName,omitempty"`
 	// MaxPercentUnhealthyApplications - Maximum allowed percentage of unhealthy applications for the application type, specified as an entry in ApplicationTypeHealthPolicyMap.
 	MaxPercentUnhealthyApplications *int32 `json:"MaxPercentUnhealthyApplications,omitempty"`
 	// TotalCount - Total number of applications of the application type found in the health store.
 	TotalCount           *int64                     `json:"TotalCount,omitempty"`
 	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
+	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
+	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
+	Description *string `json:"Description,omitempty"`
+	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
+	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ApplicationTypeApplicationsHealthEvaluation.
 func (atahe ApplicationTypeApplicationsHealthEvaluation) MarshalJSON() ([]byte, error) {
 	atahe.Kind = KindApplicationTypeApplications
-	type Alias ApplicationTypeApplicationsHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(atahe),
-	})
+	objectMap := make(map[string]interface{})
+	if atahe.ApplicationTypeName != nil {
+		objectMap["ApplicationTypeName"] = atahe.ApplicationTypeName
+	}
+	if atahe.MaxPercentUnhealthyApplications != nil {
+		objectMap["MaxPercentUnhealthyApplications"] = atahe.MaxPercentUnhealthyApplications
+	}
+	if atahe.TotalCount != nil {
+		objectMap["TotalCount"] = atahe.TotalCount
+	}
+	if atahe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = atahe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = atahe.AggregatedHealthState
+	if atahe.Description != nil {
+		objectMap["Description"] = atahe.Description
+	}
+	objectMap["Kind"] = atahe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for ApplicationTypeApplicationsHealthEvaluation.
@@ -2605,8 +2636,8 @@ type ApplicationTypeHealthPolicyMapItem struct {
 	Value *int32 `json:"Value,omitempty"`
 }
 
-// ApplicationTypeImageStorePath path description for the application package in the image store specified during the
-// prior copy operation.
+// ApplicationTypeImageStorePath path description for the application package in the image store specified during
+// the prior copy operation.
 type ApplicationTypeImageStorePath struct {
 	// ApplicationTypeBuildPath - The relative image store path to the application package.
 	ApplicationTypeBuildPath *string `json:"ApplicationTypeBuildPath,omitempty"`
@@ -2623,13 +2654,14 @@ type ApplicationTypeInfo struct {
 	Version              *string                 `json:"Version,omitempty"`
 	DefaultParameterList *[]ApplicationParameter `json:"DefaultParameterList,omitempty"`
 	// Status - Possible values include: 'Status1Invalid', 'Status1Provisioning', 'Status1Available', 'Status1Unprovisioning', 'Status1Failed'
-	Status        Status  `json:"Status,omitempty"`
+	Status        Status1 `json:"Status,omitempty"`
 	StatusDetails *string `json:"StatusDetails,omitempty"`
 	// ApplicationTypeDefinitionKind - Possible values include: 'ApplicationTypeDefinitionKindInvalid', 'ApplicationTypeDefinitionKindServiceFabricApplicationPackage', 'ApplicationTypeDefinitionKindCompose'
 	ApplicationTypeDefinitionKind ApplicationTypeDefinitionKind `json:"ApplicationTypeDefinitionKind,omitempty"`
 }
 
-// ApplicationTypeManifest contains the manifest describing an application type registered in a Service Fabric cluster.
+// ApplicationTypeManifest contains the manifest describing an application type registered in a Service Fabric
+// cluster.
 type ApplicationTypeManifest struct {
 	autorest.Response `json:"-"`
 	// Manifest - The XML manifest as a string.
@@ -2637,11 +2669,11 @@ type ApplicationTypeManifest struct {
 }
 
 // ApplicationUpgradeDescription describes the parameters for an application upgrade. Please note that upgrade
-// description replaces the existing application description. This means that if the parameters are not specified, the
-// existing parameters on the applications will be overwritten with the empty parameters list. This would results in
-// application using the default value of the parameters from the application manifest. If you do not want to change
-// any existing parameter values, please get the application parameters first using the GetApplicationInfo query and
-// then supply those values as Parameters in this ApplicationUpgradeDescription.
+// description replaces the existing application description. This means that if the parameters are not specified,
+// the existing parameters on the applications will be overwritten with the empty parameters list. This would
+// results in application using the default value of the parameters from the application manifest. If you do not
+// want to change any existing parameter values, please get the application parameters first using the
+// GetApplicationInfo query and then supply those values as Parameters in this ApplicationUpgradeDescription.
 type ApplicationUpgradeDescription struct {
 	Name                         *string                 `json:"Name,omitempty"`
 	TargetApplicationTypeVersion *string                 `json:"TargetApplicationTypeVersion,omitempty"`
@@ -2667,7 +2699,7 @@ type ApplicationUpgradeProgressInfo struct {
 	UpgradeState      UpgradeState `json:"UpgradeState,omitempty"`
 	NextUpgradeDomain *string      `json:"NextUpgradeDomain,omitempty"`
 	// RollingUpgradeMode - Possible values include: 'RollingUpgradeMode1Invalid', 'RollingUpgradeMode1UnmonitoredAuto', 'RollingUpgradeMode1UnmonitoredManual', 'RollingUpgradeMode1Monitored'
-	RollingUpgradeMode RollingUpgradeMode             `json:"RollingUpgradeMode,omitempty"`
+	RollingUpgradeMode RollingUpgradeMode1            `json:"RollingUpgradeMode,omitempty"`
 	UpgradeDescription *ApplicationUpgradeDescription `json:"UpgradeDescription,omitempty"`
 	// UpgradeDurationInMilliseconds - The estimated total amount of time spent processing the overall upgrade.
 	UpgradeDurationInMilliseconds *string `json:"UpgradeDurationInMilliseconds,omitempty"`
@@ -2690,27 +2722,27 @@ type ApplicationUpgradeProgressInfo struct {
 type ApplicationUpgradeUpdateDescription struct {
 	Name *string `json:"Name,omitempty"`
 	// UpgradeKind - Possible values include: 'UpgradeKind6Invalid', 'UpgradeKind6Rolling'
-	UpgradeKind             UpgradeKind                      `json:"UpgradeKind,omitempty"`
+	UpgradeKind             UpgradeKind6                     `json:"UpgradeKind,omitempty"`
 	ApplicationHealthPolicy *ApplicationHealthPolicy         `json:"ApplicationHealthPolicy,omitempty"`
 	UpdateDescription       *RollingUpgradeUpdateDescription `json:"UpdateDescription,omitempty"`
 }
 
 // BinaryPropertyValue describes a Service Fabric property value of type Binary.
 type BinaryPropertyValue struct {
+	Data *[]int32 `json:"Data,omitempty"`
 	// Kind - Possible values include: 'KindPropertyValue', 'KindBinary', 'KindInt64', 'KindDouble', 'KindString', 'KindGUID'
 	Kind KindBasicPropertyValue `json:"Kind,omitempty"`
-	Data *[]int32               `json:"Data,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for BinaryPropertyValue.
 func (bpv BinaryPropertyValue) MarshalJSON() ([]byte, error) {
 	bpv.Kind = KindBinary
-	type Alias BinaryPropertyValue
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(bpv),
-	})
+	objectMap := make(map[string]interface{})
+	if bpv.Data != nil {
+		objectMap["Data"] = bpv.Data
+	}
+	objectMap["Kind"] = bpv.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsBinaryPropertyValue is the BasicPropertyValue implementation for BinaryPropertyValue.
@@ -2748,13 +2780,13 @@ func (bpv BinaryPropertyValue) AsBasicPropertyValue() (BasicPropertyValue, bool)
 	return &bpv, true
 }
 
-// ChaosContext describes a map, which is a collection of (string, string) type key-value pairs. The map can be used to
-// record information about
+// ChaosContext describes a map, which is a collection of (string, string) type key-value pairs. The map can be
+// used to record information about
 // the Chaos run. There cannot be more than 100 such pairs and each string (key or value) can be at most 4095
 // characters long.
 // This map is set by the starter of the Chaos run to optionally store the context about the specific run.
 type ChaosContext struct {
-	Map *map[string]interface{} `json:"Map,omitempty"`
+	Map interface{} `json:"Map,omitempty"`
 }
 
 // ChaosContextMapItem describes an item in the ChaosContextMap in ChaosParameters.
@@ -2843,12 +2875,12 @@ func unmarshalBasicChaosEventArray(body []byte) ([]BasicChaosEvent, error) {
 // MarshalJSON is the custom marshaler for ChaosEvent.
 func (ce ChaosEvent) MarshalJSON() ([]byte, error) {
 	ce.Kind = KindChaosEvent
-	type Alias ChaosEvent
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ce),
-	})
+	objectMap := make(map[string]interface{})
+	if ce.TimeStampUtc != nil {
+		objectMap["TimeStampUtc"] = ce.TimeStampUtc
+	}
+	objectMap["Kind"] = ce.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsExecutingFaultsChaosEvent is the BasicChaosEvent implementation for ChaosEvent.
@@ -2903,15 +2935,17 @@ func (cew *ChaosEventWrapper) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["ChaosEvent"]
-	if v != nil {
-		chaosEvent, err := unmarshalBasicChaosEvent(*m["ChaosEvent"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "ChaosEvent":
+			if v != nil {
+				chaosEvent, err := unmarshalBasicChaosEvent(*v)
+				if err != nil {
+					return err
+				}
+				cew.ChaosEvent = chaosEvent
+			}
 		}
-		cew.ChaosEvent = chaosEvent
 	}
 
 	return nil
@@ -2951,33 +2985,36 @@ type ChaosReport struct {
 	//   The valus is zero.
 	// - Running - Indicates that Chaos is not stopped.
 	// - Stopped - Indicates that Chaos is not scheduling futher faults. Possible values include: 'Status5Invalid', 'Status5Running', 'Status5Stopped'
-	Status            Status               `json:"Status,omitempty"`
+	Status            Status5              `json:"Status,omitempty"`
 	ContinuationToken *string              `json:"ContinuationToken,omitempty"`
 	History           *[]ChaosEventWrapper `json:"History,omitempty"`
 }
 
 // CheckExistsPropertyBatchOperation represents a PropertyBatchOperation that compares the Boolean existence of a
-// property with the Exists argument.  The PropertyBatchOperation operation fails if the property's existence is not
-// equal to the Exists argument.  The CheckExistsPropertyBatchOperation is generally used as a precondition for the
-// write operations in the batch.  Note that if one PropertyBatchOperation in a PropertyBatch fails,  the entire batch
-// fails and cannot be committed in a transactional manner.
+// property with the Exists argument.  The PropertyBatchOperation operation fails if the property's existence is
+// not equal to the Exists argument.  The CheckExistsPropertyBatchOperation is generally used as a precondition for
+// the write operations in the batch.  Note that if one PropertyBatchOperation in a PropertyBatch fails,  the
+// entire batch fails and cannot be committed in a transactional manner.
 type CheckExistsPropertyBatchOperation struct {
+	// Exists - Whether or not the property should exist for the operation to pass.
+	Exists       *bool   `json:"Exists,omitempty"`
 	PropertyName *string `json:"PropertyName,omitempty"`
 	// Kind - Possible values include: 'KindPropertyBatchOperation', 'KindCheckExists', 'KindCheckSequence', 'KindCheckValue', 'KindDelete', 'KindGet', 'KindPut'
 	Kind KindBasicPropertyBatchOperation `json:"Kind,omitempty"`
-	// Exists - Whether or not the property should exist for the operation to pass.
-	Exists *bool `json:"Exists,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for CheckExistsPropertyBatchOperation.
 func (cepbo CheckExistsPropertyBatchOperation) MarshalJSON() ([]byte, error) {
 	cepbo.Kind = KindCheckExists
-	type Alias CheckExistsPropertyBatchOperation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(cepbo),
-	})
+	objectMap := make(map[string]interface{})
+	if cepbo.Exists != nil {
+		objectMap["Exists"] = cepbo.Exists
+	}
+	if cepbo.PropertyName != nil {
+		objectMap["PropertyName"] = cepbo.PropertyName
+	}
+	objectMap["Kind"] = cepbo.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsCheckExistsPropertyBatchOperation is the BasicPropertyBatchOperation implementation for CheckExistsPropertyBatchOperation.
@@ -3020,29 +3057,32 @@ func (cepbo CheckExistsPropertyBatchOperation) AsBasicPropertyBatchOperation() (
 	return &cepbo, true
 }
 
-// CheckSequencePropertyBatchOperation compares the Sequence Number of a property with the SequenceNumber argument.  A
-// property's sequence number can be thought of as that property's version.  Every time the property is modified, its
-// sequence number is increased.  The sequence number can be found in a property's metadata.  The comparison fails if
-// the sequence numbers are not equal.  CheckSequencePropertyBatchOperation is generally used as a precondition for the
-// write operations in the batch.  Note that if one PropertyBatchOperation in a PropertyBatch fails,  the entire batch
-// fails and cannot be committed in a transactional manner.
+// CheckSequencePropertyBatchOperation compares the Sequence Number of a property with the SequenceNumber argument.
+// A property's sequence number can be thought of as that property's version.  Every time the property is modified,
+// its sequence number is increased.  The sequence number can be found in a property's metadata.  The comparison
+// fails if the sequence numbers are not equal.  CheckSequencePropertyBatchOperation is generally used as a
+// precondition for the write operations in the batch.  Note that if one PropertyBatchOperation in a PropertyBatch
+// fails,  the entire batch fails and cannot be committed in a transactional manner.
 type CheckSequencePropertyBatchOperation struct {
-	PropertyName *string `json:"PropertyName,omitempty"`
-	// Kind - Possible values include: 'KindPropertyBatchOperation', 'KindCheckExists', 'KindCheckSequence', 'KindCheckValue', 'KindDelete', 'KindGet', 'KindPut'
-	Kind KindBasicPropertyBatchOperation `json:"Kind,omitempty"`
 	// SequenceNumber - The expected sequence number.
 	SequenceNumber *string `json:"SequenceNumber,omitempty"`
+	PropertyName   *string `json:"PropertyName,omitempty"`
+	// Kind - Possible values include: 'KindPropertyBatchOperation', 'KindCheckExists', 'KindCheckSequence', 'KindCheckValue', 'KindDelete', 'KindGet', 'KindPut'
+	Kind KindBasicPropertyBatchOperation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for CheckSequencePropertyBatchOperation.
 func (cspbo CheckSequencePropertyBatchOperation) MarshalJSON() ([]byte, error) {
 	cspbo.Kind = KindCheckSequence
-	type Alias CheckSequencePropertyBatchOperation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(cspbo),
-	})
+	objectMap := make(map[string]interface{})
+	if cspbo.SequenceNumber != nil {
+		objectMap["SequenceNumber"] = cspbo.SequenceNumber
+	}
+	if cspbo.PropertyName != nil {
+		objectMap["PropertyName"] = cspbo.PropertyName
+	}
+	objectMap["Kind"] = cspbo.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsCheckExistsPropertyBatchOperation is the BasicPropertyBatchOperation implementation for CheckSequencePropertyBatchOperation.
@@ -3085,26 +3125,27 @@ func (cspbo CheckSequencePropertyBatchOperation) AsBasicPropertyBatchOperation()
 	return &cspbo, true
 }
 
-// CheckValuePropertyBatchOperation represents a PropertyBatchOperation that compares the value of the property with
-// the expected value.  The CheckValuePropertyBatchOperation is generally used as a precondition for the write
-// operations in the batch.  Note that if one PropertyBatchOperation in a PropertyBatch fails,  the entire batch fails
-// and cannot be committed in a transactional manner.
+// CheckValuePropertyBatchOperation represents a PropertyBatchOperation that compares the value of the property
+// with the expected value.  The CheckValuePropertyBatchOperation is generally used as a precondition for the write
+// operations in the batch.  Note that if one PropertyBatchOperation in a PropertyBatch fails,  the entire batch
+// fails and cannot be committed in a transactional manner.
 type CheckValuePropertyBatchOperation struct {
-	PropertyName *string `json:"PropertyName,omitempty"`
+	Value        BasicPropertyValue `json:"Value,omitempty"`
+	PropertyName *string            `json:"PropertyName,omitempty"`
 	// Kind - Possible values include: 'KindPropertyBatchOperation', 'KindCheckExists', 'KindCheckSequence', 'KindCheckValue', 'KindDelete', 'KindGet', 'KindPut'
-	Kind  KindBasicPropertyBatchOperation `json:"Kind,omitempty"`
-	Value BasicPropertyValue              `json:"Value,omitempty"`
+	Kind KindBasicPropertyBatchOperation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for CheckValuePropertyBatchOperation.
 func (cvpbo CheckValuePropertyBatchOperation) MarshalJSON() ([]byte, error) {
 	cvpbo.Kind = KindCheckValue
-	type Alias CheckValuePropertyBatchOperation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(cvpbo),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["Value"] = cvpbo.Value
+	if cvpbo.PropertyName != nil {
+		objectMap["PropertyName"] = cvpbo.PropertyName
+	}
+	objectMap["Kind"] = cvpbo.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsCheckExistsPropertyBatchOperation is the BasicPropertyBatchOperation implementation for CheckValuePropertyBatchOperation.
@@ -3154,35 +3195,35 @@ func (cvpbo *CheckValuePropertyBatchOperation) UnmarshalJSON(body []byte) error 
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["Value"]
-	if v != nil {
-		value, err := unmarshalBasicPropertyValue(*m["Value"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "Value":
+			if v != nil {
+				value, err := unmarshalBasicPropertyValue(*v)
+				if err != nil {
+					return err
+				}
+				cvpbo.Value = value
+			}
+		case "PropertyName":
+			if v != nil {
+				var propertyName string
+				err = json.Unmarshal(*v, &propertyName)
+				if err != nil {
+					return err
+				}
+				cvpbo.PropertyName = &propertyName
+			}
+		case "Kind":
+			if v != nil {
+				var kind KindBasicPropertyBatchOperation
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				cvpbo.Kind = kind
+			}
 		}
-		cvpbo.Value = value
-	}
-
-	v = m["PropertyName"]
-	if v != nil {
-		var propertyName string
-		err = json.Unmarshal(*m["PropertyName"], &propertyName)
-		if err != nil {
-			return err
-		}
-		cvpbo.PropertyName = &propertyName
-	}
-
-	v = m["Kind"]
-	if v != nil {
-		var kind KindBasicPropertyBatchOperation
-		err = json.Unmarshal(*m["Kind"], &kind)
-		if err != nil {
-			return err
-		}
-		cvpbo.Kind = kind
 	}
 
 	return nil
@@ -3223,7 +3264,7 @@ type ClusterConfigurationUpgradeDescription struct {
 type ClusterConfigurationUpgradeStatusInfo struct {
 	autorest.Response `json:"-"`
 	// UpgradeState - Possible values include: 'UpgradeState1Invalid', 'UpgradeState1RollingBackInProgress', 'UpgradeState1RollingBackCompleted', 'UpgradeState1RollingForwardPending', 'UpgradeState1RollingForwardInProgress', 'UpgradeState1RollingForwardCompleted', 'UpgradeState1Failed'
-	UpgradeState UpgradeState `json:"UpgradeState,omitempty"`
+	UpgradeState UpgradeState1 `json:"UpgradeState,omitempty"`
 	// ProgressStatus - The cluster manifest version.
 	ProgressStatus *int32 `json:"ProgressStatus,omitempty"`
 	// ConfigVersion - The cluster configuration version.
@@ -3233,20 +3274,20 @@ type ClusterConfigurationUpgradeStatusInfo struct {
 }
 
 // ClusterHealth represents the health of the cluster.
-// Contains the cluster aggregated health state, the cluster application and node health states as well as the health
-// events and the unhealthy evaluations.
+// Contains the cluster aggregated health state, the cluster application and node health states as well as the
+// health events and the unhealthy evaluations.
 type ClusterHealth struct {
 	autorest.Response `json:"-"`
-	// AggregatedHealthState - Possible values include: 'AggregatedHealthState1Invalid', 'AggregatedHealthState1Ok', 'AggregatedHealthState1Warning', 'AggregatedHealthState1Error', 'AggregatedHealthState1Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	// HealthEvents - The list of health events reported on the entity.
-	HealthEvents         *[]HealthEvent             `json:"HealthEvents,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
-	HealthStatistics     *HealthStatistics          `json:"HealthStatistics,omitempty"`
 	// NodeHealthStates - Cluster node health states as found in the health store.
 	NodeHealthStates *[]NodeHealthState `json:"NodeHealthStates,omitempty"`
 	// ApplicationHealthStates - Cluster application health states as found in the health store.
 	ApplicationHealthStates *[]ApplicationHealthState `json:"ApplicationHealthStates,omitempty"`
+	// AggregatedHealthState - Possible values include: 'AggregatedHealthState1Invalid', 'AggregatedHealthState1Ok', 'AggregatedHealthState1Warning', 'AggregatedHealthState1Error', 'AggregatedHealthState1Unknown'
+	AggregatedHealthState AggregatedHealthState1 `json:"AggregatedHealthState,omitempty"`
+	// HealthEvents - The list of health events reported on the entity.
+	HealthEvents         *[]HealthEvent             `json:"HealthEvents,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	HealthStatistics     *HealthStatistics          `json:"HealthStatistics,omitempty"`
 }
 
 // ClusterHealthChunk represents the health chunk of the cluster.
@@ -3254,13 +3295,14 @@ type ClusterHealth struct {
 type ClusterHealthChunk struct {
 	autorest.Response `json:"-"`
 	// HealthState - Possible values include: 'HealthState1Invalid', 'HealthState1Ok', 'HealthState1Warning', 'HealthState1Error', 'HealthState1Unknown'
-	HealthState                  HealthState                      `json:"HealthState,omitempty"`
+	HealthState                  HealthState1                     `json:"HealthState,omitempty"`
 	NodeHealthStateChunks        *NodeHealthStateChunkList        `json:"NodeHealthStateChunks,omitempty"`
 	ApplicationHealthStateChunks *ApplicationHealthStateChunkList `json:"ApplicationHealthStateChunks,omitempty"`
 }
 
-// ClusterHealthChunkQueryDescription the cluster health chunk query description, which can specify the health policies
-// to evaluate cluster health and very expressive filters to select which cluster entities to include in response.
+// ClusterHealthChunkQueryDescription the cluster health chunk query description, which can specify the health
+// policies to evaluate cluster health and very expressive filters to select which cluster entities to include in
+// response.
 type ClusterHealthChunkQueryDescription struct {
 	// NodeFilters - Defines a list of filters that specify which nodes to be included in the returned cluster health chunk.
 	// If no filters are specified, no nodes are returned. All the nodes are used to evaluate the cluster's aggregated health state, regardless of the input filters.
@@ -3314,9 +3356,9 @@ type ClusterUpgradeDescriptionObject struct {
 	ConfigVersion *string `json:"ConfigVersion,omitempty"`
 	CodeVersion   *string `json:"CodeVersion,omitempty"`
 	// UpgradeKind - Possible values include: 'UpgradeKind3Invalid', 'UpgradeKind3Rolling'
-	UpgradeKind UpgradeKind `json:"UpgradeKind,omitempty"`
+	UpgradeKind UpgradeKind3 `json:"UpgradeKind,omitempty"`
 	// RollingUpgradeMode - Possible values include: 'RollingUpgradeMode4Invalid', 'RollingUpgradeMode4UnmonitoredAuto', 'RollingUpgradeMode4UnmonitoredManual', 'RollingUpgradeMode4Monitored'
-	RollingUpgradeMode                     RollingUpgradeMode                `json:"RollingUpgradeMode,omitempty"`
+	RollingUpgradeMode                     RollingUpgradeMode4               `json:"RollingUpgradeMode,omitempty"`
 	UpgradeReplicaSetCheckTimeoutInSeconds *int64                            `json:"UpgradeReplicaSetCheckTimeoutInSeconds,omitempty"`
 	ForceRestart                           *bool                             `json:"ForceRestart,omitempty"`
 	EnableDeltaHealthEvaluation            *bool                             `json:"EnableDeltaHealthEvaluation,omitempty"`
@@ -3326,8 +3368,8 @@ type ClusterUpgradeDescriptionObject struct {
 	ApplicationHealthPolicyMap             *[]ApplicationHealthPolicyMapItem `json:"ApplicationHealthPolicyMap,omitempty"`
 }
 
-// ClusterUpgradeHealthPolicyObject defines a health policy used to evaluate the health of the cluster during a cluster
-// upgrade.
+// ClusterUpgradeHealthPolicyObject defines a health policy used to evaluate the health of the cluster during a
+// cluster upgrade.
 type ClusterUpgradeHealthPolicyObject struct {
 	// MaxPercentDeltaUnhealthyNodes - The maximum allowed percentage of nodes health degradation allowed during cluster upgrades. The delta is measured between the state of the nodes at the beginning of upgrade and the state of the nodes at the time of the health evaluation. The check is performed after every upgrade domain upgrade completion to make sure the global state of the cluster is within tolerated limits. The default value is 10%.
 	MaxPercentDeltaUnhealthyNodes *int32 `json:"MaxPercentDeltaUnhealthyNodes,omitempty"`
@@ -3342,10 +3384,10 @@ type ClusterUpgradeProgressObject struct {
 	ConfigVersion     *string              `json:"ConfigVersion,omitempty"`
 	UpgradeDomains    *[]UpgradeDomainInfo `json:"UpgradeDomains,omitempty"`
 	// UpgradeState - Possible values include: 'UpgradeState2Invalid', 'UpgradeState2RollingBackInProgress', 'UpgradeState2RollingBackCompleted', 'UpgradeState2RollingForwardPending', 'UpgradeState2RollingForwardInProgress', 'UpgradeState2RollingForwardCompleted', 'UpgradeState2Failed'
-	UpgradeState      UpgradeState `json:"UpgradeState,omitempty"`
-	NextUpgradeDomain *string      `json:"NextUpgradeDomain,omitempty"`
+	UpgradeState      UpgradeState2 `json:"UpgradeState,omitempty"`
+	NextUpgradeDomain *string       `json:"NextUpgradeDomain,omitempty"`
 	// RollingUpgradeMode - Possible values include: 'RollingUpgradeMode5Invalid', 'RollingUpgradeMode5UnmonitoredAuto', 'RollingUpgradeMode5UnmonitoredManual', 'RollingUpgradeMode5Monitored'
-	RollingUpgradeMode                  RollingUpgradeMode                `json:"RollingUpgradeMode,omitempty"`
+	RollingUpgradeMode                  RollingUpgradeMode5               `json:"RollingUpgradeMode,omitempty"`
 	UpgradeDescription                  *ClusterUpgradeDescriptionObject  `json:"UpgradeDescription,omitempty"`
 	UpgradeDurationInMilliseconds       *string                           `json:"UpgradeDurationInMilliseconds,omitempty"`
 	UpgradeDomainDurationInMilliseconds *string                           `json:"UpgradeDomainDurationInMilliseconds,omitempty"`
@@ -3354,7 +3396,7 @@ type ClusterUpgradeProgressObject struct {
 	StartTimestampUtc                   *string                           `json:"StartTimestampUtc,omitempty"`
 	FailureTimestampUtc                 *string                           `json:"FailureTimestampUtc,omitempty"`
 	// FailureReason - Possible values include: 'FailureReason1None', 'FailureReason1Interrupted', 'FailureReason1HealthCheck', 'FailureReason1UpgradeDomainTimeout', 'FailureReason1UpgradeTimeout'
-	FailureReason                  FailureReason                      `json:"FailureReason,omitempty"`
+	FailureReason                  FailureReason1                     `json:"FailureReason,omitempty"`
 	UpgradeDomainProgressAtFailure *FailedUpgradeDomainProgressObject `json:"UpgradeDomainProgressAtFailure,omitempty"`
 }
 
@@ -3369,14 +3411,14 @@ type CodePackageEntryPoint struct {
 	RunAsUserName                   *string                          `json:"RunAsUserName,omitempty"`
 	CodePackageEntryPointStatistics *CodePackageEntryPointStatistics `json:"CodePackageEntryPointStatistics,omitempty"`
 	// Status - Possible values include: 'Status3Invalid', 'Status3Pending', 'Status3Starting', 'Status3Started', 'Status3Stopping', 'Status3Stopped'
-	Status Status `json:"Status,omitempty"`
+	Status Status3 `json:"Status,omitempty"`
 	// NextActivationTime - The time (in UTC) when the entry point executable will be run next.
 	NextActivationTime *date.Time `json:"NextActivationTime,omitempty"`
 	InstanceID         *string    `json:"InstanceId,omitempty"`
 }
 
-// CodePackageEntryPointStatistics statistics about setup or main entry point  of a code package deployed on a Service
-// Fabric node.
+// CodePackageEntryPointStatistics statistics about setup or main entry point  of a code package deployed on a
+// Service Fabric node.
 type CodePackageEntryPointStatistics struct {
 	// LastExitCode - The last exit code of the entry point.
 	LastExitCode *string `json:"LastExitCode,omitempty"`
@@ -3408,7 +3450,7 @@ type ComposeDeploymentStatusInfo struct {
 	Name              *string `json:"Name,omitempty"`
 	ApplicationName   *string `json:"ApplicationName,omitempty"`
 	// Status - Possible values include: 'Status6Invalid', 'Status6Provisioning', 'Status6Creating', 'Status6Ready', 'Status6Unprovisioning', 'Status6Deleting', 'Status6Failed', 'Status6Upgrading'
-	Status Status `json:"Status,omitempty"`
+	Status Status6 `json:"Status,omitempty"`
 	// StatusDetails - The status details of compose deployment including failure message.
 	StatusDetails *string `json:"StatusDetails,omitempty"`
 }
@@ -3420,9 +3462,9 @@ type ComposeDeploymentUpgradeDescription struct {
 	ComposeFileContent *string             `json:"ComposeFileContent,omitempty"`
 	RegistryCredential *RegistryCredential `json:"RegistryCredential,omitempty"`
 	// UpgradeKind - Possible values include: 'UpgradeKind4Invalid', 'UpgradeKind4Rolling'
-	UpgradeKind UpgradeKind `json:"UpgradeKind,omitempty"`
+	UpgradeKind UpgradeKind4 `json:"UpgradeKind,omitempty"`
 	// RollingUpgradeMode - Possible values include: 'RollingUpgradeMode6Invalid', 'RollingUpgradeMode6UnmonitoredAuto', 'RollingUpgradeMode6UnmonitoredManual', 'RollingUpgradeMode6Monitored'
-	RollingUpgradeMode                     RollingUpgradeMode           `json:"RollingUpgradeMode,omitempty"`
+	RollingUpgradeMode                     RollingUpgradeMode6          `json:"RollingUpgradeMode,omitempty"`
 	UpgradeReplicaSetCheckTimeoutInSeconds *int64                       `json:"UpgradeReplicaSetCheckTimeoutInSeconds,omitempty"`
 	ForceRestart                           *bool                        `json:"ForceRestart,omitempty"`
 	MonitoringPolicy                       *MonitoringPolicyDescription `json:"MonitoringPolicy,omitempty"`
@@ -3435,12 +3477,12 @@ type ComposeDeploymentUpgradeProgressInfo struct {
 	DeploymentName    *string `json:"DeploymentName,omitempty"`
 	ApplicationName   *string `json:"ApplicationName,omitempty"`
 	// UpgradeState - Possible values include: 'UpgradeState3Invalid', 'UpgradeState3ProvisioningTarget', 'UpgradeState3RollingForwardInProgress', 'UpgradeState3RollingForwardPending', 'UpgradeState3UnprovisioningCurrent', 'UpgradeState3RollingForwardCompleted', 'UpgradeState3RollingBackInProgress', 'UpgradeState3UnprovisioningTarget', 'UpgradeState3RollingBackCompleted', 'UpgradeState3Failed'
-	UpgradeState         UpgradeState `json:"UpgradeState,omitempty"`
-	UpgradeStatusDetails *string      `json:"UpgradeStatusDetails,omitempty"`
+	UpgradeState         UpgradeState3 `json:"UpgradeState,omitempty"`
+	UpgradeStatusDetails *string       `json:"UpgradeStatusDetails,omitempty"`
 	// UpgradeKind - Possible values include: 'UpgradeKind5Invalid', 'UpgradeKind5Rolling'
-	UpgradeKind UpgradeKind `json:"UpgradeKind,omitempty"`
+	UpgradeKind UpgradeKind5 `json:"UpgradeKind,omitempty"`
 	// RollingUpgradeMode - Possible values include: 'RollingUpgradeMode7Invalid', 'RollingUpgradeMode7UnmonitoredAuto', 'RollingUpgradeMode7UnmonitoredManual', 'RollingUpgradeMode7Monitored'
-	RollingUpgradeMode                     RollingUpgradeMode                `json:"RollingUpgradeMode,omitempty"`
+	RollingUpgradeMode                     RollingUpgradeMode7               `json:"RollingUpgradeMode,omitempty"`
 	ForceRestart                           *bool                             `json:"ForceRestart,omitempty"`
 	UpgradeReplicaSetCheckTimeoutInSeconds *int64                            `json:"UpgradeReplicaSetCheckTimeoutInSeconds,omitempty"`
 	MonitoringPolicy                       *MonitoringPolicyDescription      `json:"MonitoringPolicy,omitempty"`
@@ -3453,7 +3495,7 @@ type ComposeDeploymentUpgradeProgressInfo struct {
 	StartTimestampUtc                      *string                           `json:"StartTimestampUtc,omitempty"`
 	FailureTimestampUtc                    *string                           `json:"FailureTimestampUtc,omitempty"`
 	// FailureReason - Possible values include: 'FailureReason2None', 'FailureReason2Interrupted', 'FailureReason2HealthCheck', 'FailureReason2UpgradeDomainTimeout', 'FailureReason2UpgradeTimeout'
-	FailureReason                   FailureReason                     `json:"FailureReason,omitempty"`
+	FailureReason                   FailureReason2                    `json:"FailureReason,omitempty"`
 	UpgradeDomainProgressAtFailure  *FailureUpgradeDomainProgressInfo `json:"UpgradeDomainProgressAtFailure,omitempty"`
 	ApplicationUpgradeStatusDetails *string                           `json:"ApplicationUpgradeStatusDetails,omitempty"`
 }
@@ -3483,8 +3525,8 @@ type DeactivationIntentDescription struct {
 }
 
 // DeletePropertyBatchOperation represents a PropertyBatchOperation that deletes a specified property if it exists.
-// Note that if one PropertyBatchOperation in a PropertyBatch fails,  the entire batch fails and cannot be committed in
-// a transactional manner.
+// Note that if one PropertyBatchOperation in a PropertyBatch fails,  the entire batch fails and cannot be
+// committed in a transactional manner.
 type DeletePropertyBatchOperation struct {
 	PropertyName *string `json:"PropertyName,omitempty"`
 	// Kind - Possible values include: 'KindPropertyBatchOperation', 'KindCheckExists', 'KindCheckSequence', 'KindCheckValue', 'KindDelete', 'KindGet', 'KindPut'
@@ -3494,12 +3536,12 @@ type DeletePropertyBatchOperation struct {
 // MarshalJSON is the custom marshaler for DeletePropertyBatchOperation.
 func (dpbo DeletePropertyBatchOperation) MarshalJSON() ([]byte, error) {
 	dpbo.Kind = KindDelete
-	type Alias DeletePropertyBatchOperation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dpbo),
-	})
+	objectMap := make(map[string]interface{})
+	if dpbo.PropertyName != nil {
+		objectMap["PropertyName"] = dpbo.PropertyName
+	}
+	objectMap["Kind"] = dpbo.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsCheckExistsPropertyBatchOperation is the BasicPropertyBatchOperation implementation for DeletePropertyBatchOperation.
@@ -3542,16 +3584,10 @@ func (dpbo DeletePropertyBatchOperation) AsBasicPropertyBatchOperation() (BasicP
 	return &dpbo, true
 }
 
-// DeltaNodesCheckHealthEvaluation represents health evaluation for delta nodes, containing health evaluations for each
-// unhealthy node that impacted current aggregated health state.
+// DeltaNodesCheckHealthEvaluation represents health evaluation for delta nodes, containing health evaluations for
+// each unhealthy node that impacted current aggregated health state.
 // Can be returned during cluster upgrade when the aggregated health state of the cluster is Warning or Error.
 type DeltaNodesCheckHealthEvaluation struct {
-	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
-	Description *string `json:"Description,omitempty"`
-	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
-	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 	// BaselineErrorCount - Number of nodes with aggregated heath state Error in the health store at the beginning of the cluster upgrade.
 	BaselineErrorCount *int64 `json:"BaselineErrorCount,omitempty"`
 	// BaselineTotalCount - Total number of nodes in the health store at the beginning of the cluster upgrade.
@@ -3561,17 +3597,39 @@ type DeltaNodesCheckHealthEvaluation struct {
 	// TotalCount - Total number of nodes in the health store.
 	TotalCount           *int64                     `json:"TotalCount,omitempty"`
 	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
+	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
+	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
+	Description *string `json:"Description,omitempty"`
+	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
+	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DeltaNodesCheckHealthEvaluation.
 func (dnche DeltaNodesCheckHealthEvaluation) MarshalJSON() ([]byte, error) {
 	dnche.Kind = KindDeltaNodesCheck
-	type Alias DeltaNodesCheckHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dnche),
-	})
+	objectMap := make(map[string]interface{})
+	if dnche.BaselineErrorCount != nil {
+		objectMap["BaselineErrorCount"] = dnche.BaselineErrorCount
+	}
+	if dnche.BaselineTotalCount != nil {
+		objectMap["BaselineTotalCount"] = dnche.BaselineTotalCount
+	}
+	if dnche.MaxPercentDeltaUnhealthyNodes != nil {
+		objectMap["MaxPercentDeltaUnhealthyNodes"] = dnche.MaxPercentDeltaUnhealthyNodes
+	}
+	if dnche.TotalCount != nil {
+		objectMap["TotalCount"] = dnche.TotalCount
+	}
+	if dnche.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = dnche.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = dnche.AggregatedHealthState
+	if dnche.Description != nil {
+		objectMap["Description"] = dnche.Description
+	}
+	objectMap["Kind"] = dnche.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for DeltaNodesCheckHealthEvaluation.
@@ -3686,41 +3744,51 @@ func (dnche DeltaNodesCheckHealthEvaluation) AsBasicHealthEvaluation() (BasicHea
 
 // DeployedApplicationHealth information about the health of an application deployed on a Service Fabric node.
 type DeployedApplicationHealth struct {
-	autorest.Response `json:"-"`
-	// AggregatedHealthState - Possible values include: 'AggregatedHealthState1Invalid', 'AggregatedHealthState1Ok', 'AggregatedHealthState1Warning', 'AggregatedHealthState1Error', 'AggregatedHealthState1Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	// HealthEvents - The list of health events reported on the entity.
-	HealthEvents                       *[]HealthEvent                       `json:"HealthEvents,omitempty"`
-	UnhealthyEvaluations               *[]HealthEvaluationWrapper           `json:"UnhealthyEvaluations,omitempty"`
-	HealthStatistics                   *HealthStatistics                    `json:"HealthStatistics,omitempty"`
+	autorest.Response                  `json:"-"`
 	Name                               *string                              `json:"Name,omitempty"`
 	NodeName                           *string                              `json:"NodeName,omitempty"`
 	DeployedServicePackageHealthStates *[]DeployedServicePackageHealthState `json:"DeployedServicePackageHealthStates,omitempty"`
+	// AggregatedHealthState - Possible values include: 'AggregatedHealthState1Invalid', 'AggregatedHealthState1Ok', 'AggregatedHealthState1Warning', 'AggregatedHealthState1Error', 'AggregatedHealthState1Unknown'
+	AggregatedHealthState AggregatedHealthState1 `json:"AggregatedHealthState,omitempty"`
+	// HealthEvents - The list of health events reported on the entity.
+	HealthEvents         *[]HealthEvent             `json:"HealthEvents,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	HealthStatistics     *HealthStatistics          `json:"HealthStatistics,omitempty"`
 }
 
-// DeployedApplicationHealthEvaluation represents health evaluation for a deployed application, containing information
-// about the data and the algorithm used by the health store to evaluate health.
+// DeployedApplicationHealthEvaluation represents health evaluation for a deployed application, containing
+// information about the data and the algorithm used by the health store to evaluate health.
 type DeployedApplicationHealthEvaluation struct {
+	NodeName             *string                    `json:"NodeName,omitempty"`
+	ApplicationName      *string                    `json:"ApplicationName,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
-	Kind                 KindBasicHealthEvaluation  `json:"Kind,omitempty"`
-	NodeName             *string                    `json:"NodeName,omitempty"`
-	ApplicationName      *string                    `json:"ApplicationName,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DeployedApplicationHealthEvaluation.
 func (dahe DeployedApplicationHealthEvaluation) MarshalJSON() ([]byte, error) {
 	dahe.Kind = KindDeployedApplication
-	type Alias DeployedApplicationHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dahe),
-	})
+	objectMap := make(map[string]interface{})
+	if dahe.NodeName != nil {
+		objectMap["NodeName"] = dahe.NodeName
+	}
+	if dahe.ApplicationName != nil {
+		objectMap["ApplicationName"] = dahe.ApplicationName
+	}
+	if dahe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = dahe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = dahe.AggregatedHealthState
+	if dahe.Description != nil {
+		objectMap["Description"] = dahe.Description
+	}
+	objectMap["Kind"] = dahe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for DeployedApplicationHealthEvaluation.
@@ -3836,32 +3904,32 @@ func (dahe DeployedApplicationHealthEvaluation) AsBasicHealthEvaluation() (Basic
 // DeployedApplicationHealthState represents the health state of a deployed application, which contains the entity
 // identifier and the aggregated health state.
 type DeployedApplicationHealthState struct {
+	NodeName        *string `json:"NodeName,omitempty"`
+	ApplicationName *string `json:"ApplicationName,omitempty"`
 	// AggregatedHealthState - Possible values include: 'AggregatedHealthState2Invalid', 'AggregatedHealthState2Ok', 'AggregatedHealthState2Warning', 'AggregatedHealthState2Error', 'AggregatedHealthState2Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	NodeName              *string               `json:"NodeName,omitempty"`
-	ApplicationName       *string               `json:"ApplicationName,omitempty"`
+	AggregatedHealthState AggregatedHealthState2 `json:"AggregatedHealthState,omitempty"`
 }
 
-// DeployedApplicationHealthStateChunk represents the health state chunk of a deployed application, which contains the
-// node where the application is deployed, the aggregated health state and any deployed service packages that respect
-// the chunk query description filters.
+// DeployedApplicationHealthStateChunk represents the health state chunk of a deployed application, which contains
+// the node where the application is deployed, the aggregated health state and any deployed service packages that
+// respect the chunk query description filters.
 type DeployedApplicationHealthStateChunk struct {
-	// HealthState - Possible values include: 'HealthState2Invalid', 'HealthState2Ok', 'HealthState2Warning', 'HealthState2Error', 'HealthState2Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
 	// NodeName - The name of node where the application is deployed.
 	NodeName                                *string                                     `json:"NodeName,omitempty"`
 	DeployedServicePackageHealthStateChunks *DeployedServicePackageHealthStateChunkList `json:"DeployedServicePackageHealthStateChunks,omitempty"`
+	// HealthState - Possible values include: 'HealthState2Invalid', 'HealthState2Ok', 'HealthState2Warning', 'HealthState2Error', 'HealthState2Unknown'
+	HealthState HealthState2 `json:"HealthState,omitempty"`
 }
 
-// DeployedApplicationHealthStateChunkList the list of deployed application health state chunks that respect the input
-// filters in the chunk query. Returned by get cluster health state chunks query.
+// DeployedApplicationHealthStateChunkList the list of deployed application health state chunks that respect the
+// input filters in the chunk query. Returned by get cluster health state chunks query.
 type DeployedApplicationHealthStateChunkList struct {
 	// Items - The list of deployed application health state chunks that respect the input filters in the chunk query.
 	Items *[]DeployedApplicationHealthStateChunk `json:"Items,omitempty"`
 }
 
-// DeployedApplicationHealthStateFilter defines matching criteria to determine whether a deployed application should be
-// included as a child of an application in the cluster health chunk.
+// DeployedApplicationHealthStateFilter defines matching criteria to determine whether a deployed application
+// should be included as a child of an application in the cluster health chunk.
 // The deployed applications are only returned if the parent application matches a filter specified in the cluster
 // health chunk query description.
 // One filter can match zero, one or multiple deployed applications, depending on its properties.
@@ -3898,7 +3966,7 @@ type DeployedApplicationInfo struct {
 	Name              *string `json:"Name,omitempty"`
 	TypeName          *string `json:"TypeName,omitempty"`
 	// Status - Possible values include: 'Status2Invalid', 'Status2Downloading', 'Status2Activating', 'Status2Active', 'Status2Upgrading', 'Status2Deactivating'
-	Status Status `json:"Status,omitempty"`
+	Status Status2 `json:"Status,omitempty"`
 	// WorkDirectory - The work directory of the application on the node. The work directory can be used to store application data.
 	WorkDirectory *string `json:"WorkDirectory,omitempty"`
 	// LogDirectory - The log directory of the application on the node. The log directory can be used to store application logs.
@@ -3911,28 +3979,38 @@ type DeployedApplicationInfo struct {
 // evaluations for each unhealthy deployed application that impacted current aggregated health state.
 // Can be returned when evaluating application health and the aggregated health state is either Error or Warning.
 type DeployedApplicationsHealthEvaluation struct {
+	// MaxPercentUnhealthyDeployedApplications - Maximum allowed percentage of unhealthy deployed applications from the ApplicationHealthPolicy.
+	MaxPercentUnhealthyDeployedApplications *int32 `json:"MaxPercentUnhealthyDeployedApplications,omitempty"`
+	// TotalCount - Total number of deployed applications of the application in the health store.
+	TotalCount           *int64                     `json:"TotalCount,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
 	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
-	// MaxPercentUnhealthyDeployedApplications - Maximum allowed percentage of unhealthy deployed applications from the ApplicationHealthPolicy.
-	MaxPercentUnhealthyDeployedApplications *int32 `json:"MaxPercentUnhealthyDeployedApplications,omitempty"`
-	// TotalCount - Total number of deployed applications of the application in the health store.
-	TotalCount           *int64                     `json:"TotalCount,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DeployedApplicationsHealthEvaluation.
 func (dahe DeployedApplicationsHealthEvaluation) MarshalJSON() ([]byte, error) {
 	dahe.Kind = KindDeployedApplications
-	type Alias DeployedApplicationsHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dahe),
-	})
+	objectMap := make(map[string]interface{})
+	if dahe.MaxPercentUnhealthyDeployedApplications != nil {
+		objectMap["MaxPercentUnhealthyDeployedApplications"] = dahe.MaxPercentUnhealthyDeployedApplications
+	}
+	if dahe.TotalCount != nil {
+		objectMap["TotalCount"] = dahe.TotalCount
+	}
+	if dahe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = dahe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = dahe.AggregatedHealthState
+	if dahe.Description != nil {
+		objectMap["Description"] = dahe.Description
+	}
+	objectMap["Kind"] = dahe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for DeployedApplicationsHealthEvaluation.
@@ -4057,53 +4135,66 @@ type DeployedCodePackageInfo struct {
 	// HostIsolationMode - Possible values include: 'HostIsolationModeNone', 'HostIsolationModeProcess', 'HostIsolationModeHyperV'
 	HostIsolationMode HostIsolationMode `json:"HostIsolationMode,omitempty"`
 	// Status - Possible values include: 'Status4Invalid', 'Status4Downloading', 'Status4Activating', 'Status4Active', 'Status4Upgrading', 'Status4Deactivating'
-	Status Status `json:"Status,omitempty"`
+	Status Status4 `json:"Status,omitempty"`
 	// RunFrequencyInterval - The interval at which code package is run. This is used for periodic code package.
 	RunFrequencyInterval *string                `json:"RunFrequencyInterval,omitempty"`
 	SetupEntryPoint      *CodePackageEntryPoint `json:"SetupEntryPoint,omitempty"`
 	MainEntryPoint       *CodePackageEntryPoint `json:"MainEntryPoint,omitempty"`
 }
 
-// DeployedServicePackageHealth information about the health of a service package for a specific application deployed
-// on a Service Fabric node.
+// DeployedServicePackageHealth information about the health of a service package for a specific application
+// deployed on a Service Fabric node.
 type DeployedServicePackageHealth struct {
-	autorest.Response `json:"-"`
+	autorest.Response   `json:"-"`
+	ApplicationName     *string `json:"ApplicationName,omitempty"`
+	ServiceManifestName *string `json:"ServiceManifestName,omitempty"`
+	NodeName            *string `json:"NodeName,omitempty"`
 	// AggregatedHealthState - Possible values include: 'AggregatedHealthState1Invalid', 'AggregatedHealthState1Ok', 'AggregatedHealthState1Warning', 'AggregatedHealthState1Error', 'AggregatedHealthState1Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
+	AggregatedHealthState AggregatedHealthState1 `json:"AggregatedHealthState,omitempty"`
 	// HealthEvents - The list of health events reported on the entity.
 	HealthEvents         *[]HealthEvent             `json:"HealthEvents,omitempty"`
 	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	HealthStatistics     *HealthStatistics          `json:"HealthStatistics,omitempty"`
-	ApplicationName      *string                    `json:"ApplicationName,omitempty"`
-	ServiceManifestName  *string                    `json:"ServiceManifestName,omitempty"`
-	NodeName             *string                    `json:"NodeName,omitempty"`
 }
 
 // DeployedServicePackageHealthEvaluation represents health evaluation for a deployed service package, containing
 // information about the data and the algorithm used by health store to evaluate health. The evaluation is returned
 // only when the aggregated health state is either Error or Warning.
 type DeployedServicePackageHealthEvaluation struct {
+	NodeName             *string                    `json:"NodeName,omitempty"`
+	ApplicationName      *string                    `json:"ApplicationName,omitempty"`
+	ServiceManifestName  *string                    `json:"ServiceManifestName,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
-	Kind                 KindBasicHealthEvaluation  `json:"Kind,omitempty"`
-	NodeName             *string                    `json:"NodeName,omitempty"`
-	ApplicationName      *string                    `json:"ApplicationName,omitempty"`
-	ServiceManifestName  *string                    `json:"ServiceManifestName,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DeployedServicePackageHealthEvaluation.
 func (dsphe DeployedServicePackageHealthEvaluation) MarshalJSON() ([]byte, error) {
 	dsphe.Kind = KindDeployedServicePackage
-	type Alias DeployedServicePackageHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dsphe),
-	})
+	objectMap := make(map[string]interface{})
+	if dsphe.NodeName != nil {
+		objectMap["NodeName"] = dsphe.NodeName
+	}
+	if dsphe.ApplicationName != nil {
+		objectMap["ApplicationName"] = dsphe.ApplicationName
+	}
+	if dsphe.ServiceManifestName != nil {
+		objectMap["ServiceManifestName"] = dsphe.ServiceManifestName
+	}
+	if dsphe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = dsphe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = dsphe.AggregatedHealthState
+	if dsphe.Description != nil {
+		objectMap["Description"] = dsphe.Description
+	}
+	objectMap["Kind"] = dsphe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for DeployedServicePackageHealthEvaluation.
@@ -4216,38 +4307,38 @@ func (dsphe DeployedServicePackageHealthEvaluation) AsBasicHealthEvaluation() (B
 	return &dsphe, true
 }
 
-// DeployedServicePackageHealthState represents the health state of a deployed service package, containing the entity
-// identifier and the aggregated health state.
+// DeployedServicePackageHealthState represents the health state of a deployed service package, containing the
+// entity identifier and the aggregated health state.
 type DeployedServicePackageHealthState struct {
+	NodeName                   *string `json:"NodeName,omitempty"`
+	ApplicationName            *string `json:"ApplicationName,omitempty"`
+	ServiceManifestName        *string `json:"ServiceManifestName,omitempty"`
+	ServicePackageActivationID *string `json:"ServicePackageActivationId,omitempty"`
 	// AggregatedHealthState - Possible values include: 'AggregatedHealthState2Invalid', 'AggregatedHealthState2Ok', 'AggregatedHealthState2Warning', 'AggregatedHealthState2Error', 'AggregatedHealthState2Unknown'
-	AggregatedHealthState      AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	NodeName                   *string               `json:"NodeName,omitempty"`
-	ApplicationName            *string               `json:"ApplicationName,omitempty"`
-	ServiceManifestName        *string               `json:"ServiceManifestName,omitempty"`
-	ServicePackageActivationID *string               `json:"ServicePackageActivationId,omitempty"`
+	AggregatedHealthState AggregatedHealthState2 `json:"AggregatedHealthState,omitempty"`
 }
 
 // DeployedServicePackageHealthStateChunk represents the health state chunk of a deployed service package, which
 // contains the service manifest name and the service package aggregated health state.
 type DeployedServicePackageHealthStateChunk struct {
+	ServiceManifestName        *string `json:"ServiceManifestName,omitempty"`
+	ServicePackageActivationID *string `json:"ServicePackageActivationId,omitempty"`
 	// HealthState - Possible values include: 'HealthState2Invalid', 'HealthState2Ok', 'HealthState2Warning', 'HealthState2Error', 'HealthState2Unknown'
-	HealthState                HealthState `json:"HealthState,omitempty"`
-	ServiceManifestName        *string     `json:"ServiceManifestName,omitempty"`
-	ServicePackageActivationID *string     `json:"ServicePackageActivationId,omitempty"`
+	HealthState HealthState2 `json:"HealthState,omitempty"`
 }
 
-// DeployedServicePackageHealthStateChunkList the list of deployed service package health state chunks that respect the
-// input filters in the chunk query. Returned by get cluster health state chunks query.
+// DeployedServicePackageHealthStateChunkList the list of deployed service package health state chunks that respect
+// the input filters in the chunk query. Returned by get cluster health state chunks query.
 type DeployedServicePackageHealthStateChunkList struct {
 	// Items - The list of deployed service package health state chunks that respect the input filters in the chunk query.
 	Items *[]DeployedServicePackageHealthStateChunk `json:"Items,omitempty"`
 }
 
-// DeployedServicePackageHealthStateFilter defines matching criteria to determine whether a deployed service package
-// should be included as a child of a deployed application in the cluster health chunk.
+// DeployedServicePackageHealthStateFilter defines matching criteria to determine whether a deployed service
+// package should be included as a child of a deployed application in the cluster health chunk.
 // The deployed service packages are only returned if the parent entities match a filter specified in the cluster
-// health chunk query description. The parent deployed application and its parent application must be included in the
-// cluster health chunk.
+// health chunk query description. The parent deployed application and its parent application must be included in
+// the cluster health chunk.
 // One filter can match zero, one or multiple deployed service packages, depending on its properties.
 type DeployedServicePackageHealthStateFilter struct {
 	// ServiceManifestNameFilter - The name of the service manifest which identifies the deployed service packages that matches the filter.
@@ -4280,34 +4371,42 @@ type DeployedServicePackageInfo struct {
 	// Version - The version of the service package specified in service manifest.
 	Version *string `json:"Version,omitempty"`
 	// Status - Possible values include: 'Status7Invalid', 'Status7Downloading', 'Status7Activating', 'Status7Active', 'Status7Upgrading', 'Status7Deactivating'
-	Status                     Status  `json:"Status,omitempty"`
+	Status                     Status7 `json:"Status,omitempty"`
 	ServicePackageActivationID *string `json:"ServicePackageActivationId,omitempty"`
 }
 
 // DeployedServicePackagesHealthEvaluation represents health evaluation for deployed service packages, containing
-// health evaluations for each unhealthy deployed service package that impacted current aggregated health state. Can be
-// returned when evaluating deployed application health and the aggregated health state is either Error or Warning.
+// health evaluations for each unhealthy deployed service package that impacted current aggregated health state.
+// Can be returned when evaluating deployed application health and the aggregated health state is either Error or
+// Warning.
 type DeployedServicePackagesHealthEvaluation struct {
+	// TotalCount - Total number of deployed service packages of the deployed application in the health store.
+	TotalCount           *int64                     `json:"TotalCount,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
 	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
-	// TotalCount - Total number of deployed service packages of the deployed application in the health store.
-	TotalCount           *int64                     `json:"TotalCount,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DeployedServicePackagesHealthEvaluation.
 func (dsphe DeployedServicePackagesHealthEvaluation) MarshalJSON() ([]byte, error) {
 	dsphe.Kind = KindDeployedServicePackages
-	type Alias DeployedServicePackagesHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dsphe),
-	})
+	objectMap := make(map[string]interface{})
+	if dsphe.TotalCount != nil {
+		objectMap["TotalCount"] = dsphe.TotalCount
+	}
+	if dsphe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = dsphe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = dsphe.AggregatedHealthState
+	if dsphe.Description != nil {
+		objectMap["Description"] = dsphe.Description
+	}
+	objectMap["Kind"] = dsphe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for DeployedServicePackagesHealthEvaluation.
@@ -4485,12 +4584,22 @@ func unmarshalBasicDeployedServiceReplicaDetailInfoArray(body []byte) ([]BasicDe
 // MarshalJSON is the custom marshaler for DeployedServiceReplicaDetailInfo.
 func (dsrdi DeployedServiceReplicaDetailInfo) MarshalJSON() ([]byte, error) {
 	dsrdi.ServiceKind = ServiceKindBasicDeployedServiceReplicaDetailInfoServiceKindDeployedServiceReplicaDetailInfo
-	type Alias DeployedServiceReplicaDetailInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dsrdi),
-	})
+	objectMap := make(map[string]interface{})
+	if dsrdi.ServiceName != nil {
+		objectMap["ServiceName"] = dsrdi.ServiceName
+	}
+	if dsrdi.PartitionID != nil {
+		objectMap["PartitionId"] = dsrdi.PartitionID
+	}
+	objectMap["CurrentServiceOperation"] = dsrdi.CurrentServiceOperation
+	if dsrdi.CurrentServiceOperationStartTimeUtc != nil {
+		objectMap["CurrentServiceOperationStartTimeUtc"] = dsrdi.CurrentServiceOperationStartTimeUtc
+	}
+	if dsrdi.ReportedLoad != nil {
+		objectMap["ReportedLoad"] = dsrdi.ReportedLoad
+	}
+	objectMap["ServiceKind"] = dsrdi.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsDeployedStatefulServiceReplicaDetailInfo is the BasicDeployedServiceReplicaDetailInfo implementation for DeployedServiceReplicaDetailInfo.
@@ -4599,12 +4708,34 @@ func unmarshalBasicDeployedServiceReplicaInfoArray(body []byte) ([]BasicDeployed
 // MarshalJSON is the custom marshaler for DeployedServiceReplicaInfo.
 func (dsri DeployedServiceReplicaInfo) MarshalJSON() ([]byte, error) {
 	dsri.ServiceKind = ServiceKindDeployedServiceReplicaInfo
-	type Alias DeployedServiceReplicaInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dsri),
-	})
+	objectMap := make(map[string]interface{})
+	if dsri.ServiceName != nil {
+		objectMap["ServiceName"] = dsri.ServiceName
+	}
+	if dsri.ServiceTypeName != nil {
+		objectMap["ServiceTypeName"] = dsri.ServiceTypeName
+	}
+	if dsri.ServiceManifestName != nil {
+		objectMap["ServiceManifestName"] = dsri.ServiceManifestName
+	}
+	if dsri.CodePackageName != nil {
+		objectMap["CodePackageName"] = dsri.CodePackageName
+	}
+	if dsri.PartitionID != nil {
+		objectMap["PartitionId"] = dsri.PartitionID
+	}
+	objectMap["ReplicaStatus"] = dsri.ReplicaStatus
+	if dsri.Address != nil {
+		objectMap["Address"] = dsri.Address
+	}
+	if dsri.ServicePackageActivationID != nil {
+		objectMap["ServicePackageActivationId"] = dsri.ServicePackageActivationID
+	}
+	if dsri.HostProcessID != nil {
+		objectMap["HostProcessId"] = dsri.HostProcessID
+	}
+	objectMap["ServiceKind"] = dsri.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsDeployedStatefulServiceReplicaInfo is the BasicDeployedServiceReplicaInfo implementation for DeployedServiceReplicaInfo.
@@ -4634,24 +4765,15 @@ type DeployedServiceTypeInfo struct {
 	ServiceManifestName *string `json:"ServiceManifestName,omitempty"`
 	CodePackageName     *string `json:"CodePackageName,omitempty"`
 	// Status - Possible values include: 'Status8Invalid', 'Status8Disabled', 'Status8Enabled', 'Status8Registered'
-	Status                     Status  `json:"Status,omitempty"`
+	Status                     Status8 `json:"Status,omitempty"`
 	ServicePackageActivationID *string `json:"ServicePackageActivationId,omitempty"`
 }
 
-// DeployedStatefulServiceReplicaDetailInfo information about a stateful replica running in a code package. Please note
-// DeployedServiceReplicaQueryResult will contain duplicate data like ServiceKind, ServiceName, PartitionId and
-// replicaId.
+// DeployedStatefulServiceReplicaDetailInfo information about a stateful replica running in a code package. Please
+// note DeployedServiceReplicaQueryResult will contain duplicate data like ServiceKind, ServiceName, PartitionId
+// and replicaId.
 type DeployedStatefulServiceReplicaDetailInfo struct {
-	ServiceName *string    `json:"ServiceName,omitempty"`
-	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
-	// CurrentServiceOperation - Possible values include: 'CurrentServiceOperationUnknown', 'CurrentServiceOperationNone', 'CurrentServiceOperationOpen', 'CurrentServiceOperationChangeRole', 'CurrentServiceOperationClose', 'CurrentServiceOperationAbort'
-	CurrentServiceOperation CurrentServiceOperation `json:"CurrentServiceOperation,omitempty"`
-	// CurrentServiceOperationStartTimeUtc - The start time of the current service operation in UTC format.
-	CurrentServiceOperationStartTimeUtc *date.Time              `json:"CurrentServiceOperationStartTimeUtc,omitempty"`
-	ReportedLoad                        *[]LoadMetricReportInfo `json:"ReportedLoad,omitempty"`
-	// ServiceKind - Possible values include: 'ServiceKindBasicDeployedServiceReplicaDetailInfoServiceKindDeployedServiceReplicaDetailInfo', 'ServiceKindBasicDeployedServiceReplicaDetailInfoServiceKindStateful', 'ServiceKindBasicDeployedServiceReplicaDetailInfoServiceKindStateless'
-	ServiceKind ServiceKindBasicDeployedServiceReplicaDetailInfo `json:"ServiceKind,omitempty"`
-	ReplicaID   *string                                          `json:"ReplicaId,omitempty"`
+	ReplicaID *string `json:"ReplicaId,omitempty"`
 	// CurrentReplicatorOperation - Possible values include: 'CurrentReplicatorOperationInvalid', 'CurrentReplicatorOperationNone', 'CurrentReplicatorOperationOpen', 'CurrentReplicatorOperationChangeRole', 'CurrentReplicatorOperationUpdateEpoch', 'CurrentReplicatorOperationClose', 'CurrentReplicatorOperationAbort', 'CurrentReplicatorOperationOnDataLoss', 'CurrentReplicatorOperationWaitForCatchup', 'CurrentReplicatorOperationBuild'
 	CurrentReplicatorOperation CurrentReplicatorOperation `json:"CurrentReplicatorOperation,omitempty"`
 	// ReadStatus - Possible values include: 'ReadStatusInvalid', 'ReadStatusGranted', 'ReadStatusReconfigurationPending', 'ReadStatusNotPrimary', 'ReadStatusNoWriteQuorum'
@@ -4661,17 +4783,49 @@ type DeployedStatefulServiceReplicaDetailInfo struct {
 	ReplicatorStatus                  BasicReplicatorStatus               `json:"ReplicatorStatus,omitempty"`
 	ReplicaStatus                     *KeyValueStoreReplicaStatus         `json:"ReplicaStatus,omitempty"`
 	DeployedServiceReplicaQueryResult *DeployedStatefulServiceReplicaInfo `json:"DeployedServiceReplicaQueryResult,omitempty"`
+	ServiceName                       *string                             `json:"ServiceName,omitempty"`
+	PartitionID                       *uuid.UUID                          `json:"PartitionId,omitempty"`
+	// CurrentServiceOperation - Possible values include: 'CurrentServiceOperationUnknown', 'CurrentServiceOperationNone', 'CurrentServiceOperationOpen', 'CurrentServiceOperationChangeRole', 'CurrentServiceOperationClose', 'CurrentServiceOperationAbort'
+	CurrentServiceOperation CurrentServiceOperation `json:"CurrentServiceOperation,omitempty"`
+	// CurrentServiceOperationStartTimeUtc - The start time of the current service operation in UTC format.
+	CurrentServiceOperationStartTimeUtc *date.Time              `json:"CurrentServiceOperationStartTimeUtc,omitempty"`
+	ReportedLoad                        *[]LoadMetricReportInfo `json:"ReportedLoad,omitempty"`
+	// ServiceKind - Possible values include: 'ServiceKindBasicDeployedServiceReplicaDetailInfoServiceKindDeployedServiceReplicaDetailInfo', 'ServiceKindBasicDeployedServiceReplicaDetailInfoServiceKindStateful', 'ServiceKindBasicDeployedServiceReplicaDetailInfoServiceKindStateless'
+	ServiceKind ServiceKindBasicDeployedServiceReplicaDetailInfo `json:"ServiceKind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DeployedStatefulServiceReplicaDetailInfo.
 func (dssrdi DeployedStatefulServiceReplicaDetailInfo) MarshalJSON() ([]byte, error) {
 	dssrdi.ServiceKind = ServiceKindBasicDeployedServiceReplicaDetailInfoServiceKindStateful
-	type Alias DeployedStatefulServiceReplicaDetailInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dssrdi),
-	})
+	objectMap := make(map[string]interface{})
+	if dssrdi.ReplicaID != nil {
+		objectMap["ReplicaId"] = dssrdi.ReplicaID
+	}
+	objectMap["CurrentReplicatorOperation"] = dssrdi.CurrentReplicatorOperation
+	objectMap["ReadStatus"] = dssrdi.ReadStatus
+	objectMap["WriteStatus"] = dssrdi.WriteStatus
+	objectMap["ReplicatorStatus"] = dssrdi.ReplicatorStatus
+	if dssrdi.ReplicaStatus != nil {
+		objectMap["ReplicaStatus"] = dssrdi.ReplicaStatus
+	}
+	if dssrdi.DeployedServiceReplicaQueryResult != nil {
+		objectMap["DeployedServiceReplicaQueryResult"] = dssrdi.DeployedServiceReplicaQueryResult
+	}
+	if dssrdi.ServiceName != nil {
+		objectMap["ServiceName"] = dssrdi.ServiceName
+	}
+	if dssrdi.PartitionID != nil {
+		objectMap["PartitionId"] = dssrdi.PartitionID
+	}
+	objectMap["CurrentServiceOperation"] = dssrdi.CurrentServiceOperation
+	if dssrdi.CurrentServiceOperationStartTimeUtc != nil {
+		objectMap["CurrentServiceOperationStartTimeUtc"] = dssrdi.CurrentServiceOperationStartTimeUtc
+	}
+	if dssrdi.ReportedLoad != nil {
+		objectMap["ReportedLoad"] = dssrdi.ReportedLoad
+	}
+	objectMap["ServiceKind"] = dssrdi.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsDeployedStatefulServiceReplicaDetailInfo is the BasicDeployedServiceReplicaDetailInfo implementation for DeployedStatefulServiceReplicaDetailInfo.
@@ -4701,135 +4855,125 @@ func (dssrdi *DeployedStatefulServiceReplicaDetailInfo) UnmarshalJSON(body []byt
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["ReplicaId"]
-	if v != nil {
-		var replicaID string
-		err = json.Unmarshal(*m["ReplicaId"], &replicaID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "ReplicaId":
+			if v != nil {
+				var replicaID string
+				err = json.Unmarshal(*v, &replicaID)
+				if err != nil {
+					return err
+				}
+				dssrdi.ReplicaID = &replicaID
+			}
+		case "CurrentReplicatorOperation":
+			if v != nil {
+				var currentReplicatorOperation CurrentReplicatorOperation
+				err = json.Unmarshal(*v, &currentReplicatorOperation)
+				if err != nil {
+					return err
+				}
+				dssrdi.CurrentReplicatorOperation = currentReplicatorOperation
+			}
+		case "ReadStatus":
+			if v != nil {
+				var readStatus ReadStatus
+				err = json.Unmarshal(*v, &readStatus)
+				if err != nil {
+					return err
+				}
+				dssrdi.ReadStatus = readStatus
+			}
+		case "WriteStatus":
+			if v != nil {
+				var writeStatus WriteStatus
+				err = json.Unmarshal(*v, &writeStatus)
+				if err != nil {
+					return err
+				}
+				dssrdi.WriteStatus = writeStatus
+			}
+		case "ReplicatorStatus":
+			if v != nil {
+				replicatorStatus, err := unmarshalBasicReplicatorStatus(*v)
+				if err != nil {
+					return err
+				}
+				dssrdi.ReplicatorStatus = replicatorStatus
+			}
+		case "ReplicaStatus":
+			if v != nil {
+				var replicaStatus KeyValueStoreReplicaStatus
+				err = json.Unmarshal(*v, &replicaStatus)
+				if err != nil {
+					return err
+				}
+				dssrdi.ReplicaStatus = &replicaStatus
+			}
+		case "DeployedServiceReplicaQueryResult":
+			if v != nil {
+				var deployedServiceReplicaQueryResult DeployedStatefulServiceReplicaInfo
+				err = json.Unmarshal(*v, &deployedServiceReplicaQueryResult)
+				if err != nil {
+					return err
+				}
+				dssrdi.DeployedServiceReplicaQueryResult = &deployedServiceReplicaQueryResult
+			}
+		case "ServiceName":
+			if v != nil {
+				var serviceName string
+				err = json.Unmarshal(*v, &serviceName)
+				if err != nil {
+					return err
+				}
+				dssrdi.ServiceName = &serviceName
+			}
+		case "PartitionId":
+			if v != nil {
+				var partitionID uuid.UUID
+				err = json.Unmarshal(*v, &partitionID)
+				if err != nil {
+					return err
+				}
+				dssrdi.PartitionID = &partitionID
+			}
+		case "CurrentServiceOperation":
+			if v != nil {
+				var currentServiceOperation CurrentServiceOperation
+				err = json.Unmarshal(*v, &currentServiceOperation)
+				if err != nil {
+					return err
+				}
+				dssrdi.CurrentServiceOperation = currentServiceOperation
+			}
+		case "CurrentServiceOperationStartTimeUtc":
+			if v != nil {
+				var currentServiceOperationStartTimeUtc date.Time
+				err = json.Unmarshal(*v, &currentServiceOperationStartTimeUtc)
+				if err != nil {
+					return err
+				}
+				dssrdi.CurrentServiceOperationStartTimeUtc = &currentServiceOperationStartTimeUtc
+			}
+		case "ReportedLoad":
+			if v != nil {
+				var reportedLoad []LoadMetricReportInfo
+				err = json.Unmarshal(*v, &reportedLoad)
+				if err != nil {
+					return err
+				}
+				dssrdi.ReportedLoad = &reportedLoad
+			}
+		case "ServiceKind":
+			if v != nil {
+				var serviceKind ServiceKindBasicDeployedServiceReplicaDetailInfo
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				dssrdi.ServiceKind = serviceKind
+			}
 		}
-		dssrdi.ReplicaID = &replicaID
-	}
-
-	v = m["CurrentReplicatorOperation"]
-	if v != nil {
-		var currentReplicatorOperation CurrentReplicatorOperation
-		err = json.Unmarshal(*m["CurrentReplicatorOperation"], &currentReplicatorOperation)
-		if err != nil {
-			return err
-		}
-		dssrdi.CurrentReplicatorOperation = currentReplicatorOperation
-	}
-
-	v = m["ReadStatus"]
-	if v != nil {
-		var readStatus ReadStatus
-		err = json.Unmarshal(*m["ReadStatus"], &readStatus)
-		if err != nil {
-			return err
-		}
-		dssrdi.ReadStatus = readStatus
-	}
-
-	v = m["WriteStatus"]
-	if v != nil {
-		var writeStatus WriteStatus
-		err = json.Unmarshal(*m["WriteStatus"], &writeStatus)
-		if err != nil {
-			return err
-		}
-		dssrdi.WriteStatus = writeStatus
-	}
-
-	v = m["ReplicatorStatus"]
-	if v != nil {
-		replicatorStatus, err := unmarshalBasicReplicatorStatus(*m["ReplicatorStatus"])
-		if err != nil {
-			return err
-		}
-		dssrdi.ReplicatorStatus = replicatorStatus
-	}
-
-	v = m["ReplicaStatus"]
-	if v != nil {
-		var replicaStatus KeyValueStoreReplicaStatus
-		err = json.Unmarshal(*m["ReplicaStatus"], &replicaStatus)
-		if err != nil {
-			return err
-		}
-		dssrdi.ReplicaStatus = &replicaStatus
-	}
-
-	v = m["DeployedServiceReplicaQueryResult"]
-	if v != nil {
-		var deployedServiceReplicaQueryResult DeployedStatefulServiceReplicaInfo
-		err = json.Unmarshal(*m["DeployedServiceReplicaQueryResult"], &deployedServiceReplicaQueryResult)
-		if err != nil {
-			return err
-		}
-		dssrdi.DeployedServiceReplicaQueryResult = &deployedServiceReplicaQueryResult
-	}
-
-	v = m["ServiceName"]
-	if v != nil {
-		var serviceName string
-		err = json.Unmarshal(*m["ServiceName"], &serviceName)
-		if err != nil {
-			return err
-		}
-		dssrdi.ServiceName = &serviceName
-	}
-
-	v = m["PartitionId"]
-	if v != nil {
-		var partitionID uuid.UUID
-		err = json.Unmarshal(*m["PartitionId"], &partitionID)
-		if err != nil {
-			return err
-		}
-		dssrdi.PartitionID = &partitionID
-	}
-
-	v = m["CurrentServiceOperation"]
-	if v != nil {
-		var currentServiceOperation CurrentServiceOperation
-		err = json.Unmarshal(*m["CurrentServiceOperation"], &currentServiceOperation)
-		if err != nil {
-			return err
-		}
-		dssrdi.CurrentServiceOperation = currentServiceOperation
-	}
-
-	v = m["CurrentServiceOperationStartTimeUtc"]
-	if v != nil {
-		var currentServiceOperationStartTimeUtc date.Time
-		err = json.Unmarshal(*m["CurrentServiceOperationStartTimeUtc"], &currentServiceOperationStartTimeUtc)
-		if err != nil {
-			return err
-		}
-		dssrdi.CurrentServiceOperationStartTimeUtc = &currentServiceOperationStartTimeUtc
-	}
-
-	v = m["ReportedLoad"]
-	if v != nil {
-		var reportedLoad []LoadMetricReportInfo
-		err = json.Unmarshal(*m["ReportedLoad"], &reportedLoad)
-		if err != nil {
-			return err
-		}
-		dssrdi.ReportedLoad = &reportedLoad
-	}
-
-	v = m["ServiceKind"]
-	if v != nil {
-		var serviceKind ServiceKindBasicDeployedServiceReplicaDetailInfo
-		err = json.Unmarshal(*m["ServiceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		dssrdi.ServiceKind = serviceKind
 	}
 
 	return nil
@@ -4837,11 +4981,15 @@ func (dssrdi *DeployedStatefulServiceReplicaDetailInfo) UnmarshalJSON(body []byt
 
 // DeployedStatefulServiceReplicaInfo information about a stateful service replica deployed on a node.
 type DeployedStatefulServiceReplicaInfo struct {
-	ServiceName         *string    `json:"ServiceName,omitempty"`
-	ServiceTypeName     *string    `json:"ServiceTypeName,omitempty"`
-	ServiceManifestName *string    `json:"ServiceManifestName,omitempty"`
-	CodePackageName     *string    `json:"CodePackageName,omitempty"`
-	PartitionID         *uuid.UUID `json:"PartitionId,omitempty"`
+	ReplicaID *string `json:"ReplicaId,omitempty"`
+	// ReplicaRole - Possible values include: 'ReplicaRoleUnknown', 'ReplicaRoleNone', 'ReplicaRolePrimary', 'ReplicaRoleIdleSecondary', 'ReplicaRoleActiveSecondary'
+	ReplicaRole                ReplicaRole                 `json:"ReplicaRole,omitempty"`
+	ReconfigurationInformation *ReconfigurationInformation `json:"ReconfigurationInformation,omitempty"`
+	ServiceName                *string                     `json:"ServiceName,omitempty"`
+	ServiceTypeName            *string                     `json:"ServiceTypeName,omitempty"`
+	ServiceManifestName        *string                     `json:"ServiceManifestName,omitempty"`
+	CodePackageName            *string                     `json:"CodePackageName,omitempty"`
+	PartitionID                *uuid.UUID                  `json:"PartitionId,omitempty"`
 	// ReplicaStatus - Possible values include: 'ReplicaStatusInvalid', 'ReplicaStatusInBuild', 'ReplicaStatusStandby', 'ReplicaStatusReady', 'ReplicaStatusDown', 'ReplicaStatusDropped'
 	ReplicaStatus ReplicaStatus `json:"ReplicaStatus,omitempty"`
 	// Address - The last address returned by the replica in Open or ChangeRole.
@@ -4851,21 +4999,46 @@ type DeployedStatefulServiceReplicaInfo struct {
 	HostProcessID *string `json:"HostProcessId,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindDeployedServiceReplicaInfo', 'ServiceKindStateful', 'ServiceKindStateless'
 	ServiceKind ServiceKind `json:"ServiceKind,omitempty"`
-	ReplicaID   *string     `json:"ReplicaId,omitempty"`
-	// ReplicaRole - Possible values include: 'ReplicaRoleUnknown', 'ReplicaRoleNone', 'ReplicaRolePrimary', 'ReplicaRoleIdleSecondary', 'ReplicaRoleActiveSecondary'
-	ReplicaRole                ReplicaRole                 `json:"ReplicaRole,omitempty"`
-	ReconfigurationInformation *ReconfigurationInformation `json:"ReconfigurationInformation,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DeployedStatefulServiceReplicaInfo.
 func (dssri DeployedStatefulServiceReplicaInfo) MarshalJSON() ([]byte, error) {
 	dssri.ServiceKind = ServiceKindStateful
-	type Alias DeployedStatefulServiceReplicaInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dssri),
-	})
+	objectMap := make(map[string]interface{})
+	if dssri.ReplicaID != nil {
+		objectMap["ReplicaId"] = dssri.ReplicaID
+	}
+	objectMap["ReplicaRole"] = dssri.ReplicaRole
+	if dssri.ReconfigurationInformation != nil {
+		objectMap["ReconfigurationInformation"] = dssri.ReconfigurationInformation
+	}
+	if dssri.ServiceName != nil {
+		objectMap["ServiceName"] = dssri.ServiceName
+	}
+	if dssri.ServiceTypeName != nil {
+		objectMap["ServiceTypeName"] = dssri.ServiceTypeName
+	}
+	if dssri.ServiceManifestName != nil {
+		objectMap["ServiceManifestName"] = dssri.ServiceManifestName
+	}
+	if dssri.CodePackageName != nil {
+		objectMap["CodePackageName"] = dssri.CodePackageName
+	}
+	if dssri.PartitionID != nil {
+		objectMap["PartitionId"] = dssri.PartitionID
+	}
+	objectMap["ReplicaStatus"] = dssri.ReplicaStatus
+	if dssri.Address != nil {
+		objectMap["Address"] = dssri.Address
+	}
+	if dssri.ServicePackageActivationID != nil {
+		objectMap["ServicePackageActivationId"] = dssri.ServicePackageActivationID
+	}
+	if dssri.HostProcessID != nil {
+		objectMap["HostProcessId"] = dssri.HostProcessID
+	}
+	objectMap["ServiceKind"] = dssri.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsDeployedStatefulServiceReplicaInfo is the BasicDeployedServiceReplicaInfo implementation for DeployedStatefulServiceReplicaInfo.
@@ -4888,32 +5061,48 @@ func (dssri DeployedStatefulServiceReplicaInfo) AsBasicDeployedServiceReplicaInf
 	return &dssri, true
 }
 
-// DeployedStatelessServiceInstanceDetailInfo information about a stateless instance running in a code package. Please
-// note that DeployedServiceReplicaQueryResult will contain duplicate data like ServiceKind, ServiceName, PartitionId
-// and InstanceId.
+// DeployedStatelessServiceInstanceDetailInfo information about a stateless instance running in a code package.
+// Please note that DeployedServiceReplicaQueryResult will contain duplicate data like ServiceKind, ServiceName,
+// PartitionId and InstanceId.
 type DeployedStatelessServiceInstanceDetailInfo struct {
-	ServiceName *string    `json:"ServiceName,omitempty"`
-	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
+	InstanceID                        *string                               `json:"InstanceId,omitempty"`
+	DeployedServiceReplicaQueryResult *DeployedStatelessServiceInstanceInfo `json:"DeployedServiceReplicaQueryResult,omitempty"`
+	ServiceName                       *string                               `json:"ServiceName,omitempty"`
+	PartitionID                       *uuid.UUID                            `json:"PartitionId,omitempty"`
 	// CurrentServiceOperation - Possible values include: 'CurrentServiceOperationUnknown', 'CurrentServiceOperationNone', 'CurrentServiceOperationOpen', 'CurrentServiceOperationChangeRole', 'CurrentServiceOperationClose', 'CurrentServiceOperationAbort'
 	CurrentServiceOperation CurrentServiceOperation `json:"CurrentServiceOperation,omitempty"`
 	// CurrentServiceOperationStartTimeUtc - The start time of the current service operation in UTC format.
 	CurrentServiceOperationStartTimeUtc *date.Time              `json:"CurrentServiceOperationStartTimeUtc,omitempty"`
 	ReportedLoad                        *[]LoadMetricReportInfo `json:"ReportedLoad,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindBasicDeployedServiceReplicaDetailInfoServiceKindDeployedServiceReplicaDetailInfo', 'ServiceKindBasicDeployedServiceReplicaDetailInfoServiceKindStateful', 'ServiceKindBasicDeployedServiceReplicaDetailInfoServiceKindStateless'
-	ServiceKind                       ServiceKindBasicDeployedServiceReplicaDetailInfo `json:"ServiceKind,omitempty"`
-	InstanceID                        *string                                          `json:"InstanceId,omitempty"`
-	DeployedServiceReplicaQueryResult *DeployedStatelessServiceInstanceInfo            `json:"DeployedServiceReplicaQueryResult,omitempty"`
+	ServiceKind ServiceKindBasicDeployedServiceReplicaDetailInfo `json:"ServiceKind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DeployedStatelessServiceInstanceDetailInfo.
 func (dssidi DeployedStatelessServiceInstanceDetailInfo) MarshalJSON() ([]byte, error) {
 	dssidi.ServiceKind = ServiceKindBasicDeployedServiceReplicaDetailInfoServiceKindStateless
-	type Alias DeployedStatelessServiceInstanceDetailInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dssidi),
-	})
+	objectMap := make(map[string]interface{})
+	if dssidi.InstanceID != nil {
+		objectMap["InstanceId"] = dssidi.InstanceID
+	}
+	if dssidi.DeployedServiceReplicaQueryResult != nil {
+		objectMap["DeployedServiceReplicaQueryResult"] = dssidi.DeployedServiceReplicaQueryResult
+	}
+	if dssidi.ServiceName != nil {
+		objectMap["ServiceName"] = dssidi.ServiceName
+	}
+	if dssidi.PartitionID != nil {
+		objectMap["PartitionId"] = dssidi.PartitionID
+	}
+	objectMap["CurrentServiceOperation"] = dssidi.CurrentServiceOperation
+	if dssidi.CurrentServiceOperationStartTimeUtc != nil {
+		objectMap["CurrentServiceOperationStartTimeUtc"] = dssidi.CurrentServiceOperationStartTimeUtc
+	}
+	if dssidi.ReportedLoad != nil {
+		objectMap["ReportedLoad"] = dssidi.ReportedLoad
+	}
+	objectMap["ServiceKind"] = dssidi.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsDeployedStatefulServiceReplicaDetailInfo is the BasicDeployedServiceReplicaDetailInfo implementation for DeployedStatelessServiceInstanceDetailInfo.
@@ -4938,6 +5127,7 @@ func (dssidi DeployedStatelessServiceInstanceDetailInfo) AsBasicDeployedServiceR
 
 // DeployedStatelessServiceInstanceInfo information about a stateless service instance deployed on a node.
 type DeployedStatelessServiceInstanceInfo struct {
+	InstanceID          *string    `json:"InstanceId,omitempty"`
 	ServiceName         *string    `json:"ServiceName,omitempty"`
 	ServiceTypeName     *string    `json:"ServiceTypeName,omitempty"`
 	ServiceManifestName *string    `json:"ServiceManifestName,omitempty"`
@@ -4952,18 +5142,42 @@ type DeployedStatelessServiceInstanceInfo struct {
 	HostProcessID *string `json:"HostProcessId,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindDeployedServiceReplicaInfo', 'ServiceKindStateful', 'ServiceKindStateless'
 	ServiceKind ServiceKind `json:"ServiceKind,omitempty"`
-	InstanceID  *string     `json:"InstanceId,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DeployedStatelessServiceInstanceInfo.
 func (dssii DeployedStatelessServiceInstanceInfo) MarshalJSON() ([]byte, error) {
 	dssii.ServiceKind = ServiceKindStateless
-	type Alias DeployedStatelessServiceInstanceInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dssii),
-	})
+	objectMap := make(map[string]interface{})
+	if dssii.InstanceID != nil {
+		objectMap["InstanceId"] = dssii.InstanceID
+	}
+	if dssii.ServiceName != nil {
+		objectMap["ServiceName"] = dssii.ServiceName
+	}
+	if dssii.ServiceTypeName != nil {
+		objectMap["ServiceTypeName"] = dssii.ServiceTypeName
+	}
+	if dssii.ServiceManifestName != nil {
+		objectMap["ServiceManifestName"] = dssii.ServiceManifestName
+	}
+	if dssii.CodePackageName != nil {
+		objectMap["CodePackageName"] = dssii.CodePackageName
+	}
+	if dssii.PartitionID != nil {
+		objectMap["PartitionId"] = dssii.PartitionID
+	}
+	objectMap["ReplicaStatus"] = dssii.ReplicaStatus
+	if dssii.Address != nil {
+		objectMap["Address"] = dssii.Address
+	}
+	if dssii.ServicePackageActivationID != nil {
+		objectMap["ServicePackageActivationId"] = dssii.ServicePackageActivationID
+	}
+	if dssii.HostProcessID != nil {
+		objectMap["HostProcessId"] = dssii.HostProcessID
+	}
+	objectMap["ServiceKind"] = dssii.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsDeployedStatefulServiceReplicaInfo is the BasicDeployedServiceReplicaInfo implementation for DeployedStatelessServiceInstanceInfo.
@@ -4998,21 +5212,21 @@ type DeployServicePackageToNodeDescription struct {
 
 // DoublePropertyValue describes a Service Fabric property value of type Double.
 type DoublePropertyValue struct {
-	// Kind - Possible values include: 'KindPropertyValue', 'KindBinary', 'KindInt64', 'KindDouble', 'KindString', 'KindGUID'
-	Kind KindBasicPropertyValue `json:"Kind,omitempty"`
 	// Data - The data of the property value.
 	Data *float64 `json:"Data,omitempty"`
+	// Kind - Possible values include: 'KindPropertyValue', 'KindBinary', 'KindInt64', 'KindDouble', 'KindString', 'KindGUID'
+	Kind KindBasicPropertyValue `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DoublePropertyValue.
 func (dpv DoublePropertyValue) MarshalJSON() ([]byte, error) {
 	dpv.Kind = KindDouble
-	type Alias DoublePropertyValue
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dpv),
-	})
+	objectMap := make(map[string]interface{})
+	if dpv.Data != nil {
+		objectMap["Data"] = dpv.Data
+	}
+	objectMap["Kind"] = dpv.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsBinaryPropertyValue is the BasicPropertyValue implementation for DoublePropertyValue.
@@ -5050,24 +5264,24 @@ func (dpv DoublePropertyValue) AsBasicPropertyValue() (BasicPropertyValue, bool)
 	return &dpv, true
 }
 
-// EnsureAvailabilitySafetyCheck safety check that waits to ensure the availability of the partition. It waits until
-// there are replicas available such that bringing down this replica will not cause availability loss for the
+// EnsureAvailabilitySafetyCheck safety check that waits to ensure the availability of the partition. It waits
+// until there are replicas available such that bringing down this replica will not cause availability loss for the
 // partition.
 type EnsureAvailabilitySafetyCheck struct {
+	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
 	// Kind - Possible values include: 'KindSafetyCheck', 'KindPartitionSafetyCheck', 'KindEnsureAvailability', 'KindEnsurePartitionQuorum', 'KindEnsureSeedNodeQuorum', 'KindWaitForInbuildReplica', 'KindWaitForPrimaryPlacement', 'KindWaitForPrimarySwap', 'KindWaitForReconfiguration'
-	Kind        KindBasicSafetyCheck `json:"Kind,omitempty"`
-	PartitionID *uuid.UUID           `json:"PartitionId,omitempty"`
+	Kind KindBasicSafetyCheck `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for EnsureAvailabilitySafetyCheck.
 func (easc EnsureAvailabilitySafetyCheck) MarshalJSON() ([]byte, error) {
 	easc.Kind = KindEnsureAvailability
-	type Alias EnsureAvailabilitySafetyCheck
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(easc),
-	})
+	objectMap := make(map[string]interface{})
+	if easc.PartitionID != nil {
+		objectMap["PartitionId"] = easc.PartitionID
+	}
+	objectMap["Kind"] = easc.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsPartitionSafetyCheck is the BasicSafetyCheck implementation for EnsureAvailabilitySafetyCheck.
@@ -5125,22 +5339,23 @@ func (easc EnsureAvailabilitySafetyCheck) AsBasicSafetyCheck() (BasicSafetyCheck
 	return &easc, true
 }
 
-// EnsurePartitionQurumSafetyCheck safety check that ensures that a quorum of replicas are not lost for a partition.
+// EnsurePartitionQurumSafetyCheck safety check that ensures that a quorum of replicas are not lost for a
+// partition.
 type EnsurePartitionQurumSafetyCheck struct {
+	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
 	// Kind - Possible values include: 'KindSafetyCheck', 'KindPartitionSafetyCheck', 'KindEnsureAvailability', 'KindEnsurePartitionQuorum', 'KindEnsureSeedNodeQuorum', 'KindWaitForInbuildReplica', 'KindWaitForPrimaryPlacement', 'KindWaitForPrimarySwap', 'KindWaitForReconfiguration'
-	Kind        KindBasicSafetyCheck `json:"Kind,omitempty"`
-	PartitionID *uuid.UUID           `json:"PartitionId,omitempty"`
+	Kind KindBasicSafetyCheck `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for EnsurePartitionQurumSafetyCheck.
 func (epqsc EnsurePartitionQurumSafetyCheck) MarshalJSON() ([]byte, error) {
 	epqsc.Kind = KindEnsurePartitionQuorum
-	type Alias EnsurePartitionQurumSafetyCheck
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(epqsc),
-	})
+	objectMap := make(map[string]interface{})
+	if epqsc.PartitionID != nil {
+		objectMap["PartitionId"] = epqsc.PartitionID
+	}
+	objectMap["Kind"] = epqsc.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsPartitionSafetyCheck is the BasicSafetyCheck implementation for EnsurePartitionQurumSafetyCheck.
@@ -5202,25 +5417,25 @@ func (epqsc EnsurePartitionQurumSafetyCheck) AsBasicSafetyCheck() (BasicSafetyCh
 // health events and unhealthy evaluation.
 type EntityHealth struct {
 	// AggregatedHealthState - Possible values include: 'AggregatedHealthState1Invalid', 'AggregatedHealthState1Ok', 'AggregatedHealthState1Warning', 'AggregatedHealthState1Error', 'AggregatedHealthState1Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
+	AggregatedHealthState AggregatedHealthState1 `json:"AggregatedHealthState,omitempty"`
 	// HealthEvents - The list of health events reported on the entity.
 	HealthEvents         *[]HealthEvent             `json:"HealthEvents,omitempty"`
 	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	HealthStatistics     *HealthStatistics          `json:"HealthStatistics,omitempty"`
 }
 
-// EntityHealthState a base type for the health state of various entities in the cluster. It contains the aggregated
-// health state.
+// EntityHealthState a base type for the health state of various entities in the cluster. It contains the
+// aggregated health state.
 type EntityHealthState struct {
 	// AggregatedHealthState - Possible values include: 'AggregatedHealthState2Invalid', 'AggregatedHealthState2Ok', 'AggregatedHealthState2Warning', 'AggregatedHealthState2Error', 'AggregatedHealthState2Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
+	AggregatedHealthState AggregatedHealthState2 `json:"AggregatedHealthState,omitempty"`
 }
 
-// EntityHealthStateChunk a base type for the health state chunk of various entities in the cluster. It contains the
-// aggregated health state.
+// EntityHealthStateChunk a base type for the health state chunk of various entities in the cluster. It contains
+// the aggregated health state.
 type EntityHealthStateChunk struct {
 	// HealthState - Possible values include: 'HealthState2Invalid', 'HealthState2Ok', 'HealthState2Warning', 'HealthState2Error', 'HealthState2Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
+	HealthState HealthState2 `json:"HealthState,omitempty"`
 }
 
 // EntityHealthStateChunkList a base type for the list of health state chunks found in the cluster. It contains the
@@ -5250,26 +5465,33 @@ type Epoch struct {
 // EventHealthEvaluation represents health evaluation of a HealthEvent that was reported on the entity.
 // The health evaluation is returned when evaluating health of an entity results in Error or Warning.
 type EventHealthEvaluation struct {
+	// ConsiderWarningAsError - Indicates whether warnings are treated with the same severity as errors. The field is specified in the health policy used to evaluate the entity.
+	ConsiderWarningAsError *bool        `json:"ConsiderWarningAsError,omitempty"`
+	UnhealthyEvent         *HealthEvent `json:"UnhealthyEvent,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
 	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
-	// ConsiderWarningAsError - Indicates whether warnings are treated with the same severity as errors. The field is specified in the health policy used to evaluate the entity.
-	ConsiderWarningAsError *bool        `json:"ConsiderWarningAsError,omitempty"`
-	UnhealthyEvent         *HealthEvent `json:"UnhealthyEvent,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for EventHealthEvaluation.
 func (ehe EventHealthEvaluation) MarshalJSON() ([]byte, error) {
 	ehe.Kind = KindEvent
-	type Alias EventHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ehe),
-	})
+	objectMap := make(map[string]interface{})
+	if ehe.ConsiderWarningAsError != nil {
+		objectMap["ConsiderWarningAsError"] = ehe.ConsiderWarningAsError
+	}
+	if ehe.UnhealthyEvent != nil {
+		objectMap["UnhealthyEvent"] = ehe.UnhealthyEvent
+	}
+	objectMap["AggregatedHealthState"] = ehe.AggregatedHealthState
+	if ehe.Description != nil {
+		objectMap["Description"] = ehe.Description
+	}
+	objectMap["Kind"] = ehe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for EventHealthEvaluation.
@@ -5382,24 +5604,27 @@ func (ehe EventHealthEvaluation) AsBasicHealthEvaluation() (BasicHealthEvaluatio
 	return &ehe, true
 }
 
-// ExecutingFaultsChaosEvent describes a Chaos event that gets generated when Chaos has decided on the faults for an
-// iteration. This Chaos event contains the details of the faults as a list of strings.
+// ExecutingFaultsChaosEvent describes a Chaos event that gets generated when Chaos has decided on the faults for
+// an iteration. This Chaos event contains the details of the faults as a list of strings.
 type ExecutingFaultsChaosEvent struct {
+	Faults       *[]string  `json:"Faults,omitempty"`
 	TimeStampUtc *date.Time `json:"TimeStampUtc,omitempty"`
 	// Kind - Possible values include: 'KindChaosEvent', 'KindExecutingFaults', 'KindStarted', 'KindStopped', 'KindTestError', 'KindValidationFailed', 'KindWaiting'
-	Kind   KindBasicChaosEvent `json:"Kind,omitempty"`
-	Faults *[]string           `json:"Faults,omitempty"`
+	Kind KindBasicChaosEvent `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ExecutingFaultsChaosEvent.
 func (efce ExecutingFaultsChaosEvent) MarshalJSON() ([]byte, error) {
 	efce.Kind = KindExecutingFaults
-	type Alias ExecutingFaultsChaosEvent
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(efce),
-	})
+	objectMap := make(map[string]interface{})
+	if efce.Faults != nil {
+		objectMap["Faults"] = efce.Faults
+	}
+	if efce.TimeStampUtc != nil {
+		objectMap["TimeStampUtc"] = efce.TimeStampUtc
+	}
+	objectMap["Kind"] = efce.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsExecutingFaultsChaosEvent is the BasicChaosEvent implementation for ExecutingFaultsChaosEvent.
@@ -5468,26 +5693,29 @@ type FabricErrorError struct {
 	Message *string `json:"Message,omitempty"`
 }
 
-// FailedPropertyBatchInfo derived from PropertyBatchInfo. Represents the property batch failing. Contains information
-// about the specific batch failure.
+// FailedPropertyBatchInfo derived from PropertyBatchInfo. Represents the property batch failing. Contains
+// information about the specific batch failure.
 type FailedPropertyBatchInfo struct {
-	// Kind - Possible values include: 'KindPropertyBatchInfo', 'KindSuccessful', 'KindFailed'
-	Kind KindBasicPropertyBatchInfo `json:"Kind,omitempty"`
 	// ErrorMessage - The error message of the failed operation. Describes the exception thrown due to the first unsuccessful operation in the property batch.
 	ErrorMessage *string `json:"ErrorMessage,omitempty"`
 	// OperationIndex - The index of the unsuccessful operation in the property batch.
 	OperationIndex *int32 `json:"OperationIndex,omitempty"`
+	// Kind - Possible values include: 'KindPropertyBatchInfo', 'KindSuccessful', 'KindFailed'
+	Kind KindBasicPropertyBatchInfo `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for FailedPropertyBatchInfo.
 func (fpbi FailedPropertyBatchInfo) MarshalJSON() ([]byte, error) {
 	fpbi.Kind = KindFailed
-	type Alias FailedPropertyBatchInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(fpbi),
-	})
+	objectMap := make(map[string]interface{})
+	if fpbi.ErrorMessage != nil {
+		objectMap["ErrorMessage"] = fpbi.ErrorMessage
+	}
+	if fpbi.OperationIndex != nil {
+		objectMap["OperationIndex"] = fpbi.OperationIndex
+	}
+	objectMap["Kind"] = fpbi.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsSuccessfulPropertyBatchInfo is the BasicPropertyBatchInfo implementation for FailedPropertyBatchInfo.
@@ -5510,8 +5738,8 @@ func (fpbi FailedPropertyBatchInfo) AsBasicPropertyBatchInfo() (BasicPropertyBat
 	return &fpbi, true
 }
 
-// FailedUpgradeDomainProgressObject the detailed upgrade progress for nodes in the current upgrade domain at the point
-// of failure.
+// FailedUpgradeDomainProgressObject the detailed upgrade progress for nodes in the current upgrade domain at the
+// point of failure.
 type FailedUpgradeDomainProgressObject struct {
 	DomainName              *string                    `json:"DomainName,omitempty"`
 	NodeUpgradeProgressList *[]NodeUpgradeProgressInfo `json:"NodeUpgradeProgressList,omitempty"`
@@ -5550,26 +5778,29 @@ type FolderInfo struct {
 	FileCount *uuid.UUID `json:"FileCount,omitempty"`
 }
 
-// GetPropertyBatchOperation represents a PropertyBatchOperation that gets the specified property if it exists.  Note
-// that if one PropertyBatchOperation in a PropertyBatch fails,  the entire batch fails and cannot be committed in a
-// transactional manner.
+// GetPropertyBatchOperation represents a PropertyBatchOperation that gets the specified property if it exists.
+// Note that if one PropertyBatchOperation in a PropertyBatch fails,  the entire batch fails and cannot be
+// committed in a transactional manner.
 type GetPropertyBatchOperation struct {
+	// IncludeValue - Whether or not to return the property value with the metadata.  True if values should be returned with the metadata; False to return only property metadata.
+	IncludeValue *bool   `json:"IncludeValue,omitempty"`
 	PropertyName *string `json:"PropertyName,omitempty"`
 	// Kind - Possible values include: 'KindPropertyBatchOperation', 'KindCheckExists', 'KindCheckSequence', 'KindCheckValue', 'KindDelete', 'KindGet', 'KindPut'
 	Kind KindBasicPropertyBatchOperation `json:"Kind,omitempty"`
-	// IncludeValue - Whether or not to return the property value with the metadata.  True if values should be returned with the metadata; False to return only property metadata.
-	IncludeValue *bool `json:"IncludeValue,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for GetPropertyBatchOperation.
 func (gpbo GetPropertyBatchOperation) MarshalJSON() ([]byte, error) {
 	gpbo.Kind = KindGet
-	type Alias GetPropertyBatchOperation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(gpbo),
-	})
+	objectMap := make(map[string]interface{})
+	if gpbo.IncludeValue != nil {
+		objectMap["IncludeValue"] = gpbo.IncludeValue
+	}
+	if gpbo.PropertyName != nil {
+		objectMap["PropertyName"] = gpbo.PropertyName
+	}
+	objectMap["Kind"] = gpbo.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsCheckExistsPropertyBatchOperation is the BasicPropertyBatchOperation implementation for GetPropertyBatchOperation.
@@ -5614,21 +5845,21 @@ func (gpbo GetPropertyBatchOperation) AsBasicPropertyBatchOperation() (BasicProp
 
 // GUIDPropertyValue describes a Service Fabric property value of type Guid.
 type GUIDPropertyValue struct {
-	// Kind - Possible values include: 'KindPropertyValue', 'KindBinary', 'KindInt64', 'KindDouble', 'KindString', 'KindGUID'
-	Kind KindBasicPropertyValue `json:"Kind,omitempty"`
 	// Data - The data of the property value.
 	Data *uuid.UUID `json:"Data,omitempty"`
+	// Kind - Possible values include: 'KindPropertyValue', 'KindBinary', 'KindInt64', 'KindDouble', 'KindString', 'KindGUID'
+	Kind KindBasicPropertyValue `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for GUIDPropertyValue.
 func (gpv GUIDPropertyValue) MarshalJSON() ([]byte, error) {
 	gpv.Kind = KindGUID
-	type Alias GUIDPropertyValue
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(gpv),
-	})
+	objectMap := make(map[string]interface{})
+	if gpv.Data != nil {
+		objectMap["Data"] = gpv.Data
+	}
+	objectMap["Kind"] = gpv.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsBinaryPropertyValue is the BasicPropertyValue implementation for GUIDPropertyValue.
@@ -5692,8 +5923,8 @@ type BasicHealthEvaluation interface {
 	AsHealthEvaluation() (*HealthEvaluation, bool)
 }
 
-// HealthEvaluation represents a health evaluation which describes the data and the algorithm used by health manager to
-// evaluate the health of an entity.
+// HealthEvaluation represents a health evaluation which describes the data and the algorithm used by health
+// manager to evaluate the health of an entity.
 type HealthEvaluation struct {
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
@@ -5819,12 +6050,13 @@ func unmarshalBasicHealthEvaluationArray(body []byte) ([]BasicHealthEvaluation, 
 // MarshalJSON is the custom marshaler for HealthEvaluation.
 func (he HealthEvaluation) MarshalJSON() ([]byte, error) {
 	he.Kind = KindHealthEvaluation
-	type Alias HealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(he),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["AggregatedHealthState"] = he.AggregatedHealthState
+	if he.Description != nil {
+		objectMap["Description"] = he.Description
+	}
+	objectMap["Kind"] = he.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for HealthEvaluation.
@@ -5949,60 +6181,25 @@ func (hew *HealthEvaluationWrapper) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["HealthEvaluation"]
-	if v != nil {
-		healthEvaluation, err := unmarshalBasicHealthEvaluation(*m["HealthEvaluation"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "HealthEvaluation":
+			if v != nil {
+				healthEvaluation, err := unmarshalBasicHealthEvaluation(*v)
+				if err != nil {
+					return err
+				}
+				hew.HealthEvaluation = healthEvaluation
+			}
 		}
-		hew.HealthEvaluation = healthEvaluation
 	}
 
 	return nil
 }
 
-// HealthEvent represents health information reported on a health entity, such as cluster, application or node, with
-// additional metadata added by the Health Manager.
+// HealthEvent represents health information reported on a health entity, such as cluster, application or node,
+// with additional metadata added by the Health Manager.
 type HealthEvent struct {
-	// SourceID - The source name which identifies the client/watchdog/system component which generated the health information.
-	SourceID *string `json:"SourceId,omitempty"`
-	// Property - The property of the health information. An entity can have health reports for different properties.
-	// The property is a string and not a fixed enumeration to allow the reporter flexibility to categorize the state condition that triggers the report.
-	// For example, a reporter with SourceId "LocalWatchdog" can monitor the state of the available disk on a node,
-	// so it can report "AvailableDisk" property on that node.
-	// The same reporter can monitor the node connectivity, so it can report a property "Connectivity" on the same node.
-	// In the health store, these reports are treated as separate health events for the specified node.
-	// Together with the SourceId, the property uniquely identifies the health information.
-	Property *string `json:"Property,omitempty"`
-	// HealthState - Possible values include: 'HealthState3Invalid', 'HealthState3Ok', 'HealthState3Warning', 'HealthState3Error', 'HealthState3Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
-	// TimeToLiveInMilliSeconds - The duration for which this health report is valid. This field is using ISO8601 format for specifying the duration.
-	// When clients report periodically, they should send reports with higher frequency than time to live.
-	// If clients report on transition, they can set the time to live to infinite.
-	// When time to live expires, the health event that contains the health information
-	// is either removed from health store, if RemoveWhenExpired is true, or evaluated at error, if RemoveWhenExpired false.
-	// If not specified, time to live defaults to infinite value.
-	TimeToLiveInMilliSeconds *string `json:"TimeToLiveInMilliSeconds,omitempty"`
-	// Description - The description of the health information. It represents free text used to add human readable information about the report.
-	// The maximum string length for the description is 4096 characters.
-	// If the provided string is longer, it will be automatically truncated.
-	// When truncated, the last characters of the description contain a marker "[Truncated]", and total string size is 4096 characters.
-	// The presence of the marker indicates to users that truncation occurred.
-	// Note that when truncated, the description has less than 4096 characters from the original string.
-	Description *string `json:"Description,omitempty"`
-	// SequenceNumber - The sequence number for this health report as a numeric string.
-	// The report sequence number is used by the health store to detect stale reports.
-	// If not specified, a sequence number is auto-generated by the health client when a report is added.
-	SequenceNumber *string `json:"SequenceNumber,omitempty"`
-	// RemoveWhenExpired - Value that indicates whether the report is removed from health store when it expires.
-	// If set to true, the report is remopved from the health store after it expires.
-	// If set to false, the report is treated as an error when expired. The value of this property is false by default.
-	// When clients report periodically, they should set RemoveWhenExpired false (default).
-	// This way, is the reporter has issues (eg. deadlock) and can't report, the entity is evaluated at error when the health report expires.
-	// This flags the entity as being in Error health state.
-	RemoveWhenExpired *bool `json:"RemoveWhenExpired,omitempty"`
 	// IsExpired - Returns true if the health event is expired, otherwise false.
 	IsExpired *bool `json:"IsExpired,omitempty"`
 	// SourceUtcTimestamp - The date and time when the health report was sent by the source.
@@ -6023,11 +6220,6 @@ type HealthEvent struct {
 	// If the current health state is 'Ok' or 'Warning', returns the date and time at which the health state was last in 'Error', before transitioning to a different state.
 	// If the health state was never 'Error', the value will be zero date-time.
 	LastErrorTransitionAt *date.Time `json:"LastErrorTransitionAt,omitempty"`
-}
-
-// HealthInformation represents common health report information. It is included in all health reports sent to health
-// store and in all health events returned by health queries.
-type HealthInformation struct {
 	// SourceID - The source name which identifies the client/watchdog/system component which generated the health information.
 	SourceID *string `json:"SourceId,omitempty"`
 	// Property - The property of the health information. An entity can have health reports for different properties.
@@ -6039,7 +6231,7 @@ type HealthInformation struct {
 	// Together with the SourceId, the property uniquely identifies the health information.
 	Property *string `json:"Property,omitempty"`
 	// HealthState - Possible values include: 'HealthState3Invalid', 'HealthState3Ok', 'HealthState3Warning', 'HealthState3Error', 'HealthState3Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
+	HealthState HealthState3 `json:"HealthState,omitempty"`
 	// TimeToLiveInMilliSeconds - The duration for which this health report is valid. This field is using ISO8601 format for specifying the duration.
 	// When clients report periodically, they should send reports with higher frequency than time to live.
 	// If clients report on transition, they can set the time to live to infinite.
@@ -6067,7 +6259,50 @@ type HealthInformation struct {
 	RemoveWhenExpired *bool `json:"RemoveWhenExpired,omitempty"`
 }
 
-// HealthStateCount represents information about how many health entities are in Ok, Warning and Error health state.
+// HealthInformation represents common health report information. It is included in all health reports sent to
+// health store and in all health events returned by health queries.
+type HealthInformation struct {
+	// SourceID - The source name which identifies the client/watchdog/system component which generated the health information.
+	SourceID *string `json:"SourceId,omitempty"`
+	// Property - The property of the health information. An entity can have health reports for different properties.
+	// The property is a string and not a fixed enumeration to allow the reporter flexibility to categorize the state condition that triggers the report.
+	// For example, a reporter with SourceId "LocalWatchdog" can monitor the state of the available disk on a node,
+	// so it can report "AvailableDisk" property on that node.
+	// The same reporter can monitor the node connectivity, so it can report a property "Connectivity" on the same node.
+	// In the health store, these reports are treated as separate health events for the specified node.
+	// Together with the SourceId, the property uniquely identifies the health information.
+	Property *string `json:"Property,omitempty"`
+	// HealthState - Possible values include: 'HealthState3Invalid', 'HealthState3Ok', 'HealthState3Warning', 'HealthState3Error', 'HealthState3Unknown'
+	HealthState HealthState3 `json:"HealthState,omitempty"`
+	// TimeToLiveInMilliSeconds - The duration for which this health report is valid. This field is using ISO8601 format for specifying the duration.
+	// When clients report periodically, they should send reports with higher frequency than time to live.
+	// If clients report on transition, they can set the time to live to infinite.
+	// When time to live expires, the health event that contains the health information
+	// is either removed from health store, if RemoveWhenExpired is true, or evaluated at error, if RemoveWhenExpired false.
+	// If not specified, time to live defaults to infinite value.
+	TimeToLiveInMilliSeconds *string `json:"TimeToLiveInMilliSeconds,omitempty"`
+	// Description - The description of the health information. It represents free text used to add human readable information about the report.
+	// The maximum string length for the description is 4096 characters.
+	// If the provided string is longer, it will be automatically truncated.
+	// When truncated, the last characters of the description contain a marker "[Truncated]", and total string size is 4096 characters.
+	// The presence of the marker indicates to users that truncation occurred.
+	// Note that when truncated, the description has less than 4096 characters from the original string.
+	Description *string `json:"Description,omitempty"`
+	// SequenceNumber - The sequence number for this health report as a numeric string.
+	// The report sequence number is used by the health store to detect stale reports.
+	// If not specified, a sequence number is auto-generated by the health client when a report is added.
+	SequenceNumber *string `json:"SequenceNumber,omitempty"`
+	// RemoveWhenExpired - Value that indicates whether the report is removed from health store when it expires.
+	// If set to true, the report is remopved from the health store after it expires.
+	// If set to false, the report is treated as an error when expired. The value of this property is false by default.
+	// When clients report periodically, they should set RemoveWhenExpired false (default).
+	// This way, is the reporter has issues (eg. deadlock) and can't report, the entity is evaluated at error when the health report expires.
+	// This flags the entity as being in Error health state.
+	RemoveWhenExpired *bool `json:"RemoveWhenExpired,omitempty"`
+}
+
+// HealthStateCount represents information about how many health entities are in Ok, Warning and Error health
+// state.
 type HealthStateCount struct {
 	// OkCount - The number of health entities with aggregated health state Ok.
 	OkCount *int64 `json:"OkCount,omitempty"`
@@ -6097,8 +6332,8 @@ type ImageStoreContent struct {
 	StoreFolders *[]FolderInfo `json:"StoreFolders,omitempty"`
 }
 
-// ImageStoreCopyDescription information about how to copy image store content from one image store relative path to
-// another image store relative path.
+// ImageStoreCopyDescription information about how to copy image store content from one image store relative path
+// to another image store relative path.
 type ImageStoreCopyDescription struct {
 	// RemoteSource - The relative path of source image store content to be copied from.
 	RemoteSource *string `json:"RemoteSource,omitempty"`
@@ -6112,21 +6347,21 @@ type ImageStoreCopyDescription struct {
 
 // Int64PropertyValue describes a Service Fabric property value of type Int64.
 type Int64PropertyValue struct {
-	// Kind - Possible values include: 'KindPropertyValue', 'KindBinary', 'KindInt64', 'KindDouble', 'KindString', 'KindGUID'
-	Kind KindBasicPropertyValue `json:"Kind,omitempty"`
 	// Data - The data of the property value.
 	Data *string `json:"Data,omitempty"`
+	// Kind - Possible values include: 'KindPropertyValue', 'KindBinary', 'KindInt64', 'KindDouble', 'KindString', 'KindGUID'
+	Kind KindBasicPropertyValue `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Int64PropertyValue.
 func (i6pv Int64PropertyValue) MarshalJSON() ([]byte, error) {
 	i6pv.Kind = KindInt64
-	type Alias Int64PropertyValue
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(i6pv),
-	})
+	objectMap := make(map[string]interface{})
+	if i6pv.Data != nil {
+		objectMap["Data"] = i6pv.Data
+	}
+	objectMap["Kind"] = i6pv.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsBinaryPropertyValue is the BasicPropertyValue implementation for Int64PropertyValue.
@@ -6164,27 +6399,33 @@ func (i6pv Int64PropertyValue) AsBasicPropertyValue() (BasicPropertyValue, bool)
 	return &i6pv, true
 }
 
-// Int64RangePartitionInformation describes the partition information for the integer range that is based on partition
-// schemes.
+// Int64RangePartitionInformation describes the partition information for the integer range that is based on
+// partition schemes.
 type Int64RangePartitionInformation struct {
-	ID *uuid.UUID `json:"Id,omitempty"`
-	// ServicePartitionKind - Possible values include: 'ServicePartitionKindPartitionInformation', 'ServicePartitionKindInt64Range', 'ServicePartitionKindNamed', 'ServicePartitionKindSingleton'
-	ServicePartitionKind ServicePartitionKind `json:"ServicePartitionKind,omitempty"`
 	// LowKey - Specifies the minimum key value handled by this partition.
 	LowKey *string `json:"LowKey,omitempty"`
 	// HighKey - Specifies the maximum key value handled by this partition.
-	HighKey *string `json:"HighKey,omitempty"`
+	HighKey *string    `json:"HighKey,omitempty"`
+	ID      *uuid.UUID `json:"Id,omitempty"`
+	// ServicePartitionKind - Possible values include: 'ServicePartitionKindPartitionInformation', 'ServicePartitionKindInt64Range', 'ServicePartitionKindNamed', 'ServicePartitionKindSingleton'
+	ServicePartitionKind ServicePartitionKind `json:"ServicePartitionKind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Int64RangePartitionInformation.
 func (i6rpi Int64RangePartitionInformation) MarshalJSON() ([]byte, error) {
 	i6rpi.ServicePartitionKind = ServicePartitionKindInt64Range
-	type Alias Int64RangePartitionInformation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(i6rpi),
-	})
+	objectMap := make(map[string]interface{})
+	if i6rpi.LowKey != nil {
+		objectMap["LowKey"] = i6rpi.LowKey
+	}
+	if i6rpi.HighKey != nil {
+		objectMap["HighKey"] = i6rpi.HighKey
+	}
+	if i6rpi.ID != nil {
+		objectMap["Id"] = i6rpi.ID
+	}
+	objectMap["ServicePartitionKind"] = i6rpi.ServicePartitionKind
+	return json.Marshal(objectMap)
 }
 
 // AsInt64RangePartitionInformation is the BasicPartitionInformation implementation for Int64RangePartitionInformation.
@@ -6228,8 +6469,6 @@ type InvokeQuorumLossResult struct {
 
 // KeyValueStoreReplicaStatus key value store related information for the replica.
 type KeyValueStoreReplicaStatus struct {
-	// Kind - Possible values include: 'KindReplicaStatusBase', 'KindKeyValueStore'
-	Kind KindBasicReplicaStatusBase `json:"Kind,omitempty"`
 	// DatabaseRowCountEstimate - Value indicating the estimated number of rows in the underlying database.
 	DatabaseRowCountEstimate *string `json:"DatabaseRowCountEstimate,omitempty"`
 	// DatabaseLogicalSizeEstimate - Value indicating the estimated size of the underlying database.
@@ -6240,17 +6479,31 @@ type KeyValueStoreReplicaStatus struct {
 	CopyNotificationCurrentProgress *string `json:"CopyNotificationCurrentProgress,omitempty"`
 	// StatusDetails - Value indicating the current status details of the replica.
 	StatusDetails *string `json:"StatusDetails,omitempty"`
+	// Kind - Possible values include: 'KindReplicaStatusBase', 'KindKeyValueStore'
+	Kind KindBasicReplicaStatusBase `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for KeyValueStoreReplicaStatus.
 func (kvsrs KeyValueStoreReplicaStatus) MarshalJSON() ([]byte, error) {
 	kvsrs.Kind = KindKeyValueStore
-	type Alias KeyValueStoreReplicaStatus
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(kvsrs),
-	})
+	objectMap := make(map[string]interface{})
+	if kvsrs.DatabaseRowCountEstimate != nil {
+		objectMap["DatabaseRowCountEstimate"] = kvsrs.DatabaseRowCountEstimate
+	}
+	if kvsrs.DatabaseLogicalSizeEstimate != nil {
+		objectMap["DatabaseLogicalSizeEstimate"] = kvsrs.DatabaseLogicalSizeEstimate
+	}
+	if kvsrs.CopyNotificationCurrentKeyFilter != nil {
+		objectMap["CopyNotificationCurrentKeyFilter"] = kvsrs.CopyNotificationCurrentKeyFilter
+	}
+	if kvsrs.CopyNotificationCurrentProgress != nil {
+		objectMap["CopyNotificationCurrentProgress"] = kvsrs.CopyNotificationCurrentProgress
+	}
+	if kvsrs.StatusDetails != nil {
+		objectMap["StatusDetails"] = kvsrs.StatusDetails
+	}
+	objectMap["Kind"] = kvsrs.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsKeyValueStoreReplicaStatus is the BasicReplicaStatusBase implementation for KeyValueStoreReplicaStatus.
@@ -6339,7 +6592,8 @@ type ListServiceTypeInfo struct {
 	Value             *[]ServiceTypeInfo `json:"value,omitempty"`
 }
 
-// LoadMetricReport represents the load metric report which contains the time metric was reported, its name and value.
+// LoadMetricReport represents the load metric report which contains the time metric was reported, its name and
+// value.
 type LoadMetricReport struct {
 	// LastReportedUtc - Gets the UTC time when the load was reported.
 	LastReportedUtc *date.Time `json:"LastReportedUtc,omitempty"`
@@ -6375,25 +6629,28 @@ type NameDescription struct {
 	Name *string `json:"Name,omitempty"`
 }
 
-// NamedPartitionInformation describes the partition information for the name as a string that is based on partition
-// schemes.
+// NamedPartitionInformation describes the partition information for the name as a string that is based on
+// partition schemes.
 type NamedPartitionInformation struct {
-	ID *uuid.UUID `json:"Id,omitempty"`
+	// Name - Name of the partition.
+	Name *string    `json:"Name,omitempty"`
+	ID   *uuid.UUID `json:"Id,omitempty"`
 	// ServicePartitionKind - Possible values include: 'ServicePartitionKindPartitionInformation', 'ServicePartitionKindInt64Range', 'ServicePartitionKindNamed', 'ServicePartitionKindSingleton'
 	ServicePartitionKind ServicePartitionKind `json:"ServicePartitionKind,omitempty"`
-	// Name - Name of the partition.
-	Name *string `json:"Name,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for NamedPartitionInformation.
 func (npi NamedPartitionInformation) MarshalJSON() ([]byte, error) {
 	npi.ServicePartitionKind = ServicePartitionKindNamed
-	type Alias NamedPartitionInformation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(npi),
-	})
+	objectMap := make(map[string]interface{})
+	if npi.Name != nil {
+		objectMap["Name"] = npi.Name
+	}
+	if npi.ID != nil {
+		objectMap["Id"] = npi.ID
+	}
+	objectMap["ServicePartitionKind"] = npi.ServicePartitionKind
+	return json.Marshal(objectMap)
 }
 
 // AsInt64RangePartitionInformation is the BasicPartitionInformation implementation for NamedPartitionInformation.
@@ -6423,23 +6680,26 @@ func (npi NamedPartitionInformation) AsBasicPartitionInformation() (BasicPartiti
 
 // NamedPartitionSchemeDescription describes the named partition scheme of the service.
 type NamedPartitionSchemeDescription struct {
-	// PartitionScheme - Possible values include: 'PartitionSchemePartitionSchemeDescription', 'PartitionSchemeNamed', 'PartitionSchemeSingleton', 'PartitionSchemeUniformInt64Range'
-	PartitionScheme PartitionScheme `json:"PartitionScheme,omitempty"`
 	// Count - The number of partitions.
 	Count *int32 `json:"Count,omitempty"`
 	// Names - Array of size specified by the ‘Count’ parameter, for the names of the partitions.
 	Names *[]string `json:"Names,omitempty"`
+	// PartitionScheme - Possible values include: 'PartitionSchemePartitionSchemeDescription', 'PartitionSchemeNamed', 'PartitionSchemeSingleton', 'PartitionSchemeUniformInt64Range'
+	PartitionScheme PartitionScheme `json:"PartitionScheme,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for NamedPartitionSchemeDescription.
 func (npsd NamedPartitionSchemeDescription) MarshalJSON() ([]byte, error) {
 	npsd.PartitionScheme = PartitionSchemeNamed
-	type Alias NamedPartitionSchemeDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(npsd),
-	})
+	objectMap := make(map[string]interface{})
+	if npsd.Count != nil {
+		objectMap["Count"] = npsd.Count
+	}
+	if npsd.Names != nil {
+		objectMap["Names"] = npsd.Names
+	}
+	objectMap["PartitionScheme"] = npsd.PartitionScheme
+	return json.Marshal(objectMap)
 }
 
 // AsNamedPartitionSchemeDescription is the BasicPartitionSchemeDescription implementation for NamedPartitionSchemeDescription.
@@ -6471,7 +6731,7 @@ func (npsd NamedPartitionSchemeDescription) AsBasicPartitionSchemeDescription() 
 // undergoing deactivation or has already been deactivated.
 type NodeDeactivationInfo struct {
 	// NodeDeactivationIntent - Possible values include: 'NodeDeactivationIntent1Invalid', 'NodeDeactivationIntent1Pause', 'NodeDeactivationIntent1Restart', 'NodeDeactivationIntent1RemoveData', 'NodeDeactivationIntent1RemoveNode'
-	NodeDeactivationIntent NodeDeactivationIntent `json:"NodeDeactivationIntent,omitempty"`
+	NodeDeactivationIntent NodeDeactivationIntent1 `json:"NodeDeactivationIntent,omitempty"`
 	// NodeDeactivationStatus - Possible values include: 'NodeDeactivationStatusNone', 'NodeDeactivationStatusSafetyCheckInProgress', 'NodeDeactivationStatusSafetyCheckComplete', 'NodeDeactivationStatusCompleted'
 	NodeDeactivationStatus NodeDeactivationStatus  `json:"NodeDeactivationStatus,omitempty"`
 	NodeDeactivationTask   *[]NodeDeactivationTask `json:"NodeDeactivationTask,omitempty"`
@@ -6496,38 +6756,45 @@ type NodeDeactivationTaskID struct {
 // NodeHealth information about the health of a Service Fabric node.
 type NodeHealth struct {
 	autorest.Response `json:"-"`
+	Name              *string `json:"Name,omitempty"`
 	// AggregatedHealthState - Possible values include: 'AggregatedHealthState1Invalid', 'AggregatedHealthState1Ok', 'AggregatedHealthState1Warning', 'AggregatedHealthState1Error', 'AggregatedHealthState1Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
+	AggregatedHealthState AggregatedHealthState1 `json:"AggregatedHealthState,omitempty"`
 	// HealthEvents - The list of health events reported on the entity.
 	HealthEvents         *[]HealthEvent             `json:"HealthEvents,omitempty"`
 	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	HealthStatistics     *HealthStatistics          `json:"HealthStatistics,omitempty"`
-	Name                 *string                    `json:"Name,omitempty"`
 }
 
 // NodeHealthEvaluation represents health evaluation for a node, containing information about the data and the
-// algorithm used by health store to evaluate health. The evaluation is returned only when the aggregated health state
-// is either Error or Warning.
+// algorithm used by health store to evaluate health. The evaluation is returned only when the aggregated health
+// state is either Error or Warning.
 type NodeHealthEvaluation struct {
+	NodeName             *string                    `json:"NodeName,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
-	Kind                 KindBasicHealthEvaluation  `json:"Kind,omitempty"`
-	NodeName             *string                    `json:"NodeName,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for NodeHealthEvaluation.
 func (nhe NodeHealthEvaluation) MarshalJSON() ([]byte, error) {
 	nhe.Kind = KindNode
-	type Alias NodeHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(nhe),
-	})
+	objectMap := make(map[string]interface{})
+	if nhe.NodeName != nil {
+		objectMap["NodeName"] = nhe.NodeName
+	}
+	if nhe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = nhe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = nhe.AggregatedHealthState
+	if nhe.Description != nil {
+		objectMap["Description"] = nhe.Description
+	}
+	objectMap["Kind"] = nhe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for NodeHealthEvaluation.
@@ -6640,30 +6907,30 @@ func (nhe NodeHealthEvaluation) AsBasicHealthEvaluation() (BasicHealthEvaluation
 	return &nhe, true
 }
 
-// NodeHealthState represents the health state of a node, which contains the node identifier and its aggregated health
-// state.
-type NodeHealthState struct {
-	// AggregatedHealthState - Possible values include: 'AggregatedHealthState2Invalid', 'AggregatedHealthState2Ok', 'AggregatedHealthState2Warning', 'AggregatedHealthState2Error', 'AggregatedHealthState2Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	Name                  *string               `json:"Name,omitempty"`
-	ID                    *NodeID               `json:"Id,omitempty"`
-}
-
-// NodeHealthStateChunk represents the health state chunk of a node, which contains the node name and its aggregated
+// NodeHealthState represents the health state of a node, which contains the node identifier and its aggregated
 // health state.
-type NodeHealthStateChunk struct {
-	// HealthState - Possible values include: 'HealthState2Invalid', 'HealthState2Ok', 'HealthState2Warning', 'HealthState2Error', 'HealthState2Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
-	NodeName    *string     `json:"NodeName,omitempty"`
+type NodeHealthState struct {
+	Name *string `json:"Name,omitempty"`
+	ID   *NodeID `json:"Id,omitempty"`
+	// AggregatedHealthState - Possible values include: 'AggregatedHealthState2Invalid', 'AggregatedHealthState2Ok', 'AggregatedHealthState2Warning', 'AggregatedHealthState2Error', 'AggregatedHealthState2Unknown'
+	AggregatedHealthState AggregatedHealthState2 `json:"AggregatedHealthState,omitempty"`
 }
 
-// NodeHealthStateChunkList the list of node health state chunks in the cluster that respect the input filters in the
-// chunk query. Returned by get cluster health state chunks query.
+// NodeHealthStateChunk represents the health state chunk of a node, which contains the node name and its
+// aggregated health state.
+type NodeHealthStateChunk struct {
+	NodeName *string `json:"NodeName,omitempty"`
+	// HealthState - Possible values include: 'HealthState2Invalid', 'HealthState2Ok', 'HealthState2Warning', 'HealthState2Error', 'HealthState2Unknown'
+	HealthState HealthState2 `json:"HealthState,omitempty"`
+}
+
+// NodeHealthStateChunkList the list of node health state chunks in the cluster that respect the input filters in
+// the chunk query. Returned by get cluster health state chunks query.
 type NodeHealthStateChunkList struct {
-	// TotalCount - Total number of entity health state objects that match the specified filters from the cluster health chunk query description.
-	TotalCount *int64 `json:"TotalCount,omitempty"`
 	// Items - The list of node health state chunks that respect the input filters in the chunk query.
 	Items *[]NodeHealthStateChunk `json:"Items,omitempty"`
+	// TotalCount - Total number of entity health state objects that match the specified filters from the cluster health chunk query description.
+	TotalCount *int64 `json:"TotalCount,omitempty"`
 }
 
 // NodeHealthStateFilter defines matching criteria to determine whether a node should be included in the returned
@@ -6724,7 +6991,7 @@ type NodeInfo struct {
 	// NodeUpTimeInSeconds - Time in seconds since the node has been in NodeStatus Up. Value ero indicates that the node is not Up.
 	NodeUpTimeInSeconds *string `json:"NodeUpTimeInSeconds,omitempty"`
 	// HealthState - Possible values include: 'HealthState4Invalid', 'HealthState4Ok', 'HealthState4Warning', 'HealthState4Error', 'HealthState4Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
+	HealthState HealthState4 `json:"HealthState,omitempty"`
 	// IsSeedNode - Indicates if the node is a seed node or not. Returns true if the node is a seed node, otherwise false. A quorum of seed nodes are required for proper operation of Service Fabric cluster.
 	IsSeedNode *bool `json:"IsSeedNode,omitempty"`
 	// UpgradeDomain - The upgrade domain of the node.
@@ -6745,8 +7012,8 @@ type NodeInfo struct {
 	NodeDownAt *date.Time `json:"NodeDownAt,omitempty"`
 }
 
-// NodeLoadInfo information about load on a Service Fabric node. It holds a summary of all metrics and their load on a
-// node.
+// NodeLoadInfo information about load on a Service Fabric node. It holds a summary of all metrics and their load
+// on a node.
 type NodeLoadInfo struct {
 	autorest.Response `json:"-"`
 	NodeName          *string `json:"NodeName,omitempty"`
@@ -6754,7 +7021,8 @@ type NodeLoadInfo struct {
 	NodeLoadMetricInformation *[]NodeLoadMetricInformation `json:"NodeLoadMetricInformation,omitempty"`
 }
 
-// NodeLoadMetricInformation represents data structure that contains load information for a certain metric on a node.
+// NodeLoadMetricInformation represents data structure that contains load information for a certain metric on a
+// node.
 type NodeLoadMetricInformation struct {
 	// Name - Name of the metric for which this load information is provided.
 	Name *string `json:"Name,omitempty"`
@@ -6776,21 +7044,21 @@ type NodeLoadMetricInformation struct {
 //
 // This type supports the Service Fabric platform; it is not meant to be used directly from your code.
 type NodeRepairImpactDescription struct {
-	// Kind - Possible values include: 'KindBasicRepairImpactDescriptionBaseKindRepairImpactDescriptionBase', 'KindBasicRepairImpactDescriptionBaseKindNode'
-	Kind KindBasicRepairImpactDescriptionBase `json:"Kind,omitempty"`
 	// NodeImpactList - The list of nodes impacted by a repair action and their respective expected impact.
 	NodeImpactList *[]NodeImpact `json:"NodeImpactList,omitempty"`
+	// Kind - Possible values include: 'KindBasicRepairImpactDescriptionBaseKindRepairImpactDescriptionBase', 'KindBasicRepairImpactDescriptionBaseKindNode'
+	Kind KindBasicRepairImpactDescriptionBase `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for NodeRepairImpactDescription.
 func (nrid NodeRepairImpactDescription) MarshalJSON() ([]byte, error) {
 	nrid.Kind = KindBasicRepairImpactDescriptionBaseKindNode
-	type Alias NodeRepairImpactDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(nrid),
-	})
+	objectMap := make(map[string]interface{})
+	if nrid.NodeImpactList != nil {
+		objectMap["NodeImpactList"] = nrid.NodeImpactList
+	}
+	objectMap["Kind"] = nrid.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsNodeRepairImpactDescription is the BasicRepairImpactDescriptionBase implementation for NodeRepairImpactDescription.
@@ -6812,21 +7080,21 @@ func (nrid NodeRepairImpactDescription) AsBasicRepairImpactDescriptionBase() (Ba
 //
 // This type supports the Service Fabric platform; it is not meant to be used directly from your code.
 type NodeRepairTargetDescription struct {
-	// Kind - Possible values include: 'KindBasicRepairTargetDescriptionBaseKindRepairTargetDescriptionBase', 'KindBasicRepairTargetDescriptionBaseKindNode'
-	Kind KindBasicRepairTargetDescriptionBase `json:"Kind,omitempty"`
 	// NodeNames - The list of nodes targeted by a repair action.
 	NodeNames *[]string `json:"NodeNames,omitempty"`
+	// Kind - Possible values include: 'KindBasicRepairTargetDescriptionBaseKindRepairTargetDescriptionBase', 'KindBasicRepairTargetDescriptionBaseKindNode'
+	Kind KindBasicRepairTargetDescriptionBase `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for NodeRepairTargetDescription.
 func (nrtd NodeRepairTargetDescription) MarshalJSON() ([]byte, error) {
 	nrtd.Kind = KindBasicRepairTargetDescriptionBaseKindNode
-	type Alias NodeRepairTargetDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(nrtd),
-	})
+	objectMap := make(map[string]interface{})
+	if nrtd.NodeNames != nil {
+		objectMap["NodeNames"] = nrtd.NodeNames
+	}
+	objectMap["Kind"] = nrtd.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsNodeRepairTargetDescription is the BasicRepairTargetDescriptionBase implementation for NodeRepairTargetDescription.
@@ -6851,32 +7119,42 @@ type NodeResult struct {
 	NodeInstanceID *string `json:"NodeInstanceId,omitempty"`
 }
 
-// NodesHealthEvaluation represents health evaluation for nodes, containing health evaluations for each unhealthy node
-// that impacted current aggregated health state. Can be returned when evaluating cluster health and the aggregated
-// health state is either Error or Warning.
+// NodesHealthEvaluation represents health evaluation for nodes, containing health evaluations for each unhealthy
+// node that impacted current aggregated health state. Can be returned when evaluating cluster health and the
+// aggregated health state is either Error or Warning.
 type NodesHealthEvaluation struct {
+	// MaxPercentUnhealthyNodes - Maximum allowed percentage of unhealthy nodes from the ClusterHealthPolicy.
+	MaxPercentUnhealthyNodes *int32 `json:"MaxPercentUnhealthyNodes,omitempty"`
+	// TotalCount - Total number of nodes found in the health store.
+	TotalCount           *int64                     `json:"TotalCount,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
 	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
-	// MaxPercentUnhealthyNodes - Maximum allowed percentage of unhealthy nodes from the ClusterHealthPolicy.
-	MaxPercentUnhealthyNodes *int32 `json:"MaxPercentUnhealthyNodes,omitempty"`
-	// TotalCount - Total number of nodes found in the health store.
-	TotalCount           *int64                     `json:"TotalCount,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for NodesHealthEvaluation.
 func (nhe NodesHealthEvaluation) MarshalJSON() ([]byte, error) {
 	nhe.Kind = KindNodes
-	type Alias NodesHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(nhe),
-	})
+	objectMap := make(map[string]interface{})
+	if nhe.MaxPercentUnhealthyNodes != nil {
+		objectMap["MaxPercentUnhealthyNodes"] = nhe.MaxPercentUnhealthyNodes
+	}
+	if nhe.TotalCount != nil {
+		objectMap["TotalCount"] = nhe.TotalCount
+	}
+	if nhe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = nhe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = nhe.AggregatedHealthState
+	if nhe.Description != nil {
+		objectMap["Description"] = nhe.Description
+	}
+	objectMap["Kind"] = nhe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for NodesHealthEvaluation.
@@ -6989,13 +7267,13 @@ func (nhe NodesHealthEvaluation) AsBasicHealthEvaluation() (BasicHealthEvaluatio
 	return &nhe, true
 }
 
-// NodeTransitionProgress information about an NodeTransition operation.  This class contains an OperationState and a
-// NodeTransitionResult.  The NodeTransitionResult is not valid until OperationState
+// NodeTransitionProgress information about an NodeTransition operation.  This class contains an OperationState and
+// a NodeTransitionResult.  The NodeTransitionResult is not valid until OperationState
 // is Completed or Faulted.
 type NodeTransitionProgress struct {
 	autorest.Response `json:"-"`
 	// State - Possible values include: 'State1Invalid', 'State1Running', 'State1RollingBack', 'State1Completed', 'State1Faulted', 'State1Cancelled', 'State1ForceCancelled'
-	State                State                 `json:"State,omitempty"`
+	State                State1                `json:"State,omitempty"`
 	NodeTransitionResult *NodeTransitionResult `json:"NodeTransitionResult,omitempty"`
 }
 
@@ -7018,7 +7296,7 @@ type NodeUpgradeProgressInfo struct {
 type OperationStatus struct {
 	OperationID *uuid.UUID `json:"OperationId,omitempty"`
 	// State - Possible values include: 'State2Invalid', 'State2Running', 'State2RollingBack', 'State2Completed', 'State2Faulted', 'State2Cancelled', 'State2ForceCancelled'
-	State State `json:"State,omitempty"`
+	State State2 `json:"State,omitempty"`
 	// Type - Possible values include: 'TypeInvalid', 'TypePartitionDataLoss', 'TypePartitionQuorumLoss', 'TypePartitionRestart', 'TypeNodeTransition'
 	Type Type `json:"Type,omitempty"`
 }
@@ -7031,45 +7309,45 @@ type PackageSharingPolicyInfo struct {
 	PackageSharingScope PackageSharingScope `json:"PackageSharingScope,omitempty"`
 }
 
-// PagedApplicationInfoList the list of applications in the cluster. The list is paged when all of the results cannot
-// fit in a single message. The next set of results can be obtained by executing the same query with the continuation
-// token provided in this list.
+// PagedApplicationInfoList the list of applications in the cluster. The list is paged when all of the results
+// cannot fit in a single message. The next set of results can be obtained by executing the same query with the
+// continuation token provided in this list.
 type PagedApplicationInfoList struct {
 	autorest.Response `json:"-"`
 	ContinuationToken *string            `json:"ContinuationToken,omitempty"`
 	Items             *[]ApplicationInfo `json:"Items,omitempty"`
 }
 
-// PagedApplicationTypeInfoList the list of application types that are provisioned or being provisioned in the cluster.
-// The list is paged when all of the results cannot fit in a single message. The next set of results can be obtained by
-// executing the same query with the continuation token provided in this list.
+// PagedApplicationTypeInfoList the list of application types that are provisioned or being provisioned in the
+// cluster. The list is paged when all of the results cannot fit in a single message. The next set of results can
+// be obtained by executing the same query with the continuation token provided in this list.
 type PagedApplicationTypeInfoList struct {
 	autorest.Response `json:"-"`
 	ContinuationToken *string                `json:"ContinuationToken,omitempty"`
 	Items             *[]ApplicationTypeInfo `json:"Items,omitempty"`
 }
 
-// PagedComposeDeploymentStatusInfoList the list of compose deployments in the cluster. The list is paged when all of
-// the results cannot fit in a single message. The next set of results can be obtained by executing the same query with
-// the continuation token provided in this list.
+// PagedComposeDeploymentStatusInfoList the list of compose deployments in the cluster. The list is paged when all
+// of the results cannot fit in a single message. The next set of results can be obtained by executing the same
+// query with the continuation token provided in this list.
 type PagedComposeDeploymentStatusInfoList struct {
 	autorest.Response `json:"-"`
 	ContinuationToken *string                        `json:"ContinuationToken,omitempty"`
 	Items             *[]ComposeDeploymentStatusInfo `json:"Items,omitempty"`
 }
 
-// PagedNodeInfoList the list of nodes in the cluster. The list is paged when all of the results cannot fit in a single
-// message. The next set of results can be obtained by executing the same query with the continuation token provided in
-// this list.
+// PagedNodeInfoList the list of nodes in the cluster. The list is paged when all of the results cannot fit in a
+// single message. The next set of results can be obtained by executing the same query with the continuation token
+// provided in this list.
 type PagedNodeInfoList struct {
 	autorest.Response `json:"-"`
 	ContinuationToken *string     `json:"ContinuationToken,omitempty"`
 	Items             *[]NodeInfo `json:"Items,omitempty"`
 }
 
-// PagedPropertyInfoList the paged list of Service Fabric properties under a given name. The list is paged when all of
-// the results cannot fit in a single message. The next set of results can be obtained by executing the same query with
-// the continuation token provided in this list.
+// PagedPropertyInfoList the paged list of Service Fabric properties under a given name. The list is paged when all
+// of the results cannot fit in a single message. The next set of results can be obtained by executing the same
+// query with the continuation token provided in this list.
 type PagedPropertyInfoList struct {
 	autorest.Response `json:"-"`
 	ContinuationToken *string `json:"ContinuationToken,omitempty"`
@@ -7078,9 +7356,9 @@ type PagedPropertyInfoList struct {
 	Properties   *[]PropertyInfo `json:"Properties,omitempty"`
 }
 
-// PagedReplicaInfoList the list of replicas in the cluster for a given partition. The list is paged when all of the
-// results cannot fit in a single message. The next set of results can be obtained by executing the same query with the
-// continuation token provided in this list.
+// PagedReplicaInfoList the list of replicas in the cluster for a given partition. The list is paged when all of
+// the results cannot fit in a single message. The next set of results can be obtained by executing the same query
+// with the continuation token provided in this list.
 type PagedReplicaInfoList struct {
 	autorest.Response `json:"-"`
 	ContinuationToken *string             `json:"ContinuationToken,omitempty"`
@@ -7094,33 +7372,34 @@ func (pril *PagedReplicaInfoList) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["ContinuationToken"]
-	if v != nil {
-		var continuationToken string
-		err = json.Unmarshal(*m["ContinuationToken"], &continuationToken)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "ContinuationToken":
+			if v != nil {
+				var continuationToken string
+				err = json.Unmarshal(*v, &continuationToken)
+				if err != nil {
+					return err
+				}
+				pril.ContinuationToken = &continuationToken
+			}
+		case "Items":
+			if v != nil {
+				items, err := unmarshalBasicReplicaInfoArray(*v)
+				if err != nil {
+					return err
+				}
+				pril.Items = &items
+			}
 		}
-		pril.ContinuationToken = &continuationToken
-	}
-
-	v = m["Items"]
-	if v != nil {
-		items, err := unmarshalBasicReplicaInfoArray(*m["Items"])
-		if err != nil {
-			return err
-		}
-		pril.Items = &items
 	}
 
 	return nil
 }
 
 // PagedServiceInfoList the list of services in the cluster for an application. The list is paged when all of the
-// results cannot fit in a single message. The next set of results can be obtained by executing the same query with the
-// continuation token provided in this list.
+// results cannot fit in a single message. The next set of results can be obtained by executing the same query with
+// the continuation token provided in this list.
 type PagedServiceInfoList struct {
 	autorest.Response `json:"-"`
 	ContinuationToken *string             `json:"ContinuationToken,omitempty"`
@@ -7134,33 +7413,34 @@ func (psil *PagedServiceInfoList) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["ContinuationToken"]
-	if v != nil {
-		var continuationToken string
-		err = json.Unmarshal(*m["ContinuationToken"], &continuationToken)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "ContinuationToken":
+			if v != nil {
+				var continuationToken string
+				err = json.Unmarshal(*v, &continuationToken)
+				if err != nil {
+					return err
+				}
+				psil.ContinuationToken = &continuationToken
+			}
+		case "Items":
+			if v != nil {
+				items, err := unmarshalBasicServiceInfoArray(*v)
+				if err != nil {
+					return err
+				}
+				psil.Items = &items
+			}
 		}
-		psil.ContinuationToken = &continuationToken
-	}
-
-	v = m["Items"]
-	if v != nil {
-		items, err := unmarshalBasicServiceInfoArray(*m["Items"])
-		if err != nil {
-			return err
-		}
-		psil.Items = &items
 	}
 
 	return nil
 }
 
-// PagedServicePartitionInfoList the list of partition in the cluster for a service. The list is paged when all of the
-// results cannot fit in a single message. The next set of results can be obtained by executing the same query with the
-// continuation token provided in this list.
+// PagedServicePartitionInfoList the list of partition in the cluster for a service. The list is paged when all of
+// the results cannot fit in a single message. The next set of results can be obtained by executing the same query
+// with the continuation token provided in this list.
 type PagedServicePartitionInfoList struct {
 	autorest.Response `json:"-"`
 	ContinuationToken *string                      `json:"ContinuationToken,omitempty"`
@@ -7174,33 +7454,34 @@ func (pspil *PagedServicePartitionInfoList) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["ContinuationToken"]
-	if v != nil {
-		var continuationToken string
-		err = json.Unmarshal(*m["ContinuationToken"], &continuationToken)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "ContinuationToken":
+			if v != nil {
+				var continuationToken string
+				err = json.Unmarshal(*v, &continuationToken)
+				if err != nil {
+					return err
+				}
+				pspil.ContinuationToken = &continuationToken
+			}
+		case "Items":
+			if v != nil {
+				items, err := unmarshalBasicServicePartitionInfoArray(*v)
+				if err != nil {
+					return err
+				}
+				pspil.Items = &items
+			}
 		}
-		pspil.ContinuationToken = &continuationToken
-	}
-
-	v = m["Items"]
-	if v != nil {
-		items, err := unmarshalBasicServicePartitionInfoArray(*m["Items"])
-		if err != nil {
-			return err
-		}
-		pspil.Items = &items
 	}
 
 	return nil
 }
 
-// PagedSubNameInfoList a paged list of Service Fabric names. The list is paged when all of the results cannot fit in a
-// single message. The next set of results can be obtained by executing the same query with the continuation token
-// provided in this list.
+// PagedSubNameInfoList a paged list of Service Fabric names. The list is paged when all of the results cannot fit
+// in a single message. The next set of results can be obtained by executing the same query with the continuation
+// token provided in this list.
 type PagedSubNameInfoList struct {
 	autorest.Response `json:"-"`
 	ContinuationToken *string `json:"ContinuationToken,omitempty"`
@@ -7213,22 +7494,22 @@ type PagedSubNameInfoList struct {
 type PartitionDataLossProgress struct {
 	autorest.Response `json:"-"`
 	// State - Possible values include: 'State3Invalid', 'State3Running', 'State3RollingBack', 'State3Completed', 'State3Faulted', 'State3Cancelled', 'State3ForceCancelled'
-	State                State                 `json:"State,omitempty"`
+	State                State3                `json:"State,omitempty"`
 	InvokeDataLossResult *InvokeDataLossResult `json:"InvokeDataLossResult,omitempty"`
 }
 
 // PartitionHealth information about the health of a Service Fabric partition.
 type PartitionHealth struct {
 	autorest.Response `json:"-"`
+	PartitionID       *uuid.UUID `json:"PartitionId,omitempty"`
+	// ReplicaHealthStates - The list of replica health states associated with the partition.
+	ReplicaHealthStates *[]BasicReplicaHealthState `json:"ReplicaHealthStates,omitempty"`
 	// AggregatedHealthState - Possible values include: 'AggregatedHealthState1Invalid', 'AggregatedHealthState1Ok', 'AggregatedHealthState1Warning', 'AggregatedHealthState1Error', 'AggregatedHealthState1Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
+	AggregatedHealthState AggregatedHealthState1 `json:"AggregatedHealthState,omitempty"`
 	// HealthEvents - The list of health events reported on the entity.
 	HealthEvents         *[]HealthEvent             `json:"HealthEvents,omitempty"`
 	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	HealthStatistics     *HealthStatistics          `json:"HealthStatistics,omitempty"`
-	PartitionID          *uuid.UUID                 `json:"PartitionId,omitempty"`
-	// ReplicaHealthStates - The list of replica health states associated with the partition.
-	ReplicaHealthStates *[]BasicReplicaHealthState `json:"ReplicaHealthStates,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for PartitionHealth struct.
@@ -7238,93 +7519,97 @@ func (ph *PartitionHealth) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["PartitionId"]
-	if v != nil {
-		var partitionID uuid.UUID
-		err = json.Unmarshal(*m["PartitionId"], &partitionID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "PartitionId":
+			if v != nil {
+				var partitionID uuid.UUID
+				err = json.Unmarshal(*v, &partitionID)
+				if err != nil {
+					return err
+				}
+				ph.PartitionID = &partitionID
+			}
+		case "ReplicaHealthStates":
+			if v != nil {
+				replicaHealthStates, err := unmarshalBasicReplicaHealthStateArray(*v)
+				if err != nil {
+					return err
+				}
+				ph.ReplicaHealthStates = &replicaHealthStates
+			}
+		case "AggregatedHealthState":
+			if v != nil {
+				var aggregatedHealthState AggregatedHealthState1
+				err = json.Unmarshal(*v, &aggregatedHealthState)
+				if err != nil {
+					return err
+				}
+				ph.AggregatedHealthState = aggregatedHealthState
+			}
+		case "HealthEvents":
+			if v != nil {
+				var healthEvents []HealthEvent
+				err = json.Unmarshal(*v, &healthEvents)
+				if err != nil {
+					return err
+				}
+				ph.HealthEvents = &healthEvents
+			}
+		case "UnhealthyEvaluations":
+			if v != nil {
+				var unhealthyEvaluations []HealthEvaluationWrapper
+				err = json.Unmarshal(*v, &unhealthyEvaluations)
+				if err != nil {
+					return err
+				}
+				ph.UnhealthyEvaluations = &unhealthyEvaluations
+			}
+		case "HealthStatistics":
+			if v != nil {
+				var healthStatistics HealthStatistics
+				err = json.Unmarshal(*v, &healthStatistics)
+				if err != nil {
+					return err
+				}
+				ph.HealthStatistics = &healthStatistics
+			}
 		}
-		ph.PartitionID = &partitionID
-	}
-
-	v = m["ReplicaHealthStates"]
-	if v != nil {
-		replicaHealthStates, err := unmarshalBasicReplicaHealthStateArray(*m["ReplicaHealthStates"])
-		if err != nil {
-			return err
-		}
-		ph.ReplicaHealthStates = &replicaHealthStates
-	}
-
-	v = m["AggregatedHealthState"]
-	if v != nil {
-		var aggregatedHealthState AggregatedHealthState
-		err = json.Unmarshal(*m["AggregatedHealthState"], &aggregatedHealthState)
-		if err != nil {
-			return err
-		}
-		ph.AggregatedHealthState = aggregatedHealthState
-	}
-
-	v = m["HealthEvents"]
-	if v != nil {
-		var healthEvents []HealthEvent
-		err = json.Unmarshal(*m["HealthEvents"], &healthEvents)
-		if err != nil {
-			return err
-		}
-		ph.HealthEvents = &healthEvents
-	}
-
-	v = m["UnhealthyEvaluations"]
-	if v != nil {
-		var unhealthyEvaluations []HealthEvaluationWrapper
-		err = json.Unmarshal(*m["UnhealthyEvaluations"], &unhealthyEvaluations)
-		if err != nil {
-			return err
-		}
-		ph.UnhealthyEvaluations = &unhealthyEvaluations
-	}
-
-	v = m["HealthStatistics"]
-	if v != nil {
-		var healthStatistics HealthStatistics
-		err = json.Unmarshal(*m["HealthStatistics"], &healthStatistics)
-		if err != nil {
-			return err
-		}
-		ph.HealthStatistics = &healthStatistics
 	}
 
 	return nil
 }
 
-// PartitionHealthEvaluation represents health evaluation for a partition, containing information about the data and
-// the algorithm used by health store to evaluate health. The evaluation is returned only when the aggregated health
-// state is either Error or Warning.
+// PartitionHealthEvaluation represents health evaluation for a partition, containing information about the data
+// and the algorithm used by health store to evaluate health. The evaluation is returned only when the aggregated
+// health state is either Error or Warning.
 type PartitionHealthEvaluation struct {
+	PartitionID          *uuid.UUID                 `json:"PartitionId,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
-	Kind                 KindBasicHealthEvaluation  `json:"Kind,omitempty"`
-	PartitionID          *uuid.UUID                 `json:"PartitionId,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for PartitionHealthEvaluation.
 func (phe PartitionHealthEvaluation) MarshalJSON() ([]byte, error) {
 	phe.Kind = KindPartition
-	type Alias PartitionHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(phe),
-	})
+	objectMap := make(map[string]interface{})
+	if phe.PartitionID != nil {
+		objectMap["PartitionId"] = phe.PartitionID
+	}
+	if phe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = phe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = phe.AggregatedHealthState
+	if phe.Description != nil {
+		objectMap["Description"] = phe.Description
+	}
+	objectMap["Kind"] = phe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for PartitionHealthEvaluation.
@@ -7440,32 +7725,32 @@ func (phe PartitionHealthEvaluation) AsBasicHealthEvaluation() (BasicHealthEvalu
 // PartitionHealthState represents the health state of a partition, which contains the partition identifier and its
 // aggregated health state.
 type PartitionHealthState struct {
+	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
 	// AggregatedHealthState - Possible values include: 'AggregatedHealthState2Invalid', 'AggregatedHealthState2Ok', 'AggregatedHealthState2Warning', 'AggregatedHealthState2Error', 'AggregatedHealthState2Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	PartitionID           *uuid.UUID            `json:"PartitionId,omitempty"`
+	AggregatedHealthState AggregatedHealthState2 `json:"AggregatedHealthState,omitempty"`
 }
 
 // PartitionHealthStateChunk represents the health state chunk of a partition, which contains the partition id, its
 // aggregated health state and any replicas that respect the filters in the cluster health chunk query description.
 type PartitionHealthStateChunk struct {
-	// HealthState - Possible values include: 'HealthState2Invalid', 'HealthState2Ok', 'HealthState2Warning', 'HealthState2Error', 'HealthState2Unknown'
-	HealthState              HealthState                  `json:"HealthState,omitempty"`
 	PartitionID              *uuid.UUID                   `json:"PartitionId,omitempty"`
 	ReplicaHealthStateChunks *ReplicaHealthStateChunkList `json:"ReplicaHealthStateChunks,omitempty"`
+	// HealthState - Possible values include: 'HealthState2Invalid', 'HealthState2Ok', 'HealthState2Warning', 'HealthState2Error', 'HealthState2Unknown'
+	HealthState HealthState2 `json:"HealthState,omitempty"`
 }
 
-// PartitionHealthStateChunkList the list of partition health state chunks that respect the input filters in the chunk
-// query description.
+// PartitionHealthStateChunkList the list of partition health state chunks that respect the input filters in the
+// chunk query description.
 // Returned by get cluster health state chunks query as part of the parent application hierarchy.
 type PartitionHealthStateChunkList struct {
 	// Items - The list of partition health state chunks that respect the input filters in the chunk query.
 	Items *[]PartitionHealthStateChunk `json:"Items,omitempty"`
 }
 
-// PartitionHealthStateFilter defines matching criteria to determine whether a partition should be included as a child
-// of a service in the cluster health chunk.
-// The partitions are only returned if the parent entities match a filter specified in the cluster health chunk query
-// description. The parent service and application must be included in the cluster health chunk.
+// PartitionHealthStateFilter defines matching criteria to determine whether a partition should be included as a
+// child of a service in the cluster health chunk.
+// The partitions are only returned if the parent entities match a filter specified in the cluster health chunk
+// query description. The parent service and application must be included in the cluster health chunk.
 // One filter can match zero, one or multiple partitions, depending on its properties.
 type PartitionHealthStateFilter struct {
 	// PartitionIDFilter - ID of the partition that matches the filter. The filter is applied only to the specified partition, if it exists.
@@ -7555,12 +7840,12 @@ func unmarshalBasicPartitionInformationArray(body []byte) ([]BasicPartitionInfor
 // MarshalJSON is the custom marshaler for PartitionInformation.
 func (pi PartitionInformation) MarshalJSON() ([]byte, error) {
 	pi.ServicePartitionKind = ServicePartitionKindPartitionInformation
-	type Alias PartitionInformation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(pi),
-	})
+	objectMap := make(map[string]interface{})
+	if pi.ID != nil {
+		objectMap["Id"] = pi.ID
+	}
+	objectMap["ServicePartitionKind"] = pi.ServicePartitionKind
+	return json.Marshal(objectMap)
 }
 
 // AsInt64RangePartitionInformation is the BasicPartitionInformation implementation for PartitionInformation.
@@ -7607,7 +7892,7 @@ type PartitionLoadInformation struct {
 type PartitionQuorumLossProgress struct {
 	autorest.Response `json:"-"`
 	// State - Possible values include: 'State4Invalid', 'State4Running', 'State4RollingBack', 'State4Completed', 'State4Faulted', 'State4Cancelled', 'State4ForceCancelled'
-	State                  State                   `json:"State,omitempty"`
+	State                  State4                  `json:"State,omitempty"`
 	InvokeQuorumLossResult *InvokeQuorumLossResult `json:"InvokeQuorumLossResult,omitempty"`
 }
 
@@ -7615,7 +7900,7 @@ type PartitionQuorumLossProgress struct {
 type PartitionRestartProgress struct {
 	autorest.Response `json:"-"`
 	// State - Possible values include: 'State5Invalid', 'State5Running', 'State5RollingBack', 'State5Completed', 'State5Faulted', 'State5Cancelled', 'State5ForceCancelled'
-	State                  State                   `json:"State,omitempty"`
+	State                  State5                  `json:"State,omitempty"`
 	RestartPartitionResult *RestartPartitionResult `json:"RestartPartitionResult,omitempty"`
 }
 
@@ -7631,12 +7916,12 @@ type BasicPartitionSafetyCheck interface {
 	AsPartitionSafetyCheck() (*PartitionSafetyCheck, bool)
 }
 
-// PartitionSafetyCheck represents a safety check for the service partition being performed by service fabric before
-// continuing with operations.
+// PartitionSafetyCheck represents a safety check for the service partition being performed by service fabric
+// before continuing with operations.
 type PartitionSafetyCheck struct {
+	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
 	// Kind - Possible values include: 'KindSafetyCheck', 'KindPartitionSafetyCheck', 'KindEnsureAvailability', 'KindEnsurePartitionQuorum', 'KindEnsureSeedNodeQuorum', 'KindWaitForInbuildReplica', 'KindWaitForPrimaryPlacement', 'KindWaitForPrimarySwap', 'KindWaitForReconfiguration'
-	Kind        KindBasicSafetyCheck `json:"Kind,omitempty"`
-	PartitionID *uuid.UUID           `json:"PartitionId,omitempty"`
+	Kind KindBasicSafetyCheck `json:"Kind,omitempty"`
 }
 
 func unmarshalBasicPartitionSafetyCheck(body []byte) (BasicPartitionSafetyCheck, error) {
@@ -7699,12 +7984,12 @@ func unmarshalBasicPartitionSafetyCheckArray(body []byte) ([]BasicPartitionSafet
 // MarshalJSON is the custom marshaler for PartitionSafetyCheck.
 func (psc PartitionSafetyCheck) MarshalJSON() ([]byte, error) {
 	psc.Kind = KindPartitionSafetyCheck
-	type Alias PartitionSafetyCheck
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(psc),
-	})
+	objectMap := make(map[string]interface{})
+	if psc.PartitionID != nil {
+		objectMap["PartitionId"] = psc.PartitionID
+	}
+	objectMap["Kind"] = psc.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsPartitionSafetyCheck is the BasicSafetyCheck implementation for PartitionSafetyCheck.
@@ -7824,12 +8109,9 @@ func unmarshalBasicPartitionSchemeDescriptionArray(body []byte) ([]BasicPartitio
 // MarshalJSON is the custom marshaler for PartitionSchemeDescription.
 func (psd PartitionSchemeDescription) MarshalJSON() ([]byte, error) {
 	psd.PartitionScheme = PartitionSchemePartitionSchemeDescription
-	type Alias PartitionSchemeDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(psd),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["PartitionScheme"] = psd.PartitionScheme
+	return json.Marshal(objectMap)
 }
 
 // AsNamedPartitionSchemeDescription is the BasicPartitionSchemeDescription implementation for PartitionSchemeDescription.
@@ -7861,28 +8143,38 @@ func (psd PartitionSchemeDescription) AsBasicPartitionSchemeDescription() (Basic
 // evaluations for each unhealthy partition that impacts current aggregated health state. Can be returned when
 // evaluating service health and the aggregated health state is either Error or Warning.
 type PartitionsHealthEvaluation struct {
+	// MaxPercentUnhealthyPartitionsPerService - Maximum allowed percentage of unhealthy partitions per service from the ServiceTypeHealthPolicy.
+	MaxPercentUnhealthyPartitionsPerService *int32 `json:"MaxPercentUnhealthyPartitionsPerService,omitempty"`
+	// TotalCount - Total number of partitions of the service from the health store.
+	TotalCount           *int64                     `json:"TotalCount,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
 	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
-	// MaxPercentUnhealthyPartitionsPerService - Maximum allowed percentage of unhealthy partitions per service from the ServiceTypeHealthPolicy.
-	MaxPercentUnhealthyPartitionsPerService *int32 `json:"MaxPercentUnhealthyPartitionsPerService,omitempty"`
-	// TotalCount - Total number of partitions of the service from the health store.
-	TotalCount           *int64                     `json:"TotalCount,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for PartitionsHealthEvaluation.
 func (phe PartitionsHealthEvaluation) MarshalJSON() ([]byte, error) {
 	phe.Kind = KindPartitions
-	type Alias PartitionsHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(phe),
-	})
+	objectMap := make(map[string]interface{})
+	if phe.MaxPercentUnhealthyPartitionsPerService != nil {
+		objectMap["MaxPercentUnhealthyPartitionsPerService"] = phe.MaxPercentUnhealthyPartitionsPerService
+	}
+	if phe.TotalCount != nil {
+		objectMap["TotalCount"] = phe.TotalCount
+	}
+	if phe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = phe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = phe.AggregatedHealthState
+	if phe.Description != nil {
+		objectMap["Description"] = phe.Description
+	}
+	objectMap["Kind"] = phe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for PartitionsHealthEvaluation.
@@ -7997,21 +8289,24 @@ func (phe PartitionsHealthEvaluation) AsBasicHealthEvaluation() (BasicHealthEval
 
 // PrimaryReplicatorStatus ...
 type PrimaryReplicatorStatus struct {
-	// Kind - Possible values include: 'KindReplicatorStatus', 'KindPrimary', 'KindSecondaryReplicatorStatus', 'KindActiveSecondary', 'KindIdleSecondary'
-	Kind                   KindBasicReplicatorStatus `json:"Kind,omitempty"`
 	ReplicationQueueStatus *ReplicatorQueueStatus    `json:"ReplicationQueueStatus,omitempty"`
 	RemoteReplicators      *[]RemoteReplicatorStatus `json:"RemoteReplicators,omitempty"`
+	// Kind - Possible values include: 'KindReplicatorStatus', 'KindPrimary', 'KindSecondaryReplicatorStatus', 'KindActiveSecondary', 'KindIdleSecondary'
+	Kind KindBasicReplicatorStatus `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for PrimaryReplicatorStatus.
 func (prs PrimaryReplicatorStatus) MarshalJSON() ([]byte, error) {
 	prs.Kind = KindPrimary
-	type Alias PrimaryReplicatorStatus
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(prs),
-	})
+	objectMap := make(map[string]interface{})
+	if prs.ReplicationQueueStatus != nil {
+		objectMap["ReplicationQueueStatus"] = prs.ReplicationQueueStatus
+	}
+	if prs.RemoteReplicators != nil {
+		objectMap["RemoteReplicators"] = prs.RemoteReplicators
+	}
+	objectMap["Kind"] = prs.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsPrimaryReplicatorStatus is the BasicReplicatorStatus implementation for PrimaryReplicatorStatus.
@@ -8049,8 +8344,8 @@ func (prs PrimaryReplicatorStatus) AsBasicReplicatorStatus() (BasicReplicatorSta
 	return &prs, true
 }
 
-// PropertyBatchDescriptionList describes a list of property batch operations to be executed. Either all or none of the
-// operations will be committed.
+// PropertyBatchDescriptionList describes a list of property batch operations to be executed. Either all or none of
+// the operations will be committed.
 type PropertyBatchDescriptionList struct {
 	// Operations - A list of the property batch operations to be executed.
 	Operations *[]BasicPropertyBatchOperation `json:"Operations,omitempty"`
@@ -8063,15 +8358,17 @@ func (pbdl *PropertyBatchDescriptionList) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["Operations"]
-	if v != nil {
-		operations, err := unmarshalBasicPropertyBatchOperationArray(*m["Operations"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "Operations":
+			if v != nil {
+				operations, err := unmarshalBasicPropertyBatchOperationArray(*v)
+				if err != nil {
+					return err
+				}
+				pbdl.Operations = &operations
+			}
 		}
-		pbdl.Operations = &operations
 	}
 
 	return nil
@@ -8135,12 +8432,9 @@ func unmarshalBasicPropertyBatchInfoArray(body []byte) ([]BasicPropertyBatchInfo
 // MarshalJSON is the custom marshaler for PropertyBatchInfo.
 func (pbi PropertyBatchInfo) MarshalJSON() ([]byte, error) {
 	pbi.Kind = KindPropertyBatchInfo
-	type Alias PropertyBatchInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(pbi),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["Kind"] = pbi.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsSuccessfulPropertyBatchInfo is the BasicPropertyBatchInfo implementation for PropertyBatchInfo.
@@ -8192,7 +8486,8 @@ type BasicPropertyBatchOperation interface {
 	AsPropertyBatchOperation() (*PropertyBatchOperation, bool)
 }
 
-// PropertyBatchOperation represents the base type for property operations that can be put into a batch and submitted.
+// PropertyBatchOperation represents the base type for property operations that can be put into a batch and
+// submitted.
 type PropertyBatchOperation struct {
 	PropertyName *string `json:"PropertyName,omitempty"`
 	// Kind - Possible values include: 'KindPropertyBatchOperation', 'KindCheckExists', 'KindCheckSequence', 'KindCheckValue', 'KindDelete', 'KindGet', 'KindPut'
@@ -8259,12 +8554,12 @@ func unmarshalBasicPropertyBatchOperationArray(body []byte) ([]BasicPropertyBatc
 // MarshalJSON is the custom marshaler for PropertyBatchOperation.
 func (pbo PropertyBatchOperation) MarshalJSON() ([]byte, error) {
 	pbo.Kind = KindPropertyBatchOperation
-	type Alias PropertyBatchOperation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(pbo),
-	})
+	objectMap := make(map[string]interface{})
+	if pbo.PropertyName != nil {
+		objectMap["PropertyName"] = pbo.PropertyName
+	}
+	objectMap["Kind"] = pbo.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsCheckExistsPropertyBatchOperation is the BasicPropertyBatchOperation implementation for PropertyBatchOperation.
@@ -8321,35 +8616,35 @@ func (pd *PropertyDescription) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["PropertyName"]
-	if v != nil {
-		var propertyName string
-		err = json.Unmarshal(*m["PropertyName"], &propertyName)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "PropertyName":
+			if v != nil {
+				var propertyName string
+				err = json.Unmarshal(*v, &propertyName)
+				if err != nil {
+					return err
+				}
+				pd.PropertyName = &propertyName
+			}
+		case "CustomTypeId":
+			if v != nil {
+				var customTypeID string
+				err = json.Unmarshal(*v, &customTypeID)
+				if err != nil {
+					return err
+				}
+				pd.CustomTypeID = &customTypeID
+			}
+		case "Value":
+			if v != nil {
+				value, err := unmarshalBasicPropertyValue(*v)
+				if err != nil {
+					return err
+				}
+				pd.Value = value
+			}
 		}
-		pd.PropertyName = &propertyName
-	}
-
-	v = m["CustomTypeId"]
-	if v != nil {
-		var customTypeID string
-		err = json.Unmarshal(*m["CustomTypeId"], &customTypeID)
-		if err != nil {
-			return err
-		}
-		pd.CustomTypeID = &customTypeID
-	}
-
-	v = m["Value"]
-	if v != nil {
-		value, err := unmarshalBasicPropertyValue(*m["Value"])
-		if err != nil {
-			return err
-		}
-		pd.Value = value
 	}
 
 	return nil
@@ -8370,35 +8665,35 @@ func (pi *PropertyInfo) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["Name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["Name"], &name)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "Name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				pi.Name = &name
+			}
+		case "Value":
+			if v != nil {
+				value, err := unmarshalBasicPropertyValue(*v)
+				if err != nil {
+					return err
+				}
+				pi.Value = value
+			}
+		case "Metadata":
+			if v != nil {
+				var metadata PropertyMetadata
+				err = json.Unmarshal(*v, &metadata)
+				if err != nil {
+					return err
+				}
+				pi.Metadata = &metadata
+			}
 		}
-		pi.Name = &name
-	}
-
-	v = m["Value"]
-	if v != nil {
-		value, err := unmarshalBasicPropertyValue(*m["Value"])
-		if err != nil {
-			return err
-		}
-		pi.Value = value
-	}
-
-	v = m["Metadata"]
-	if v != nil {
-		var metadata PropertyMetadata
-		err = json.Unmarshal(*m["Metadata"], &metadata)
-		if err != nil {
-			return err
-		}
-		pi.Metadata = &metadata
 	}
 
 	return nil
@@ -8490,12 +8785,9 @@ func unmarshalBasicPropertyValueArray(body []byte) ([]BasicPropertyValue, error)
 // MarshalJSON is the custom marshaler for PropertyValue.
 func (pv PropertyValue) MarshalJSON() ([]byte, error) {
 	pv.Kind = KindPropertyValue
-	type Alias PropertyValue
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(pv),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["Kind"] = pv.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsBinaryPropertyValue is the BasicPropertyValue implementation for PropertyValue.
@@ -8542,25 +8834,29 @@ type ProvisionFabricDescription struct {
 }
 
 // PutPropertyBatchOperation puts the specified property under the specified name.  Note that if one
-// PropertyBatchOperation in a PropertyBatch fails,  the entire batch fails and cannot be committed in a transactional
-// manner.
+// PropertyBatchOperation in a PropertyBatch fails,  the entire batch fails and cannot be committed in a
+// transactional manner.
 type PutPropertyBatchOperation struct {
-	PropertyName *string `json:"PropertyName,omitempty"`
+	Value        BasicPropertyValue `json:"Value,omitempty"`
+	CustomTypeID *string            `json:"CustomTypeId,omitempty"`
+	PropertyName *string            `json:"PropertyName,omitempty"`
 	// Kind - Possible values include: 'KindPropertyBatchOperation', 'KindCheckExists', 'KindCheckSequence', 'KindCheckValue', 'KindDelete', 'KindGet', 'KindPut'
-	Kind         KindBasicPropertyBatchOperation `json:"Kind,omitempty"`
-	Value        BasicPropertyValue              `json:"Value,omitempty"`
-	CustomTypeID *string                         `json:"CustomTypeId,omitempty"`
+	Kind KindBasicPropertyBatchOperation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for PutPropertyBatchOperation.
 func (ppbo PutPropertyBatchOperation) MarshalJSON() ([]byte, error) {
 	ppbo.Kind = KindPut
-	type Alias PutPropertyBatchOperation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ppbo),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["Value"] = ppbo.Value
+	if ppbo.CustomTypeID != nil {
+		objectMap["CustomTypeId"] = ppbo.CustomTypeID
+	}
+	if ppbo.PropertyName != nil {
+		objectMap["PropertyName"] = ppbo.PropertyName
+	}
+	objectMap["Kind"] = ppbo.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsCheckExistsPropertyBatchOperation is the BasicPropertyBatchOperation implementation for PutPropertyBatchOperation.
@@ -8610,52 +8906,51 @@ func (ppbo *PutPropertyBatchOperation) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["Value"]
-	if v != nil {
-		value, err := unmarshalBasicPropertyValue(*m["Value"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "Value":
+			if v != nil {
+				value, err := unmarshalBasicPropertyValue(*v)
+				if err != nil {
+					return err
+				}
+				ppbo.Value = value
+			}
+		case "CustomTypeId":
+			if v != nil {
+				var customTypeID string
+				err = json.Unmarshal(*v, &customTypeID)
+				if err != nil {
+					return err
+				}
+				ppbo.CustomTypeID = &customTypeID
+			}
+		case "PropertyName":
+			if v != nil {
+				var propertyName string
+				err = json.Unmarshal(*v, &propertyName)
+				if err != nil {
+					return err
+				}
+				ppbo.PropertyName = &propertyName
+			}
+		case "Kind":
+			if v != nil {
+				var kind KindBasicPropertyBatchOperation
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				ppbo.Kind = kind
+			}
 		}
-		ppbo.Value = value
-	}
-
-	v = m["CustomTypeId"]
-	if v != nil {
-		var customTypeID string
-		err = json.Unmarshal(*m["CustomTypeId"], &customTypeID)
-		if err != nil {
-			return err
-		}
-		ppbo.CustomTypeID = &customTypeID
-	}
-
-	v = m["PropertyName"]
-	if v != nil {
-		var propertyName string
-		err = json.Unmarshal(*m["PropertyName"], &propertyName)
-		if err != nil {
-			return err
-		}
-		ppbo.PropertyName = &propertyName
-	}
-
-	v = m["Kind"]
-	if v != nil {
-		var kind KindBasicPropertyBatchOperation
-		err = json.Unmarshal(*m["Kind"], &kind)
-		if err != nil {
-			return err
-		}
-		ppbo.Kind = kind
 	}
 
 	return nil
 }
 
-// ReconfigurationInformation information about current reconfiguration like phase, type, previous configuration role
-// of replica and reconfiguration start date time.
+// ReconfigurationInformation information about current reconfiguration like phase, type, previous configuration
+// role of replica and reconfiguration start date time.
 type ReconfigurationInformation struct {
 	// PreviousConfigurationRole - Possible values include: 'PreviousConfigurationRoleUnknown', 'PreviousConfigurationRoleNone', 'PreviousConfigurationRolePrimary', 'PreviousConfigurationRoleIdleSecondary', 'PreviousConfigurationRoleActiveSecondary'
 	PreviousConfigurationRole PreviousConfigurationRole `json:"PreviousConfigurationRole,omitempty"`
@@ -8677,8 +8972,8 @@ type RegistryCredential struct {
 	PasswordEncrypted *bool `json:"PasswordEncrypted,omitempty"`
 }
 
-// RemoteReplicatorAcknowledgementDetail provides various statistics of the acknowledgements that are being received
-// from the remote replicator.
+// RemoteReplicatorAcknowledgementDetail provides various statistics of the acknowledgements that are being
+// received from the remote replicator.
 type RemoteReplicatorAcknowledgementDetail struct {
 	// AverageReceiveDuration - Represents the average duration it takes for the remote replicator to receive an operation.
 	AverageReceiveDuration *string `json:"AverageReceiveDuration,omitempty"`
@@ -8690,14 +8985,15 @@ type RemoteReplicatorAcknowledgementDetail struct {
 	ReceivedAndNotAppliedCount *string `json:"ReceivedAndNotAppliedCount,omitempty"`
 }
 
-// RemoteReplicatorAcknowledgementStatus provides details about the remote replicators from the primary replicator's
-// point of view.
+// RemoteReplicatorAcknowledgementStatus provides details about the remote replicators from the primary
+// replicator's point of view.
 type RemoteReplicatorAcknowledgementStatus struct {
 	ReplicationStreamAcknowledgementDetail *RemoteReplicatorAcknowledgementDetail `json:"ReplicationStreamAcknowledgementDetail,omitempty"`
 	CopyStreamAcknowledgementDetail        *RemoteReplicatorAcknowledgementDetail `json:"CopyStreamAcknowledgementDetail,omitempty"`
 }
 
-// RemoteReplicatorStatus represents the state of the secondary replicator from the primary replicator’s point of view.
+// RemoteReplicatorStatus represents the state of the secondary replicator from the primary replicator’s point of
+// view.
 type RemoteReplicatorStatus struct {
 	ReplicaID *string `json:"ReplicaId,omitempty"`
 	// LastAcknowledgementProcessedTimeUtc - The last timestamp (in UTC) when an acknowledgement from the secondary replicator was processed on the primary.
@@ -8774,12 +9070,9 @@ func unmarshalBasicRepairImpactDescriptionBaseArray(body []byte) ([]BasicRepairI
 // MarshalJSON is the custom marshaler for RepairImpactDescriptionBase.
 func (ridb RepairImpactDescriptionBase) MarshalJSON() ([]byte, error) {
 	ridb.Kind = KindBasicRepairImpactDescriptionBaseKindRepairImpactDescriptionBase
-	type Alias RepairImpactDescriptionBase
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ridb),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["Kind"] = ridb.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsNodeRepairImpactDescription is the BasicRepairImpactDescriptionBase implementation for RepairImpactDescriptionBase.
@@ -8853,12 +9146,9 @@ func unmarshalBasicRepairTargetDescriptionBaseArray(body []byte) ([]BasicRepairT
 // MarshalJSON is the custom marshaler for RepairTargetDescriptionBase.
 func (rtdb RepairTargetDescriptionBase) MarshalJSON() ([]byte, error) {
 	rtdb.Kind = KindBasicRepairTargetDescriptionBaseKindRepairTargetDescriptionBase
-	type Alias RepairTargetDescriptionBase
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(rtdb),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["Kind"] = rtdb.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsNodeRepairTargetDescription is the BasicRepairTargetDescriptionBase implementation for RepairTargetDescriptionBase.
@@ -8876,8 +9166,8 @@ func (rtdb RepairTargetDescriptionBase) AsBasicRepairTargetDescriptionBase() (Ba
 	return &rtdb, true
 }
 
-// RepairTask represents a repair task, which includes information about what kind of repair was requested, what its
-// progress is, and what its final result was.
+// RepairTask represents a repair task, which includes information about what kind of repair was requested, what
+// its progress is, and what its final result was.
 //
 // This type supports the Service Fabric platform; it is not meant to be used directly from your code.
 type RepairTask struct {
@@ -8902,7 +9192,7 @@ type RepairTask struct {
 	// - Restoring - Indicates that the Repair Manager is restoring the system to its pre-repair state, usually by bringing resources back online.
 	// - Completed - Indicates that the repair task has completed, and no further state changes will occur.
 	// . Possible values include: 'State6Invalid', 'State6Created', 'State6Claimed', 'State6Preparing', 'State6Approved', 'State6Executing', 'State6Restoring', 'State6Completed'
-	State State `json:"State,omitempty"`
+	State State6 `json:"State,omitempty"`
 	// Flags - A bitwise-OR of the following values, which gives additional details about the status of the repair task.
 	// - 1 - Cancellation of the repair has been requested
 	// - 2 - Abort of the repair has been requested
@@ -8950,184 +9240,169 @@ func (rt *RepairTask) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["TaskId"]
-	if v != nil {
-		var taskID string
-		err = json.Unmarshal(*m["TaskId"], &taskID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "TaskId":
+			if v != nil {
+				var taskID string
+				err = json.Unmarshal(*v, &taskID)
+				if err != nil {
+					return err
+				}
+				rt.TaskID = &taskID
+			}
+		case "Version":
+			if v != nil {
+				var version string
+				err = json.Unmarshal(*v, &version)
+				if err != nil {
+					return err
+				}
+				rt.Version = &version
+			}
+		case "Description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				rt.Description = &description
+			}
+		case "State":
+			if v != nil {
+				var state State6
+				err = json.Unmarshal(*v, &state)
+				if err != nil {
+					return err
+				}
+				rt.State = state
+			}
+		case "Flags":
+			if v != nil {
+				var flags int32
+				err = json.Unmarshal(*v, &flags)
+				if err != nil {
+					return err
+				}
+				rt.Flags = &flags
+			}
+		case "Action":
+			if v != nil {
+				var action string
+				err = json.Unmarshal(*v, &action)
+				if err != nil {
+					return err
+				}
+				rt.Action = &action
+			}
+		case "Target":
+			if v != nil {
+				target, err := unmarshalBasicRepairTargetDescriptionBase(*v)
+				if err != nil {
+					return err
+				}
+				rt.Target = target
+			}
+		case "Executor":
+			if v != nil {
+				var executor string
+				err = json.Unmarshal(*v, &executor)
+				if err != nil {
+					return err
+				}
+				rt.Executor = &executor
+			}
+		case "ExecutorData":
+			if v != nil {
+				var executorData string
+				err = json.Unmarshal(*v, &executorData)
+				if err != nil {
+					return err
+				}
+				rt.ExecutorData = &executorData
+			}
+		case "Impact":
+			if v != nil {
+				impact, err := unmarshalBasicRepairImpactDescriptionBase(*v)
+				if err != nil {
+					return err
+				}
+				rt.Impact = impact
+			}
+		case "ResultStatus":
+			if v != nil {
+				var resultStatus ResultStatus
+				err = json.Unmarshal(*v, &resultStatus)
+				if err != nil {
+					return err
+				}
+				rt.ResultStatus = resultStatus
+			}
+		case "ResultCode":
+			if v != nil {
+				var resultCode int32
+				err = json.Unmarshal(*v, &resultCode)
+				if err != nil {
+					return err
+				}
+				rt.ResultCode = &resultCode
+			}
+		case "ResultDetails":
+			if v != nil {
+				var resultDetails string
+				err = json.Unmarshal(*v, &resultDetails)
+				if err != nil {
+					return err
+				}
+				rt.ResultDetails = &resultDetails
+			}
+		case "History":
+			if v != nil {
+				var history RepairTaskHistory
+				err = json.Unmarshal(*v, &history)
+				if err != nil {
+					return err
+				}
+				rt.History = &history
+			}
+		case "PreparingHealthCheckState":
+			if v != nil {
+				var preparingHealthCheckState PreparingHealthCheckState
+				err = json.Unmarshal(*v, &preparingHealthCheckState)
+				if err != nil {
+					return err
+				}
+				rt.PreparingHealthCheckState = preparingHealthCheckState
+			}
+		case "RestoringHealthCheckState":
+			if v != nil {
+				var restoringHealthCheckState RestoringHealthCheckState
+				err = json.Unmarshal(*v, &restoringHealthCheckState)
+				if err != nil {
+					return err
+				}
+				rt.RestoringHealthCheckState = restoringHealthCheckState
+			}
+		case "PerformPreparingHealthCheck":
+			if v != nil {
+				var performPreparingHealthCheck bool
+				err = json.Unmarshal(*v, &performPreparingHealthCheck)
+				if err != nil {
+					return err
+				}
+				rt.PerformPreparingHealthCheck = &performPreparingHealthCheck
+			}
+		case "PerformRestoringHealthCheck":
+			if v != nil {
+				var performRestoringHealthCheck bool
+				err = json.Unmarshal(*v, &performRestoringHealthCheck)
+				if err != nil {
+					return err
+				}
+				rt.PerformRestoringHealthCheck = &performRestoringHealthCheck
+			}
 		}
-		rt.TaskID = &taskID
-	}
-
-	v = m["Version"]
-	if v != nil {
-		var version string
-		err = json.Unmarshal(*m["Version"], &version)
-		if err != nil {
-			return err
-		}
-		rt.Version = &version
-	}
-
-	v = m["Description"]
-	if v != nil {
-		var description string
-		err = json.Unmarshal(*m["Description"], &description)
-		if err != nil {
-			return err
-		}
-		rt.Description = &description
-	}
-
-	v = m["State"]
-	if v != nil {
-		var state State
-		err = json.Unmarshal(*m["State"], &state)
-		if err != nil {
-			return err
-		}
-		rt.State = state
-	}
-
-	v = m["Flags"]
-	if v != nil {
-		var flags int32
-		err = json.Unmarshal(*m["Flags"], &flags)
-		if err != nil {
-			return err
-		}
-		rt.Flags = &flags
-	}
-
-	v = m["Action"]
-	if v != nil {
-		var action string
-		err = json.Unmarshal(*m["Action"], &action)
-		if err != nil {
-			return err
-		}
-		rt.Action = &action
-	}
-
-	v = m["Target"]
-	if v != nil {
-		target, err := unmarshalBasicRepairTargetDescriptionBase(*m["Target"])
-		if err != nil {
-			return err
-		}
-		rt.Target = target
-	}
-
-	v = m["Executor"]
-	if v != nil {
-		var executor string
-		err = json.Unmarshal(*m["Executor"], &executor)
-		if err != nil {
-			return err
-		}
-		rt.Executor = &executor
-	}
-
-	v = m["ExecutorData"]
-	if v != nil {
-		var executorData string
-		err = json.Unmarshal(*m["ExecutorData"], &executorData)
-		if err != nil {
-			return err
-		}
-		rt.ExecutorData = &executorData
-	}
-
-	v = m["Impact"]
-	if v != nil {
-		impact, err := unmarshalBasicRepairImpactDescriptionBase(*m["Impact"])
-		if err != nil {
-			return err
-		}
-		rt.Impact = impact
-	}
-
-	v = m["ResultStatus"]
-	if v != nil {
-		var resultStatus ResultStatus
-		err = json.Unmarshal(*m["ResultStatus"], &resultStatus)
-		if err != nil {
-			return err
-		}
-		rt.ResultStatus = resultStatus
-	}
-
-	v = m["ResultCode"]
-	if v != nil {
-		var resultCode int32
-		err = json.Unmarshal(*m["ResultCode"], &resultCode)
-		if err != nil {
-			return err
-		}
-		rt.ResultCode = &resultCode
-	}
-
-	v = m["ResultDetails"]
-	if v != nil {
-		var resultDetails string
-		err = json.Unmarshal(*m["ResultDetails"], &resultDetails)
-		if err != nil {
-			return err
-		}
-		rt.ResultDetails = &resultDetails
-	}
-
-	v = m["History"]
-	if v != nil {
-		var history RepairTaskHistory
-		err = json.Unmarshal(*m["History"], &history)
-		if err != nil {
-			return err
-		}
-		rt.History = &history
-	}
-
-	v = m["PreparingHealthCheckState"]
-	if v != nil {
-		var preparingHealthCheckState PreparingHealthCheckState
-		err = json.Unmarshal(*m["PreparingHealthCheckState"], &preparingHealthCheckState)
-		if err != nil {
-			return err
-		}
-		rt.PreparingHealthCheckState = preparingHealthCheckState
-	}
-
-	v = m["RestoringHealthCheckState"]
-	if v != nil {
-		var restoringHealthCheckState RestoringHealthCheckState
-		err = json.Unmarshal(*m["RestoringHealthCheckState"], &restoringHealthCheckState)
-		if err != nil {
-			return err
-		}
-		rt.RestoringHealthCheckState = restoringHealthCheckState
-	}
-
-	v = m["PerformPreparingHealthCheck"]
-	if v != nil {
-		var performPreparingHealthCheck bool
-		err = json.Unmarshal(*m["PerformPreparingHealthCheck"], &performPreparingHealthCheck)
-		if err != nil {
-			return err
-		}
-		rt.PerformPreparingHealthCheck = &performPreparingHealthCheck
-	}
-
-	v = m["PerformRestoringHealthCheck"]
-	if v != nil {
-		var performRestoringHealthCheck bool
-		err = json.Unmarshal(*m["PerformRestoringHealthCheck"], &performRestoringHealthCheck)
-		if err != nil {
-			return err
-		}
-		rt.PerformRestoringHealthCheck = &performRestoringHealthCheck
 	}
 
 	return nil
@@ -9228,15 +9503,15 @@ type BasicReplicaHealth interface {
 // Contains the replica aggregated health state, the health events and the unhealthy evaluations.
 type ReplicaHealth struct {
 	autorest.Response `json:"-"`
+	PartitionID       *uuid.UUID `json:"PartitionId,omitempty"`
+	// ServiceKind - Possible values include: 'ServiceKindBasicReplicaHealthServiceKindReplicaHealth', 'ServiceKindBasicReplicaHealthServiceKindStateful', 'ServiceKindBasicReplicaHealthServiceKindStateless'
+	ServiceKind ServiceKindBasicReplicaHealth `json:"ServiceKind,omitempty"`
 	// AggregatedHealthState - Possible values include: 'AggregatedHealthState1Invalid', 'AggregatedHealthState1Ok', 'AggregatedHealthState1Warning', 'AggregatedHealthState1Error', 'AggregatedHealthState1Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
+	AggregatedHealthState AggregatedHealthState1 `json:"AggregatedHealthState,omitempty"`
 	// HealthEvents - The list of health events reported on the entity.
 	HealthEvents         *[]HealthEvent             `json:"HealthEvents,omitempty"`
 	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	HealthStatistics     *HealthStatistics          `json:"HealthStatistics,omitempty"`
-	PartitionID          *uuid.UUID                 `json:"PartitionId,omitempty"`
-	// ServiceKind - Possible values include: 'ServiceKindBasicReplicaHealthServiceKindReplicaHealth', 'ServiceKindBasicReplicaHealthServiceKindStateful', 'ServiceKindBasicReplicaHealthServiceKindStateless'
-	ServiceKind ServiceKindBasicReplicaHealth `json:"ServiceKind,omitempty"`
 }
 
 func unmarshalBasicReplicaHealth(body []byte) (BasicReplicaHealth, error) {
@@ -9283,12 +9558,22 @@ func unmarshalBasicReplicaHealthArray(body []byte) ([]BasicReplicaHealth, error)
 // MarshalJSON is the custom marshaler for ReplicaHealth.
 func (rh ReplicaHealth) MarshalJSON() ([]byte, error) {
 	rh.ServiceKind = ServiceKindBasicReplicaHealthServiceKindReplicaHealth
-	type Alias ReplicaHealth
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(rh),
-	})
+	objectMap := make(map[string]interface{})
+	if rh.PartitionID != nil {
+		objectMap["PartitionId"] = rh.PartitionID
+	}
+	objectMap["ServiceKind"] = rh.ServiceKind
+	objectMap["AggregatedHealthState"] = rh.AggregatedHealthState
+	if rh.HealthEvents != nil {
+		objectMap["HealthEvents"] = rh.HealthEvents
+	}
+	if rh.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = rh.UnhealthyEvaluations
+	}
+	if rh.HealthStatistics != nil {
+		objectMap["HealthStatistics"] = rh.HealthStatistics
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealth is the BasicEntityHealth implementation for ReplicaHealth.
@@ -9346,30 +9631,40 @@ func (rh ReplicaHealth) AsStatelessServiceInstanceHealth() (*StatelessServiceIns
 	return nil, false
 }
 
-// ReplicaHealthEvaluation represents health evaluation for a replica, containing information about the data and the
-// algorithm used by health store to evaluate health. The evaluation is returned only when the aggregated health state
-// is either Error or Warning.
+// ReplicaHealthEvaluation represents health evaluation for a replica, containing information about the data and
+// the algorithm used by health store to evaluate health. The evaluation is returned only when the aggregated
+// health state is either Error or Warning.
 type ReplicaHealthEvaluation struct {
+	PartitionID          *uuid.UUID                 `json:"PartitionId,omitempty"`
+	ReplicaOrInstanceID  *string                    `json:"ReplicaOrInstanceId,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
-	Kind                 KindBasicHealthEvaluation  `json:"Kind,omitempty"`
-	PartitionID          *uuid.UUID                 `json:"PartitionId,omitempty"`
-	ReplicaOrInstanceID  *string                    `json:"ReplicaOrInstanceId,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ReplicaHealthEvaluation.
 func (rhe ReplicaHealthEvaluation) MarshalJSON() ([]byte, error) {
 	rhe.Kind = KindReplica
-	type Alias ReplicaHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(rhe),
-	})
+	objectMap := make(map[string]interface{})
+	if rhe.PartitionID != nil {
+		objectMap["PartitionId"] = rhe.PartitionID
+	}
+	if rhe.ReplicaOrInstanceID != nil {
+		objectMap["ReplicaOrInstanceId"] = rhe.ReplicaOrInstanceID
+	}
+	if rhe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = rhe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = rhe.AggregatedHealthState
+	if rhe.Description != nil {
+		objectMap["Description"] = rhe.Description
+	}
+	objectMap["Kind"] = rhe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for ReplicaHealthEvaluation.
@@ -9507,13 +9802,14 @@ type BasicReplicaHealthState interface {
 	AsReplicaHealthState() (*ReplicaHealthState, bool)
 }
 
-// ReplicaHealthState represents a base class for stateful service replica or stateless service instance health state.
+// ReplicaHealthState represents a base class for stateful service replica or stateless service instance health
+// state.
 type ReplicaHealthState struct {
-	// AggregatedHealthState - Possible values include: 'AggregatedHealthState2Invalid', 'AggregatedHealthState2Ok', 'AggregatedHealthState2Warning', 'AggregatedHealthState2Error', 'AggregatedHealthState2Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	PartitionID           *uuid.UUID            `json:"PartitionId,omitempty"`
+	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindBasicReplicaHealthStateServiceKindReplicaHealthState', 'ServiceKindBasicReplicaHealthStateServiceKindStateful', 'ServiceKindBasicReplicaHealthStateServiceKindStateless'
 	ServiceKind ServiceKindBasicReplicaHealthState `json:"ServiceKind,omitempty"`
+	// AggregatedHealthState - Possible values include: 'AggregatedHealthState2Invalid', 'AggregatedHealthState2Ok', 'AggregatedHealthState2Warning', 'AggregatedHealthState2Error', 'AggregatedHealthState2Unknown'
+	AggregatedHealthState AggregatedHealthState2 `json:"AggregatedHealthState,omitempty"`
 }
 
 func unmarshalBasicReplicaHealthState(body []byte) (BasicReplicaHealthState, error) {
@@ -9560,12 +9856,13 @@ func unmarshalBasicReplicaHealthStateArray(body []byte) ([]BasicReplicaHealthSta
 // MarshalJSON is the custom marshaler for ReplicaHealthState.
 func (RHS ReplicaHealthState) MarshalJSON() ([]byte, error) {
 	RHS.ServiceKind = ServiceKindBasicReplicaHealthStateServiceKindReplicaHealthState
-	type Alias ReplicaHealthState
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(RHS),
-	})
+	objectMap := make(map[string]interface{})
+	if RHS.PartitionID != nil {
+		objectMap["PartitionId"] = RHS.PartitionID
+	}
+	objectMap["ServiceKind"] = RHS.ServiceKind
+	objectMap["AggregatedHealthState"] = RHS.AggregatedHealthState
+	return json.Marshal(objectMap)
 }
 
 // AsServiceHealthState is the BasicEntityHealthState implementation for ReplicaHealthState.
@@ -9622,9 +9919,9 @@ func (RHS ReplicaHealthState) AsStatelessServiceInstanceHealthState() (*Stateles
 // instance.
 // The replica health state contains the replica ID and its aggregated health state.
 type ReplicaHealthStateChunk struct {
+	ReplicaOrInstanceID *string `json:"ReplicaOrInstanceId,omitempty"`
 	// HealthState - Possible values include: 'HealthState2Invalid', 'HealthState2Ok', 'HealthState2Warning', 'HealthState2Error', 'HealthState2Unknown'
-	HealthState         HealthState `json:"HealthState,omitempty"`
-	ReplicaOrInstanceID *string     `json:"ReplicaOrInstanceId,omitempty"`
+	HealthState HealthState2 `json:"HealthState,omitempty"`
 }
 
 // ReplicaHealthStateChunkList the list of replica health state chunks that respect the input filters in the chunk
@@ -9634,8 +9931,8 @@ type ReplicaHealthStateChunkList struct {
 	Items *[]ReplicaHealthStateChunk `json:"Items,omitempty"`
 }
 
-// ReplicaHealthStateFilter defines matching criteria to determine whether a replica should be included as a child of a
-// partition in the cluster health chunk.
+// ReplicaHealthStateFilter defines matching criteria to determine whether a replica should be included as a child
+// of a partition in the cluster health chunk.
 // The replicas are only returned if the parent entities match a filter specified in the cluster health chunk query
 // description. The parent partition, service and application must be included in the cluster health chunk.
 // One filter can match zero, one or multiple replicas, depending on its properties.
@@ -9667,14 +9964,15 @@ type BasicReplicaInfo interface {
 	AsReplicaInfo() (*ReplicaInfo, bool)
 }
 
-// ReplicaInfo information about the identity, status, health, node name, uptime, and other details about the replica.
+// ReplicaInfo information about the identity, status, health, node name, uptime, and other details about the
+// replica.
 type ReplicaInfo struct {
 	autorest.Response `json:"-"`
 	// ReplicaStatus - Possible values include: 'ReplicaStatus1Invalid', 'ReplicaStatus1InBuild', 'ReplicaStatus1Standby', 'ReplicaStatus1Ready', 'ReplicaStatus1Down', 'ReplicaStatus1Dropped'
-	ReplicaStatus ReplicaStatus `json:"ReplicaStatus,omitempty"`
+	ReplicaStatus ReplicaStatus1 `json:"ReplicaStatus,omitempty"`
 	// HealthState - Possible values include: 'HealthState6Invalid', 'HealthState6Ok', 'HealthState6Warning', 'HealthState6Error', 'HealthState6Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
-	NodeName    *string     `json:"NodeName,omitempty"`
+	HealthState HealthState6 `json:"HealthState,omitempty"`
+	NodeName    *string      `json:"NodeName,omitempty"`
 	// Address - The address the replica is listening on.
 	Address *string `json:"Address,omitempty"`
 	// LastInBuildDurationInSeconds - The last in build duration of the replica in seconds.
@@ -9727,12 +10025,20 @@ func unmarshalBasicReplicaInfoArray(body []byte) ([]BasicReplicaInfo, error) {
 // MarshalJSON is the custom marshaler for ReplicaInfo.
 func (ri ReplicaInfo) MarshalJSON() ([]byte, error) {
 	ri.ServiceKind = ServiceKindBasicReplicaInfoServiceKindReplicaInfo
-	type Alias ReplicaInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ri),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["ReplicaStatus"] = ri.ReplicaStatus
+	objectMap["HealthState"] = ri.HealthState
+	if ri.NodeName != nil {
+		objectMap["NodeName"] = ri.NodeName
+	}
+	if ri.Address != nil {
+		objectMap["Address"] = ri.Address
+	}
+	if ri.LastInBuildDurationInSeconds != nil {
+		objectMap["LastInBuildDurationInSeconds"] = ri.LastInBuildDurationInSeconds
+	}
+	objectMap["ServiceKind"] = ri.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceReplicaInfo is the BasicReplicaInfo implementation for ReplicaInfo.
@@ -9772,32 +10078,42 @@ func (rim *ReplicaInfoModel) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
-// ReplicasHealthEvaluation represents health evaluation for replicas, containing health evaluations for each unhealthy
-// replica that impacted current aggregated health state. Can be returned when evaluating partition health and the
-// aggregated health state is either Error or Warning.
+// ReplicasHealthEvaluation represents health evaluation for replicas, containing health evaluations for each
+// unhealthy replica that impacted current aggregated health state. Can be returned when evaluating partition
+// health and the aggregated health state is either Error or Warning.
 type ReplicasHealthEvaluation struct {
+	// MaxPercentUnhealthyReplicasPerPartition - Maximum allowed percentage of unhealthy replicas per partition from the ApplicationHealthPolicy.
+	MaxPercentUnhealthyReplicasPerPartition *int32 `json:"MaxPercentUnhealthyReplicasPerPartition,omitempty"`
+	// TotalCount - Total number of replicas in the partition from the health store.
+	TotalCount           *int64                     `json:"TotalCount,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
 	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
-	// MaxPercentUnhealthyReplicasPerPartition - Maximum allowed percentage of unhealthy replicas per partition from the ApplicationHealthPolicy.
-	MaxPercentUnhealthyReplicasPerPartition *int32 `json:"MaxPercentUnhealthyReplicasPerPartition,omitempty"`
-	// TotalCount - Total number of replicas in the partition from the health store.
-	TotalCount           *int64                     `json:"TotalCount,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ReplicasHealthEvaluation.
 func (rhe ReplicasHealthEvaluation) MarshalJSON() ([]byte, error) {
 	rhe.Kind = KindReplicas
-	type Alias ReplicasHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(rhe),
-	})
+	objectMap := make(map[string]interface{})
+	if rhe.MaxPercentUnhealthyReplicasPerPartition != nil {
+		objectMap["MaxPercentUnhealthyReplicasPerPartition"] = rhe.MaxPercentUnhealthyReplicasPerPartition
+	}
+	if rhe.TotalCount != nil {
+		objectMap["TotalCount"] = rhe.TotalCount
+	}
+	if rhe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = rhe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = rhe.AggregatedHealthState
+	if rhe.Description != nil {
+		objectMap["Description"] = rhe.Description
+	}
+	objectMap["Kind"] = rhe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for ReplicasHealthEvaluation.
@@ -9962,12 +10278,9 @@ func unmarshalBasicReplicaStatusBaseArray(body []byte) ([]BasicReplicaStatusBase
 // MarshalJSON is the custom marshaler for ReplicaStatusBase.
 func (rsb ReplicaStatusBase) MarshalJSON() ([]byte, error) {
 	rsb.Kind = KindReplicaStatusBase
-	type Alias ReplicaStatusBase
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(rsb),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["Kind"] = rsb.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsKeyValueStoreReplicaStatus is the BasicReplicaStatusBase implementation for ReplicaStatusBase.
@@ -10079,12 +10392,9 @@ func unmarshalBasicReplicatorStatusArray(body []byte) ([]BasicReplicatorStatus, 
 // MarshalJSON is the custom marshaler for ReplicatorStatus.
 func (rs ReplicatorStatus) MarshalJSON() ([]byte, error) {
 	rs.Kind = KindReplicatorStatus
-	type Alias ReplicatorStatus
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(rs),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["Kind"] = rs.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsPrimaryReplicatorStatus is the BasicReplicatorStatus implementation for ReplicatorStatus.
@@ -10147,52 +10457,51 @@ func (rsp *ResolvedServicePartition) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["Name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["Name"], &name)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "Name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				rsp.Name = &name
+			}
+		case "PartitionInformation":
+			if v != nil {
+				partitionInformation, err := unmarshalBasicPartitionInformation(*v)
+				if err != nil {
+					return err
+				}
+				rsp.PartitionInformation = partitionInformation
+			}
+		case "Endpoints":
+			if v != nil {
+				var endpoints []ResolvedServiceEndpoint
+				err = json.Unmarshal(*v, &endpoints)
+				if err != nil {
+					return err
+				}
+				rsp.Endpoints = &endpoints
+			}
+		case "Version":
+			if v != nil {
+				var version string
+				err = json.Unmarshal(*v, &version)
+				if err != nil {
+					return err
+				}
+				rsp.Version = &version
+			}
 		}
-		rsp.Name = &name
-	}
-
-	v = m["PartitionInformation"]
-	if v != nil {
-		partitionInformation, err := unmarshalBasicPartitionInformation(*m["PartitionInformation"])
-		if err != nil {
-			return err
-		}
-		rsp.PartitionInformation = partitionInformation
-	}
-
-	v = m["Endpoints"]
-	if v != nil {
-		var endpoints []ResolvedServiceEndpoint
-		err = json.Unmarshal(*m["Endpoints"], &endpoints)
-		if err != nil {
-			return err
-		}
-		rsp.Endpoints = &endpoints
-	}
-
-	v = m["Version"]
-	if v != nil {
-		var version string
-		err = json.Unmarshal(*m["Version"], &version)
-		if err != nil {
-			return err
-		}
-		rsp.Version = &version
 	}
 
 	return nil
 }
 
-// RestartDeployedCodePackageDescription defines description for restarting a deloyed code package on Service Fabric
-// node.
+// RestartDeployedCodePackageDescription defines description for restarting a deloyed code package on Service
+// Fabric node.
 type RestartDeployedCodePackageDescription struct {
 	ServiceManifestName        *string `json:"ServiceManifestName,omitempty"`
 	ServicePackageActivationID *string `json:"ServicePackageActivationId,omitempty"`
@@ -10228,19 +10537,20 @@ type ResumeClusterUpgradeDescription struct {
 	UpgradeDomain *string `json:"UpgradeDomain,omitempty"`
 }
 
-// RollingUpgradeUpdateDescription describes the parameters for updating a rolling upgrade of application or cluster.
+// RollingUpgradeUpdateDescription describes the parameters for updating a rolling upgrade of application or
+// cluster.
 type RollingUpgradeUpdateDescription struct {
 	// RollingUpgradeMode - Possible values include: 'RollingUpgradeMode3Invalid', 'RollingUpgradeMode3UnmonitoredAuto', 'RollingUpgradeMode3UnmonitoredManual', 'RollingUpgradeMode3Monitored'
-	RollingUpgradeMode                   RollingUpgradeMode `json:"RollingUpgradeMode,omitempty"`
-	ForceRestart                         *bool              `json:"ForceRestart,omitempty"`
-	ReplicaSetCheckTimeoutInMilliseconds *int64             `json:"ReplicaSetCheckTimeoutInMilliseconds,omitempty"`
+	RollingUpgradeMode                   RollingUpgradeMode3 `json:"RollingUpgradeMode,omitempty"`
+	ForceRestart                         *bool               `json:"ForceRestart,omitempty"`
+	ReplicaSetCheckTimeoutInMilliseconds *int64              `json:"ReplicaSetCheckTimeoutInMilliseconds,omitempty"`
 	// FailureAction - Possible values include: 'FailureAction1Invalid', 'FailureAction1Rollback', 'FailureAction1Manual'
-	FailureAction                           FailureAction `json:"FailureAction,omitempty"`
-	HealthCheckWaitDurationInMilliseconds   *string       `json:"HealthCheckWaitDurationInMilliseconds,omitempty"`
-	HealthCheckStableDurationInMilliseconds *string       `json:"HealthCheckStableDurationInMilliseconds,omitempty"`
-	HealthCheckRetryTimeoutInMilliseconds   *string       `json:"HealthCheckRetryTimeoutInMilliseconds,omitempty"`
-	UpgradeTimeoutInMilliseconds            *string       `json:"UpgradeTimeoutInMilliseconds,omitempty"`
-	UpgradeDomainTimeoutInMilliseconds      *string       `json:"UpgradeDomainTimeoutInMilliseconds,omitempty"`
+	FailureAction                           FailureAction1 `json:"FailureAction,omitempty"`
+	HealthCheckWaitDurationInMilliseconds   *string        `json:"HealthCheckWaitDurationInMilliseconds,omitempty"`
+	HealthCheckStableDurationInMilliseconds *string        `json:"HealthCheckStableDurationInMilliseconds,omitempty"`
+	HealthCheckRetryTimeoutInMilliseconds   *string        `json:"HealthCheckRetryTimeoutInMilliseconds,omitempty"`
+	UpgradeTimeoutInMilliseconds            *string        `json:"UpgradeTimeoutInMilliseconds,omitempty"`
+	UpgradeDomainTimeoutInMilliseconds      *string        `json:"UpgradeDomainTimeoutInMilliseconds,omitempty"`
 }
 
 // BasicSafetyCheck represents a safety check performed by service fabric before continuing with the operations. These
@@ -10333,12 +10643,9 @@ func unmarshalBasicSafetyCheckArray(body []byte) ([]BasicSafetyCheck, error) {
 // MarshalJSON is the custom marshaler for SafetyCheck.
 func (sc SafetyCheck) MarshalJSON() ([]byte, error) {
 	sc.Kind = KindSafetyCheck
-	type Alias SafetyCheck
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sc),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["Kind"] = sc.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsPartitionSafetyCheck is the BasicSafetyCheck implementation for SafetyCheck.
@@ -10410,15 +10717,17 @@ func (scw *SafetyCheckWrapper) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["SafetyCheck"]
-	if v != nil {
-		safetyCheck, err := unmarshalBasicSafetyCheck(*m["SafetyCheck"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "SafetyCheck":
+			if v != nil {
+				safetyCheck, err := unmarshalBasicSafetyCheck(*v)
+				if err != nil {
+					return err
+				}
+				scw.SafetyCheck = safetyCheck
+			}
 		}
-		scw.SafetyCheck = safetyCheck
 	}
 
 	return nil
@@ -10427,9 +10736,7 @@ func (scw *SafetyCheckWrapper) UnmarshalJSON(body []byte) error {
 // SecondaryActiveReplicatorStatus status of the secondary replicator when it is in active mode and is part of the
 // replica set.
 type SecondaryActiveReplicatorStatus struct {
-	// Kind - Possible values include: 'KindReplicatorStatus', 'KindPrimary', 'KindSecondaryReplicatorStatus', 'KindActiveSecondary', 'KindIdleSecondary'
-	Kind                   KindBasicReplicatorStatus `json:"Kind,omitempty"`
-	ReplicationQueueStatus *ReplicatorQueueStatus    `json:"ReplicationQueueStatus,omitempty"`
+	ReplicationQueueStatus *ReplicatorQueueStatus `json:"ReplicationQueueStatus,omitempty"`
 	// LastReplicationOperationReceivedTimeUtc - The last time-stamp (UTC) at which a replication operation was received from the primary.
 	// UTC 0 represents an invalid value, indicating that a replication operation message was never received.
 	LastReplicationOperationReceivedTimeUtc *date.Time `json:"LastReplicationOperationReceivedTimeUtc,omitempty"`
@@ -10442,17 +10749,34 @@ type SecondaryActiveReplicatorStatus struct {
 	// LastAcknowledgementSentTimeUtc - The last time-stamp (UTC) at which an acknowledgment was sent to the primary replicator.
 	// UTC 0 represents an invalid value, indicating that an acknowledgment message was never sent.
 	LastAcknowledgementSentTimeUtc *date.Time `json:"LastAcknowledgementSentTimeUtc,omitempty"`
+	// Kind - Possible values include: 'KindReplicatorStatus', 'KindPrimary', 'KindSecondaryReplicatorStatus', 'KindActiveSecondary', 'KindIdleSecondary'
+	Kind KindBasicReplicatorStatus `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for SecondaryActiveReplicatorStatus.
 func (sars SecondaryActiveReplicatorStatus) MarshalJSON() ([]byte, error) {
 	sars.Kind = KindActiveSecondary
-	type Alias SecondaryActiveReplicatorStatus
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sars),
-	})
+	objectMap := make(map[string]interface{})
+	if sars.ReplicationQueueStatus != nil {
+		objectMap["ReplicationQueueStatus"] = sars.ReplicationQueueStatus
+	}
+	if sars.LastReplicationOperationReceivedTimeUtc != nil {
+		objectMap["LastReplicationOperationReceivedTimeUtc"] = sars.LastReplicationOperationReceivedTimeUtc
+	}
+	if sars.IsInBuild != nil {
+		objectMap["IsInBuild"] = sars.IsInBuild
+	}
+	if sars.CopyQueueStatus != nil {
+		objectMap["CopyQueueStatus"] = sars.CopyQueueStatus
+	}
+	if sars.LastCopyOperationReceivedTimeUtc != nil {
+		objectMap["LastCopyOperationReceivedTimeUtc"] = sars.LastCopyOperationReceivedTimeUtc
+	}
+	if sars.LastAcknowledgementSentTimeUtc != nil {
+		objectMap["LastAcknowledgementSentTimeUtc"] = sars.LastAcknowledgementSentTimeUtc
+	}
+	objectMap["Kind"] = sars.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsPrimaryReplicatorStatus is the BasicReplicatorStatus implementation for SecondaryActiveReplicatorStatus.
@@ -10490,12 +10814,10 @@ func (sars SecondaryActiveReplicatorStatus) AsBasicReplicatorStatus() (BasicRepl
 	return &sars, true
 }
 
-// SecondaryIdleReplicatorStatus status of the secondary replicator when it is in idle mode and is being built by the
-// primary.
+// SecondaryIdleReplicatorStatus status of the secondary replicator when it is in idle mode and is being built by
+// the primary.
 type SecondaryIdleReplicatorStatus struct {
-	// Kind - Possible values include: 'KindReplicatorStatus', 'KindPrimary', 'KindSecondaryReplicatorStatus', 'KindActiveSecondary', 'KindIdleSecondary'
-	Kind                   KindBasicReplicatorStatus `json:"Kind,omitempty"`
-	ReplicationQueueStatus *ReplicatorQueueStatus    `json:"ReplicationQueueStatus,omitempty"`
+	ReplicationQueueStatus *ReplicatorQueueStatus `json:"ReplicationQueueStatus,omitempty"`
 	// LastReplicationOperationReceivedTimeUtc - The last time-stamp (UTC) at which a replication operation was received from the primary.
 	// UTC 0 represents an invalid value, indicating that a replication operation message was never received.
 	LastReplicationOperationReceivedTimeUtc *date.Time `json:"LastReplicationOperationReceivedTimeUtc,omitempty"`
@@ -10508,17 +10830,34 @@ type SecondaryIdleReplicatorStatus struct {
 	// LastAcknowledgementSentTimeUtc - The last time-stamp (UTC) at which an acknowledgment was sent to the primary replicator.
 	// UTC 0 represents an invalid value, indicating that an acknowledgment message was never sent.
 	LastAcknowledgementSentTimeUtc *date.Time `json:"LastAcknowledgementSentTimeUtc,omitempty"`
+	// Kind - Possible values include: 'KindReplicatorStatus', 'KindPrimary', 'KindSecondaryReplicatorStatus', 'KindActiveSecondary', 'KindIdleSecondary'
+	Kind KindBasicReplicatorStatus `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for SecondaryIdleReplicatorStatus.
 func (sirs SecondaryIdleReplicatorStatus) MarshalJSON() ([]byte, error) {
 	sirs.Kind = KindIdleSecondary
-	type Alias SecondaryIdleReplicatorStatus
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sirs),
-	})
+	objectMap := make(map[string]interface{})
+	if sirs.ReplicationQueueStatus != nil {
+		objectMap["ReplicationQueueStatus"] = sirs.ReplicationQueueStatus
+	}
+	if sirs.LastReplicationOperationReceivedTimeUtc != nil {
+		objectMap["LastReplicationOperationReceivedTimeUtc"] = sirs.LastReplicationOperationReceivedTimeUtc
+	}
+	if sirs.IsInBuild != nil {
+		objectMap["IsInBuild"] = sirs.IsInBuild
+	}
+	if sirs.CopyQueueStatus != nil {
+		objectMap["CopyQueueStatus"] = sirs.CopyQueueStatus
+	}
+	if sirs.LastCopyOperationReceivedTimeUtc != nil {
+		objectMap["LastCopyOperationReceivedTimeUtc"] = sirs.LastCopyOperationReceivedTimeUtc
+	}
+	if sirs.LastAcknowledgementSentTimeUtc != nil {
+		objectMap["LastAcknowledgementSentTimeUtc"] = sirs.LastAcknowledgementSentTimeUtc
+	}
+	objectMap["Kind"] = sirs.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsPrimaryReplicatorStatus is the BasicReplicatorStatus implementation for SecondaryIdleReplicatorStatus.
@@ -10556,18 +10895,16 @@ func (sirs SecondaryIdleReplicatorStatus) AsBasicReplicatorStatus() (BasicReplic
 	return &sirs, true
 }
 
-// BasicSecondaryReplicatorStatus
+// BasicSecondaryReplicatorStatus ...
 type BasicSecondaryReplicatorStatus interface {
 	AsSecondaryActiveReplicatorStatus() (*SecondaryActiveReplicatorStatus, bool)
 	AsSecondaryIdleReplicatorStatus() (*SecondaryIdleReplicatorStatus, bool)
 	AsSecondaryReplicatorStatus() (*SecondaryReplicatorStatus, bool)
 }
 
-// SecondaryReplicatorStatus
+// SecondaryReplicatorStatus ...
 type SecondaryReplicatorStatus struct {
-	// Kind - Possible values include: 'KindReplicatorStatus', 'KindPrimary', 'KindSecondaryReplicatorStatus', 'KindActiveSecondary', 'KindIdleSecondary'
-	Kind                   KindBasicReplicatorStatus `json:"Kind,omitempty"`
-	ReplicationQueueStatus *ReplicatorQueueStatus    `json:"ReplicationQueueStatus,omitempty"`
+	ReplicationQueueStatus *ReplicatorQueueStatus `json:"ReplicationQueueStatus,omitempty"`
 	// LastReplicationOperationReceivedTimeUtc - The last time-stamp (UTC) at which a replication operation was received from the primary.
 	// UTC 0 represents an invalid value, indicating that a replication operation message was never received.
 	LastReplicationOperationReceivedTimeUtc *date.Time `json:"LastReplicationOperationReceivedTimeUtc,omitempty"`
@@ -10580,6 +10917,8 @@ type SecondaryReplicatorStatus struct {
 	// LastAcknowledgementSentTimeUtc - The last time-stamp (UTC) at which an acknowledgment was sent to the primary replicator.
 	// UTC 0 represents an invalid value, indicating that an acknowledgment message was never sent.
 	LastAcknowledgementSentTimeUtc *date.Time `json:"LastAcknowledgementSentTimeUtc,omitempty"`
+	// Kind - Possible values include: 'KindReplicatorStatus', 'KindPrimary', 'KindSecondaryReplicatorStatus', 'KindActiveSecondary', 'KindIdleSecondary'
+	Kind KindBasicReplicatorStatus `json:"Kind,omitempty"`
 }
 
 func unmarshalBasicSecondaryReplicatorStatus(body []byte) (BasicSecondaryReplicatorStatus, error) {
@@ -10626,12 +10965,27 @@ func unmarshalBasicSecondaryReplicatorStatusArray(body []byte) ([]BasicSecondary
 // MarshalJSON is the custom marshaler for SecondaryReplicatorStatus.
 func (srs SecondaryReplicatorStatus) MarshalJSON() ([]byte, error) {
 	srs.Kind = KindSecondaryReplicatorStatus
-	type Alias SecondaryReplicatorStatus
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(srs),
-	})
+	objectMap := make(map[string]interface{})
+	if srs.ReplicationQueueStatus != nil {
+		objectMap["ReplicationQueueStatus"] = srs.ReplicationQueueStatus
+	}
+	if srs.LastReplicationOperationReceivedTimeUtc != nil {
+		objectMap["LastReplicationOperationReceivedTimeUtc"] = srs.LastReplicationOperationReceivedTimeUtc
+	}
+	if srs.IsInBuild != nil {
+		objectMap["IsInBuild"] = srs.IsInBuild
+	}
+	if srs.CopyQueueStatus != nil {
+		objectMap["CopyQueueStatus"] = srs.CopyQueueStatus
+	}
+	if srs.LastCopyOperationReceivedTimeUtc != nil {
+		objectMap["LastCopyOperationReceivedTimeUtc"] = srs.LastCopyOperationReceivedTimeUtc
+	}
+	if srs.LastAcknowledgementSentTimeUtc != nil {
+		objectMap["LastAcknowledgementSentTimeUtc"] = srs.LastAcknowledgementSentTimeUtc
+	}
+	objectMap["Kind"] = srs.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsPrimaryReplicatorStatus is the BasicReplicatorStatus implementation for SecondaryReplicatorStatus.
@@ -10669,8 +11023,8 @@ func (srs SecondaryReplicatorStatus) AsBasicReplicatorStatus() (BasicReplicatorS
 	return &srs, true
 }
 
-// SeedNodeSafetyCheck represents a safety check for the seed nodes being performed by service fabric before continuing
-// with node level operations.
+// SeedNodeSafetyCheck represents a safety check for the seed nodes being performed by service fabric before
+// continuing with node level operations.
 type SeedNodeSafetyCheck struct {
 	// Kind - Possible values include: 'KindSafetyCheck', 'KindPartitionSafetyCheck', 'KindEnsureAvailability', 'KindEnsurePartitionQuorum', 'KindEnsureSeedNodeQuorum', 'KindWaitForInbuildReplica', 'KindWaitForPrimaryPlacement', 'KindWaitForPrimarySwap', 'KindWaitForReconfiguration'
 	Kind KindBasicSafetyCheck `json:"Kind,omitempty"`
@@ -10679,12 +11033,9 @@ type SeedNodeSafetyCheck struct {
 // MarshalJSON is the custom marshaler for SeedNodeSafetyCheck.
 func (snsc SeedNodeSafetyCheck) MarshalJSON() ([]byte, error) {
 	snsc.Kind = KindEnsureSeedNodeQuorum
-	type Alias SeedNodeSafetyCheck
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(snsc),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["Kind"] = snsc.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsPartitionSafetyCheck is the BasicSafetyCheck implementation for SeedNodeSafetyCheck.
@@ -10780,7 +11131,7 @@ type ServiceDescription struct {
 	// IsDefaultMoveCostSpecified - Indicates if the DefaultMoveCost property is specified.
 	IsDefaultMoveCostSpecified *bool `json:"IsDefaultMoveCostSpecified,omitempty"`
 	// ServicePackageActivationMode - Possible values include: 'ServicePackageActivationMode1SharedProcess', 'ServicePackageActivationMode1ExclusiveProcess'
-	ServicePackageActivationMode ServicePackageActivationMode `json:"ServicePackageActivationMode,omitempty"`
+	ServicePackageActivationMode ServicePackageActivationMode1 `json:"ServicePackageActivationMode,omitempty"`
 	// ServiceDNSName - The DNS name of the service. It requires the DNS system service to be enabled in Service Fabric cluster.
 	ServiceDNSName *string `json:"ServiceDnsName,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindBasicServiceDescriptionServiceKindServiceDescription', 'ServiceKindBasicServiceDescriptionServiceKindStateful', 'ServiceKindBasicServiceDescriptionServiceKindStateless'
@@ -10831,12 +11182,42 @@ func unmarshalBasicServiceDescriptionArray(body []byte) ([]BasicServiceDescripti
 // MarshalJSON is the custom marshaler for ServiceDescription.
 func (sd ServiceDescription) MarshalJSON() ([]byte, error) {
 	sd.ServiceKind = ServiceKindBasicServiceDescriptionServiceKindServiceDescription
-	type Alias ServiceDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sd),
-	})
+	objectMap := make(map[string]interface{})
+	if sd.ApplicationName != nil {
+		objectMap["ApplicationName"] = sd.ApplicationName
+	}
+	if sd.ServiceName != nil {
+		objectMap["ServiceName"] = sd.ServiceName
+	}
+	if sd.ServiceTypeName != nil {
+		objectMap["ServiceTypeName"] = sd.ServiceTypeName
+	}
+	if sd.InitializationData != nil {
+		objectMap["InitializationData"] = sd.InitializationData
+	}
+	objectMap["PartitionDescription"] = sd.PartitionDescription
+	if sd.PlacementConstraints != nil {
+		objectMap["PlacementConstraints"] = sd.PlacementConstraints
+	}
+	if sd.CorrelationScheme != nil {
+		objectMap["CorrelationScheme"] = sd.CorrelationScheme
+	}
+	if sd.ServiceLoadMetrics != nil {
+		objectMap["ServiceLoadMetrics"] = sd.ServiceLoadMetrics
+	}
+	if sd.ServicePlacementPolicies != nil {
+		objectMap["ServicePlacementPolicies"] = sd.ServicePlacementPolicies
+	}
+	objectMap["DefaultMoveCost"] = sd.DefaultMoveCost
+	if sd.IsDefaultMoveCostSpecified != nil {
+		objectMap["IsDefaultMoveCostSpecified"] = sd.IsDefaultMoveCostSpecified
+	}
+	objectMap["ServicePackageActivationMode"] = sd.ServicePackageActivationMode
+	if sd.ServiceDNSName != nil {
+		objectMap["ServiceDnsName"] = sd.ServiceDNSName
+	}
+	objectMap["ServiceKind"] = sd.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceDescription is the BasicServiceDescription implementation for ServiceDescription.
@@ -10866,144 +11247,133 @@ func (sd *ServiceDescription) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["ApplicationName"]
-	if v != nil {
-		var applicationName string
-		err = json.Unmarshal(*m["ApplicationName"], &applicationName)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "ApplicationName":
+			if v != nil {
+				var applicationName string
+				err = json.Unmarshal(*v, &applicationName)
+				if err != nil {
+					return err
+				}
+				sd.ApplicationName = &applicationName
+			}
+		case "ServiceName":
+			if v != nil {
+				var serviceName string
+				err = json.Unmarshal(*v, &serviceName)
+				if err != nil {
+					return err
+				}
+				sd.ServiceName = &serviceName
+			}
+		case "ServiceTypeName":
+			if v != nil {
+				var serviceTypeName string
+				err = json.Unmarshal(*v, &serviceTypeName)
+				if err != nil {
+					return err
+				}
+				sd.ServiceTypeName = &serviceTypeName
+			}
+		case "InitializationData":
+			if v != nil {
+				var initializationData []int32
+				err = json.Unmarshal(*v, &initializationData)
+				if err != nil {
+					return err
+				}
+				sd.InitializationData = &initializationData
+			}
+		case "PartitionDescription":
+			if v != nil {
+				partitionDescription, err := unmarshalBasicPartitionSchemeDescription(*v)
+				if err != nil {
+					return err
+				}
+				sd.PartitionDescription = partitionDescription
+			}
+		case "PlacementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				sd.PlacementConstraints = &placementConstraints
+			}
+		case "CorrelationScheme":
+			if v != nil {
+				var correlationScheme []ServiceCorrelationDescription
+				err = json.Unmarshal(*v, &correlationScheme)
+				if err != nil {
+					return err
+				}
+				sd.CorrelationScheme = &correlationScheme
+			}
+		case "ServiceLoadMetrics":
+			if v != nil {
+				var serviceLoadMetrics []ServiceLoadMetricDescription
+				err = json.Unmarshal(*v, &serviceLoadMetrics)
+				if err != nil {
+					return err
+				}
+				sd.ServiceLoadMetrics = &serviceLoadMetrics
+			}
+		case "ServicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				sd.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "DefaultMoveCost":
+			if v != nil {
+				var defaultMoveCost DefaultMoveCost
+				err = json.Unmarshal(*v, &defaultMoveCost)
+				if err != nil {
+					return err
+				}
+				sd.DefaultMoveCost = defaultMoveCost
+			}
+		case "IsDefaultMoveCostSpecified":
+			if v != nil {
+				var isDefaultMoveCostSpecified bool
+				err = json.Unmarshal(*v, &isDefaultMoveCostSpecified)
+				if err != nil {
+					return err
+				}
+				sd.IsDefaultMoveCostSpecified = &isDefaultMoveCostSpecified
+			}
+		case "ServicePackageActivationMode":
+			if v != nil {
+				var servicePackageActivationMode ServicePackageActivationMode1
+				err = json.Unmarshal(*v, &servicePackageActivationMode)
+				if err != nil {
+					return err
+				}
+				sd.ServicePackageActivationMode = servicePackageActivationMode
+			}
+		case "ServiceDnsName":
+			if v != nil {
+				var serviceDNSName string
+				err = json.Unmarshal(*v, &serviceDNSName)
+				if err != nil {
+					return err
+				}
+				sd.ServiceDNSName = &serviceDNSName
+			}
+		case "ServiceKind":
+			if v != nil {
+				var serviceKind ServiceKindBasicServiceDescription
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				sd.ServiceKind = serviceKind
+			}
 		}
-		sd.ApplicationName = &applicationName
-	}
-
-	v = m["ServiceName"]
-	if v != nil {
-		var serviceName string
-		err = json.Unmarshal(*m["ServiceName"], &serviceName)
-		if err != nil {
-			return err
-		}
-		sd.ServiceName = &serviceName
-	}
-
-	v = m["ServiceTypeName"]
-	if v != nil {
-		var serviceTypeName string
-		err = json.Unmarshal(*m["ServiceTypeName"], &serviceTypeName)
-		if err != nil {
-			return err
-		}
-		sd.ServiceTypeName = &serviceTypeName
-	}
-
-	v = m["InitializationData"]
-	if v != nil {
-		var initializationData []int32
-		err = json.Unmarshal(*m["InitializationData"], &initializationData)
-		if err != nil {
-			return err
-		}
-		sd.InitializationData = &initializationData
-	}
-
-	v = m["PartitionDescription"]
-	if v != nil {
-		partitionDescription, err := unmarshalBasicPartitionSchemeDescription(*m["PartitionDescription"])
-		if err != nil {
-			return err
-		}
-		sd.PartitionDescription = partitionDescription
-	}
-
-	v = m["PlacementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["PlacementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		sd.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["CorrelationScheme"]
-	if v != nil {
-		var correlationScheme []ServiceCorrelationDescription
-		err = json.Unmarshal(*m["CorrelationScheme"], &correlationScheme)
-		if err != nil {
-			return err
-		}
-		sd.CorrelationScheme = &correlationScheme
-	}
-
-	v = m["ServiceLoadMetrics"]
-	if v != nil {
-		var serviceLoadMetrics []ServiceLoadMetricDescription
-		err = json.Unmarshal(*m["ServiceLoadMetrics"], &serviceLoadMetrics)
-		if err != nil {
-			return err
-		}
-		sd.ServiceLoadMetrics = &serviceLoadMetrics
-	}
-
-	v = m["ServicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["ServicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		sd.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["DefaultMoveCost"]
-	if v != nil {
-		var defaultMoveCost DefaultMoveCost
-		err = json.Unmarshal(*m["DefaultMoveCost"], &defaultMoveCost)
-		if err != nil {
-			return err
-		}
-		sd.DefaultMoveCost = defaultMoveCost
-	}
-
-	v = m["IsDefaultMoveCostSpecified"]
-	if v != nil {
-		var isDefaultMoveCostSpecified bool
-		err = json.Unmarshal(*m["IsDefaultMoveCostSpecified"], &isDefaultMoveCostSpecified)
-		if err != nil {
-			return err
-		}
-		sd.IsDefaultMoveCostSpecified = &isDefaultMoveCostSpecified
-	}
-
-	v = m["ServicePackageActivationMode"]
-	if v != nil {
-		var servicePackageActivationMode ServicePackageActivationMode
-		err = json.Unmarshal(*m["ServicePackageActivationMode"], &servicePackageActivationMode)
-		if err != nil {
-			return err
-		}
-		sd.ServicePackageActivationMode = servicePackageActivationMode
-	}
-
-	v = m["ServiceDnsName"]
-	if v != nil {
-		var serviceDNSName string
-		err = json.Unmarshal(*m["ServiceDnsName"], &serviceDNSName)
-		if err != nil {
-			return err
-		}
-		sd.ServiceDNSName = &serviceDNSName
-	}
-
-	v = m["ServiceKind"]
-	if v != nil {
-		var serviceKind ServiceKindBasicServiceDescription
-		err = json.Unmarshal(*m["ServiceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		sd.ServiceKind = serviceKind
 	}
 
 	return nil
@@ -11026,8 +11396,8 @@ func (sdm *ServiceDescriptionModel) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
-// ServiceFromTemplateDescription defines description for creating a Service Fabric service from a template defined in
-// the application manifest.
+// ServiceFromTemplateDescription defines description for creating a Service Fabric service from a template defined
+// in the application manifest.
 type ServiceFromTemplateDescription struct {
 	ApplicationName    *string  `json:"ApplicationName,omitempty"`
 	ServiceName        *string  `json:"ServiceName,omitempty"`
@@ -11042,40 +11412,47 @@ type ServiceFromTemplateDescription struct {
 // ServiceHealth information about the health of a Service Fabric service.
 type ServiceHealth struct {
 	autorest.Response `json:"-"`
+	Name              *string `json:"Name,omitempty"`
+	// PartitionHealthStates - The list of partition health states associated with the service.
+	PartitionHealthStates *[]PartitionHealthState `json:"PartitionHealthStates,omitempty"`
 	// AggregatedHealthState - Possible values include: 'AggregatedHealthState1Invalid', 'AggregatedHealthState1Ok', 'AggregatedHealthState1Warning', 'AggregatedHealthState1Error', 'AggregatedHealthState1Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
+	AggregatedHealthState AggregatedHealthState1 `json:"AggregatedHealthState,omitempty"`
 	// HealthEvents - The list of health events reported on the entity.
 	HealthEvents         *[]HealthEvent             `json:"HealthEvents,omitempty"`
 	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	HealthStatistics     *HealthStatistics          `json:"HealthStatistics,omitempty"`
-	Name                 *string                    `json:"Name,omitempty"`
-	// PartitionHealthStates - The list of partition health states associated with the service.
-	PartitionHealthStates *[]PartitionHealthState `json:"PartitionHealthStates,omitempty"`
 }
 
-// ServiceHealthEvaluation represents health evaluation for a service, containing information about the data and the
-// algorithm used by health store to evaluate health. The evaluation is returned only when the aggregated health state
-// is either Error or Warning.
+// ServiceHealthEvaluation represents health evaluation for a service, containing information about the data and
+// the algorithm used by health store to evaluate health. The evaluation is returned only when the aggregated
+// health state is either Error or Warning.
 type ServiceHealthEvaluation struct {
+	ServiceName          *string                    `json:"ServiceName,omitempty"`
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
-	Kind                 KindBasicHealthEvaluation  `json:"Kind,omitempty"`
-	ServiceName          *string                    `json:"ServiceName,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ServiceHealthEvaluation.
 func (she ServiceHealthEvaluation) MarshalJSON() ([]byte, error) {
 	she.Kind = KindService
-	type Alias ServiceHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(she),
-	})
+	objectMap := make(map[string]interface{})
+	if she.ServiceName != nil {
+		objectMap["ServiceName"] = she.ServiceName
+	}
+	if she.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = she.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = she.AggregatedHealthState
+	if she.Description != nil {
+		objectMap["Description"] = she.Description
+	}
+	objectMap["Kind"] = she.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for ServiceHealthEvaluation.
@@ -11191,18 +11568,19 @@ func (she ServiceHealthEvaluation) AsBasicHealthEvaluation() (BasicHealthEvaluat
 // ServiceHealthState represents the health state of a service, which contains the service identifier and its
 // aggregated health state.
 type ServiceHealthState struct {
+	ServiceName *string `json:"ServiceName,omitempty"`
 	// AggregatedHealthState - Possible values include: 'AggregatedHealthState2Invalid', 'AggregatedHealthState2Ok', 'AggregatedHealthState2Warning', 'AggregatedHealthState2Error', 'AggregatedHealthState2Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	ServiceName           *string               `json:"ServiceName,omitempty"`
+	AggregatedHealthState AggregatedHealthState2 `json:"AggregatedHealthState,omitempty"`
 }
 
 // ServiceHealthStateChunk represents the health state chunk of a service, which contains the service name, its
-// aggregated health state and any partitions that respect the filters in the cluster health chunk query description.
+// aggregated health state and any partitions that respect the filters in the cluster health chunk query
+// description.
 type ServiceHealthStateChunk struct {
-	// HealthState - Possible values include: 'HealthState2Invalid', 'HealthState2Ok', 'HealthState2Warning', 'HealthState2Error', 'HealthState2Unknown'
-	HealthState                HealthState                    `json:"HealthState,omitempty"`
 	ServiceName                *string                        `json:"ServiceName,omitempty"`
 	PartitionHealthStateChunks *PartitionHealthStateChunkList `json:"PartitionHealthStateChunks,omitempty"`
+	// HealthState - Possible values include: 'HealthState2Invalid', 'HealthState2Ok', 'HealthState2Warning', 'HealthState2Error', 'HealthState2Unknown'
+	HealthState HealthState2 `json:"HealthState,omitempty"`
 }
 
 // ServiceHealthStateChunkList the list of service health state chunks that respect the input filters in the chunk
@@ -11212,8 +11590,8 @@ type ServiceHealthStateChunkList struct {
 	Items *[]ServiceHealthStateChunk `json:"Items,omitempty"`
 }
 
-// ServiceHealthStateFilter defines matching criteria to determine whether a service should be included as a child of
-// an application in the cluster health chunk.
+// ServiceHealthStateFilter defines matching criteria to determine whether a service should be included as a child
+// of an application in the cluster health chunk.
 // The services are only returned if the parent application matches a filter specified in the cluster health chunk
 // query description.
 // One filter can match zero, one or multiple services, depending on its properties.
@@ -11258,7 +11636,7 @@ type ServiceInfo struct {
 	// ManifestVersion - The version of the service manifest.
 	ManifestVersion *string `json:"ManifestVersion,omitempty"`
 	// HealthState - Possible values include: 'HealthState7Invalid', 'HealthState7Ok', 'HealthState7Warning', 'HealthState7Error', 'HealthState7Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
+	HealthState HealthState7 `json:"HealthState,omitempty"`
 	// ServiceStatus - Possible values include: 'ServiceStatusUnknown', 'ServiceStatusActive', 'ServiceStatusUpgrading', 'ServiceStatusDeleting', 'ServiceStatusCreating', 'ServiceStatusFailed'
 	ServiceStatus ServiceStatus `json:"ServiceStatus,omitempty"`
 	// IsServiceGroup - Whether the service is in a service group.
@@ -11311,12 +11689,26 @@ func unmarshalBasicServiceInfoArray(body []byte) ([]BasicServiceInfo, error) {
 // MarshalJSON is the custom marshaler for ServiceInfo.
 func (si ServiceInfo) MarshalJSON() ([]byte, error) {
 	si.ServiceKind = ServiceKindBasicServiceInfoServiceKindServiceInfo
-	type Alias ServiceInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(si),
-	})
+	objectMap := make(map[string]interface{})
+	if si.ID != nil {
+		objectMap["Id"] = si.ID
+	}
+	if si.Name != nil {
+		objectMap["Name"] = si.Name
+	}
+	if si.TypeName != nil {
+		objectMap["TypeName"] = si.TypeName
+	}
+	if si.ManifestVersion != nil {
+		objectMap["ManifestVersion"] = si.ManifestVersion
+	}
+	objectMap["HealthState"] = si.HealthState
+	objectMap["ServiceStatus"] = si.ServiceStatus
+	if si.IsServiceGroup != nil {
+		objectMap["IsServiceGroup"] = si.IsServiceGroup
+	}
+	objectMap["ServiceKind"] = si.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceInfo is the BasicServiceInfo implementation for ServiceInfo.
@@ -11388,7 +11780,7 @@ type BasicServicePartitionInfo interface {
 type ServicePartitionInfo struct {
 	autorest.Response `json:"-"`
 	// HealthState - Possible values include: 'HealthState5Invalid', 'HealthState5Ok', 'HealthState5Warning', 'HealthState5Error', 'HealthState5Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
+	HealthState HealthState5 `json:"HealthState,omitempty"`
 	// PartitionStatus - Possible values include: 'PartitionStatusInvalid', 'PartitionStatusReady', 'PartitionStatusNotReady', 'PartitionStatusInQuorumLoss', 'PartitionStatusReconfiguring', 'PartitionStatusDeleting'
 	PartitionStatus      PartitionStatus           `json:"PartitionStatus,omitempty"`
 	PartitionInformation BasicPartitionInformation `json:"PartitionInformation,omitempty"`
@@ -11440,12 +11832,12 @@ func unmarshalBasicServicePartitionInfoArray(body []byte) ([]BasicServicePartiti
 // MarshalJSON is the custom marshaler for ServicePartitionInfo.
 func (spi ServicePartitionInfo) MarshalJSON() ([]byte, error) {
 	spi.ServiceKind = ServiceKindBasicServicePartitionInfoServiceKindServicePartitionInfo
-	type Alias ServicePartitionInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(spi),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["HealthState"] = spi.HealthState
+	objectMap["PartitionStatus"] = spi.PartitionStatus
+	objectMap["PartitionInformation"] = spi.PartitionInformation
+	objectMap["ServiceKind"] = spi.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServicePartitionInfo is the BasicServicePartitionInfo implementation for ServicePartitionInfo.
@@ -11475,45 +11867,44 @@ func (spi *ServicePartitionInfo) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["HealthState"]
-	if v != nil {
-		var healthState HealthState
-		err = json.Unmarshal(*m["HealthState"], &healthState)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "HealthState":
+			if v != nil {
+				var healthState HealthState5
+				err = json.Unmarshal(*v, &healthState)
+				if err != nil {
+					return err
+				}
+				spi.HealthState = healthState
+			}
+		case "PartitionStatus":
+			if v != nil {
+				var partitionStatus PartitionStatus
+				err = json.Unmarshal(*v, &partitionStatus)
+				if err != nil {
+					return err
+				}
+				spi.PartitionStatus = partitionStatus
+			}
+		case "PartitionInformation":
+			if v != nil {
+				partitionInformation, err := unmarshalBasicPartitionInformation(*v)
+				if err != nil {
+					return err
+				}
+				spi.PartitionInformation = partitionInformation
+			}
+		case "ServiceKind":
+			if v != nil {
+				var serviceKind ServiceKindBasicServicePartitionInfo
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				spi.ServiceKind = serviceKind
+			}
 		}
-		spi.HealthState = healthState
-	}
-
-	v = m["PartitionStatus"]
-	if v != nil {
-		var partitionStatus PartitionStatus
-		err = json.Unmarshal(*m["PartitionStatus"], &partitionStatus)
-		if err != nil {
-			return err
-		}
-		spi.PartitionStatus = partitionStatus
-	}
-
-	v = m["PartitionInformation"]
-	if v != nil {
-		partitionInformation, err := unmarshalBasicPartitionInformation(*m["PartitionInformation"])
-		if err != nil {
-			return err
-		}
-		spi.PartitionInformation = partitionInformation
-	}
-
-	v = m["ServiceKind"]
-	if v != nil {
-		var serviceKind ServiceKindBasicServicePartitionInfo
-		err = json.Unmarshal(*m["ServiceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		spi.ServiceKind = serviceKind
 	}
 
 	return nil
@@ -11537,24 +11928,24 @@ func (spim *ServicePartitionInfoModel) UnmarshalJSON(body []byte) error {
 }
 
 // ServicePlacementInvalidDomainPolicyDescription describes the policy to be used for placement of a Service Fabric
-// service where a particular fault or upgrade domain should not be used for placement of the instances or replicas of
-// that service.
+// service where a particular fault or upgrade domain should not be used for placement of the instances or replicas
+// of that service.
 type ServicePlacementInvalidDomainPolicyDescription struct {
-	// Type - Possible values include: 'TypeServicePlacementPolicyDescription', 'TypeInvalidDomain', 'TypeNonPartiallyPlaceService', 'TypePreferPrimaryDomain', 'TypeRequireDomain', 'TypeRequireDomainDistribution'
-	Type TypeBasicServicePlacementPolicyDescription `json:"Type,omitempty"`
 	// DomainName - The name of the domain that should not be used for placement.
 	DomainName *string `json:"DomainName,omitempty"`
+	// Type - Possible values include: 'TypeServicePlacementPolicyDescription', 'TypeInvalidDomain', 'TypeNonPartiallyPlaceService', 'TypePreferPrimaryDomain', 'TypeRequireDomain', 'TypeRequireDomainDistribution'
+	Type TypeBasicServicePlacementPolicyDescription `json:"Type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ServicePlacementInvalidDomainPolicyDescription.
 func (spidpd ServicePlacementInvalidDomainPolicyDescription) MarshalJSON() ([]byte, error) {
 	spidpd.Type = TypeInvalidDomain
-	type Alias ServicePlacementInvalidDomainPolicyDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(spidpd),
-	})
+	objectMap := make(map[string]interface{})
+	if spidpd.DomainName != nil {
+		objectMap["DomainName"] = spidpd.DomainName
+	}
+	objectMap["Type"] = spidpd.Type
+	return json.Marshal(objectMap)
 }
 
 // AsServicePlacementInvalidDomainPolicyDescription is the BasicServicePlacementPolicyDescription implementation for ServicePlacementInvalidDomainPolicyDescription.
@@ -11592,8 +11983,8 @@ func (spidpd ServicePlacementInvalidDomainPolicyDescription) AsBasicServicePlace
 	return &spidpd, true
 }
 
-// ServicePlacementNonPartiallyPlaceServicePolicyDescription describes the policy to be used for placement of a Service
-// Fabric service where all replicas must be able to be placed in order for any replicas to be created.
+// ServicePlacementNonPartiallyPlaceServicePolicyDescription describes the policy to be used for placement of a
+// Service Fabric service where all replicas must be able to be placed in order for any replicas to be created.
 type ServicePlacementNonPartiallyPlaceServicePolicyDescription struct {
 	// Type - Possible values include: 'TypeServicePlacementPolicyDescription', 'TypeInvalidDomain', 'TypeNonPartiallyPlaceService', 'TypePreferPrimaryDomain', 'TypeRequireDomain', 'TypeRequireDomainDistribution'
 	Type TypeBasicServicePlacementPolicyDescription `json:"Type,omitempty"`
@@ -11602,12 +11993,9 @@ type ServicePlacementNonPartiallyPlaceServicePolicyDescription struct {
 // MarshalJSON is the custom marshaler for ServicePlacementNonPartiallyPlaceServicePolicyDescription.
 func (spnppspd ServicePlacementNonPartiallyPlaceServicePolicyDescription) MarshalJSON() ([]byte, error) {
 	spnppspd.Type = TypeNonPartiallyPlaceService
-	type Alias ServicePlacementNonPartiallyPlaceServicePolicyDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(spnppspd),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["Type"] = spnppspd.Type
+	return json.Marshal(objectMap)
 }
 
 // AsServicePlacementInvalidDomainPolicyDescription is the BasicServicePlacementPolicyDescription implementation for ServicePlacementNonPartiallyPlaceServicePolicyDescription.
@@ -11717,12 +12105,9 @@ func unmarshalBasicServicePlacementPolicyDescriptionArray(body []byte) ([]BasicS
 // MarshalJSON is the custom marshaler for ServicePlacementPolicyDescription.
 func (sppd ServicePlacementPolicyDescription) MarshalJSON() ([]byte, error) {
 	sppd.Type = TypeServicePlacementPolicyDescription
-	type Alias ServicePlacementPolicyDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sppd),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["Type"] = sppd.Type
+	return json.Marshal(objectMap)
 }
 
 // AsServicePlacementInvalidDomainPolicyDescription is the BasicServicePlacementPolicyDescription implementation for ServicePlacementPolicyDescription.
@@ -11764,26 +12149,26 @@ func (sppd ServicePlacementPolicyDescription) AsBasicServicePlacementPolicyDescr
 // Fabric service where the service's Primary replicas should optimally be placed in a particular domain.
 //
 // This placement policy is usually used with fault domains in scenarios where the Service Fabric cluster is
-// geographically distributed in order to indicate that a service's primary replica should be located in a particular
-// fault domain, which in geo-distributed scenarios usually aligns with regional or datacenter boundaries. Note that
-// since this is an optimization it is possible that the Primary replica may not end up located in this domain due to
-// failures, capacity limits, or other constraints.
+// geographically distributed in order to indicate that a service's primary replica should be located in a
+// particular fault domain, which in geo-distributed scenarios usually aligns with regional or datacenter
+// boundaries. Note that since this is an optimization it is possible that the Primary replica may not end up
+// located in this domain due to failures, capacity limits, or other constraints.
 type ServicePlacementPreferPrimaryDomainPolicyDescription struct {
-	// Type - Possible values include: 'TypeServicePlacementPolicyDescription', 'TypeInvalidDomain', 'TypeNonPartiallyPlaceService', 'TypePreferPrimaryDomain', 'TypeRequireDomain', 'TypeRequireDomainDistribution'
-	Type TypeBasicServicePlacementPolicyDescription `json:"Type,omitempty"`
 	// DomainName - The name of the domain that should used for placement as per this policy.
 	DomainName *string `json:"DomainName,omitempty"`
+	// Type - Possible values include: 'TypeServicePlacementPolicyDescription', 'TypeInvalidDomain', 'TypeNonPartiallyPlaceService', 'TypePreferPrimaryDomain', 'TypeRequireDomain', 'TypeRequireDomainDistribution'
+	Type TypeBasicServicePlacementPolicyDescription `json:"Type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ServicePlacementPreferPrimaryDomainPolicyDescription.
 func (spppdpd ServicePlacementPreferPrimaryDomainPolicyDescription) MarshalJSON() ([]byte, error) {
 	spppdpd.Type = TypePreferPrimaryDomain
-	type Alias ServicePlacementPreferPrimaryDomainPolicyDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(spppdpd),
-	})
+	objectMap := make(map[string]interface{})
+	if spppdpd.DomainName != nil {
+		objectMap["DomainName"] = spppdpd.DomainName
+	}
+	objectMap["Type"] = spppdpd.Type
+	return json.Marshal(objectMap)
 }
 
 // AsServicePlacementInvalidDomainPolicyDescription is the BasicServicePlacementPolicyDescription implementation for ServicePlacementPreferPrimaryDomainPolicyDescription.
@@ -11821,24 +12206,24 @@ func (spppdpd ServicePlacementPreferPrimaryDomainPolicyDescription) AsBasicServi
 	return &spppdpd, true
 }
 
-// ServicePlacementRequiredDomainPolicyDescription describes the policy to be used for placement of a Service Fabric
-// service where the instances or replicas of that service must be placed in a particular domain
+// ServicePlacementRequiredDomainPolicyDescription describes the policy to be used for placement of a Service
+// Fabric service where the instances or replicas of that service must be placed in a particular domain
 type ServicePlacementRequiredDomainPolicyDescription struct {
-	// Type - Possible values include: 'TypeServicePlacementPolicyDescription', 'TypeInvalidDomain', 'TypeNonPartiallyPlaceService', 'TypePreferPrimaryDomain', 'TypeRequireDomain', 'TypeRequireDomainDistribution'
-	Type TypeBasicServicePlacementPolicyDescription `json:"Type,omitempty"`
 	// DomainName - The name of the domain that should used for placement as per this policy.
 	DomainName *string `json:"DomainName,omitempty"`
+	// Type - Possible values include: 'TypeServicePlacementPolicyDescription', 'TypeInvalidDomain', 'TypeNonPartiallyPlaceService', 'TypePreferPrimaryDomain', 'TypeRequireDomain', 'TypeRequireDomainDistribution'
+	Type TypeBasicServicePlacementPolicyDescription `json:"Type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ServicePlacementRequiredDomainPolicyDescription.
 func (sprdpd ServicePlacementRequiredDomainPolicyDescription) MarshalJSON() ([]byte, error) {
 	sprdpd.Type = TypeRequireDomain
-	type Alias ServicePlacementRequiredDomainPolicyDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sprdpd),
-	})
+	objectMap := make(map[string]interface{})
+	if sprdpd.DomainName != nil {
+		objectMap["DomainName"] = sprdpd.DomainName
+	}
+	objectMap["Type"] = sprdpd.Type
+	return json.Marshal(objectMap)
 }
 
 // AsServicePlacementInvalidDomainPolicyDescription is the BasicServicePlacementPolicyDescription implementation for ServicePlacementRequiredDomainPolicyDescription.
@@ -11881,26 +12266,26 @@ func (sprdpd ServicePlacementRequiredDomainPolicyDescription) AsBasicServicePlac
 // upgrade domain.
 //
 // While this is not common it can expose the service to an increased risk of concurrent failures due to unplanned
-// outages or other cases of subsequent/concurrent failures. As an example, consider a case where replicas are deployed
-// across different data center, with one replica per location. In the event that one of the datacenters goes offline,
-// normally the replica that was placed in that datacenter will be packed into one of the remaining datacenters. If
-// this is not desirable then this policy should be set.
+// outages or other cases of subsequent/concurrent failures. As an example, consider a case where replicas are
+// deployed across different data center, with one replica per location. In the event that one of the datacenters
+// goes offline, normally the replica that was placed in that datacenter will be packed into one of the remaining
+// datacenters. If this is not desirable then this policy should be set.
 type ServicePlacementRequireDomainDistributionPolicyDescription struct {
-	// Type - Possible values include: 'TypeServicePlacementPolicyDescription', 'TypeInvalidDomain', 'TypeNonPartiallyPlaceService', 'TypePreferPrimaryDomain', 'TypeRequireDomain', 'TypeRequireDomainDistribution'
-	Type TypeBasicServicePlacementPolicyDescription `json:"Type,omitempty"`
 	// DomainName - The name of the domain that should used for placement as per this policy.
 	DomainName *string `json:"DomainName,omitempty"`
+	// Type - Possible values include: 'TypeServicePlacementPolicyDescription', 'TypeInvalidDomain', 'TypeNonPartiallyPlaceService', 'TypePreferPrimaryDomain', 'TypeRequireDomain', 'TypeRequireDomainDistribution'
+	Type TypeBasicServicePlacementPolicyDescription `json:"Type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ServicePlacementRequireDomainDistributionPolicyDescription.
 func (sprddpd ServicePlacementRequireDomainDistributionPolicyDescription) MarshalJSON() ([]byte, error) {
 	sprddpd.Type = TypeRequireDomainDistribution
-	type Alias ServicePlacementRequireDomainDistributionPolicyDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sprddpd),
-	})
+	objectMap := make(map[string]interface{})
+	if sprddpd.DomainName != nil {
+		objectMap["DomainName"] = sprddpd.DomainName
+	}
+	objectMap["Type"] = sprddpd.Type
+	return json.Marshal(objectMap)
 }
 
 // AsServicePlacementInvalidDomainPolicyDescription is the BasicServicePlacementPolicyDescription implementation for ServicePlacementRequireDomainDistributionPolicyDescription.
@@ -11939,15 +12324,10 @@ func (sprddpd ServicePlacementRequireDomainDistributionPolicyDescription) AsBasi
 }
 
 // ServicesHealthEvaluation represents health evaluation for services of a certain service type belonging to an
-// application, containing health evaluations for each unhealthy service that impacted current aggregated health state.
-// Can be returned when evaluating application health and the aggregated health state is either Error or Warning.
+// application, containing health evaluations for each unhealthy service that impacted current aggregated health
+// state. Can be returned when evaluating application health and the aggregated health state is either Error or
+// Warning.
 type ServicesHealthEvaluation struct {
-	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
-	Description *string `json:"Description,omitempty"`
-	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
-	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 	// ServiceTypeName - Name of the service type of the services.
 	ServiceTypeName *string `json:"ServiceTypeName,omitempty"`
 	// MaxPercentUnhealthyServices - Maximum allowed percentage of unhealthy services from the ServiceTypeHealthPolicy.
@@ -11955,17 +12335,36 @@ type ServicesHealthEvaluation struct {
 	// TotalCount - Total number of services of the current service type in the application from the health store.
 	TotalCount           *int64                     `json:"TotalCount,omitempty"`
 	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
+	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
+	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
+	Description *string `json:"Description,omitempty"`
+	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
+	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ServicesHealthEvaluation.
 func (she ServicesHealthEvaluation) MarshalJSON() ([]byte, error) {
 	she.Kind = KindServices
-	type Alias ServicesHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(she),
-	})
+	objectMap := make(map[string]interface{})
+	if she.ServiceTypeName != nil {
+		objectMap["ServiceTypeName"] = she.ServiceTypeName
+	}
+	if she.MaxPercentUnhealthyServices != nil {
+		objectMap["MaxPercentUnhealthyServices"] = she.MaxPercentUnhealthyServices
+	}
+	if she.TotalCount != nil {
+		objectMap["TotalCount"] = she.TotalCount
+	}
+	if she.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = she.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = she.AggregatedHealthState
+	if she.Description != nil {
+		objectMap["Description"] = she.Description
+	}
+	objectMap["Kind"] = she.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for ServicesHealthEvaluation.
@@ -12086,8 +12485,8 @@ type BasicServiceTypeDescription interface {
 	AsServiceTypeDescription() (*ServiceTypeDescription, bool)
 }
 
-// ServiceTypeDescription describes a service type defined in the service manifest of a provisioned application type.
-// The properties the the ones defined in the service manifest.
+// ServiceTypeDescription describes a service type defined in the service manifest of a provisioned application
+// type. The properties the the ones defined in the service manifest.
 type ServiceTypeDescription struct {
 	// IsStateful - Indicates whether the service type is a stateful service type or a stateless service type. This property is true if the service type is a stateful service type, false otherwise.
 	IsStateful      *bool   `json:"IsStateful,omitempty"`
@@ -12144,12 +12543,24 @@ func unmarshalBasicServiceTypeDescriptionArray(body []byte) ([]BasicServiceTypeD
 // MarshalJSON is the custom marshaler for ServiceTypeDescription.
 func (std ServiceTypeDescription) MarshalJSON() ([]byte, error) {
 	std.Kind = KindServiceTypeDescription
-	type Alias ServiceTypeDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(std),
-	})
+	objectMap := make(map[string]interface{})
+	if std.IsStateful != nil {
+		objectMap["IsStateful"] = std.IsStateful
+	}
+	if std.ServiceTypeName != nil {
+		objectMap["ServiceTypeName"] = std.ServiceTypeName
+	}
+	if std.PlacementConstraints != nil {
+		objectMap["PlacementConstraints"] = std.PlacementConstraints
+	}
+	if std.ServicePlacementPolicies != nil {
+		objectMap["ServicePlacementPolicies"] = std.ServicePlacementPolicies
+	}
+	if std.Extensions != nil {
+		objectMap["Extensions"] = std.Extensions
+	}
+	objectMap["Kind"] = std.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceTypeDescription is the BasicServiceTypeDescription implementation for ServiceTypeDescription.
@@ -12179,65 +12590,62 @@ func (std *ServiceTypeDescription) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["IsStateful"]
-	if v != nil {
-		var isStateful bool
-		err = json.Unmarshal(*m["IsStateful"], &isStateful)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "IsStateful":
+			if v != nil {
+				var isStateful bool
+				err = json.Unmarshal(*v, &isStateful)
+				if err != nil {
+					return err
+				}
+				std.IsStateful = &isStateful
+			}
+		case "ServiceTypeName":
+			if v != nil {
+				var serviceTypeName string
+				err = json.Unmarshal(*v, &serviceTypeName)
+				if err != nil {
+					return err
+				}
+				std.ServiceTypeName = &serviceTypeName
+			}
+		case "PlacementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				std.PlacementConstraints = &placementConstraints
+			}
+		case "ServicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				std.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "Extensions":
+			if v != nil {
+				var extensions []ServiceTypeExtensionDescription
+				err = json.Unmarshal(*v, &extensions)
+				if err != nil {
+					return err
+				}
+				std.Extensions = &extensions
+			}
+		case "Kind":
+			if v != nil {
+				var kind KindBasicServiceTypeDescription
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				std.Kind = kind
+			}
 		}
-		std.IsStateful = &isStateful
-	}
-
-	v = m["ServiceTypeName"]
-	if v != nil {
-		var serviceTypeName string
-		err = json.Unmarshal(*m["ServiceTypeName"], &serviceTypeName)
-		if err != nil {
-			return err
-		}
-		std.ServiceTypeName = &serviceTypeName
-	}
-
-	v = m["PlacementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["PlacementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		std.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["ServicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["ServicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		std.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["Extensions"]
-	if v != nil {
-		var extensions []ServiceTypeExtensionDescription
-		err = json.Unmarshal(*m["Extensions"], &extensions)
-		if err != nil {
-			return err
-		}
-		std.Extensions = &extensions
-	}
-
-	v = m["Kind"]
-	if v != nil {
-		var kind KindBasicServiceTypeDescription
-		err = json.Unmarshal(*m["Kind"], &kind)
-		if err != nil {
-			return err
-		}
-		std.Kind = kind
 	}
 
 	return nil
@@ -12251,8 +12659,8 @@ type ServiceTypeExtensionDescription struct {
 	Value *string `json:"Value,omitempty"`
 }
 
-// ServiceTypeHealthPolicy represents the health policy used to evaluate the health of services belonging to a service
-// type.
+// ServiceTypeHealthPolicy represents the health policy used to evaluate the health of services belonging to a
+// service type.
 type ServiceTypeHealthPolicy struct {
 	// MaxPercentUnhealthyPartitionsPerService - The maximum allowed percentage of unhealthy partitions per service. Allowed values are Byte values from zero to 100
 	// The percentage represents the maximum tolerated percentage of partitions that can be unhealthy before the service is considered in error.
@@ -12281,8 +12689,8 @@ type ServiceTypeHealthPolicyMapItem struct {
 	Value *ServiceTypeHealthPolicy `json:"Value,omitempty"`
 }
 
-// ServiceTypeInfo information about a service type that is defined in a service manifest of a provisioned application
-// type.
+// ServiceTypeInfo information about a service type that is defined in a service manifest of a provisioned
+// application type.
 type ServiceTypeInfo struct {
 	ServiceTypeDescription BasicServiceTypeDescription `json:"ServiceTypeDescription,omitempty"`
 	ServiceManifestName    *string                     `json:"ServiceManifestName,omitempty"`
@@ -12299,45 +12707,44 @@ func (sti *ServiceTypeInfo) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["ServiceTypeDescription"]
-	if v != nil {
-		serviceTypeDescription, err := unmarshalBasicServiceTypeDescription(*m["ServiceTypeDescription"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "ServiceTypeDescription":
+			if v != nil {
+				serviceTypeDescription, err := unmarshalBasicServiceTypeDescription(*v)
+				if err != nil {
+					return err
+				}
+				sti.ServiceTypeDescription = serviceTypeDescription
+			}
+		case "ServiceManifestName":
+			if v != nil {
+				var serviceManifestName string
+				err = json.Unmarshal(*v, &serviceManifestName)
+				if err != nil {
+					return err
+				}
+				sti.ServiceManifestName = &serviceManifestName
+			}
+		case "ServiceManifestVersion":
+			if v != nil {
+				var serviceManifestVersion string
+				err = json.Unmarshal(*v, &serviceManifestVersion)
+				if err != nil {
+					return err
+				}
+				sti.ServiceManifestVersion = &serviceManifestVersion
+			}
+		case "IsServiceGroup":
+			if v != nil {
+				var isServiceGroup bool
+				err = json.Unmarshal(*v, &isServiceGroup)
+				if err != nil {
+					return err
+				}
+				sti.IsServiceGroup = &isServiceGroup
+			}
 		}
-		sti.ServiceTypeDescription = serviceTypeDescription
-	}
-
-	v = m["ServiceManifestName"]
-	if v != nil {
-		var serviceManifestName string
-		err = json.Unmarshal(*m["ServiceManifestName"], &serviceManifestName)
-		if err != nil {
-			return err
-		}
-		sti.ServiceManifestName = &serviceManifestName
-	}
-
-	v = m["ServiceManifestVersion"]
-	if v != nil {
-		var serviceManifestVersion string
-		err = json.Unmarshal(*m["ServiceManifestVersion"], &serviceManifestVersion)
-		if err != nil {
-			return err
-		}
-		sti.ServiceManifestVersion = &serviceManifestVersion
-	}
-
-	v = m["IsServiceGroup"]
-	if v != nil {
-		var isServiceGroup bool
-		err = json.Unmarshal(*m["IsServiceGroup"], &isServiceGroup)
-		if err != nil {
-			return err
-		}
-		sti.IsServiceGroup = &isServiceGroup
 	}
 
 	return nil
@@ -12359,7 +12766,8 @@ type BasicServiceUpdateDescription interface {
 	AsServiceUpdateDescription() (*ServiceUpdateDescription, bool)
 }
 
-// ServiceUpdateDescription a ServiceUpdateDescription contains all of the information necessary to update a service.
+// ServiceUpdateDescription a ServiceUpdateDescription contains all of the information necessary to update a
+// service.
 type ServiceUpdateDescription struct {
 	// Flags - Flags indicating whether other properties are set. Each of the associated properties corresponds to a flag, specified below, which, if set, indicate that the property is specified.
 	// This property can be a combination of those flags obtained using bitwise 'OR' operator.
@@ -12382,7 +12790,7 @@ type ServiceUpdateDescription struct {
 	LoadMetrics              *[]ServiceLoadMetricDescription           `json:"LoadMetrics,omitempty"`
 	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"ServicePlacementPolicies,omitempty"`
 	// DefaultMoveCost - Possible values include: 'DefaultMoveCost1Zero', 'DefaultMoveCost1Low', 'DefaultMoveCost1Medium', 'DefaultMoveCost1High'
-	DefaultMoveCost DefaultMoveCost `json:"DefaultMoveCost,omitempty"`
+	DefaultMoveCost DefaultMoveCost1 `json:"DefaultMoveCost,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindBasicServiceUpdateDescriptionServiceKindServiceUpdateDescription', 'ServiceKindBasicServiceUpdateDescriptionServiceKindStateful', 'ServiceKindBasicServiceUpdateDescriptionServiceKindStateless'
 	ServiceKind ServiceKindBasicServiceUpdateDescription `json:"ServiceKind,omitempty"`
 }
@@ -12431,12 +12839,25 @@ func unmarshalBasicServiceUpdateDescriptionArray(body []byte) ([]BasicServiceUpd
 // MarshalJSON is the custom marshaler for ServiceUpdateDescription.
 func (sud ServiceUpdateDescription) MarshalJSON() ([]byte, error) {
 	sud.ServiceKind = ServiceKindBasicServiceUpdateDescriptionServiceKindServiceUpdateDescription
-	type Alias ServiceUpdateDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sud),
-	})
+	objectMap := make(map[string]interface{})
+	if sud.Flags != nil {
+		objectMap["Flags"] = sud.Flags
+	}
+	if sud.PlacementConstraints != nil {
+		objectMap["PlacementConstraints"] = sud.PlacementConstraints
+	}
+	if sud.CorrelationScheme != nil {
+		objectMap["CorrelationScheme"] = sud.CorrelationScheme
+	}
+	if sud.LoadMetrics != nil {
+		objectMap["LoadMetrics"] = sud.LoadMetrics
+	}
+	if sud.ServicePlacementPolicies != nil {
+		objectMap["ServicePlacementPolicies"] = sud.ServicePlacementPolicies
+	}
+	objectMap["DefaultMoveCost"] = sud.DefaultMoveCost
+	objectMap["ServiceKind"] = sud.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceUpdateDescription is the BasicServiceUpdateDescription implementation for ServiceUpdateDescription.
@@ -12466,75 +12887,71 @@ func (sud *ServiceUpdateDescription) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["Flags"]
-	if v != nil {
-		var flags string
-		err = json.Unmarshal(*m["Flags"], &flags)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "Flags":
+			if v != nil {
+				var flags string
+				err = json.Unmarshal(*v, &flags)
+				if err != nil {
+					return err
+				}
+				sud.Flags = &flags
+			}
+		case "PlacementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				sud.PlacementConstraints = &placementConstraints
+			}
+		case "CorrelationScheme":
+			if v != nil {
+				var correlationScheme []ServiceCorrelationDescription
+				err = json.Unmarshal(*v, &correlationScheme)
+				if err != nil {
+					return err
+				}
+				sud.CorrelationScheme = &correlationScheme
+			}
+		case "LoadMetrics":
+			if v != nil {
+				var loadMetrics []ServiceLoadMetricDescription
+				err = json.Unmarshal(*v, &loadMetrics)
+				if err != nil {
+					return err
+				}
+				sud.LoadMetrics = &loadMetrics
+			}
+		case "ServicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				sud.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "DefaultMoveCost":
+			if v != nil {
+				var defaultMoveCost DefaultMoveCost1
+				err = json.Unmarshal(*v, &defaultMoveCost)
+				if err != nil {
+					return err
+				}
+				sud.DefaultMoveCost = defaultMoveCost
+			}
+		case "ServiceKind":
+			if v != nil {
+				var serviceKind ServiceKindBasicServiceUpdateDescription
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				sud.ServiceKind = serviceKind
+			}
 		}
-		sud.Flags = &flags
-	}
-
-	v = m["PlacementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["PlacementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		sud.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["CorrelationScheme"]
-	if v != nil {
-		var correlationScheme []ServiceCorrelationDescription
-		err = json.Unmarshal(*m["CorrelationScheme"], &correlationScheme)
-		if err != nil {
-			return err
-		}
-		sud.CorrelationScheme = &correlationScheme
-	}
-
-	v = m["LoadMetrics"]
-	if v != nil {
-		var loadMetrics []ServiceLoadMetricDescription
-		err = json.Unmarshal(*m["LoadMetrics"], &loadMetrics)
-		if err != nil {
-			return err
-		}
-		sud.LoadMetrics = &loadMetrics
-	}
-
-	v = m["ServicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["ServicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		sud.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["DefaultMoveCost"]
-	if v != nil {
-		var defaultMoveCost DefaultMoveCost
-		err = json.Unmarshal(*m["DefaultMoveCost"], &defaultMoveCost)
-		if err != nil {
-			return err
-		}
-		sud.DefaultMoveCost = defaultMoveCost
-	}
-
-	v = m["ServiceKind"]
-	if v != nil {
-		var serviceKind ServiceKindBasicServiceUpdateDescription
-		err = json.Unmarshal(*m["ServiceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		sud.ServiceKind = serviceKind
 	}
 
 	return nil
@@ -12551,12 +12968,12 @@ type SingletonPartitionInformation struct {
 // MarshalJSON is the custom marshaler for SingletonPartitionInformation.
 func (spi SingletonPartitionInformation) MarshalJSON() ([]byte, error) {
 	spi.ServicePartitionKind = ServicePartitionKindSingleton
-	type Alias SingletonPartitionInformation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(spi),
-	})
+	objectMap := make(map[string]interface{})
+	if spi.ID != nil {
+		objectMap["Id"] = spi.ID
+	}
+	objectMap["ServicePartitionKind"] = spi.ServicePartitionKind
+	return json.Marshal(objectMap)
 }
 
 // AsInt64RangePartitionInformation is the BasicPartitionInformation implementation for SingletonPartitionInformation.
@@ -12584,8 +13001,8 @@ func (spi SingletonPartitionInformation) AsBasicPartitionInformation() (BasicPar
 	return &spi, true
 }
 
-// SingletonPartitionSchemeDescription describes the partition scheme of a singleton-partitioned, or non-partitioned
-// service.
+// SingletonPartitionSchemeDescription describes the partition scheme of a singleton-partitioned, or
+// non-partitioned service.
 type SingletonPartitionSchemeDescription struct {
 	// PartitionScheme - Possible values include: 'PartitionSchemePartitionSchemeDescription', 'PartitionSchemeNamed', 'PartitionSchemeSingleton', 'PartitionSchemeUniformInt64Range'
 	PartitionScheme PartitionScheme `json:"PartitionScheme,omitempty"`
@@ -12594,12 +13011,9 @@ type SingletonPartitionSchemeDescription struct {
 // MarshalJSON is the custom marshaler for SingletonPartitionSchemeDescription.
 func (spsd SingletonPartitionSchemeDescription) MarshalJSON() ([]byte, error) {
 	spsd.PartitionScheme = PartitionSchemeSingleton
-	type Alias SingletonPartitionSchemeDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(spsd),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["PartitionScheme"] = spsd.PartitionScheme
+	return json.Marshal(objectMap)
 }
 
 // AsNamedPartitionSchemeDescription is the BasicPartitionSchemeDescription implementation for SingletonPartitionSchemeDescription.
@@ -12634,9 +13048,9 @@ type StartClusterUpgradeDescription struct {
 	// ConfigVersion - The cluster configuration version.
 	ConfigVersion *string `json:"ConfigVersion,omitempty"`
 	// UpgradeKind - Possible values include: 'UpgradeKind1Invalid', 'UpgradeKind1Rolling'
-	UpgradeKind UpgradeKind `json:"UpgradeKind,omitempty"`
+	UpgradeKind UpgradeKind1 `json:"UpgradeKind,omitempty"`
 	// RollingUpgradeMode - Possible values include: 'RollingUpgradeMode2Invalid', 'RollingUpgradeMode2UnmonitoredAuto', 'RollingUpgradeMode2UnmonitoredManual', 'RollingUpgradeMode2Monitored'
-	RollingUpgradeMode                     RollingUpgradeMode           `json:"RollingUpgradeMode,omitempty"`
+	RollingUpgradeMode                     RollingUpgradeMode2          `json:"RollingUpgradeMode,omitempty"`
 	UpgradeReplicaSetCheckTimeoutInSeconds *int64                       `json:"UpgradeReplicaSetCheckTimeoutInSeconds,omitempty"`
 	ForceRestart                           *bool                        `json:"ForceRestart,omitempty"`
 	MonitoringPolicy                       *MonitoringPolicyDescription `json:"MonitoringPolicy,omitempty"`
@@ -12649,21 +13063,24 @@ type StartClusterUpgradeDescription struct {
 
 // StartedChaosEvent describes a Chaos event that gets generated when Chaos is started.
 type StartedChaosEvent struct {
-	TimeStampUtc *date.Time `json:"TimeStampUtc,omitempty"`
+	ChaosParameters *ChaosParameters `json:"ChaosParameters,omitempty"`
+	TimeStampUtc    *date.Time       `json:"TimeStampUtc,omitempty"`
 	// Kind - Possible values include: 'KindChaosEvent', 'KindExecutingFaults', 'KindStarted', 'KindStopped', 'KindTestError', 'KindValidationFailed', 'KindWaiting'
-	Kind            KindBasicChaosEvent `json:"Kind,omitempty"`
-	ChaosParameters *ChaosParameters    `json:"ChaosParameters,omitempty"`
+	Kind KindBasicChaosEvent `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StartedChaosEvent.
 func (sce StartedChaosEvent) MarshalJSON() ([]byte, error) {
 	sce.Kind = KindStarted
-	type Alias StartedChaosEvent
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sce),
-	})
+	objectMap := make(map[string]interface{})
+	if sce.ChaosParameters != nil {
+		objectMap["ChaosParameters"] = sce.ChaosParameters
+	}
+	if sce.TimeStampUtc != nil {
+		objectMap["TimeStampUtc"] = sce.TimeStampUtc
+	}
+	objectMap["Kind"] = sce.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsExecutingFaultsChaosEvent is the BasicChaosEvent implementation for StartedChaosEvent.
@@ -12708,26 +13125,6 @@ func (sce StartedChaosEvent) AsBasicChaosEvent() (BasicChaosEvent, bool) {
 
 // StatefulServiceDescription describes a stateful service.
 type StatefulServiceDescription struct {
-	ApplicationName      *string                         `json:"ApplicationName,omitempty"`
-	ServiceName          *string                         `json:"ServiceName,omitempty"`
-	ServiceTypeName      *string                         `json:"ServiceTypeName,omitempty"`
-	InitializationData   *[]int32                        `json:"InitializationData,omitempty"`
-	PartitionDescription BasicPartitionSchemeDescription `json:"PartitionDescription,omitempty"`
-	// PlacementConstraints - The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)".
-	PlacementConstraints     *string                                   `json:"PlacementConstraints,omitempty"`
-	CorrelationScheme        *[]ServiceCorrelationDescription          `json:"CorrelationScheme,omitempty"`
-	ServiceLoadMetrics       *[]ServiceLoadMetricDescription           `json:"ServiceLoadMetrics,omitempty"`
-	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"ServicePlacementPolicies,omitempty"`
-	// DefaultMoveCost - Possible values include: 'Zero', 'Low', 'Medium', 'High'
-	DefaultMoveCost DefaultMoveCost `json:"DefaultMoveCost,omitempty"`
-	// IsDefaultMoveCostSpecified - Indicates if the DefaultMoveCost property is specified.
-	IsDefaultMoveCostSpecified *bool `json:"IsDefaultMoveCostSpecified,omitempty"`
-	// ServicePackageActivationMode - Possible values include: 'ServicePackageActivationMode1SharedProcess', 'ServicePackageActivationMode1ExclusiveProcess'
-	ServicePackageActivationMode ServicePackageActivationMode `json:"ServicePackageActivationMode,omitempty"`
-	// ServiceDNSName - The DNS name of the service. It requires the DNS system service to be enabled in Service Fabric cluster.
-	ServiceDNSName *string `json:"ServiceDnsName,omitempty"`
-	// ServiceKind - Possible values include: 'ServiceKindBasicServiceDescriptionServiceKindServiceDescription', 'ServiceKindBasicServiceDescriptionServiceKindStateful', 'ServiceKindBasicServiceDescriptionServiceKindStateless'
-	ServiceKind ServiceKindBasicServiceDescription `json:"ServiceKind,omitempty"`
 	// TargetReplicaSetSize - The target replica set size as a number.
 	TargetReplicaSetSize *int32 `json:"TargetReplicaSetSize,omitempty"`
 	// MinReplicaSetSize - The minimum replica set size as a number.
@@ -12747,18 +13144,89 @@ type StatefulServiceDescription struct {
 	// QuorumLossWaitDurationSeconds - The maximum duration, in seconds, for which a partition is allowed to be in a state of quorum loss.
 	QuorumLossWaitDurationSeconds *int64 `json:"QuorumLossWaitDurationSeconds,omitempty"`
 	// StandByReplicaKeepDurationSeconds - The definition on how long StandBy replicas should be maintained before being removed.
-	StandByReplicaKeepDurationSeconds *int64 `json:"StandByReplicaKeepDurationSeconds,omitempty"`
+	StandByReplicaKeepDurationSeconds *int64                          `json:"StandByReplicaKeepDurationSeconds,omitempty"`
+	ApplicationName                   *string                         `json:"ApplicationName,omitempty"`
+	ServiceName                       *string                         `json:"ServiceName,omitempty"`
+	ServiceTypeName                   *string                         `json:"ServiceTypeName,omitempty"`
+	InitializationData                *[]int32                        `json:"InitializationData,omitempty"`
+	PartitionDescription              BasicPartitionSchemeDescription `json:"PartitionDescription,omitempty"`
+	// PlacementConstraints - The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)".
+	PlacementConstraints     *string                                   `json:"PlacementConstraints,omitempty"`
+	CorrelationScheme        *[]ServiceCorrelationDescription          `json:"CorrelationScheme,omitempty"`
+	ServiceLoadMetrics       *[]ServiceLoadMetricDescription           `json:"ServiceLoadMetrics,omitempty"`
+	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"ServicePlacementPolicies,omitempty"`
+	// DefaultMoveCost - Possible values include: 'Zero', 'Low', 'Medium', 'High'
+	DefaultMoveCost DefaultMoveCost `json:"DefaultMoveCost,omitempty"`
+	// IsDefaultMoveCostSpecified - Indicates if the DefaultMoveCost property is specified.
+	IsDefaultMoveCostSpecified *bool `json:"IsDefaultMoveCostSpecified,omitempty"`
+	// ServicePackageActivationMode - Possible values include: 'ServicePackageActivationMode1SharedProcess', 'ServicePackageActivationMode1ExclusiveProcess'
+	ServicePackageActivationMode ServicePackageActivationMode1 `json:"ServicePackageActivationMode,omitempty"`
+	// ServiceDNSName - The DNS name of the service. It requires the DNS system service to be enabled in Service Fabric cluster.
+	ServiceDNSName *string `json:"ServiceDnsName,omitempty"`
+	// ServiceKind - Possible values include: 'ServiceKindBasicServiceDescriptionServiceKindServiceDescription', 'ServiceKindBasicServiceDescriptionServiceKindStateful', 'ServiceKindBasicServiceDescriptionServiceKindStateless'
+	ServiceKind ServiceKindBasicServiceDescription `json:"ServiceKind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatefulServiceDescription.
 func (ssd StatefulServiceDescription) MarshalJSON() ([]byte, error) {
 	ssd.ServiceKind = ServiceKindBasicServiceDescriptionServiceKindStateful
-	type Alias StatefulServiceDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssd),
-	})
+	objectMap := make(map[string]interface{})
+	if ssd.TargetReplicaSetSize != nil {
+		objectMap["TargetReplicaSetSize"] = ssd.TargetReplicaSetSize
+	}
+	if ssd.MinReplicaSetSize != nil {
+		objectMap["MinReplicaSetSize"] = ssd.MinReplicaSetSize
+	}
+	if ssd.HasPersistedState != nil {
+		objectMap["HasPersistedState"] = ssd.HasPersistedState
+	}
+	if ssd.Flags != nil {
+		objectMap["Flags"] = ssd.Flags
+	}
+	if ssd.ReplicaRestartWaitDurationSeconds != nil {
+		objectMap["ReplicaRestartWaitDurationSeconds"] = ssd.ReplicaRestartWaitDurationSeconds
+	}
+	if ssd.QuorumLossWaitDurationSeconds != nil {
+		objectMap["QuorumLossWaitDurationSeconds"] = ssd.QuorumLossWaitDurationSeconds
+	}
+	if ssd.StandByReplicaKeepDurationSeconds != nil {
+		objectMap["StandByReplicaKeepDurationSeconds"] = ssd.StandByReplicaKeepDurationSeconds
+	}
+	if ssd.ApplicationName != nil {
+		objectMap["ApplicationName"] = ssd.ApplicationName
+	}
+	if ssd.ServiceName != nil {
+		objectMap["ServiceName"] = ssd.ServiceName
+	}
+	if ssd.ServiceTypeName != nil {
+		objectMap["ServiceTypeName"] = ssd.ServiceTypeName
+	}
+	if ssd.InitializationData != nil {
+		objectMap["InitializationData"] = ssd.InitializationData
+	}
+	objectMap["PartitionDescription"] = ssd.PartitionDescription
+	if ssd.PlacementConstraints != nil {
+		objectMap["PlacementConstraints"] = ssd.PlacementConstraints
+	}
+	if ssd.CorrelationScheme != nil {
+		objectMap["CorrelationScheme"] = ssd.CorrelationScheme
+	}
+	if ssd.ServiceLoadMetrics != nil {
+		objectMap["ServiceLoadMetrics"] = ssd.ServiceLoadMetrics
+	}
+	if ssd.ServicePlacementPolicies != nil {
+		objectMap["ServicePlacementPolicies"] = ssd.ServicePlacementPolicies
+	}
+	objectMap["DefaultMoveCost"] = ssd.DefaultMoveCost
+	if ssd.IsDefaultMoveCostSpecified != nil {
+		objectMap["IsDefaultMoveCostSpecified"] = ssd.IsDefaultMoveCostSpecified
+	}
+	objectMap["ServicePackageActivationMode"] = ssd.ServicePackageActivationMode
+	if ssd.ServiceDNSName != nil {
+		objectMap["ServiceDnsName"] = ssd.ServiceDNSName
+	}
+	objectMap["ServiceKind"] = ssd.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceDescription is the BasicServiceDescription implementation for StatefulServiceDescription.
@@ -12788,214 +13256,196 @@ func (ssd *StatefulServiceDescription) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["TargetReplicaSetSize"]
-	if v != nil {
-		var targetReplicaSetSize int32
-		err = json.Unmarshal(*m["TargetReplicaSetSize"], &targetReplicaSetSize)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "TargetReplicaSetSize":
+			if v != nil {
+				var targetReplicaSetSize int32
+				err = json.Unmarshal(*v, &targetReplicaSetSize)
+				if err != nil {
+					return err
+				}
+				ssd.TargetReplicaSetSize = &targetReplicaSetSize
+			}
+		case "MinReplicaSetSize":
+			if v != nil {
+				var minReplicaSetSize int32
+				err = json.Unmarshal(*v, &minReplicaSetSize)
+				if err != nil {
+					return err
+				}
+				ssd.MinReplicaSetSize = &minReplicaSetSize
+			}
+		case "HasPersistedState":
+			if v != nil {
+				var hasPersistedState bool
+				err = json.Unmarshal(*v, &hasPersistedState)
+				if err != nil {
+					return err
+				}
+				ssd.HasPersistedState = &hasPersistedState
+			}
+		case "Flags":
+			if v != nil {
+				var flags int32
+				err = json.Unmarshal(*v, &flags)
+				if err != nil {
+					return err
+				}
+				ssd.Flags = &flags
+			}
+		case "ReplicaRestartWaitDurationSeconds":
+			if v != nil {
+				var replicaRestartWaitDurationSeconds int64
+				err = json.Unmarshal(*v, &replicaRestartWaitDurationSeconds)
+				if err != nil {
+					return err
+				}
+				ssd.ReplicaRestartWaitDurationSeconds = &replicaRestartWaitDurationSeconds
+			}
+		case "QuorumLossWaitDurationSeconds":
+			if v != nil {
+				var quorumLossWaitDurationSeconds int64
+				err = json.Unmarshal(*v, &quorumLossWaitDurationSeconds)
+				if err != nil {
+					return err
+				}
+				ssd.QuorumLossWaitDurationSeconds = &quorumLossWaitDurationSeconds
+			}
+		case "StandByReplicaKeepDurationSeconds":
+			if v != nil {
+				var standByReplicaKeepDurationSeconds int64
+				err = json.Unmarshal(*v, &standByReplicaKeepDurationSeconds)
+				if err != nil {
+					return err
+				}
+				ssd.StandByReplicaKeepDurationSeconds = &standByReplicaKeepDurationSeconds
+			}
+		case "ApplicationName":
+			if v != nil {
+				var applicationName string
+				err = json.Unmarshal(*v, &applicationName)
+				if err != nil {
+					return err
+				}
+				ssd.ApplicationName = &applicationName
+			}
+		case "ServiceName":
+			if v != nil {
+				var serviceName string
+				err = json.Unmarshal(*v, &serviceName)
+				if err != nil {
+					return err
+				}
+				ssd.ServiceName = &serviceName
+			}
+		case "ServiceTypeName":
+			if v != nil {
+				var serviceTypeName string
+				err = json.Unmarshal(*v, &serviceTypeName)
+				if err != nil {
+					return err
+				}
+				ssd.ServiceTypeName = &serviceTypeName
+			}
+		case "InitializationData":
+			if v != nil {
+				var initializationData []int32
+				err = json.Unmarshal(*v, &initializationData)
+				if err != nil {
+					return err
+				}
+				ssd.InitializationData = &initializationData
+			}
+		case "PartitionDescription":
+			if v != nil {
+				partitionDescription, err := unmarshalBasicPartitionSchemeDescription(*v)
+				if err != nil {
+					return err
+				}
+				ssd.PartitionDescription = partitionDescription
+			}
+		case "PlacementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				ssd.PlacementConstraints = &placementConstraints
+			}
+		case "CorrelationScheme":
+			if v != nil {
+				var correlationScheme []ServiceCorrelationDescription
+				err = json.Unmarshal(*v, &correlationScheme)
+				if err != nil {
+					return err
+				}
+				ssd.CorrelationScheme = &correlationScheme
+			}
+		case "ServiceLoadMetrics":
+			if v != nil {
+				var serviceLoadMetrics []ServiceLoadMetricDescription
+				err = json.Unmarshal(*v, &serviceLoadMetrics)
+				if err != nil {
+					return err
+				}
+				ssd.ServiceLoadMetrics = &serviceLoadMetrics
+			}
+		case "ServicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				ssd.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "DefaultMoveCost":
+			if v != nil {
+				var defaultMoveCost DefaultMoveCost
+				err = json.Unmarshal(*v, &defaultMoveCost)
+				if err != nil {
+					return err
+				}
+				ssd.DefaultMoveCost = defaultMoveCost
+			}
+		case "IsDefaultMoveCostSpecified":
+			if v != nil {
+				var isDefaultMoveCostSpecified bool
+				err = json.Unmarshal(*v, &isDefaultMoveCostSpecified)
+				if err != nil {
+					return err
+				}
+				ssd.IsDefaultMoveCostSpecified = &isDefaultMoveCostSpecified
+			}
+		case "ServicePackageActivationMode":
+			if v != nil {
+				var servicePackageActivationMode ServicePackageActivationMode1
+				err = json.Unmarshal(*v, &servicePackageActivationMode)
+				if err != nil {
+					return err
+				}
+				ssd.ServicePackageActivationMode = servicePackageActivationMode
+			}
+		case "ServiceDnsName":
+			if v != nil {
+				var serviceDNSName string
+				err = json.Unmarshal(*v, &serviceDNSName)
+				if err != nil {
+					return err
+				}
+				ssd.ServiceDNSName = &serviceDNSName
+			}
+		case "ServiceKind":
+			if v != nil {
+				var serviceKind ServiceKindBasicServiceDescription
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				ssd.ServiceKind = serviceKind
+			}
 		}
-		ssd.TargetReplicaSetSize = &targetReplicaSetSize
-	}
-
-	v = m["MinReplicaSetSize"]
-	if v != nil {
-		var minReplicaSetSize int32
-		err = json.Unmarshal(*m["MinReplicaSetSize"], &minReplicaSetSize)
-		if err != nil {
-			return err
-		}
-		ssd.MinReplicaSetSize = &minReplicaSetSize
-	}
-
-	v = m["HasPersistedState"]
-	if v != nil {
-		var hasPersistedState bool
-		err = json.Unmarshal(*m["HasPersistedState"], &hasPersistedState)
-		if err != nil {
-			return err
-		}
-		ssd.HasPersistedState = &hasPersistedState
-	}
-
-	v = m["Flags"]
-	if v != nil {
-		var flags int32
-		err = json.Unmarshal(*m["Flags"], &flags)
-		if err != nil {
-			return err
-		}
-		ssd.Flags = &flags
-	}
-
-	v = m["ReplicaRestartWaitDurationSeconds"]
-	if v != nil {
-		var replicaRestartWaitDurationSeconds int64
-		err = json.Unmarshal(*m["ReplicaRestartWaitDurationSeconds"], &replicaRestartWaitDurationSeconds)
-		if err != nil {
-			return err
-		}
-		ssd.ReplicaRestartWaitDurationSeconds = &replicaRestartWaitDurationSeconds
-	}
-
-	v = m["QuorumLossWaitDurationSeconds"]
-	if v != nil {
-		var quorumLossWaitDurationSeconds int64
-		err = json.Unmarshal(*m["QuorumLossWaitDurationSeconds"], &quorumLossWaitDurationSeconds)
-		if err != nil {
-			return err
-		}
-		ssd.QuorumLossWaitDurationSeconds = &quorumLossWaitDurationSeconds
-	}
-
-	v = m["StandByReplicaKeepDurationSeconds"]
-	if v != nil {
-		var standByReplicaKeepDurationSeconds int64
-		err = json.Unmarshal(*m["StandByReplicaKeepDurationSeconds"], &standByReplicaKeepDurationSeconds)
-		if err != nil {
-			return err
-		}
-		ssd.StandByReplicaKeepDurationSeconds = &standByReplicaKeepDurationSeconds
-	}
-
-	v = m["ApplicationName"]
-	if v != nil {
-		var applicationName string
-		err = json.Unmarshal(*m["ApplicationName"], &applicationName)
-		if err != nil {
-			return err
-		}
-		ssd.ApplicationName = &applicationName
-	}
-
-	v = m["ServiceName"]
-	if v != nil {
-		var serviceName string
-		err = json.Unmarshal(*m["ServiceName"], &serviceName)
-		if err != nil {
-			return err
-		}
-		ssd.ServiceName = &serviceName
-	}
-
-	v = m["ServiceTypeName"]
-	if v != nil {
-		var serviceTypeName string
-		err = json.Unmarshal(*m["ServiceTypeName"], &serviceTypeName)
-		if err != nil {
-			return err
-		}
-		ssd.ServiceTypeName = &serviceTypeName
-	}
-
-	v = m["InitializationData"]
-	if v != nil {
-		var initializationData []int32
-		err = json.Unmarshal(*m["InitializationData"], &initializationData)
-		if err != nil {
-			return err
-		}
-		ssd.InitializationData = &initializationData
-	}
-
-	v = m["PartitionDescription"]
-	if v != nil {
-		partitionDescription, err := unmarshalBasicPartitionSchemeDescription(*m["PartitionDescription"])
-		if err != nil {
-			return err
-		}
-		ssd.PartitionDescription = partitionDescription
-	}
-
-	v = m["PlacementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["PlacementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		ssd.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["CorrelationScheme"]
-	if v != nil {
-		var correlationScheme []ServiceCorrelationDescription
-		err = json.Unmarshal(*m["CorrelationScheme"], &correlationScheme)
-		if err != nil {
-			return err
-		}
-		ssd.CorrelationScheme = &correlationScheme
-	}
-
-	v = m["ServiceLoadMetrics"]
-	if v != nil {
-		var serviceLoadMetrics []ServiceLoadMetricDescription
-		err = json.Unmarshal(*m["ServiceLoadMetrics"], &serviceLoadMetrics)
-		if err != nil {
-			return err
-		}
-		ssd.ServiceLoadMetrics = &serviceLoadMetrics
-	}
-
-	v = m["ServicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["ServicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		ssd.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["DefaultMoveCost"]
-	if v != nil {
-		var defaultMoveCost DefaultMoveCost
-		err = json.Unmarshal(*m["DefaultMoveCost"], &defaultMoveCost)
-		if err != nil {
-			return err
-		}
-		ssd.DefaultMoveCost = defaultMoveCost
-	}
-
-	v = m["IsDefaultMoveCostSpecified"]
-	if v != nil {
-		var isDefaultMoveCostSpecified bool
-		err = json.Unmarshal(*m["IsDefaultMoveCostSpecified"], &isDefaultMoveCostSpecified)
-		if err != nil {
-			return err
-		}
-		ssd.IsDefaultMoveCostSpecified = &isDefaultMoveCostSpecified
-	}
-
-	v = m["ServicePackageActivationMode"]
-	if v != nil {
-		var servicePackageActivationMode ServicePackageActivationMode
-		err = json.Unmarshal(*m["ServicePackageActivationMode"], &servicePackageActivationMode)
-		if err != nil {
-			return err
-		}
-		ssd.ServicePackageActivationMode = servicePackageActivationMode
-	}
-
-	v = m["ServiceDnsName"]
-	if v != nil {
-		var serviceDNSName string
-		err = json.Unmarshal(*m["ServiceDnsName"], &serviceDNSName)
-		if err != nil {
-			return err
-		}
-		ssd.ServiceDNSName = &serviceDNSName
-	}
-
-	v = m["ServiceKind"]
-	if v != nil {
-		var serviceKind ServiceKindBasicServiceDescription
-		err = json.Unmarshal(*m["ServiceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		ssd.ServiceKind = serviceKind
 	}
 
 	return nil
@@ -13003,32 +13453,49 @@ func (ssd *StatefulServiceDescription) UnmarshalJSON(body []byte) error {
 
 // StatefulServiceInfo information about a stateful Service Fabric service.
 type StatefulServiceInfo struct {
-	ID       *string `json:"Id,omitempty"`
-	Name     *string `json:"Name,omitempty"`
-	TypeName *string `json:"TypeName,omitempty"`
+	// HasPersistedState - Whether the service has persisted state.
+	HasPersistedState *bool   `json:"HasPersistedState,omitempty"`
+	ID                *string `json:"Id,omitempty"`
+	Name              *string `json:"Name,omitempty"`
+	TypeName          *string `json:"TypeName,omitempty"`
 	// ManifestVersion - The version of the service manifest.
 	ManifestVersion *string `json:"ManifestVersion,omitempty"`
 	// HealthState - Possible values include: 'HealthState7Invalid', 'HealthState7Ok', 'HealthState7Warning', 'HealthState7Error', 'HealthState7Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
+	HealthState HealthState7 `json:"HealthState,omitempty"`
 	// ServiceStatus - Possible values include: 'ServiceStatusUnknown', 'ServiceStatusActive', 'ServiceStatusUpgrading', 'ServiceStatusDeleting', 'ServiceStatusCreating', 'ServiceStatusFailed'
 	ServiceStatus ServiceStatus `json:"ServiceStatus,omitempty"`
 	// IsServiceGroup - Whether the service is in a service group.
 	IsServiceGroup *bool `json:"IsServiceGroup,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindBasicServiceInfoServiceKindServiceInfo', 'ServiceKindBasicServiceInfoServiceKindStateful', 'ServiceKindBasicServiceInfoServiceKindStateless'
 	ServiceKind ServiceKindBasicServiceInfo `json:"ServiceKind,omitempty"`
-	// HasPersistedState - Whether the service has persisted state.
-	HasPersistedState *bool `json:"HasPersistedState,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatefulServiceInfo.
 func (ssi StatefulServiceInfo) MarshalJSON() ([]byte, error) {
 	ssi.ServiceKind = ServiceKindBasicServiceInfoServiceKindStateful
-	type Alias StatefulServiceInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssi),
-	})
+	objectMap := make(map[string]interface{})
+	if ssi.HasPersistedState != nil {
+		objectMap["HasPersistedState"] = ssi.HasPersistedState
+	}
+	if ssi.ID != nil {
+		objectMap["Id"] = ssi.ID
+	}
+	if ssi.Name != nil {
+		objectMap["Name"] = ssi.Name
+	}
+	if ssi.TypeName != nil {
+		objectMap["TypeName"] = ssi.TypeName
+	}
+	if ssi.ManifestVersion != nil {
+		objectMap["ManifestVersion"] = ssi.ManifestVersion
+	}
+	objectMap["HealthState"] = ssi.HealthState
+	objectMap["ServiceStatus"] = ssi.ServiceStatus
+	if ssi.IsServiceGroup != nil {
+		objectMap["IsServiceGroup"] = ssi.IsServiceGroup
+	}
+	objectMap["ServiceKind"] = ssi.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceInfo is the BasicServiceInfo implementation for StatefulServiceInfo.
@@ -13053,13 +13520,6 @@ func (ssi StatefulServiceInfo) AsBasicServiceInfo() (BasicServiceInfo, bool) {
 
 // StatefulServicePartitionInfo information about a partition of a stateful Service Fabric service..
 type StatefulServicePartitionInfo struct {
-	// HealthState - Possible values include: 'HealthState5Invalid', 'HealthState5Ok', 'HealthState5Warning', 'HealthState5Error', 'HealthState5Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
-	// PartitionStatus - Possible values include: 'PartitionStatusInvalid', 'PartitionStatusReady', 'PartitionStatusNotReady', 'PartitionStatusInQuorumLoss', 'PartitionStatusReconfiguring', 'PartitionStatusDeleting'
-	PartitionStatus      PartitionStatus           `json:"PartitionStatus,omitempty"`
-	PartitionInformation BasicPartitionInformation `json:"PartitionInformation,omitempty"`
-	// ServiceKind - Possible values include: 'ServiceKindBasicServicePartitionInfoServiceKindServicePartitionInfo', 'ServiceKindBasicServicePartitionInfoServiceKindStateful', 'ServiceKindBasicServicePartitionInfoServiceKindStateless'
-	ServiceKind ServiceKindBasicServicePartitionInfo `json:"ServiceKind,omitempty"`
 	// TargetReplicaSetSize - The target replica set size as a number.
 	TargetReplicaSetSize *int64 `json:"TargetReplicaSetSize,omitempty"`
 	// MinReplicaSetSize - The minimum replica set size as a number.
@@ -13067,17 +13527,36 @@ type StatefulServicePartitionInfo struct {
 	// LastQuorumLossDuration - The duration for which this partition was in quorum loss. If the partition is currently in quorum loss, it returns the duration since it has been in that state. This field is using ISO8601 format for specifying the duration.
 	LastQuorumLossDuration    *string `json:"LastQuorumLossDuration,omitempty"`
 	CurrentConfigurationEpoch *Epoch  `json:"CurrentConfigurationEpoch,omitempty"`
+	// HealthState - Possible values include: 'HealthState5Invalid', 'HealthState5Ok', 'HealthState5Warning', 'HealthState5Error', 'HealthState5Unknown'
+	HealthState HealthState5 `json:"HealthState,omitempty"`
+	// PartitionStatus - Possible values include: 'PartitionStatusInvalid', 'PartitionStatusReady', 'PartitionStatusNotReady', 'PartitionStatusInQuorumLoss', 'PartitionStatusReconfiguring', 'PartitionStatusDeleting'
+	PartitionStatus      PartitionStatus           `json:"PartitionStatus,omitempty"`
+	PartitionInformation BasicPartitionInformation `json:"PartitionInformation,omitempty"`
+	// ServiceKind - Possible values include: 'ServiceKindBasicServicePartitionInfoServiceKindServicePartitionInfo', 'ServiceKindBasicServicePartitionInfoServiceKindStateful', 'ServiceKindBasicServicePartitionInfoServiceKindStateless'
+	ServiceKind ServiceKindBasicServicePartitionInfo `json:"ServiceKind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatefulServicePartitionInfo.
 func (sspi StatefulServicePartitionInfo) MarshalJSON() ([]byte, error) {
 	sspi.ServiceKind = ServiceKindBasicServicePartitionInfoServiceKindStateful
-	type Alias StatefulServicePartitionInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sspi),
-	})
+	objectMap := make(map[string]interface{})
+	if sspi.TargetReplicaSetSize != nil {
+		objectMap["TargetReplicaSetSize"] = sspi.TargetReplicaSetSize
+	}
+	if sspi.MinReplicaSetSize != nil {
+		objectMap["MinReplicaSetSize"] = sspi.MinReplicaSetSize
+	}
+	if sspi.LastQuorumLossDuration != nil {
+		objectMap["LastQuorumLossDuration"] = sspi.LastQuorumLossDuration
+	}
+	if sspi.CurrentConfigurationEpoch != nil {
+		objectMap["CurrentConfigurationEpoch"] = sspi.CurrentConfigurationEpoch
+	}
+	objectMap["HealthState"] = sspi.HealthState
+	objectMap["PartitionStatus"] = sspi.PartitionStatus
+	objectMap["PartitionInformation"] = sspi.PartitionInformation
+	objectMap["ServiceKind"] = sspi.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServicePartitionInfo is the BasicServicePartitionInfo implementation for StatefulServicePartitionInfo.
@@ -13107,85 +13586,80 @@ func (sspi *StatefulServicePartitionInfo) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["TargetReplicaSetSize"]
-	if v != nil {
-		var targetReplicaSetSize int64
-		err = json.Unmarshal(*m["TargetReplicaSetSize"], &targetReplicaSetSize)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "TargetReplicaSetSize":
+			if v != nil {
+				var targetReplicaSetSize int64
+				err = json.Unmarshal(*v, &targetReplicaSetSize)
+				if err != nil {
+					return err
+				}
+				sspi.TargetReplicaSetSize = &targetReplicaSetSize
+			}
+		case "MinReplicaSetSize":
+			if v != nil {
+				var minReplicaSetSize int64
+				err = json.Unmarshal(*v, &minReplicaSetSize)
+				if err != nil {
+					return err
+				}
+				sspi.MinReplicaSetSize = &minReplicaSetSize
+			}
+		case "LastQuorumLossDuration":
+			if v != nil {
+				var lastQuorumLossDuration string
+				err = json.Unmarshal(*v, &lastQuorumLossDuration)
+				if err != nil {
+					return err
+				}
+				sspi.LastQuorumLossDuration = &lastQuorumLossDuration
+			}
+		case "CurrentConfigurationEpoch":
+			if v != nil {
+				var currentConfigurationEpoch Epoch
+				err = json.Unmarshal(*v, &currentConfigurationEpoch)
+				if err != nil {
+					return err
+				}
+				sspi.CurrentConfigurationEpoch = &currentConfigurationEpoch
+			}
+		case "HealthState":
+			if v != nil {
+				var healthState HealthState5
+				err = json.Unmarshal(*v, &healthState)
+				if err != nil {
+					return err
+				}
+				sspi.HealthState = healthState
+			}
+		case "PartitionStatus":
+			if v != nil {
+				var partitionStatus PartitionStatus
+				err = json.Unmarshal(*v, &partitionStatus)
+				if err != nil {
+					return err
+				}
+				sspi.PartitionStatus = partitionStatus
+			}
+		case "PartitionInformation":
+			if v != nil {
+				partitionInformation, err := unmarshalBasicPartitionInformation(*v)
+				if err != nil {
+					return err
+				}
+				sspi.PartitionInformation = partitionInformation
+			}
+		case "ServiceKind":
+			if v != nil {
+				var serviceKind ServiceKindBasicServicePartitionInfo
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				sspi.ServiceKind = serviceKind
+			}
 		}
-		sspi.TargetReplicaSetSize = &targetReplicaSetSize
-	}
-
-	v = m["MinReplicaSetSize"]
-	if v != nil {
-		var minReplicaSetSize int64
-		err = json.Unmarshal(*m["MinReplicaSetSize"], &minReplicaSetSize)
-		if err != nil {
-			return err
-		}
-		sspi.MinReplicaSetSize = &minReplicaSetSize
-	}
-
-	v = m["LastQuorumLossDuration"]
-	if v != nil {
-		var lastQuorumLossDuration string
-		err = json.Unmarshal(*m["LastQuorumLossDuration"], &lastQuorumLossDuration)
-		if err != nil {
-			return err
-		}
-		sspi.LastQuorumLossDuration = &lastQuorumLossDuration
-	}
-
-	v = m["CurrentConfigurationEpoch"]
-	if v != nil {
-		var currentConfigurationEpoch Epoch
-		err = json.Unmarshal(*m["CurrentConfigurationEpoch"], &currentConfigurationEpoch)
-		if err != nil {
-			return err
-		}
-		sspi.CurrentConfigurationEpoch = &currentConfigurationEpoch
-	}
-
-	v = m["HealthState"]
-	if v != nil {
-		var healthState HealthState
-		err = json.Unmarshal(*m["HealthState"], &healthState)
-		if err != nil {
-			return err
-		}
-		sspi.HealthState = healthState
-	}
-
-	v = m["PartitionStatus"]
-	if v != nil {
-		var partitionStatus PartitionStatus
-		err = json.Unmarshal(*m["PartitionStatus"], &partitionStatus)
-		if err != nil {
-			return err
-		}
-		sspi.PartitionStatus = partitionStatus
-	}
-
-	v = m["PartitionInformation"]
-	if v != nil {
-		partitionInformation, err := unmarshalBasicPartitionInformation(*m["PartitionInformation"])
-		if err != nil {
-			return err
-		}
-		sspi.PartitionInformation = partitionInformation
-	}
-
-	v = m["ServiceKind"]
-	if v != nil {
-		var serviceKind ServiceKindBasicServicePartitionInfo
-		err = json.Unmarshal(*m["ServiceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		sspi.ServiceKind = serviceKind
 	}
 
 	return nil
@@ -13194,27 +13668,40 @@ func (sspi *StatefulServicePartitionInfo) UnmarshalJSON(body []byte) error {
 // StatefulServiceReplicaHealth represents the health of the stateful service replica.
 // Contains the replica aggregated health state, the health events and the unhealthy evaluations.
 type StatefulServiceReplicaHealth struct {
+	ReplicaID   *string    `json:"ReplicaId,omitempty"`
+	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
+	// ServiceKind - Possible values include: 'ServiceKindBasicReplicaHealthServiceKindReplicaHealth', 'ServiceKindBasicReplicaHealthServiceKindStateful', 'ServiceKindBasicReplicaHealthServiceKindStateless'
+	ServiceKind ServiceKindBasicReplicaHealth `json:"ServiceKind,omitempty"`
 	// AggregatedHealthState - Possible values include: 'AggregatedHealthState1Invalid', 'AggregatedHealthState1Ok', 'AggregatedHealthState1Warning', 'AggregatedHealthState1Error', 'AggregatedHealthState1Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
+	AggregatedHealthState AggregatedHealthState1 `json:"AggregatedHealthState,omitempty"`
 	// HealthEvents - The list of health events reported on the entity.
 	HealthEvents         *[]HealthEvent             `json:"HealthEvents,omitempty"`
 	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	HealthStatistics     *HealthStatistics          `json:"HealthStatistics,omitempty"`
-	PartitionID          *uuid.UUID                 `json:"PartitionId,omitempty"`
-	// ServiceKind - Possible values include: 'ServiceKindBasicReplicaHealthServiceKindReplicaHealth', 'ServiceKindBasicReplicaHealthServiceKindStateful', 'ServiceKindBasicReplicaHealthServiceKindStateless'
-	ServiceKind ServiceKindBasicReplicaHealth `json:"ServiceKind,omitempty"`
-	ReplicaID   *string                       `json:"ReplicaId,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatefulServiceReplicaHealth.
 func (ssrh StatefulServiceReplicaHealth) MarshalJSON() ([]byte, error) {
 	ssrh.ServiceKind = ServiceKindBasicReplicaHealthServiceKindStateful
-	type Alias StatefulServiceReplicaHealth
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssrh),
-	})
+	objectMap := make(map[string]interface{})
+	if ssrh.ReplicaID != nil {
+		objectMap["ReplicaId"] = ssrh.ReplicaID
+	}
+	if ssrh.PartitionID != nil {
+		objectMap["PartitionId"] = ssrh.PartitionID
+	}
+	objectMap["ServiceKind"] = ssrh.ServiceKind
+	objectMap["AggregatedHealthState"] = ssrh.AggregatedHealthState
+	if ssrh.HealthEvents != nil {
+		objectMap["HealthEvents"] = ssrh.HealthEvents
+	}
+	if ssrh.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = ssrh.UnhealthyEvaluations
+	}
+	if ssrh.HealthStatistics != nil {
+		objectMap["HealthStatistics"] = ssrh.HealthStatistics
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealth is the BasicEntityHealth implementation for StatefulServiceReplicaHealth.
@@ -13272,26 +13759,30 @@ func (ssrh StatefulServiceReplicaHealth) AsStatelessServiceInstanceHealth() (*St
 	return nil, false
 }
 
-// StatefulServiceReplicaHealthState represents the health state of the stateful service replica, which contains the
-// replica id and the aggregated health state.
+// StatefulServiceReplicaHealthState represents the health state of the stateful service replica, which contains
+// the replica id and the aggregated health state.
 type StatefulServiceReplicaHealthState struct {
-	// AggregatedHealthState - Possible values include: 'AggregatedHealthState2Invalid', 'AggregatedHealthState2Ok', 'AggregatedHealthState2Warning', 'AggregatedHealthState2Error', 'AggregatedHealthState2Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	PartitionID           *uuid.UUID            `json:"PartitionId,omitempty"`
+	ReplicaID   *string    `json:"ReplicaId,omitempty"`
+	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindBasicReplicaHealthStateServiceKindReplicaHealthState', 'ServiceKindBasicReplicaHealthStateServiceKindStateful', 'ServiceKindBasicReplicaHealthStateServiceKindStateless'
 	ServiceKind ServiceKindBasicReplicaHealthState `json:"ServiceKind,omitempty"`
-	ReplicaID   *string                            `json:"ReplicaId,omitempty"`
+	// AggregatedHealthState - Possible values include: 'AggregatedHealthState2Invalid', 'AggregatedHealthState2Ok', 'AggregatedHealthState2Warning', 'AggregatedHealthState2Error', 'AggregatedHealthState2Unknown'
+	AggregatedHealthState AggregatedHealthState2 `json:"AggregatedHealthState,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatefulServiceReplicaHealthState.
 func (ssrhs StatefulServiceReplicaHealthState) MarshalJSON() ([]byte, error) {
 	ssrhs.ServiceKind = ServiceKindBasicReplicaHealthStateServiceKindStateful
-	type Alias StatefulServiceReplicaHealthState
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssrhs),
-	})
+	objectMap := make(map[string]interface{})
+	if ssrhs.ReplicaID != nil {
+		objectMap["ReplicaId"] = ssrhs.ReplicaID
+	}
+	if ssrhs.PartitionID != nil {
+		objectMap["PartitionId"] = ssrhs.PartitionID
+	}
+	objectMap["ServiceKind"] = ssrhs.ServiceKind
+	objectMap["AggregatedHealthState"] = ssrhs.AggregatedHealthState
+	return json.Marshal(objectMap)
 }
 
 // AsServiceHealthState is the BasicEntityHealthState implementation for StatefulServiceReplicaHealthState.
@@ -13347,31 +13838,43 @@ func (ssrhs StatefulServiceReplicaHealthState) AsStatelessServiceInstanceHealthS
 // StatefulServiceReplicaInfo represents a stateful service replica. This includes information about the identity,
 // role, status, health, node name, uptime, and other details about the replica.
 type StatefulServiceReplicaInfo struct {
+	// ReplicaRole - Possible values include: 'ReplicaRole1Unknown', 'ReplicaRole1None', 'ReplicaRole1Primary', 'ReplicaRole1IdleSecondary', 'ReplicaRole1ActiveSecondary'
+	ReplicaRole ReplicaRole1 `json:"ReplicaRole,omitempty"`
+	ReplicaID   *string      `json:"ReplicaId,omitempty"`
 	// ReplicaStatus - Possible values include: 'ReplicaStatus1Invalid', 'ReplicaStatus1InBuild', 'ReplicaStatus1Standby', 'ReplicaStatus1Ready', 'ReplicaStatus1Down', 'ReplicaStatus1Dropped'
-	ReplicaStatus ReplicaStatus `json:"ReplicaStatus,omitempty"`
+	ReplicaStatus ReplicaStatus1 `json:"ReplicaStatus,omitempty"`
 	// HealthState - Possible values include: 'HealthState6Invalid', 'HealthState6Ok', 'HealthState6Warning', 'HealthState6Error', 'HealthState6Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
-	NodeName    *string     `json:"NodeName,omitempty"`
+	HealthState HealthState6 `json:"HealthState,omitempty"`
+	NodeName    *string      `json:"NodeName,omitempty"`
 	// Address - The address the replica is listening on.
 	Address *string `json:"Address,omitempty"`
 	// LastInBuildDurationInSeconds - The last in build duration of the replica in seconds.
 	LastInBuildDurationInSeconds *string `json:"LastInBuildDurationInSeconds,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindBasicReplicaInfoServiceKindReplicaInfo', 'ServiceKindBasicReplicaInfoServiceKindStateful', 'ServiceKindBasicReplicaInfoServiceKindStateless'
 	ServiceKind ServiceKindBasicReplicaInfo `json:"ServiceKind,omitempty"`
-	// ReplicaRole - Possible values include: 'ReplicaRole1Unknown', 'ReplicaRole1None', 'ReplicaRole1Primary', 'ReplicaRole1IdleSecondary', 'ReplicaRole1ActiveSecondary'
-	ReplicaRole ReplicaRole `json:"ReplicaRole,omitempty"`
-	ReplicaID   *string     `json:"ReplicaId,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatefulServiceReplicaInfo.
 func (ssri StatefulServiceReplicaInfo) MarshalJSON() ([]byte, error) {
 	ssri.ServiceKind = ServiceKindBasicReplicaInfoServiceKindStateful
-	type Alias StatefulServiceReplicaInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssri),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["ReplicaRole"] = ssri.ReplicaRole
+	if ssri.ReplicaID != nil {
+		objectMap["ReplicaId"] = ssri.ReplicaID
+	}
+	objectMap["ReplicaStatus"] = ssri.ReplicaStatus
+	objectMap["HealthState"] = ssri.HealthState
+	if ssri.NodeName != nil {
+		objectMap["NodeName"] = ssri.NodeName
+	}
+	if ssri.Address != nil {
+		objectMap["Address"] = ssri.Address
+	}
+	if ssri.LastInBuildDurationInSeconds != nil {
+		objectMap["LastInBuildDurationInSeconds"] = ssri.LastInBuildDurationInSeconds
+	}
+	objectMap["ServiceKind"] = ssri.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceReplicaInfo is the BasicReplicaInfo implementation for StatefulServiceReplicaInfo.
@@ -13394,9 +13897,11 @@ func (ssri StatefulServiceReplicaInfo) AsBasicReplicaInfo() (BasicReplicaInfo, b
 	return &ssri, true
 }
 
-// StatefulServiceTypeDescription describes a stateful service type defined in the service manifest of a provisioned
-// application type.
+// StatefulServiceTypeDescription describes a stateful service type defined in the service manifest of a
+// provisioned application type.
 type StatefulServiceTypeDescription struct {
+	// HasPersistedState - A flag indicating whether this is a persistent service which stores states on the local disk. If it is then the value of this property is true, if not it is false.
+	HasPersistedState *bool `json:"HasPersistedState,omitempty"`
 	// IsStateful - Indicates whether the service type is a stateful service type or a stateless service type. This property is true if the service type is a stateful service type, false otherwise.
 	IsStateful      *bool   `json:"IsStateful,omitempty"`
 	ServiceTypeName *string `json:"ServiceTypeName,omitempty"`
@@ -13406,19 +13911,32 @@ type StatefulServiceTypeDescription struct {
 	Extensions               *[]ServiceTypeExtensionDescription        `json:"Extensions,omitempty"`
 	// Kind - Possible values include: 'KindServiceTypeDescription', 'KindStateful', 'KindStateless1'
 	Kind KindBasicServiceTypeDescription `json:"Kind,omitempty"`
-	// HasPersistedState - A flag indicating whether this is a persistent service which stores states on the local disk. If it is then the value of this property is true, if not it is false.
-	HasPersistedState *bool `json:"HasPersistedState,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatefulServiceTypeDescription.
 func (sstd StatefulServiceTypeDescription) MarshalJSON() ([]byte, error) {
 	sstd.Kind = KindStateful
-	type Alias StatefulServiceTypeDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sstd),
-	})
+	objectMap := make(map[string]interface{})
+	if sstd.HasPersistedState != nil {
+		objectMap["HasPersistedState"] = sstd.HasPersistedState
+	}
+	if sstd.IsStateful != nil {
+		objectMap["IsStateful"] = sstd.IsStateful
+	}
+	if sstd.ServiceTypeName != nil {
+		objectMap["ServiceTypeName"] = sstd.ServiceTypeName
+	}
+	if sstd.PlacementConstraints != nil {
+		objectMap["PlacementConstraints"] = sstd.PlacementConstraints
+	}
+	if sstd.ServicePlacementPolicies != nil {
+		objectMap["ServicePlacementPolicies"] = sstd.ServicePlacementPolicies
+	}
+	if sstd.Extensions != nil {
+		objectMap["Extensions"] = sstd.Extensions
+	}
+	objectMap["Kind"] = sstd.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceTypeDescription is the BasicServiceTypeDescription implementation for StatefulServiceTypeDescription.
@@ -13448,75 +13966,71 @@ func (sstd *StatefulServiceTypeDescription) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["HasPersistedState"]
-	if v != nil {
-		var hasPersistedState bool
-		err = json.Unmarshal(*m["HasPersistedState"], &hasPersistedState)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "HasPersistedState":
+			if v != nil {
+				var hasPersistedState bool
+				err = json.Unmarshal(*v, &hasPersistedState)
+				if err != nil {
+					return err
+				}
+				sstd.HasPersistedState = &hasPersistedState
+			}
+		case "IsStateful":
+			if v != nil {
+				var isStateful bool
+				err = json.Unmarshal(*v, &isStateful)
+				if err != nil {
+					return err
+				}
+				sstd.IsStateful = &isStateful
+			}
+		case "ServiceTypeName":
+			if v != nil {
+				var serviceTypeName string
+				err = json.Unmarshal(*v, &serviceTypeName)
+				if err != nil {
+					return err
+				}
+				sstd.ServiceTypeName = &serviceTypeName
+			}
+		case "PlacementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				sstd.PlacementConstraints = &placementConstraints
+			}
+		case "ServicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				sstd.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "Extensions":
+			if v != nil {
+				var extensions []ServiceTypeExtensionDescription
+				err = json.Unmarshal(*v, &extensions)
+				if err != nil {
+					return err
+				}
+				sstd.Extensions = &extensions
+			}
+		case "Kind":
+			if v != nil {
+				var kind KindBasicServiceTypeDescription
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				sstd.Kind = kind
+			}
 		}
-		sstd.HasPersistedState = &hasPersistedState
-	}
-
-	v = m["IsStateful"]
-	if v != nil {
-		var isStateful bool
-		err = json.Unmarshal(*m["IsStateful"], &isStateful)
-		if err != nil {
-			return err
-		}
-		sstd.IsStateful = &isStateful
-	}
-
-	v = m["ServiceTypeName"]
-	if v != nil {
-		var serviceTypeName string
-		err = json.Unmarshal(*m["ServiceTypeName"], &serviceTypeName)
-		if err != nil {
-			return err
-		}
-		sstd.ServiceTypeName = &serviceTypeName
-	}
-
-	v = m["PlacementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["PlacementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		sstd.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["ServicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["ServicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		sstd.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["Extensions"]
-	if v != nil {
-		var extensions []ServiceTypeExtensionDescription
-		err = json.Unmarshal(*m["Extensions"], &extensions)
-		if err != nil {
-			return err
-		}
-		sstd.Extensions = &extensions
-	}
-
-	v = m["Kind"]
-	if v != nil {
-		var kind KindBasicServiceTypeDescription
-		err = json.Unmarshal(*m["Kind"], &kind)
-		if err != nil {
-			return err
-		}
-		sstd.Kind = kind
 	}
 
 	return nil
@@ -13524,6 +14038,16 @@ func (sstd *StatefulServiceTypeDescription) UnmarshalJSON(body []byte) error {
 
 // StatefulServiceUpdateDescription describes an update for a stateful service.
 type StatefulServiceUpdateDescription struct {
+	// TargetReplicaSetSize - The target replica set size as a number.
+	TargetReplicaSetSize *int32 `json:"TargetReplicaSetSize,omitempty"`
+	// MinReplicaSetSize - The minimum replica set size as a number.
+	MinReplicaSetSize *int32 `json:"MinReplicaSetSize,omitempty"`
+	// ReplicaRestartWaitDurationSeconds - The duration, in seconds, between when a replica goes down and when a new replica is created.
+	ReplicaRestartWaitDurationSeconds *string `json:"ReplicaRestartWaitDurationSeconds,omitempty"`
+	// QuorumLossWaitDurationSeconds - The maximum duration, in seconds, for which a partition is allowed to be in a state of quorum loss.
+	QuorumLossWaitDurationSeconds *string `json:"QuorumLossWaitDurationSeconds,omitempty"`
+	// StandByReplicaKeepDurationSeconds - The definition on how long StandBy replicas should be maintained before being removed.
+	StandByReplicaKeepDurationSeconds *string `json:"StandByReplicaKeepDurationSeconds,omitempty"`
 	// Flags - Flags indicating whether other properties are set. Each of the associated properties corresponds to a flag, specified below, which, if set, indicate that the property is specified.
 	// This property can be a combination of those flags obtained using bitwise 'OR' operator.
 	// For example, if the provided value is 6 then the flags for ReplicaRestartWaitDuration (2) and QuorumLossWaitDuration (4) are set.
@@ -13545,30 +14069,48 @@ type StatefulServiceUpdateDescription struct {
 	LoadMetrics              *[]ServiceLoadMetricDescription           `json:"LoadMetrics,omitempty"`
 	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"ServicePlacementPolicies,omitempty"`
 	// DefaultMoveCost - Possible values include: 'DefaultMoveCost1Zero', 'DefaultMoveCost1Low', 'DefaultMoveCost1Medium', 'DefaultMoveCost1High'
-	DefaultMoveCost DefaultMoveCost `json:"DefaultMoveCost,omitempty"`
+	DefaultMoveCost DefaultMoveCost1 `json:"DefaultMoveCost,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindBasicServiceUpdateDescriptionServiceKindServiceUpdateDescription', 'ServiceKindBasicServiceUpdateDescriptionServiceKindStateful', 'ServiceKindBasicServiceUpdateDescriptionServiceKindStateless'
 	ServiceKind ServiceKindBasicServiceUpdateDescription `json:"ServiceKind,omitempty"`
-	// TargetReplicaSetSize - The target replica set size as a number.
-	TargetReplicaSetSize *int32 `json:"TargetReplicaSetSize,omitempty"`
-	// MinReplicaSetSize - The minimum replica set size as a number.
-	MinReplicaSetSize *int32 `json:"MinReplicaSetSize,omitempty"`
-	// ReplicaRestartWaitDurationSeconds - The duration, in seconds, between when a replica goes down and when a new replica is created.
-	ReplicaRestartWaitDurationSeconds *string `json:"ReplicaRestartWaitDurationSeconds,omitempty"`
-	// QuorumLossWaitDurationSeconds - The maximum duration, in seconds, for which a partition is allowed to be in a state of quorum loss.
-	QuorumLossWaitDurationSeconds *string `json:"QuorumLossWaitDurationSeconds,omitempty"`
-	// StandByReplicaKeepDurationSeconds - The definition on how long StandBy replicas should be maintained before being removed.
-	StandByReplicaKeepDurationSeconds *string `json:"StandByReplicaKeepDurationSeconds,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatefulServiceUpdateDescription.
 func (ssud StatefulServiceUpdateDescription) MarshalJSON() ([]byte, error) {
 	ssud.ServiceKind = ServiceKindBasicServiceUpdateDescriptionServiceKindStateful
-	type Alias StatefulServiceUpdateDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssud),
-	})
+	objectMap := make(map[string]interface{})
+	if ssud.TargetReplicaSetSize != nil {
+		objectMap["TargetReplicaSetSize"] = ssud.TargetReplicaSetSize
+	}
+	if ssud.MinReplicaSetSize != nil {
+		objectMap["MinReplicaSetSize"] = ssud.MinReplicaSetSize
+	}
+	if ssud.ReplicaRestartWaitDurationSeconds != nil {
+		objectMap["ReplicaRestartWaitDurationSeconds"] = ssud.ReplicaRestartWaitDurationSeconds
+	}
+	if ssud.QuorumLossWaitDurationSeconds != nil {
+		objectMap["QuorumLossWaitDurationSeconds"] = ssud.QuorumLossWaitDurationSeconds
+	}
+	if ssud.StandByReplicaKeepDurationSeconds != nil {
+		objectMap["StandByReplicaKeepDurationSeconds"] = ssud.StandByReplicaKeepDurationSeconds
+	}
+	if ssud.Flags != nil {
+		objectMap["Flags"] = ssud.Flags
+	}
+	if ssud.PlacementConstraints != nil {
+		objectMap["PlacementConstraints"] = ssud.PlacementConstraints
+	}
+	if ssud.CorrelationScheme != nil {
+		objectMap["CorrelationScheme"] = ssud.CorrelationScheme
+	}
+	if ssud.LoadMetrics != nil {
+		objectMap["LoadMetrics"] = ssud.LoadMetrics
+	}
+	if ssud.ServicePlacementPolicies != nil {
+		objectMap["ServicePlacementPolicies"] = ssud.ServicePlacementPolicies
+	}
+	objectMap["DefaultMoveCost"] = ssud.DefaultMoveCost
+	objectMap["ServiceKind"] = ssud.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceUpdateDescription is the BasicServiceUpdateDescription implementation for StatefulServiceUpdateDescription.
@@ -13598,125 +14140,116 @@ func (ssud *StatefulServiceUpdateDescription) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["TargetReplicaSetSize"]
-	if v != nil {
-		var targetReplicaSetSize int32
-		err = json.Unmarshal(*m["TargetReplicaSetSize"], &targetReplicaSetSize)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "TargetReplicaSetSize":
+			if v != nil {
+				var targetReplicaSetSize int32
+				err = json.Unmarshal(*v, &targetReplicaSetSize)
+				if err != nil {
+					return err
+				}
+				ssud.TargetReplicaSetSize = &targetReplicaSetSize
+			}
+		case "MinReplicaSetSize":
+			if v != nil {
+				var minReplicaSetSize int32
+				err = json.Unmarshal(*v, &minReplicaSetSize)
+				if err != nil {
+					return err
+				}
+				ssud.MinReplicaSetSize = &minReplicaSetSize
+			}
+		case "ReplicaRestartWaitDurationSeconds":
+			if v != nil {
+				var replicaRestartWaitDurationSeconds string
+				err = json.Unmarshal(*v, &replicaRestartWaitDurationSeconds)
+				if err != nil {
+					return err
+				}
+				ssud.ReplicaRestartWaitDurationSeconds = &replicaRestartWaitDurationSeconds
+			}
+		case "QuorumLossWaitDurationSeconds":
+			if v != nil {
+				var quorumLossWaitDurationSeconds string
+				err = json.Unmarshal(*v, &quorumLossWaitDurationSeconds)
+				if err != nil {
+					return err
+				}
+				ssud.QuorumLossWaitDurationSeconds = &quorumLossWaitDurationSeconds
+			}
+		case "StandByReplicaKeepDurationSeconds":
+			if v != nil {
+				var standByReplicaKeepDurationSeconds string
+				err = json.Unmarshal(*v, &standByReplicaKeepDurationSeconds)
+				if err != nil {
+					return err
+				}
+				ssud.StandByReplicaKeepDurationSeconds = &standByReplicaKeepDurationSeconds
+			}
+		case "Flags":
+			if v != nil {
+				var flags string
+				err = json.Unmarshal(*v, &flags)
+				if err != nil {
+					return err
+				}
+				ssud.Flags = &flags
+			}
+		case "PlacementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				ssud.PlacementConstraints = &placementConstraints
+			}
+		case "CorrelationScheme":
+			if v != nil {
+				var correlationScheme []ServiceCorrelationDescription
+				err = json.Unmarshal(*v, &correlationScheme)
+				if err != nil {
+					return err
+				}
+				ssud.CorrelationScheme = &correlationScheme
+			}
+		case "LoadMetrics":
+			if v != nil {
+				var loadMetrics []ServiceLoadMetricDescription
+				err = json.Unmarshal(*v, &loadMetrics)
+				if err != nil {
+					return err
+				}
+				ssud.LoadMetrics = &loadMetrics
+			}
+		case "ServicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				ssud.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "DefaultMoveCost":
+			if v != nil {
+				var defaultMoveCost DefaultMoveCost1
+				err = json.Unmarshal(*v, &defaultMoveCost)
+				if err != nil {
+					return err
+				}
+				ssud.DefaultMoveCost = defaultMoveCost
+			}
+		case "ServiceKind":
+			if v != nil {
+				var serviceKind ServiceKindBasicServiceUpdateDescription
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				ssud.ServiceKind = serviceKind
+			}
 		}
-		ssud.TargetReplicaSetSize = &targetReplicaSetSize
-	}
-
-	v = m["MinReplicaSetSize"]
-	if v != nil {
-		var minReplicaSetSize int32
-		err = json.Unmarshal(*m["MinReplicaSetSize"], &minReplicaSetSize)
-		if err != nil {
-			return err
-		}
-		ssud.MinReplicaSetSize = &minReplicaSetSize
-	}
-
-	v = m["ReplicaRestartWaitDurationSeconds"]
-	if v != nil {
-		var replicaRestartWaitDurationSeconds string
-		err = json.Unmarshal(*m["ReplicaRestartWaitDurationSeconds"], &replicaRestartWaitDurationSeconds)
-		if err != nil {
-			return err
-		}
-		ssud.ReplicaRestartWaitDurationSeconds = &replicaRestartWaitDurationSeconds
-	}
-
-	v = m["QuorumLossWaitDurationSeconds"]
-	if v != nil {
-		var quorumLossWaitDurationSeconds string
-		err = json.Unmarshal(*m["QuorumLossWaitDurationSeconds"], &quorumLossWaitDurationSeconds)
-		if err != nil {
-			return err
-		}
-		ssud.QuorumLossWaitDurationSeconds = &quorumLossWaitDurationSeconds
-	}
-
-	v = m["StandByReplicaKeepDurationSeconds"]
-	if v != nil {
-		var standByReplicaKeepDurationSeconds string
-		err = json.Unmarshal(*m["StandByReplicaKeepDurationSeconds"], &standByReplicaKeepDurationSeconds)
-		if err != nil {
-			return err
-		}
-		ssud.StandByReplicaKeepDurationSeconds = &standByReplicaKeepDurationSeconds
-	}
-
-	v = m["Flags"]
-	if v != nil {
-		var flags string
-		err = json.Unmarshal(*m["Flags"], &flags)
-		if err != nil {
-			return err
-		}
-		ssud.Flags = &flags
-	}
-
-	v = m["PlacementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["PlacementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		ssud.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["CorrelationScheme"]
-	if v != nil {
-		var correlationScheme []ServiceCorrelationDescription
-		err = json.Unmarshal(*m["CorrelationScheme"], &correlationScheme)
-		if err != nil {
-			return err
-		}
-		ssud.CorrelationScheme = &correlationScheme
-	}
-
-	v = m["LoadMetrics"]
-	if v != nil {
-		var loadMetrics []ServiceLoadMetricDescription
-		err = json.Unmarshal(*m["LoadMetrics"], &loadMetrics)
-		if err != nil {
-			return err
-		}
-		ssud.LoadMetrics = &loadMetrics
-	}
-
-	v = m["ServicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["ServicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		ssud.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["DefaultMoveCost"]
-	if v != nil {
-		var defaultMoveCost DefaultMoveCost
-		err = json.Unmarshal(*m["DefaultMoveCost"], &defaultMoveCost)
-		if err != nil {
-			return err
-		}
-		ssud.DefaultMoveCost = defaultMoveCost
-	}
-
-	v = m["ServiceKind"]
-	if v != nil {
-		var serviceKind ServiceKindBasicServiceUpdateDescription
-		err = json.Unmarshal(*m["ServiceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		ssud.ServiceKind = serviceKind
 	}
 
 	return nil
@@ -13724,6 +14257,8 @@ func (ssud *StatefulServiceUpdateDescription) UnmarshalJSON(body []byte) error {
 
 // StatelessServiceDescription describes a stateless service.
 type StatelessServiceDescription struct {
+	// InstanceCount - The instance count.
+	InstanceCount        *int32                          `json:"InstanceCount,omitempty"`
 	ApplicationName      *string                         `json:"ApplicationName,omitempty"`
 	ServiceName          *string                         `json:"ServiceName,omitempty"`
 	ServiceTypeName      *string                         `json:"ServiceTypeName,omitempty"`
@@ -13739,24 +14274,55 @@ type StatelessServiceDescription struct {
 	// IsDefaultMoveCostSpecified - Indicates if the DefaultMoveCost property is specified.
 	IsDefaultMoveCostSpecified *bool `json:"IsDefaultMoveCostSpecified,omitempty"`
 	// ServicePackageActivationMode - Possible values include: 'ServicePackageActivationMode1SharedProcess', 'ServicePackageActivationMode1ExclusiveProcess'
-	ServicePackageActivationMode ServicePackageActivationMode `json:"ServicePackageActivationMode,omitempty"`
+	ServicePackageActivationMode ServicePackageActivationMode1 `json:"ServicePackageActivationMode,omitempty"`
 	// ServiceDNSName - The DNS name of the service. It requires the DNS system service to be enabled in Service Fabric cluster.
 	ServiceDNSName *string `json:"ServiceDnsName,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindBasicServiceDescriptionServiceKindServiceDescription', 'ServiceKindBasicServiceDescriptionServiceKindStateful', 'ServiceKindBasicServiceDescriptionServiceKindStateless'
 	ServiceKind ServiceKindBasicServiceDescription `json:"ServiceKind,omitempty"`
-	// InstanceCount - The instance count.
-	InstanceCount *int32 `json:"InstanceCount,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatelessServiceDescription.
 func (ssd StatelessServiceDescription) MarshalJSON() ([]byte, error) {
 	ssd.ServiceKind = ServiceKindBasicServiceDescriptionServiceKindStateless
-	type Alias StatelessServiceDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssd),
-	})
+	objectMap := make(map[string]interface{})
+	if ssd.InstanceCount != nil {
+		objectMap["InstanceCount"] = ssd.InstanceCount
+	}
+	if ssd.ApplicationName != nil {
+		objectMap["ApplicationName"] = ssd.ApplicationName
+	}
+	if ssd.ServiceName != nil {
+		objectMap["ServiceName"] = ssd.ServiceName
+	}
+	if ssd.ServiceTypeName != nil {
+		objectMap["ServiceTypeName"] = ssd.ServiceTypeName
+	}
+	if ssd.InitializationData != nil {
+		objectMap["InitializationData"] = ssd.InitializationData
+	}
+	objectMap["PartitionDescription"] = ssd.PartitionDescription
+	if ssd.PlacementConstraints != nil {
+		objectMap["PlacementConstraints"] = ssd.PlacementConstraints
+	}
+	if ssd.CorrelationScheme != nil {
+		objectMap["CorrelationScheme"] = ssd.CorrelationScheme
+	}
+	if ssd.ServiceLoadMetrics != nil {
+		objectMap["ServiceLoadMetrics"] = ssd.ServiceLoadMetrics
+	}
+	if ssd.ServicePlacementPolicies != nil {
+		objectMap["ServicePlacementPolicies"] = ssd.ServicePlacementPolicies
+	}
+	objectMap["DefaultMoveCost"] = ssd.DefaultMoveCost
+	if ssd.IsDefaultMoveCostSpecified != nil {
+		objectMap["IsDefaultMoveCostSpecified"] = ssd.IsDefaultMoveCostSpecified
+	}
+	objectMap["ServicePackageActivationMode"] = ssd.ServicePackageActivationMode
+	if ssd.ServiceDNSName != nil {
+		objectMap["ServiceDnsName"] = ssd.ServiceDNSName
+	}
+	objectMap["ServiceKind"] = ssd.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceDescription is the BasicServiceDescription implementation for StatelessServiceDescription.
@@ -13786,154 +14352,142 @@ func (ssd *StatelessServiceDescription) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["InstanceCount"]
-	if v != nil {
-		var instanceCount int32
-		err = json.Unmarshal(*m["InstanceCount"], &instanceCount)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "InstanceCount":
+			if v != nil {
+				var instanceCount int32
+				err = json.Unmarshal(*v, &instanceCount)
+				if err != nil {
+					return err
+				}
+				ssd.InstanceCount = &instanceCount
+			}
+		case "ApplicationName":
+			if v != nil {
+				var applicationName string
+				err = json.Unmarshal(*v, &applicationName)
+				if err != nil {
+					return err
+				}
+				ssd.ApplicationName = &applicationName
+			}
+		case "ServiceName":
+			if v != nil {
+				var serviceName string
+				err = json.Unmarshal(*v, &serviceName)
+				if err != nil {
+					return err
+				}
+				ssd.ServiceName = &serviceName
+			}
+		case "ServiceTypeName":
+			if v != nil {
+				var serviceTypeName string
+				err = json.Unmarshal(*v, &serviceTypeName)
+				if err != nil {
+					return err
+				}
+				ssd.ServiceTypeName = &serviceTypeName
+			}
+		case "InitializationData":
+			if v != nil {
+				var initializationData []int32
+				err = json.Unmarshal(*v, &initializationData)
+				if err != nil {
+					return err
+				}
+				ssd.InitializationData = &initializationData
+			}
+		case "PartitionDescription":
+			if v != nil {
+				partitionDescription, err := unmarshalBasicPartitionSchemeDescription(*v)
+				if err != nil {
+					return err
+				}
+				ssd.PartitionDescription = partitionDescription
+			}
+		case "PlacementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				ssd.PlacementConstraints = &placementConstraints
+			}
+		case "CorrelationScheme":
+			if v != nil {
+				var correlationScheme []ServiceCorrelationDescription
+				err = json.Unmarshal(*v, &correlationScheme)
+				if err != nil {
+					return err
+				}
+				ssd.CorrelationScheme = &correlationScheme
+			}
+		case "ServiceLoadMetrics":
+			if v != nil {
+				var serviceLoadMetrics []ServiceLoadMetricDescription
+				err = json.Unmarshal(*v, &serviceLoadMetrics)
+				if err != nil {
+					return err
+				}
+				ssd.ServiceLoadMetrics = &serviceLoadMetrics
+			}
+		case "ServicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				ssd.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "DefaultMoveCost":
+			if v != nil {
+				var defaultMoveCost DefaultMoveCost
+				err = json.Unmarshal(*v, &defaultMoveCost)
+				if err != nil {
+					return err
+				}
+				ssd.DefaultMoveCost = defaultMoveCost
+			}
+		case "IsDefaultMoveCostSpecified":
+			if v != nil {
+				var isDefaultMoveCostSpecified bool
+				err = json.Unmarshal(*v, &isDefaultMoveCostSpecified)
+				if err != nil {
+					return err
+				}
+				ssd.IsDefaultMoveCostSpecified = &isDefaultMoveCostSpecified
+			}
+		case "ServicePackageActivationMode":
+			if v != nil {
+				var servicePackageActivationMode ServicePackageActivationMode1
+				err = json.Unmarshal(*v, &servicePackageActivationMode)
+				if err != nil {
+					return err
+				}
+				ssd.ServicePackageActivationMode = servicePackageActivationMode
+			}
+		case "ServiceDnsName":
+			if v != nil {
+				var serviceDNSName string
+				err = json.Unmarshal(*v, &serviceDNSName)
+				if err != nil {
+					return err
+				}
+				ssd.ServiceDNSName = &serviceDNSName
+			}
+		case "ServiceKind":
+			if v != nil {
+				var serviceKind ServiceKindBasicServiceDescription
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				ssd.ServiceKind = serviceKind
+			}
 		}
-		ssd.InstanceCount = &instanceCount
-	}
-
-	v = m["ApplicationName"]
-	if v != nil {
-		var applicationName string
-		err = json.Unmarshal(*m["ApplicationName"], &applicationName)
-		if err != nil {
-			return err
-		}
-		ssd.ApplicationName = &applicationName
-	}
-
-	v = m["ServiceName"]
-	if v != nil {
-		var serviceName string
-		err = json.Unmarshal(*m["ServiceName"], &serviceName)
-		if err != nil {
-			return err
-		}
-		ssd.ServiceName = &serviceName
-	}
-
-	v = m["ServiceTypeName"]
-	if v != nil {
-		var serviceTypeName string
-		err = json.Unmarshal(*m["ServiceTypeName"], &serviceTypeName)
-		if err != nil {
-			return err
-		}
-		ssd.ServiceTypeName = &serviceTypeName
-	}
-
-	v = m["InitializationData"]
-	if v != nil {
-		var initializationData []int32
-		err = json.Unmarshal(*m["InitializationData"], &initializationData)
-		if err != nil {
-			return err
-		}
-		ssd.InitializationData = &initializationData
-	}
-
-	v = m["PartitionDescription"]
-	if v != nil {
-		partitionDescription, err := unmarshalBasicPartitionSchemeDescription(*m["PartitionDescription"])
-		if err != nil {
-			return err
-		}
-		ssd.PartitionDescription = partitionDescription
-	}
-
-	v = m["PlacementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["PlacementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		ssd.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["CorrelationScheme"]
-	if v != nil {
-		var correlationScheme []ServiceCorrelationDescription
-		err = json.Unmarshal(*m["CorrelationScheme"], &correlationScheme)
-		if err != nil {
-			return err
-		}
-		ssd.CorrelationScheme = &correlationScheme
-	}
-
-	v = m["ServiceLoadMetrics"]
-	if v != nil {
-		var serviceLoadMetrics []ServiceLoadMetricDescription
-		err = json.Unmarshal(*m["ServiceLoadMetrics"], &serviceLoadMetrics)
-		if err != nil {
-			return err
-		}
-		ssd.ServiceLoadMetrics = &serviceLoadMetrics
-	}
-
-	v = m["ServicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["ServicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		ssd.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["DefaultMoveCost"]
-	if v != nil {
-		var defaultMoveCost DefaultMoveCost
-		err = json.Unmarshal(*m["DefaultMoveCost"], &defaultMoveCost)
-		if err != nil {
-			return err
-		}
-		ssd.DefaultMoveCost = defaultMoveCost
-	}
-
-	v = m["IsDefaultMoveCostSpecified"]
-	if v != nil {
-		var isDefaultMoveCostSpecified bool
-		err = json.Unmarshal(*m["IsDefaultMoveCostSpecified"], &isDefaultMoveCostSpecified)
-		if err != nil {
-			return err
-		}
-		ssd.IsDefaultMoveCostSpecified = &isDefaultMoveCostSpecified
-	}
-
-	v = m["ServicePackageActivationMode"]
-	if v != nil {
-		var servicePackageActivationMode ServicePackageActivationMode
-		err = json.Unmarshal(*m["ServicePackageActivationMode"], &servicePackageActivationMode)
-		if err != nil {
-			return err
-		}
-		ssd.ServicePackageActivationMode = servicePackageActivationMode
-	}
-
-	v = m["ServiceDnsName"]
-	if v != nil {
-		var serviceDNSName string
-		err = json.Unmarshal(*m["ServiceDnsName"], &serviceDNSName)
-		if err != nil {
-			return err
-		}
-		ssd.ServiceDNSName = &serviceDNSName
-	}
-
-	v = m["ServiceKind"]
-	if v != nil {
-		var serviceKind ServiceKindBasicServiceDescription
-		err = json.Unmarshal(*m["ServiceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		ssd.ServiceKind = serviceKind
 	}
 
 	return nil
@@ -13947,7 +14501,7 @@ type StatelessServiceInfo struct {
 	// ManifestVersion - The version of the service manifest.
 	ManifestVersion *string `json:"ManifestVersion,omitempty"`
 	// HealthState - Possible values include: 'HealthState7Invalid', 'HealthState7Ok', 'HealthState7Warning', 'HealthState7Error', 'HealthState7Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
+	HealthState HealthState7 `json:"HealthState,omitempty"`
 	// ServiceStatus - Possible values include: 'ServiceStatusUnknown', 'ServiceStatusActive', 'ServiceStatusUpgrading', 'ServiceStatusDeleting', 'ServiceStatusCreating', 'ServiceStatusFailed'
 	ServiceStatus ServiceStatus `json:"ServiceStatus,omitempty"`
 	// IsServiceGroup - Whether the service is in a service group.
@@ -13959,12 +14513,26 @@ type StatelessServiceInfo struct {
 // MarshalJSON is the custom marshaler for StatelessServiceInfo.
 func (ssi StatelessServiceInfo) MarshalJSON() ([]byte, error) {
 	ssi.ServiceKind = ServiceKindBasicServiceInfoServiceKindStateless
-	type Alias StatelessServiceInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssi),
-	})
+	objectMap := make(map[string]interface{})
+	if ssi.ID != nil {
+		objectMap["Id"] = ssi.ID
+	}
+	if ssi.Name != nil {
+		objectMap["Name"] = ssi.Name
+	}
+	if ssi.TypeName != nil {
+		objectMap["TypeName"] = ssi.TypeName
+	}
+	if ssi.ManifestVersion != nil {
+		objectMap["ManifestVersion"] = ssi.ManifestVersion
+	}
+	objectMap["HealthState"] = ssi.HealthState
+	objectMap["ServiceStatus"] = ssi.ServiceStatus
+	if ssi.IsServiceGroup != nil {
+		objectMap["IsServiceGroup"] = ssi.IsServiceGroup
+	}
+	objectMap["ServiceKind"] = ssi.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceInfo is the BasicServiceInfo implementation for StatelessServiceInfo.
@@ -13990,27 +14558,40 @@ func (ssi StatelessServiceInfo) AsBasicServiceInfo() (BasicServiceInfo, bool) {
 // StatelessServiceInstanceHealth represents the health of the statelss service instance.
 // Contains the instance aggregated health state, the health events and the unhealthy evaluations.
 type StatelessServiceInstanceHealth struct {
+	InstanceID  *string    `json:"InstanceId,omitempty"`
+	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
+	// ServiceKind - Possible values include: 'ServiceKindBasicReplicaHealthServiceKindReplicaHealth', 'ServiceKindBasicReplicaHealthServiceKindStateful', 'ServiceKindBasicReplicaHealthServiceKindStateless'
+	ServiceKind ServiceKindBasicReplicaHealth `json:"ServiceKind,omitempty"`
 	// AggregatedHealthState - Possible values include: 'AggregatedHealthState1Invalid', 'AggregatedHealthState1Ok', 'AggregatedHealthState1Warning', 'AggregatedHealthState1Error', 'AggregatedHealthState1Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
+	AggregatedHealthState AggregatedHealthState1 `json:"AggregatedHealthState,omitempty"`
 	// HealthEvents - The list of health events reported on the entity.
 	HealthEvents         *[]HealthEvent             `json:"HealthEvents,omitempty"`
 	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	HealthStatistics     *HealthStatistics          `json:"HealthStatistics,omitempty"`
-	PartitionID          *uuid.UUID                 `json:"PartitionId,omitempty"`
-	// ServiceKind - Possible values include: 'ServiceKindBasicReplicaHealthServiceKindReplicaHealth', 'ServiceKindBasicReplicaHealthServiceKindStateful', 'ServiceKindBasicReplicaHealthServiceKindStateless'
-	ServiceKind ServiceKindBasicReplicaHealth `json:"ServiceKind,omitempty"`
-	InstanceID  *string                       `json:"InstanceId,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatelessServiceInstanceHealth.
 func (ssih StatelessServiceInstanceHealth) MarshalJSON() ([]byte, error) {
 	ssih.ServiceKind = ServiceKindBasicReplicaHealthServiceKindStateless
-	type Alias StatelessServiceInstanceHealth
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssih),
-	})
+	objectMap := make(map[string]interface{})
+	if ssih.InstanceID != nil {
+		objectMap["InstanceId"] = ssih.InstanceID
+	}
+	if ssih.PartitionID != nil {
+		objectMap["PartitionId"] = ssih.PartitionID
+	}
+	objectMap["ServiceKind"] = ssih.ServiceKind
+	objectMap["AggregatedHealthState"] = ssih.AggregatedHealthState
+	if ssih.HealthEvents != nil {
+		objectMap["HealthEvents"] = ssih.HealthEvents
+	}
+	if ssih.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = ssih.UnhealthyEvaluations
+	}
+	if ssih.HealthStatistics != nil {
+		objectMap["HealthStatistics"] = ssih.HealthStatistics
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealth is the BasicEntityHealth implementation for StatelessServiceInstanceHealth.
@@ -14068,26 +14649,30 @@ func (ssih StatelessServiceInstanceHealth) AsStatelessServiceInstanceHealth() (*
 	return &ssih, true
 }
 
-// StatelessServiceInstanceHealthState represents the health state of the stateless service instance, which contains
-// the instance id and the aggregated health state.
+// StatelessServiceInstanceHealthState represents the health state of the stateless service instance, which
+// contains the instance id and the aggregated health state.
 type StatelessServiceInstanceHealthState struct {
-	// AggregatedHealthState - Possible values include: 'AggregatedHealthState2Invalid', 'AggregatedHealthState2Ok', 'AggregatedHealthState2Warning', 'AggregatedHealthState2Error', 'AggregatedHealthState2Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	PartitionID           *uuid.UUID            `json:"PartitionId,omitempty"`
+	ReplicaID   *string    `json:"ReplicaId,omitempty"`
+	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindBasicReplicaHealthStateServiceKindReplicaHealthState', 'ServiceKindBasicReplicaHealthStateServiceKindStateful', 'ServiceKindBasicReplicaHealthStateServiceKindStateless'
 	ServiceKind ServiceKindBasicReplicaHealthState `json:"ServiceKind,omitempty"`
-	ReplicaID   *string                            `json:"ReplicaId,omitempty"`
+	// AggregatedHealthState - Possible values include: 'AggregatedHealthState2Invalid', 'AggregatedHealthState2Ok', 'AggregatedHealthState2Warning', 'AggregatedHealthState2Error', 'AggregatedHealthState2Unknown'
+	AggregatedHealthState AggregatedHealthState2 `json:"AggregatedHealthState,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatelessServiceInstanceHealthState.
 func (ssihs StatelessServiceInstanceHealthState) MarshalJSON() ([]byte, error) {
 	ssihs.ServiceKind = ServiceKindBasicReplicaHealthStateServiceKindStateless
-	type Alias StatelessServiceInstanceHealthState
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssihs),
-	})
+	objectMap := make(map[string]interface{})
+	if ssihs.ReplicaID != nil {
+		objectMap["ReplicaId"] = ssihs.ReplicaID
+	}
+	if ssihs.PartitionID != nil {
+		objectMap["PartitionId"] = ssihs.PartitionID
+	}
+	objectMap["ServiceKind"] = ssihs.ServiceKind
+	objectMap["AggregatedHealthState"] = ssihs.AggregatedHealthState
+	return json.Marshal(objectMap)
 }
 
 // AsServiceHealthState is the BasicEntityHealthState implementation for StatelessServiceInstanceHealthState.
@@ -14140,32 +14725,43 @@ func (ssihs StatelessServiceInstanceHealthState) AsStatelessServiceInstanceHealt
 	return &ssihs, true
 }
 
-// StatelessServiceInstanceInfo represents a stateless service instance. This includes information about the identity,
-// status, health, node name, uptime, and other details about the instance.
+// StatelessServiceInstanceInfo represents a stateless service instance. This includes information about the
+// identity, status, health, node name, uptime, and other details about the instance.
 type StatelessServiceInstanceInfo struct {
+	InstanceID *string `json:"InstanceId,omitempty"`
 	// ReplicaStatus - Possible values include: 'ReplicaStatus1Invalid', 'ReplicaStatus1InBuild', 'ReplicaStatus1Standby', 'ReplicaStatus1Ready', 'ReplicaStatus1Down', 'ReplicaStatus1Dropped'
-	ReplicaStatus ReplicaStatus `json:"ReplicaStatus,omitempty"`
+	ReplicaStatus ReplicaStatus1 `json:"ReplicaStatus,omitempty"`
 	// HealthState - Possible values include: 'HealthState6Invalid', 'HealthState6Ok', 'HealthState6Warning', 'HealthState6Error', 'HealthState6Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
-	NodeName    *string     `json:"NodeName,omitempty"`
+	HealthState HealthState6 `json:"HealthState,omitempty"`
+	NodeName    *string      `json:"NodeName,omitempty"`
 	// Address - The address the replica is listening on.
 	Address *string `json:"Address,omitempty"`
 	// LastInBuildDurationInSeconds - The last in build duration of the replica in seconds.
 	LastInBuildDurationInSeconds *string `json:"LastInBuildDurationInSeconds,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindBasicReplicaInfoServiceKindReplicaInfo', 'ServiceKindBasicReplicaInfoServiceKindStateful', 'ServiceKindBasicReplicaInfoServiceKindStateless'
 	ServiceKind ServiceKindBasicReplicaInfo `json:"ServiceKind,omitempty"`
-	InstanceID  *string                     `json:"InstanceId,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatelessServiceInstanceInfo.
 func (ssii StatelessServiceInstanceInfo) MarshalJSON() ([]byte, error) {
 	ssii.ServiceKind = ServiceKindBasicReplicaInfoServiceKindStateless
-	type Alias StatelessServiceInstanceInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssii),
-	})
+	objectMap := make(map[string]interface{})
+	if ssii.InstanceID != nil {
+		objectMap["InstanceId"] = ssii.InstanceID
+	}
+	objectMap["ReplicaStatus"] = ssii.ReplicaStatus
+	objectMap["HealthState"] = ssii.HealthState
+	if ssii.NodeName != nil {
+		objectMap["NodeName"] = ssii.NodeName
+	}
+	if ssii.Address != nil {
+		objectMap["Address"] = ssii.Address
+	}
+	if ssii.LastInBuildDurationInSeconds != nil {
+		objectMap["LastInBuildDurationInSeconds"] = ssii.LastInBuildDurationInSeconds
+	}
+	objectMap["ServiceKind"] = ssii.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceReplicaInfo is the BasicReplicaInfo implementation for StatelessServiceInstanceInfo.
@@ -14190,26 +14786,29 @@ func (ssii StatelessServiceInstanceInfo) AsBasicReplicaInfo() (BasicReplicaInfo,
 
 // StatelessServicePartitionInfo information about a partition of a stateless Service Fabric service.
 type StatelessServicePartitionInfo struct {
+	// InstanceCount - Number of instances of this partition.
+	InstanceCount *int64 `json:"InstanceCount,omitempty"`
 	// HealthState - Possible values include: 'HealthState5Invalid', 'HealthState5Ok', 'HealthState5Warning', 'HealthState5Error', 'HealthState5Unknown'
-	HealthState HealthState `json:"HealthState,omitempty"`
+	HealthState HealthState5 `json:"HealthState,omitempty"`
 	// PartitionStatus - Possible values include: 'PartitionStatusInvalid', 'PartitionStatusReady', 'PartitionStatusNotReady', 'PartitionStatusInQuorumLoss', 'PartitionStatusReconfiguring', 'PartitionStatusDeleting'
 	PartitionStatus      PartitionStatus           `json:"PartitionStatus,omitempty"`
 	PartitionInformation BasicPartitionInformation `json:"PartitionInformation,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindBasicServicePartitionInfoServiceKindServicePartitionInfo', 'ServiceKindBasicServicePartitionInfoServiceKindStateful', 'ServiceKindBasicServicePartitionInfoServiceKindStateless'
 	ServiceKind ServiceKindBasicServicePartitionInfo `json:"ServiceKind,omitempty"`
-	// InstanceCount - Number of instances of this partition.
-	InstanceCount *int64 `json:"InstanceCount,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatelessServicePartitionInfo.
 func (sspi StatelessServicePartitionInfo) MarshalJSON() ([]byte, error) {
 	sspi.ServiceKind = ServiceKindBasicServicePartitionInfoServiceKindStateless
-	type Alias StatelessServicePartitionInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sspi),
-	})
+	objectMap := make(map[string]interface{})
+	if sspi.InstanceCount != nil {
+		objectMap["InstanceCount"] = sspi.InstanceCount
+	}
+	objectMap["HealthState"] = sspi.HealthState
+	objectMap["PartitionStatus"] = sspi.PartitionStatus
+	objectMap["PartitionInformation"] = sspi.PartitionInformation
+	objectMap["ServiceKind"] = sspi.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServicePartitionInfo is the BasicServicePartitionInfo implementation for StatelessServicePartitionInfo.
@@ -14239,63 +14838,63 @@ func (sspi *StatelessServicePartitionInfo) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["InstanceCount"]
-	if v != nil {
-		var instanceCount int64
-		err = json.Unmarshal(*m["InstanceCount"], &instanceCount)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "InstanceCount":
+			if v != nil {
+				var instanceCount int64
+				err = json.Unmarshal(*v, &instanceCount)
+				if err != nil {
+					return err
+				}
+				sspi.InstanceCount = &instanceCount
+			}
+		case "HealthState":
+			if v != nil {
+				var healthState HealthState5
+				err = json.Unmarshal(*v, &healthState)
+				if err != nil {
+					return err
+				}
+				sspi.HealthState = healthState
+			}
+		case "PartitionStatus":
+			if v != nil {
+				var partitionStatus PartitionStatus
+				err = json.Unmarshal(*v, &partitionStatus)
+				if err != nil {
+					return err
+				}
+				sspi.PartitionStatus = partitionStatus
+			}
+		case "PartitionInformation":
+			if v != nil {
+				partitionInformation, err := unmarshalBasicPartitionInformation(*v)
+				if err != nil {
+					return err
+				}
+				sspi.PartitionInformation = partitionInformation
+			}
+		case "ServiceKind":
+			if v != nil {
+				var serviceKind ServiceKindBasicServicePartitionInfo
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				sspi.ServiceKind = serviceKind
+			}
 		}
-		sspi.InstanceCount = &instanceCount
-	}
-
-	v = m["HealthState"]
-	if v != nil {
-		var healthState HealthState
-		err = json.Unmarshal(*m["HealthState"], &healthState)
-		if err != nil {
-			return err
-		}
-		sspi.HealthState = healthState
-	}
-
-	v = m["PartitionStatus"]
-	if v != nil {
-		var partitionStatus PartitionStatus
-		err = json.Unmarshal(*m["PartitionStatus"], &partitionStatus)
-		if err != nil {
-			return err
-		}
-		sspi.PartitionStatus = partitionStatus
-	}
-
-	v = m["PartitionInformation"]
-	if v != nil {
-		partitionInformation, err := unmarshalBasicPartitionInformation(*m["PartitionInformation"])
-		if err != nil {
-			return err
-		}
-		sspi.PartitionInformation = partitionInformation
-	}
-
-	v = m["ServiceKind"]
-	if v != nil {
-		var serviceKind ServiceKindBasicServicePartitionInfo
-		err = json.Unmarshal(*m["ServiceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		sspi.ServiceKind = serviceKind
 	}
 
 	return nil
 }
 
-// StatelessServiceTypeDescription describes a stateless service type defined in the service manifest of a provisioned
-// application type.
+// StatelessServiceTypeDescription describes a stateless service type defined in the service manifest of a
+// provisioned application type.
 type StatelessServiceTypeDescription struct {
+	// UseImplicitHost - A flag indicating if this type is not implemented and hosted by a user service process, but is implicitly hosted by a system created process. This value is true for services using the guest executable services, false otherwise.
+	UseImplicitHost *bool `json:"UseImplicitHost,omitempty"`
 	// IsStateful - Indicates whether the service type is a stateful service type or a stateless service type. This property is true if the service type is a stateful service type, false otherwise.
 	IsStateful      *bool   `json:"IsStateful,omitempty"`
 	ServiceTypeName *string `json:"ServiceTypeName,omitempty"`
@@ -14305,19 +14904,32 @@ type StatelessServiceTypeDescription struct {
 	Extensions               *[]ServiceTypeExtensionDescription        `json:"Extensions,omitempty"`
 	// Kind - Possible values include: 'KindServiceTypeDescription', 'KindStateful', 'KindStateless1'
 	Kind KindBasicServiceTypeDescription `json:"Kind,omitempty"`
-	// UseImplicitHost - A flag indicating if this type is not implemented and hosted by a user service process, but is implicitly hosted by a system created process. This value is true for services using the guest executable services, false otherwise.
-	UseImplicitHost *bool `json:"UseImplicitHost,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatelessServiceTypeDescription.
 func (sstd StatelessServiceTypeDescription) MarshalJSON() ([]byte, error) {
 	sstd.Kind = KindStateless1
-	type Alias StatelessServiceTypeDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sstd),
-	})
+	objectMap := make(map[string]interface{})
+	if sstd.UseImplicitHost != nil {
+		objectMap["UseImplicitHost"] = sstd.UseImplicitHost
+	}
+	if sstd.IsStateful != nil {
+		objectMap["IsStateful"] = sstd.IsStateful
+	}
+	if sstd.ServiceTypeName != nil {
+		objectMap["ServiceTypeName"] = sstd.ServiceTypeName
+	}
+	if sstd.PlacementConstraints != nil {
+		objectMap["PlacementConstraints"] = sstd.PlacementConstraints
+	}
+	if sstd.ServicePlacementPolicies != nil {
+		objectMap["ServicePlacementPolicies"] = sstd.ServicePlacementPolicies
+	}
+	if sstd.Extensions != nil {
+		objectMap["Extensions"] = sstd.Extensions
+	}
+	objectMap["Kind"] = sstd.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceTypeDescription is the BasicServiceTypeDescription implementation for StatelessServiceTypeDescription.
@@ -14347,75 +14959,71 @@ func (sstd *StatelessServiceTypeDescription) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["UseImplicitHost"]
-	if v != nil {
-		var useImplicitHost bool
-		err = json.Unmarshal(*m["UseImplicitHost"], &useImplicitHost)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "UseImplicitHost":
+			if v != nil {
+				var useImplicitHost bool
+				err = json.Unmarshal(*v, &useImplicitHost)
+				if err != nil {
+					return err
+				}
+				sstd.UseImplicitHost = &useImplicitHost
+			}
+		case "IsStateful":
+			if v != nil {
+				var isStateful bool
+				err = json.Unmarshal(*v, &isStateful)
+				if err != nil {
+					return err
+				}
+				sstd.IsStateful = &isStateful
+			}
+		case "ServiceTypeName":
+			if v != nil {
+				var serviceTypeName string
+				err = json.Unmarshal(*v, &serviceTypeName)
+				if err != nil {
+					return err
+				}
+				sstd.ServiceTypeName = &serviceTypeName
+			}
+		case "PlacementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				sstd.PlacementConstraints = &placementConstraints
+			}
+		case "ServicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				sstd.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "Extensions":
+			if v != nil {
+				var extensions []ServiceTypeExtensionDescription
+				err = json.Unmarshal(*v, &extensions)
+				if err != nil {
+					return err
+				}
+				sstd.Extensions = &extensions
+			}
+		case "Kind":
+			if v != nil {
+				var kind KindBasicServiceTypeDescription
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				sstd.Kind = kind
+			}
 		}
-		sstd.UseImplicitHost = &useImplicitHost
-	}
-
-	v = m["IsStateful"]
-	if v != nil {
-		var isStateful bool
-		err = json.Unmarshal(*m["IsStateful"], &isStateful)
-		if err != nil {
-			return err
-		}
-		sstd.IsStateful = &isStateful
-	}
-
-	v = m["ServiceTypeName"]
-	if v != nil {
-		var serviceTypeName string
-		err = json.Unmarshal(*m["ServiceTypeName"], &serviceTypeName)
-		if err != nil {
-			return err
-		}
-		sstd.ServiceTypeName = &serviceTypeName
-	}
-
-	v = m["PlacementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["PlacementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		sstd.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["ServicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["ServicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		sstd.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["Extensions"]
-	if v != nil {
-		var extensions []ServiceTypeExtensionDescription
-		err = json.Unmarshal(*m["Extensions"], &extensions)
-		if err != nil {
-			return err
-		}
-		sstd.Extensions = &extensions
-	}
-
-	v = m["Kind"]
-	if v != nil {
-		var kind KindBasicServiceTypeDescription
-		err = json.Unmarshal(*m["Kind"], &kind)
-		if err != nil {
-			return err
-		}
-		sstd.Kind = kind
 	}
 
 	return nil
@@ -14423,6 +15031,8 @@ func (sstd *StatelessServiceTypeDescription) UnmarshalJSON(body []byte) error {
 
 // StatelessServiceUpdateDescription describes an update for a stateless service.
 type StatelessServiceUpdateDescription struct {
+	// InstanceCount - The instance count.
+	InstanceCount *int32 `json:"InstanceCount,omitempty"`
 	// Flags - Flags indicating whether other properties are set. Each of the associated properties corresponds to a flag, specified below, which, if set, indicate that the property is specified.
 	// This property can be a combination of those flags obtained using bitwise 'OR' operator.
 	// For example, if the provided value is 6 then the flags for ReplicaRestartWaitDuration (2) and QuorumLossWaitDuration (4) are set.
@@ -14444,22 +15054,36 @@ type StatelessServiceUpdateDescription struct {
 	LoadMetrics              *[]ServiceLoadMetricDescription           `json:"LoadMetrics,omitempty"`
 	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"ServicePlacementPolicies,omitempty"`
 	// DefaultMoveCost - Possible values include: 'DefaultMoveCost1Zero', 'DefaultMoveCost1Low', 'DefaultMoveCost1Medium', 'DefaultMoveCost1High'
-	DefaultMoveCost DefaultMoveCost `json:"DefaultMoveCost,omitempty"`
+	DefaultMoveCost DefaultMoveCost1 `json:"DefaultMoveCost,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindBasicServiceUpdateDescriptionServiceKindServiceUpdateDescription', 'ServiceKindBasicServiceUpdateDescriptionServiceKindStateful', 'ServiceKindBasicServiceUpdateDescriptionServiceKindStateless'
 	ServiceKind ServiceKindBasicServiceUpdateDescription `json:"ServiceKind,omitempty"`
-	// InstanceCount - The instance count.
-	InstanceCount *int32 `json:"InstanceCount,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatelessServiceUpdateDescription.
 func (ssud StatelessServiceUpdateDescription) MarshalJSON() ([]byte, error) {
 	ssud.ServiceKind = ServiceKindBasicServiceUpdateDescriptionServiceKindStateless
-	type Alias StatelessServiceUpdateDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssud),
-	})
+	objectMap := make(map[string]interface{})
+	if ssud.InstanceCount != nil {
+		objectMap["InstanceCount"] = ssud.InstanceCount
+	}
+	if ssud.Flags != nil {
+		objectMap["Flags"] = ssud.Flags
+	}
+	if ssud.PlacementConstraints != nil {
+		objectMap["PlacementConstraints"] = ssud.PlacementConstraints
+	}
+	if ssud.CorrelationScheme != nil {
+		objectMap["CorrelationScheme"] = ssud.CorrelationScheme
+	}
+	if ssud.LoadMetrics != nil {
+		objectMap["LoadMetrics"] = ssud.LoadMetrics
+	}
+	if ssud.ServicePlacementPolicies != nil {
+		objectMap["ServicePlacementPolicies"] = ssud.ServicePlacementPolicies
+	}
+	objectMap["DefaultMoveCost"] = ssud.DefaultMoveCost
+	objectMap["ServiceKind"] = ssud.ServiceKind
+	return json.Marshal(objectMap)
 }
 
 // AsStatefulServiceUpdateDescription is the BasicServiceUpdateDescription implementation for StatelessServiceUpdateDescription.
@@ -14489,108 +15113,106 @@ func (ssud *StatelessServiceUpdateDescription) UnmarshalJSON(body []byte) error 
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["InstanceCount"]
-	if v != nil {
-		var instanceCount int32
-		err = json.Unmarshal(*m["InstanceCount"], &instanceCount)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "InstanceCount":
+			if v != nil {
+				var instanceCount int32
+				err = json.Unmarshal(*v, &instanceCount)
+				if err != nil {
+					return err
+				}
+				ssud.InstanceCount = &instanceCount
+			}
+		case "Flags":
+			if v != nil {
+				var flags string
+				err = json.Unmarshal(*v, &flags)
+				if err != nil {
+					return err
+				}
+				ssud.Flags = &flags
+			}
+		case "PlacementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				ssud.PlacementConstraints = &placementConstraints
+			}
+		case "CorrelationScheme":
+			if v != nil {
+				var correlationScheme []ServiceCorrelationDescription
+				err = json.Unmarshal(*v, &correlationScheme)
+				if err != nil {
+					return err
+				}
+				ssud.CorrelationScheme = &correlationScheme
+			}
+		case "LoadMetrics":
+			if v != nil {
+				var loadMetrics []ServiceLoadMetricDescription
+				err = json.Unmarshal(*v, &loadMetrics)
+				if err != nil {
+					return err
+				}
+				ssud.LoadMetrics = &loadMetrics
+			}
+		case "ServicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				ssud.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "DefaultMoveCost":
+			if v != nil {
+				var defaultMoveCost DefaultMoveCost1
+				err = json.Unmarshal(*v, &defaultMoveCost)
+				if err != nil {
+					return err
+				}
+				ssud.DefaultMoveCost = defaultMoveCost
+			}
+		case "ServiceKind":
+			if v != nil {
+				var serviceKind ServiceKindBasicServiceUpdateDescription
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				ssud.ServiceKind = serviceKind
+			}
 		}
-		ssud.InstanceCount = &instanceCount
-	}
-
-	v = m["Flags"]
-	if v != nil {
-		var flags string
-		err = json.Unmarshal(*m["Flags"], &flags)
-		if err != nil {
-			return err
-		}
-		ssud.Flags = &flags
-	}
-
-	v = m["PlacementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["PlacementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		ssud.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["CorrelationScheme"]
-	if v != nil {
-		var correlationScheme []ServiceCorrelationDescription
-		err = json.Unmarshal(*m["CorrelationScheme"], &correlationScheme)
-		if err != nil {
-			return err
-		}
-		ssud.CorrelationScheme = &correlationScheme
-	}
-
-	v = m["LoadMetrics"]
-	if v != nil {
-		var loadMetrics []ServiceLoadMetricDescription
-		err = json.Unmarshal(*m["LoadMetrics"], &loadMetrics)
-		if err != nil {
-			return err
-		}
-		ssud.LoadMetrics = &loadMetrics
-	}
-
-	v = m["ServicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["ServicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		ssud.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["DefaultMoveCost"]
-	if v != nil {
-		var defaultMoveCost DefaultMoveCost
-		err = json.Unmarshal(*m["DefaultMoveCost"], &defaultMoveCost)
-		if err != nil {
-			return err
-		}
-		ssud.DefaultMoveCost = defaultMoveCost
-	}
-
-	v = m["ServiceKind"]
-	if v != nil {
-		var serviceKind ServiceKindBasicServiceUpdateDescription
-		err = json.Unmarshal(*m["ServiceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		ssud.ServiceKind = serviceKind
 	}
 
 	return nil
 }
 
-// StoppedChaosEvent describes a Chaos event that gets generated when Chaos stops because either the user issued a stop
-// or the time to run was up.
+// StoppedChaosEvent describes a Chaos event that gets generated when Chaos stops because either the user issued a
+// stop or the time to run was up.
 type StoppedChaosEvent struct {
+	Reason       *string    `json:"Reason,omitempty"`
 	TimeStampUtc *date.Time `json:"TimeStampUtc,omitempty"`
 	// Kind - Possible values include: 'KindChaosEvent', 'KindExecutingFaults', 'KindStarted', 'KindStopped', 'KindTestError', 'KindValidationFailed', 'KindWaiting'
-	Kind   KindBasicChaosEvent `json:"Kind,omitempty"`
-	Reason *string             `json:"Reason,omitempty"`
+	Kind KindBasicChaosEvent `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StoppedChaosEvent.
 func (sce StoppedChaosEvent) MarshalJSON() ([]byte, error) {
 	sce.Kind = KindStopped
-	type Alias StoppedChaosEvent
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sce),
-	})
+	objectMap := make(map[string]interface{})
+	if sce.Reason != nil {
+		objectMap["Reason"] = sce.Reason
+	}
+	if sce.TimeStampUtc != nil {
+		objectMap["TimeStampUtc"] = sce.TimeStampUtc
+	}
+	objectMap["Kind"] = sce.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsExecutingFaultsChaosEvent is the BasicChaosEvent implementation for StoppedChaosEvent.
@@ -14641,21 +15263,21 @@ type String struct {
 
 // StringPropertyValue describes a Service Fabric property value of type String.
 type StringPropertyValue struct {
-	// Kind - Possible values include: 'KindPropertyValue', 'KindBinary', 'KindInt64', 'KindDouble', 'KindString', 'KindGUID'
-	Kind KindBasicPropertyValue `json:"Kind,omitempty"`
 	// Data - The data of the property value.
 	Data *string `json:"Data,omitempty"`
+	// Kind - Possible values include: 'KindPropertyValue', 'KindBinary', 'KindInt64', 'KindDouble', 'KindString', 'KindGUID'
+	Kind KindBasicPropertyValue `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StringPropertyValue.
 func (spv StringPropertyValue) MarshalJSON() ([]byte, error) {
 	spv.Kind = KindString
-	type Alias StringPropertyValue
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(spv),
-	})
+	objectMap := make(map[string]interface{})
+	if spv.Data != nil {
+		objectMap["Data"] = spv.Data
+	}
+	objectMap["Kind"] = spv.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsBinaryPropertyValue is the BasicPropertyValue implementation for StringPropertyValue.
@@ -14693,24 +15315,24 @@ func (spv StringPropertyValue) AsBasicPropertyValue() (BasicPropertyValue, bool)
 	return &spv, true
 }
 
-// SuccessfulPropertyBatchInfo derived from PropertyBatchInfo. Represents the property batch succeeding. Contains the
-// results of any "Get" operations in the batch.
+// SuccessfulPropertyBatchInfo derived from PropertyBatchInfo. Represents the property batch succeeding. Contains
+// the results of any "Get" operations in the batch.
 type SuccessfulPropertyBatchInfo struct {
+	// Properties - A map containing the properties that were requested through any "Get" property batch operations. The key represents the index of the "Get" operation in the original request, in string form. The value is the property. If a property is not found, it will not be in the map.
+	Properties map[string]*PropertyInfo `json:"Properties"`
 	// Kind - Possible values include: 'KindPropertyBatchInfo', 'KindSuccessful', 'KindFailed'
 	Kind KindBasicPropertyBatchInfo `json:"Kind,omitempty"`
-	// Properties - A map containing the properties that were requested through any "Get" property batch operations. The key represents the index of the "Get" operation in the original request, in string form. The value is the property. If a property is not found, it will not be in the map.
-	Properties *map[string]*PropertyInfo `json:"Properties,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for SuccessfulPropertyBatchInfo.
 func (spbi SuccessfulPropertyBatchInfo) MarshalJSON() ([]byte, error) {
 	spbi.Kind = KindSuccessful
-	type Alias SuccessfulPropertyBatchInfo
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(spbi),
-	})
+	objectMap := make(map[string]interface{})
+	if spbi.Properties != nil {
+		objectMap["Properties"] = spbi.Properties
+	}
+	objectMap["Kind"] = spbi.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsSuccessfulPropertyBatchInfo is the BasicPropertyBatchInfo implementation for SuccessfulPropertyBatchInfo.
@@ -14737,24 +15359,28 @@ func (spbi SuccessfulPropertyBatchInfo) AsBasicPropertyBatchInfo() (BasicPropert
 // information about the data and the algorithm used by health store to evaluate health. The evaluation is returned
 // only when the aggregated health state of the cluster is either Error or Warning.
 type SystemApplicationHealthEvaluation struct {
+	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
 	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
 	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
 	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
 	Description *string `json:"Description,omitempty"`
 	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
-	Kind                 KindBasicHealthEvaluation  `json:"Kind,omitempty"`
-	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for SystemApplicationHealthEvaluation.
 func (sahe SystemApplicationHealthEvaluation) MarshalJSON() ([]byte, error) {
 	sahe.Kind = KindSystemApplication
-	type Alias SystemApplicationHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sahe),
-	})
+	objectMap := make(map[string]interface{})
+	if sahe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = sahe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = sahe.AggregatedHealthState
+	if sahe.Description != nil {
+		objectMap["Description"] = sahe.Description
+	}
+	objectMap["Kind"] = sahe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for SystemApplicationHealthEvaluation.
@@ -14867,25 +15493,29 @@ func (sahe SystemApplicationHealthEvaluation) AsBasicHealthEvaluation() (BasicHe
 	return &sahe, true
 }
 
-// TestErrorChaosEvent describes a Chaos event that gets generated when an unexpected event occurs in the Chaos engine.
-// For example, due to the cluster snapshot being inconsistent, while faulting a faultable entity, Chaos found that the
-// entity was alreay faulted -- which would be an unexpected event.
+// TestErrorChaosEvent describes a Chaos event that gets generated when an unexpected event occurs in the Chaos
+// engine.
+// For example, due to the cluster snapshot being inconsistent, while faulting a faultable entity, Chaos found that
+// the entity was alreay faulted -- which would be an unexpected event.
 type TestErrorChaosEvent struct {
+	Reason       *string    `json:"Reason,omitempty"`
 	TimeStampUtc *date.Time `json:"TimeStampUtc,omitempty"`
 	// Kind - Possible values include: 'KindChaosEvent', 'KindExecutingFaults', 'KindStarted', 'KindStopped', 'KindTestError', 'KindValidationFailed', 'KindWaiting'
-	Kind   KindBasicChaosEvent `json:"Kind,omitempty"`
-	Reason *string             `json:"Reason,omitempty"`
+	Kind KindBasicChaosEvent `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for TestErrorChaosEvent.
 func (tece TestErrorChaosEvent) MarshalJSON() ([]byte, error) {
 	tece.Kind = KindTestError
-	type Alias TestErrorChaosEvent
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(tece),
-	})
+	objectMap := make(map[string]interface{})
+	if tece.Reason != nil {
+		objectMap["Reason"] = tece.Reason
+	}
+	if tece.TimeStampUtc != nil {
+		objectMap["TimeStampUtc"] = tece.TimeStampUtc
+	}
+	objectMap["Kind"] = tece.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsExecutingFaultsChaosEvent is the BasicChaosEvent implementation for TestErrorChaosEvent.
@@ -14931,8 +15561,6 @@ func (tece TestErrorChaosEvent) AsBasicChaosEvent() (BasicChaosEvent, bool) {
 // UniformInt64RangePartitionSchemeDescription describes a partitioning scheme where an integer range is allocated
 // evenly across a number of partitions.
 type UniformInt64RangePartitionSchemeDescription struct {
-	// PartitionScheme - Possible values include: 'PartitionSchemePartitionSchemeDescription', 'PartitionSchemeNamed', 'PartitionSchemeSingleton', 'PartitionSchemeUniformInt64Range'
-	PartitionScheme PartitionScheme `json:"PartitionScheme,omitempty"`
 	// Count - The number of partitions.
 	Count *int32 `json:"Count,omitempty"`
 	// LowKey - String indicating the lower bound of the partition key range that
@@ -14941,17 +15569,25 @@ type UniformInt64RangePartitionSchemeDescription struct {
 	// HighKey - String indicating the upper bound of the partition key range that
 	// should be split between the partition ‘Count’
 	HighKey *string `json:"HighKey,omitempty"`
+	// PartitionScheme - Possible values include: 'PartitionSchemePartitionSchemeDescription', 'PartitionSchemeNamed', 'PartitionSchemeSingleton', 'PartitionSchemeUniformInt64Range'
+	PartitionScheme PartitionScheme `json:"PartitionScheme,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for UniformInt64RangePartitionSchemeDescription.
 func (ui6rpsd UniformInt64RangePartitionSchemeDescription) MarshalJSON() ([]byte, error) {
 	ui6rpsd.PartitionScheme = PartitionSchemeUniformInt64Range
-	type Alias UniformInt64RangePartitionSchemeDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ui6rpsd),
-	})
+	objectMap := make(map[string]interface{})
+	if ui6rpsd.Count != nil {
+		objectMap["Count"] = ui6rpsd.Count
+	}
+	if ui6rpsd.LowKey != nil {
+		objectMap["LowKey"] = ui6rpsd.LowKey
+	}
+	if ui6rpsd.HighKey != nil {
+		objectMap["HighKey"] = ui6rpsd.HighKey
+	}
+	objectMap["PartitionScheme"] = ui6rpsd.PartitionScheme
+	return json.Marshal(objectMap)
 }
 
 // AsNamedPartitionSchemeDescription is the BasicPartitionSchemeDescription implementation for UniformInt64RangePartitionSchemeDescription.
@@ -14990,7 +15626,7 @@ type UnprovisionFabricDescription struct {
 // UpdateClusterUpgradeDescription parameters for updating a cluster upgrade.
 type UpdateClusterUpgradeDescription struct {
 	// UpgradeKind - Possible values include: 'UpgradeKind2Invalid', 'UpgradeKind2Rolling', 'UpgradeKind2RollingForceRestart'
-	UpgradeKind                 UpgradeKind                       `json:"UpgradeKind,omitempty"`
+	UpgradeKind                 UpgradeKind2                      `json:"UpgradeKind,omitempty"`
 	UpdateDescription           *RollingUpgradeUpdateDescription  `json:"UpdateDescription,omitempty"`
 	ClusterHealthPolicy         *ClusterHealthPolicy              `json:"ClusterHealthPolicy,omitempty"`
 	EnableDeltaHealthEvaluation *bool                             `json:"EnableDeltaHealthEvaluation,omitempty"`
@@ -14998,16 +15634,11 @@ type UpdateClusterUpgradeDescription struct {
 	ApplicationHealthPolicyMap  *ApplicationHealthPolicies        `json:"ApplicationHealthPolicyMap,omitempty"`
 }
 
-// UpgradeDomainDeltaNodesCheckHealthEvaluation represents health evaluation for delta unhealthy cluster nodes in an
-// upgrade domain, containing health evaluations for each unhealthy node that impacted current aggregated health state.
+// UpgradeDomainDeltaNodesCheckHealthEvaluation represents health evaluation for delta unhealthy cluster nodes in
+// an upgrade domain, containing health evaluations for each unhealthy node that impacted current aggregated health
+// state.
 // Can be returned during cluster upgrade when cluster aggregated health state is Warning or Error.
 type UpgradeDomainDeltaNodesCheckHealthEvaluation struct {
-	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
-	Description *string `json:"Description,omitempty"`
-	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
-	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 	// UpgradeDomainName - Name of the upgrade domain where nodes health is currently evaluated.
 	UpgradeDomainName *string `json:"UpgradeDomainName,omitempty"`
 	// BaselineErrorCount - Number of upgrade domain nodes with aggregated heath state Error in the health store at the beginning of the cluster upgrade.
@@ -15019,17 +15650,42 @@ type UpgradeDomainDeltaNodesCheckHealthEvaluation struct {
 	// TotalCount - Total number of upgrade domain nodes in the health store.
 	TotalCount           *int64                     `json:"TotalCount,omitempty"`
 	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
+	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
+	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
+	Description *string `json:"Description,omitempty"`
+	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
+	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for UpgradeDomainDeltaNodesCheckHealthEvaluation.
 func (uddnche UpgradeDomainDeltaNodesCheckHealthEvaluation) MarshalJSON() ([]byte, error) {
 	uddnche.Kind = KindUpgradeDomainDeltaNodesCheck
-	type Alias UpgradeDomainDeltaNodesCheckHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(uddnche),
-	})
+	objectMap := make(map[string]interface{})
+	if uddnche.UpgradeDomainName != nil {
+		objectMap["UpgradeDomainName"] = uddnche.UpgradeDomainName
+	}
+	if uddnche.BaselineErrorCount != nil {
+		objectMap["BaselineErrorCount"] = uddnche.BaselineErrorCount
+	}
+	if uddnche.BaselineTotalCount != nil {
+		objectMap["BaselineTotalCount"] = uddnche.BaselineTotalCount
+	}
+	if uddnche.MaxPercentDeltaUnhealthyNodes != nil {
+		objectMap["MaxPercentDeltaUnhealthyNodes"] = uddnche.MaxPercentDeltaUnhealthyNodes
+	}
+	if uddnche.TotalCount != nil {
+		objectMap["TotalCount"] = uddnche.TotalCount
+	}
+	if uddnche.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = uddnche.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = uddnche.AggregatedHealthState
+	if uddnche.Description != nil {
+		objectMap["Description"] = uddnche.Description
+	}
+	objectMap["Kind"] = uddnche.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for UpgradeDomainDeltaNodesCheckHealthEvaluation.
@@ -15149,16 +15805,11 @@ type UpgradeDomainInfo struct {
 	State State `json:"State,omitempty"`
 }
 
-// UpgradeDomainNodesHealthEvaluation represents health evaluation for cluster nodes in an upgrade domain, containing
-// health evaluations for each unhealthy node that impacted current aggregated health state. Can be returned when
-// evaluating cluster health during cluster upgrade and the aggregated health state is either Error or Warning.
+// UpgradeDomainNodesHealthEvaluation represents health evaluation for cluster nodes in an upgrade domain,
+// containing health evaluations for each unhealthy node that impacted current aggregated health state. Can be
+// returned when evaluating cluster health during cluster upgrade and the aggregated health state is either Error
+// or Warning.
 type UpgradeDomainNodesHealthEvaluation struct {
-	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
-	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
-	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
-	Description *string `json:"Description,omitempty"`
-	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
-	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 	// UpgradeDomainName - Name of the upgrade domain where nodes health is currently evaluated.
 	UpgradeDomainName *string `json:"UpgradeDomainName,omitempty"`
 	// MaxPercentUnhealthyNodes - Maximum allowed percentage of unhealthy nodes from the ClusterHealthPolicy.
@@ -15166,17 +15817,36 @@ type UpgradeDomainNodesHealthEvaluation struct {
 	// TotalCount - Total number of nodes in the current upgrade domain.
 	TotalCount           *int64                     `json:"TotalCount,omitempty"`
 	UnhealthyEvaluations *[]HealthEvaluationWrapper `json:"UnhealthyEvaluations,omitempty"`
+	// AggregatedHealthState - Possible values include: 'Invalid', 'Ok', 'Warning', 'Error', 'Unknown'
+	AggregatedHealthState AggregatedHealthState `json:"AggregatedHealthState,omitempty"`
+	// Description - Description of the health evaluation, which represents a summary of the evaluation process.
+	Description *string `json:"Description,omitempty"`
+	// Kind - Possible values include: 'KindHealthEvaluation', 'KindApplication', 'KindApplications', 'KindApplicationTypeApplications', 'KindDeltaNodesCheck', 'KindDeployedApplication', 'KindDeployedApplications', 'KindDeployedServicePackage', 'KindDeployedServicePackages', 'KindEvent', 'KindNode', 'KindNodes', 'KindPartition', 'KindPartitions', 'KindReplica', 'KindReplicas', 'KindService', 'KindServices', 'KindSystemApplication', 'KindUpgradeDomainDeltaNodesCheck', 'KindUpgradeDomainNodes'
+	Kind KindBasicHealthEvaluation `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for UpgradeDomainNodesHealthEvaluation.
 func (udnhe UpgradeDomainNodesHealthEvaluation) MarshalJSON() ([]byte, error) {
 	udnhe.Kind = KindUpgradeDomainNodes
-	type Alias UpgradeDomainNodesHealthEvaluation
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(udnhe),
-	})
+	objectMap := make(map[string]interface{})
+	if udnhe.UpgradeDomainName != nil {
+		objectMap["UpgradeDomainName"] = udnhe.UpgradeDomainName
+	}
+	if udnhe.MaxPercentUnhealthyNodes != nil {
+		objectMap["MaxPercentUnhealthyNodes"] = udnhe.MaxPercentUnhealthyNodes
+	}
+	if udnhe.TotalCount != nil {
+		objectMap["TotalCount"] = udnhe.TotalCount
+	}
+	if udnhe.UnhealthyEvaluations != nil {
+		objectMap["UnhealthyEvaluations"] = udnhe.UnhealthyEvaluations
+	}
+	objectMap["AggregatedHealthState"] = udnhe.AggregatedHealthState
+	if udnhe.Description != nil {
+		objectMap["Description"] = udnhe.Description
+	}
+	objectMap["Kind"] = udnhe.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsApplicationHealthEvaluation is the BasicHealthEvaluation implementation for UpgradeDomainNodesHealthEvaluation.
@@ -15291,21 +15961,24 @@ func (udnhe UpgradeDomainNodesHealthEvaluation) AsBasicHealthEvaluation() (Basic
 
 // ValidationFailedChaosEvent chaos event corresponding to a failure during validation.
 type ValidationFailedChaosEvent struct {
+	Reason       *string    `json:"Reason,omitempty"`
 	TimeStampUtc *date.Time `json:"TimeStampUtc,omitempty"`
 	// Kind - Possible values include: 'KindChaosEvent', 'KindExecutingFaults', 'KindStarted', 'KindStopped', 'KindTestError', 'KindValidationFailed', 'KindWaiting'
-	Kind   KindBasicChaosEvent `json:"Kind,omitempty"`
-	Reason *string             `json:"Reason,omitempty"`
+	Kind KindBasicChaosEvent `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ValidationFailedChaosEvent.
 func (vfce ValidationFailedChaosEvent) MarshalJSON() ([]byte, error) {
 	vfce.Kind = KindValidationFailed
-	type Alias ValidationFailedChaosEvent
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(vfce),
-	})
+	objectMap := make(map[string]interface{})
+	if vfce.Reason != nil {
+		objectMap["Reason"] = vfce.Reason
+	}
+	if vfce.TimeStampUtc != nil {
+		objectMap["TimeStampUtc"] = vfce.TimeStampUtc
+	}
+	objectMap["Kind"] = vfce.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsExecutingFaultsChaosEvent is the BasicChaosEvent implementation for ValidationFailedChaosEvent.
@@ -15348,24 +16021,25 @@ func (vfce ValidationFailedChaosEvent) AsBasicChaosEvent() (BasicChaosEvent, boo
 	return &vfce, true
 }
 
-// WaitForInbuildReplicaSafetyCheck safety check that waits for the replica build operation to finish. This indiciates
-// that there is a replica that is going through the copy or is providing data for building another replica. Bring the
-// node down will abort this copy operation which are typoically expensive involving data movements.
+// WaitForInbuildReplicaSafetyCheck safety check that waits for the replica build operation to finish. This
+// indiciates that there is a replica that is going through the copy or is providing data for building another
+// replica. Bring the node down will abort this copy operation which are typoically expensive involving data
+// movements.
 type WaitForInbuildReplicaSafetyCheck struct {
+	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
 	// Kind - Possible values include: 'KindSafetyCheck', 'KindPartitionSafetyCheck', 'KindEnsureAvailability', 'KindEnsurePartitionQuorum', 'KindEnsureSeedNodeQuorum', 'KindWaitForInbuildReplica', 'KindWaitForPrimaryPlacement', 'KindWaitForPrimarySwap', 'KindWaitForReconfiguration'
-	Kind        KindBasicSafetyCheck `json:"Kind,omitempty"`
-	PartitionID *uuid.UUID           `json:"PartitionId,omitempty"`
+	Kind KindBasicSafetyCheck `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for WaitForInbuildReplicaSafetyCheck.
 func (wfirsc WaitForInbuildReplicaSafetyCheck) MarshalJSON() ([]byte, error) {
 	wfirsc.Kind = KindWaitForInbuildReplica
-	type Alias WaitForInbuildReplicaSafetyCheck
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(wfirsc),
-	})
+	objectMap := make(map[string]interface{})
+	if wfirsc.PartitionID != nil {
+		objectMap["PartitionId"] = wfirsc.PartitionID
+	}
+	objectMap["Kind"] = wfirsc.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsPartitionSafetyCheck is the BasicSafetyCheck implementation for WaitForInbuildReplicaSafetyCheck.
@@ -15423,23 +16097,23 @@ func (wfirsc WaitForInbuildReplicaSafetyCheck) AsBasicSafetyCheck() (BasicSafety
 	return &wfirsc, true
 }
 
-// WaitForPrimaryPlacementSafetyCheck safety check that waits for the primary replica that was moved out of the node
-// due to upgrade to be placed back again on that node.
+// WaitForPrimaryPlacementSafetyCheck safety check that waits for the primary replica that was moved out of the
+// node due to upgrade to be placed back again on that node.
 type WaitForPrimaryPlacementSafetyCheck struct {
+	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
 	// Kind - Possible values include: 'KindSafetyCheck', 'KindPartitionSafetyCheck', 'KindEnsureAvailability', 'KindEnsurePartitionQuorum', 'KindEnsureSeedNodeQuorum', 'KindWaitForInbuildReplica', 'KindWaitForPrimaryPlacement', 'KindWaitForPrimarySwap', 'KindWaitForReconfiguration'
-	Kind        KindBasicSafetyCheck `json:"Kind,omitempty"`
-	PartitionID *uuid.UUID           `json:"PartitionId,omitempty"`
+	Kind KindBasicSafetyCheck `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for WaitForPrimaryPlacementSafetyCheck.
 func (wfppsc WaitForPrimaryPlacementSafetyCheck) MarshalJSON() ([]byte, error) {
 	wfppsc.Kind = KindWaitForPrimaryPlacement
-	type Alias WaitForPrimaryPlacementSafetyCheck
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(wfppsc),
-	})
+	objectMap := make(map[string]interface{})
+	if wfppsc.PartitionID != nil {
+		objectMap["PartitionId"] = wfppsc.PartitionID
+	}
+	objectMap["Kind"] = wfppsc.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsPartitionSafetyCheck is the BasicSafetyCheck implementation for WaitForPrimaryPlacementSafetyCheck.
@@ -15500,20 +16174,20 @@ func (wfppsc WaitForPrimaryPlacementSafetyCheck) AsBasicSafetyCheck() (BasicSafe
 // WaitForPrimarySwapSafetyCheck safety check that waits for the primary replica to be moved out of the node before
 // starting an upgrade to ensure the availability of the primary replica for the partition.
 type WaitForPrimarySwapSafetyCheck struct {
+	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
 	// Kind - Possible values include: 'KindSafetyCheck', 'KindPartitionSafetyCheck', 'KindEnsureAvailability', 'KindEnsurePartitionQuorum', 'KindEnsureSeedNodeQuorum', 'KindWaitForInbuildReplica', 'KindWaitForPrimaryPlacement', 'KindWaitForPrimarySwap', 'KindWaitForReconfiguration'
-	Kind        KindBasicSafetyCheck `json:"Kind,omitempty"`
-	PartitionID *uuid.UUID           `json:"PartitionId,omitempty"`
+	Kind KindBasicSafetyCheck `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for WaitForPrimarySwapSafetyCheck.
 func (wfpssc WaitForPrimarySwapSafetyCheck) MarshalJSON() ([]byte, error) {
 	wfpssc.Kind = KindWaitForPrimarySwap
-	type Alias WaitForPrimarySwapSafetyCheck
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(wfpssc),
-	})
+	objectMap := make(map[string]interface{})
+	if wfpssc.PartitionID != nil {
+		objectMap["PartitionId"] = wfpssc.PartitionID
+	}
+	objectMap["Kind"] = wfpssc.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsPartitionSafetyCheck is the BasicSafetyCheck implementation for WaitForPrimarySwapSafetyCheck.
@@ -15574,20 +16248,20 @@ func (wfpssc WaitForPrimarySwapSafetyCheck) AsBasicSafetyCheck() (BasicSafetyChe
 // WaitForReconfigurationSafetyCheck safety check that waits for the current reconfiguration of the partition to be
 // completed before starting an upgrade.
 type WaitForReconfigurationSafetyCheck struct {
+	PartitionID *uuid.UUID `json:"PartitionId,omitempty"`
 	// Kind - Possible values include: 'KindSafetyCheck', 'KindPartitionSafetyCheck', 'KindEnsureAvailability', 'KindEnsurePartitionQuorum', 'KindEnsureSeedNodeQuorum', 'KindWaitForInbuildReplica', 'KindWaitForPrimaryPlacement', 'KindWaitForPrimarySwap', 'KindWaitForReconfiguration'
-	Kind        KindBasicSafetyCheck `json:"Kind,omitempty"`
-	PartitionID *uuid.UUID           `json:"PartitionId,omitempty"`
+	Kind KindBasicSafetyCheck `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for WaitForReconfigurationSafetyCheck.
 func (wfrsc WaitForReconfigurationSafetyCheck) MarshalJSON() ([]byte, error) {
 	wfrsc.Kind = KindWaitForReconfiguration
-	type Alias WaitForReconfigurationSafetyCheck
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(wfrsc),
-	})
+	objectMap := make(map[string]interface{})
+	if wfrsc.PartitionID != nil {
+		objectMap["PartitionId"] = wfrsc.PartitionID
+	}
+	objectMap["Kind"] = wfrsc.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsPartitionSafetyCheck is the BasicSafetyCheck implementation for WaitForReconfigurationSafetyCheck.
@@ -15645,24 +16319,27 @@ func (wfrsc WaitForReconfigurationSafetyCheck) AsBasicSafetyCheck() (BasicSafety
 	return &wfrsc, true
 }
 
-// WaitingChaosEvent describes a Chaos event that gets generated when Chaos is waiting for the cluster to become ready
-// for faulting, for example, Chaos may be waiting for the on-going upgrade to finish.
+// WaitingChaosEvent describes a Chaos event that gets generated when Chaos is waiting for the cluster to become
+// ready for faulting, for example, Chaos may be waiting for the on-going upgrade to finish.
 type WaitingChaosEvent struct {
+	Reason       *string    `json:"Reason,omitempty"`
 	TimeStampUtc *date.Time `json:"TimeStampUtc,omitempty"`
 	// Kind - Possible values include: 'KindChaosEvent', 'KindExecutingFaults', 'KindStarted', 'KindStopped', 'KindTestError', 'KindValidationFailed', 'KindWaiting'
-	Kind   KindBasicChaosEvent `json:"Kind,omitempty"`
-	Reason *string             `json:"Reason,omitempty"`
+	Kind KindBasicChaosEvent `json:"Kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for WaitingChaosEvent.
 func (wce WaitingChaosEvent) MarshalJSON() ([]byte, error) {
 	wce.Kind = KindWaiting
-	type Alias WaitingChaosEvent
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(wce),
-	})
+	objectMap := make(map[string]interface{})
+	if wce.Reason != nil {
+		objectMap["Reason"] = wce.Reason
+	}
+	if wce.TimeStampUtc != nil {
+		objectMap["TimeStampUtc"] = wce.TimeStampUtc
+	}
+	objectMap["Kind"] = wce.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsExecutingFaultsChaosEvent is the BasicChaosEvent implementation for WaitingChaosEvent.

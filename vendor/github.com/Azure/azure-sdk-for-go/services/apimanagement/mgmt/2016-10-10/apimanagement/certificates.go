@@ -44,8 +44,8 @@ func NewCertificatesClientWithBaseURI(baseURI string, subscriptionID string) Cer
 //
 // resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
 // certificateID is identifier of the certificate entity. Must be unique in the current API Management service
-// instance. parameters is create parameters. ifMatch is the entity state (Etag) version of the certificate to update.
-// A value of "*" can be used for If-Match to unconditionally apply the operation..
+// instance. parameters is create parameters. ifMatch is the entity state (Etag) version of the certificate to
+// update. A value of "*" can be used for If-Match to unconditionally apply the operation..
 func (client CertificatesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, certificateID string, parameters CertificateCreateOrUpdateParameters, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -59,7 +59,7 @@ func (client CertificatesClient) CreateOrUpdate(ctx context.Context, resourceGro
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Data", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.Password", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.CertificatesClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.CertificatesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, certificateID, parameters, ifMatch)
@@ -134,8 +134,8 @@ func (client CertificatesClient) CreateOrUpdateResponder(resp *http.Response) (r
 //
 // resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
 // certificateID is identifier of the certificate entity. Must be unique in the current API Management service
-// instance. ifMatch is the entity state (Etag) version of the certificate to delete. A value of "*" can be used for
-// If-Match to unconditionally apply the operation.
+// instance. ifMatch is the entity state (Etag) version of the certificate to delete. A value of "*" can be used
+// for If-Match to unconditionally apply the operation.
 func (client CertificatesClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, certificateID string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -146,7 +146,7 @@ func (client CertificatesClient) Delete(ctx context.Context, resourceGroupName s
 			Constraints: []validation.Constraint{{Target: "certificateID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "certificateID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "certificateID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.CertificatesClient", "Delete")
+		return result, validation.NewError("apimanagement.CertificatesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, certificateID, ifMatch)
@@ -227,7 +227,7 @@ func (client CertificatesClient) Get(ctx context.Context, resourceGroupName stri
 			Constraints: []validation.Constraint{{Target: "certificateID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "certificateID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "certificateID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.CertificatesClient", "Get")
+		return result, validation.NewError("apimanagement.CertificatesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, certificateID)
@@ -295,14 +295,14 @@ func (client CertificatesClient) GetResponder(resp *http.Response) (result Certi
 
 // ListByService lists a collection of all certificates in the specified service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. filter
-// is | Field          | Supported operators    | Supported functions                         |
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// filter is | Field          | Supported operators    | Supported functions                         |
 // |----------------|------------------------|---------------------------------------------|
 // | id             | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | subject        | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | thumbprint     | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | expirationDate | ge, le, eq, ne, gt, lt | N/A                                         | top is number of records
-// to return. skip is number of records to skip.
+// | expirationDate | ge, le, eq, ne, gt, lt | N/A                                         | top is number of
+// records to return. skip is number of records to skip.
 func (client CertificatesClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result CertificateCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -315,7 +315,7 @@ func (client CertificatesClient) ListByService(ctx context.Context, resourceGrou
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.CertificatesClient", "ListByService")
+		return result, validation.NewError("apimanagement.CertificatesClient", "ListByService", err.Error())
 	}
 
 	result.fn = client.listByServiceNextResults

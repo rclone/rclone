@@ -16,6 +16,12 @@ const (
 	// Could not perform an operation on a container that does not exist.
 	ErrCodeContainerNotFoundException = "ContainerNotFoundException"
 
+	// ErrCodeCorsPolicyNotFoundException for service response error code
+	// "CorsPolicyNotFoundException".
+	//
+	// Could not perform an operation on a policy that does not exist.
+	ErrCodeCorsPolicyNotFoundException = "CorsPolicyNotFoundException"
+
 	// ErrCodeInternalServerError for service response error code
 	// "InternalServerError".
 	//

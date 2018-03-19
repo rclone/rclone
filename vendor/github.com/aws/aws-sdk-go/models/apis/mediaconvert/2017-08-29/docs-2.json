@@ -189,7 +189,7 @@
     "AudioNormalizationSettings": {
       "base": "Advanced audio normalization settings.",
       "refs": {
-        "AudioDescription$AudioNormalizationSettings": "Settings for Audio Normalization"
+        "AudioDescription$AudioNormalizationSettings": null
       }
     },
     "AudioSelector": {
@@ -300,9 +300,9 @@
       }
     },
     "CaptionDestinationType": {
-      "base": null,
+      "base": "Type of Caption output, including Burn-In, Embedded, SCC, SRT, TTML, WebVTT, DVB-Sub, Teletext.",
       "refs": {
-        "CaptionDestinationSettings$DestinationType": "Type of Caption output, including Burn-In, Embedded, SCC, SRT, TTML, WebVTT, DVB-Sub, Teletext."
+        "CaptionDestinationSettings$DestinationType": null
       }
     },
     "CaptionSelector": {
@@ -1460,9 +1460,9 @@
       "refs": {
         "AudioSelector$Pids": "Selects a specific PID from within an audio source (e.g. 257 selects PID 0x101).",
         "AudioSelector$Tracks": "Identify the channel to include in this selector by entering the 1-based track index.  To combine several tracks, enter a comma-separated list, e.g. \"1,2,3\" for tracks 1-3.",
-        "M2tsSettings$AudioPids": "Packet Identifier (PID) of the elementary audio stream(s) in the transport stream. Multiple values are accepted, and can be entered in ranges and/or by comma separation. Can be entered as decimal or hexadecimal values.",
-        "M2tsSettings$DvbSubPids": "Packet Identifier (PID) for input source DVB Subtitle data to this output. Multiple values are accepted, and can be entered in ranges and/or by comma separation. Can be entered as decimal or hexadecimal values.",
-        "M3u8Settings$AudioPids": "Packet Identifier (PID) of the elementary audio stream(s) in the transport stream. Multiple values are accepted, and can be entered in ranges and/or by comma separation. Can be entered as decimal or hexadecimal values.",
+        "M2tsSettings$AudioPids": "Packet Identifier (PID) of the elementary audio stream(s) in the transport stream. Multiple values are accepted, and can be entered in ranges and/or by comma separation.",
+        "M2tsSettings$DvbSubPids": "Packet Identifier (PID) for input source DVB Subtitle data to this output. Multiple values are accepted, and can be entered in ranges and/or by comma separation.",
+        "M3u8Settings$AudioPids": "Packet Identifier (PID) of the elementary audio stream(s) in the transport stream. Multiple values are accepted, and can be entered in ranges and/or by comma separation.",
         "OutputChannelMapping$InputChannels": "List of input channels"
       }
     },
@@ -1523,6 +1523,12 @@
         "M2tsSettings$EsRateInPes": null
       }
     },
+    "M2tsNielsenId3": {
+      "base": "If INSERT, Nielsen inaudible tones for media tracking will be detected in the input audio and an equivalent ID3 tag will be inserted in the output.",
+      "refs": {
+        "M2tsSettings$NielsenId3": null
+      }
+    },
     "M2tsPcrControl": {
       "base": "When set to PCR_EVERY_PES_PACKET, a Program Clock Reference value is inserted for every Packetized Elementary Stream (PES) header. This is effective only when the PCR PID is the same as the video or audio elementary stream.",
       "refs": {
@@ -1536,7 +1542,7 @@
       }
     },
     "M2tsScte35Source": {
-      "base": "Enables SCTE-35 passthrough (scte35Source) to pass any SCTE-35 signals from input to output. This is only available for certain containers.",
+      "base": "Enables SCTE-35 passthrough (scte35Source) to pass any SCTE-35 signals from input to output.",
       "refs": {
         "M2tsSettings$Scte35Source": null
       }
@@ -1559,6 +1565,12 @@
         "ContainerSettings$M2tsSettings": null
       }
     },
+    "M3u8NielsenId3": {
+      "base": "If INSERT, Nielsen inaudible tones for media tracking will be detected in the input audio and an equivalent ID3 tag will be inserted in the output.",
+      "refs": {
+        "M3u8Settings$NielsenId3": null
+      }
+    },
     "M3u8PcrControl": {
       "base": "When set to PCR_EVERY_PES_PACKET a Program Clock Reference value is inserted for every Packetized Elementary Stream (PES) header. This parameter is effective only when the PCR PID is the same as the video or audio elementary stream.",
       "refs": {
@@ -1566,7 +1578,7 @@
       }
     },
     "M3u8Scte35Source": {
-      "base": "Enables SCTE-35 passthrough (scte35Source) to pass any SCTE-35 signals from input to output. This is only available for certain containers.",
+      "base": "Enables SCTE-35 passthrough (scte35Source) to pass any SCTE-35 signals from input to output.",
       "refs": {
         "M3u8Settings$Scte35Source": null
       }
@@ -1885,13 +1897,13 @@
       }
     },
     "OutputGroupType": {
-      "base": null,
+      "base": "Type of output group (File group, Apple HLS, DASH ISO, Microsoft Smooth Streaming)",
       "refs": {
-        "OutputGroupSettings$Type": "Type of output group (File group, Apple HLS, DASH ISO, Microsoft Smooth Streaming)"
+        "OutputGroupSettings$Type": null
       }
     },
     "OutputSdt": {
-      "base": "Selects method of inserting SDT information into output stream.  \"Follow input SDT\" copies SDT information from input stream to  output stream. \"Follow input SDT if present\" copies SDT information from  input stream to output stream if SDT information is present in the input,  otherwise it will fall back on the user-defined values. Enter \"SDT  Manually\" means user will enter the SDT information. \"No SDT\" means output  stream will not contain SDT information.",
+      "base": "Selects method of inserting SDT information into output stream.  \"Follow input SDT\" copies SDT information from input stream to  output stream. \"Follow input SDT if present\" copies SDT information from  input stream to output stream if SDT information is present in the input, otherwise it will fall back on the user-defined values. Enter \"SDT  Manually\" means user will enter the SDT information. \"No SDT\" means output  stream will not contain SDT information.",
       "refs": {
         "DvbSdtSettings$OutputSdt": null
       }
@@ -2085,7 +2097,7 @@
       }
     },
     "TimedMetadata": {
-      "base": "If PASSTHROUGH, inserts ID3 timed metadata from the timed_metadata REST command into this output. Only available for certain containers.",
+      "base": "If PASSTHROUGH, inserts ID3 timed metadata from the timed_metadata REST command into this output.",
       "refs": {
         "M3u8Settings$TimedMetadata": null
       }
@@ -2109,9 +2121,9 @@
       }
     },
     "TtmlDestinationSettings": {
-      "base": "Settings for TTML caption output",
+      "base": "Settings specific to TTML caption outputs, including Pass style information (TtmlStylePassthrough).",
       "refs": {
-        "CaptionDestinationSettings$TtmlDestinationSettings": "Settings specific to TTML caption outputs, including Pass style information (TtmlStylePassthrough)."
+        "CaptionDestinationSettings$TtmlDestinationSettings": null
       }
     },
     "TtmlStylePassthrough": {
@@ -2123,9 +2135,9 @@
     "Type": {
       "base": null,
       "refs": {
-        "JobTemplate$Type": "A job template can be of two types: system or custom. System or built-in job templates can’t be modified or deleted by the user.",
-        "Preset$Type": "A preset can be of two types: system or custom. System or built-in preset can’t be modified or deleted by the user.",
-        "Queue$Type": "A queue can be of two types: system or custom. System or built-in queues can’t be modified or deleted by the user."
+        "JobTemplate$Type": "A job template can be of two types: system or custom. System or built-in job templates can't be modified or deleted by the user.",
+        "Preset$Type": "A preset can be of two types: system or custom. System or built-in preset can't be modified or deleted by the user.",
+        "Queue$Type": "A queue can be of two types: system or custom. System or built-in queues can't be modified or deleted by the user."
       }
     },
     "UpdateJobTemplateRequest": {
@@ -2352,29 +2364,30 @@
         "ListQueuesRequest$MaxResults": "Optional. Number of queues, up to twenty, that will be returned at one time.",
         "M2tsSettings$AudioFramesPerPes": "The number of audio frames to insert for each PES packet.",
         "M2tsSettings$Bitrate": "The output bitrate of the transport stream in bits per second. Setting to 0 lets the muxer automatically determine the appropriate bitrate. Other common values are 3750000, 7500000, and 15000000.",
-        "M2tsSettings$DvbTeletextPid": "Packet Identifier (PID) for input source DVB Teletext data to this output. Can be entered as a decimal or hexadecimal value.",
+        "M2tsSettings$DvbTeletextPid": "Packet Identifier (PID) for input source DVB Teletext data to this output.",
         "M2tsSettings$MaxPcrInterval": "Maximum time in milliseconds between Program Clock References (PCRs) inserted into the transport stream.",
         "M2tsSettings$MinEbpInterval": "When set, enforces that Encoder Boundary Points do not come within the specified time interval of each other by looking ahead at input video. If another EBP is going to come in within the specified time interval, the current EBP is not emitted, and the segment is \"stretched\" to the next marker. The lookahead value does not add latency to the system. The Live Event must be configured elsewhere to create sufficient latency to make the lookahead accurate.",
         "M2tsSettings$PatInterval": "The number of milliseconds between instances of this table in the output transport stream.",
-        "M2tsSettings$PcrPid": "Packet Identifier (PID) of the Program Clock Reference (PCR) in the transport stream. When no value is given, the encoder will assign the same value as the Video PID. Can be entered as a decimal or hexadecimal value.",
+        "M2tsSettings$PcrPid": "Packet Identifier (PID) of the Program Clock Reference (PCR) in the transport stream. When no value is given, the encoder will assign the same value as the Video PID.",
         "M2tsSettings$PmtInterval": "The number of milliseconds between instances of this table in the output transport stream.",
-        "M2tsSettings$PmtPid": "Packet Identifier (PID) for the Program Map Table (PMT) in the transport stream. Can be entered as a decimal or hexadecimal value.",
-        "M2tsSettings$PrivateMetadataPid": "Packet Identifier (PID) of the private metadata stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M2tsSettings$PmtPid": "Packet Identifier (PID) for the Program Map Table (PMT) in the transport stream.",
+        "M2tsSettings$PrivateMetadataPid": "Packet Identifier (PID) of the private metadata stream in the transport stream.",
         "M2tsSettings$ProgramNumber": "The value of the program number field in the Program Map Table.",
-        "M2tsSettings$Scte35Pid": "Packet Identifier (PID) of the SCTE-35 stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M2tsSettings$Scte35Pid": "Packet Identifier (PID) of the SCTE-35 stream in the transport stream.",
+        "M2tsSettings$TimedMetadataPid": "Packet Identifier (PID) of the timed metadata stream in the transport stream.",
         "M2tsSettings$TransportStreamId": "The value of the transport stream ID field in the Program Map Table.",
-        "M2tsSettings$VideoPid": "Packet Identifier (PID) of the elementary video stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M2tsSettings$VideoPid": "Packet Identifier (PID) of the elementary video stream in the transport stream.",
         "M3u8Settings$AudioFramesPerPes": "The number of audio frames to insert for each PES packet.",
         "M3u8Settings$PatInterval": "The number of milliseconds between instances of this table in the output transport stream.",
-        "M3u8Settings$PcrPid": "Packet Identifier (PID) of the Program Clock Reference (PCR) in the transport stream. When no value is given, the encoder will assign the same value as the Video PID. Can be entered as a decimal or hexadecimal value.",
+        "M3u8Settings$PcrPid": "Packet Identifier (PID) of the Program Clock Reference (PCR) in the transport stream. When no value is given, the encoder will assign the same value as the Video PID.",
         "M3u8Settings$PmtInterval": "The number of milliseconds between instances of this table in the output transport stream.",
-        "M3u8Settings$PmtPid": "Packet Identifier (PID) for the Program Map Table (PMT) in the transport stream. Can be entered as a decimal or hexadecimal value.",
-        "M3u8Settings$PrivateMetadataPid": "Packet Identifier (PID) of the private metadata stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M3u8Settings$PmtPid": "Packet Identifier (PID) for the Program Map Table (PMT) in the transport stream.",
+        "M3u8Settings$PrivateMetadataPid": "Packet Identifier (PID) of the private metadata stream in the transport stream.",
         "M3u8Settings$ProgramNumber": "The value of the program number field in the Program Map Table.",
-        "M3u8Settings$Scte35Pid": "Packet Identifier (PID) of the SCTE-35 stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
-        "M3u8Settings$TimedMetadataPid": "Packet Identifier (PID) of the timed metadata stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M3u8Settings$Scte35Pid": "Packet Identifier (PID) of the SCTE-35 stream in the transport stream.",
+        "M3u8Settings$TimedMetadataPid": "Packet Identifier (PID) of the timed metadata stream in the transport stream.",
         "M3u8Settings$TransportStreamId": "The value of the transport stream ID field in the Program Map Table.",
-        "M3u8Settings$VideoPid": "Packet Identifier (PID) of the elementary video stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M3u8Settings$VideoPid": "Packet Identifier (PID) of the elementary video stream in the transport stream.",
         "Mp2Settings$Bitrate": "Average bitrate in bits/second.",
         "Mp2Settings$Channels": "Set Channels to specify the number of channels in this output audio track. Choosing Mono in the console will give you 1 output channel; choosing Stereo will give you 2. In the API, valid values are 1 and 2.",
         "Mp2Settings$SampleRate": "Sample rate in hz.",
@@ -2390,7 +2403,7 @@
         "Mpeg2Settings$ParDenominator": "Pixel Aspect Ratio denominator.",
         "Mpeg2Settings$ParNumerator": "Pixel Aspect Ratio numerator.",
         "Mpeg2Settings$Softness": "Softness. Selects quantizer matrix, larger values reduce high-frequency content in the encoded image.",
-        "MsSmoothGroupSettings$FragmentLength": "Use Fragment length (FragmentLength) to specify the mp4 fragment sizes in seconds.  Fragment length must be compatible with GOP size and framerate.",
+        "MsSmoothGroupSettings$FragmentLength": "Use Fragment length (FragmentLength) to specify the mp4 fragment sizes in seconds. Fragment length must be compatible with GOP size and framerate.",
         "NielsenConfiguration$BreakoutCode": "Use Nielsen Configuration (NielsenConfiguration) to set the Nielsen measurement system breakout code. Supported values are 0, 3, 7, and 9.",
         "NoiseReducerFilterSettings$Strength": "Relative strength of noise reducing filter. Higher values produce stronger filtering.",
         "NoiseReducerSpatialFilterSettings$PostFilterSharpenStrength": "Specify strength of post noise reduction sharpening filter, with 0 disabling the filter and 3 enabling it at maximum strength.",
@@ -2426,7 +2439,7 @@
       "refs": {
         "AudioDescription$AudioSourceName": "Specifies which audio data to use from each input. In the simplest case, specify an \"Audio Selector\":#inputs-audio_selector by name based on its order within each input. For example if you specify \"Audio Selector 3\", then the third audio selector will be used from each input. If an input does not have an \"Audio Selector 3\", then the audio selector marked as \"default\" in that input will be used. If there is no audio selector marked as \"default\", silence will be inserted for the duration of that input. Alternatively, an \"Audio Selector Group\":#inputs-audio_selector_group name may be specified, with similar default/silence behavior. If no audio_source_name is specified, then \"Audio Selector 1\" will be chosen automatically.",
         "AudioDescription$StreamName": "Used for MS Smooth and Apple HLS outputs. Indicates the name displayed by the player (eg. English, or Director Commentary). Alphanumeric characters, spaces, and underscore are legal.",
-        "AudioSelector$ExternalAudioFileInput": "Specifies audio data from an external file source. Auto populated when Infer External Filename is checked",
+        "AudioSelector$ExternalAudioFileInput": "Specifies audio data from an external file source.",
         "AvailBlanking$AvailBlankingImage": "Blanking image to be used. Leave empty for solid black. Only bmp and png images are supported.",
         "CancelJobRequest$Id": "The Job ID of the job to be cancelled.",
         "CaptionDescription$CaptionSelectorName": "Specifies which \"Caption Selector\":#inputs-caption_selector to use from each input when generating captions. The name should be of the format \"Caption Selector <N>\", which denotes that the Nth Caption Selector will be used from each input.",
@@ -2458,7 +2471,7 @@
         "Endpoint$Url": "URL of endpoint",
         "ExceptionBody$Message": null,
         "FileGroupSettings$Destination": "Use Destination (Destination) to specify the S3 output location and the output filename base. Destination accepts format identifiers. If you do not specify the base filename in the URI, the service will use the filename of the input file. If your job has multiple inputs, the service uses the filename of the first input file.",
-        "FileSourceSettings$SourceFile": "External caption file used for loading captions. Accepted file extensions are 'scc', 'ttml', 'dfxp', 'stl', 'srt', and 'smi'. Auto-populated when Infer External Filename is checked.",
+        "FileSourceSettings$SourceFile": "External caption file used for loading captions. Accepted file extensions are 'scc', 'ttml', 'dfxp', 'stl', 'srt', and 'smi'.",
         "GetJobRequest$Id": "the job ID of the job.",
         "GetJobTemplateRequest$Name": "The name of the job template.",
         "GetPresetRequest$Name": "The name of the preset.",
@@ -2505,7 +2518,7 @@
         "MsSmoothGroupSettings$Destination": "Use Destination (Destination) to specify the S3 output location and the output filename base. Destination accepts format identifiers. If you do not specify the base filename in the URI, the service will use the filename of the input file. If your job has multiple inputs, the service uses the filename of the first input file.",
         "NielsenConfiguration$DistributorId": "Use Distributor ID (DistributorID) to specify the distributor ID that is assigned to your organization by Neilsen.",
         "Output$Extension": "Use Extension (Extension) to specify the file extension for outputs in File output groups. If you do not specify a value, the service will use default extensions by container type as follows * MPEG-2 transport stream, m2ts * Quicktime, mov * MXF container, mxf * MPEG-4 container, mp4 * No Container, the service will use codec extensions (e.g. AAC, H265, H265, AC3)",
-        "Output$NameModifier": "Use Name modifier (NameModifier) to have the service add a string to the end of each output filename. You specify the base filename as part of your destination URI. When you create multiple outputs in the same output group, Name modifier is required. Name modifier also accepts format identifiers. For DASH ISO outputs, if you use the format identifiers $Number$ or $Time$ in one output, you must use them in the same way in all outputs of the output group.",
+        "Output$NameModifier": "Use Name modifier (NameModifier) to have the service add a string to the end of each output filename. You specify the base filename as part of your destination URI. When you create multiple outputs in the same output group, Name modifier (NameModifier) is required. Name modifier also accepts format identifiers. For DASH ISO outputs, if you use the format identifiers $Number$ or $Time$ in one output, you must use them in the same way in all outputs of the output group.",
         "Output$Preset": "Use Preset (Preset) to specifiy a preset for your transcoding settings. Provide the system or custom preset name. You can specify either Preset (Preset) or Container settings (ContainerSettings), but not both.",
         "OutputGroup$CustomName": "Use Custom Group Name (CustomName) to specify a name for the output group. This value is displayed on the console and can make your job settings JSON more human-readable. It does not affect your outputs. Use up to twelve characters that are either letters, numbers, spaces, or underscores.",
         "OutputGroup$Name": "Name of the output group",
@@ -2522,12 +2535,12 @@
         "StaticKeyProvider$KeyFormatVersions": "Relates to DRM implementation. Either a single positive integer version value or a slash delimited list of version values (1/2/3).",
         "StaticKeyProvider$StaticKeyValue": "Relates to DRM implementation. Use a 32-character hexidecimal string to specify Key Value (StaticKeyValue).",
         "StaticKeyProvider$Url": "Relates to DRM implementation. The location of the license server used for protecting content.",
-        "TeletextDestinationSettings$PageNumber": "Set pageNumber to the Teletext page number for the destination captions for this output.  This value must be a three-digit hexadecimal string; strings ending in -FF are invalid. If you are passing through the entire set of Teletext data, do not use this field.",
+        "TeletextDestinationSettings$PageNumber": "Set pageNumber to the Teletext page number for the destination captions for this output. This value must be a three-digit hexadecimal string; strings ending in -FF are invalid. If you are passing through the entire set of Teletext data, do not use this field.",
         "TeletextSourceSettings$PageNumber": "Use Page Number (PageNumber) to specify the three-digit hexadecimal page number that will be used for Teletext captions. Do not use this setting if you are passing through teletext from the input source to output.",
         "TimecodeBurnin$Prefix": "Use Prefix (Prefix) to place ASCII characters before any burned-in timecode. For example, a prefix of \"EZ-\" will result in the timecode \"EZ-00:00:00:00\". Provide either the characters themselves or the ASCII code equivalents. The supported range of characters is 0x20 through 0x7e. This includes letters, numbers, and all special characters represented on a standard English keyboard.",
         "TimecodeConfig$Anchor": "If you use an editing platform that relies on an anchor timecode, use Anchor Timecode (Anchor) to specify a timecode that will match the input video frame to the output video frame. Use 24-hour format with frame number, (HH:MM:SS:FF) or (HH:MM:SS;FF). This setting ignores framerate conversion. System behavior for Anchor Timecode varies depending on your setting for Timecode source (TimecodeSource). * If Timecode source (TimecodeSource) is set to Specified Start (specifiedstart), the first input frame is the specified value in Start Timecode (Start). Anchor Timecode (Anchor) and Start Timecode (Start) are used calculate output timecode. * If Timecode source (TimecodeSource) is set to Start at 0 (zerobased)  the  first frame is 00:00:00:00. * If Timecode source (TimecodeSource) is set to Embedded (embedded), the  first frame is the timecode value on the first input frame of the input.",
         "TimecodeConfig$Start": "Only use when you set Timecode Source (TimecodeSource) to Specified Start (SPECIFIEDSTART). Use Start timecode (Start) to specify the timecode for the initial frame. Use 24-hour format with frame number, (HH:MM:SS:FF) or (HH:MM:SS;FF).",
-        "TimecodeConfig$TimestampOffset": "Only applies to outputs that support program-date-time stamp. Use Time  stamp offset (TimestampOffset) to overwrite the timecode date without affecting the time and frame number. Provide the new date as a string in the format \"yyyy-mm-dd\".  To use Time stamp offset, you must also enable Insert program-date-time (InsertProgramDateTime) in the output settings.",
+        "TimecodeConfig$TimestampOffset": "Only applies to outputs that support program-date-time stamp. Use Time stamp offset (TimestampOffset) to overwrite the timecode date without affecting the time and frame number. Provide the new date as a string in the format \"yyyy-mm-dd\".  To use Time stamp offset, you must also enable Insert program-date-time (InsertProgramDateTime) in the output settings.",
         "UpdateJobTemplateRequest$Category": "The new category for the job template, if you are changing it.",
         "UpdateJobTemplateRequest$Description": "The new description for the job template, if you are changing it.",
         "UpdateJobTemplateRequest$Name": "The name of the job template you are modifying",

@@ -178,9 +178,9 @@ func (client SitesClient) AddSitePremierAddOnSlotResponder(resp *http.Response) 
 
 // ApplySlotConfigSlot sends the apply slot config slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains the
-// target slot name. Settings from that slot will be applied on the source slot slot is name of the source slot.
-// Settings from the target slot will be applied onto this slot
+// resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains
+// the target slot name. Settings from that slot will be applied on the source slot slot is name of the source
+// slot. Settings from the target slot will be applied onto this slot
 func (client SitesClient) ApplySlotConfigSlot(ctx context.Context, resourceGroupName string, name string, slotSwapEntity CsmSlotEntity, slot string) (result SetObject, err error) {
 	req, err := client.ApplySlotConfigSlotPreparer(ctx, resourceGroupName, name, slotSwapEntity, slot)
 	if err != nil {
@@ -249,8 +249,8 @@ func (client SitesClient) ApplySlotConfigSlotResponder(resp *http.Response) (res
 
 // ApplySlotConfigToProduction sends the apply slot config to production request.
 //
-// resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains the
-// target slot name. Settings from that slot will be applied on the source slot
+// resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains
+// the target slot name. Settings from that slot will be applied on the source slot
 func (client SitesClient) ApplySlotConfigToProduction(ctx context.Context, resourceGroupName string, name string, slotSwapEntity CsmSlotEntity) (result SetObject, err error) {
 	req, err := client.ApplySlotConfigToProductionPreparer(ctx, resourceGroupName, name, slotSwapEntity)
 	if err != nil {
@@ -386,8 +386,8 @@ func (client SitesClient) BackupSiteResponder(resp *http.Response) (result Backu
 
 // BackupSiteSlot sends the backup site slot request.
 //
-// resourceGroupName is name of resource group name is name of web app request is information on backup request slot is
-// name of web app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app request is information on backup request
+// slot is name of web app slot. If not specified then will default to production slot.
 func (client SitesClient) BackupSiteSlot(ctx context.Context, resourceGroupName string, name string, request BackupRequest, slot string) (result BackupItem, err error) {
 	req, err := client.BackupSiteSlotPreparer(ctx, resourceGroupName, name, request, slot)
 	if err != nil {
@@ -456,8 +456,8 @@ func (client SitesClient) BackupSiteSlotResponder(resp *http.Response) (result B
 
 // CreateDeployment sends the create deployment request.
 //
-// resourceGroupName is name of resource group name is name of web app ID is id of the deployment deployment is details
-// of deployment
+// resourceGroupName is name of resource group name is name of web app ID is id of the deployment deployment is
+// details of deployment
 func (client SitesClient) CreateDeployment(ctx context.Context, resourceGroupName string, name string, ID string, deployment Deployment) (result Deployment, err error) {
 	req, err := client.CreateDeploymentPreparer(ctx, resourceGroupName, name, ID, deployment)
 	if err != nil {
@@ -526,8 +526,8 @@ func (client SitesClient) CreateDeploymentResponder(resp *http.Response) (result
 
 // CreateDeploymentSlot sends the create deployment slot request.
 //
-// resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of web
-// app slot. If not specified then will default to production slot. deployment is details of deployment
+// resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of
+// web app slot. If not specified then will default to production slot. deployment is details of deployment
 func (client SitesClient) CreateDeploymentSlot(ctx context.Context, resourceGroupName string, name string, ID string, slot string, deployment Deployment) (result Deployment, err error) {
 	req, err := client.CreateDeploymentSlotPreparer(ctx, resourceGroupName, name, ID, slot, deployment)
 	if err != nil {
@@ -597,8 +597,8 @@ func (client SitesClient) CreateDeploymentSlotResponder(resp *http.Response) (re
 
 // CreateInstanceDeployment sends the create instance deployment request.
 //
-// resourceGroupName is name of resource group name is name of web app ID is id of the deployment instanceID is id of
-// web app instance deployment is details of deployment
+// resourceGroupName is name of resource group name is name of web app ID is id of the deployment instanceID is id
+// of web app instance deployment is details of deployment
 func (client SitesClient) CreateInstanceDeployment(ctx context.Context, resourceGroupName string, name string, ID string, instanceID string, deployment Deployment) (result Deployment, err error) {
 	req, err := client.CreateInstanceDeploymentPreparer(ctx, resourceGroupName, name, ID, instanceID, deployment)
 	if err != nil {
@@ -668,9 +668,9 @@ func (client SitesClient) CreateInstanceDeploymentResponder(resp *http.Response)
 
 // CreateInstanceDeploymentSlot sends the create instance deployment slot request.
 //
-// resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of web
-// app slot. If not specified then will default to production slot. instanceID is id of web app instance deployment is
-// details of deployment
+// resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of
+// web app slot. If not specified then will default to production slot. instanceID is id of web app instance
+// deployment is details of deployment
 func (client SitesClient) CreateInstanceDeploymentSlot(ctx context.Context, resourceGroupName string, name string, ID string, slot string, instanceID string, deployment Deployment) (result Deployment, err error) {
 	req, err := client.CreateInstanceDeploymentSlotPreparer(ctx, resourceGroupName, name, ID, slot, instanceID, deployment)
 	if err != nil {
@@ -741,12 +741,12 @@ func (client SitesClient) CreateInstanceDeploymentSlotResponder(resp *http.Respo
 
 // CreateOrUpdateSite sends the create or update site request.
 //
-// resourceGroupName is name of the resource group name is name of the web app siteEnvelope is details of web app if it
-// exists already skipDNSRegistration is if true web app hostname is not registered with DNS on creation. This
-// parameter is
+// resourceGroupName is name of the resource group name is name of the web app siteEnvelope is details of web app
+// if it exists already skipDNSRegistration is if true web app hostname is not registered with DNS on creation.
+// This parameter is
 // only used for app creation skipCustomDomainVerification is if true, custom (non *.azurewebsites.net) domains
-// associated with web app are not verified. forceDNSRegistration is if true, web app hostname is force registered with
-// DNS TTLInSeconds is time to live in seconds for web app's default domain name
+// associated with web app are not verified. forceDNSRegistration is if true, web app hostname is force registered
+// with DNS TTLInSeconds is time to live in seconds for web app's default domain name
 func (client SitesClient) CreateOrUpdateSite(ctx context.Context, resourceGroupName string, name string, siteEnvelope Site, skipDNSRegistration string, skipCustomDomainVerification string, forceDNSRegistration string, TTLInSeconds string) (result SitesCreateOrUpdateSiteFuture, err error) {
 	req, err := client.CreateOrUpdateSitePreparer(ctx, resourceGroupName, name, siteEnvelope, skipDNSRegistration, skipCustomDomainVerification, forceDNSRegistration, TTLInSeconds)
 	if err != nil {
@@ -898,8 +898,8 @@ func (client SitesClient) CreateOrUpdateSiteConfigResponder(resp *http.Response)
 // CreateOrUpdateSiteConfigSlot sends the create or update site config slot request.
 //
 // resourceGroupName is name of resource group name is name of web app siteConfig is request body that contains the
-// configuraiton setting for the web app slot is name of web app slot. If not specified then will default to production
-// slot.
+// configuraiton setting for the web app slot is name of web app slot. If not specified then will default to
+// production slot.
 func (client SitesClient) CreateOrUpdateSiteConfigSlot(ctx context.Context, resourceGroupName string, name string, siteConfig SiteConfig, slot string) (result SiteConfig, err error) {
 	req, err := client.CreateOrUpdateSiteConfigSlotPreparer(ctx, resourceGroupName, name, siteConfig, slot)
 	if err != nil {
@@ -968,8 +968,8 @@ func (client SitesClient) CreateOrUpdateSiteConfigSlotResponder(resp *http.Respo
 
 // CreateOrUpdateSiteHostNameBinding sends the create or update site host name binding request.
 //
-// resourceGroupName is name of resource group name is name of web app hostName is name of host hostNameBinding is host
-// name binding information
+// resourceGroupName is name of resource group name is name of web app hostName is name of host hostNameBinding is
+// host name binding information
 func (client SitesClient) CreateOrUpdateSiteHostNameBinding(ctx context.Context, resourceGroupName string, name string, hostName string, hostNameBinding HostNameBinding) (result HostNameBinding, err error) {
 	req, err := client.CreateOrUpdateSiteHostNameBindingPreparer(ctx, resourceGroupName, name, hostName, hostNameBinding)
 	if err != nil {
@@ -1038,8 +1038,9 @@ func (client SitesClient) CreateOrUpdateSiteHostNameBindingResponder(resp *http.
 
 // CreateOrUpdateSiteHostNameBindingSlot sends the create or update site host name binding slot request.
 //
-// resourceGroupName is name of resource group name is name of web app hostName is name of host hostNameBinding is host
-// name binding information slot is name of web app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app hostName is name of host hostNameBinding is
+// host name binding information slot is name of web app slot. If not specified then will default to production
+// slot.
 func (client SitesClient) CreateOrUpdateSiteHostNameBindingSlot(ctx context.Context, resourceGroupName string, name string, hostName string, hostNameBinding HostNameBinding, slot string) (result HostNameBinding, err error) {
 	req, err := client.CreateOrUpdateSiteHostNameBindingSlotPreparer(ctx, resourceGroupName, name, hostName, hostNameBinding, slot)
 	if err != nil {
@@ -1180,8 +1181,8 @@ func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionResponder(resp
 // CreateOrUpdateSiteRelayServiceConnectionSlot sends the create or update site relay service connection slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app entityName is the name by which the
-// Hybrid Connection is identified connectionEnvelope is the details of the Hybrid Connection slot is the name of the
-// slot for the web app.
+// Hybrid Connection is identified connectionEnvelope is the details of the Hybrid Connection slot is the name of
+// the slot for the web app.
 func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionSlot(ctx context.Context, resourceGroupName string, name string, entityName string, connectionEnvelope RelayServiceConnectionEntity, slot string) (result RelayServiceConnectionEntity, err error) {
 	req, err := client.CreateOrUpdateSiteRelayServiceConnectionSlotPreparer(ctx, resourceGroupName, name, entityName, connectionEnvelope, slot)
 	if err != nil {
@@ -1251,12 +1252,12 @@ func (client SitesClient) CreateOrUpdateSiteRelayServiceConnectionSlotResponder(
 
 // CreateOrUpdateSiteSlot sends the create or update site slot request.
 //
-// resourceGroupName is name of the resource group name is name of the web app siteEnvelope is details of web app if it
-// exists already slot is name of web app slot. If not specified then will default to production slot.
+// resourceGroupName is name of the resource group name is name of the web app siteEnvelope is details of web app
+// if it exists already slot is name of web app slot. If not specified then will default to production slot.
 // skipDNSRegistration is if true web app hostname is not registered with DNS on creation. This parameter is
 // only used for app creation skipCustomDomainVerification is if true, custom (non *.azurewebsites.net) domains
-// associated with web app are not verified. forceDNSRegistration is if true, web app hostname is force registered with
-// DNS TTLInSeconds is time to live in seconds for web app's default domain name
+// associated with web app are not verified. forceDNSRegistration is if true, web app hostname is force registered
+// with DNS TTLInSeconds is time to live in seconds for web app's default domain name
 func (client SitesClient) CreateOrUpdateSiteSlot(ctx context.Context, resourceGroupName string, name string, siteEnvelope Site, slot string, skipDNSRegistration string, skipCustomDomainVerification string, forceDNSRegistration string, TTLInSeconds string) (result SitesCreateOrUpdateSiteSlotFuture, err error) {
 	req, err := client.CreateOrUpdateSiteSlotPreparer(ctx, resourceGroupName, name, siteEnvelope, slot, skipDNSRegistration, skipCustomDomainVerification, forceDNSRegistration, TTLInSeconds)
 	if err != nil {
@@ -1339,8 +1340,8 @@ func (client SitesClient) CreateOrUpdateSiteSlotResponder(resp *http.Response) (
 
 // CreateOrUpdateSiteSourceControl sends the create or update site source control request.
 //
-// resourceGroupName is name of resource group name is name of web app siteSourceControl is request body that contains
-// the source control parameters
+// resourceGroupName is name of resource group name is name of web app siteSourceControl is request body that
+// contains the source control parameters
 func (client SitesClient) CreateOrUpdateSiteSourceControl(ctx context.Context, resourceGroupName string, name string, siteSourceControl SiteSourceControl) (result SiteSourceControl, err error) {
 	req, err := client.CreateOrUpdateSiteSourceControlPreparer(ctx, resourceGroupName, name, siteSourceControl)
 	if err != nil {
@@ -1408,8 +1409,9 @@ func (client SitesClient) CreateOrUpdateSiteSourceControlResponder(resp *http.Re
 
 // CreateOrUpdateSiteSourceControlSlot sends the create or update site source control slot request.
 //
-// resourceGroupName is name of resource group name is name of web app siteSourceControl is request body that contains
-// the source control parameters slot is name of web app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app siteSourceControl is request body that
+// contains the source control parameters slot is name of web app slot. If not specified then will default to
+// production slot.
 func (client SitesClient) CreateOrUpdateSiteSourceControlSlot(ctx context.Context, resourceGroupName string, name string, siteSourceControl SiteSourceControl, slot string) (result SiteSourceControl, err error) {
 	req, err := client.CreateOrUpdateSiteSourceControlSlotPreparer(ctx, resourceGroupName, name, siteSourceControl, slot)
 	if err != nil {
@@ -1832,8 +1834,8 @@ func (client SitesClient) DeleteBackupResponder(resp *http.Response) (result Bac
 
 // DeleteBackupSlot sends the delete backup slot request.
 //
-// resourceGroupName is name of resource group name is name of web app backupID is id of backup slot is name of web app
-// slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app backupID is id of backup slot is name of web
+// app slot. If not specified then will default to production slot.
 func (client SitesClient) DeleteBackupSlot(ctx context.Context, resourceGroupName string, name string, backupID string, slot string) (result BackupItem, err error) {
 	req, err := client.DeleteBackupSlotPreparer(ctx, resourceGroupName, name, backupID, slot)
 	if err != nil {
@@ -1968,8 +1970,8 @@ func (client SitesClient) DeleteDeploymentResponder(resp *http.Response) (result
 
 // DeleteDeploymentSlot sends the delete deployment slot request.
 //
-// resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of web
-// app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of
+// web app slot. If not specified then will default to production slot.
 func (client SitesClient) DeleteDeploymentSlot(ctx context.Context, resourceGroupName string, name string, ID string, slot string) (result SetObject, err error) {
 	req, err := client.DeleteDeploymentSlotPreparer(ctx, resourceGroupName, name, ID, slot)
 	if err != nil {
@@ -2037,8 +2039,8 @@ func (client SitesClient) DeleteDeploymentSlotResponder(resp *http.Response) (re
 
 // DeleteInstanceDeployment sends the delete instance deployment request.
 //
-// resourceGroupName is name of resource group name is name of web app ID is id of the deployment instanceID is id of
-// web app instance
+// resourceGroupName is name of resource group name is name of web app ID is id of the deployment instanceID is id
+// of web app instance
 func (client SitesClient) DeleteInstanceDeployment(ctx context.Context, resourceGroupName string, name string, ID string, instanceID string) (result SetObject, err error) {
 	req, err := client.DeleteInstanceDeploymentPreparer(ctx, resourceGroupName, name, ID, instanceID)
 	if err != nil {
@@ -2106,8 +2108,8 @@ func (client SitesClient) DeleteInstanceDeploymentResponder(resp *http.Response)
 
 // DeleteInstanceDeploymentSlot sends the delete instance deployment slot request.
 //
-// resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of web
-// app slot. If not specified then will default to production slot. instanceID is id of web app instance
+// resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of
+// web app slot. If not specified then will default to production slot. instanceID is id of web app instance
 func (client SitesClient) DeleteInstanceDeploymentSlot(ctx context.Context, resourceGroupName string, name string, ID string, slot string, instanceID string) (result SetObject, err error) {
 	req, err := client.DeleteInstanceDeploymentSlotPreparer(ctx, resourceGroupName, name, ID, slot, instanceID)
 	if err != nil {
@@ -2176,10 +2178,10 @@ func (client SitesClient) DeleteInstanceDeploymentSlotResponder(resp *http.Respo
 
 // DeleteSite sends the delete site request.
 //
-// resourceGroupName is name of resource group name is name of web app deleteMetrics is if true, web app metrics are
-// also deleted deleteEmptyServerFarm is if true and App Service Plan is empty after web app deletion, App Service Plan
-// is also deleted skipDNSRegistration is if true, DNS registration is skipped deleteAllSlots is if true, all slots
-// associated with web app are also deleted
+// resourceGroupName is name of resource group name is name of web app deleteMetrics is if true, web app metrics
+// are also deleted deleteEmptyServerFarm is if true and App Service Plan is empty after web app deletion, App
+// Service Plan is also deleted skipDNSRegistration is if true, DNS registration is skipped deleteAllSlots is if
+// true, all slots associated with web app are also deleted
 func (client SitesClient) DeleteSite(ctx context.Context, resourceGroupName string, name string, deleteMetrics string, deleteEmptyServerFarm string, skipDNSRegistration string, deleteAllSlots string) (result SetObject, err error) {
 	req, err := client.DeleteSitePreparer(ctx, resourceGroupName, name, deleteMetrics, deleteEmptyServerFarm, skipDNSRegistration, deleteAllSlots)
 	if err != nil {
@@ -2324,8 +2326,8 @@ func (client SitesClient) DeleteSiteHostNameBindingResponder(resp *http.Response
 
 // DeleteSiteHostNameBindingSlot sends the delete site host name binding slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot. hostName is name of host
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot. hostName is name of host
 func (client SitesClient) DeleteSiteHostNameBindingSlot(ctx context.Context, resourceGroupName string, name string, slot string, hostName string) (result SetObject, err error) {
 	req, err := client.DeleteSiteHostNameBindingSlotPreparer(ctx, resourceGroupName, name, slot, hostName)
 	if err != nil {
@@ -2663,11 +2665,11 @@ func (client SitesClient) DeleteSiteRelayServiceConnectionSlotResponder(resp *ht
 
 // DeleteSiteSlot sends the delete site slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot. deleteMetrics is if true, web app metrics are also deleted
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot. deleteMetrics is if true, web app metrics are also deleted
 // deleteEmptyServerFarm is if true and App Service Plan is empty after web app deletion, App Service Plan is also
-// deleted skipDNSRegistration is if true, DNS registration is skipped deleteAllSlots is if true, all slots associated
-// with web app are also deleted
+// deleted skipDNSRegistration is if true, DNS registration is skipped deleteAllSlots is if true, all slots
+// associated with web app are also deleted
 func (client SitesClient) DeleteSiteSlot(ctx context.Context, resourceGroupName string, name string, slot string, deleteMetrics string, deleteEmptyServerFarm string, skipDNSRegistration string, deleteAllSlots string) (result SetObject, err error) {
 	req, err := client.DeleteSiteSlotPreparer(ctx, resourceGroupName, name, slot, deleteMetrics, deleteEmptyServerFarm, skipDNSRegistration, deleteAllSlots)
 	if err != nil {
@@ -2812,8 +2814,8 @@ func (client SitesClient) DeleteSiteSourceControlResponder(resp *http.Response) 
 
 // DeleteSiteSourceControlSlot sends the delete site source control slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) DeleteSiteSourceControlSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result SetObject, err error) {
 	req, err := client.DeleteSiteSourceControlSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -3085,8 +3087,8 @@ func (client SitesClient) DiscoverSiteRestoreResponder(resp *http.Response) (res
 
 // DiscoverSiteRestoreSlot sends the discover site restore slot request.
 //
-// resourceGroupName is name of resource group name is name of web app request is information on restore request slot
-// is name of web app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app request is information on restore request
+// slot is name of web app slot. If not specified then will default to production slot.
 func (client SitesClient) DiscoverSiteRestoreSlot(ctx context.Context, resourceGroupName string, name string, request RestoreRequest, slot string) (result RestoreRequest, err error) {
 	req, err := client.DiscoverSiteRestoreSlotPreparer(ctx, resourceGroupName, name, request, slot)
 	if err != nil {
@@ -3221,8 +3223,8 @@ func (client SitesClient) GenerateNewSitePublishingPasswordResponder(resp *http.
 
 // GenerateNewSitePublishingPasswordSlot sends the generate new site publishing password slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) GenerateNewSitePublishingPasswordSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result SetObject, err error) {
 	req, err := client.GenerateNewSitePublishingPasswordSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -3550,8 +3552,8 @@ func (client SitesClient) GetDeploymentsComplete(ctx context.Context, resourceGr
 
 // GetDeploymentSlot sends the get deployment slot request.
 //
-// resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of web
-// app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of
+// web app slot. If not specified then will default to production slot.
 func (client SitesClient) GetDeploymentSlot(ctx context.Context, resourceGroupName string, name string, ID string, slot string) (result Deployment, err error) {
 	req, err := client.GetDeploymentSlotPreparer(ctx, resourceGroupName, name, ID, slot)
 	if err != nil {
@@ -3619,8 +3621,8 @@ func (client SitesClient) GetDeploymentSlotResponder(resp *http.Response) (resul
 
 // GetDeploymentsSlot sends the get deployments slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) GetDeploymentsSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result DeploymentCollectionPage, err error) {
 	result.fn = client.getDeploymentsSlotNextResults
 	req, err := client.GetDeploymentsSlotPreparer(ctx, resourceGroupName, name, slot)
@@ -3715,8 +3717,8 @@ func (client SitesClient) GetDeploymentsSlotComplete(ctx context.Context, resour
 
 // GetInstanceDeployment sends the get instance deployment request.
 //
-// resourceGroupName is name of resource group name is name of web app ID is id of the deployment instanceID is id of
-// web app instance
+// resourceGroupName is name of resource group name is name of web app ID is id of the deployment instanceID is id
+// of web app instance
 func (client SitesClient) GetInstanceDeployment(ctx context.Context, resourceGroupName string, name string, ID string, instanceID string) (result Deployment, err error) {
 	req, err := client.GetInstanceDeploymentPreparer(ctx, resourceGroupName, name, ID, instanceID)
 	if err != nil {
@@ -3879,8 +3881,8 @@ func (client SitesClient) GetInstanceDeploymentsComplete(ctx context.Context, re
 
 // GetInstanceDeploymentSlot sends the get instance deployment slot request.
 //
-// resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of web
-// app slot. If not specified then will default to production slot. instanceID is id of web app instance
+// resourceGroupName is name of resource group name is name of web app ID is id of the deployment slot is name of
+// web app slot. If not specified then will default to production slot. instanceID is id of web app instance
 func (client SitesClient) GetInstanceDeploymentSlot(ctx context.Context, resourceGroupName string, name string, ID string, slot string, instanceID string) (result Deployment, err error) {
 	req, err := client.GetInstanceDeploymentSlotPreparer(ctx, resourceGroupName, name, ID, slot, instanceID)
 	if err != nil {
@@ -3949,8 +3951,8 @@ func (client SitesClient) GetInstanceDeploymentSlotResponder(resp *http.Response
 
 // GetInstanceDeploymentsSlot sends the get instance deployments slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot. instanceID is id of web app instance
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot. instanceID is id of web app instance
 func (client SitesClient) GetInstanceDeploymentsSlot(ctx context.Context, resourceGroupName string, name string, slot string, instanceID string) (result DeploymentCollectionPage, err error) {
 	result.fn = client.getInstanceDeploymentsSlotNextResults
 	req, err := client.GetInstanceDeploymentsSlotPreparer(ctx, resourceGroupName, name, slot, instanceID)
@@ -4182,8 +4184,8 @@ func (client SitesClient) GetSiteBackupConfigurationResponder(resp *http.Respons
 
 // GetSiteBackupConfigurationSlot sends the get site backup configuration slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) GetSiteBackupConfigurationSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result BackupRequest, err error) {
 	req, err := client.GetSiteBackupConfigurationSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -4317,8 +4319,8 @@ func (client SitesClient) GetSiteBackupStatusResponder(resp *http.Response) (res
 
 // GetSiteBackupStatusSecrets sends the get site backup status secrets request.
 //
-// resourceGroupName is name of resource group name is name of web app backupID is id of backup request is information
-// on backup request
+// resourceGroupName is name of resource group name is name of web app backupID is id of backup request is
+// information on backup request
 func (client SitesClient) GetSiteBackupStatusSecrets(ctx context.Context, resourceGroupName string, name string, backupID string, request BackupRequest) (result BackupItem, err error) {
 	req, err := client.GetSiteBackupStatusSecretsPreparer(ctx, resourceGroupName, name, backupID, request)
 	if err != nil {
@@ -4387,8 +4389,9 @@ func (client SitesClient) GetSiteBackupStatusSecretsResponder(resp *http.Respons
 
 // GetSiteBackupStatusSecretsSlot sends the get site backup status secrets slot request.
 //
-// resourceGroupName is name of resource group name is name of web app backupID is id of backup request is information
-// on backup request slot is name of web app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app backupID is id of backup request is
+// information on backup request slot is name of web app slot. If not specified then will default to production
+// slot.
 func (client SitesClient) GetSiteBackupStatusSecretsSlot(ctx context.Context, resourceGroupName string, name string, backupID string, request BackupRequest, slot string) (result BackupItem, err error) {
 	req, err := client.GetSiteBackupStatusSecretsSlotPreparer(ctx, resourceGroupName, name, backupID, request, slot)
 	if err != nil {
@@ -4458,8 +4461,8 @@ func (client SitesClient) GetSiteBackupStatusSecretsSlotResponder(resp *http.Res
 
 // GetSiteBackupStatusSlot sends the get site backup status slot request.
 //
-// resourceGroupName is name of resource group name is name of web app backupID is id of backup slot is name of web app
-// slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app backupID is id of backup slot is name of web
+// app slot. If not specified then will default to production slot.
 func (client SitesClient) GetSiteBackupStatusSlot(ctx context.Context, resourceGroupName string, name string, backupID string, slot string) (result BackupItem, err error) {
 	req, err := client.GetSiteBackupStatusSlotPreparer(ctx, resourceGroupName, name, backupID, slot)
 	if err != nil {
@@ -4593,8 +4596,8 @@ func (client SitesClient) GetSiteConfigResponder(resp *http.Response) (result Si
 
 // GetSiteConfigSlot sends the get site config slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) GetSiteConfigSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result SiteConfig, err error) {
 	req, err := client.GetSiteConfigSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -4822,8 +4825,8 @@ func (client SitesClient) GetSiteHostNameBindingsComplete(ctx context.Context, r
 
 // GetSiteHostNameBindingSlot sends the get site host name binding slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot. hostName is name of host
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot. hostName is name of host
 func (client SitesClient) GetSiteHostNameBindingSlot(ctx context.Context, resourceGroupName string, name string, slot string, hostName string) (result HostNameBinding, err error) {
 	req, err := client.GetSiteHostNameBindingSlotPreparer(ctx, resourceGroupName, name, slot, hostName)
 	if err != nil {
@@ -4891,8 +4894,8 @@ func (client SitesClient) GetSiteHostNameBindingSlotResponder(resp *http.Respons
 
 // GetSiteHostNameBindingsSlot sends the get site host name bindings slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) GetSiteHostNameBindingsSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result HostNameBindingCollectionPage, err error) {
 	result.fn = client.getSiteHostNameBindingsSlotNextResults
 	req, err := client.GetSiteHostNameBindingsSlotPreparer(ctx, resourceGroupName, name, slot)
@@ -5081,8 +5084,8 @@ func (client SitesClient) GetSiteInstanceIdentifiersComplete(ctx context.Context
 
 // GetSiteInstanceIdentifiersSlot sends the get site instance identifiers slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) GetSiteInstanceIdentifiersSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result SiteInstanceCollectionPage, err error) {
 	result.fn = client.getSiteInstanceIdentifiersSlotNextResults
 	req, err := client.GetSiteInstanceIdentifiersSlotPreparer(ctx, resourceGroupName, name, slot)
@@ -5243,8 +5246,8 @@ func (client SitesClient) GetSiteLogsConfigResponder(resp *http.Response) (resul
 
 // GetSiteLogsConfigSlot sends the get site logs config slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) GetSiteLogsConfigSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result SiteLogsConfig, err error) {
 	req, err := client.GetSiteLogsConfigSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -5405,8 +5408,8 @@ func (client SitesClient) GetSiteMetricDefinitionsComplete(ctx context.Context, 
 
 // GetSiteMetricDefinitionsSlot sends the get site metric definitions slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) GetSiteMetricDefinitionsSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result MetricDefinitionCollectionPage, err error) {
 	result.fn = client.getSiteMetricDefinitionsSlotNextResults
 	req, err := client.GetSiteMetricDefinitionsSlotPreparer(ctx, resourceGroupName, name, slot)
@@ -5501,10 +5504,10 @@ func (client SitesClient) GetSiteMetricDefinitionsSlotComplete(ctx context.Conte
 
 // GetSiteMetrics sends the get site metrics request.
 //
-// resourceGroupName is name of resource group name is name of web app details is if true, metric details are included
-// in response filter is return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example:
-// $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime eq
-// '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
+// resourceGroupName is name of resource group name is name of web app details is if true, metric details are
+// included in response filter is return only usages/metrics specified in the filter. Filter conforms to odata
+// syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq
+// '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
 func (client SitesClient) GetSiteMetrics(ctx context.Context, resourceGroupName string, name string, details *bool, filter string) (result ResourceMetricCollectionPage, err error) {
 	result.fn = client.getSiteMetricsNextResults
 	req, err := client.GetSiteMetricsPreparer(ctx, resourceGroupName, name, details, filter)
@@ -5604,11 +5607,11 @@ func (client SitesClient) GetSiteMetricsComplete(ctx context.Context, resourceGr
 
 // GetSiteMetricsSlot sends the get site metrics slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot. details is if true, metric details are included in response filter is return
-// only usages/metrics specified in the filter. Filter conforms to odata syntax. Example: $filter=(name.value eq
-// 'Metric1' or name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z'
-// and timeGrain eq duration'[Hour|Minute|Day]'.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot. details is if true, metric details are included in response
+// filter is return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example:
+// $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime
+// eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
 func (client SitesClient) GetSiteMetricsSlot(ctx context.Context, resourceGroupName string, name string, slot string, details *bool, filter string) (result ResourceMetricCollectionPage, err error) {
 	result.fn = client.getSiteMetricsSlotNextResults
 	req, err := client.GetSiteMetricsSlotPreparer(ctx, resourceGroupName, name, slot, details, filter)
@@ -5913,8 +5916,8 @@ func (client SitesClient) GetSiteOperationResponder(resp *http.Response) (result
 
 // GetSiteOperationSlot sends the get site operation slot request.
 //
-// resourceGroupName is name of resource group name is name of web app operationID is id of an operation slot is name
-// of web app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app operationID is id of an operation slot is
+// name of web app slot. If not specified then will default to production slot.
 func (client SitesClient) GetSiteOperationSlot(ctx context.Context, resourceGroupName string, name string, operationID string, slot string) (result SetObject, err error) {
 	req, err := client.GetSiteOperationSlotPreparer(ctx, resourceGroupName, name, operationID, slot)
 	if err != nil {
@@ -6356,8 +6359,9 @@ func (client SitesClient) GetSitesComplete(ctx context.Context, resourceGroupNam
 
 // GetSiteSlot sends the get site slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot. propertiesToInclude is additional web app properties included in the response
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot. propertiesToInclude is additional web app properties included in
+// the response
 func (client SitesClient) GetSiteSlot(ctx context.Context, resourceGroupName string, name string, slot string, propertiesToInclude string) (result Site, err error) {
 	req, err := client.GetSiteSlotPreparer(ctx, resourceGroupName, name, slot, propertiesToInclude)
 	if err != nil {
@@ -6427,8 +6431,8 @@ func (client SitesClient) GetSiteSlotResponder(resp *http.Response) (result Site
 
 // GetSiteSlots sends the get site slots request.
 //
-// resourceGroupName is name of resource group name is name of web app propertiesToInclude is list of app properties to
-// include in the response
+// resourceGroupName is name of resource group name is name of web app propertiesToInclude is list of app
+// properties to include in the response
 func (client SitesClient) GetSiteSlots(ctx context.Context, resourceGroupName string, name string, propertiesToInclude string) (result SiteCollectionPage, err error) {
 	result.fn = client.getSiteSlotsNextResults
 	req, err := client.GetSiteSlotsPreparer(ctx, resourceGroupName, name, propertiesToInclude)
@@ -6724,8 +6728,8 @@ func (client SitesClient) GetSiteSourceControlResponder(resp *http.Response) (re
 
 // GetSiteSourceControlSlot sends the get site source control slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) GetSiteSourceControlSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result SiteSourceControl, err error) {
 	req, err := client.GetSiteSourceControlSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -6792,9 +6796,9 @@ func (client SitesClient) GetSiteSourceControlSlotResponder(resp *http.Response)
 
 // GetSiteUsages sends the get site usages request.
 //
-// resourceGroupName is name of resource group name is name of web app filter is return only usages specified in the
-// filter. Filter is specified by using OData syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq
-// 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq
+// resourceGroupName is name of resource group name is name of web app filter is return only usages specified in
+// the filter. Filter is specified by using OData syntax. Example: $filter=(name.value eq 'Metric1' or name.value
+// eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq
 // duration'[Hour|Minute|Day]'.
 func (client SitesClient) GetSiteUsages(ctx context.Context, resourceGroupName string, name string, filter string) (result CsmUsageQuotaCollectionPage, err error) {
 	result.fn = client.getSiteUsagesNextResults
@@ -6892,10 +6896,11 @@ func (client SitesClient) GetSiteUsagesComplete(ctx context.Context, resourceGro
 
 // GetSiteUsagesSlot sends the get site usages slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot. filter is return only usages specified in the filter. Filter is specified by
-// using OData syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq
-// '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot. filter is return only usages specified in the filter. Filter is
+// specified by using OData syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and
+// startTime eq '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq
+// duration'[Hour|Minute|Day]'.
 func (client SitesClient) GetSiteUsagesSlot(ctx context.Context, resourceGroupName string, name string, slot string, filter string) (result CsmUsageQuotaCollectionPage, err error) {
 	result.fn = client.getSiteUsagesSlotNextResults
 	req, err := client.GetSiteUsagesSlotPreparer(ctx, resourceGroupName, name, slot, filter)
@@ -7196,8 +7201,8 @@ func (client SitesClient) GetSiteVNETConnectionSlotResponder(resp *http.Response
 
 // GetSiteVNETConnectionsSlot sends the get site vnet connections slot request.
 //
-// resourceGroupName is the resource group name name is the name of the web app slot is the name of the slot for this
-// web app.
+// resourceGroupName is the resource group name name is the name of the web app slot is the name of the slot for
+// this web app.
 func (client SitesClient) GetSiteVNETConnectionsSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result ListVnetInfo, err error) {
 	req, err := client.GetSiteVNETConnectionsSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -7334,8 +7339,8 @@ func (client SitesClient) GetSiteVnetGatewayResponder(resp *http.Response) (resu
 // GetSiteVnetGatewaySlot sends the get site vnet gateway slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app vnetName is the name of the Virtual
-// Network gatewayName is the name of the gateway. The only gateway that exists presently is "primary" slot is the name
-// of the slot for this web app.
+// Network gatewayName is the name of the gateway. The only gateway that exists presently is "primary" slot is the
+// name of the slot for this web app.
 func (client SitesClient) GetSiteVnetGatewaySlot(ctx context.Context, resourceGroupName string, name string, vnetName string, gatewayName string, slot string) (result SetObject, err error) {
 	req, err := client.GetSiteVnetGatewaySlotPreparer(ctx, resourceGroupName, name, vnetName, gatewayName, slot)
 	if err != nil {
@@ -7470,8 +7475,8 @@ func (client SitesClient) GetSlotConfigNamesResponder(resp *http.Response) (resu
 
 // GetSlotsDifferencesFromProduction sends the get slots differences from production request.
 //
-// resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains the
-// target slot name
+// resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains
+// the target slot name
 func (client SitesClient) GetSlotsDifferencesFromProduction(ctx context.Context, resourceGroupName string, name string, slotSwapEntity CsmSlotEntity) (result SlotDifferenceCollectionPage, err error) {
 	result.fn = client.getSlotsDifferencesFromProductionNextResults
 	req, err := client.GetSlotsDifferencesFromProductionPreparer(ctx, resourceGroupName, name, slotSwapEntity)
@@ -7567,8 +7572,8 @@ func (client SitesClient) GetSlotsDifferencesFromProductionComplete(ctx context.
 
 // GetSlotsDifferencesSlot sends the get slots differences slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains the
-// target slot name slot is name of the source slot
+// resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains
+// the target slot name slot is name of the source slot
 func (client SitesClient) GetSlotsDifferencesSlot(ctx context.Context, resourceGroupName string, name string, slotSwapEntity CsmSlotEntity, slot string) (result SlotDifferenceCollectionPage, err error) {
 	result.fn = client.getSlotsDifferencesSlotNextResults
 	req, err := client.GetSlotsDifferencesSlotPreparer(ctx, resourceGroupName, name, slotSwapEntity, slot)
@@ -7865,8 +7870,8 @@ func (client SitesClient) ListSiteAppSettingsResponder(resp *http.Response) (res
 
 // ListSiteAppSettingsSlot sends the list site app settings slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) ListSiteAppSettingsSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result StringDictionary, err error) {
 	req, err := client.ListSiteAppSettingsSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -7999,8 +8004,8 @@ func (client SitesClient) ListSiteAuthSettingsResponder(resp *http.Response) (re
 
 // ListSiteAuthSettingsSlot sends the list site auth settings slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) ListSiteAuthSettingsSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result SiteAuthSettings, err error) {
 	req, err := client.ListSiteAuthSettingsSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -8161,8 +8166,8 @@ func (client SitesClient) ListSiteBackupsComplete(ctx context.Context, resourceG
 
 // ListSiteBackupsSlot sends the list site backups slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) ListSiteBackupsSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result BackupItemCollectionPage, err error) {
 	result.fn = client.listSiteBackupsSlotNextResults
 	req, err := client.ListSiteBackupsSlotPreparer(ctx, resourceGroupName, name, slot)
@@ -8323,8 +8328,8 @@ func (client SitesClient) ListSiteConnectionStringsResponder(resp *http.Response
 
 // ListSiteConnectionStringsSlot sends the list site connection strings slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) ListSiteConnectionStringsSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result ConnectionStringDictionary, err error) {
 	req, err := client.ListSiteConnectionStringsSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -8457,8 +8462,8 @@ func (client SitesClient) ListSiteMetadataResponder(resp *http.Response) (result
 
 // ListSiteMetadataSlot sends the list site metadata slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) ListSiteMetadataSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result StringDictionary, err error) {
 	req, err := client.ListSiteMetadataSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -8724,8 +8729,8 @@ func (client SitesClient) ListSitePublishingCredentialsResponder(resp *http.Resp
 
 // ListSitePublishingCredentialsSlot sends the list site publishing credentials slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) ListSitePublishingCredentialsSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result SitesListSitePublishingCredentialsSlotFuture, err error) {
 	req, err := client.ListSitePublishingCredentialsSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -8863,8 +8868,8 @@ func (client SitesClient) ListSitePublishingProfileXMLResponder(resp *http.Respo
 // ListSitePublishingProfileXMLSlot sends the list site publishing profile xml slot request.
 //
 // resourceGroupName is name of resource group name is name of web app options is specifies options for publishing
-// profile. Pass CsmPublishingProfileOptions.Format=FileZilla3 for FileZilla FTP format. slot is name of web app slot.
-// If not specified then will default to production slot.
+// profile. Pass CsmPublishingProfileOptions.Format=FileZilla3 for FileZilla FTP format. slot is name of web app
+// slot. If not specified then will default to production slot.
 func (client SitesClient) ListSitePublishingProfileXMLSlot(ctx context.Context, resourceGroupName string, name string, options CsmPublishingProfileOptions, slot string) (result ReadCloser, err error) {
 	req, err := client.ListSitePublishingProfileXMLSlotPreparer(ctx, resourceGroupName, name, options, slot)
 	if err != nil {
@@ -8998,8 +9003,8 @@ func (client SitesClient) ListSiteRelayServiceConnectionsResponder(resp *http.Re
 
 // ListSiteRelayServiceConnectionsSlot sends the list site relay service connections slot request.
 //
-// resourceGroupName is the resource group name name is the name of the web app slot is the name of the slot for the
-// web app.
+// resourceGroupName is the resource group name name is the name of the web app slot is the name of the slot for
+// the web app.
 func (client SitesClient) ListSiteRelayServiceConnectionsSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result RelayServiceConnectionEntity, err error) {
 	req, err := client.ListSiteRelayServiceConnectionsSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -9066,8 +9071,8 @@ func (client SitesClient) ListSiteRelayServiceConnectionsSlotResponder(resp *htt
 
 // RecoverSite sends the recover site request.
 //
-// resourceGroupName is name of resource group name is name of web app recoveryEntity is snapshot data used for web app
-// recovery. Snapshot information can be obtained by calling GetDeletedSites or GetSiteSnapshots API.
+// resourceGroupName is name of resource group name is name of web app recoveryEntity is snapshot data used for web
+// app recovery. Snapshot information can be obtained by calling GetDeletedSites or GetSiteSnapshots API.
 func (client SitesClient) RecoverSite(ctx context.Context, resourceGroupName string, name string, recoveryEntity CsmSiteRecoveryEntity) (result SitesRecoverSiteFuture, err error) {
 	req, err := client.RecoverSitePreparer(ctx, resourceGroupName, name, recoveryEntity)
 	if err != nil {
@@ -9137,9 +9142,9 @@ func (client SitesClient) RecoverSiteResponder(resp *http.Response) (result Site
 
 // RecoverSiteSlot sends the recover site slot request.
 //
-// resourceGroupName is name of resource group name is name of web app recoveryEntity is snapshot data used for web app
-// recovery. Snapshot information can be obtained by calling GetDeletedSites or GetSiteSnapshots API. slot is name of
-// web app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app recoveryEntity is snapshot data used for web
+// app recovery. Snapshot information can be obtained by calling GetDeletedSites or GetSiteSnapshots API. slot is
+// name of web app slot. If not specified then will default to production slot.
 func (client SitesClient) RecoverSiteSlot(ctx context.Context, resourceGroupName string, name string, recoveryEntity CsmSiteRecoveryEntity, slot string) (result SitesRecoverSiteSlotFuture, err error) {
 	req, err := client.RecoverSiteSlotPreparer(ctx, resourceGroupName, name, recoveryEntity, slot)
 	if err != nil {
@@ -9276,8 +9281,8 @@ func (client SitesClient) ResetProductionSlotConfigResponder(resp *http.Response
 
 // ResetSlotConfigSlot sends the reset slot config slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) ResetSlotConfigSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result SetObject, err error) {
 	req, err := client.ResetSlotConfigSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -9418,10 +9423,10 @@ func (client SitesClient) RestartSiteResponder(resp *http.Response) (result SetO
 
 // RestartSiteSlot sends the restart site slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot. softRestart is soft restart applies the configuration settings and restarts
-// the app if necessary. Hard restart always restarts and reprovisions the app synchronous is if true then the API will
-// block until the app has been restarted
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot. softRestart is soft restart applies the configuration settings
+// and restarts the app if necessary. Hard restart always restarts and reprovisions the app synchronous is if true
+// then the API will block until the app has been restarted
 func (client SitesClient) RestartSiteSlot(ctx context.Context, resourceGroupName string, name string, slot string, softRestart *bool, synchronous *bool) (result SetObject, err error) {
 	req, err := client.RestartSiteSlotPreparer(ctx, resourceGroupName, name, slot, softRestart, synchronous)
 	if err != nil {
@@ -9494,8 +9499,8 @@ func (client SitesClient) RestartSiteSlotResponder(resp *http.Response) (result 
 
 // RestoreSite sends the restore site request.
 //
-// resourceGroupName is name of resource group name is name of web app backupID is id of backup to restore request is
-// information on restore request
+// resourceGroupName is name of resource group name is name of web app backupID is id of backup to restore request
+// is information on restore request
 func (client SitesClient) RestoreSite(ctx context.Context, resourceGroupName string, name string, backupID string, request RestoreRequest) (result SitesRestoreSiteFuture, err error) {
 	req, err := client.RestoreSitePreparer(ctx, resourceGroupName, name, backupID, request)
 	if err != nil {
@@ -9566,8 +9571,9 @@ func (client SitesClient) RestoreSiteResponder(resp *http.Response) (result Rest
 
 // RestoreSiteSlot sends the restore site slot request.
 //
-// resourceGroupName is name of resource group name is name of web app backupID is id of backup to restore request is
-// information on restore request slot is name of web app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app backupID is id of backup to restore request
+// is information on restore request slot is name of web app slot. If not specified then will default to production
+// slot.
 func (client SitesClient) RestoreSiteSlot(ctx context.Context, resourceGroupName string, name string, backupID string, request RestoreRequest, slot string) (result SitesRestoreSiteSlotFuture, err error) {
 	req, err := client.RestoreSiteSlotPreparer(ctx, resourceGroupName, name, backupID, request, slot)
 	if err != nil {
@@ -9705,8 +9711,8 @@ func (client SitesClient) StartSiteResponder(resp *http.Response) (result SetObj
 
 // StartSiteSlot sends the start site slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) StartSiteSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result SetObject, err error) {
 	req, err := client.StartSiteSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -9839,8 +9845,8 @@ func (client SitesClient) StopSiteResponder(resp *http.Response) (result SetObje
 
 // StopSiteSlot sends the stop site slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not specified
-// then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app slot is name of web app slot. If not
+// specified then will default to production slot.
 func (client SitesClient) StopSiteSlot(ctx context.Context, resourceGroupName string, name string, slot string) (result SetObject, err error) {
 	req, err := client.StopSiteSlotPreparer(ctx, resourceGroupName, name, slot)
 	if err != nil {
@@ -9907,8 +9913,8 @@ func (client SitesClient) StopSiteSlotResponder(resp *http.Response) (result Set
 
 // SwapSlotsSlot sends the swap slots slot request.
 //
-// resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains the
-// target slot name slot is name of source slot for the swap
+// resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains
+// the target slot name slot is name of source slot for the swap
 func (client SitesClient) SwapSlotsSlot(ctx context.Context, resourceGroupName string, name string, slotSwapEntity CsmSlotEntity, slot string) (result SitesSwapSlotsSlotFuture, err error) {
 	req, err := client.SwapSlotsSlotPreparer(ctx, resourceGroupName, name, slotSwapEntity, slot)
 	if err != nil {
@@ -9979,8 +9985,8 @@ func (client SitesClient) SwapSlotsSlotResponder(resp *http.Response) (result Se
 
 // SwapSlotWithProduction sends the swap slot with production request.
 //
-// resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains the
-// target slot name
+// resourceGroupName is name of resource group name is name of web app slotSwapEntity is request body that contains
+// the target slot name
 func (client SitesClient) SwapSlotWithProduction(ctx context.Context, resourceGroupName string, name string, slotSwapEntity CsmSlotEntity) (result SitesSwapSlotWithProductionFuture, err error) {
 	req, err := client.SwapSlotWithProductionPreparer(ctx, resourceGroupName, name, slotSwapEntity)
 	if err != nil {
@@ -10181,7 +10187,8 @@ func (client SitesClient) SyncSiteRepositorySlotResponder(resp *http.Response) (
 
 // UpdateSiteAppSettings sends the update site app settings request.
 //
-// resourceGroupName is name of resource group name is name of web app appSettings is application settings of web app
+// resourceGroupName is name of resource group name is name of web app appSettings is application settings of web
+// app
 func (client SitesClient) UpdateSiteAppSettings(ctx context.Context, resourceGroupName string, name string, appSettings StringDictionary) (result StringDictionary, err error) {
 	req, err := client.UpdateSiteAppSettingsPreparer(ctx, resourceGroupName, name, appSettings)
 	if err != nil {
@@ -10249,8 +10256,8 @@ func (client SitesClient) UpdateSiteAppSettingsResponder(resp *http.Response) (r
 
 // UpdateSiteAppSettingsSlot sends the update site app settings slot request.
 //
-// resourceGroupName is name of resource group name is name of web app appSettings is application settings of web app
-// slot is name of web app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app appSettings is application settings of web
+// app slot is name of web app slot. If not specified then will default to production slot.
 func (client SitesClient) UpdateSiteAppSettingsSlot(ctx context.Context, resourceGroupName string, name string, appSettings StringDictionary, slot string) (result StringDictionary, err error) {
 	req, err := client.UpdateSiteAppSettingsSlotPreparer(ctx, resourceGroupName, name, appSettings, slot)
 	if err != nil {
@@ -10526,8 +10533,8 @@ func (client SitesClient) UpdateSiteBackupConfigurationResponder(resp *http.Resp
 
 // UpdateSiteBackupConfigurationSlot sends the update site backup configuration slot request.
 //
-// resourceGroupName is name of resource group name is name of web app request is information on backup request slot is
-// name of web app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app request is information on backup request
+// slot is name of web app slot. If not specified then will default to production slot.
 func (client SitesClient) UpdateSiteBackupConfigurationSlot(ctx context.Context, resourceGroupName string, name string, request BackupRequest, slot string) (result BackupRequest, err error) {
 	req, err := client.UpdateSiteBackupConfigurationSlotPreparer(ctx, resourceGroupName, name, request, slot)
 	if err != nil {
@@ -10666,8 +10673,8 @@ func (client SitesClient) UpdateSiteConfigResponder(resp *http.Response) (result
 // UpdateSiteConfigSlot sends the update site config slot request.
 //
 // resourceGroupName is name of resource group name is name of web app siteConfig is request body that contains the
-// configuraiton setting for the web app slot is name of web app slot. If not specified then will default to production
-// slot.
+// configuraiton setting for the web app slot is name of web app slot. If not specified then will default to
+// production slot.
 func (client SitesClient) UpdateSiteConfigSlot(ctx context.Context, resourceGroupName string, name string, siteConfig SiteConfig, slot string) (result SiteConfig, err error) {
 	req, err := client.UpdateSiteConfigSlotPreparer(ctx, resourceGroupName, name, siteConfig, slot)
 	if err != nil {
@@ -10943,8 +10950,8 @@ func (client SitesClient) UpdateSiteLogsConfigResponder(resp *http.Response) (re
 
 // UpdateSiteLogsConfigSlot sends the update site logs config slot request.
 //
-// resourceGroupName is name of resource group name is name of web app siteLogsConfig is site logs configuration slot
-// is name of web app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app siteLogsConfig is site logs configuration
+// slot is name of web app slot. If not specified then will default to production slot.
 func (client SitesClient) UpdateSiteLogsConfigSlot(ctx context.Context, resourceGroupName string, name string, siteLogsConfig SiteLogsConfig, slot string) (result SiteLogsConfig, err error) {
 	req, err := client.UpdateSiteLogsConfigSlotPreparer(ctx, resourceGroupName, name, siteLogsConfig, slot)
 	if err != nil {
@@ -11081,8 +11088,8 @@ func (client SitesClient) UpdateSiteMetadataResponder(resp *http.Response) (resu
 
 // UpdateSiteMetadataSlot sends the update site metadata slot request.
 //
-// resourceGroupName is name of resource group name is name of web app metadata is meta data of web app slot is name of
-// web app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app metadata is meta data of web app slot is
+// name of web app slot. If not specified then will default to production slot.
 func (client SitesClient) UpdateSiteMetadataSlot(ctx context.Context, resourceGroupName string, name string, metadata StringDictionary, slot string) (result StringDictionary, err error) {
 	req, err := client.UpdateSiteMetadataSlotPreparer(ctx, resourceGroupName, name, metadata, slot)
 	if err != nil {
@@ -11222,8 +11229,8 @@ func (client SitesClient) UpdateSiteRelayServiceConnectionResponder(resp *http.R
 // UpdateSiteRelayServiceConnectionSlot sends the update site relay service connection slot request.
 //
 // resourceGroupName is the resource group name name is the name of the web app entityName is the name by which the
-// Hybrid Connection is identified connectionEnvelope is the details of the Hybrid Connection slot is the name of the
-// slot for the web app.
+// Hybrid Connection is identified connectionEnvelope is the details of the Hybrid Connection slot is the name of
+// the slot for the web app.
 func (client SitesClient) UpdateSiteRelayServiceConnectionSlot(ctx context.Context, resourceGroupName string, name string, entityName string, connectionEnvelope RelayServiceConnectionEntity, slot string) (result RelayServiceConnectionEntity, err error) {
 	req, err := client.UpdateSiteRelayServiceConnectionSlotPreparer(ctx, resourceGroupName, name, entityName, connectionEnvelope, slot)
 	if err != nil {
@@ -11293,8 +11300,8 @@ func (client SitesClient) UpdateSiteRelayServiceConnectionSlotResponder(resp *ht
 
 // UpdateSiteSourceControl sends the update site source control request.
 //
-// resourceGroupName is name of resource group name is name of web app siteSourceControl is request body that contains
-// the source control parameters
+// resourceGroupName is name of resource group name is name of web app siteSourceControl is request body that
+// contains the source control parameters
 func (client SitesClient) UpdateSiteSourceControl(ctx context.Context, resourceGroupName string, name string, siteSourceControl SiteSourceControl) (result SiteSourceControl, err error) {
 	req, err := client.UpdateSiteSourceControlPreparer(ctx, resourceGroupName, name, siteSourceControl)
 	if err != nil {
@@ -11362,8 +11369,9 @@ func (client SitesClient) UpdateSiteSourceControlResponder(resp *http.Response) 
 
 // UpdateSiteSourceControlSlot sends the update site source control slot request.
 //
-// resourceGroupName is name of resource group name is name of web app siteSourceControl is request body that contains
-// the source control parameters slot is name of web app slot. If not specified then will default to production slot.
+// resourceGroupName is name of resource group name is name of web app siteSourceControl is request body that
+// contains the source control parameters slot is name of web app slot. If not specified then will default to
+// production slot.
 func (client SitesClient) UpdateSiteSourceControlSlot(ctx context.Context, resourceGroupName string, name string, siteSourceControl SiteSourceControl, slot string) (result SiteSourceControl, err error) {
 	req, err := client.UpdateSiteSourceControlSlotPreparer(ctx, resourceGroupName, name, siteSourceControl, slot)
 	if err != nil {
@@ -11719,8 +11727,8 @@ func (client SitesClient) UpdateSiteVNETConnectionSlotResponder(resp *http.Respo
 
 // UpdateSlotConfigNames sends the update slot config names request.
 //
-// resourceGroupName is name of resource group name is name of web app slotConfigNames is request body containing the
-// names of application settings and connection strings
+// resourceGroupName is name of resource group name is name of web app slotConfigNames is request body containing
+// the names of application settings and connection strings
 func (client SitesClient) UpdateSlotConfigNames(ctx context.Context, resourceGroupName string, name string, slotConfigNames SlotConfigNamesResource) (result SlotConfigNamesResource, err error) {
 	req, err := client.UpdateSlotConfigNamesPreparer(ctx, resourceGroupName, name, slotConfigNames)
 	if err != nil {

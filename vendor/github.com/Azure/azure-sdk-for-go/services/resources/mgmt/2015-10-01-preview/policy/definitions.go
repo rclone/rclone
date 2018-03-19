@@ -42,7 +42,8 @@ func NewDefinitionsClientWithBaseURI(baseURI string, subscriptionID string) Defi
 
 // CreateOrUpdate creates or updates a policy definition.
 //
-// policyDefinitionName is the name of the policy definition to create. parameters is the policy definition properties.
+// policyDefinitionName is the name of the policy definition to create. parameters is the policy definition
+// properties.
 func (client DefinitionsClient) CreateOrUpdate(ctx context.Context, policyDefinitionName string, parameters Definition) (result Definition, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, policyDefinitionName, parameters)
 	if err != nil {

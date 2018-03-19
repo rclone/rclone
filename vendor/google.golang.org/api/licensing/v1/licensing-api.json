@@ -1,465 +1,465 @@
 {
- "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/WD_dCFRiB71YKGuRij6Gw1Sn7dI\"",
- "discoveryVersion": "v1",
- "id": "licensing:v1",
- "name": "licensing",
- "version": "v1",
- "revision": "20170213",
- "title": "Enterprise License Manager API",
- "description": "Views and manages licenses for your domain.",
- "ownerDomain": "google.com",
- "ownerName": "Google",
- "icons": {
-  "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
-  "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
- },
- "documentationLink": "https://developers.google.com/google-apps/licensing/",
- "protocol": "rest",
- "baseUrl": "https://www.googleapis.com/apps/licensing/v1/product/",
- "basePath": "/apps/licensing/v1/product/",
- "rootUrl": "https://www.googleapis.com/",
- "servicePath": "apps/licensing/v1/product/",
- "batchPath": "batch/licensing/v1",
- "parameters": {
-  "alt": {
-   "type": "string",
-   "description": "Data format for the response.",
-   "default": "json",
-   "enum": [
-    "json"
-   ],
-   "enumDescriptions": [
-    "Responses with Content-Type of application/json"
-   ],
-   "location": "query"
-  },
-  "fields": {
-   "type": "string",
-   "description": "Selector specifying which fields to include in a partial response.",
-   "location": "query"
-  },
-  "key": {
-   "type": "string",
-   "description": "API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.",
-   "location": "query"
-  },
-  "oauth_token": {
-   "type": "string",
-   "description": "OAuth 2.0 token for the current user.",
-   "location": "query"
-  },
-  "prettyPrint": {
-   "type": "boolean",
-   "description": "Returns response with indentations and line breaks.",
-   "default": "true",
-   "location": "query"
-  },
-  "quotaUser": {
-   "type": "string",
-   "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
-   "location": "query"
-  },
-  "userIp": {
-   "type": "string",
-   "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
-   "location": "query"
-  }
- },
- "auth": {
-  "oauth2": {
-   "scopes": {
-    "https://www.googleapis.com/auth/apps.licensing": {
-     "description": "View and manage G Suite licenses for your domain"
+  "auth": {
+    "oauth2": {
+      "scopes": {
+        "https://www.googleapis.com/auth/apps.licensing": {
+          "description": "View and manage G Suite licenses for your domain"
+        }
+      }
     }
-   }
-  }
- },
- "schemas": {
-  "LicenseAssignment": {
-   "id": "LicenseAssignment",
-   "type": "object",
-   "description": "Template for LiscenseAssignment Resource",
-   "properties": {
-    "etags": {
-     "type": "string",
-     "description": "ETag of the resource."
-    },
-    "kind": {
-     "type": "string",
-     "description": "Identifies the resource as a LicenseAssignment.",
-     "default": "licensing#licenseAssignment"
-    },
-    "productId": {
-     "type": "string",
-     "description": "Id of the product.",
-     "annotations": {
-      "required": [
-       "licensing.licenseAssignments.update"
-      ]
-     }
-    },
-    "productName": {
-     "type": "string",
-     "description": "Display Name of the product."
-    },
-    "selfLink": {
-     "type": "string",
-     "description": "Link to this page."
-    },
-    "skuId": {
-     "type": "string",
-     "description": "Id of the sku of the product.",
-     "annotations": {
-      "required": [
-       "licensing.licenseAssignments.update"
-      ]
-     }
-    },
-    "skuName": {
-     "type": "string",
-     "description": "Display Name of the sku of the product."
-    },
-    "userId": {
-     "type": "string",
-     "description": "Email id of the user.",
-     "annotations": {
-      "required": [
-       "licensing.licenseAssignments.update"
-      ]
-     }
-    }
-   }
   },
-  "LicenseAssignmentInsert": {
-   "id": "LicenseAssignmentInsert",
-   "type": "object",
-   "description": "Template for LicenseAssignment Insert request",
-   "properties": {
-    "userId": {
-     "type": "string",
-     "description": "Email id of the user",
-     "annotations": {
-      "required": [
-       "licensing.licenseAssignments.insert"
-      ]
-     }
-    }
-   }
+  "basePath": "/apps/licensing/v1/product/",
+  "baseUrl": "https://www.googleapis.com/apps/licensing/v1/product/",
+  "batchPath": "batch/licensing/v1",
+  "description": "Views and manages licenses for your domain.",
+  "discoveryVersion": "v1",
+  "documentationLink": "https://developers.google.com/google-apps/licensing/",
+  "etag": "\"-iA1DTNe4s-I6JZXPt1t1Ypy8IU/WD_dCFRiB71YKGuRij6Gw1Sn7dI\"",
+  "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
   },
-  "LicenseAssignmentList": {
-   "id": "LicenseAssignmentList",
-   "type": "object",
-   "description": "LicesnseAssignment List for a given product/sku for a customer.",
-   "properties": {
-    "etag": {
-     "type": "string",
-     "description": "ETag of the resource."
+  "id": "licensing:v1",
+  "kind": "discovery#restDescription",
+  "name": "licensing",
+  "ownerDomain": "google.com",
+  "ownerName": "Google",
+  "parameters": {
+    "alt": {
+      "default": "json",
+      "description": "Data format for the response.",
+      "enum": [
+        "json"
+      ],
+      "enumDescriptions": [
+        "Responses with Content-Type of application/json"
+      ],
+      "location": "query",
+      "type": "string"
     },
-    "items": {
-     "type": "array",
-     "description": "The LicenseAssignments in this page of results.",
-     "items": {
-      "$ref": "LicenseAssignment"
-     }
+    "fields": {
+      "description": "Selector specifying which fields to include in a partial response.",
+      "location": "query",
+      "type": "string"
     },
-    "kind": {
-     "type": "string",
-     "description": "Identifies the resource as a collection of LicenseAssignments.",
-     "default": "licensing#licenseAssignmentList"
+    "key": {
+      "description": "API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.",
+      "location": "query",
+      "type": "string"
     },
-    "nextPageToken": {
-     "type": "string",
-     "description": "The continuation token, used to page through large result sets. Provide this value in a subsequent request to return the next page of results."
+    "oauth_token": {
+      "description": "OAuth 2.0 token for the current user.",
+      "location": "query",
+      "type": "string"
+    },
+    "prettyPrint": {
+      "default": "true",
+      "description": "Returns response with indentations and line breaks.",
+      "location": "query",
+      "type": "boolean"
+    },
+    "quotaUser": {
+      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters. Overrides userIp if both are provided.",
+      "location": "query",
+      "type": "string"
+    },
+    "userIp": {
+      "description": "IP address of the site where the request originates. Use this if you want to enforce per-user limits.",
+      "location": "query",
+      "type": "string"
     }
-   }
-  }
- },
- "resources": {
-  "licenseAssignments": {
-   "methods": {
-    "delete": {
-     "id": "licensing.licenseAssignments.delete",
-     "path": "{productId}/sku/{skuId}/user/{userId}",
-     "httpMethod": "DELETE",
-     "description": "Revoke License.",
-     "parameters": {
-      "productId": {
-       "type": "string",
-       "description": "Name for product",
-       "required": true,
-       "location": "path"
-      },
-      "skuId": {
-       "type": "string",
-       "description": "Name for sku",
-       "required": true,
-       "location": "path"
-      },
-      "userId": {
-       "type": "string",
-       "description": "email id or unique Id of the user",
-       "required": true,
-       "location": "path"
+  },
+  "protocol": "rest",
+  "resources": {
+    "licenseAssignments": {
+      "methods": {
+        "delete": {
+          "description": "Revoke License.",
+          "httpMethod": "DELETE",
+          "id": "licensing.licenseAssignments.delete",
+          "parameterOrder": [
+            "productId",
+            "skuId",
+            "userId"
+          ],
+          "parameters": {
+            "productId": {
+              "description": "Name for product",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "skuId": {
+              "description": "Name for sku",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "userId": {
+              "description": "email id or unique Id of the user",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{productId}/sku/{skuId}/user/{userId}",
+          "scopes": [
+            "https://www.googleapis.com/auth/apps.licensing"
+          ]
+        },
+        "get": {
+          "description": "Get license assignment of a particular product and sku for a user",
+          "httpMethod": "GET",
+          "id": "licensing.licenseAssignments.get",
+          "parameterOrder": [
+            "productId",
+            "skuId",
+            "userId"
+          ],
+          "parameters": {
+            "productId": {
+              "description": "Name for product",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "skuId": {
+              "description": "Name for sku",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "userId": {
+              "description": "email id or unique Id of the user",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{productId}/sku/{skuId}/user/{userId}",
+          "response": {
+            "$ref": "LicenseAssignment"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/apps.licensing"
+          ]
+        },
+        "insert": {
+          "description": "Assign License.",
+          "httpMethod": "POST",
+          "id": "licensing.licenseAssignments.insert",
+          "parameterOrder": [
+            "productId",
+            "skuId"
+          ],
+          "parameters": {
+            "productId": {
+              "description": "Name for product",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "skuId": {
+              "description": "Name for sku",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{productId}/sku/{skuId}/user",
+          "request": {
+            "$ref": "LicenseAssignmentInsert"
+          },
+          "response": {
+            "$ref": "LicenseAssignment"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/apps.licensing"
+          ]
+        },
+        "listForProduct": {
+          "description": "List license assignments for given product of the customer.",
+          "httpMethod": "GET",
+          "id": "licensing.licenseAssignments.listForProduct",
+          "parameterOrder": [
+            "productId",
+            "customerId"
+          ],
+          "parameters": {
+            "customerId": {
+              "description": "CustomerId represents the customer for whom licenseassignments are queried",
+              "location": "query",
+              "required": true,
+              "type": "string"
+            },
+            "maxResults": {
+              "default": "100",
+              "description": "Maximum number of campaigns to return at one time. Must be positive. Optional. Default value is 100.",
+              "format": "uint32",
+              "location": "query",
+              "maximum": "1000",
+              "minimum": "1",
+              "type": "integer"
+            },
+            "pageToken": {
+              "default": "",
+              "description": "Token to fetch the next page.Optional. By default server will return first page",
+              "location": "query",
+              "type": "string"
+            },
+            "productId": {
+              "description": "Name for product",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{productId}/users",
+          "response": {
+            "$ref": "LicenseAssignmentList"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/apps.licensing"
+          ]
+        },
+        "listForProductAndSku": {
+          "description": "List license assignments for given product and sku of the customer.",
+          "httpMethod": "GET",
+          "id": "licensing.licenseAssignments.listForProductAndSku",
+          "parameterOrder": [
+            "productId",
+            "skuId",
+            "customerId"
+          ],
+          "parameters": {
+            "customerId": {
+              "description": "CustomerId represents the customer for whom licenseassignments are queried",
+              "location": "query",
+              "required": true,
+              "type": "string"
+            },
+            "maxResults": {
+              "default": "100",
+              "description": "Maximum number of campaigns to return at one time. Must be positive. Optional. Default value is 100.",
+              "format": "uint32",
+              "location": "query",
+              "maximum": "1000",
+              "minimum": "1",
+              "type": "integer"
+            },
+            "pageToken": {
+              "default": "",
+              "description": "Token to fetch the next page.Optional. By default server will return first page",
+              "location": "query",
+              "type": "string"
+            },
+            "productId": {
+              "description": "Name for product",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "skuId": {
+              "description": "Name for sku",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{productId}/sku/{skuId}/users",
+          "response": {
+            "$ref": "LicenseAssignmentList"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/apps.licensing"
+          ]
+        },
+        "patch": {
+          "description": "Assign License. This method supports patch semantics.",
+          "httpMethod": "PATCH",
+          "id": "licensing.licenseAssignments.patch",
+          "parameterOrder": [
+            "productId",
+            "skuId",
+            "userId"
+          ],
+          "parameters": {
+            "productId": {
+              "description": "Name for product",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "skuId": {
+              "description": "Name for sku for which license would be revoked",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "userId": {
+              "description": "email id or unique Id of the user",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{productId}/sku/{skuId}/user/{userId}",
+          "request": {
+            "$ref": "LicenseAssignment"
+          },
+          "response": {
+            "$ref": "LicenseAssignment"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/apps.licensing"
+          ]
+        },
+        "update": {
+          "description": "Assign License.",
+          "httpMethod": "PUT",
+          "id": "licensing.licenseAssignments.update",
+          "parameterOrder": [
+            "productId",
+            "skuId",
+            "userId"
+          ],
+          "parameters": {
+            "productId": {
+              "description": "Name for product",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "skuId": {
+              "description": "Name for sku for which license would be revoked",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "userId": {
+              "description": "email id or unique Id of the user",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{productId}/sku/{skuId}/user/{userId}",
+          "request": {
+            "$ref": "LicenseAssignment"
+          },
+          "response": {
+            "$ref": "LicenseAssignment"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/apps.licensing"
+          ]
+        }
       }
-     },
-     "parameterOrder": [
-      "productId",
-      "skuId",
-      "userId"
-     ],
-     "scopes": [
-      "https://www.googleapis.com/auth/apps.licensing"
-     ]
-    },
-    "get": {
-     "id": "licensing.licenseAssignments.get",
-     "path": "{productId}/sku/{skuId}/user/{userId}",
-     "httpMethod": "GET",
-     "description": "Get license assignment of a particular product and sku for a user",
-     "parameters": {
-      "productId": {
-       "type": "string",
-       "description": "Name for product",
-       "required": true,
-       "location": "path"
-      },
-      "skuId": {
-       "type": "string",
-       "description": "Name for sku",
-       "required": true,
-       "location": "path"
-      },
-      "userId": {
-       "type": "string",
-       "description": "email id or unique Id of the user",
-       "required": true,
-       "location": "path"
-      }
-     },
-     "parameterOrder": [
-      "productId",
-      "skuId",
-      "userId"
-     ],
-     "response": {
-      "$ref": "LicenseAssignment"
-     },
-     "scopes": [
-      "https://www.googleapis.com/auth/apps.licensing"
-     ]
-    },
-    "insert": {
-     "id": "licensing.licenseAssignments.insert",
-     "path": "{productId}/sku/{skuId}/user",
-     "httpMethod": "POST",
-     "description": "Assign License.",
-     "parameters": {
-      "productId": {
-       "type": "string",
-       "description": "Name for product",
-       "required": true,
-       "location": "path"
-      },
-      "skuId": {
-       "type": "string",
-       "description": "Name for sku",
-       "required": true,
-       "location": "path"
-      }
-     },
-     "parameterOrder": [
-      "productId",
-      "skuId"
-     ],
-     "request": {
-      "$ref": "LicenseAssignmentInsert"
-     },
-     "response": {
-      "$ref": "LicenseAssignment"
-     },
-     "scopes": [
-      "https://www.googleapis.com/auth/apps.licensing"
-     ]
-    },
-    "listForProduct": {
-     "id": "licensing.licenseAssignments.listForProduct",
-     "path": "{productId}/users",
-     "httpMethod": "GET",
-     "description": "List license assignments for given product of the customer.",
-     "parameters": {
-      "customerId": {
-       "type": "string",
-       "description": "CustomerId represents the customer for whom licenseassignments are queried",
-       "required": true,
-       "location": "query"
-      },
-      "maxResults": {
-       "type": "integer",
-       "description": "Maximum number of campaigns to return at one time. Must be positive. Optional. Default value is 100.",
-       "default": "100",
-       "format": "uint32",
-       "minimum": "1",
-       "maximum": "1000",
-       "location": "query"
-      },
-      "pageToken": {
-       "type": "string",
-       "description": "Token to fetch the next page.Optional. By default server will return first page",
-       "default": "",
-       "location": "query"
-      },
-      "productId": {
-       "type": "string",
-       "description": "Name for product",
-       "required": true,
-       "location": "path"
-      }
-     },
-     "parameterOrder": [
-      "productId",
-      "customerId"
-     ],
-     "response": {
-      "$ref": "LicenseAssignmentList"
-     },
-     "scopes": [
-      "https://www.googleapis.com/auth/apps.licensing"
-     ]
-    },
-    "listForProductAndSku": {
-     "id": "licensing.licenseAssignments.listForProductAndSku",
-     "path": "{productId}/sku/{skuId}/users",
-     "httpMethod": "GET",
-     "description": "List license assignments for given product and sku of the customer.",
-     "parameters": {
-      "customerId": {
-       "type": "string",
-       "description": "CustomerId represents the customer for whom licenseassignments are queried",
-       "required": true,
-       "location": "query"
-      },
-      "maxResults": {
-       "type": "integer",
-       "description": "Maximum number of campaigns to return at one time. Must be positive. Optional. Default value is 100.",
-       "default": "100",
-       "format": "uint32",
-       "minimum": "1",
-       "maximum": "1000",
-       "location": "query"
-      },
-      "pageToken": {
-       "type": "string",
-       "description": "Token to fetch the next page.Optional. By default server will return first page",
-       "default": "",
-       "location": "query"
-      },
-      "productId": {
-       "type": "string",
-       "description": "Name for product",
-       "required": true,
-       "location": "path"
-      },
-      "skuId": {
-       "type": "string",
-       "description": "Name for sku",
-       "required": true,
-       "location": "path"
-      }
-     },
-     "parameterOrder": [
-      "productId",
-      "skuId",
-      "customerId"
-     ],
-     "response": {
-      "$ref": "LicenseAssignmentList"
-     },
-     "scopes": [
-      "https://www.googleapis.com/auth/apps.licensing"
-     ]
-    },
-    "patch": {
-     "id": "licensing.licenseAssignments.patch",
-     "path": "{productId}/sku/{skuId}/user/{userId}",
-     "httpMethod": "PATCH",
-     "description": "Assign License. This method supports patch semantics.",
-     "parameters": {
-      "productId": {
-       "type": "string",
-       "description": "Name for product",
-       "required": true,
-       "location": "path"
-      },
-      "skuId": {
-       "type": "string",
-       "description": "Name for sku for which license would be revoked",
-       "required": true,
-       "location": "path"
-      },
-      "userId": {
-       "type": "string",
-       "description": "email id or unique Id of the user",
-       "required": true,
-       "location": "path"
-      }
-     },
-     "parameterOrder": [
-      "productId",
-      "skuId",
-      "userId"
-     ],
-     "request": {
-      "$ref": "LicenseAssignment"
-     },
-     "response": {
-      "$ref": "LicenseAssignment"
-     },
-     "scopes": [
-      "https://www.googleapis.com/auth/apps.licensing"
-     ]
-    },
-    "update": {
-     "id": "licensing.licenseAssignments.update",
-     "path": "{productId}/sku/{skuId}/user/{userId}",
-     "httpMethod": "PUT",
-     "description": "Assign License.",
-     "parameters": {
-      "productId": {
-       "type": "string",
-       "description": "Name for product",
-       "required": true,
-       "location": "path"
-      },
-      "skuId": {
-       "type": "string",
-       "description": "Name for sku for which license would be revoked",
-       "required": true,
-       "location": "path"
-      },
-      "userId": {
-       "type": "string",
-       "description": "email id or unique Id of the user",
-       "required": true,
-       "location": "path"
-      }
-     },
-     "parameterOrder": [
-      "productId",
-      "skuId",
-      "userId"
-     ],
-     "request": {
-      "$ref": "LicenseAssignment"
-     },
-     "response": {
-      "$ref": "LicenseAssignment"
-     },
-     "scopes": [
-      "https://www.googleapis.com/auth/apps.licensing"
-     ]
     }
-   }
-  }
- }
+  },
+  "revision": "20170213",
+  "rootUrl": "https://www.googleapis.com/",
+  "schemas": {
+    "LicenseAssignment": {
+      "description": "Template for LiscenseAssignment Resource",
+      "id": "LicenseAssignment",
+      "properties": {
+        "etags": {
+          "description": "ETag of the resource.",
+          "type": "string"
+        },
+        "kind": {
+          "default": "licensing#licenseAssignment",
+          "description": "Identifies the resource as a LicenseAssignment.",
+          "type": "string"
+        },
+        "productId": {
+          "annotations": {
+            "required": [
+              "licensing.licenseAssignments.update"
+            ]
+          },
+          "description": "Id of the product.",
+          "type": "string"
+        },
+        "productName": {
+          "description": "Display Name of the product.",
+          "type": "string"
+        },
+        "selfLink": {
+          "description": "Link to this page.",
+          "type": "string"
+        },
+        "skuId": {
+          "annotations": {
+            "required": [
+              "licensing.licenseAssignments.update"
+            ]
+          },
+          "description": "Id of the sku of the product.",
+          "type": "string"
+        },
+        "skuName": {
+          "description": "Display Name of the sku of the product.",
+          "type": "string"
+        },
+        "userId": {
+          "annotations": {
+            "required": [
+              "licensing.licenseAssignments.update"
+            ]
+          },
+          "description": "Email id of the user.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "LicenseAssignmentInsert": {
+      "description": "Template for LicenseAssignment Insert request",
+      "id": "LicenseAssignmentInsert",
+      "properties": {
+        "userId": {
+          "annotations": {
+            "required": [
+              "licensing.licenseAssignments.insert"
+            ]
+          },
+          "description": "Email id of the user",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "LicenseAssignmentList": {
+      "description": "LicesnseAssignment List for a given product/sku for a customer.",
+      "id": "LicenseAssignmentList",
+      "properties": {
+        "etag": {
+          "description": "ETag of the resource.",
+          "type": "string"
+        },
+        "items": {
+          "description": "The LicenseAssignments in this page of results.",
+          "items": {
+            "$ref": "LicenseAssignment"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "default": "licensing#licenseAssignmentList",
+          "description": "Identifies the resource as a collection of LicenseAssignments.",
+          "type": "string"
+        },
+        "nextPageToken": {
+          "description": "The continuation token, used to page through large result sets. Provide this value in a subsequent request to return the next page of results.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "servicePath": "apps/licensing/v1/product/",
+  "title": "Enterprise License Manager API",
+  "version": "v1"
 }

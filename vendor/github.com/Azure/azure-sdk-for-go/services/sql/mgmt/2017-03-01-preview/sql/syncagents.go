@@ -43,9 +43,9 @@ func NewSyncAgentsClientWithBaseURI(baseURI string, subscriptionID string) SyncA
 
 // CreateOrUpdate creates or updates a sync agent.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server on which the sync agent is hosted.
-// syncAgentName is the name of the sync agent. parameters is the requested sync agent resource state.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server on which the sync agent is
+// hosted. syncAgentName is the name of the sync agent. parameters is the requested sync agent resource state.
 func (client SyncAgentsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, syncAgentName string, parameters SyncAgent) (result SyncAgentsCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, syncAgentName, parameters)
 	if err != nil {
@@ -116,9 +116,9 @@ func (client SyncAgentsClient) CreateOrUpdateResponder(resp *http.Response) (res
 
 // Delete deletes a sync agent.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server on which the sync agent is hosted.
-// syncAgentName is the name of the sync agent.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server on which the sync agent is
+// hosted. syncAgentName is the name of the sync agent.
 func (client SyncAgentsClient) Delete(ctx context.Context, resourceGroupName string, serverName string, syncAgentName string) (result SyncAgentsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName, syncAgentName)
 	if err != nil {
@@ -186,9 +186,9 @@ func (client SyncAgentsClient) DeleteResponder(resp *http.Response) (result auto
 
 // GenerateKey generates a sync agent key.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server on which the sync agent is hosted.
-// syncAgentName is the name of the sync agent.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server on which the sync agent is
+// hosted. syncAgentName is the name of the sync agent.
 func (client SyncAgentsClient) GenerateKey(ctx context.Context, resourceGroupName string, serverName string, syncAgentName string) (result SyncAgentKeyProperties, err error) {
 	req, err := client.GenerateKeyPreparer(ctx, resourceGroupName, serverName, syncAgentName)
 	if err != nil {
@@ -255,9 +255,9 @@ func (client SyncAgentsClient) GenerateKeyResponder(resp *http.Response) (result
 
 // Get gets a sync agent.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server on which the sync agent is hosted.
-// syncAgentName is the name of the sync agent.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server on which the sync agent is
+// hosted. syncAgentName is the name of the sync agent.
 func (client SyncAgentsClient) Get(ctx context.Context, resourceGroupName string, serverName string, syncAgentName string) (result SyncAgent, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, syncAgentName)
 	if err != nil {
@@ -324,8 +324,9 @@ func (client SyncAgentsClient) GetResponder(resp *http.Response) (result SyncAge
 
 // ListByServer lists sync agents in a server.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server on which the sync agent is hosted.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server on which the sync agent is
+// hosted.
 func (client SyncAgentsClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result SyncAgentListResultPage, err error) {
 	result.fn = client.listByServerNextResults
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)
@@ -419,9 +420,9 @@ func (client SyncAgentsClient) ListByServerComplete(ctx context.Context, resourc
 
 // ListLinkedDatabases lists databases linked to a sync agent.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server on which the sync agent is hosted.
-// syncAgentName is the name of the sync agent.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server on which the sync agent is
+// hosted. syncAgentName is the name of the sync agent.
 func (client SyncAgentsClient) ListLinkedDatabases(ctx context.Context, resourceGroupName string, serverName string, syncAgentName string) (result SyncAgentLinkedDatabaseListResultPage, err error) {
 	result.fn = client.listLinkedDatabasesNextResults
 	req, err := client.ListLinkedDatabasesPreparer(ctx, resourceGroupName, serverName, syncAgentName)

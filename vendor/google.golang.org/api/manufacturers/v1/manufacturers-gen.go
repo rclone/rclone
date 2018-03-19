@@ -503,7 +503,8 @@ type Issue struct {
 	// https://support.google.com/manufacturers/answer/6124116.
 	Attribute string `json:"attribute,omitempty"`
 
-	// Description: Description of the issue.
+	// Description: Longer description of the issue focused on how to
+	// resolve it.
 	Description string `json:"description,omitempty"`
 
 	// Severity: The severity of the issue.
@@ -1254,36 +1255,43 @@ type AccountsProductsUpdateCall struct {
 	s          *Service
 	parent     string
 	name       string
-	product    *Product
+	attributes *Attributes
 	urlParams_ gensupport.URLParams
 	ctx_       context.Context
 	header_    http.Header
 }
 
-// Update: Inserts or updates the product in a Manufacturer Center
+// Update: Inserts or updates the attributes of the product in a
+// Manufacturer Center
 // account.
 //
-// The checks at upload time are minimal. All required attributes need
-// to be
-// present for a product to be valid. Issues may show up later
-// after the API has accepted an update for a product and it is possible
-// to
-// overwrite an existing valid product with an invalid product. To
-// detect
-// this, you should retrieve the product and check it for issues once
+// Creates a product with the provided attributes. If the product
+// already
+// exists, then all attributes are replaced with the new ones. The
+// checks at
+// upload time are minimal. All required attributes need to be present
+// for a
+// product to be valid. Issues may show up later after the API has
+// accepted a
+// new upload for a product and it is possible to overwrite an existing
+// valid
+// product with an invalid product. To detect this, you should retrieve
 // the
-// updated version is available.
+// product and check it for issues once the new version is
+// available.
 //
-// Inserted or updated products first need to be processed before they
-// can be
+// Uploaded attributes first need to be processed before they can
+// be
 // retrieved. Until then, new products will be unavailable, and
 // retrieval
-// of updated products will return the original state of the product.
-func (r *AccountsProductsService) Update(parent string, name string, product *Product) *AccountsProductsUpdateCall {
+// of previously uploaded products will return the original state of
+// the
+// product.
+func (r *AccountsProductsService) Update(parent string, name string, attributes *Attributes) *AccountsProductsUpdateCall {
 	c := &AccountsProductsUpdateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
 	c.name = name
-	c.product = product
+	c.attributes = attributes
 	return c
 }
 
@@ -1319,7 +1327,7 @@ func (c *AccountsProductsUpdateCall) doRequest(alt string) (*http.Response, erro
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
-	body, err := googleapi.WithoutDataWrapper.JSONReader(c.product)
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.attributes)
 	if err != nil {
 		return nil, err
 	}
@@ -1337,13 +1345,13 @@ func (c *AccountsProductsUpdateCall) doRequest(alt string) (*http.Response, erro
 }
 
 // Do executes the "manufacturers.accounts.products.update" call.
-// Exactly one of *Product or error will be non-nil. Any non-2xx status
+// Exactly one of *Empty or error will be non-nil. Any non-2xx status
 // code is an error. Response headers are in either
-// *Product.ServerResponse.Header or (if a response was returned at all)
+// *Empty.ServerResponse.Header or (if a response was returned at all)
 // in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
 // check whether the returned error was because http.StatusNotModified
 // was returned.
-func (c *AccountsProductsUpdateCall) Do(opts ...googleapi.CallOption) (*Product, error) {
+func (c *AccountsProductsUpdateCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -1362,7 +1370,7 @@ func (c *AccountsProductsUpdateCall) Do(opts ...googleapi.CallOption) (*Product,
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &Product{
+	ret := &Empty{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -1374,7 +1382,7 @@ func (c *AccountsProductsUpdateCall) Do(opts ...googleapi.CallOption) (*Product,
 	}
 	return ret, nil
 	// {
-	//   "description": "Inserts or updates the product in a Manufacturer Center account.\n\nThe checks at upload time are minimal. All required attributes need to be\npresent for a product to be valid. Issues may show up later\nafter the API has accepted an update for a product and it is possible to\noverwrite an existing valid product with an invalid product. To detect\nthis, you should retrieve the product and check it for issues once the\nupdated version is available.\n\nInserted or updated products first need to be processed before they can be\nretrieved. Until then, new products will be unavailable, and retrieval\nof updated products will return the original state of the product.",
+	//   "description": "Inserts or updates the attributes of the product in a Manufacturer Center\naccount.\n\nCreates a product with the provided attributes. If the product already\nexists, then all attributes are replaced with the new ones. The checks at\nupload time are minimal. All required attributes need to be present for a\nproduct to be valid. Issues may show up later after the API has accepted a\nnew upload for a product and it is possible to overwrite an existing valid\nproduct with an invalid product. To detect this, you should retrieve the\nproduct and check it for issues once the new version is available.\n\nUploaded attributes first need to be processed before they can be\nretrieved. Until then, new products will be unavailable, and retrieval\nof previously uploaded products will return the original state of the\nproduct.",
 	//   "flatPath": "v1/accounts/{accountsId}/products/{productsId}",
 	//   "httpMethod": "PUT",
 	//   "id": "manufacturers.accounts.products.update",
@@ -1400,10 +1408,10 @@ func (c *AccountsProductsUpdateCall) Do(opts ...googleapi.CallOption) (*Product,
 	//   },
 	//   "path": "v1/{+parent}/products/{+name}",
 	//   "request": {
-	//     "$ref": "Product"
+	//     "$ref": "Attributes"
 	//   },
 	//   "response": {
-	//     "$ref": "Product"
+	//     "$ref": "Empty"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/manufacturercenter"

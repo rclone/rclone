@@ -221,6 +221,12 @@ type ActionGroup struct {
 	SmsReceivers *[]SmsReceiver `json:"smsReceivers,omitempty"`
 	// WebhookReceivers - The list of webhook receivers that are part of this action group.
 	WebhookReceivers *[]WebhookReceiver `json:"webhookReceivers,omitempty"`
+	// ItsmReceivers - The list of ITSM receivers that are part of this action group.
+	ItsmReceivers *[]ItsmReceiver `json:"itsmReceivers,omitempty"`
+	// AzureAppPushReceivers - The list of AzureAppPush receivers that are part of this action group.
+	AzureAppPushReceivers *[]AzureAppPushReceiver `json:"azureAppPushReceivers,omitempty"`
+	// AutomationRunbookReceivers - The list of AutomationRunbook receivers that are part of this action group.
+	AutomationRunbookReceivers *[]AutomationRunbookReceiver `json:"automationRunbookReceivers,omitempty"`
 }
 
 // ActionGroupList a list of action groups.
@@ -230,6 +236,52 @@ type ActionGroupList struct {
 	Value *[]ActionGroupResource `json:"value,omitempty"`
 	// NextLink - Provides the link to retrieve the next set of elements.
 	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// ActionGroupPatch an Azure action group for patch operations.
+type ActionGroupPatch struct {
+	// Enabled - Indicates whether this action group is enabled. If an action group is not enabled, then none of its actions will be activated.
+	Enabled *bool `json:"enabled,omitempty"`
+}
+
+// ActionGroupPatchBody an action group object for the body of patch operations.
+type ActionGroupPatchBody struct {
+	// Tags - Resource tags
+	Tags *map[string]*string `json:"tags,omitempty"`
+	// ActionGroupPatch - The action group settings for an update operation.
+	*ActionGroupPatch `json:"properties,omitempty"`
+}
+
+// UnmarshalJSON is the custom unmarshaler for ActionGroupPatchBody struct.
+func (agpb *ActionGroupPatchBody) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	var v *json.RawMessage
+
+	v = m["tags"]
+	if v != nil {
+		var tags map[string]*string
+		err = json.Unmarshal(*m["tags"], &tags)
+		if err != nil {
+			return err
+		}
+		agpb.Tags = &tags
+	}
+
+	v = m["properties"]
+	if v != nil {
+		var properties ActionGroupPatch
+		err = json.Unmarshal(*m["properties"], &properties)
+		if err != nil {
+			return err
+		}
+		agpb.ActionGroupPatch = &properties
+	}
+
+	return nil
 }
 
 // ActionGroupResource an action group resource.
@@ -730,6 +782,22 @@ func (arrp *AlertRuleResourcePatch) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// AutomationRunbookReceiver the Azure Automation Runbook notification receiver.
+type AutomationRunbookReceiver struct {
+	// AutomationAccountID - The Azure automation account Id which holds this runbook and authenticate to Azure resource.
+	AutomationAccountID *string `json:"automationAccountId,omitempty"`
+	// RunbookName - The name for this runbook.
+	RunbookName *string `json:"runbookName,omitempty"`
+	// WebhookResourceID - The resource id for webhook linked to this runbook.
+	WebhookResourceID *string `json:"webhookResourceId,omitempty"`
+	// IsGlobalRunbook - Indicates whether this instance is global runbook.
+	IsGlobalRunbook *bool `json:"isGlobalRunbook,omitempty"`
+	// Name - Indicates name of the webhook.
+	Name *string `json:"name,omitempty"`
+	// ServiceURI - The URI where webhooks should be sent.
+	ServiceURI *string `json:"serviceUri,omitempty"`
+}
+
 // AutoscaleNotification autoscale notification.
 type AutoscaleNotification struct {
 	// Operation - the operation associated with the notification and its value must be "scale"
@@ -999,6 +1067,14 @@ func (asrp *AutoscaleSettingResourcePatch) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// AzureAppPushReceiver the Azure mobile App push notification receiver.
+type AzureAppPushReceiver struct {
+	// Name - The name of the Azure mobile app push receiver. Names must be unique across all receivers within an action group.
+	Name *string `json:"name,omitempty"`
+	// EmailAddress - The email address registered for the Azure mobile app.
+	EmailAddress *string `json:"emailAddress,omitempty"`
+}
+
 // DiagnosticSettings the diagnostic settings.
 type DiagnosticSettings struct {
 	// StorageAccountID - The resource ID of the storage account to which you would like to send Diagnostic Logs.
@@ -1217,6 +1293,20 @@ type IncidentListResult struct {
 	autorest.Response `json:"-"`
 	// Value - the incident collection.
 	Value *[]Incident `json:"value,omitempty"`
+}
+
+// ItsmReceiver an Itsm receiver.
+type ItsmReceiver struct {
+	// Name - The name of the Itsm receiver. Names must be unique across all receivers within an action group.
+	Name *string `json:"name,omitempty"`
+	// WorkspaceID - OMS LA instance identifier.
+	WorkspaceID *string `json:"workspaceId,omitempty"`
+	// ConnectionID - Unique identification of ITSM connection among multiple defined in above workspace.
+	ConnectionID *string `json:"connectionId,omitempty"`
+	// TicketConfiguration - JSON blob for the configurations of the ITSM action. CreateMultipleWorkItems option will be part of this blob as well.
+	TicketConfiguration *string `json:"ticketConfiguration,omitempty"`
+	// Region - Region in which workspace resides. Supported values:'centralindia','japaneast','southeastasia','australiasoutheast','uksouth','westcentralus','canadacentral','eastus','westeurope'
+	Region *string `json:"region,omitempty"`
 }
 
 // LocationThresholdRuleCondition a rule condition based on a certain number of locations failing.

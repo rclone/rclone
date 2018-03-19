@@ -43,11 +43,11 @@ func NewEncryptionProtectorsClientWithBaseURI(baseURI string, subscriptionID str
 
 // CreateOrUpdate updates an existing encryption protector.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. encryptionProtectorName is the name
-// of the encryption protector to be updated. parameters is the requested encryption protector resource state.
-func (client EncryptionProtectorsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, encryptionProtectorName string, parameters EncryptionProtector) (result EncryptionProtectorsCreateOrUpdateFuture, err error) {
-	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, encryptionProtectorName, parameters)
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. parameters is the requested
+// encryption protector resource state.
+func (client EncryptionProtectorsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, parameters EncryptionProtector) (result EncryptionProtectorsCreateOrUpdateFuture, err error) {
+	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.EncryptionProtectorsClient", "CreateOrUpdate", nil, "Failure preparing request")
 		return
@@ -63,9 +63,9 @@ func (client EncryptionProtectorsClient) CreateOrUpdate(ctx context.Context, res
 }
 
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
-func (client EncryptionProtectorsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, encryptionProtectorName string, parameters EncryptionProtector) (*http.Request, error) {
+func (client EncryptionProtectorsClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, parameters EncryptionProtector) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
-		"encryptionProtectorName": autorest.Encode("path", encryptionProtectorName),
+		"encryptionProtectorName": autorest.Encode("path", "current"),
 		"resourceGroupName":       autorest.Encode("path", resourceGroupName),
 		"serverName":              autorest.Encode("path", serverName),
 		"subscriptionId":          autorest.Encode("path", client.SubscriptionID),
@@ -116,11 +116,10 @@ func (client EncryptionProtectorsClient) CreateOrUpdateResponder(resp *http.Resp
 
 // Get gets a server encryption protector.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. encryptionProtectorName is the name
-// of the encryption protector to be retrieved.
-func (client EncryptionProtectorsClient) Get(ctx context.Context, resourceGroupName string, serverName string, encryptionProtectorName string) (result EncryptionProtector, err error) {
-	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, encryptionProtectorName)
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
+func (client EncryptionProtectorsClient) Get(ctx context.Context, resourceGroupName string, serverName string) (result EncryptionProtector, err error) {
+	req, err := client.GetPreparer(ctx, resourceGroupName, serverName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.EncryptionProtectorsClient", "Get", nil, "Failure preparing request")
 		return
@@ -142,9 +141,9 @@ func (client EncryptionProtectorsClient) Get(ctx context.Context, resourceGroupN
 }
 
 // GetPreparer prepares the Get request.
-func (client EncryptionProtectorsClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, encryptionProtectorName string) (*http.Request, error) {
+func (client EncryptionProtectorsClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
-		"encryptionProtectorName": autorest.Encode("path", encryptionProtectorName),
+		"encryptionProtectorName": autorest.Encode("path", "current"),
 		"resourceGroupName":       autorest.Encode("path", resourceGroupName),
 		"serverName":              autorest.Encode("path", serverName),
 		"subscriptionId":          autorest.Encode("path", client.SubscriptionID),
@@ -185,8 +184,8 @@ func (client EncryptionProtectorsClient) GetResponder(resp *http.Response) (resu
 
 // ListByServer gets a list of server encryption protectors
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
 func (client EncryptionProtectorsClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result EncryptionProtectorListResultPage, err error) {
 	result.fn = client.listByServerNextResults
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)

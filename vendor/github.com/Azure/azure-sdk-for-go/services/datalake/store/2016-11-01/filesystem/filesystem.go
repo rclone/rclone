@@ -41,24 +41,22 @@ func NewClient() Client {
 // ConcurrentAppend. ConcurrentAppend and Append cannot be used interchangeably; once a target file has been modified
 // using either of these append options, the other append option cannot be used on the target file.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file to which to append. streamContents is the file contents to include when
-// appending to the file. streamContents will be closed upon successful return. Callers should ensure closure when
-// receiving an error.appendParameter is flag to skip redirection. When append=false or not specified, the request is
-// redirected. Submit another HTTP PUT request using the URL in the Location header with the file data to be written.
-// When append=true, this redirection is skipped. op is the constant value for the operation. offset is the optional
-// offset in the stream to begin the append operation. Default is to append at the end of the stream. syncFlag is
-// optionally indicates what to do after completion of the concurrent append. DATA indicates that more data will be
-// sent immediately by the client, the file handle should remain open/locked, and file metadata (including file length,
-// last modified time) should NOT get updated. METADATA indicates that more data will be sent immediately by the
-// client, the file handle should remain open/locked, and file metadata should get updated. CLOSE indicates that the
-// client is done sending data, the file handle should be closed/unlocked, and file metadata should get updated.
-// leaseID is optional unique GUID per file to ensure single writer semantics, meaning that only clients that append to
-// the file with the same leaseId will be allowed to do so. fileSessionID is optional unique GUID per file indicating
-// all the appends with the same fileSessionId are from the same client and same session. This will give a performance
-// benefit when syncFlag is DATA or METADATA.
-func (client Client) Append(ctx context.Context, accountName string, pathParameter string, streamContents io.ReadCloser, appendParameter string, op string, offset *int64, syncFlag SyncFlag, leaseID *uuid.UUID, fileSessionID *uuid.UUID) (result autorest.Response, err error) {
-	req, err := client.AppendPreparer(ctx, accountName, pathParameter, streamContents, appendParameter, op, offset, syncFlag, leaseID, fileSessionID)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file to which to append. streamContents is the file contents to
+// include when appending to the file. streamContents will be closed upon successful return. Callers should ensure
+// closure when receiving an error.offset is the optional offset in the stream to begin the append operation.
+// Default is to append at the end of the stream. syncFlag is optionally indicates what to do after completion of
+// the concurrent append. DATA indicates that more data will be sent immediately by the client, the file handle
+// should remain open/locked, and file metadata (including file length, last modified time) should NOT get updated.
+// METADATA indicates that more data will be sent immediately by the client, the file handle should remain
+// open/locked, and file metadata should get updated. CLOSE indicates that the client is done sending data, the
+// file handle should be closed/unlocked, and file metadata should get updated. leaseID is optional unique GUID per
+// file to ensure single writer semantics, meaning that only clients that append to the file with the same leaseId
+// will be allowed to do so. fileSessionID is optional unique GUID per file indicating all the appends with the
+// same fileSessionId are from the same client and same session. This will give a performance benefit when syncFlag
+// is DATA or METADATA.
+func (client Client) Append(ctx context.Context, accountName string, pathParameter string, streamContents io.ReadCloser, offset *int64, syncFlag SyncFlag, leaseID *uuid.UUID, fileSessionID *uuid.UUID) (result autorest.Response, err error) {
+	req, err := client.AppendPreparer(ctx, accountName, pathParameter, streamContents, offset, syncFlag, leaseID, fileSessionID)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "Append", nil, "Failure preparing request")
 		return
@@ -80,7 +78,7 @@ func (client Client) Append(ctx context.Context, accountName string, pathParamet
 }
 
 // AppendPreparer prepares the Append request.
-func (client Client) AppendPreparer(ctx context.Context, accountName string, pathParameter string, streamContents io.ReadCloser, appendParameter string, op string, offset *int64, syncFlag SyncFlag, leaseID *uuid.UUID, fileSessionID *uuid.UUID) (*http.Request, error) {
+func (client Client) AppendPreparer(ctx context.Context, accountName string, pathParameter string, streamContents io.ReadCloser, offset *int64, syncFlag SyncFlag, leaseID *uuid.UUID, fileSessionID *uuid.UUID) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -93,14 +91,16 @@ func (client Client) AppendPreparer(ctx context.Context, accountName string, pat
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"append":      autorest.Encode("query", appendParameter),
-		"op":          autorest.Encode("query", op),
+		"append":      autorest.Encode("query", "true"),
+		"op":          autorest.Encode("query", "APPEND"),
 	}
 	if offset != nil {
 		queryParameters["offset"] = autorest.Encode("query", *offset)
 	}
 	if len(string(syncFlag)) > 0 {
 		queryParameters["syncFlag"] = autorest.Encode("query", syncFlag)
+	} else {
+		queryParameters["syncFlag"] = autorest.Encode("query", "CLOSE")
 	}
 	if leaseID != nil {
 		queryParameters["leaseId"] = autorest.Encode("query", *leaseID)
@@ -110,6 +110,7 @@ func (client Client) AppendPreparer(ctx context.Context, accountName string, pat
 	}
 
 	preparer := autorest.CreatePreparer(
+		autorest.AsOctetStream(),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlsFileSystemDnsSuffix}", urlParameters),
 		autorest.WithPathParameters("/webhdfs/v1/{path}", pathParameters),
@@ -139,11 +140,11 @@ func (client Client) AppendResponder(resp *http.Response) (result autorest.Respo
 
 // CheckAccess checks if the specified access is available at the given path.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file or directory for which to check access. fsaction is file system operation
-// read/write/execute in string form, matching regex pattern '[rwx-]{3}' op is the constant value for the operation.
-func (client Client) CheckAccess(ctx context.Context, accountName string, pathParameter string, fsaction string, op string) (result autorest.Response, err error) {
-	req, err := client.CheckAccessPreparer(ctx, accountName, pathParameter, fsaction, op)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file or directory for which to check access. fsaction is file system
+// operation read/write/execute in string form, matching regex pattern '[rwx-]{3}'
+func (client Client) CheckAccess(ctx context.Context, accountName string, pathParameter string, fsaction string) (result autorest.Response, err error) {
+	req, err := client.CheckAccessPreparer(ctx, accountName, pathParameter, fsaction)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "CheckAccess", nil, "Failure preparing request")
 		return
@@ -165,7 +166,7 @@ func (client Client) CheckAccess(ctx context.Context, accountName string, pathPa
 }
 
 // CheckAccessPreparer prepares the CheckAccess request.
-func (client Client) CheckAccessPreparer(ctx context.Context, accountName string, pathParameter string, fsaction string, op string) (*http.Request, error) {
+func (client Client) CheckAccessPreparer(ctx context.Context, accountName string, pathParameter string, fsaction string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -179,7 +180,7 @@ func (client Client) CheckAccessPreparer(ctx context.Context, accountName string
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 		"fsaction":    autorest.Encode("query", fsaction),
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "CHECKACCESS"),
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -211,18 +212,18 @@ func (client Client) CheckAccessResponder(resp *http.Response) (result autorest.
 
 // Concat concatenates the list of source files into the destination file, removing all source files upon success.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the destination file resulting from the concatenation. sources is a list of comma
-// separated Data Lake Store paths (starting with '/') of the files to concatenate, in the order in which they should
-// be concatenated. op is the constant value for the operation.
-func (client Client) Concat(ctx context.Context, accountName string, pathParameter string, sources []string, op string) (result autorest.Response, err error) {
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the destination file resulting from the concatenation. sources is a list
+// of comma separated Data Lake Store paths (starting with '/') of the files to concatenate, in the order in which
+// they should be concatenated.
+func (client Client) Concat(ctx context.Context, accountName string, pathParameter string, sources []string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: sources,
 			Constraints: []validation.Constraint{{Target: "sources", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "filesystem.Client", "Concat")
+		return result, validation.NewError("filesystem.Client", "Concat", err.Error())
 	}
 
-	req, err := client.ConcatPreparer(ctx, accountName, pathParameter, sources, op)
+	req, err := client.ConcatPreparer(ctx, accountName, pathParameter, sources)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "Concat", nil, "Failure preparing request")
 		return
@@ -244,7 +245,7 @@ func (client Client) Concat(ctx context.Context, accountName string, pathParamet
 }
 
 // ConcatPreparer prepares the Concat request.
-func (client Client) ConcatPreparer(ctx context.Context, accountName string, pathParameter string, sources []string, op string) (*http.Request, error) {
+func (client Client) ConcatPreparer(ctx context.Context, accountName string, pathParameter string, sources []string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -257,7 +258,7 @@ func (client Client) ConcatPreparer(ctx context.Context, accountName string, pat
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "CONCAT"),
 		"sources":     autorest.Encode("query", sources, ","),
 	}
 
@@ -294,19 +295,18 @@ func (client Client) ConcatResponder(resp *http.Response) (result autorest.Respo
 // modified using either of these append options, the other append option cannot be used on the target file.
 // ConcurrentAppend does not guarantee order and can result in duplicated data landing in the target file.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file to which to append using concurrent append. streamContents is the file
-// contents to include when appending to the file. streamContents will be closed upon successful return. Callers should
-// ensure closure when receiving an error.op is the constant value for the operation. transferEncoding is indicates the
-// data being sent to the server is being streamed in chunks. appendMode is indicates the concurrent append call should
-// create the file if it doesn't exist or just open the existing file for append syncFlag is optionally indicates what
-// to do after completion of the concurrent append. DATA indicates that more data will be sent immediately by the
-// client, the file handle should remain open/locked, and file metadata (including file length, last modified time)
-// should NOT get updated. METADATA indicates that more data will be sent immediately by the client, the file handle
-// should remain open/locked, and file metadata should get updated. CLOSE indicates that the client is done sending
-// data, the file handle should be closed/unlocked, and file metadata should get updated.
-func (client Client) ConcurrentAppend(ctx context.Context, accountName string, pathParameter string, streamContents io.ReadCloser, op string, transferEncoding string, appendMode AppendModeType, syncFlag SyncFlag) (result autorest.Response, err error) {
-	req, err := client.ConcurrentAppendPreparer(ctx, accountName, pathParameter, streamContents, op, transferEncoding, appendMode, syncFlag)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file to which to append using concurrent append. streamContents is
+// the file contents to include when appending to the file. streamContents will be closed upon successful return.
+// Callers should ensure closure when receiving an error.appendMode is indicates the concurrent append call should
+// create the file if it doesn't exist or just open the existing file for append syncFlag is optionally indicates
+// what to do after completion of the concurrent append. DATA indicates that more data will be sent immediately by
+// the client, the file handle should remain open/locked, and file metadata (including file length, last modified
+// time) should NOT get updated. METADATA indicates that more data will be sent immediately by the client, the file
+// handle should remain open/locked, and file metadata should get updated. CLOSE indicates that the client is done
+// sending data, the file handle should be closed/unlocked, and file metadata should get updated.
+func (client Client) ConcurrentAppend(ctx context.Context, accountName string, pathParameter string, streamContents io.ReadCloser, appendMode AppendModeType, syncFlag SyncFlag) (result autorest.Response, err error) {
+	req, err := client.ConcurrentAppendPreparer(ctx, accountName, pathParameter, streamContents, appendMode, syncFlag)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "ConcurrentAppend", nil, "Failure preparing request")
 		return
@@ -328,7 +328,7 @@ func (client Client) ConcurrentAppend(ctx context.Context, accountName string, p
 }
 
 // ConcurrentAppendPreparer prepares the ConcurrentAppend request.
-func (client Client) ConcurrentAppendPreparer(ctx context.Context, accountName string, pathParameter string, streamContents io.ReadCloser, op string, transferEncoding string, appendMode AppendModeType, syncFlag SyncFlag) (*http.Request, error) {
+func (client Client) ConcurrentAppendPreparer(ctx context.Context, accountName string, pathParameter string, streamContents io.ReadCloser, appendMode AppendModeType, syncFlag SyncFlag) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -341,22 +341,25 @@ func (client Client) ConcurrentAppendPreparer(ctx context.Context, accountName s
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "CONCURRENTAPPEND"),
 	}
 	if len(string(appendMode)) > 0 {
 		queryParameters["appendMode"] = autorest.Encode("query", appendMode)
 	}
 	if len(string(syncFlag)) > 0 {
 		queryParameters["syncFlag"] = autorest.Encode("query", syncFlag)
+	} else {
+		queryParameters["syncFlag"] = autorest.Encode("query", "DATA")
 	}
 
 	preparer := autorest.CreatePreparer(
+		autorest.AsOctetStream(),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlsFileSystemDnsSuffix}", urlParameters),
 		autorest.WithPathParameters("/WebHdfsExt/{path}", pathParameters),
 		autorest.WithFile(streamContents),
 		autorest.WithQueryParameters(queryParameters),
-		autorest.WithHeader("Transfer-Encoding", autorest.String(transferEncoding)))
+		autorest.WithHeader("Transfer-Encoding", "chunked"))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
@@ -382,23 +385,21 @@ func (client Client) ConcurrentAppendResponder(resp *http.Response) (result auto
 // Create creates a file with optionally specified content. NOTE: If content is provided, the resulting file cannot be
 // modified using ConcurrentAppend.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file to create. write is flag to skip redirection. When write=false or not
-// specified, the request is redirected. Submit another HTTP PUT request using the URL in the Location header with the
-// file data to be written. When write=true, this redirection is skipped. op is the constant value for the operation.
-// streamContents is the file contents to include when creating the file. This parameter is optional, resulting in an
-// empty file if not specified. streamContents will be closed upon successful return. Callers should ensure closure
-// when receiving an error.overwrite is the indication of if the file should be overwritten. syncFlag is optionally
-// indicates what to do after completion of the create. DATA indicates that more data will be sent immediately by the
-// client, the file handle should remain open/locked, and file metadata (including file length, last modified time)
-// should NOT get updated. METADATA indicates that more data will be sent immediately by the client, the file handle
-// should remain open/locked, and file metadata should get updated. CLOSE indicates that the client is done sending
-// data, the file handle should be closed/unlocked, and file metadata should get updated. leaseID is optional unique
-// GUID per file to ensure single writer semantics, meaning that only clients that append to the file with the same
-// leaseId will be allowed to do so. permission is the octal representation of the unnamed user, mask and other
-// permissions that should be set for the file when created. If not specified, it inherits these from the container.
-func (client Client) Create(ctx context.Context, accountName string, pathParameter string, write string, op string, streamContents io.ReadCloser, overwrite *bool, syncFlag SyncFlag, leaseID *uuid.UUID, permission *int32) (result autorest.Response, err error) {
-	req, err := client.CreatePreparer(ctx, accountName, pathParameter, write, op, streamContents, overwrite, syncFlag, leaseID, permission)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file to create. streamContents is the file contents to include when
+// creating the file. This parameter is optional, resulting in an empty file if not specified. streamContents will
+// be closed upon successful return. Callers should ensure closure when receiving an error.overwrite is the
+// indication of if the file should be overwritten. syncFlag is optionally indicates what to do after completion of
+// the create. DATA indicates that more data will be sent immediately by the client, the file handle should remain
+// open/locked, and file metadata (including file length, last modified time) should NOT get updated. METADATA
+// indicates that more data will be sent immediately by the client, the file handle should remain open/locked, and
+// file metadata should get updated. CLOSE indicates that the client is done sending data, the file handle should
+// be closed/unlocked, and file metadata should get updated. leaseID is optional unique GUID per file to ensure
+// single writer semantics, meaning that only clients that append to the file with the same leaseId will be allowed
+// to do so. permission is the octal representation of the unnamed user, mask and other permissions that should be
+// set for the file when created. If not specified, it inherits these from the container.
+func (client Client) Create(ctx context.Context, accountName string, pathParameter string, streamContents io.ReadCloser, overwrite *bool, syncFlag SyncFlag, leaseID *uuid.UUID, permission *int32) (result autorest.Response, err error) {
+	req, err := client.CreatePreparer(ctx, accountName, pathParameter, streamContents, overwrite, syncFlag, leaseID, permission)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "Create", nil, "Failure preparing request")
 		return
@@ -420,7 +421,7 @@ func (client Client) Create(ctx context.Context, accountName string, pathParamet
 }
 
 // CreatePreparer prepares the Create request.
-func (client Client) CreatePreparer(ctx context.Context, accountName string, pathParameter string, write string, op string, streamContents io.ReadCloser, overwrite *bool, syncFlag SyncFlag, leaseID *uuid.UUID, permission *int32) (*http.Request, error) {
+func (client Client) CreatePreparer(ctx context.Context, accountName string, pathParameter string, streamContents io.ReadCloser, overwrite *bool, syncFlag SyncFlag, leaseID *uuid.UUID, permission *int32) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -433,14 +434,16 @@ func (client Client) CreatePreparer(ctx context.Context, accountName string, pat
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
-		"write":       autorest.Encode("query", write),
+		"op":          autorest.Encode("query", "CREATE"),
+		"write":       autorest.Encode("query", "true"),
 	}
 	if overwrite != nil {
 		queryParameters["overwrite"] = autorest.Encode("query", *overwrite)
 	}
 	if len(string(syncFlag)) > 0 {
 		queryParameters["syncFlag"] = autorest.Encode("query", syncFlag)
+	} else {
+		queryParameters["syncFlag"] = autorest.Encode("query", "CLOSE")
 	}
 	if leaseID != nil {
 		queryParameters["leaseId"] = autorest.Encode("query", *leaseID)
@@ -450,13 +453,14 @@ func (client Client) CreatePreparer(ctx context.Context, accountName string, pat
 	}
 
 	preparer := autorest.CreatePreparer(
+		autorest.AsOctetStream(),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlsFileSystemDnsSuffix}", urlParameters),
 		autorest.WithPathParameters("/webhdfs/v1/{path}", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	if streamContents != nil {
 		preparer = autorest.DecoratePreparer(preparer,
-			autorest.WithJSON(streamContents))
+			autorest.WithFile(streamContents))
 	}
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
@@ -482,11 +486,11 @@ func (client Client) CreateResponder(resp *http.Response) (result autorest.Respo
 
 // Delete deletes the requested file or directory, optionally recursively.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file or directory to delete. op is the constant value for the operation.
-// recursive is the optional switch indicating if the delete should be recursive
-func (client Client) Delete(ctx context.Context, accountName string, pathParameter string, op string, recursive *bool) (result FileOperationResult, err error) {
-	req, err := client.DeletePreparer(ctx, accountName, pathParameter, op, recursive)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file or directory to delete. recursive is the optional switch
+// indicating if the delete should be recursive
+func (client Client) Delete(ctx context.Context, accountName string, pathParameter string, recursive *bool) (result FileOperationResult, err error) {
+	req, err := client.DeletePreparer(ctx, accountName, pathParameter, recursive)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "Delete", nil, "Failure preparing request")
 		return
@@ -508,7 +512,7 @@ func (client Client) Delete(ctx context.Context, accountName string, pathParamet
 }
 
 // DeletePreparer prepares the Delete request.
-func (client Client) DeletePreparer(ctx context.Context, accountName string, pathParameter string, op string, recursive *bool) (*http.Request, error) {
+func (client Client) DeletePreparer(ctx context.Context, accountName string, pathParameter string, recursive *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -521,7 +525,7 @@ func (client Client) DeletePreparer(ctx context.Context, accountName string, pat
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "DELETE"),
 	}
 	if recursive != nil {
 		queryParameters["recursive"] = autorest.Encode("query", *recursive)
@@ -557,12 +561,12 @@ func (client Client) DeleteResponder(resp *http.Response) (result FileOperationR
 
 // GetACLStatus gets Access Control List (ACL) entries for the specified file or directory.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file or directory for which to get the ACL. op is the constant value for the
-// operation. tooID is an optional switch to return friendly names in place of object ID for ACL entries. tooid=false
-// returns friendly names instead of the AAD Object ID. Default value is true, returning AAD object IDs.
-func (client Client) GetACLStatus(ctx context.Context, accountName string, pathParameter string, op string, tooID *bool) (result ACLStatusResult, err error) {
-	req, err := client.GetACLStatusPreparer(ctx, accountName, pathParameter, op, tooID)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file or directory for which to get the ACL. tooID is an optional
+// switch to return friendly names in place of object ID for ACL entries. tooid=false returns friendly names
+// instead of the AAD Object ID. Default value is true, returning AAD object IDs.
+func (client Client) GetACLStatus(ctx context.Context, accountName string, pathParameter string, tooID *bool) (result ACLStatusResult, err error) {
+	req, err := client.GetACLStatusPreparer(ctx, accountName, pathParameter, tooID)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "GetACLStatus", nil, "Failure preparing request")
 		return
@@ -584,7 +588,7 @@ func (client Client) GetACLStatus(ctx context.Context, accountName string, pathP
 }
 
 // GetACLStatusPreparer prepares the GetACLStatus request.
-func (client Client) GetACLStatusPreparer(ctx context.Context, accountName string, pathParameter string, op string, tooID *bool) (*http.Request, error) {
+func (client Client) GetACLStatusPreparer(ctx context.Context, accountName string, pathParameter string, tooID *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -597,7 +601,7 @@ func (client Client) GetACLStatusPreparer(ctx context.Context, accountName strin
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "GETACLSTATUS"),
 	}
 	if tooID != nil {
 		queryParameters["tooId"] = autorest.Encode("query", *tooID)
@@ -633,11 +637,10 @@ func (client Client) GetACLStatusResponder(resp *http.Response) (result ACLStatu
 
 // GetContentSummary gets the file content summary object specified by the file path.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file for which to retrieve the summary. op is the constant value for the
-// operation.
-func (client Client) GetContentSummary(ctx context.Context, accountName string, pathParameter string, op string) (result ContentSummaryResult, err error) {
-	req, err := client.GetContentSummaryPreparer(ctx, accountName, pathParameter, op)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file for which to retrieve the summary.
+func (client Client) GetContentSummary(ctx context.Context, accountName string, pathParameter string) (result ContentSummaryResult, err error) {
+	req, err := client.GetContentSummaryPreparer(ctx, accountName, pathParameter)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "GetContentSummary", nil, "Failure preparing request")
 		return
@@ -659,7 +662,7 @@ func (client Client) GetContentSummary(ctx context.Context, accountName string, 
 }
 
 // GetContentSummaryPreparer prepares the GetContentSummary request.
-func (client Client) GetContentSummaryPreparer(ctx context.Context, accountName string, pathParameter string, op string) (*http.Request, error) {
+func (client Client) GetContentSummaryPreparer(ctx context.Context, accountName string, pathParameter string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -672,7 +675,7 @@ func (client Client) GetContentSummaryPreparer(ctx context.Context, accountName 
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "GETCONTENTSUMMARY"),
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -705,12 +708,12 @@ func (client Client) GetContentSummaryResponder(resp *http.Response) (result Con
 
 // GetFileStatus get the file status object specified by the file path.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file or directory for which to retrieve the status. op is the constant value
-// for the operation. tooID is an optional switch to return friendly names in place of owner and group. tooid=false
-// returns friendly names instead of the AAD Object ID. Default value is true, returning AAD object IDs.
-func (client Client) GetFileStatus(ctx context.Context, accountName string, pathParameter string, op string, tooID *bool) (result FileStatusResult, err error) {
-	req, err := client.GetFileStatusPreparer(ctx, accountName, pathParameter, op, tooID)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file or directory for which to retrieve the status. tooID is an
+// optional switch to return friendly names in place of owner and group. tooid=false returns friendly names instead
+// of the AAD Object ID. Default value is true, returning AAD object IDs.
+func (client Client) GetFileStatus(ctx context.Context, accountName string, pathParameter string, tooID *bool) (result FileStatusResult, err error) {
+	req, err := client.GetFileStatusPreparer(ctx, accountName, pathParameter, tooID)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "GetFileStatus", nil, "Failure preparing request")
 		return
@@ -732,7 +735,7 @@ func (client Client) GetFileStatus(ctx context.Context, accountName string, path
 }
 
 // GetFileStatusPreparer prepares the GetFileStatus request.
-func (client Client) GetFileStatusPreparer(ctx context.Context, accountName string, pathParameter string, op string, tooID *bool) (*http.Request, error) {
+func (client Client) GetFileStatusPreparer(ctx context.Context, accountName string, pathParameter string, tooID *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -745,7 +748,7 @@ func (client Client) GetFileStatusPreparer(ctx context.Context, accountName stri
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "GETFILESTATUS"),
 	}
 	if tooID != nil {
 		queryParameters["tooId"] = autorest.Encode("query", *tooID)
@@ -781,17 +784,17 @@ func (client Client) GetFileStatusResponder(resp *http.Response) (result FileSta
 
 // ListFileStatus get the list of file status objects specified by the file path, with optional pagination parameters
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the directory to list. op is the constant value for the operation. listSize is
-// gets or sets the number of items to return. Optional. listAfter is gets or sets the item or lexographical index
-// after which to begin returning results. For example, a file list of 'a','b','d' and listAfter='b' will return 'd',
-// and a listAfter='c' will also return 'd'. Optional. listBefore is gets or sets the item or lexographical index
-// before which to begin returning results. For example, a file list of 'a','b','d' and listBefore='d' will return
-// 'a','b', and a listBefore='c' will also return 'a','b'. Optional. tooID is an optional switch to return friendly
-// names in place of owner and group. tooid=false returns friendly names instead of the AAD Object ID. Default value is
-// true, returning AAD object IDs.
-func (client Client) ListFileStatus(ctx context.Context, accountName string, pathParameter string, op string, listSize *int32, listAfter string, listBefore string, tooID *bool) (result FileStatusesResult, err error) {
-	req, err := client.ListFileStatusPreparer(ctx, accountName, pathParameter, op, listSize, listAfter, listBefore, tooID)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the directory to list. listSize is gets or sets the number of items to
+// return. Optional. listAfter is gets or sets the item or lexographical index after which to begin returning
+// results. For example, a file list of 'a','b','d' and listAfter='b' will return 'd', and a listAfter='c' will
+// also return 'd'. Optional. listBefore is gets or sets the item or lexographical index before which to begin
+// returning results. For example, a file list of 'a','b','d' and listBefore='d' will return 'a','b', and a
+// listBefore='c' will also return 'a','b'. Optional. tooID is an optional switch to return friendly names in place
+// of owner and group. tooid=false returns friendly names instead of the AAD Object ID. Default value is true,
+// returning AAD object IDs.
+func (client Client) ListFileStatus(ctx context.Context, accountName string, pathParameter string, listSize *int32, listAfter string, listBefore string, tooID *bool) (result FileStatusesResult, err error) {
+	req, err := client.ListFileStatusPreparer(ctx, accountName, pathParameter, listSize, listAfter, listBefore, tooID)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "ListFileStatus", nil, "Failure preparing request")
 		return
@@ -813,7 +816,7 @@ func (client Client) ListFileStatus(ctx context.Context, accountName string, pat
 }
 
 // ListFileStatusPreparer prepares the ListFileStatus request.
-func (client Client) ListFileStatusPreparer(ctx context.Context, accountName string, pathParameter string, op string, listSize *int32, listAfter string, listBefore string, tooID *bool) (*http.Request, error) {
+func (client Client) ListFileStatusPreparer(ctx context.Context, accountName string, pathParameter string, listSize *int32, listAfter string, listBefore string, tooID *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -826,7 +829,7 @@ func (client Client) ListFileStatusPreparer(ctx context.Context, accountName str
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "LISTSTATUS"),
 	}
 	if listSize != nil {
 		queryParameters["listSize"] = autorest.Encode("query", *listSize)
@@ -871,11 +874,11 @@ func (client Client) ListFileStatusResponder(resp *http.Response) (result FileSt
 
 // Mkdirs creates a directory.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the directory to create. op is the constant value for the operation. permission is
-// optional octal permission with which the directory should be created.
-func (client Client) Mkdirs(ctx context.Context, accountName string, pathParameter string, op string, permission *int32) (result FileOperationResult, err error) {
-	req, err := client.MkdirsPreparer(ctx, accountName, pathParameter, op, permission)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the directory to create. permission is optional octal permission with
+// which the directory should be created.
+func (client Client) Mkdirs(ctx context.Context, accountName string, pathParameter string, permission *int32) (result FileOperationResult, err error) {
+	req, err := client.MkdirsPreparer(ctx, accountName, pathParameter, permission)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "Mkdirs", nil, "Failure preparing request")
 		return
@@ -897,7 +900,7 @@ func (client Client) Mkdirs(ctx context.Context, accountName string, pathParamet
 }
 
 // MkdirsPreparer prepares the Mkdirs request.
-func (client Client) MkdirsPreparer(ctx context.Context, accountName string, pathParameter string, op string, permission *int32) (*http.Request, error) {
+func (client Client) MkdirsPreparer(ctx context.Context, accountName string, pathParameter string, permission *int32) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -910,7 +913,7 @@ func (client Client) MkdirsPreparer(ctx context.Context, accountName string, pat
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "MKDIRS"),
 	}
 	if permission != nil {
 		queryParameters["permission"] = autorest.Encode("query", *permission)
@@ -946,12 +949,11 @@ func (client Client) MkdirsResponder(resp *http.Response) (result FileOperationR
 
 // ModifyACLEntries modifies existing Access Control List (ACL) entries on a file or folder.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file or directory with the ACL being modified. aclspec is the ACL
-// specification included in ACL modification operations in the format '[default:]user|group|other::r|-w|-x|-' op is
-// the constant value for the operation.
-func (client Client) ModifyACLEntries(ctx context.Context, accountName string, pathParameter string, aclspec string, op string) (result autorest.Response, err error) {
-	req, err := client.ModifyACLEntriesPreparer(ctx, accountName, pathParameter, aclspec, op)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file or directory with the ACL being modified. aclspec is the ACL
+// specification included in ACL modification operations in the format '[default:]user|group|other::r|-w|-x|-'
+func (client Client) ModifyACLEntries(ctx context.Context, accountName string, pathParameter string, aclspec string) (result autorest.Response, err error) {
+	req, err := client.ModifyACLEntriesPreparer(ctx, accountName, pathParameter, aclspec)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "ModifyACLEntries", nil, "Failure preparing request")
 		return
@@ -973,7 +975,7 @@ func (client Client) ModifyACLEntries(ctx context.Context, accountName string, p
 }
 
 // ModifyACLEntriesPreparer prepares the ModifyACLEntries request.
-func (client Client) ModifyACLEntriesPreparer(ctx context.Context, accountName string, pathParameter string, aclspec string, op string) (*http.Request, error) {
+func (client Client) ModifyACLEntriesPreparer(ctx context.Context, accountName string, pathParameter string, aclspec string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -987,7 +989,7 @@ func (client Client) ModifyACLEntriesPreparer(ctx context.Context, accountName s
 	queryParameters := map[string]interface{}{
 		"aclspec":     autorest.Encode("query", aclspec),
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "MODIFYACLENTRIES"),
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1021,18 +1023,18 @@ func (client Client) ModifyACLEntriesResponder(resp *http.Response) (result auto
 // This method accepts more source file paths than the Concat method. This method and the parameters it accepts are
 // subject to change for usability in an upcoming version.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the destination file resulting from the concatenation. streamContents is a list of
-// Data Lake Store paths (starting with '/') of the source files. Must be a comma-separated path list in the format:
-// sources=/file/path/1.txt,/file/path/2.txt,/file/path/lastfile.csv streamContents will be closed upon successful
-// return. Callers should ensure closure when receiving an error.op is the constant value for the operation.
-// deleteSourceDirectory is indicates that as an optimization instead of deleting each individual source stream, delete
-// the source stream folder if all streams are in the same folder instead. This results in a substantial performance
-// improvement when the only streams in the folder are part of the concatenation operation. WARNING: This includes the
-// deletion of any other files that are not source files. Only set this to true when source files are the only files in
-// the source directory.
-func (client Client) MsConcat(ctx context.Context, accountName string, pathParameter string, streamContents io.ReadCloser, op string, deleteSourceDirectory *bool) (result autorest.Response, err error) {
-	req, err := client.MsConcatPreparer(ctx, accountName, pathParameter, streamContents, op, deleteSourceDirectory)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the destination file resulting from the concatenation. streamContents is
+// a list of Data Lake Store paths (starting with '/') of the source files. Must be a comma-separated path list in
+// the format: sources=/file/path/1.txt,/file/path/2.txt,/file/path/lastfile.csv streamContents will be closed upon
+// successful return. Callers should ensure closure when receiving an error.deleteSourceDirectory is indicates that
+// as an optimization instead of deleting each individual source stream, delete the source stream folder if all
+// streams are in the same folder instead. This results in a substantial performance improvement when the only
+// streams in the folder are part of the concatenation operation. WARNING: This includes the deletion of any other
+// files that are not source files. Only set this to true when source files are the only files in the source
+// directory.
+func (client Client) MsConcat(ctx context.Context, accountName string, pathParameter string, streamContents io.ReadCloser, deleteSourceDirectory *bool) (result autorest.Response, err error) {
+	req, err := client.MsConcatPreparer(ctx, accountName, pathParameter, streamContents, deleteSourceDirectory)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "MsConcat", nil, "Failure preparing request")
 		return
@@ -1054,7 +1056,7 @@ func (client Client) MsConcat(ctx context.Context, accountName string, pathParam
 }
 
 // MsConcatPreparer prepares the MsConcat request.
-func (client Client) MsConcatPreparer(ctx context.Context, accountName string, pathParameter string, streamContents io.ReadCloser, op string, deleteSourceDirectory *bool) (*http.Request, error) {
+func (client Client) MsConcatPreparer(ctx context.Context, accountName string, pathParameter string, streamContents io.ReadCloser, deleteSourceDirectory *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -1067,13 +1069,14 @@ func (client Client) MsConcatPreparer(ctx context.Context, accountName string, p
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "MSCONCAT"),
 	}
 	if deleteSourceDirectory != nil {
 		queryParameters["deleteSourceDirectory"] = autorest.Encode("query", *deleteSourceDirectory)
 	}
 
 	preparer := autorest.CreatePreparer(
+		autorest.AsOctetStream(),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlsFileSystemDnsSuffix}", urlParameters),
 		autorest.WithPathParameters("/webhdfs/v1/{path}", pathParameters),
@@ -1103,15 +1106,13 @@ func (client Client) MsConcatResponder(resp *http.Response) (result autorest.Res
 
 // Open opens and reads from the specified file.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file to open. read is flag to skip redirection. When read=false or not
-// specified, the request is redirected. Submit another HTTP PUT request using the URL in the Location header with the
-// file data to be read. When read=true, this redirection is skipped. op is the constant value for the operation.
-// length is the number of bytes that the server will attempt to retrieve. It will retrieve <= length bytes. offset is
-// the byte offset to start reading data from. fileSessionID is optional unique GUID per file indicating all the reads
-// with the same fileSessionId are from the same client and same session. This will give a performance benefit.
-func (client Client) Open(ctx context.Context, accountName string, pathParameter string, read string, op string, length *int64, offset *int64, fileSessionID *uuid.UUID) (result ReadCloser, err error) {
-	req, err := client.OpenPreparer(ctx, accountName, pathParameter, read, op, length, offset, fileSessionID)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file to open. length is the number of bytes that the server will
+// attempt to retrieve. It will retrieve <= length bytes. offset is the byte offset to start reading data from.
+// fileSessionID is optional unique GUID per file indicating all the reads with the same fileSessionId are from the
+// same client and same session. This will give a performance benefit.
+func (client Client) Open(ctx context.Context, accountName string, pathParameter string, length *int64, offset *int64, fileSessionID *uuid.UUID) (result ReadCloser, err error) {
+	req, err := client.OpenPreparer(ctx, accountName, pathParameter, length, offset, fileSessionID)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "Open", nil, "Failure preparing request")
 		return
@@ -1133,7 +1134,7 @@ func (client Client) Open(ctx context.Context, accountName string, pathParameter
 }
 
 // OpenPreparer prepares the Open request.
-func (client Client) OpenPreparer(ctx context.Context, accountName string, pathParameter string, read string, op string, length *int64, offset *int64, fileSessionID *uuid.UUID) (*http.Request, error) {
+func (client Client) OpenPreparer(ctx context.Context, accountName string, pathParameter string, length *int64, offset *int64, fileSessionID *uuid.UUID) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -1146,8 +1147,8 @@ func (client Client) OpenPreparer(ctx context.Context, accountName string, pathP
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
-		"read":        autorest.Encode("query", read),
+		"op":          autorest.Encode("query", "OPEN"),
+		"read":        autorest.Encode("query", "true"),
 	}
 	if length != nil {
 		queryParameters["length"] = autorest.Encode("query", *length)
@@ -1188,11 +1189,10 @@ func (client Client) OpenResponder(resp *http.Response) (result ReadCloser, err 
 
 // RemoveACL removes the existing Access Control List (ACL) of the specified file or directory.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file or directory with the ACL being removed. op is the constant value for the
-// operation.
-func (client Client) RemoveACL(ctx context.Context, accountName string, pathParameter string, op string) (result autorest.Response, err error) {
-	req, err := client.RemoveACLPreparer(ctx, accountName, pathParameter, op)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file or directory with the ACL being removed.
+func (client Client) RemoveACL(ctx context.Context, accountName string, pathParameter string) (result autorest.Response, err error) {
+	req, err := client.RemoveACLPreparer(ctx, accountName, pathParameter)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "RemoveACL", nil, "Failure preparing request")
 		return
@@ -1214,7 +1214,7 @@ func (client Client) RemoveACL(ctx context.Context, accountName string, pathPara
 }
 
 // RemoveACLPreparer prepares the RemoveACL request.
-func (client Client) RemoveACLPreparer(ctx context.Context, accountName string, pathParameter string, op string) (*http.Request, error) {
+func (client Client) RemoveACLPreparer(ctx context.Context, accountName string, pathParameter string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -1227,7 +1227,7 @@ func (client Client) RemoveACLPreparer(ctx context.Context, accountName string, 
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "REMOVEACL"),
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1259,11 +1259,11 @@ func (client Client) RemoveACLResponder(resp *http.Response) (result autorest.Re
 
 // RemoveACLEntries removes existing Access Control List (ACL) entries for a file or folder.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file or directory with the ACL being removed. aclspec is the ACL spec included
-// in ACL removal operations in the format '[default:]user|group|other' op is the constant value for the operation.
-func (client Client) RemoveACLEntries(ctx context.Context, accountName string, pathParameter string, aclspec string, op string) (result autorest.Response, err error) {
-	req, err := client.RemoveACLEntriesPreparer(ctx, accountName, pathParameter, aclspec, op)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file or directory with the ACL being removed. aclspec is the ACL spec
+// included in ACL removal operations in the format '[default:]user|group|other'
+func (client Client) RemoveACLEntries(ctx context.Context, accountName string, pathParameter string, aclspec string) (result autorest.Response, err error) {
+	req, err := client.RemoveACLEntriesPreparer(ctx, accountName, pathParameter, aclspec)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "RemoveACLEntries", nil, "Failure preparing request")
 		return
@@ -1285,7 +1285,7 @@ func (client Client) RemoveACLEntries(ctx context.Context, accountName string, p
 }
 
 // RemoveACLEntriesPreparer prepares the RemoveACLEntries request.
-func (client Client) RemoveACLEntriesPreparer(ctx context.Context, accountName string, pathParameter string, aclspec string, op string) (*http.Request, error) {
+func (client Client) RemoveACLEntriesPreparer(ctx context.Context, accountName string, pathParameter string, aclspec string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -1299,7 +1299,7 @@ func (client Client) RemoveACLEntriesPreparer(ctx context.Context, accountName s
 	queryParameters := map[string]interface{}{
 		"aclspec":     autorest.Encode("query", aclspec),
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "REMOVEACLENTRIES"),
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1331,11 +1331,10 @@ func (client Client) RemoveACLEntriesResponder(resp *http.Response) (result auto
 
 // RemoveDefaultACL removes the existing Default Access Control List (ACL) of the specified directory.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the directory with the default ACL being removed. op is the constant value for the
-// operation.
-func (client Client) RemoveDefaultACL(ctx context.Context, accountName string, pathParameter string, op string) (result autorest.Response, err error) {
-	req, err := client.RemoveDefaultACLPreparer(ctx, accountName, pathParameter, op)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the directory with the default ACL being removed.
+func (client Client) RemoveDefaultACL(ctx context.Context, accountName string, pathParameter string) (result autorest.Response, err error) {
+	req, err := client.RemoveDefaultACLPreparer(ctx, accountName, pathParameter)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "RemoveDefaultACL", nil, "Failure preparing request")
 		return
@@ -1357,7 +1356,7 @@ func (client Client) RemoveDefaultACL(ctx context.Context, accountName string, p
 }
 
 // RemoveDefaultACLPreparer prepares the RemoveDefaultACL request.
-func (client Client) RemoveDefaultACLPreparer(ctx context.Context, accountName string, pathParameter string, op string) (*http.Request, error) {
+func (client Client) RemoveDefaultACLPreparer(ctx context.Context, accountName string, pathParameter string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -1370,7 +1369,7 @@ func (client Client) RemoveDefaultACLPreparer(ctx context.Context, accountName s
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "REMOVEDEFAULTACL"),
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1402,11 +1401,11 @@ func (client Client) RemoveDefaultACLResponder(resp *http.Response) (result auto
 
 // Rename rename a file or directory.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file or directory to move/rename. destination is the path to move/rename the
-// file or folder to op is the constant value for the operation.
-func (client Client) Rename(ctx context.Context, accountName string, pathParameter string, destination string, op string) (result FileOperationResult, err error) {
-	req, err := client.RenamePreparer(ctx, accountName, pathParameter, destination, op)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file or directory to move/rename. destination is the path to
+// move/rename the file or folder to
+func (client Client) Rename(ctx context.Context, accountName string, pathParameter string, destination string) (result FileOperationResult, err error) {
+	req, err := client.RenamePreparer(ctx, accountName, pathParameter, destination)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "Rename", nil, "Failure preparing request")
 		return
@@ -1428,7 +1427,7 @@ func (client Client) Rename(ctx context.Context, accountName string, pathParamet
 }
 
 // RenamePreparer prepares the Rename request.
-func (client Client) RenamePreparer(ctx context.Context, accountName string, pathParameter string, destination string, op string) (*http.Request, error) {
+func (client Client) RenamePreparer(ctx context.Context, accountName string, pathParameter string, destination string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -1442,7 +1441,7 @@ func (client Client) RenamePreparer(ctx context.Context, accountName string, pat
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 		"destination": autorest.Encode("query", destination),
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "RENAME"),
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1475,12 +1474,11 @@ func (client Client) RenameResponder(resp *http.Response) (result FileOperationR
 
 // SetACL sets the Access Control List (ACL) for a file or folder.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file or directory on which to set the ACL. aclspec is the ACL spec included in
-// ACL creation operations in the format '[default:]user|group|other::r|-w|-x|-' op is the constant value for the
-// operation.
-func (client Client) SetACL(ctx context.Context, accountName string, pathParameter string, aclspec string, op string) (result autorest.Response, err error) {
-	req, err := client.SetACLPreparer(ctx, accountName, pathParameter, aclspec, op)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file or directory on which to set the ACL. aclspec is the ACL spec
+// included in ACL creation operations in the format '[default:]user|group|other::r|-w|-x|-'
+func (client Client) SetACL(ctx context.Context, accountName string, pathParameter string, aclspec string) (result autorest.Response, err error) {
+	req, err := client.SetACLPreparer(ctx, accountName, pathParameter, aclspec)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "SetACL", nil, "Failure preparing request")
 		return
@@ -1502,7 +1500,7 @@ func (client Client) SetACL(ctx context.Context, accountName string, pathParamet
 }
 
 // SetACLPreparer prepares the SetACL request.
-func (client Client) SetACLPreparer(ctx context.Context, accountName string, pathParameter string, aclspec string, op string) (*http.Request, error) {
+func (client Client) SetACLPreparer(ctx context.Context, accountName string, pathParameter string, aclspec string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -1516,7 +1514,7 @@ func (client Client) SetACLPreparer(ctx context.Context, accountName string, pat
 	queryParameters := map[string]interface{}{
 		"aclspec":     autorest.Encode("query", aclspec),
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "SETACL"),
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1549,16 +1547,16 @@ func (client Client) SetACLResponder(resp *http.Response) (result autorest.Respo
 // SetFileExpiry sets or removes the expiration time on the specified file. This operation can only be executed against
 // files. Folders are not supported.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file on which to set or remove the expiration time. expiryOption is indicates
-// the type of expiration to use for the file: 1. NeverExpire: ExpireTime is ignored. 2. RelativeToNow: ExpireTime is
-// an integer in milliseconds representing the expiration date relative to when file expiration is updated. 3.
-// RelativeToCreationDate: ExpireTime is an integer in milliseconds representing the expiration date relative to file
-// creation. 4. Absolute: ExpireTime is an integer in milliseconds, as a Unix timestamp relative to 1/1/1970 00:00:00.
-// op is the constant value for the operation. expireTime is the time that the file will expire, corresponding to the
-// ExpiryOption that was set.
-func (client Client) SetFileExpiry(ctx context.Context, accountName string, pathParameter string, expiryOption ExpiryOptionType, op string, expireTime *int64) (result autorest.Response, err error) {
-	req, err := client.SetFileExpiryPreparer(ctx, accountName, pathParameter, expiryOption, op, expireTime)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file on which to set or remove the expiration time. expiryOption is
+// indicates the type of expiration to use for the file: 1. NeverExpire: ExpireTime is ignored. 2. RelativeToNow:
+// ExpireTime is an integer in milliseconds representing the expiration date relative to when file expiration is
+// updated. 3. RelativeToCreationDate: ExpireTime is an integer in milliseconds representing the expiration date
+// relative to file creation. 4. Absolute: ExpireTime is an integer in milliseconds, as a Unix timestamp relative
+// to 1/1/1970 00:00:00. expireTime is the time that the file will expire, corresponding to the ExpiryOption that
+// was set.
+func (client Client) SetFileExpiry(ctx context.Context, accountName string, pathParameter string, expiryOption ExpiryOptionType, expireTime *int64) (result autorest.Response, err error) {
+	req, err := client.SetFileExpiryPreparer(ctx, accountName, pathParameter, expiryOption, expireTime)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "SetFileExpiry", nil, "Failure preparing request")
 		return
@@ -1580,7 +1578,7 @@ func (client Client) SetFileExpiry(ctx context.Context, accountName string, path
 }
 
 // SetFileExpiryPreparer prepares the SetFileExpiry request.
-func (client Client) SetFileExpiryPreparer(ctx context.Context, accountName string, pathParameter string, expiryOption ExpiryOptionType, op string, expireTime *int64) (*http.Request, error) {
+func (client Client) SetFileExpiryPreparer(ctx context.Context, accountName string, pathParameter string, expiryOption ExpiryOptionType, expireTime *int64) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -1594,7 +1592,7 @@ func (client Client) SetFileExpiryPreparer(ctx context.Context, accountName stri
 	queryParameters := map[string]interface{}{
 		"api-version":  APIVersion,
 		"expiryOption": autorest.Encode("query", expiryOption),
-		"op":           autorest.Encode("query", op),
+		"op":           autorest.Encode("query", "SETEXPIRY"),
 	}
 	if expireTime != nil {
 		queryParameters["expireTime"] = autorest.Encode("query", *expireTime)
@@ -1629,13 +1627,12 @@ func (client Client) SetFileExpiryResponder(resp *http.Response) (result autores
 
 // SetOwner sets the owner of a file or directory.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file or directory for which to set the owner. op is the constant value for the
-// operation. owner is the AAD Object ID of the user owner of the file or directory. If empty, the property will remain
-// unchanged. group is the AAD Object ID of the group owner of the file or directory. If empty, the property will
-// remain unchanged.
-func (client Client) SetOwner(ctx context.Context, accountName string, pathParameter string, op string, owner string, group string) (result autorest.Response, err error) {
-	req, err := client.SetOwnerPreparer(ctx, accountName, pathParameter, op, owner, group)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file or directory for which to set the owner. owner is the AAD Object
+// ID of the user owner of the file or directory. If empty, the property will remain unchanged. group is the AAD
+// Object ID of the group owner of the file or directory. If empty, the property will remain unchanged.
+func (client Client) SetOwner(ctx context.Context, accountName string, pathParameter string, owner string, group string) (result autorest.Response, err error) {
+	req, err := client.SetOwnerPreparer(ctx, accountName, pathParameter, owner, group)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "SetOwner", nil, "Failure preparing request")
 		return
@@ -1657,7 +1654,7 @@ func (client Client) SetOwner(ctx context.Context, accountName string, pathParam
 }
 
 // SetOwnerPreparer prepares the SetOwner request.
-func (client Client) SetOwnerPreparer(ctx context.Context, accountName string, pathParameter string, op string, owner string, group string) (*http.Request, error) {
+func (client Client) SetOwnerPreparer(ctx context.Context, accountName string, pathParameter string, owner string, group string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -1670,7 +1667,7 @@ func (client Client) SetOwnerPreparer(ctx context.Context, accountName string, p
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "SETOWNER"),
 	}
 	if len(owner) > 0 {
 		queryParameters["owner"] = autorest.Encode("query", owner)
@@ -1708,12 +1705,11 @@ func (client Client) SetOwnerResponder(resp *http.Response) (result autorest.Res
 
 // SetPermission sets the permission of the file or folder.
 //
-// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data Lake
-// Store path (starting with '/') of the file or directory for which to set the permission. op is the constant value
-// for the operation. permission is a string representation of the permission (i.e 'rwx'). If empty, this property
-// remains unchanged.
-func (client Client) SetPermission(ctx context.Context, accountName string, pathParameter string, op string, permission string) (result autorest.Response, err error) {
-	req, err := client.SetPermissionPreparer(ctx, accountName, pathParameter, op, permission)
+// accountName is the Azure Data Lake Store account to execute filesystem operations on. pathParameter is the Data
+// Lake Store path (starting with '/') of the file or directory for which to set the permission. permission is a
+// string representation of the permission (i.e 'rwx'). If empty, this property remains unchanged.
+func (client Client) SetPermission(ctx context.Context, accountName string, pathParameter string, permission string) (result autorest.Response, err error) {
+	req, err := client.SetPermissionPreparer(ctx, accountName, pathParameter, permission)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "filesystem.Client", "SetPermission", nil, "Failure preparing request")
 		return
@@ -1735,7 +1731,7 @@ func (client Client) SetPermission(ctx context.Context, accountName string, path
 }
 
 // SetPermissionPreparer prepares the SetPermission request.
-func (client Client) SetPermissionPreparer(ctx context.Context, accountName string, pathParameter string, op string, permission string) (*http.Request, error) {
+func (client Client) SetPermissionPreparer(ctx context.Context, accountName string, pathParameter string, permission string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"accountName":             accountName,
 		"adlsFileSystemDnsSuffix": client.AdlsFileSystemDNSSuffix,
@@ -1748,7 +1744,7 @@ func (client Client) SetPermissionPreparer(ctx context.Context, accountName stri
 	const APIVersion = "2016-11-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
-		"op":          autorest.Encode("query", op),
+		"op":          autorest.Encode("query", "SETPERMISSION"),
 	}
 	if len(permission) > 0 {
 		queryParameters["permission"] = autorest.Encode("query", permission)

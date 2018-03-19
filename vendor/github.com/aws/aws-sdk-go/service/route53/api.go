@@ -5773,7 +5773,6 @@ func (c *Route53) UpdateTrafficPolicyInstanceWithContext(ctx aws.Context, input 
 
 // A complex type that contains the type of limit that you specified in the
 // request and the current value for that limit.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/AccountLimit
 type AccountLimit struct {
 	_ struct{} `type:"structure"`
 
@@ -5830,7 +5829,6 @@ func (s *AccountLimit) SetValue(v int64) *AccountLimit {
 // A complex type that identifies the CloudWatch alarm that you want Amazon
 // Route 53 health checkers to use to determine whether this health check is
 // healthy.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/AlarmIdentifier
 type AlarmIdentifier struct {
 	_ struct{} `type:"structure"`
 
@@ -5911,7 +5909,6 @@ func (s *AlarmIdentifier) SetRegion(v string) *AlarmIdentifier {
 //
 //    * For information about creating failover resource record sets in a private
 //    hosted zone, see Configuring Failover in a Private Hosted Zone (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-failover-private-hosted-zones.html).
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/AliasTarget
 type AliasTarget struct {
 	_ struct{} `type:"structure"`
 
@@ -6143,7 +6140,6 @@ func (s *AliasTarget) SetHostedZoneId(v string) *AliasTarget {
 
 // A complex type that contains information about the request to associate a
 // VPC with a private hosted zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/AssociateVPCWithHostedZoneRequest
 type AssociateVPCWithHostedZoneInput struct {
 	_ struct{} `locationName:"AssociateVPCWithHostedZoneRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -6217,7 +6213,6 @@ func (s *AssociateVPCWithHostedZoneInput) SetVPC(v *VPC) *AssociateVPCWithHosted
 
 // A complex type that contains the response information for the AssociateVPCWithHostedZone
 // request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/AssociateVPCWithHostedZoneResponse
 type AssociateVPCWithHostedZoneOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6244,7 +6239,6 @@ func (s *AssociateVPCWithHostedZoneOutput) SetChangeInfo(v *ChangeInfo) *Associa
 }
 
 // The information for each resource record set that you want to change.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/Change
 type Change struct {
 	_ struct{} `type:"structure"`
 
@@ -6318,7 +6312,6 @@ func (s *Change) SetResourceRecordSet(v *ResourceRecordSet) *Change {
 }
 
 // The information for a change request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeBatch
 type ChangeBatch struct {
 	_ struct{} `type:"structure"`
 
@@ -6381,7 +6374,6 @@ func (s *ChangeBatch) SetComment(v string) *ChangeBatch {
 
 // A complex type that describes change information about changes made to your
 // hosted zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeInfo
 type ChangeInfo struct {
 	_ struct{} `type:"structure"`
 
@@ -6447,7 +6439,6 @@ func (s *ChangeInfo) SetSubmittedAt(v time.Time) *ChangeInfo {
 }
 
 // A complex type that contains change information for the resource record set.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeResourceRecordSetsRequest
 type ChangeResourceRecordSetsInput struct {
 	_ struct{} `locationName:"ChangeResourceRecordSetsRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -6507,7 +6498,6 @@ func (s *ChangeResourceRecordSetsInput) SetHostedZoneId(v string) *ChangeResourc
 }
 
 // A complex type containing the response for the request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeResourceRecordSetsResponse
 type ChangeResourceRecordSetsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6539,7 +6529,6 @@ func (s *ChangeResourceRecordSetsOutput) SetChangeInfo(v *ChangeInfo) *ChangeRes
 
 // A complex type that contains information about the tags that you want to
 // add, edit, or delete.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeTagsForResourceRequest
 type ChangeTagsForResourceInput struct {
 	_ struct{} `locationName:"ChangeTagsForResourceRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -6626,7 +6615,6 @@ func (s *ChangeTagsForResourceInput) SetResourceType(v string) *ChangeTagsForRes
 }
 
 // Empty response for the request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ChangeTagsForResourceResponse
 type ChangeTagsForResourceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6643,7 +6631,6 @@ func (s ChangeTagsForResourceOutput) GoString() string {
 
 // A complex type that contains information about the CloudWatch alarm that
 // Amazon Route 53 is monitoring for this health check.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CloudWatchAlarmConfiguration
 type CloudWatchAlarmConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -6755,7 +6742,6 @@ func (s *CloudWatchAlarmConfiguration) SetThreshold(v float64) *CloudWatchAlarmC
 }
 
 // A complex type that contains the health check request information.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateHealthCheckRequest
 type CreateHealthCheckInput struct {
 	_ struct{} `locationName:"CreateHealthCheckRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -6836,7 +6822,6 @@ func (s *CreateHealthCheckInput) SetHealthCheckConfig(v *HealthCheckConfig) *Cre
 }
 
 // A complex type containing the response information for the new health check.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateHealthCheckResponse
 type CreateHealthCheckOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6875,7 +6860,6 @@ func (s *CreateHealthCheckOutput) SetLocation(v string) *CreateHealthCheckOutput
 
 // A complex type that contains information about the request to create a hosted
 // zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateHostedZoneRequest
 type CreateHostedZoneInput struct {
 	_ struct{} `locationName:"CreateHostedZoneRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -6992,7 +6976,6 @@ func (s *CreateHostedZoneInput) SetVPC(v *VPC) *CreateHostedZoneInput {
 }
 
 // A complex type containing the response information for the hosted zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateHostedZoneResponse
 type CreateHostedZoneOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7061,7 +7044,6 @@ func (s *CreateHostedZoneOutput) SetVPC(v *VPC) *CreateHostedZoneOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateQueryLoggingConfigRequest
 type CreateQueryLoggingConfigInput struct {
 	_ struct{} `locationName:"CreateQueryLoggingConfigRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -7123,7 +7105,6 @@ func (s *CreateQueryLoggingConfigInput) SetHostedZoneId(v string) *CreateQueryLo
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateQueryLoggingConfigResponse
 type CreateQueryLoggingConfigOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7162,7 +7143,6 @@ func (s *CreateQueryLoggingConfigOutput) SetQueryLoggingConfig(v *QueryLoggingCo
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateReusableDelegationSetRequest
 type CreateReusableDelegationSetInput struct {
 	_ struct{} `locationName:"CreateReusableDelegationSetRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -7218,7 +7198,6 @@ func (s *CreateReusableDelegationSetInput) SetHostedZoneId(v string) *CreateReus
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateReusableDelegationSetResponse
 type CreateReusableDelegationSetOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7257,7 +7236,6 @@ func (s *CreateReusableDelegationSetOutput) SetLocation(v string) *CreateReusabl
 
 // A complex type that contains information about the traffic policy that you
 // want to create.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyRequest
 type CreateTrafficPolicyInput struct {
 	_ struct{} `locationName:"CreateTrafficPolicyRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -7322,7 +7300,6 @@ func (s *CreateTrafficPolicyInput) SetName(v string) *CreateTrafficPolicyInput {
 
 // A complex type that contains information about the resource record sets that
 // you want to create based on a specified traffic policy.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyInstanceRequest
 type CreateTrafficPolicyInstanceInput struct {
 	_ struct{} `locationName:"CreateTrafficPolicyInstanceRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -7431,7 +7408,6 @@ func (s *CreateTrafficPolicyInstanceInput) SetTrafficPolicyVersion(v int64) *Cre
 
 // A complex type that contains the response information for the CreateTrafficPolicyInstance
 // request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyInstanceResponse
 type CreateTrafficPolicyInstanceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7470,7 +7446,6 @@ func (s *CreateTrafficPolicyInstanceOutput) SetTrafficPolicyInstance(v *TrafficP
 
 // A complex type that contains the response information for the CreateTrafficPolicy
 // request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyResponse
 type CreateTrafficPolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7509,7 +7484,6 @@ func (s *CreateTrafficPolicyOutput) SetTrafficPolicy(v *TrafficPolicy) *CreateTr
 
 // A complex type that contains information about the traffic policy that you
 // want to create a new version for.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyVersionRequest
 type CreateTrafficPolicyVersionInput struct {
 	_ struct{} `locationName:"CreateTrafficPolicyVersionRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -7579,7 +7553,6 @@ func (s *CreateTrafficPolicyVersionInput) SetId(v string) *CreateTrafficPolicyVe
 
 // A complex type that contains the response information for the CreateTrafficPolicyVersion
 // request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateTrafficPolicyVersionResponse
 type CreateTrafficPolicyVersionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7620,7 +7593,6 @@ func (s *CreateTrafficPolicyVersionOutput) SetTrafficPolicy(v *TrafficPolicy) *C
 // A complex type that contains information about the request to authorize associating
 // a VPC with your private hosted zone. Authorization is only required when
 // a private hosted zone and a VPC were created by using different accounts.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateVPCAssociationAuthorizationRequest
 type CreateVPCAssociationAuthorizationInput struct {
 	_ struct{} `locationName:"CreateVPCAssociationAuthorizationRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -7682,7 +7654,6 @@ func (s *CreateVPCAssociationAuthorizationInput) SetVPC(v *VPC) *CreateVPCAssoci
 
 // A complex type that contains the response information from a CreateVPCAssociationAuthorization
 // request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/CreateVPCAssociationAuthorizationResponse
 type CreateVPCAssociationAuthorizationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7721,7 +7692,6 @@ func (s *CreateVPCAssociationAuthorizationOutput) SetVPC(v *VPC) *CreateVPCAssoc
 
 // A complex type that lists the name servers in a delegation set, as well as
 // the CallerReference and the ID for the delegation set.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DelegationSet
 type DelegationSet struct {
 	_ struct{} `type:"structure"`
 
@@ -7768,7 +7738,6 @@ func (s *DelegationSet) SetNameServers(v []*string) *DelegationSet {
 }
 
 // This action deletes a health check.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteHealthCheckRequest
 type DeleteHealthCheckInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7808,7 +7777,6 @@ func (s *DeleteHealthCheckInput) SetHealthCheckId(v string) *DeleteHealthCheckIn
 }
 
 // An empty element.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteHealthCheckResponse
 type DeleteHealthCheckOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -7824,7 +7792,6 @@ func (s DeleteHealthCheckOutput) GoString() string {
 }
 
 // A request to delete a hosted zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteHostedZoneRequest
 type DeleteHostedZoneInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7864,7 +7831,6 @@ func (s *DeleteHostedZoneInput) SetId(v string) *DeleteHostedZoneInput {
 }
 
 // A complex type that contains the response to a DeleteHostedZone request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteHostedZoneResponse
 type DeleteHostedZoneOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7891,7 +7857,6 @@ func (s *DeleteHostedZoneOutput) SetChangeInfo(v *ChangeInfo) *DeleteHostedZoneO
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteQueryLoggingConfigRequest
 type DeleteQueryLoggingConfigInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7933,7 +7898,6 @@ func (s *DeleteQueryLoggingConfigInput) SetId(v string) *DeleteQueryLoggingConfi
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteQueryLoggingConfigResponse
 type DeleteQueryLoggingConfigOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -7949,7 +7913,6 @@ func (s DeleteQueryLoggingConfigOutput) GoString() string {
 }
 
 // A request to delete a reusable delegation set.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteReusableDelegationSetRequest
 type DeleteReusableDelegationSetInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7989,7 +7952,6 @@ func (s *DeleteReusableDelegationSetInput) SetId(v string) *DeleteReusableDelega
 }
 
 // An empty element.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteReusableDelegationSetResponse
 type DeleteReusableDelegationSetOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -8005,7 +7967,6 @@ func (s DeleteReusableDelegationSetOutput) GoString() string {
 }
 
 // A request to delete a specified traffic policy version.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteTrafficPolicyRequest
 type DeleteTrafficPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8065,7 +8026,6 @@ func (s *DeleteTrafficPolicyInput) SetVersion(v int64) *DeleteTrafficPolicyInput
 }
 
 // A request to delete a specified traffic policy instance.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteTrafficPolicyInstanceRequest
 type DeleteTrafficPolicyInstanceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8112,7 +8072,6 @@ func (s *DeleteTrafficPolicyInstanceInput) SetId(v string) *DeleteTrafficPolicyI
 }
 
 // An empty element.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteTrafficPolicyInstanceResponse
 type DeleteTrafficPolicyInstanceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -8128,7 +8087,6 @@ func (s DeleteTrafficPolicyInstanceOutput) GoString() string {
 }
 
 // An empty element.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteTrafficPolicyResponse
 type DeleteTrafficPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -8146,7 +8104,6 @@ func (s DeleteTrafficPolicyOutput) GoString() string {
 // A complex type that contains information about the request to remove authorization
 // to associate a VPC that was created by one AWS account with a hosted zone
 // that was created with a different AWS account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteVPCAssociationAuthorizationRequest
 type DeleteVPCAssociationAuthorizationInput struct {
 	_ struct{} `locationName:"DeleteVPCAssociationAuthorizationRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -8209,7 +8166,6 @@ func (s *DeleteVPCAssociationAuthorizationInput) SetVPC(v *VPC) *DeleteVPCAssoci
 }
 
 // Empty response for the request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DeleteVPCAssociationAuthorizationResponse
 type DeleteVPCAssociationAuthorizationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -8226,7 +8182,6 @@ func (s DeleteVPCAssociationAuthorizationOutput) GoString() string {
 
 // For the metric that the CloudWatch alarm is associated with, a complex type
 // that contains information about one dimension.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/Dimension
 type Dimension struct {
 	_ struct{} `type:"structure"`
 
@@ -8267,7 +8222,6 @@ func (s *Dimension) SetValue(v string) *Dimension {
 
 // A complex type that contains information about the VPC that you want to disassociate
 // from a specified private hosted zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DisassociateVPCFromHostedZoneRequest
 type DisassociateVPCFromHostedZoneInput struct {
 	_ struct{} `locationName:"DisassociateVPCFromHostedZoneRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -8337,7 +8291,6 @@ func (s *DisassociateVPCFromHostedZoneInput) SetVPC(v *VPC) *DisassociateVPCFrom
 
 // A complex type that contains the response information for the disassociate
 // request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/DisassociateVPCFromHostedZoneResponse
 type DisassociateVPCFromHostedZoneOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8365,7 +8318,6 @@ func (s *DisassociateVPCFromHostedZoneOutput) SetChangeInfo(v *ChangeInfo) *Disa
 }
 
 // A complex type that contains information about a geo location.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GeoLocation
 type GeoLocation struct {
 	_ struct{} `type:"structure"`
 
@@ -8434,7 +8386,6 @@ func (s *GeoLocation) SetSubdivisionCode(v string) *GeoLocation {
 
 // A complex type that contains the codes and full continent, country, and subdivision
 // names for the specified geolocation code.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GeoLocationDetails
 type GeoLocationDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -8507,7 +8458,6 @@ func (s *GeoLocationDetails) SetSubdivisionName(v string) *GeoLocationDetails {
 
 // A complex type that contains information about the request to create a hosted
 // zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetAccountLimitRequest
 type GetAccountLimitInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8564,7 +8514,6 @@ func (s *GetAccountLimitInput) SetType(v string) *GetAccountLimitInput {
 }
 
 // A complex type that contains the requested limit.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetAccountLimitResponse
 type GetAccountLimitOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8608,7 +8557,6 @@ func (s *GetAccountLimitOutput) SetLimit(v *AccountLimit) *GetAccountLimitOutput
 }
 
 // The input for a GetChange request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetChangeRequest
 type GetChangeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8650,7 +8598,6 @@ func (s *GetChangeInput) SetId(v string) *GetChangeInput {
 }
 
 // A complex type that contains the ChangeInfo element.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetChangeResponse
 type GetChangeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8676,7 +8623,6 @@ func (s *GetChangeOutput) SetChangeInfo(v *ChangeInfo) *GetChangeOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetCheckerIpRangesRequest
 type GetCheckerIpRangesInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -8691,7 +8637,6 @@ func (s GetCheckerIpRangesInput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetCheckerIpRangesResponse
 type GetCheckerIpRangesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8717,7 +8662,6 @@ func (s *GetCheckerIpRangesOutput) SetCheckerIpRanges(v []*string) *GetCheckerIp
 
 // A request for information about whether a specified geographic location is
 // supported for Amazon Route 53 geolocation resource record sets.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetGeoLocationRequest
 type GetGeoLocationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8798,7 +8742,6 @@ func (s *GetGeoLocationInput) SetSubdivisionCode(v string) *GetGeoLocationInput 
 
 // A complex type that contains the response information for the specified geolocation
 // code.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetGeoLocationResponse
 type GetGeoLocationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8827,7 +8770,6 @@ func (s *GetGeoLocationOutput) SetGeoLocationDetails(v *GeoLocationDetails) *Get
 
 // A request for the number of health checks that are associated with the current
 // AWS account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckCountRequest
 type GetHealthCheckCountInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -8843,7 +8785,6 @@ func (s GetHealthCheckCountInput) GoString() string {
 }
 
 // A complex type that contains the response to a GetHealthCheckCount request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckCountResponse
 type GetHealthCheckCountOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8870,7 +8811,6 @@ func (s *GetHealthCheckCountOutput) SetHealthCheckCount(v int64) *GetHealthCheck
 }
 
 // A request to get information about a specified health check.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckRequest
 type GetHealthCheckInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8913,7 +8853,6 @@ func (s *GetHealthCheckInput) SetHealthCheckId(v string) *GetHealthCheckInput {
 }
 
 // A request for the reason that a health check failed most recently.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckLastFailureReasonRequest
 type GetHealthCheckLastFailureReasonInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8960,7 +8899,6 @@ func (s *GetHealthCheckLastFailureReasonInput) SetHealthCheckId(v string) *GetHe
 
 // A complex type that contains the response to a GetHealthCheckLastFailureReason
 // request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckLastFailureReasonResponse
 type GetHealthCheckLastFailureReasonOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8988,7 +8926,6 @@ func (s *GetHealthCheckLastFailureReasonOutput) SetHealthCheckObservations(v []*
 }
 
 // A complex type that contains the response to a GetHealthCheck request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckResponse
 type GetHealthCheckOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9016,7 +8953,6 @@ func (s *GetHealthCheckOutput) SetHealthCheck(v *HealthCheck) *GetHealthCheckOut
 }
 
 // A request to get the status for a health check.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckStatusRequest
 type GetHealthCheckStatusInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9062,7 +8998,6 @@ func (s *GetHealthCheckStatusInput) SetHealthCheckId(v string) *GetHealthCheckSt
 }
 
 // A complex type that contains the response to a GetHealthCheck request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHealthCheckStatusResponse
 type GetHealthCheckStatusOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9091,7 +9026,6 @@ func (s *GetHealthCheckStatusOutput) SetHealthCheckObservations(v []*HealthCheck
 
 // A request to retrieve a count of all the hosted zones that are associated
 // with the current AWS account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHostedZoneCountRequest
 type GetHostedZoneCountInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9107,7 +9041,6 @@ func (s GetHostedZoneCountInput) GoString() string {
 }
 
 // A complex type that contains the response to a GetHostedZoneCount request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHostedZoneCountResponse
 type GetHostedZoneCountOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9135,7 +9068,6 @@ func (s *GetHostedZoneCountOutput) SetHostedZoneCount(v int64) *GetHostedZoneCou
 }
 
 // A request to get information about a specified hosted zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHostedZoneRequest
 type GetHostedZoneInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9176,7 +9108,6 @@ func (s *GetHostedZoneInput) SetId(v string) *GetHostedZoneInput {
 
 // A complex type that contains information about the request to create a hosted
 // zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHostedZoneLimitRequest
 type GetHostedZoneLimitInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9236,7 +9167,6 @@ func (s *GetHostedZoneLimitInput) SetType(v string) *GetHostedZoneLimitInput {
 }
 
 // A complex type that contains the requested limit.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHostedZoneLimitResponse
 type GetHostedZoneLimitOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9280,7 +9210,6 @@ func (s *GetHostedZoneLimitOutput) SetLimit(v *HostedZoneLimit) *GetHostedZoneLi
 }
 
 // A complex type that contain the response to a GetHostedZone request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetHostedZoneResponse
 type GetHostedZoneOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9327,7 +9256,6 @@ func (s *GetHostedZoneOutput) SetVPCs(v []*VPC) *GetHostedZoneOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetQueryLoggingConfigRequest
 type GetQueryLoggingConfigInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9370,7 +9298,6 @@ func (s *GetQueryLoggingConfigInput) SetId(v string) *GetQueryLoggingConfigInput
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetQueryLoggingConfigResponse
 type GetQueryLoggingConfigOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9398,7 +9325,6 @@ func (s *GetQueryLoggingConfigOutput) SetQueryLoggingConfig(v *QueryLoggingConfi
 }
 
 // A request to get information about a specified reusable delegation set.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetReusableDelegationSetRequest
 type GetReusableDelegationSetInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9440,7 +9366,6 @@ func (s *GetReusableDelegationSetInput) SetId(v string) *GetReusableDelegationSe
 
 // A complex type that contains information about the request to create a hosted
 // zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetReusableDelegationSetLimitRequest
 type GetReusableDelegationSetLimitInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9496,7 +9421,6 @@ func (s *GetReusableDelegationSetLimitInput) SetType(v string) *GetReusableDeleg
 }
 
 // A complex type that contains the requested limit.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetReusableDelegationSetLimitResponse
 type GetReusableDelegationSetLimitOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9537,7 +9461,6 @@ func (s *GetReusableDelegationSetLimitOutput) SetLimit(v *ReusableDelegationSetL
 
 // A complex type that contains the response to the GetReusableDelegationSet
 // request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetReusableDelegationSetResponse
 type GetReusableDelegationSetOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9564,7 +9487,6 @@ func (s *GetReusableDelegationSetOutput) SetDelegationSet(v *DelegationSet) *Get
 }
 
 // Gets information about a specific traffic policy version.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyRequest
 type GetTrafficPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9626,7 +9548,6 @@ func (s *GetTrafficPolicyInput) SetVersion(v int64) *GetTrafficPolicyInput {
 
 // Request to get the number of traffic policy instances that are associated
 // with the current AWS account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyInstanceCountRequest
 type GetTrafficPolicyInstanceCountInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9643,7 +9564,6 @@ func (s GetTrafficPolicyInstanceCountInput) GoString() string {
 
 // A complex type that contains information about the resource record sets that
 // Amazon Route 53 created based on a specified traffic policy.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyInstanceCountResponse
 type GetTrafficPolicyInstanceCountOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9671,7 +9591,6 @@ func (s *GetTrafficPolicyInstanceCountOutput) SetTrafficPolicyInstanceCount(v in
 }
 
 // Gets information about a specified traffic policy instance.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyInstanceRequest
 type GetTrafficPolicyInstanceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9715,7 +9634,6 @@ func (s *GetTrafficPolicyInstanceInput) SetId(v string) *GetTrafficPolicyInstanc
 
 // A complex type that contains information about the resource record sets that
 // Amazon Route 53 created based on a specified traffic policy.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyInstanceResponse
 type GetTrafficPolicyInstanceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9742,7 +9660,6 @@ func (s *GetTrafficPolicyInstanceOutput) SetTrafficPolicyInstance(v *TrafficPoli
 }
 
 // A complex type that contains the response information for the request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/GetTrafficPolicyResponse
 type GetTrafficPolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9770,7 +9687,6 @@ func (s *GetTrafficPolicyOutput) SetTrafficPolicy(v *TrafficPolicy) *GetTrafficP
 
 // A complex type that contains information about one health check that is associated
 // with the current AWS account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/HealthCheck
 type HealthCheck struct {
 	_ struct{} `type:"structure"`
 
@@ -9856,7 +9772,6 @@ func (s *HealthCheck) SetLinkedService(v *LinkedService) *HealthCheck {
 }
 
 // A complex type that contains information about the health check.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/HealthCheckConfig
 type HealthCheckConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -10268,7 +10183,6 @@ func (s *HealthCheckConfig) SetType(v string) *HealthCheckConfig {
 
 // A complex type that contains the last failure reason as reported by one Amazon
 // Route 53 health checker.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/HealthCheckObservation
 type HealthCheckObservation struct {
 	_ struct{} `type:"structure"`
 
@@ -10314,7 +10228,6 @@ func (s *HealthCheckObservation) SetStatusReport(v *StatusReport) *HealthCheckOb
 }
 
 // A complex type that contains general information about the hosted zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/HostedZone
 type HostedZone struct {
 	_ struct{} `type:"structure"`
 
@@ -10402,7 +10315,6 @@ func (s *HostedZone) SetResourceRecordSetCount(v int64) *HostedZone {
 // A complex type that contains an optional comment about your hosted zone.
 // If you don't want to specify a comment, omit both the HostedZoneConfig and
 // Comment elements.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/HostedZoneConfig
 type HostedZoneConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -10437,7 +10349,6 @@ func (s *HostedZoneConfig) SetPrivateZone(v bool) *HostedZoneConfig {
 
 // A complex type that contains the type of limit that you specified in the
 // request and the current value for that limit.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/HostedZoneLimit
 type HostedZoneLimit struct {
 	_ struct{} `type:"structure"`
 
@@ -10484,7 +10395,6 @@ func (s *HostedZoneLimit) SetValue(v int64) *HostedZoneLimit {
 // is a complex type that describes the service that created the resource. When
 // a resource is created by another service, you can't edit or delete it using
 // Amazon Route 53.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/LinkedService
 type LinkedService struct {
 	_ struct{} `type:"structure"`
 
@@ -10524,7 +10434,6 @@ func (s *LinkedService) SetServicePrincipal(v string) *LinkedService {
 
 // A request to get a list of geographic locations that Amazon Route 53 supports
 // for geolocation resource record sets.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListGeoLocationsRequest
 type ListGeoLocationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10619,7 +10528,6 @@ func (s *ListGeoLocationsInput) SetStartSubdivisionCode(v string) *ListGeoLocati
 }
 
 // A complex type containing the response information for the request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListGeoLocationsResponse
 type ListGeoLocationsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10707,7 +10615,6 @@ func (s *ListGeoLocationsOutput) SetNextSubdivisionCode(v string) *ListGeoLocati
 
 // A request to retrieve a list of the health checks that are associated with
 // the current AWS account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHealthChecksRequest
 type ListHealthChecksInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10752,7 +10659,6 @@ func (s *ListHealthChecksInput) SetMaxItems(v string) *ListHealthChecksInput {
 }
 
 // A complex type that contains the response to a ListHealthChecks request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHealthChecksResponse
 type ListHealthChecksOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10830,7 +10736,6 @@ func (s *ListHealthChecksOutput) SetNextMarker(v string) *ListHealthChecksOutput
 
 // Retrieves a list of the public and private hosted zones that are associated
 // with the current AWS account in ASCII order by domain name.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHostedZonesByNameRequest
 type ListHostedZonesByNameInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10890,7 +10795,6 @@ func (s *ListHostedZonesByNameInput) SetMaxItems(v string) *ListHostedZonesByNam
 }
 
 // A complex type that contains the response information for the request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHostedZonesByNameResponse
 type ListHostedZonesByNameOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10994,7 +10898,6 @@ func (s *ListHostedZonesByNameOutput) SetNextHostedZoneId(v string) *ListHostedZ
 
 // A request to retrieve a list of the public and private hosted zones that
 // are associated with the current AWS account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHostedZonesRequest
 type ListHostedZonesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11050,7 +10953,6 @@ func (s *ListHostedZonesInput) SetMaxItems(v string) *ListHostedZonesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListHostedZonesResponse
 type ListHostedZonesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11128,7 +11030,6 @@ func (s *ListHostedZonesOutput) SetNextMarker(v string) *ListHostedZonesOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListQueryLoggingConfigsRequest
 type ListQueryLoggingConfigsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11186,7 +11087,6 @@ func (s *ListQueryLoggingConfigsInput) SetNextToken(v string) *ListQueryLoggingC
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListQueryLoggingConfigsResponse
 type ListQueryLoggingConfigsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11231,7 +11131,6 @@ func (s *ListQueryLoggingConfigsOutput) SetQueryLoggingConfigs(v []*QueryLogging
 
 // A request for the resource record sets that are associated with a specified
 // hosted zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListResourceRecordSetsRequest
 type ListResourceRecordSetsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11342,7 +11241,6 @@ func (s *ListResourceRecordSetsInput) SetStartRecordType(v string) *ListResource
 }
 
 // A complex type that contains list information for the resource record set.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListResourceRecordSetsResponse
 type ListResourceRecordSetsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11427,7 +11325,6 @@ func (s *ListResourceRecordSetsOutput) SetResourceRecordSets(v []*ResourceRecord
 
 // A request to get a list of the reusable delegation sets that are associated
 // with the current AWS account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListReusableDelegationSetsRequest
 type ListReusableDelegationSetsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11473,7 +11370,6 @@ func (s *ListReusableDelegationSetsInput) SetMaxItems(v string) *ListReusableDel
 
 // A complex type that contains information about the reusable delegation sets
 // that are associated with the current AWS account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListReusableDelegationSetsResponse
 type ListReusableDelegationSetsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11550,7 +11446,6 @@ func (s *ListReusableDelegationSetsOutput) SetNextMarker(v string) *ListReusable
 
 // A complex type containing information about a request for a list of the tags
 // that are associated with an individual resource.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTagsForResourceRequest
 type ListTagsForResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11609,7 +11504,6 @@ func (s *ListTagsForResourceInput) SetResourceType(v string) *ListTagsForResourc
 
 // A complex type that contains information about the health checks or hosted
 // zones for which you want to list tags.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTagsForResourceResponse
 type ListTagsForResourceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11637,7 +11531,6 @@ func (s *ListTagsForResourceOutput) SetResourceTagSet(v *ResourceTagSet) *ListTa
 
 // A complex type that contains information about the health checks or hosted
 // zones for which you want to list tags.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTagsForResourcesRequest
 type ListTagsForResourcesInput struct {
 	_ struct{} `locationName:"ListTagsForResourcesRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -11699,7 +11592,6 @@ func (s *ListTagsForResourcesInput) SetResourceType(v string) *ListTagsForResour
 }
 
 // A complex type containing tags for the specified resources.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTagsForResourcesResponse
 type ListTagsForResourcesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11727,7 +11619,6 @@ func (s *ListTagsForResourcesOutput) SetResourceTagSets(v []*ResourceTagSet) *Li
 
 // A complex type that contains the information about the request to list the
 // traffic policies that are associated with the current AWS account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPoliciesRequest
 type ListTrafficPoliciesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11785,7 +11676,6 @@ func (s *ListTrafficPoliciesInput) SetTrafficPolicyIdMarker(v string) *ListTraff
 }
 
 // A complex type that contains the response information for the request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPoliciesResponse
 type ListTrafficPoliciesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11852,7 +11742,6 @@ func (s *ListTrafficPoliciesOutput) SetTrafficPolicySummaries(v []*TrafficPolicy
 
 // A request for the traffic policy instances that you created in a specified
 // hosted zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesByHostedZoneRequest
 type ListTrafficPolicyInstancesByHostedZoneInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11941,7 +11830,6 @@ func (s *ListTrafficPolicyInstancesByHostedZoneInput) SetTrafficPolicyInstanceTy
 }
 
 // A complex type that contains the response information for the request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesByHostedZoneResponse
 type ListTrafficPolicyInstancesByHostedZoneOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12018,7 +11906,6 @@ func (s *ListTrafficPolicyInstancesByHostedZoneOutput) SetTrafficPolicyInstances
 
 // A complex type that contains the information about the request to list your
 // traffic policy instances.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesByPolicyRequest
 type ListTrafficPolicyInstancesByPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12148,7 +12035,6 @@ func (s *ListTrafficPolicyInstancesByPolicyInput) SetTrafficPolicyVersion(v int6
 }
 
 // A complex type that contains the response information for the request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesByPolicyResponse
 type ListTrafficPolicyInstancesByPolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12237,7 +12123,6 @@ func (s *ListTrafficPolicyInstancesByPolicyOutput) SetTrafficPolicyInstances(v [
 
 // A request to get information about the traffic policy instances that you
 // created by using the current AWS account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesRequest
 type ListTrafficPolicyInstancesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12318,7 +12203,6 @@ func (s *ListTrafficPolicyInstancesInput) SetTrafficPolicyInstanceTypeMarker(v s
 }
 
 // A complex type that contains the response information for the request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyInstancesResponse
 type ListTrafficPolicyInstancesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12408,7 +12292,6 @@ func (s *ListTrafficPolicyInstancesOutput) SetTrafficPolicyInstances(v []*Traffi
 
 // A complex type that contains the information about the request to list your
 // traffic policies.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyVersionsRequest
 type ListTrafficPolicyVersionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12482,7 +12365,6 @@ func (s *ListTrafficPolicyVersionsInput) SetTrafficPolicyVersionMarker(v string)
 }
 
 // A complex type that contains the response information for the request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListTrafficPolicyVersionsResponse
 type ListTrafficPolicyVersionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12553,7 +12435,6 @@ func (s *ListTrafficPolicyVersionsOutput) SetTrafficPolicyVersionMarker(v string
 
 // A complex type that contains information about that can be associated with
 // your hosted zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListVPCAssociationAuthorizationsRequest
 type ListVPCAssociationAuthorizationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12618,7 +12499,6 @@ func (s *ListVPCAssociationAuthorizationsInput) SetNextToken(v string) *ListVPCA
 }
 
 // A complex type that contains the response information for the request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ListVPCAssociationAuthorizationsResponse
 type ListVPCAssociationAuthorizationsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12671,7 +12551,6 @@ func (s *ListVPCAssociationAuthorizationsOutput) SetVPCs(v []*VPC) *ListVPCAssoc
 
 // A complex type that contains information about a configuration for DNS query
 // logging.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/QueryLoggingConfig
 type QueryLoggingConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -12723,7 +12602,6 @@ func (s *QueryLoggingConfig) SetId(v string) *QueryLoggingConfig {
 // Information specific to the resource record.
 //
 // If you're creating an alias resource record set, omit ResourceRecord.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ResourceRecord
 type ResourceRecord struct {
 	_ struct{} `type:"structure"`
 
@@ -12772,7 +12650,6 @@ func (s *ResourceRecord) SetValue(v string) *ResourceRecord {
 }
 
 // Information about the resource record set to create or delete.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ResourceRecordSet
 type ResourceRecordSet struct {
 	_ struct{} `type:"structure"`
 
@@ -13304,7 +13181,6 @@ func (s *ResourceRecordSet) SetWeight(v int64) *ResourceRecordSet {
 }
 
 // A complex type containing a resource and its associated tags.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ResourceTagSet
 type ResourceTagSet struct {
 	_ struct{} `type:"structure"`
 
@@ -13352,7 +13228,6 @@ func (s *ResourceTagSet) SetTags(v []*Tag) *ResourceTagSet {
 
 // A complex type that contains the type of limit that you specified in the
 // request and the current value for that limit.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/ReusableDelegationSetLimit
 type ReusableDelegationSetLimit struct {
 	_ struct{} `type:"structure"`
 
@@ -13393,7 +13268,6 @@ func (s *ReusableDelegationSetLimit) SetValue(v int64) *ReusableDelegationSetLim
 
 // A complex type that contains the status that one Amazon Route 53 health checker
 // reports and the time of the health check.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/StatusReport
 type StatusReport struct {
 	_ struct{} `type:"structure"`
 
@@ -13432,7 +13306,6 @@ func (s *StatusReport) SetStatus(v string) *StatusReport {
 
 // A complex type that contains information about a tag that you want to add
 // or edit for the specified health check or hosted zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/Tag
 type Tag struct {
 	_ struct{} `type:"structure"`
 
@@ -13485,7 +13358,6 @@ func (s *Tag) SetValue(v string) *Tag {
 // Gets the value that Amazon Route 53 returns in response to a DNS request
 // for a specified record name and type. You can optionally specify the IP address
 // of a DNS resolver, an EDNS0 client subnet IP address, and a subnet mask.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/TestDNSAnswerRequest
 type TestDNSAnswerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13592,7 +13464,6 @@ func (s *TestDNSAnswerInput) SetResolverIP(v string) *TestDNSAnswerInput {
 }
 
 // A complex type that contains the response to a TestDNSAnswer request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/TestDNSAnswerResponse
 type TestDNSAnswerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -13680,7 +13551,6 @@ func (s *TestDNSAnswerOutput) SetResponseCode(v string) *TestDNSAnswerOutput {
 }
 
 // A complex type that contains settings for a traffic policy.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/TrafficPolicy
 type TrafficPolicy struct {
 	_ struct{} `type:"structure"`
 
@@ -13765,7 +13635,6 @@ func (s *TrafficPolicy) SetVersion(v int64) *TrafficPolicy {
 }
 
 // A complex type that contains settings for the new traffic policy instance.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/TrafficPolicyInstance
 type TrafficPolicyInstance struct {
 	_ struct{} `type:"structure"`
 
@@ -13899,7 +13768,6 @@ func (s *TrafficPolicyInstance) SetTrafficPolicyVersion(v int64) *TrafficPolicyI
 
 // A complex type that contains information about the latest version of one
 // traffic policy that is associated with the current AWS account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/TrafficPolicySummary
 type TrafficPolicySummary struct {
 	_ struct{} `type:"structure"`
 
@@ -13973,7 +13841,6 @@ func (s *TrafficPolicySummary) SetType(v string) *TrafficPolicySummary {
 
 // A complex type that contains information about a request to update a health
 // check.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateHealthCheckRequest
 type UpdateHealthCheckInput struct {
 	_ struct{} `locationName:"UpdateHealthCheckRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -14362,7 +14229,6 @@ func (s *UpdateHealthCheckInput) SetSearchString(v string) *UpdateHealthCheckInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateHealthCheckResponse
 type UpdateHealthCheckOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -14390,7 +14256,6 @@ func (s *UpdateHealthCheckOutput) SetHealthCheck(v *HealthCheck) *UpdateHealthCh
 }
 
 // A request to update the comment for a hosted zone.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateHostedZoneCommentRequest
 type UpdateHostedZoneCommentInput struct {
 	_ struct{} `locationName:"UpdateHostedZoneCommentRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -14441,7 +14306,6 @@ func (s *UpdateHostedZoneCommentInput) SetId(v string) *UpdateHostedZoneCommentI
 
 // A complex type that contains the response to the UpdateHostedZoneComment
 // request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateHostedZoneCommentResponse
 type UpdateHostedZoneCommentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -14469,7 +14333,6 @@ func (s *UpdateHostedZoneCommentOutput) SetHostedZone(v *HostedZone) *UpdateHost
 
 // A complex type that contains information about the traffic policy that you
 // want to update the comment for.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateTrafficPolicyCommentRequest
 type UpdateTrafficPolicyCommentInput struct {
 	_ struct{} `locationName:"UpdateTrafficPolicyCommentRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -14545,7 +14408,6 @@ func (s *UpdateTrafficPolicyCommentInput) SetVersion(v int64) *UpdateTrafficPoli
 }
 
 // A complex type that contains the response information for the traffic policy.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateTrafficPolicyCommentResponse
 type UpdateTrafficPolicyCommentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -14573,7 +14435,6 @@ func (s *UpdateTrafficPolicyCommentOutput) SetTrafficPolicy(v *TrafficPolicy) *U
 
 // A complex type that contains information about the resource record sets that
 // you want to update based on a specified traffic policy instance.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateTrafficPolicyInstanceRequest
 type UpdateTrafficPolicyInstanceInput struct {
 	_ struct{} `locationName:"UpdateTrafficPolicyInstanceRequest" type:"structure" xmlURI:"https://route53.amazonaws.com/doc/2013-04-01/"`
 
@@ -14668,7 +14529,6 @@ func (s *UpdateTrafficPolicyInstanceInput) SetTrafficPolicyVersion(v int64) *Upd
 
 // A complex type that contains information about the resource record sets that
 // Amazon Route 53 created based on a specified traffic policy.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/UpdateTrafficPolicyInstanceResponse
 type UpdateTrafficPolicyInstanceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -14696,7 +14556,6 @@ func (s *UpdateTrafficPolicyInstanceOutput) SetTrafficPolicyInstance(v *TrafficP
 
 // (Private hosted zones only) A complex type that contains information about
 // an Amazon VPC.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/route53-2013-04-01/VPC
 type VPC struct {
 	_ struct{} `type:"structure"`
 
@@ -14820,6 +14679,9 @@ const (
 
 	// CloudWatchRegionApNortheast2 is a CloudWatchRegion enum value
 	CloudWatchRegionApNortheast2 = "ap-northeast-2"
+
+	// CloudWatchRegionApNortheast3 is a CloudWatchRegion enum value
+	CloudWatchRegionApNortheast3 = "ap-northeast-3"
 
 	// CloudWatchRegionSaEast1 is a CloudWatchRegion enum value
 	CloudWatchRegionSaEast1 = "sa-east-1"
@@ -15007,6 +14869,9 @@ const (
 	// ResourceRecordSetRegionApNortheast2 is a ResourceRecordSetRegion enum value
 	ResourceRecordSetRegionApNortheast2 = "ap-northeast-2"
 
+	// ResourceRecordSetRegionApNortheast3 is a ResourceRecordSetRegion enum value
+	ResourceRecordSetRegionApNortheast3 = "ap-northeast-3"
+
 	// ResourceRecordSetRegionSaEast1 is a ResourceRecordSetRegion enum value
 	ResourceRecordSetRegionSaEast1 = "sa-east-1"
 
@@ -15089,6 +14954,9 @@ const (
 
 	// VPCRegionApNortheast2 is a VPCRegion enum value
 	VPCRegionApNortheast2 = "ap-northeast-2"
+
+	// VPCRegionApNortheast3 is a VPCRegion enum value
+	VPCRegionApNortheast3 = "ap-northeast-3"
 
 	// VPCRegionSaEast1 is a VPCRegion enum value
 	VPCRegionSaEast1 = "sa-east-1"

@@ -1,6 +1,8 @@
 package sftp
 
 import (
+	"sync"
+
 	"github.com/stretchr/testify/assert"
 
 	"bytes"
@@ -60,6 +62,7 @@ func testRequest(method string) *Request {
 		Method:   method,
 		Attrs:    []byte("foo"),
 		Target:   "foo",
+		state:    state{RWMutex: new(sync.RWMutex)},
 	}
 	return request
 }
@@ -96,15 +99,19 @@ func (h Handlers) getOutString() string {
 
 var errTest = errors.New("test error")
 
-func (h *Handlers) returnError() {
+func (h *Handlers) returnError(err error) {
 	handler := h.FilePut.(*testHandler)
-	handler.err = errTest
+	handler.err = err
 }
 
-func statusOk(t *testing.T, p interface{}) {
-	if pkt, ok := p.(*sshFxpStatusPacket); ok {
-		assert.Equal(t, pkt.StatusError.Code, uint32(ssh_FX_OK))
-	}
+func getStatusMsg(p interface{}) string {
+	pkt := p.(sshFxpStatusPacket)
+	return pkt.StatusError.msg
+}
+func checkOkStatus(t *testing.T, p interface{}) {
+	pkt := p.(sshFxpStatusPacket)
+	assert.Equal(t, pkt.StatusError.Code, uint32(ssh_FX_OK),
+		"sshFxpStatusPacket not OK\n", pkt.StatusError.msg)
 }
 
 // fake/test packet
@@ -135,15 +142,25 @@ func TestRequestGet(t *testing.T) {
 	}
 }
 
+func TestRequestCustomError(t *testing.T) {
+	handlers := newTestHandlers()
+	request := testRequest("Stat")
+	pkt := fakePacket{myid: 1}
+	cmdErr := errors.New("stat not supported")
+	handlers.returnError(cmdErr)
+	rpkt := request.call(handlers, pkt)
+	assert.Equal(t, rpkt, statusFromError(rpkt, cmdErr))
+}
+
 func TestRequestPut(t *testing.T) {
 	handlers := newTestHandlers()
 	request := testRequest("Put")
 	pkt := &sshFxpWritePacket{0, "a", 0, 5, []byte("file-")}
 	rpkt := request.call(handlers, pkt)
-	statusOk(t, rpkt)
+	checkOkStatus(t, rpkt)
 	pkt = &sshFxpWritePacket{1, "a", 5, 5, []byte("data.")}
 	rpkt = request.call(handlers, pkt)
-	statusOk(t, rpkt)
+	checkOkStatus(t, rpkt)
 	assert.Equal(t, "file-data.", handlers.getOutString())
 }
 
@@ -152,9 +169,9 @@ func TestRequestCmdr(t *testing.T) {
 	request := testRequest("Mkdir")
 	pkt := fakePacket{myid: 1}
 	rpkt := request.call(handlers, pkt)
-	statusOk(t, rpkt)
+	checkOkStatus(t, rpkt)
 
-	handlers.returnError()
+	handlers.returnError(errTest)
 	rpkt = request.call(handlers, pkt)
 	assert.Equal(t, rpkt, statusFromError(rpkt, errTest))
 }

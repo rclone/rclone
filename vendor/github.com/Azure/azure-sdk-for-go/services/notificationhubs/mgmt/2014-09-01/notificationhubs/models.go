@@ -18,6 +18,7 @@ package notificationhubs
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
+	"encoding/json"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/date"
@@ -97,16 +98,35 @@ type BaiduCredentialProperties struct {
 	BaiduSecretKey *string `json:"baiduSecretKey,omitempty"`
 }
 
-// CheckAvailabilityParameters parameters supplied to the Check Name Availability for Namespace and NotificationHubs.
+// CheckAvailabilityParameters parameters supplied to the Check Name Availability for Namespace and
+// NotificationHubs.
 type CheckAvailabilityParameters struct {
 	// Name - Gets or sets name
 	Name *string `json:"name,omitempty"`
 	// Location - Gets or sets location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Gets or sets tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// IsAvailiable - Gets or sets true if the name is available and can be used to create new Namespace/NotificationHub. Otherwise false.
 	IsAvailiable *bool `json:"isAvailiable,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CheckAvailabilityParameters.
+func (capVar CheckAvailabilityParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if capVar.Name != nil {
+		objectMap["name"] = capVar.Name
+	}
+	if capVar.Location != nil {
+		objectMap["location"] = capVar.Location
+	}
+	if capVar.Tags != nil {
+		objectMap["tags"] = capVar.Tags
+	}
+	if capVar.IsAvailiable != nil {
+		objectMap["isAvailiable"] = capVar.IsAvailiable
+	}
+	return json.Marshal(objectMap)
 }
 
 // CheckAvailabilityResource description of a CheckAvailibility resource.
@@ -121,9 +141,33 @@ type CheckAvailabilityResource struct {
 	// Type - Gets or sets resource type
 	Type *string `json:"type,omitempty"`
 	// Tags - Gets or sets tags
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// IsAvailiable - Gets or sets true if the name is available and can be used to create new Namespace/NotificationHub. Otherwise false.
 	IsAvailiable *bool `json:"isAvailiable,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CheckAvailabilityResource.
+func (car CheckAvailabilityResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if car.ID != nil {
+		objectMap["id"] = car.ID
+	}
+	if car.Location != nil {
+		objectMap["location"] = car.Location
+	}
+	if car.Name != nil {
+		objectMap["name"] = car.Name
+	}
+	if car.Type != nil {
+		objectMap["type"] = car.Type
+	}
+	if car.Tags != nil {
+		objectMap["tags"] = car.Tags
+	}
+	if car.IsAvailiable != nil {
+		objectMap["isAvailiable"] = car.IsAvailiable
+	}
+	return json.Marshal(objectMap)
 }
 
 // CreateOrUpdateParameters parameters supplied to the CreateOrUpdate NotificationHub operation.
@@ -131,9 +175,24 @@ type CreateOrUpdateParameters struct {
 	// Location - Gets or sets NotificationHub data center location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Gets or sets NotificationHub tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// Properties - Gets or sets properties of the NotificationHub.
 	Properties *Properties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CreateOrUpdateParameters.
+func (coup CreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if coup.Location != nil {
+		objectMap["location"] = coup.Location
+	}
+	if coup.Tags != nil {
+		objectMap["tags"] = coup.Tags
+	}
+	if coup.Properties != nil {
+		objectMap["properties"] = coup.Properties
+	}
+	return json.Marshal(objectMap)
 }
 
 // GcmCredential description of a NotificationHub GcmCredential.
@@ -273,9 +332,24 @@ type NamespaceCreateOrUpdateParameters struct {
 	// Location - Gets or sets Namespace data center location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Gets or sets Namespace tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// Properties - Gets or sets properties of the Namespace.
 	Properties *NamespaceProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for NamespaceCreateOrUpdateParameters.
+func (ncoup NamespaceCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ncoup.Location != nil {
+		objectMap["location"] = ncoup.Location
+	}
+	if ncoup.Tags != nil {
+		objectMap["tags"] = ncoup.Tags
+	}
+	if ncoup.Properties != nil {
+		objectMap["properties"] = ncoup.Properties
+	}
+	return json.Marshal(objectMap)
 }
 
 // NamespaceListResult the response of the List Namespace operation.
@@ -418,9 +492,33 @@ type NamespaceResource struct {
 	// Type - Gets or sets resource type of the Namespace.
 	Type *string `json:"type,omitempty"`
 	// Tags - Gets or sets tags of the Namespace.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// Properties - Gets or sets properties of the Namespace.
 	Properties *NamespaceProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for NamespaceResource.
+func (nr NamespaceResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if nr.ID != nil {
+		objectMap["id"] = nr.ID
+	}
+	if nr.Location != nil {
+		objectMap["location"] = nr.Location
+	}
+	if nr.Name != nil {
+		objectMap["name"] = nr.Name
+	}
+	if nr.Type != nil {
+		objectMap["type"] = nr.Type
+	}
+	if nr.Tags != nil {
+		objectMap["tags"] = nr.Tags
+	}
+	if nr.Properties != nil {
+		objectMap["properties"] = nr.Properties
+	}
+	return json.Marshal(objectMap)
 }
 
 // NamespacesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
@@ -435,22 +533,39 @@ func (future NamespacesDeleteFuture) Result(client NamespacesClient) (ar autores
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "notificationhubs.NamespacesDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("notificationhubs.NamespacesDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("notificationhubs.NamespacesDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "notificationhubs.NamespacesDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "notificationhubs.NamespacesDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "notificationhubs.NamespacesDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -487,7 +602,28 @@ type Resource struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // ResourceListKeys namespace/NotificationHub Connection String
@@ -511,9 +647,33 @@ type ResourceType struct {
 	// Type - Gets or sets resource type of the NotificationHub.
 	Type *string `json:"type,omitempty"`
 	// Tags - Gets or sets tags of the NotificationHub.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// Properties - Gets or sets properties of the NotificationHub.
 	Properties *Properties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ResourceType.
+func (rt ResourceType) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rt.ID != nil {
+		objectMap["id"] = rt.ID
+	}
+	if rt.Location != nil {
+		objectMap["location"] = rt.Location
+	}
+	if rt.Name != nil {
+		objectMap["name"] = rt.Name
+	}
+	if rt.Type != nil {
+		objectMap["type"] = rt.Type
+	}
+	if rt.Tags != nil {
+		objectMap["tags"] = rt.Tags
+	}
+	if rt.Properties != nil {
+		objectMap["properties"] = rt.Properties
+	}
+	return json.Marshal(objectMap)
 }
 
 // SharedAccessAuthorizationRuleCreateOrUpdateParameters parameters supplied to the CreateOrUpdate Namespace
@@ -664,9 +824,33 @@ type SharedAccessAuthorizationRuleResource struct {
 	// Type - Gets or sets resource type of the Namespace AuthorizationRules.
 	Type *string `json:"type,omitempty"`
 	// Tags - Gets or sets tags of the Namespace AuthorizationRules.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// Properties - Gets or sets properties of the Namespace.
 	Properties *SharedAccessAuthorizationRuleProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SharedAccessAuthorizationRuleResource.
+func (saarr SharedAccessAuthorizationRuleResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if saarr.ID != nil {
+		objectMap["id"] = saarr.ID
+	}
+	if saarr.Location != nil {
+		objectMap["location"] = saarr.Location
+	}
+	if saarr.Name != nil {
+		objectMap["name"] = saarr.Name
+	}
+	if saarr.Type != nil {
+		objectMap["type"] = saarr.Type
+	}
+	if saarr.Tags != nil {
+		objectMap["tags"] = saarr.Tags
+	}
+	if saarr.Properties != nil {
+		objectMap["properties"] = saarr.Properties
+	}
+	return json.Marshal(objectMap)
 }
 
 // SubResource ...

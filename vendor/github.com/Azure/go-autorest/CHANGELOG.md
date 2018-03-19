@@ -1,5 +1,85 @@
 # CHANGELOG
 
+## v10.2.0
+
+### New Features
+
+- Added endpoints for batch management.
+
+## v10.1.3
+
+### Bug Fixes
+
+- In Client.Do() invoke WithInspection() last so that it will inspect WithAuthorization().
+- Fixed authorization methods to invoke p.Prepare() first, aligning them with the other preparers.
+
+## v10.1.2
+
+- Corrected comment for auth.NewAuthorizerFromFile() function.
+
+## v10.1.1
+
+- Updated version number to match current release.
+
+## v10.1.0
+
+### New Features
+
+- Expose the polling URL for futures.
+
+### Bug Fixes
+
+- Add validation.NewErrorWithValidationError back to prevent breaking changes (it is deprecated).
+
+## v10.0.0
+
+### New Features
+
+- Added target and innererror fields to ServiceError to comply with OData v4 spec.
+- The Done() method on futures will now return a ServiceError object when available (it used to return a partial value of such errors).
+- Added helper methods for obtaining authorizers.
+- Expose the polling URL for futures.
+
+### Bug Fixes
+
+- Switched from glide to dep for dependency management.
+- Fixed unmarshaling of ServiceError for JSON bodies that don't conform to the OData spec.
+- Fixed a race condition in token refresh.
+
+### Breaking Changes
+
+- The ServiceError.Details field type has been changed to match the OData v4 spec.
+- Go v1.7 has been dropped from CI.
+- API parameter validation failures will now return a unique error type validation.Error.
+- The adal.Token type has been decomposed from adal.ServicePrincipalToken (this was necessary in order to fix the token refresh race).
+
+## v9.10.0
+- Fix the Service Bus suffix in Azure public env
+- Add Service Bus Endpoint (AAD ResourceURI) for use in [Azure Service Bus RBAC Preview](https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-role-based-access-control)
+
+## v9.9.0
+
+### New Features
+
+- Added EventGridKeyAuthorizer for key authorization with event grid topics.
+
+### Bug Fixes
+
+- Fixed race condition when auto-refreshing service principal tokens.
+
+## v9.8.1
+
+### Bug Fixes
+
+- Added http.StatusNoContent (204) to the list of expected status codes for long-running operations.
+- Updated runtime version info so it's current.
+
+## v9.8.0
+
+### New Features
+
+- Added type azure.AsyncOpIncompleteError to be returned from a future's Result() method when the operation has not completed.
+
 ## v9.7.1
 
 ### Bug Fixes

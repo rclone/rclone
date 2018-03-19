@@ -61,7 +61,7 @@ func (client SavedSearchesClient) CreateOrUpdate(ctx context.Context, resourceGr
 							{Target: "parameters.SavedSearchProperties.Version", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 						}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.SavedSearchesClient", "CreateOrUpdate")
+		return result, validation.NewError("operationalinsights.SavedSearchesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, workspaceName, savedSearchName, parameters)
@@ -139,7 +139,7 @@ func (client SavedSearchesClient) Delete(ctx context.Context, resourceGroupName 
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.SavedSearchesClient", "Delete")
+		return result, validation.NewError("operationalinsights.SavedSearchesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, workspaceName, savedSearchName)
@@ -214,7 +214,7 @@ func (client SavedSearchesClient) Get(ctx context.Context, resourceGroupName str
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.SavedSearchesClient", "Get")
+		return result, validation.NewError("operationalinsights.SavedSearchesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, workspaceName, savedSearchName)
@@ -290,7 +290,7 @@ func (client SavedSearchesClient) GetResults(ctx context.Context, resourceGroupN
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.SavedSearchesClient", "GetResults")
+		return result, validation.NewError("operationalinsights.SavedSearchesClient", "GetResults", err.Error())
 	}
 
 	req, err := client.GetResultsPreparer(ctx, resourceGroupName, workspaceName, savedSearchName)
@@ -366,7 +366,7 @@ func (client SavedSearchesClient) ListByWorkspace(ctx context.Context, resourceG
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.SavedSearchesClient", "ListByWorkspace")
+		return result, validation.NewError("operationalinsights.SavedSearchesClient", "ListByWorkspace", err.Error())
 	}
 
 	req, err := client.ListByWorkspacePreparer(ctx, resourceGroupName, workspaceName)

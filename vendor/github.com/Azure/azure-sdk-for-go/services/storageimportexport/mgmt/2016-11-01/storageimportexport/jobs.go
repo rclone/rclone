@@ -42,9 +42,9 @@ func NewJobsClientWithBaseURI(baseURI string, subscriptionID string, acceptLangu
 
 // Create creates a new job or updates an existing job in the specified subscription.
 //
-// jobName is the name of the import/export job. resourceGroupName is the resource group name uniquely identifies the
-// resource group within the user subscription. body is the parameters used for creating the job clientTenantID is the
-// tenant ID of the client making the request.
+// jobName is the name of the import/export job. resourceGroupName is the resource group name uniquely identifies
+// the resource group within the user subscription. body is the parameters used for creating the job clientTenantID
+// is the tenant ID of the client making the request.
 func (client JobsClient) Create(ctx context.Context, jobName string, resourceGroupName string, body PutJobParameters, clientTenantID string) (result JobResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: body,
@@ -83,7 +83,7 @@ func (client JobsClient) Create(ctx context.Context, jobName string, resourceGro
 							{Target: "body.Properties.ReturnPackage.ShipDate", Name: validation.Null, Rule: true, Chain: nil},
 						}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storageimportexport.JobsClient", "Create")
+		return result, validation.NewError("storageimportexport.JobsClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, jobName, resourceGroupName, body, clientTenantID)
@@ -160,8 +160,8 @@ func (client JobsClient) CreateResponder(resp *http.Response) (result JobRespons
 
 // Delete deletes an existing job. Only jobs in the Creating or Completed states can be deleted.
 //
-// jobName is the name of the import/export job. resourceGroupName is the resource group name uniquely identifies the
-// resource group within the user subscription.
+// jobName is the name of the import/export job. resourceGroupName is the resource group name uniquely identifies
+// the resource group within the user subscription.
 func (client JobsClient) Delete(ctx context.Context, jobName string, resourceGroupName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, jobName, resourceGroupName)
 	if err != nil {
@@ -230,8 +230,8 @@ func (client JobsClient) DeleteResponder(resp *http.Response) (result autorest.R
 
 // Get gets information about an existing job.
 //
-// jobName is the name of the import/export job. resourceGroupName is the resource group name uniquely identifies the
-// resource group within the user subscription.
+// jobName is the name of the import/export job. resourceGroupName is the resource group name uniquely identifies
+// the resource group within the user subscription.
 func (client JobsClient) Get(ctx context.Context, jobName string, resourceGroupName string) (result JobResponse, err error) {
 	req, err := client.GetPreparer(ctx, jobName, resourceGroupName)
 	if err != nil {
@@ -301,9 +301,9 @@ func (client JobsClient) GetResponder(resp *http.Response) (result JobResponse, 
 
 // ListByResourceGroup returns all active and completed jobs in a resource group.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscription.
-// top is an integer value that specifies how many jobs at most should be returned. The value cannot exceed 100. filter
-// is can be used to restrict the results to certain conditions.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscription. top is an integer value that specifies how many jobs at most should be returned. The value cannot
+// exceed 100. filter is can be used to restrict the results to certain conditions.
 func (client JobsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, top *int32, filter string) (result ListJobsResponsePage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, top, filter)
@@ -406,8 +406,8 @@ func (client JobsClient) ListByResourceGroupComplete(ctx context.Context, resour
 
 // ListBySubscription returns all active and completed jobs in a subscription.
 //
-// top is an integer value that specifies how many jobs at most should be returned. The value cannot exceed 100. filter
-// is can be used to restrict the results to certain conditions.
+// top is an integer value that specifies how many jobs at most should be returned. The value cannot exceed 100.
+// filter is can be used to restrict the results to certain conditions.
 func (client JobsClient) ListBySubscription(ctx context.Context, top *int32, filter string) (result ListJobsResponsePage, err error) {
 	result.fn = client.listBySubscriptionNextResults
 	req, err := client.ListBySubscriptionPreparer(ctx, top, filter)
@@ -511,8 +511,8 @@ func (client JobsClient) ListBySubscriptionComplete(ctx context.Context, top *in
 // the hard drives comprising the import or export job have been shipped to the Microsoft data center. It can also be
 // used to cancel an existing job.
 //
-// jobName is the name of the import/export job. resourceGroupName is the resource group name uniquely identifies the
-// resource group within the user subscription. body is the parameters to update in the job
+// jobName is the name of the import/export job. resourceGroupName is the resource group name uniquely identifies
+// the resource group within the user subscription. body is the parameters to update in the job
 func (client JobsClient) Update(ctx context.Context, jobName string, resourceGroupName string, body UpdateJobParameters) (result JobResponse, err error) {
 	req, err := client.UpdatePreparer(ctx, jobName, resourceGroupName, body)
 	if err != nil {

@@ -37,8 +37,8 @@ func NewPersonGroupClient(azureRegion AzureRegions) PersonGroupClient {
 
 // Create create a new person group with specified personGroupId, name and user-provided userData.
 //
-// personGroupID is user-provided personGroupId as a string. body is request body for creating new person group.
-func (client PersonGroupClient) Create(ctx context.Context, personGroupID string, body CreatePersonGroupRequest) (result autorest.Response, err error) {
+// personGroupID is id referencing a particular person group. body is request body for creating new person group.
+func (client PersonGroupClient) Create(ctx context.Context, personGroupID string, body NameAndUserDataContract) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
 			Constraints: []validation.Constraint{{Target: "personGroupID", Name: validation.MaxLength, Rule: 64, Chain: nil},
@@ -48,7 +48,7 @@ func (client PersonGroupClient) Create(ctx context.Context, personGroupID string
 				Chain: []validation.Constraint{{Target: "body.Name", Name: validation.MaxLength, Rule: 128, Chain: nil}}},
 				{Target: "body.UserData", Name: validation.Null, Rule: false,
 					Chain: []validation.Constraint{{Target: "body.UserData", Name: validation.MaxLength, Rule: 16384, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "face.PersonGroupClient", "Create")
+		return result, validation.NewError("face.PersonGroupClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, personGroupID, body)
@@ -73,7 +73,7 @@ func (client PersonGroupClient) Create(ctx context.Context, personGroupID string
 }
 
 // CreatePreparer prepares the Create request.
-func (client PersonGroupClient) CreatePreparer(ctx context.Context, personGroupID string, body CreatePersonGroupRequest) (*http.Request, error) {
+func (client PersonGroupClient) CreatePreparer(ctx context.Context, personGroupID string, body NameAndUserDataContract) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"AzureRegion": client.AzureRegion,
 	}
@@ -113,13 +113,13 @@ func (client PersonGroupClient) CreateResponder(resp *http.Response) (result aut
 // Delete delete an existing person group. Persisted face images of all people in the person group will also be
 // deleted.
 //
-// personGroupID is the personGroupId of the person group to be deleted.
+// personGroupID is id referencing a particular person group.
 func (client PersonGroupClient) Delete(ctx context.Context, personGroupID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
 			Constraints: []validation.Constraint{{Target: "personGroupID", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "personGroupID", Name: validation.Pattern, Rule: `^[a-z0-9-_]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "face.PersonGroupClient", "Delete")
+		return result, validation.NewError("face.PersonGroupClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, personGroupID)
@@ -181,13 +181,13 @@ func (client PersonGroupClient) DeleteResponder(resp *http.Response) (result aut
 
 // Get retrieve the information of a person group, including its name and userData.
 //
-// personGroupID is personGroupId of the target person group.
-func (client PersonGroupClient) Get(ctx context.Context, personGroupID string) (result PersonGroupResult, err error) {
+// personGroupID is id referencing a particular person group.
+func (client PersonGroupClient) Get(ctx context.Context, personGroupID string) (result PersonGroup, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
 			Constraints: []validation.Constraint{{Target: "personGroupID", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "personGroupID", Name: validation.Pattern, Rule: `^[a-z0-9-_]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "face.PersonGroupClient", "Get")
+		return result, validation.NewError("face.PersonGroupClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, personGroupID)
@@ -237,7 +237,7 @@ func (client PersonGroupClient) GetSender(req *http.Request) (*http.Response, er
 
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
-func (client PersonGroupClient) GetResponder(resp *http.Response) (result PersonGroupResult, err error) {
+func (client PersonGroupClient) GetResponder(resp *http.Response) (result PersonGroup, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
@@ -250,13 +250,13 @@ func (client PersonGroupClient) GetResponder(resp *http.Response) (result Person
 
 // GetTrainingStatus retrieve the training status of a person group (completed or ongoing).
 //
-// personGroupID is personGroupId of target person group.
+// personGroupID is id referencing a particular person group.
 func (client PersonGroupClient) GetTrainingStatus(ctx context.Context, personGroupID string) (result TrainingStatus, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
 			Constraints: []validation.Constraint{{Target: "personGroupID", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "personGroupID", Name: validation.Pattern, Rule: `^[a-z0-9-_]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "face.PersonGroupClient", "GetTrainingStatus")
+		return result, validation.NewError("face.PersonGroupClient", "GetTrainingStatus", err.Error())
 	}
 
 	req, err := client.GetTrainingStatusPreparer(ctx, personGroupID)
@@ -321,7 +321,7 @@ func (client PersonGroupClient) GetTrainingStatusResponder(resp *http.Response) 
 //
 // start is list person groups from the least personGroupId greater than the "start". top is the number of person
 // groups to list.
-func (client PersonGroupClient) List(ctx context.Context, start string, top *int32) (result ListPersonGroupResult, err error) {
+func (client PersonGroupClient) List(ctx context.Context, start string, top *int32) (result ListPersonGroup, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: start,
 			Constraints: []validation.Constraint{{Target: "start", Name: validation.MaxLength, Rule: 64, Chain: nil}}},
@@ -330,7 +330,7 @@ func (client PersonGroupClient) List(ctx context.Context, start string, top *int
 				Chain: []validation.Constraint{{Target: "top", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
 					{Target: "top", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "face.PersonGroupClient", "List")
+		return result, validation.NewError("face.PersonGroupClient", "List", err.Error())
 	}
 
 	req, err := client.ListPreparer(ctx, start, top)
@@ -366,6 +366,8 @@ func (client PersonGroupClient) ListPreparer(ctx context.Context, start string, 
 	}
 	if top != nil {
 		queryParameters["top"] = autorest.Encode("query", *top)
+	} else {
+		queryParameters["top"] = autorest.Encode("query", 1000)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -385,7 +387,7 @@ func (client PersonGroupClient) ListSender(req *http.Request) (*http.Response, e
 
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
-func (client PersonGroupClient) ListResponder(resp *http.Response) (result ListPersonGroupResult, err error) {
+func (client PersonGroupClient) ListResponder(resp *http.Response) (result ListPersonGroup, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
@@ -398,13 +400,13 @@ func (client PersonGroupClient) ListResponder(resp *http.Response) (result ListP
 
 // Train queue a person group training task, the training task may not be started immediately.
 //
-// personGroupID is target person group to be trained.
+// personGroupID is id referencing a particular person group.
 func (client PersonGroupClient) Train(ctx context.Context, personGroupID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
 			Constraints: []validation.Constraint{{Target: "personGroupID", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "personGroupID", Name: validation.Pattern, Rule: `^[a-z0-9-_]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "face.PersonGroupClient", "Train")
+		return result, validation.NewError("face.PersonGroupClient", "Train", err.Error())
 	}
 
 	req, err := client.TrainPreparer(ctx, personGroupID)
@@ -467,13 +469,13 @@ func (client PersonGroupClient) TrainResponder(resp *http.Response) (result auto
 // Update update an existing person group's display name and userData. The properties which does not appear in request
 // body will not be updated.
 //
-// personGroupID is personGroupId of the person group to be updated. body is request body for updating person group.
-func (client PersonGroupClient) Update(ctx context.Context, personGroupID string, body CreatePersonGroupRequest) (result autorest.Response, err error) {
+// personGroupID is id referencing a particular person group. body is request body for updating person group.
+func (client PersonGroupClient) Update(ctx context.Context, personGroupID string, body NameAndUserDataContract) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: personGroupID,
 			Constraints: []validation.Constraint{{Target: "personGroupID", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "personGroupID", Name: validation.Pattern, Rule: `^[a-z0-9-_]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "face.PersonGroupClient", "Update")
+		return result, validation.NewError("face.PersonGroupClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, personGroupID, body)
@@ -498,7 +500,7 @@ func (client PersonGroupClient) Update(ctx context.Context, personGroupID string
 }
 
 // UpdatePreparer prepares the Update request.
-func (client PersonGroupClient) UpdatePreparer(ctx context.Context, personGroupID string, body CreatePersonGroupRequest) (*http.Request, error) {
+func (client PersonGroupClient) UpdatePreparer(ctx context.Context, personGroupID string, body NameAndUserDataContract) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"AzureRegion": client.AzureRegion,
 	}

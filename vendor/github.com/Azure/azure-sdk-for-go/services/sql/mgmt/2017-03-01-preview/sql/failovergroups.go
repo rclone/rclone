@@ -44,9 +44,9 @@ func NewFailoverGroupsClientWithBaseURI(baseURI string, subscriptionID string) F
 
 // CreateOrUpdate creates or updates a failover group.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server containing the failover group.
-// failoverGroupName is the name of the failover group. parameters is the failover group parameters.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server containing the failover
+// group. failoverGroupName is the name of the failover group. parameters is the failover group parameters.
 func (client FailoverGroupsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, failoverGroupName string, parameters FailoverGroup) (result FailoverGroupsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -54,7 +54,7 @@ func (client FailoverGroupsClient) CreateOrUpdate(ctx context.Context, resourceG
 				Chain: []validation.Constraint{{Target: "parameters.FailoverGroupProperties.ReadWriteEndpoint", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "parameters.FailoverGroupProperties.PartnerServers", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "sql.FailoverGroupsClient", "CreateOrUpdate")
+		return result, validation.NewError("sql.FailoverGroupsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, failoverGroupName, parameters)
@@ -126,9 +126,9 @@ func (client FailoverGroupsClient) CreateOrUpdateResponder(resp *http.Response) 
 
 // Delete deletes a failover group.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server containing the failover group.
-// failoverGroupName is the name of the failover group.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server containing the failover
+// group. failoverGroupName is the name of the failover group.
 func (client FailoverGroupsClient) Delete(ctx context.Context, resourceGroupName string, serverName string, failoverGroupName string) (result FailoverGroupsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName, failoverGroupName)
 	if err != nil {
@@ -196,9 +196,9 @@ func (client FailoverGroupsClient) DeleteResponder(resp *http.Response) (result 
 
 // Failover fails over from the current primary server to this server.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server containing the failover group.
-// failoverGroupName is the name of the failover group.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server containing the failover
+// group. failoverGroupName is the name of the failover group.
 func (client FailoverGroupsClient) Failover(ctx context.Context, resourceGroupName string, serverName string, failoverGroupName string) (result FailoverGroupsFailoverFuture, err error) {
 	req, err := client.FailoverPreparer(ctx, resourceGroupName, serverName, failoverGroupName)
 	if err != nil {
@@ -268,9 +268,9 @@ func (client FailoverGroupsClient) FailoverResponder(resp *http.Response) (resul
 // ForceFailoverAllowDataLoss fails over from the current primary server to this server. This operation might result in
 // data loss.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server containing the failover group.
-// failoverGroupName is the name of the failover group.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server containing the failover
+// group. failoverGroupName is the name of the failover group.
 func (client FailoverGroupsClient) ForceFailoverAllowDataLoss(ctx context.Context, resourceGroupName string, serverName string, failoverGroupName string) (result FailoverGroupsForceFailoverAllowDataLossFuture, err error) {
 	req, err := client.ForceFailoverAllowDataLossPreparer(ctx, resourceGroupName, serverName, failoverGroupName)
 	if err != nil {
@@ -339,9 +339,9 @@ func (client FailoverGroupsClient) ForceFailoverAllowDataLossResponder(resp *htt
 
 // Get gets a failover group.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server containing the failover group.
-// failoverGroupName is the name of the failover group.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server containing the failover
+// group. failoverGroupName is the name of the failover group.
 func (client FailoverGroupsClient) Get(ctx context.Context, resourceGroupName string, serverName string, failoverGroupName string) (result FailoverGroup, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, failoverGroupName)
 	if err != nil {
@@ -408,8 +408,9 @@ func (client FailoverGroupsClient) GetResponder(resp *http.Response) (result Fai
 
 // ListByServer lists the failover groups in a server.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server containing the failover group.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server containing the failover
+// group.
 func (client FailoverGroupsClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result FailoverGroupListResultPage, err error) {
 	result.fn = client.listByServerNextResults
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)
@@ -503,9 +504,9 @@ func (client FailoverGroupsClient) ListByServerComplete(ctx context.Context, res
 
 // Update updates a failover group.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server containing the failover group.
-// failoverGroupName is the name of the failover group. parameters is the failover group parameters.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server containing the failover
+// group. failoverGroupName is the name of the failover group. parameters is the failover group parameters.
 func (client FailoverGroupsClient) Update(ctx context.Context, resourceGroupName string, serverName string, failoverGroupName string, parameters FailoverGroupUpdate) (result FailoverGroupsUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serverName, failoverGroupName, parameters)
 	if err != nil {

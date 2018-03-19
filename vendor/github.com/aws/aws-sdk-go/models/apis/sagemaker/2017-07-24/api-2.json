@@ -70,6 +70,18 @@
         {"shape":"ResourceLimitExceeded"}
       ]
     },
+    "CreateNotebookInstanceLifecycleConfig":{
+      "name":"CreateNotebookInstanceLifecycleConfig",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateNotebookInstanceLifecycleConfigInput"},
+      "output":{"shape":"CreateNotebookInstanceLifecycleConfigOutput"},
+      "errors":[
+        {"shape":"ResourceLimitExceeded"}
+      ]
+    },
     "CreatePresignedNotebookInstanceUrl":{
       "name":"CreatePresignedNotebookInstanceUrl",
       "http":{
@@ -124,6 +136,14 @@
       },
       "input":{"shape":"DeleteNotebookInstanceInput"}
     },
+    "DeleteNotebookInstanceLifecycleConfig":{
+      "name":"DeleteNotebookInstanceLifecycleConfig",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteNotebookInstanceLifecycleConfigInput"}
+    },
     "DeleteTags":{
       "name":"DeleteTags",
       "http":{
@@ -169,6 +189,15 @@
       "input":{"shape":"DescribeNotebookInstanceInput"},
       "output":{"shape":"DescribeNotebookInstanceOutput"}
     },
+    "DescribeNotebookInstanceLifecycleConfig":{
+      "name":"DescribeNotebookInstanceLifecycleConfig",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeNotebookInstanceLifecycleConfigInput"},
+      "output":{"shape":"DescribeNotebookInstanceLifecycleConfigOutput"}
+    },
     "DescribeTrainingJob":{
       "name":"DescribeTrainingJob",
       "http":{
@@ -207,6 +236,15 @@
       },
       "input":{"shape":"ListModelsInput"},
       "output":{"shape":"ListModelsOutput"}
+    },
+    "ListNotebookInstanceLifecycleConfigs":{
+      "name":"ListNotebookInstanceLifecycleConfigs",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListNotebookInstanceLifecycleConfigsInput"},
+      "output":{"shape":"ListNotebookInstanceLifecycleConfigsOutput"}
     },
     "ListNotebookInstances":{
       "name":"ListNotebookInstances",
@@ -300,6 +338,18 @@
       "errors":[
         {"shape":"ResourceLimitExceeded"}
       ]
+    },
+    "UpdateNotebookInstanceLifecycleConfig":{
+      "name":"UpdateNotebookInstanceLifecycleConfig",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateNotebookInstanceLifecycleConfigInput"},
+      "output":{"shape":"UpdateNotebookInstanceLifecycleConfigOutput"},
+      "errors":[
+        {"shape":"ResourceLimitExceeded"}
+      ]
     }
   },
   "shapes":{
@@ -390,7 +440,8 @@
       "members":{
         "EndpointConfigName":{"shape":"EndpointConfigName"},
         "ProductionVariants":{"shape":"ProductionVariantList"},
-        "Tags":{"shape":"TagList"}
+        "Tags":{"shape":"TagList"},
+        "KmsKeyId":{"shape":"KmsKeyId"}
       }
     },
     "CreateEndpointConfigOutput":{
@@ -454,7 +505,24 @@
         "SecurityGroupIds":{"shape":"SecurityGroupIds"},
         "RoleArn":{"shape":"RoleArn"},
         "KmsKeyId":{"shape":"KmsKeyId"},
-        "Tags":{"shape":"TagList"}
+        "Tags":{"shape":"TagList"},
+        "LifecycleConfigName":{"shape":"NotebookInstanceLifecycleConfigName"},
+        "DirectInternetAccess":{"shape":"DirectInternetAccess"}
+      }
+    },
+    "CreateNotebookInstanceLifecycleConfigInput":{
+      "type":"structure",
+      "required":["NotebookInstanceLifecycleConfigName"],
+      "members":{
+        "NotebookInstanceLifecycleConfigName":{"shape":"NotebookInstanceLifecycleConfigName"},
+        "OnCreate":{"shape":"NotebookInstanceLifecycleConfigList"},
+        "OnStart":{"shape":"NotebookInstanceLifecycleConfigList"}
+      }
+    },
+    "CreateNotebookInstanceLifecycleConfigOutput":{
+      "type":"structure",
+      "members":{
+        "NotebookInstanceLifecycleConfigArn":{"shape":"NotebookInstanceLifecycleConfigArn"}
       }
     },
     "CreateNotebookInstanceOutput":{
@@ -543,6 +611,13 @@
         "NotebookInstanceName":{"shape":"NotebookInstanceName"}
       }
     },
+    "DeleteNotebookInstanceLifecycleConfigInput":{
+      "type":"structure",
+      "required":["NotebookInstanceLifecycleConfigName"],
+      "members":{
+        "NotebookInstanceLifecycleConfigName":{"shape":"NotebookInstanceLifecycleConfigName"}
+      }
+    },
     "DeleteTagsInput":{
       "type":"structure",
       "required":[
@@ -578,6 +653,7 @@
         "EndpointConfigName":{"shape":"EndpointConfigName"},
         "EndpointConfigArn":{"shape":"EndpointConfigArn"},
         "ProductionVariants":{"shape":"ProductionVariantList"},
+        "KmsKeyId":{"shape":"KmsKeyId"},
         "CreationTime":{"shape":"Timestamp"}
       }
     },
@@ -640,6 +716,24 @@
         "NotebookInstanceName":{"shape":"NotebookInstanceName"}
       }
     },
+    "DescribeNotebookInstanceLifecycleConfigInput":{
+      "type":"structure",
+      "required":["NotebookInstanceLifecycleConfigName"],
+      "members":{
+        "NotebookInstanceLifecycleConfigName":{"shape":"NotebookInstanceLifecycleConfigName"}
+      }
+    },
+    "DescribeNotebookInstanceLifecycleConfigOutput":{
+      "type":"structure",
+      "members":{
+        "NotebookInstanceLifecycleConfigArn":{"shape":"NotebookInstanceLifecycleConfigArn"},
+        "NotebookInstanceLifecycleConfigName":{"shape":"NotebookInstanceLifecycleConfigName"},
+        "OnCreate":{"shape":"NotebookInstanceLifecycleConfigList"},
+        "OnStart":{"shape":"NotebookInstanceLifecycleConfigList"},
+        "LastModifiedTime":{"shape":"LastModifiedTime"},
+        "CreationTime":{"shape":"CreationTime"}
+      }
+    },
     "DescribeNotebookInstanceOutput":{
       "type":"structure",
       "members":{
@@ -655,7 +749,9 @@
         "KmsKeyId":{"shape":"KmsKeyId"},
         "NetworkInterfaceId":{"shape":"NetworkInterfaceId"},
         "LastModifiedTime":{"shape":"LastModifiedTime"},
-        "CreationTime":{"shape":"CreationTime"}
+        "CreationTime":{"shape":"CreationTime"},
+        "NotebookInstanceLifecycleConfigName":{"shape":"NotebookInstanceLifecycleConfigName"},
+        "DirectInternetAccess":{"shape":"DirectInternetAccess"}
       }
     },
     "DescribeTrainingJobRequest":{
@@ -712,6 +808,13 @@
       "type":"list",
       "member":{"shape":"DesiredWeightAndCapacity"},
       "min":1
+    },
+    "DirectInternetAccess":{
+      "type":"string",
+      "enum":[
+        "Enabled",
+        "Disabled"
+      ]
     },
     "EndpointArn":{
       "type":"string",
@@ -848,7 +951,8 @@
       "enum":[
         "ml.t2.medium",
         "ml.m4.xlarge",
-        "ml.p2.xlarge"
+        "ml.p2.xlarge",
+        "ml.p3.2xlarge"
       ]
     },
     "KmsKeyId":{
@@ -919,6 +1023,27 @@
         "NextToken":{"shape":"PaginationToken"}
       }
     },
+    "ListNotebookInstanceLifecycleConfigsInput":{
+      "type":"structure",
+      "members":{
+        "NextToken":{"shape":"NextToken"},
+        "MaxResults":{"shape":"MaxResults"},
+        "SortBy":{"shape":"NotebookInstanceLifecycleConfigSortKey"},
+        "SortOrder":{"shape":"NotebookInstanceLifecycleConfigSortOrder"},
+        "NameContains":{"shape":"NotebookInstanceLifecycleConfigNameContains"},
+        "CreationTimeBefore":{"shape":"CreationTime"},
+        "CreationTimeAfter":{"shape":"CreationTime"},
+        "LastModifiedTimeBefore":{"shape":"LastModifiedTime"},
+        "LastModifiedTimeAfter":{"shape":"LastModifiedTime"}
+      }
+    },
+    "ListNotebookInstanceLifecycleConfigsOutput":{
+      "type":"structure",
+      "members":{
+        "NextToken":{"shape":"NextToken"},
+        "NotebookInstanceLifecycleConfigs":{"shape":"NotebookInstanceLifecycleConfigSummaryList"}
+      }
+    },
     "ListNotebookInstancesInput":{
       "type":"structure",
       "members":{
@@ -931,7 +1056,8 @@
         "CreationTimeAfter":{"shape":"CreationTime"},
         "LastModifiedTimeBefore":{"shape":"LastModifiedTime"},
         "LastModifiedTimeAfter":{"shape":"LastModifiedTime"},
-        "StatusEquals":{"shape":"NotebookInstanceStatus"}
+        "StatusEquals":{"shape":"NotebookInstanceStatus"},
+        "NotebookInstanceLifecycleConfigNameContains":{"shape":"NotebookInstanceLifecycleConfigName"}
       }
     },
     "ListNotebookInstancesOutput":{
@@ -1055,6 +1181,67 @@
       "type":"string",
       "max":256
     },
+    "NotebookInstanceLifecycleConfigArn":{
+      "type":"string",
+      "max":256
+    },
+    "NotebookInstanceLifecycleConfigContent":{
+      "type":"string",
+      "max":16384,
+      "min":1
+    },
+    "NotebookInstanceLifecycleConfigList":{
+      "type":"list",
+      "member":{"shape":"NotebookInstanceLifecycleHook"},
+      "max":1
+    },
+    "NotebookInstanceLifecycleConfigName":{
+      "type":"string",
+      "max":63,
+      "pattern":"^[a-zA-Z0-9](-*[a-zA-Z0-9])*"
+    },
+    "NotebookInstanceLifecycleConfigNameContains":{
+      "type":"string",
+      "pattern":"[a-zA-Z0-9-]+"
+    },
+    "NotebookInstanceLifecycleConfigSortKey":{
+      "type":"string",
+      "enum":[
+        "Name",
+        "CreationTime",
+        "LastModifiedTime"
+      ]
+    },
+    "NotebookInstanceLifecycleConfigSortOrder":{
+      "type":"string",
+      "enum":[
+        "Ascending",
+        "Descending"
+      ]
+    },
+    "NotebookInstanceLifecycleConfigSummary":{
+      "type":"structure",
+      "required":[
+        "NotebookInstanceLifecycleConfigName",
+        "NotebookInstanceLifecycleConfigArn"
+      ],
+      "members":{
+        "NotebookInstanceLifecycleConfigName":{"shape":"NotebookInstanceLifecycleConfigName"},
+        "NotebookInstanceLifecycleConfigArn":{"shape":"NotebookInstanceLifecycleConfigArn"},
+        "CreationTime":{"shape":"CreationTime"},
+        "LastModifiedTime":{"shape":"LastModifiedTime"}
+      }
+    },
+    "NotebookInstanceLifecycleConfigSummaryList":{
+      "type":"list",
+      "member":{"shape":"NotebookInstanceLifecycleConfigSummary"}
+    },
+    "NotebookInstanceLifecycleHook":{
+      "type":"structure",
+      "members":{
+        "Content":{"shape":"NotebookInstanceLifecycleConfigContent"}
+      }
+    },
     "NotebookInstanceName":{
       "type":"string",
       "max":63,
@@ -1103,7 +1290,8 @@
         "Url":{"shape":"NotebookInstanceUrl"},
         "InstanceType":{"shape":"InstanceType"},
         "CreationTime":{"shape":"CreationTime"},
-        "LastModifiedTime":{"shape":"LastModifiedTime"}
+        "LastModifiedTime":{"shape":"LastModifiedTime"},
+        "NotebookInstanceLifecycleConfigName":{"shape":"NotebookInstanceLifecycleConfigName"}
       }
     },
     "NotebookInstanceSummaryList":{
@@ -1211,7 +1399,8 @@
       "members":{
         "InstanceType":{"shape":"TrainingInstanceType"},
         "InstanceCount":{"shape":"TrainingInstanceCount"},
-        "VolumeSizeInGB":{"shape":"VolumeSizeInGB"}
+        "VolumeSizeInGB":{"shape":"VolumeSizeInGB"},
+        "VolumeKmsKeyId":{"shape":"KmsKeyId"}
       }
     },
     "ResourceInUse":{
@@ -1504,6 +1693,20 @@
         "NotebookInstanceName":{"shape":"NotebookInstanceName"},
         "InstanceType":{"shape":"InstanceType"},
         "RoleArn":{"shape":"RoleArn"}
+      }
+    },
+    "UpdateNotebookInstanceLifecycleConfigInput":{
+      "type":"structure",
+      "required":["NotebookInstanceLifecycleConfigName"],
+      "members":{
+        "NotebookInstanceLifecycleConfigName":{"shape":"NotebookInstanceLifecycleConfigName"},
+        "OnCreate":{"shape":"NotebookInstanceLifecycleConfigList"},
+        "OnStart":{"shape":"NotebookInstanceLifecycleConfigList"}
+      }
+    },
+    "UpdateNotebookInstanceLifecycleConfigOutput":{
+      "type":"structure",
+      "members":{
       }
     },
     "UpdateNotebookInstanceOutput":{

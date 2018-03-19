@@ -48,7 +48,7 @@ func (client ArtifactSourcesClient) CreateOrUpdate(ctx context.Context, resource
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: artifactSource,
 			Constraints: []validation.Constraint{{Target: "artifactSource.ArtifactSourceProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "dtl.ArtifactSourcesClient", "CreateOrUpdate")
+		return result, validation.NewError("dtl.ArtifactSourcesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, labName, name, artifactSource)
@@ -256,10 +256,10 @@ func (client ArtifactSourcesClient) GetResponder(resp *http.Response) (result Ar
 
 // List list artifact sources in a given lab.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. expand is specify the $expand
-// query. Example: 'properties($select=displayName)' filter is the filter to apply to the operation. top is the maximum
-// number of resources to return from the operation. orderby is the ordering expression for the results, using OData
-// notation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. expand is specify the
+// $expand query. Example: 'properties($select=displayName)' filter is the filter to apply to the operation. top is
+// the maximum number of resources to return from the operation. orderby is the ordering expression for the
+// results, using OData notation.
 func (client ArtifactSourcesClient) List(ctx context.Context, resourceGroupName string, labName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationArtifactSourcePage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, expand, filter, top, orderby)

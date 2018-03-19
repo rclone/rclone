@@ -44,8 +44,8 @@ func NewPredictionsClientWithBaseURI(baseURI string, subscriptionID string) Pred
 
 // CreateOrUpdate creates a Prediction or updates an existing Prediction in the hub.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name of
-// the Prediction. parameters is parameters supplied to the create/update Prediction operation.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name
+// of the Prediction. parameters is parameters supplied to the create/update Prediction operation.
 func (client PredictionsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, predictionName string, parameters PredictionResourceFormat) (result PredictionsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: predictionName,
@@ -65,7 +65,7 @@ func (client PredictionsClient) CreateOrUpdate(ctx context.Context, resourceGrou
 						}},
 					{Target: "parameters.Prediction.ScoreLabel", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "customerinsights.PredictionsClient", "CreateOrUpdate")
+		return result, validation.NewError("customerinsights.PredictionsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, hubName, predictionName, parameters)
@@ -137,8 +137,8 @@ func (client PredictionsClient) CreateOrUpdateResponder(resp *http.Response) (re
 
 // Delete deletes a Prediction in the hub.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name of
-// the Prediction.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name
+// of the Prediction.
 func (client PredictionsClient) Delete(ctx context.Context, resourceGroupName string, hubName string, predictionName string) (result PredictionsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, hubName, predictionName)
 	if err != nil {
@@ -206,8 +206,8 @@ func (client PredictionsClient) DeleteResponder(resp *http.Response) (result aut
 
 // Get gets a Prediction in the hub.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name of
-// the Prediction.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name
+// of the Prediction.
 func (client PredictionsClient) Get(ctx context.Context, resourceGroupName string, hubName string, predictionName string) (result PredictionResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, predictionName)
 	if err != nil {
@@ -274,8 +274,8 @@ func (client PredictionsClient) GetResponder(resp *http.Response) (result Predic
 
 // GetModelStatus gets model status of the prediction.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name of
-// the Prediction.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name
+// of the Prediction.
 func (client PredictionsClient) GetModelStatus(ctx context.Context, resourceGroupName string, hubName string, predictionName string) (result PredictionModelStatus, err error) {
 	req, err := client.GetModelStatusPreparer(ctx, resourceGroupName, hubName, predictionName)
 	if err != nil {
@@ -342,8 +342,8 @@ func (client PredictionsClient) GetModelStatusResponder(resp *http.Response) (re
 
 // GetTrainingResults gets training results.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name of
-// the Prediction.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name
+// of the Prediction.
 func (client PredictionsClient) GetTrainingResults(ctx context.Context, resourceGroupName string, hubName string, predictionName string) (result PredictionTrainingResults, err error) {
 	req, err := client.GetTrainingResultsPreparer(ctx, resourceGroupName, hubName, predictionName)
 	if err != nil {
@@ -504,8 +504,8 @@ func (client PredictionsClient) ListByHubComplete(ctx context.Context, resourceG
 
 // ModelStatus creates or updates the model status of prediction.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name of
-// the Prediction. parameters is parameters supplied to the create/update prediction model status operation.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. predictionName is the name
+// of the Prediction. parameters is parameters supplied to the create/update prediction model status operation.
 func (client PredictionsClient) ModelStatus(ctx context.Context, resourceGroupName string, hubName string, predictionName string, parameters PredictionModelStatus) (result autorest.Response, err error) {
 	req, err := client.ModelStatusPreparer(ctx, resourceGroupName, hubName, predictionName, parameters)
 	if err != nil {

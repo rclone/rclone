@@ -592,6 +592,21 @@
   },
   {
    "kind": "discovery#directoryItem",
+   "id": "chat:v1",
+   "name": "chat",
+   "version": "v1",
+   "title": "Hangouts Chat API",
+   "description": "Create bots and extend the new Hangouts Chat.",
+   "discoveryRestUrl": "https://chat.googleapis.com/$discovery/rest?version=v1",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://developers.google.com/hangouts/chat",
+   "preferred": true
+  },
+  {
+   "kind": "discovery#directoryItem",
    "id": "civicinfo:v2",
    "name": "civicinfo",
    "version": "v2",
@@ -626,7 +641,7 @@
    "id": "cloudbilling:v1",
    "name": "cloudbilling",
    "version": "v1",
-   "title": "Google Cloud Billing API",
+   "title": "Cloud Billing API",
    "description": "Allows developers to manage billing for their Google Cloud Platform projects programmatically.",
    "discoveryRestUrl": "https://cloudbilling.googleapis.com/$discovery/rest?version=v1",
    "icons": {
@@ -641,7 +656,7 @@
    "id": "cloudbuild:v1",
    "name": "cloudbuild",
    "version": "v1",
-   "title": "Google Cloud Container Builder API",
+   "title": "Cloud Container Builder API",
    "description": "Builds container images in the cloud.",
    "discoveryRestUrl": "https://cloudbuild.googleapis.com/$discovery/rest?version=v1",
    "icons": {
@@ -683,6 +698,21 @@
   },
   {
    "kind": "discovery#directoryItem",
+   "id": "cloudfunctions:v2alpha1",
+   "name": "cloudfunctions",
+   "version": "v2alpha1",
+   "title": "Google Cloud Functions API",
+   "description": "API for managing lightweight user-provided functions executed in response to events.",
+   "discoveryRestUrl": "https://cloudfunctions.googleapis.com/$discovery/rest?version=v2alpha1",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://cloud.google.com/functions",
+   "preferred": false
+  },
+  {
+   "kind": "discovery#directoryItem",
    "id": "cloudfunctions:v1",
    "name": "cloudfunctions",
    "version": "v1",
@@ -716,7 +746,7 @@
    "id": "cloudiot:v1",
    "name": "cloudiot",
    "version": "v1",
-   "title": "Google Cloud IoT API",
+   "title": "Cloud IoT API",
    "description": "Registers and manages IoT (Internet of Things) devices that connect to the Google Cloud Platform.",
    "discoveryRestUrl": "https://cloudiot.googleapis.com/$discovery/rest?version=v1",
    "icons": {
@@ -731,7 +761,7 @@
    "id": "cloudiot:v1beta1",
    "name": "cloudiot",
    "version": "v1beta1",
-   "title": "Google Cloud IoT API",
+   "title": "Cloud IoT API",
    "description": "Registers and manages IoT (Internet of Things) devices that connect to the Google Cloud Platform.",
    "discoveryRestUrl": "https://cloudiot.googleapis.com/$discovery/rest?version=v1beta1",
    "icons": {
@@ -761,7 +791,7 @@
    "id": "cloudresourcemanager:v1",
    "name": "cloudresourcemanager",
    "version": "v1",
-   "title": "Google Cloud Resource Manager API",
+   "title": "Cloud Resource Manager API",
    "description": "The Google Cloud Resource Manager API provides methods for creating, reading, and updating project metadata.",
    "discoveryRestUrl": "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v1",
    "icons": {
@@ -769,14 +799,14 @@
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
    },
    "documentationLink": "https://cloud.google.com/resource-manager",
-   "preferred": true
+   "preferred": false
   },
   {
    "kind": "discovery#directoryItem",
    "id": "cloudresourcemanager:v1beta1",
    "name": "cloudresourcemanager",
    "version": "v1beta1",
-   "title": "Google Cloud Resource Manager API",
+   "title": "Cloud Resource Manager API",
    "description": "The Google Cloud Resource Manager API provides methods for creating, reading, and updating project metadata.",
    "discoveryRestUrl": "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v1beta1",
    "icons": {
@@ -788,10 +818,25 @@
   },
   {
    "kind": "discovery#directoryItem",
+   "id": "cloudresourcemanager:v2",
+   "name": "cloudresourcemanager",
+   "version": "v2",
+   "title": "Cloud Resource Manager API",
+   "description": "The Google Cloud Resource Manager API provides methods for creating, reading, and updating project metadata.",
+   "discoveryRestUrl": "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v2",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://cloud.google.com/resource-manager",
+   "preferred": true
+  },
+  {
+   "kind": "discovery#directoryItem",
    "id": "cloudresourcemanager:v2beta1",
    "name": "cloudresourcemanager",
    "version": "v2beta1",
-   "title": "Google Cloud Resource Manager API",
+   "title": "Cloud Resource Manager API",
    "description": "The Google Cloud Resource Manager API provides methods for creating, reading, and updating project metadata.",
    "discoveryRestUrl": "https://cloudresourcemanager.googleapis.com/$discovery/rest?version=v2beta1",
    "icons": {
@@ -1071,7 +1116,7 @@
    "id": "dataflow:v1b3",
    "name": "dataflow",
    "version": "v1b3",
-   "title": "Google Dataflow API",
+   "title": "Dataflow API",
    "description": "Manages Google Cloud Dataflow projects on Google Cloud Platform.",
    "discoveryRestUrl": "https://dataflow.googleapis.com/$discovery/rest?version=v1b3",
    "icons": {
@@ -1444,21 +1489,6 @@
   },
   {
    "kind": "discovery#directoryItem",
-   "id": "firebaseremoteconfig:v1",
-   "name": "firebaseremoteconfig",
-   "version": "v1",
-   "title": "Firebase Remote Config API",
-   "description": "Firebase Remote Config API allows the 3P clients to manage Remote Config conditions and parameters for Firebase applications.",
-   "discoveryRestUrl": "https://firebaseremoteconfig.googleapis.com/$discovery/rest?version=v1",
-   "icons": {
-    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
-    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
-   },
-   "documentationLink": "https://firebase.google.com/docs/remote-config/",
-   "preferred": true
-  },
-  {
-   "kind": "discovery#directoryItem",
    "id": "firebaserules:v1",
    "name": "firebaserules",
    "version": "v1",
@@ -1600,6 +1630,21 @@
   },
   {
    "kind": "discovery#directoryItem",
+   "id": "genomics:v2alpha1",
+   "name": "genomics",
+   "version": "v2alpha1",
+   "title": "Genomics API",
+   "description": "Upload, process, query, and search Genomics data in the cloud.",
+   "discoveryRestUrl": "https://genomics.googleapis.com/$discovery/rest?version=v2alpha1",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://cloud.google.com/genomics",
+   "preferred": false
+  },
+  {
+   "kind": "discovery#directoryItem",
    "id": "genomics:v1",
    "name": "genomics",
    "version": "v1",
@@ -1712,7 +1757,7 @@
    "id": "language:v1",
    "name": "language",
    "version": "v1",
-   "title": "Google Cloud Natural Language API",
+   "title": "Cloud Natural Language API",
    "description": "Provides natural language understanding technologies to developers. Examples include sentiment analysis, entity recognition, entity sentiment analysis, and text annotations.",
    "discoveryRestUrl": "https://language.googleapis.com/$discovery/rest?version=v1",
    "icons": {
@@ -1727,7 +1772,7 @@
    "id": "language:v1beta1",
    "name": "language",
    "version": "v1beta1",
-   "title": "Google Cloud Natural Language API",
+   "title": "Cloud Natural Language API",
    "description": "Provides natural language understanding technologies to developers. Examples include sentiment analysis, entity recognition, entity sentiment analysis, and text annotations.",
    "discoveryRestUrl": "https://language.googleapis.com/$discovery/rest?version=v1beta1",
    "icons": {
@@ -1742,7 +1787,7 @@
    "id": "language:v1beta2",
    "name": "language",
    "version": "v1beta2",
-   "title": "Google Cloud Natural Language API",
+   "title": "Cloud Natural Language API",
    "description": "Provides natural language understanding technologies to developers. Examples include sentiment analysis, entity recognition, entity sentiment analysis, and text annotations.",
    "discoveryRestUrl": "https://language.googleapis.com/$discovery/rest?version=v1beta2",
    "icons": {
@@ -1969,6 +2014,22 @@
     "x32": "https://www.google.com/images/icons/product/pagespeed-32.png"
    },
    "documentationLink": "https://developers.google.com/speed/docs/insights/v2/getting-started",
+   "preferred": false
+  },
+  {
+   "kind": "discovery#directoryItem",
+   "id": "pagespeedonline:v4",
+   "name": "pagespeedonline",
+   "version": "v4",
+   "title": "PageSpeed Insights API",
+   "description": "Analyzes the performance of a web page and provides tailored suggestions to make that page faster.",
+   "discoveryRestUrl": "https://www.googleapis.com/discovery/v1/apis/pagespeedonline/v4/rest",
+   "discoveryLink": "./apis/pagespeedonline/v4/rest",
+   "icons": {
+    "x16": "https://www.google.com/images/icons/product/pagespeed-16.png",
+    "x32": "https://www.google.com/images/icons/product/pagespeed-32.png"
+   },
+   "documentationLink": "https://developers.google.com/speed/docs/insights/v4/getting-started",
    "preferred": true
   },
   {
@@ -1991,7 +2052,7 @@
    "id": "people:v1",
    "name": "people",
    "version": "v1",
-   "title": "Google People API",
+   "title": "People API",
    "description": "Provides access to information about profiles and contacts.",
    "discoveryRestUrl": "https://people.googleapis.com/$discovery/rest?version=v1",
    "icons": {
@@ -2375,7 +2436,7 @@
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
    },
-   "documentationLink": "https://developers.google.com/apps-script/api",
+   "documentationLink": "https://developers.google.com/apps-script/api/",
    "preferred": true
   },
   {
@@ -2436,6 +2497,21 @@
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
    },
    "documentationLink": "https://cloud.google.com/service-management/",
+   "preferred": true
+  },
+  {
+   "kind": "discovery#directoryItem",
+   "id": "serviceusage:v1beta1",
+   "name": "serviceusage",
+   "version": "v1beta1",
+   "title": "Service Usage API",
+   "description": "Enables services that service consumers want to use on Google Cloud Platform, lists the available or enabled services, or disables services that service consumers no longer use.",
+   "discoveryRestUrl": "https://serviceusage.googleapis.com/$discovery/rest?version=v1beta1",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://cloud.google.com/service-usage/",
    "preferred": true
   },
   {
@@ -2550,7 +2626,7 @@
    "id": "speech:v1",
    "name": "speech",
    "version": "v1",
-   "title": "Google Cloud Speech API",
+   "title": "Cloud Speech API",
    "description": "Converts audio to text by applying powerful neural network models.",
    "discoveryRestUrl": "https://speech.googleapis.com/$discovery/rest?version=v1",
    "icons": {
@@ -2565,7 +2641,7 @@
    "id": "speech:v1beta1",
    "name": "speech",
    "version": "v1beta1",
-   "title": "Google Cloud Speech API",
+   "title": "Cloud Speech API",
    "description": "Converts audio to text by applying powerful neural network models.",
    "discoveryRestUrl": "https://speech.googleapis.com/$discovery/rest?version=v1beta1",
    "icons": {
@@ -2904,6 +2980,21 @@
    "title": "Google Cloud Vision API",
    "description": "Integrates Google Vision features, including image labeling, face, logo, and landmark detection, optical character recognition (OCR), and detection of explicit content, into applications.",
    "discoveryRestUrl": "https://vision.googleapis.com/$discovery/rest?version=v1p1beta1",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://cloud.google.com/vision/",
+   "preferred": false
+  },
+  {
+   "kind": "discovery#directoryItem",
+   "id": "vision:v1p2beta1",
+   "name": "vision",
+   "version": "v1p2beta1",
+   "title": "Google Cloud Vision API",
+   "description": "Integrates Google Vision features, including image labeling, face, logo, and landmark detection, optical character recognition (OCR), and detection of explicit content, into applications.",
+   "discoveryRestUrl": "https://vision.googleapis.com/$discovery/rest?version=v1p2beta1",
    "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"

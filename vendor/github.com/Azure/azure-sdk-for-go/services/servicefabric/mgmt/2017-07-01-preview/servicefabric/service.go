@@ -42,8 +42,8 @@ func NewServiceClientWithBaseURI(baseURI string) ServiceClient {
 // Delete deletes a service resource with the specified name.
 //
 // subscriptionID is the customer subscription identifier resourceGroupName is the name of the resource group.
-// clusterName is the name of the cluster resource applicationName is the name of the application resource. serviceName
-// is the name of the service resource in the format of {applicationName}~{serviceName}.
+// clusterName is the name of the cluster resource applicationName is the name of the application resource.
+// serviceName is the name of the service resource in the format of {applicationName}~{serviceName}.
 func (client ServiceClient) Delete(ctx context.Context, subscriptionID string, resourceGroupName string, clusterName string, applicationName string, serviceName string) (result ServiceDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, subscriptionID, resourceGroupName, clusterName, applicationName, serviceName)
 	if err != nil {
@@ -113,8 +113,8 @@ func (client ServiceClient) DeleteResponder(resp *http.Response) (result autores
 // Get returns a service resource with the specified name.
 //
 // subscriptionID is the customer subscription identifier resourceGroupName is the name of the resource group.
-// clusterName is the name of the cluster resource applicationName is the name of the application resource. serviceName
-// is the name of the service resource in the format of {applicationName}~{serviceName}.
+// clusterName is the name of the cluster resource applicationName is the name of the application resource.
+// serviceName is the name of the service resource in the format of {applicationName}~{serviceName}.
 func (client ServiceClient) Get(ctx context.Context, subscriptionID string, resourceGroupName string, clusterName string, applicationName string, serviceName string) (result ServiceResource, err error) {
 	req, err := client.GetPreparer(ctx, subscriptionID, resourceGroupName, clusterName, applicationName, serviceName)
 	if err != nil {
@@ -251,9 +251,9 @@ func (client ServiceClient) ListResponder(resp *http.Response) (result ServiceRe
 // Patch updates a service resource with the specified name.
 //
 // subscriptionID is the customer subscription identifier resourceGroupName is the name of the resource group.
-// clusterName is the name of the cluster resource applicationName is the name of the application resource. serviceName
-// is the name of the service resource in the format of {applicationName}~{serviceName}. parameters is the service
-// resource for patch operations.
+// clusterName is the name of the cluster resource applicationName is the name of the application resource.
+// serviceName is the name of the service resource in the format of {applicationName}~{serviceName}. parameters is
+// the service resource for patch operations.
 func (client ServiceClient) Patch(ctx context.Context, subscriptionID string, resourceGroupName string, clusterName string, applicationName string, serviceName string, parameters ServiceResourceUpdate) (result ServicePatchFuture, err error) {
 	req, err := client.PatchPreparer(ctx, subscriptionID, resourceGroupName, clusterName, applicationName, serviceName, parameters)
 	if err != nil {
@@ -326,9 +326,9 @@ func (client ServiceClient) PatchResponder(resp *http.Response) (result ServiceR
 // Put creates or updates a service resource with the specified name.
 //
 // subscriptionID is the customer subscription identifier resourceGroupName is the name of the resource group.
-// clusterName is the name of the cluster resource applicationName is the name of the application resource. serviceName
-// is the name of the service resource in the format of {applicationName}~{serviceName}. parameters is the service
-// resource.
+// clusterName is the name of the cluster resource applicationName is the name of the application resource.
+// serviceName is the name of the service resource in the format of {applicationName}~{serviceName}. parameters is
+// the service resource.
 func (client ServiceClient) Put(ctx context.Context, subscriptionID string, resourceGroupName string, clusterName string, applicationName string, serviceName string, parameters ServiceResource) (result ServicePutFuture, err error) {
 	req, err := client.PutPreparer(ctx, subscriptionID, resourceGroupName, clusterName, applicationName, serviceName, parameters)
 	if err != nil {

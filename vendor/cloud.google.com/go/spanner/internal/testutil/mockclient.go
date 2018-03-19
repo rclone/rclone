@@ -19,13 +19,13 @@ package testutil
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"sync"
 	"testing"
 	"time"
 
 	"golang.org/x/net/context"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/empty"
 	proto3 "github.com/golang/protobuf/ptypes/struct"
 	pbt "github.com/golang/protobuf/ptypes/timestamp"
@@ -203,7 +203,7 @@ func (m *MockCloudSpannerClient) ExecuteStreamingSql(c context.Context, r *sppb.
 		},
 		ParamTypes: map[string]*sppb.Type{"var1": &sppb.Type{Code: sppb.TypeCode_STRING}},
 	}
-	if !reflect.DeepEqual(r, wantReq) {
+	if !proto.Equal(r, wantReq) {
 		return nil, fmt.Errorf("got query request: %v, want: %v", r, wantReq)
 	}
 	if act.Err != nil {
@@ -254,7 +254,7 @@ func (m *MockCloudSpannerClient) StreamingRead(c context.Context, r *sppb.ReadRe
 	if act.Method == "StreamingIndexRead" {
 		wantReq.Index = "idx1"
 	}
-	if !reflect.DeepEqual(r, wantReq) {
+	if !proto.Equal(r, wantReq) {
 		return nil, fmt.Errorf("got query request: %v, want: %v", r, wantReq)
 	}
 	if act.Err != nil {

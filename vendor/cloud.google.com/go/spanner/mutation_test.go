@@ -17,7 +17,6 @@ limitations under the License.
 package spanner
 
 import (
-	"reflect"
 	"sort"
 	"strings"
 	"testing"
@@ -123,7 +122,7 @@ func TestMutationToProto(t *testing.T) {
 			},
 		},
 	} {
-		if got, err := test.m.proto(); err != nil || !reflect.DeepEqual(got, test.want) {
+		if got, err := test.m.proto(); err != nil || !testEqual(got, test.want) {
 			t.Errorf("%d: (%#v).proto() = (%v, %v), want (%v, nil)", i, test.m, got, err, test.want)
 		}
 	}
@@ -173,7 +172,7 @@ func mutationEqual(t *testing.T, m1, m2 Mutation) bool {
 	ms2 := newMutationColumnSorter(&m2)
 	sort.Sort(ms1)
 	sort.Sort(ms2)
-	return reflect.DeepEqual(ms1, ms2)
+	return testEqual(ms1, ms2)
 }
 
 // Test helper functions which help to generate spanner.Mutation.
@@ -316,16 +315,16 @@ func TestMutationHelpers(t *testing.T) {
 func TestBadStructs(t *testing.T) {
 	val := "i_am_not_a_struct"
 	wantErr := errNotStruct(val)
-	if _, gotErr := InsertStruct("t_test", val); !reflect.DeepEqual(gotErr, wantErr) {
+	if _, gotErr := InsertStruct("t_test", val); !testEqual(gotErr, wantErr) {
 		t.Errorf("InsertStruct(%q) returns error %v, want %v", val, gotErr, wantErr)
 	}
-	if _, gotErr := InsertOrUpdateStruct("t_test", val); !reflect.DeepEqual(gotErr, wantErr) {
+	if _, gotErr := InsertOrUpdateStruct("t_test", val); !testEqual(gotErr, wantErr) {
 		t.Errorf("InsertOrUpdateStruct(%q) returns error %v, want %v", val, gotErr, wantErr)
 	}
-	if _, gotErr := UpdateStruct("t_test", val); !reflect.DeepEqual(gotErr, wantErr) {
+	if _, gotErr := UpdateStruct("t_test", val); !testEqual(gotErr, wantErr) {
 		t.Errorf("UpdateStruct(%q) returns error %v, want %v", val, gotErr, wantErr)
 	}
-	if _, gotErr := ReplaceStruct("t_test", val); !reflect.DeepEqual(gotErr, wantErr) {
+	if _, gotErr := ReplaceStruct("t_test", val); !testEqual(gotErr, wantErr) {
 		t.Errorf("ReplaceStruct(%q) returns error %v, want %v", val, gotErr, wantErr)
 	}
 }
@@ -346,13 +345,13 @@ func TestStructToMutationParams(t *testing.T) {
 		{&S{F: 1}, []string{"F"}, []interface{}{1}, nil},
 	} {
 		gotCols, gotVals, gotErr := structToMutationParams(test.in)
-		if !reflect.DeepEqual(gotCols, test.wantCols) {
+		if !testEqual(gotCols, test.wantCols) {
 			t.Errorf("%#v: got cols %v, want %v", test.in, gotCols, test.wantCols)
 		}
-		if !reflect.DeepEqual(gotVals, test.wantVals) {
+		if !testEqual(gotVals, test.wantVals) {
 			t.Errorf("%#v: got vals %v, want %v", test.in, gotVals, test.wantVals)
 		}
-		if !reflect.DeepEqual(gotErr, test.wantErr) {
+		if !testEqual(gotErr, test.wantErr) {
 			t.Errorf("%#v: got err %v, want %v", test.in, gotErr, test.wantErr)
 		}
 	}
@@ -499,12 +498,12 @@ func TestEncodeMutation(t *testing.T) {
 	} {
 		gotProto, gotErr := test.mutation.proto()
 		if gotErr != nil {
-			if !reflect.DeepEqual(gotErr, test.wantErr) {
+			if !testEqual(gotErr, test.wantErr) {
 				t.Errorf("%s: %v.proto() returns error %v, want %v", test.name, test.mutation, gotErr, test.wantErr)
 			}
 			continue
 		}
-		if !reflect.DeepEqual(gotProto, test.wantProto) {
+		if !testEqual(gotProto, test.wantProto) {
 			t.Errorf("%s: %v.proto() = (%v, nil), want (%v, nil)", test.name, test.mutation, gotProto, test.wantProto)
 		}
 	}
@@ -559,12 +558,12 @@ func TestEncodeMutationArray(t *testing.T) {
 	} {
 		gotProto, gotErr := mutationsProto(test.ms)
 		if gotErr != nil {
-			if !reflect.DeepEqual(gotErr, test.wantErr) {
+			if !testEqual(gotErr, test.wantErr) {
 				t.Errorf("%v: mutationsProto(%v) returns error %v, want %v", test.name, test.ms, gotErr, test.wantErr)
 			}
 			continue
 		}
-		if !reflect.DeepEqual(gotProto, test.want) {
+		if !testEqual(gotProto, test.want) {
 			t.Errorf("%v: mutationsProto(%v) = (%v, nil), want (%v, nil)", test.name, test.ms, gotProto, test.want)
 		}
 	}

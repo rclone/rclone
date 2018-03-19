@@ -75,7 +75,7 @@ func TestServicePrincipalTokenWithAuthorizationNoRefresh(t *testing.T) {
 	req, err := Prepare(mocks.NewRequest(), ba.WithAuthorization())
 	if err != nil {
 		t.Fatalf("azure: BearerAuthorizer#WithAuthorization returned an error (%v)", err)
-	} else if req.Header.Get(http.CanonicalHeaderKey("Authorization")) != fmt.Sprintf("Bearer %s", spt.AccessToken) {
+	} else if req.Header.Get(http.CanonicalHeaderKey("Authorization")) != fmt.Sprintf("Bearer %s", spt.OAuthToken()) {
 		t.Fatal("azure: BearerAuthorizer#WithAuthorization failed to set Authorization header")
 	}
 }
@@ -120,7 +120,7 @@ func TestServicePrincipalTokenWithAuthorizationRefresh(t *testing.T) {
 	req, err := Prepare(mocks.NewRequest(), ba.WithAuthorization())
 	if err != nil {
 		t.Fatalf("azure: BearerAuthorizer#WithAuthorization returned an error (%v)", err)
-	} else if req.Header.Get(http.CanonicalHeaderKey("Authorization")) != fmt.Sprintf("Bearer %s", spt.AccessToken) {
+	} else if req.Header.Get(http.CanonicalHeaderKey("Authorization")) != fmt.Sprintf("Bearer %s", spt.OAuthToken()) {
 		t.Fatal("azure: BearerAuthorizer#WithAuthorization failed to set Authorization header")
 	}
 

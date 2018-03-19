@@ -50,7 +50,7 @@ func (client ServicesClient) ApplyNetworkConfigurationUpdates(ctx context.Contex
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ServicesClient", "ApplyNetworkConfigurationUpdates")
+		return result, validation.NewError("apimanagement.ServicesClient", "ApplyNetworkConfigurationUpdates", err.Error())
 	}
 
 	req, err := client.ApplyNetworkConfigurationUpdatesPreparer(ctx, resourceGroupName, serviceName)
@@ -133,7 +133,7 @@ func (client ServicesClient) Backup(ctx context.Context, resourceGroupName strin
 				{Target: "parameters.AccessKey", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.ContainerName", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.BackupName", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ServicesClient", "Backup")
+		return result, validation.NewError("apimanagement.ServicesClient", "Backup", err.Error())
 	}
 
 	req, err := client.BackupPreparer(ctx, resourceGroupName, serviceName, parameters)
@@ -209,7 +209,7 @@ func (client ServicesClient) CheckNameAvailability(ctx context.Context, paramete
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ServicesClient", "CheckNameAvailability")
+		return result, validation.NewError("apimanagement.ServicesClient", "CheckNameAvailability", err.Error())
 	}
 
 	req, err := client.CheckNameAvailabilityPreparer(ctx, parameters)
@@ -296,7 +296,7 @@ func (client ServicesClient) CreateOrUpdate(ctx context.Context, resourceGroupNa
 						}},
 				}},
 				{Target: "parameters.Sku", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ServicesClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.ServicesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, parameters)
@@ -372,7 +372,7 @@ func (client ServicesClient) Delete(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ServicesClient", "Delete")
+		return result, validation.NewError("apimanagement.ServicesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName)
@@ -445,7 +445,7 @@ func (client ServicesClient) Get(ctx context.Context, resourceGroupName string, 
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ServicesClient", "Get")
+		return result, validation.NewError("apimanagement.ServicesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName)
@@ -519,7 +519,7 @@ func (client ServicesClient) GetSsoToken(ctx context.Context, resourceGroupName 
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ServicesClient", "GetSsoToken")
+		return result, validation.NewError("apimanagement.ServicesClient", "GetSsoToken", err.Error())
 	}
 
 	req, err := client.GetSsoTokenPreparer(ctx, resourceGroupName, serviceName)
@@ -785,7 +785,7 @@ func (client ServicesClient) ManageDeployments(ctx context.Context, resourceGrou
 					Chain: []validation.Constraint{{Target: "parameters.VpnConfiguration.SubnetResourceID", Name: validation.Null, Rule: false,
 						Chain: []validation.Constraint{{Target: "parameters.VpnConfiguration.SubnetResourceID", Name: validation.Pattern, Rule: `^/subscriptions/[^/]*/resourceGroups/[^/]*/providers/Microsoft.(ClassicNetwork|Network)/virtualNetworks/[^/]*/subnets/[^/]*$`, Chain: nil}}},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ServicesClient", "ManageDeployments")
+		return result, validation.NewError("apimanagement.ServicesClient", "ManageDeployments", err.Error())
 	}
 
 	req, err := client.ManageDeploymentsPreparer(ctx, resourceGroupName, serviceName, parameters)
@@ -870,7 +870,7 @@ func (client ServicesClient) Restore(ctx context.Context, resourceGroupName stri
 				{Target: "parameters.AccessKey", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.ContainerName", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.BackupName", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ServicesClient", "Restore")
+		return result, validation.NewError("apimanagement.ServicesClient", "Restore", err.Error())
 	}
 
 	req, err := client.RestorePreparer(ctx, resourceGroupName, serviceName, parameters)
@@ -949,7 +949,7 @@ func (client ServicesClient) Update(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ServicesClient", "Update")
+		return result, validation.NewError("apimanagement.ServicesClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serviceName, parameters)
@@ -1030,7 +1030,7 @@ func (client ServicesClient) UpdateHostname(ctx context.Context, resourceGroupNa
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ServicesClient", "UpdateHostname")
+		return result, validation.NewError("apimanagement.ServicesClient", "UpdateHostname", err.Error())
 	}
 
 	req, err := client.UpdateHostnamePreparer(ctx, resourceGroupName, serviceName, parameters)
@@ -1112,7 +1112,7 @@ func (client ServicesClient) UploadCertificate(ctx context.Context, resourceGrou
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Certificate", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.CertificatePassword", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ServicesClient", "UploadCertificate")
+		return result, validation.NewError("apimanagement.ServicesClient", "UploadCertificate", err.Error())
 	}
 
 	req, err := client.UploadCertificatePreparer(ctx, resourceGroupName, serviceName, parameters)

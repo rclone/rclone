@@ -53,7 +53,7 @@ func (client PublicIPAddressesClient) CreateOrUpdate(ctx context.Context, resour
 						Chain: []validation.Constraint{{Target: "parameters.PublicIPAddressPropertiesFormat.IPConfiguration.IPConfigurationPropertiesFormat.PublicIPAddress", Name: validation.Null, Rule: false, Chain: nil}}},
 					}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "network.PublicIPAddressesClient", "CreateOrUpdate")
+		return result, validation.NewError("network.PublicIPAddressesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, publicIPAddressName, parameters)

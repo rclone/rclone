@@ -15,8 +15,11 @@
 package firestore
 
 import (
+	"reflect"
 	"strings"
 	"testing"
+
+	"cloud.google.com/go/internal/testutil"
 )
 
 func TestFieldPathValidate(t *testing.T) {
@@ -72,41 +75,123 @@ func TestCheckForPrefix(t *testing.T) {
 	}
 }
 
-func TestCreateMapFromUpdates(t *testing.T) {
-	type M map[string]interface{}
+func TestGetAtPath(t *testing.T) {
+	type S struct {
+		X    int
+		Y    int `firestore:"y"`
+		M    map[string]interface{}
+		Next *S
+	}
+
+	const fail = "ERROR" // value for expected error
 
 	for _, test := range []struct {
-		fpvs []fpv
-		want M
+		val  interface{}
+		fp   FieldPath
+		want interface{}
 	}{
 		{
-			fpvs: nil,
-			want: M{},
+			val:  map[string]int(nil),
+			fp:   nil,
+			want: map[string]int(nil),
 		},
 		{
-			fpvs: []fpv{{[]string{"a"}, 1}, {[]string{"b"}, 2}},
-			want: M{"a": 1, "b": 2},
+			val:  1,
+			fp:   nil,
+			want: 1,
 		},
 		{
-			fpvs: []fpv{{[]string{"a", "b"}, 1}, {[]string{"c"}, 2}},
-			want: M{"a": map[string]interface{}{"b": 1}, "c": 2},
+			val:  1,
+			fp:   []string{"a"},
+			want: fail,
 		},
 		{
-			fpvs: []fpv{{[]string{"a", "b"}, 1}, {[]string{"c", "d"}, 2}},
-			want: M{
-				"a": map[string]interface{}{"b": 1},
-				"c": map[string]interface{}{"d": 2},
+			val:  map[string]int{"a": 2},
+			fp:   []string{"a"},
+			want: 2,
+		},
+		{
+			val:  map[string]int{"a": 2},
+			fp:   []string{"b"},
+			want: fail,
+		},
+		{
+			val:  map[string]interface{}{"a": map[string]int{"b": 3}},
+			fp:   []string{"a", "b"},
+			want: 3,
+		},
+		{
+			val:  map[string]interface{}{"a": map[string]int{"b": 3}},
+			fp:   []string{"a", "b", "c"},
+			want: fail,
+		},
+		{
+			val:  S{X: 1, Y: 2},
+			fp:   nil,
+			want: S{X: 1, Y: 2},
+		},
+		{
+			val:  S{X: 1, Y: 2},
+			fp:   []string{"X"},
+			want: 1,
+		},
+		{
+			val:  S{X: 1, Y: 2},
+			fp:   []string{"Y"},
+			want: fail, // because Y is tagged with name "y"
+		},
+		{
+			val:  S{X: 1, Y: 2},
+			fp:   []string{"y"},
+			want: 2,
+		},
+		{
+			val:  &S{X: 1},
+			fp:   []string{"X"},
+			want: 1,
+		},
+		{
+			val:  &S{X: 1, Next: nil},
+			fp:   []string{"Next"},
+			want: (*S)(nil),
+		},
+		{
+			val:  &S{X: 1, Next: nil},
+			fp:   []string{"Next", "Next"},
+			want: fail,
+		},
+		{
+			val:  map[string]S{"a": S{X: 1, Y: 2}},
+			fp:   []string{"a", "y"},
+			want: 2,
+		},
+		{
+			val:  map[string]S{"a": S{X: 1, Y: 2}},
+			fp:   []string{"a", "z"},
+			want: fail,
+		},
+		{
+			val: map[string]*S{
+				"a": &S{
+					M: map[string]interface{}{
+						"b": S{
+							Next: &S{
+								X: 17,
+							},
+						},
+					},
+				},
 			},
-		},
-		{
-			fpvs: []fpv{{[]string{"a", "b"}, 1}, {[]string{"a", "c"}, 2}},
-			want: M{"a": map[string]interface{}{"b": 1, "c": 2}},
+			fp:   []string{"a", "M", "b", "Next", "X"},
+			want: 17,
 		},
 	} {
-		gotm := createMapFromUpdates(test.fpvs)
-		got := M(gotm)
-		if !testEqual(got, test.want) {
-			t.Errorf("%v: got %#v, want %#v", test.fpvs, got, test.want)
+		got, err := getAtPath(reflect.ValueOf(test.val), test.fp)
+		if err != nil && test.want != fail {
+			t.Errorf("%+v: got error <%v>, want nil", test, err)
+		}
+		if err == nil && !testutil.Equal(got, test.want) {
+			t.Errorf("%+v: got %v, want %v, want nil", test, got, test.want)
 		}
 	}
 }

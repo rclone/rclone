@@ -1142,7 +1142,6 @@ func (c *Athena) StopQueryExecutionWithContext(ctx aws.Context, input *StopQuery
 	return out, req.Send()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/BatchGetNamedQueryInput
 type BatchGetNamedQueryInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1184,7 +1183,6 @@ func (s *BatchGetNamedQueryInput) SetNamedQueryIds(v []*string) *BatchGetNamedQu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/BatchGetNamedQueryOutput
 type BatchGetNamedQueryOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1217,7 +1215,6 @@ func (s *BatchGetNamedQueryOutput) SetUnprocessedNamedQueryIds(v []*UnprocessedN
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/BatchGetQueryExecutionInput
 type BatchGetQueryExecutionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1259,7 +1256,6 @@ func (s *BatchGetQueryExecutionInput) SetQueryExecutionIds(v []*string) *BatchGe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/BatchGetQueryExecutionOutput
 type BatchGetQueryExecutionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1293,7 +1289,6 @@ func (s *BatchGetQueryExecutionOutput) SetUnprocessedQueryExecutionIds(v []*Unpr
 }
 
 // Information about the columns in a query execution result.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ColumnInfo
 type ColumnInfo struct {
 	_ struct{} `type:"structure"`
 
@@ -1404,7 +1399,6 @@ func (s *ColumnInfo) SetType(v string) *ColumnInfo {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/CreateNamedQueryInput
 type CreateNamedQueryInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1511,7 +1505,6 @@ func (s *CreateNamedQueryInput) SetQueryString(v string) *CreateNamedQueryInput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/CreateNamedQueryOutput
 type CreateNamedQueryOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1536,7 +1529,6 @@ func (s *CreateNamedQueryOutput) SetNamedQueryId(v string) *CreateNamedQueryOutp
 }
 
 // A piece of data (a field in the table).
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/Datum
 type Datum struct {
 	_ struct{} `type:"structure"`
 
@@ -1560,7 +1552,6 @@ func (s *Datum) SetVarCharValue(v string) *Datum {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/DeleteNamedQueryInput
 type DeleteNamedQueryInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1599,7 +1590,6 @@ func (s *DeleteNamedQueryInput) SetNamedQueryId(v string) *DeleteNamedQueryInput
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/DeleteNamedQueryOutput
 type DeleteNamedQueryOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1616,7 +1606,6 @@ func (s DeleteNamedQueryOutput) GoString() string {
 
 // If query results are encrypted in Amazon S3, indicates the Amazon S3 encryption
 // option used.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/EncryptionConfiguration
 type EncryptionConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -1666,7 +1655,6 @@ func (s *EncryptionConfiguration) SetKmsKey(v string) *EncryptionConfiguration {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetNamedQueryInput
 type GetNamedQueryInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1705,7 +1693,6 @@ func (s *GetNamedQueryInput) SetNamedQueryId(v string) *GetNamedQueryInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetNamedQueryOutput
 type GetNamedQueryOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1729,7 +1716,6 @@ func (s *GetNamedQueryOutput) SetNamedQuery(v *NamedQuery) *GetNamedQueryOutput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetQueryExecutionInput
 type GetQueryExecutionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1768,7 +1754,6 @@ func (s *GetQueryExecutionInput) SetQueryExecutionId(v string) *GetQueryExecutio
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetQueryExecutionOutput
 type GetQueryExecutionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1792,7 +1777,6 @@ func (s *GetQueryExecutionOutput) SetQueryExecution(v *QueryExecution) *GetQuery
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetQueryResultsInput
 type GetQueryResultsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1850,7 +1834,6 @@ func (s *GetQueryResultsInput) SetQueryExecutionId(v string) *GetQueryResultsInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/GetQueryResultsOutput
 type GetQueryResultsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1883,7 +1866,6 @@ func (s *GetQueryResultsOutput) SetResultSet(v *ResultSet) *GetQueryResultsOutpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListNamedQueriesInput
 type ListNamedQueriesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1917,7 +1899,6 @@ func (s *ListNamedQueriesInput) SetNextToken(v string) *ListNamedQueriesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListNamedQueriesOutput
 type ListNamedQueriesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1950,7 +1931,6 @@ func (s *ListNamedQueriesOutput) SetNextToken(v string) *ListNamedQueriesOutput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListQueryExecutionsInput
 type ListQueryExecutionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1984,7 +1964,6 @@ func (s *ListQueryExecutionsInput) SetNextToken(v string) *ListQueryExecutionsIn
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ListQueryExecutionsOutput
 type ListQueryExecutionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2019,7 +1998,6 @@ func (s *ListQueryExecutionsOutput) SetQueryExecutionIds(v []*string) *ListQuery
 
 // A query, where QueryString is the SQL query statements that comprise the
 // query.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/NamedQuery
 type NamedQuery struct {
 	_ struct{} `type:"structure"`
 
@@ -2086,7 +2064,6 @@ func (s *NamedQuery) SetQueryString(v string) *NamedQuery {
 }
 
 // Information about a single instance of a query execution.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/QueryExecution
 type QueryExecution struct {
 	_ struct{} `type:"structure"`
 
@@ -2159,7 +2136,6 @@ func (s *QueryExecution) SetStatus(v *QueryExecutionStatus) *QueryExecution {
 }
 
 // The database in which the query execution occurs.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/QueryExecutionContext
 type QueryExecutionContext struct {
 	_ struct{} `type:"structure"`
 
@@ -2198,7 +2174,6 @@ func (s *QueryExecutionContext) SetDatabase(v string) *QueryExecutionContext {
 
 // The amount of data scanned during the query execution and the amount of time
 // that it took to execute.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/QueryExecutionStatistics
 type QueryExecutionStatistics struct {
 	_ struct{} `type:"structure"`
 
@@ -2233,7 +2208,6 @@ func (s *QueryExecutionStatistics) SetEngineExecutionTimeInMillis(v int64) *Quer
 
 // The completion date, current state, submission time, and state change reason
 // (if applicable) for the query execution.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/QueryExecutionStatus
 type QueryExecutionStatus struct {
 	_ struct{} `type:"structure"`
 
@@ -2290,7 +2264,6 @@ func (s *QueryExecutionStatus) SetSubmissionDateTime(v time.Time) *QueryExecutio
 
 // The location in Amazon S3 where query results are stored and the encryption
 // option, if any, used for query results.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ResultConfiguration
 type ResultConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -2346,7 +2319,6 @@ func (s *ResultConfiguration) SetOutputLocation(v string) *ResultConfiguration {
 
 // The metadata and rows that comprise a query result set. The metadata describes
 // the column structure and data types.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ResultSet
 type ResultSet struct {
 	_ struct{} `type:"structure"`
 
@@ -2382,7 +2354,6 @@ func (s *ResultSet) SetRows(v []*Row) *ResultSet {
 
 // The metadata that describes the column structure and data types of a table
 // of query results.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/ResultSetMetadata
 type ResultSetMetadata struct {
 	_ struct{} `type:"structure"`
 
@@ -2407,7 +2378,6 @@ func (s *ResultSetMetadata) SetColumnInfo(v []*ColumnInfo) *ResultSetMetadata {
 }
 
 // The rows that comprise a query result table.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/Row
 type Row struct {
 	_ struct{} `type:"structure"`
 
@@ -2431,7 +2401,6 @@ func (s *Row) SetData(v []*Datum) *Row {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/StartQueryExecutionInput
 type StartQueryExecutionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2526,7 +2495,6 @@ func (s *StartQueryExecutionInput) SetResultConfiguration(v *ResultConfiguration
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/StartQueryExecutionOutput
 type StartQueryExecutionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2550,7 +2518,6 @@ func (s *StartQueryExecutionOutput) SetQueryExecutionId(v string) *StartQueryExe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/StopQueryExecutionInput
 type StopQueryExecutionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2589,7 +2556,6 @@ func (s *StopQueryExecutionInput) SetQueryExecutionId(v string) *StopQueryExecut
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/StopQueryExecutionOutput
 type StopQueryExecutionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2605,7 +2571,6 @@ func (s StopQueryExecutionOutput) GoString() string {
 }
 
 // Information about a named query ID that could not be processed.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/UnprocessedNamedQueryId
 type UnprocessedNamedQueryId struct {
 	_ struct{} `type:"structure"`
 
@@ -2650,7 +2615,6 @@ func (s *UnprocessedNamedQueryId) SetNamedQueryId(v string) *UnprocessedNamedQue
 }
 
 // Describes a query execution that failed to process.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/athena-2017-05-18/UnprocessedQueryExecutionId
 type UnprocessedQueryExecutionId struct {
 	_ struct{} `type:"structure"`
 

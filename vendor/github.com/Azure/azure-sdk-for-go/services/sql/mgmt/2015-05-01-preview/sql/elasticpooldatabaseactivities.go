@@ -44,9 +44,9 @@ func NewElasticPoolDatabaseActivitiesClientWithBaseURI(baseURI string, subscript
 
 // ListByElasticPool returns activity on databases inside of an elastic pool.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. elasticPoolName is the name of the
-// elastic pool.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. elasticPoolName is the name
+// of the elastic pool.
 func (client ElasticPoolDatabaseActivitiesClient) ListByElasticPool(ctx context.Context, resourceGroupName string, serverName string, elasticPoolName string) (result ElasticPoolDatabaseActivityListResult, err error) {
 	req, err := client.ListByElasticPoolPreparer(ctx, resourceGroupName, serverName, elasticPoolName)
 	if err != nil {

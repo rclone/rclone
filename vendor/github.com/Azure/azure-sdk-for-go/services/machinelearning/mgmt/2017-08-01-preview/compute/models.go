@@ -18,6 +18,7 @@ package compute
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
+	"encoding/json"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/date"
@@ -250,15 +251,16 @@ type AvailableOperations struct {
 	Value *[]ResourceOperation `json:"value,omitempty"`
 }
 
-// CheckSystemServicesUpdatesAvailableResponse information about updates available for system services in a cluster.
+// CheckSystemServicesUpdatesAvailableResponse information about updates available for system services in a
+// cluster.
 type CheckSystemServicesUpdatesAvailableResponse struct {
 	autorest.Response `json:"-"`
 	// UpdatesAvailable - Yes if updates are available for the system services, No if not. Possible values include: 'Yes', 'No'
 	UpdatesAvailable UpdatesAvailable `json:"updatesAvailable,omitempty"`
 }
 
-// ContainerRegistryCredentials information about the Azure Container Registry which contains the images deployed to
-// the cluster.
+// ContainerRegistryCredentials information about the Azure Container Registry which contains the images deployed
+// to the cluster.
 type ContainerRegistryCredentials struct {
 	// LoginServer - The ACR login server name. User name is the first part of the FQDN.
 	LoginServer *string `json:"loginServer,omitempty"`
@@ -276,8 +278,8 @@ type ContainerRegistryProperties struct {
 	ResourceID *string `json:"resourceId,omitempty"`
 }
 
-// ContainerServiceCredentials information about the Azure Container Registry which contains the images deployed to the
-// cluster.
+// ContainerServiceCredentials information about the Azure Container Registry which contains the images deployed to
+// the cluster.
 type ContainerServiceCredentials struct {
 	// AcsKubeConfig - The ACS kube config file.
 	AcsKubeConfig *string `json:"acsKubeConfig,omitempty"`
@@ -314,7 +316,7 @@ type ErrorResponseWrapper struct {
 // GlobalServiceConfiguration global configuration for services in the cluster.
 type GlobalServiceConfiguration struct {
 	// AdditionalProperties - Unmatched properties from the message are deserialized this collection
-	AdditionalProperties *map[string]*map[string]interface{} `json:",omitempty"`
+	AdditionalProperties map[string]interface{} `json:""`
 	// Etag - The configuartion ETag for updates.
 	Etag *string `json:"etag,omitempty"`
 	// Ssl - The SSL configuration properties
@@ -323,6 +325,27 @@ type GlobalServiceConfiguration struct {
 	ServiceAuth *ServiceAuthConfiguration `json:"serviceAuth,omitempty"`
 	// AutoScale - The auto-scale configuration
 	AutoScale *AutoScaleConfiguration `json:"autoScale,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for GlobalServiceConfiguration.
+func (gsc GlobalServiceConfiguration) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if gsc.Etag != nil {
+		objectMap["etag"] = gsc.Etag
+	}
+	if gsc.Ssl != nil {
+		objectMap["ssl"] = gsc.Ssl
+	}
+	if gsc.ServiceAuth != nil {
+		objectMap["serviceAuth"] = gsc.ServiceAuth
+	}
+	if gsc.AutoScale != nil {
+		objectMap["autoScale"] = gsc.AutoScale
+	}
+	for k, v := range gsc.AdditionalProperties {
+		objectMap[k] = v
+	}
+	return json.Marshal(objectMap)
 }
 
 // KubernetesClusterProperties kubernetes cluster specific properties
@@ -334,6 +357,8 @@ type KubernetesClusterProperties struct {
 // OperationalizationCluster instance of an Azure ML Operationalization Cluster resource.
 type OperationalizationCluster struct {
 	autorest.Response `json:"-"`
+	// OperationalizationClusterProperties - Properties of an operationalization cluster.
+	*OperationalizationClusterProperties `json:"properties,omitempty"`
 	// ID - Specifies the resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Specifies the name of the resource.
@@ -343,9 +368,100 @@ type OperationalizationCluster struct {
 	// Type - Specifies the type of the resource.
 	Type *string `json:"type,omitempty"`
 	// Tags - Contains resource tags defined as key/value pairs.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// OperationalizationClusterProperties - Properties of an operationalization cluster.
-	*OperationalizationClusterProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for OperationalizationCluster.
+func (oc OperationalizationCluster) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if oc.OperationalizationClusterProperties != nil {
+		objectMap["properties"] = oc.OperationalizationClusterProperties
+	}
+	if oc.ID != nil {
+		objectMap["id"] = oc.ID
+	}
+	if oc.Name != nil {
+		objectMap["name"] = oc.Name
+	}
+	if oc.Location != nil {
+		objectMap["location"] = oc.Location
+	}
+	if oc.Type != nil {
+		objectMap["type"] = oc.Type
+	}
+	if oc.Tags != nil {
+		objectMap["tags"] = oc.Tags
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for OperationalizationCluster struct.
+func (oc *OperationalizationCluster) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var operationalizationClusterProperties OperationalizationClusterProperties
+				err = json.Unmarshal(*v, &operationalizationClusterProperties)
+				if err != nil {
+					return err
+				}
+				oc.OperationalizationClusterProperties = &operationalizationClusterProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				oc.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				oc.Name = &name
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				oc.Location = &location
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				oc.Type = &typeVar
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				oc.Tags = tags
+			}
+		}
+	}
+
+	return nil
 }
 
 // OperationalizationClusterCredentials credentials to resources in the cluster.
@@ -404,27 +520,44 @@ func (future OperationalizationClustersCreateOrUpdateFuture) Result(client Opera
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return oc, autorest.NewError("compute.OperationalizationClustersCreateOrUpdateFuture", "Result", "asynchronous operation has not completed")
+		return oc, azure.NewAsyncOpIncompleteError("compute.OperationalizationClustersCreateOrUpdateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		oc, err = client.CreateOrUpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersCreateOrUpdateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	oc, err = client.CreateOrUpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
-// OperationalizationClustersDeleteFuture an abstraction for monitoring and retrieving the results of a long-running
-// operation.
+// OperationalizationClustersDeleteFuture an abstraction for monitoring and retrieving the results of a
+// long-running operation.
 type OperationalizationClustersDeleteFuture struct {
 	azure.Future
 	req *http.Request
@@ -436,27 +569,44 @@ func (future OperationalizationClustersDeleteFuture) Result(client Operationaliz
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("compute.OperationalizationClustersDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("compute.OperationalizationClustersDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
-// OperationalizationClustersUpdateSystemServicesFuture an abstraction for monitoring and retrieving the results of a
-// long-running operation.
+// OperationalizationClustersUpdateSystemServicesFuture an abstraction for monitoring and retrieving the results of
+// a long-running operation.
 type OperationalizationClustersUpdateSystemServicesFuture struct {
 	azure.Future
 	req *http.Request
@@ -468,29 +618,55 @@ func (future OperationalizationClustersUpdateSystemServicesFuture) Result(client
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersUpdateSystemServicesFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ussr, autorest.NewError("compute.OperationalizationClustersUpdateSystemServicesFuture", "Result", "asynchronous operation has not completed")
+		return ussr, azure.NewAsyncOpIncompleteError("compute.OperationalizationClustersUpdateSystemServicesFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ussr, err = client.UpdateSystemServicesResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersUpdateSystemServicesFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersUpdateSystemServicesFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ussr, err = client.UpdateSystemServicesResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersUpdateSystemServicesFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
 // OperationalizationClusterUpdateParameters parameters for PATCH operation on an operationalization cluster
 type OperationalizationClusterUpdateParameters struct {
 	// Tags - Gets or sets a list of key value pairs that describe the resource. These tags can be used in viewing and grouping this resource (across resource groups). A maximum of 15 tags can be provided for a resource. Each tag must have a key no greater in length than 128 characters and a value no greater in length than 256 characters.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for OperationalizationClusterUpdateParameters.
+func (ocup OperationalizationClusterUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ocup.Tags != nil {
+		objectMap["tags"] = ocup.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // PaginatedOperationalizationClustersList paginated list of operationalization clusters.
@@ -502,8 +678,8 @@ type PaginatedOperationalizationClustersList struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
-// PaginatedOperationalizationClustersListIterator provides access to a complete listing of OperationalizationCluster
-// values.
+// PaginatedOperationalizationClustersListIterator provides access to a complete listing of
+// OperationalizationCluster values.
 type PaginatedOperationalizationClustersListIterator struct {
 	i    int
 	page PaginatedOperationalizationClustersListPage
@@ -607,7 +783,28 @@ type Resource struct {
 	// Type - Specifies the type of the resource.
 	Type *string `json:"type,omitempty"`
 	// Tags - Contains resource tags defined as key/value pairs.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // ResourceOperation resource operation.
@@ -632,8 +829,8 @@ type ResourceOperationDisplay struct {
 	Description *string `json:"description,omitempty"`
 }
 
-// ServiceAuthConfiguration global service auth configuration properties. These are the data-plane authorization keys
-// and are used if a service doesn't define it's own.
+// ServiceAuthConfiguration global service auth configuration properties. These are the data-plane authorization
+// keys and are used if a service doesn't define it's own.
 type ServiceAuthConfiguration struct {
 	// PrimaryAuthKeyHash - The primary auth key hash. This is not returned in response of GET/PUT on the resource.. To see this please call listKeys API.
 	PrimaryAuthKeyHash *string `json:"primaryAuthKeyHash,omitempty"`
@@ -649,7 +846,8 @@ type ServicePrincipalProperties struct {
 	Secret *string `json:"secret,omitempty"`
 }
 
-// SslConfiguration SSL configuration. If configured data-plane calls to user services will be exposed over SSL only.
+// SslConfiguration SSL configuration. If configured data-plane calls to user services will be exposed over SSL
+// only.
 type SslConfiguration struct {
 	// Status - SSL status. Allowed values are Enabled and Disabled. Possible values include: 'Enabled', 'Disabled'
 	Status Status `json:"status,omitempty"`

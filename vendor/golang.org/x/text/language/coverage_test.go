@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+
+	"golang.org/x/text/internal/language"
 )
 
 func TestSupported(t *testing.T) {
@@ -15,9 +17,9 @@ func TestSupported(t *testing.T) {
 	// results is identical to the number of results on record, that all results
 	// are distinct and that all results are valid.
 	tests := map[string]int{
-		"BaseLanguages": numLanguages,
-		"Scripts":       numScripts,
-		"Regions":       numRegions,
+		"BaseLanguages": language.NumLanguages,
+		"Scripts":       language.NumScripts,
+		"Regions":       language.NumRegions,
 		"Tags":          0,
 	}
 	sup := reflect.ValueOf(Supported)

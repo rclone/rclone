@@ -47,9 +47,9 @@ func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 // no warning or confirmation. This is a nonrecoverable operation. If your intent is to create a new web service, call
 // the Get operation first to verify that it does not exist.
 //
-// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name of
-// the web service. createOrUpdatePayload is the payload that is used to create or update the web service.
-func (client Client) CreateOrUpdate(ctx context.Context, resourceGroupName string, webServiceName string, createOrUpdatePayload WebService) (result WebServicesCreateOrUpdateFuture, err error) {
+// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name
+// of the web service. createOrUpdatePayload is the payload that is used to create or update the web service.
+func (client Client) CreateOrUpdate(ctx context.Context, resourceGroupName string, webServiceName string, createOrUpdatePayload WebService) (result CreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: createOrUpdatePayload,
 			Constraints: []validation.Constraint{{Target: "createOrUpdatePayload.Properties", Name: validation.Null, Rule: true,
@@ -72,7 +72,7 @@ func (client Client) CreateOrUpdate(ctx context.Context, resourceGroupName strin
 							{Target: "createOrUpdatePayload.Properties.Output.Properties", Name: validation.Null, Rule: true, Chain: nil},
 						}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "webservices.Client", "CreateOrUpdate")
+		return result, validation.NewError("webservices.Client", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, webServiceName, createOrUpdatePayload)
@@ -115,7 +115,7 @@ func (client Client) CreateOrUpdatePreparer(ctx context.Context, resourceGroupNa
 
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) CreateOrUpdateSender(req *http.Request) (future WebServicesCreateOrUpdateFuture, err error) {
+func (client Client) CreateOrUpdateSender(req *http.Request) (future CreateOrUpdateFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -144,8 +144,8 @@ func (client Client) CreateOrUpdateResponder(resp *http.Response) (result WebSer
 // Get gets the Web Service Definiton as specified by a subscription, resource group, and name. Note that the storage
 // credentials and web service keys are not returned by this call. To get the web service access keys, call List Keys.
 //
-// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name of
-// the web service.
+// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name
+// of the web service.
 func (client Client) Get(ctx context.Context, resourceGroupName string, webServiceName string) (result WebService, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, webServiceName)
 	if err != nil {
@@ -306,8 +306,8 @@ func (client Client) ListComplete(ctx context.Context, skiptoken string) (result
 
 // ListByResourceGroup gets the web services in the specified resource group.
 //
-// resourceGroupName is name of the resource group in which the web service is located. skiptoken is continuation token
-// for pagination.
+// resourceGroupName is name of the resource group in which the web service is located. skiptoken is continuation
+// token for pagination.
 func (client Client) ListByResourceGroup(ctx context.Context, resourceGroupName string, skiptoken string) (result PaginatedWebServicesListPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, skiptoken)
@@ -403,8 +403,8 @@ func (client Client) ListByResourceGroupComplete(ctx context.Context, resourceGr
 
 // ListKeys gets the access keys for the specified web service.
 //
-// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name of
-// the web service.
+// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name
+// of the web service.
 func (client Client) ListKeys(ctx context.Context, resourceGroupName string, webServiceName string) (result Keys, err error) {
 	req, err := client.ListKeysPreparer(ctx, resourceGroupName, webServiceName)
 	if err != nil {
@@ -471,9 +471,9 @@ func (client Client) ListKeysResponder(resp *http.Response) (result Keys, err er
 // Patch modifies an existing web service resource. The PATCH API call is an asynchronous operation. To determine
 // whether it has completed successfully, you must perform a Get operation.
 //
-// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name of
-// the web service. patchPayload is the payload to use to patch the web service.
-func (client Client) Patch(ctx context.Context, resourceGroupName string, webServiceName string, patchPayload WebService) (result WebServicesPatchFuture, err error) {
+// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name
+// of the web service. patchPayload is the payload to use to patch the web service.
+func (client Client) Patch(ctx context.Context, resourceGroupName string, webServiceName string, patchPayload WebService) (result PatchFuture, err error) {
 	req, err := client.PatchPreparer(ctx, resourceGroupName, webServiceName, patchPayload)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "webservices.Client", "Patch", nil, "Failure preparing request")
@@ -514,7 +514,7 @@ func (client Client) PatchPreparer(ctx context.Context, resourceGroupName string
 
 // PatchSender sends the Patch request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) PatchSender(req *http.Request) (future WebServicesPatchFuture, err error) {
+func (client Client) PatchSender(req *http.Request) (future PatchFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -542,9 +542,9 @@ func (client Client) PatchResponder(resp *http.Response) (result WebService, err
 
 // Remove deletes the specified web service.
 //
-// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name of
-// the web service.
-func (client Client) Remove(ctx context.Context, resourceGroupName string, webServiceName string) (result WebServicesRemoveFuture, err error) {
+// resourceGroupName is name of the resource group in which the web service is located. webServiceName is the name
+// of the web service.
+func (client Client) Remove(ctx context.Context, resourceGroupName string, webServiceName string) (result RemoveFuture, err error) {
 	req, err := client.RemovePreparer(ctx, resourceGroupName, webServiceName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "webservices.Client", "Remove", nil, "Failure preparing request")
@@ -583,7 +583,7 @@ func (client Client) RemovePreparer(ctx context.Context, resourceGroupName strin
 
 // RemoveSender sends the Remove request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) RemoveSender(req *http.Request) (future WebServicesRemoveFuture, err error) {
+func (client Client) RemoveSender(req *http.Request) (future RemoveFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req

@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,7 +41,7 @@ func ExampleClient_DeleteLog() {
 	}
 
 	req := &loggingpb.DeleteLogRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	err = c.DeleteLog(ctx, req)
 	if err != nil {
@@ -57,7 +57,7 @@ func ExampleClient_WriteLogEntries() {
 	}
 
 	req := &loggingpb.WriteLogEntriesRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.WriteLogEntries(ctx, req)
 	if err != nil {
@@ -75,7 +75,7 @@ func ExampleClient_ListLogEntries() {
 	}
 
 	req := &loggingpb.ListLogEntriesRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListLogEntries(ctx, req)
 	for {
@@ -99,7 +99,7 @@ func ExampleClient_ListMonitoredResourceDescriptors() {
 	}
 
 	req := &loggingpb.ListMonitoredResourceDescriptorsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListMonitoredResourceDescriptors(ctx, req)
 	for {
@@ -123,7 +123,7 @@ func ExampleClient_ListLogs() {
 	}
 
 	req := &loggingpb.ListLogsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListLogs(ctx, req)
 	for {

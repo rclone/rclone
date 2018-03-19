@@ -42,8 +42,8 @@ func NewCampaignsClientWithBaseURI(baseURI string, subscriptionID string) Campai
 
 // Activate activate a campaign previously created by a call to Create campaign.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. kind is campaign kind. ID is campaign identifier.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. kind is campaign kind. ID is campaign identifier.
 func (client CampaignsClient) Activate(ctx context.Context, resourceGroupName string, appCollection string, appName string, kind CampaignKinds, ID int32) (result CampaignStateResult, err error) {
 	req, err := client.ActivatePreparer(ctx, resourceGroupName, appCollection, appName, kind, ID)
 	if err != nil {
@@ -112,8 +112,9 @@ func (client CampaignsClient) ActivateResponder(resp *http.Response) (result Cam
 
 // Create create a push campaign (announcement, poll, data push or native push).
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. kind is campaign kind. parameters is parameters supplied to the Update Campaign operation.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. kind is campaign kind. parameters is parameters supplied to the Update Campaign
+// operation.
 func (client CampaignsClient) Create(ctx context.Context, resourceGroupName string, appCollection string, appName string, kind CampaignKinds, parameters Campaign) (result CampaignStateResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -121,7 +122,7 @@ func (client CampaignsClient) Create(ctx context.Context, resourceGroupName stri
 				Chain: []validation.Constraint{{Target: "parameters.Name", Name: validation.MaxLength, Rule: 64, Chain: nil}}},
 				{Target: "parameters.Category", Name: validation.Null, Rule: false,
 					Chain: []validation.Constraint{{Target: "parameters.Category", Name: validation.MaxLength, Rule: 64, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.CampaignsClient", "Create")
+		return result, validation.NewError("mobileengagement.CampaignsClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, appCollection, appName, kind, parameters)
@@ -192,8 +193,8 @@ func (client CampaignsClient) CreateResponder(resp *http.Response) (result Campa
 
 // Delete delete a campaign previously created by a call to Create campaign.
 //
-// kind is campaign kind. ID is campaign identifier. resourceGroupName is the name of the resource group. appCollection
-// is application collection. appName is application resource name.
+// kind is campaign kind. ID is campaign identifier. resourceGroupName is the name of the resource group.
+// appCollection is application collection. appName is application resource name.
 func (client CampaignsClient) Delete(ctx context.Context, kind CampaignKinds, ID int32, resourceGroupName string, appCollection string, appName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, kind, ID, resourceGroupName, appCollection, appName)
 	if err != nil {
@@ -261,8 +262,8 @@ func (client CampaignsClient) DeleteResponder(resp *http.Response) (result autor
 
 // Finish finish a push campaign previously activated by a call to Activate campaign.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. kind is campaign kind. ID is campaign identifier.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. kind is campaign kind. ID is campaign identifier.
 func (client CampaignsClient) Finish(ctx context.Context, resourceGroupName string, appCollection string, appName string, kind CampaignKinds, ID int32) (result CampaignStateResult, err error) {
 	req, err := client.FinishPreparer(ctx, resourceGroupName, appCollection, appName, kind, ID)
 	if err != nil {
@@ -331,8 +332,8 @@ func (client CampaignsClient) FinishResponder(resp *http.Response) (result Campa
 
 // Get the Get campaign operation retrieves information about a previously created campaign.
 //
-// kind is campaign kind. ID is campaign identifier. resourceGroupName is the name of the resource group. appCollection
-// is application collection. appName is application resource name.
+// kind is campaign kind. ID is campaign identifier. resourceGroupName is the name of the resource group.
+// appCollection is application collection. appName is application resource name.
 func (client CampaignsClient) Get(ctx context.Context, kind CampaignKinds, ID int32, resourceGroupName string, appCollection string, appName string) (result CampaignResult, err error) {
 	req, err := client.GetPreparer(ctx, kind, ID, resourceGroupName, appCollection, appName)
 	if err != nil {
@@ -401,8 +402,8 @@ func (client CampaignsClient) GetResponder(resp *http.Response) (result Campaign
 
 // GetByName the Get campaign operation retrieves information about a previously created campaign.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. kind is campaign kind. name is campaign name.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. kind is campaign kind. name is campaign name.
 func (client CampaignsClient) GetByName(ctx context.Context, resourceGroupName string, appCollection string, appName string, kind CampaignKinds, name string) (result CampaignResult, err error) {
 	req, err := client.GetByNamePreparer(ctx, resourceGroupName, appCollection, appName, kind, name)
 	if err != nil {
@@ -471,8 +472,8 @@ func (client CampaignsClient) GetByNameResponder(resp *http.Response) (result Ca
 
 // GetStatistics get all the campaign statistics.
 //
-// kind is campaign kind. ID is campaign identifier. resourceGroupName is the name of the resource group. appCollection
-// is application collection. appName is application resource name.
+// kind is campaign kind. ID is campaign identifier. resourceGroupName is the name of the resource group.
+// appCollection is application collection. appName is application resource name.
 func (client CampaignsClient) GetStatistics(ctx context.Context, kind CampaignKinds, ID int32, resourceGroupName string, appCollection string, appName string) (result CampaignStatisticsResult, err error) {
 	req, err := client.GetStatisticsPreparer(ctx, kind, ID, resourceGroupName, appCollection, appName)
 	if err != nil {
@@ -541,20 +542,21 @@ func (client CampaignsClient) GetStatisticsResponder(resp *http.Response) (resul
 
 // List get the list of campaigns.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. kind is campaign kind. skip is control paging of campaigns, start results at the given offset,
-// defaults to 0 (1st page of data). top is control paging of campaigns, number of campaigns to return with each call.
-// It returns all campaigns by default. When specifying $top parameter, the response contains a `nextLink` property
-// describing the path to get the next page if there are more results. filter is filter can be used to restrict the
-// results to campaigns matching a specific state. The syntax is `$filter=state eq 'draft'`. Valid state values are:
-// draft, scheduled, in-progress, and finished. Only the eq operator and the state property are supported. orderby is
-// sort results by an expression which looks like `$orderby=id asc` (this example is actually the default behavior).
-// The syntax is orderby={property} {direction} or just orderby={property}. The available sorting properties are id,
-// name, state, activatedDate, and finishedDate. The available directions are asc (for ascending order) and desc (for
-// descending order). When not specified the asc direction is used. Only one property at a time can be used for
-// sorting. search is restrict results to campaigns matching the optional `search` expression. This currently performs
-// the search based on the name on the campaign only, case insensitive. If the campaign contains the value of the
-// `search` parameter anywhere in the name, it matches.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. kind is campaign kind. skip is control paging of campaigns, start results at the
+// given offset, defaults to 0 (1st page of data). top is control paging of campaigns, number of campaigns to
+// return with each call. It returns all campaigns by default. When specifying $top parameter, the response
+// contains a `nextLink` property describing the path to get the next page if there are more results. filter is
+// filter can be used to restrict the results to campaigns matching a specific state. The syntax is `$filter=state
+// eq 'draft'`. Valid state values are: draft, scheduled, in-progress, and finished. Only the eq operator and the
+// state property are supported. orderby is sort results by an expression which looks like `$orderby=id asc` (this
+// example is actually the default behavior). The syntax is orderby={property} {direction} or just
+// orderby={property}. The available sorting properties are id, name, state, activatedDate, and finishedDate. The
+// available directions are asc (for ascending order) and desc (for descending order). When not specified the asc
+// direction is used. Only one property at a time can be used for sorting. search is restrict results to campaigns
+// matching the optional `search` expression. This currently performs the search based on the name on the campaign
+// only, case insensitive. If the campaign contains the value of the `search` parameter anywhere in the name, it
+// matches.
 func (client CampaignsClient) List(ctx context.Context, resourceGroupName string, appCollection string, appName string, kind CampaignKinds, skip *int32, top *int32, filter string, orderby string, search string) (result CampaignsListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, appCollection, appName, kind, skip, top, filter, orderby, search)
@@ -665,9 +667,9 @@ func (client CampaignsClient) ListComplete(ctx context.Context, resourceGroupNam
 
 // Push push a previously saved campaign (created with Create campaign) to a set of devices.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. kind is campaign kind. ID is campaign identifier. parameters is parameters supplied to the Push
-// Campaign operation.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. kind is campaign kind. ID is campaign identifier. parameters is parameters supplied
+// to the Push Campaign operation.
 func (client CampaignsClient) Push(ctx context.Context, resourceGroupName string, appCollection string, appName string, kind CampaignKinds, ID int32, parameters CampaignPushParameters) (result CampaignPushResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -678,7 +680,7 @@ func (client CampaignsClient) Push(ctx context.Context, resourceGroupName string
 						{Target: "parameters.Data.Category", Name: validation.Null, Rule: false,
 							Chain: []validation.Constraint{{Target: "parameters.Data.Category", Name: validation.MaxLength, Rule: 64, Chain: nil}}},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.CampaignsClient", "Push")
+		return result, validation.NewError("mobileengagement.CampaignsClient", "Push", err.Error())
 	}
 
 	req, err := client.PushPreparer(ctx, resourceGroupName, appCollection, appName, kind, ID, parameters)
@@ -750,8 +752,8 @@ func (client CampaignsClient) PushResponder(resp *http.Response) (result Campaig
 
 // Suspend suspend a push campaign previously activated by a call to Activate campaign.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. kind is campaign kind. ID is campaign identifier.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. kind is campaign kind. ID is campaign identifier.
 func (client CampaignsClient) Suspend(ctx context.Context, resourceGroupName string, appCollection string, appName string, kind CampaignKinds, ID int32) (result CampaignStateResult, err error) {
 	req, err := client.SuspendPreparer(ctx, resourceGroupName, appCollection, appName, kind, ID)
 	if err != nil {
@@ -820,8 +822,9 @@ func (client CampaignsClient) SuspendResponder(resp *http.Response) (result Camp
 
 // TestNew test a new campaign on a set of devices.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. kind is campaign kind. parameters is parameters supplied to the Test Campaign operation.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. kind is campaign kind. parameters is parameters supplied to the Test Campaign
+// operation.
 func (client CampaignsClient) TestNew(ctx context.Context, resourceGroupName string, appCollection string, appName string, kind CampaignKinds, parameters CampaignTestNewParameters) (result CampaignState, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -831,7 +834,7 @@ func (client CampaignsClient) TestNew(ctx context.Context, resourceGroupName str
 					{Target: "parameters.Data.Category", Name: validation.Null, Rule: false,
 						Chain: []validation.Constraint{{Target: "parameters.Data.Category", Name: validation.MaxLength, Rule: 64, Chain: nil}}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.CampaignsClient", "TestNew")
+		return result, validation.NewError("mobileengagement.CampaignsClient", "TestNew", err.Error())
 	}
 
 	req, err := client.TestNewPreparer(ctx, resourceGroupName, appCollection, appName, kind, parameters)
@@ -902,14 +905,14 @@ func (client CampaignsClient) TestNewResponder(resp *http.Response) (result Camp
 
 // TestSaved test an existing campaign (created with Create campaign) on a set of devices.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. kind is campaign kind. ID is campaign identifier. parameters is parameters supplied to the Test
-// Campaign operation.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. kind is campaign kind. ID is campaign identifier. parameters is parameters supplied
+// to the Test Campaign operation.
 func (client CampaignsClient) TestSaved(ctx context.Context, resourceGroupName string, appCollection string, appName string, kind CampaignKinds, ID int32, parameters CampaignTestSavedParameters) (result CampaignStateResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.DeviceID", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.CampaignsClient", "TestSaved")
+		return result, validation.NewError("mobileengagement.CampaignsClient", "TestSaved", err.Error())
 	}
 
 	req, err := client.TestSavedPreparer(ctx, resourceGroupName, appCollection, appName, kind, ID, parameters)
@@ -982,8 +985,8 @@ func (client CampaignsClient) TestSavedResponder(resp *http.Response) (result Ca
 // Update update an existing push campaign (announcement, poll, data push or native push).
 //
 // kind is campaign kind. ID is campaign identifier. parameters is parameters supplied to the Update Campaign
-// operation. resourceGroupName is the name of the resource group. appCollection is application collection. appName is
-// application resource name.
+// operation. resourceGroupName is the name of the resource group. appCollection is application collection. appName
+// is application resource name.
 func (client CampaignsClient) Update(ctx context.Context, kind CampaignKinds, ID int32, parameters Campaign, resourceGroupName string, appCollection string, appName string) (result CampaignStateResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -991,7 +994,7 @@ func (client CampaignsClient) Update(ctx context.Context, kind CampaignKinds, ID
 				Chain: []validation.Constraint{{Target: "parameters.Name", Name: validation.MaxLength, Rule: 64, Chain: nil}}},
 				{Target: "parameters.Category", Name: validation.Null, Rule: false,
 					Chain: []validation.Constraint{{Target: "parameters.Category", Name: validation.MaxLength, Rule: 64, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.CampaignsClient", "Update")
+		return result, validation.NewError("mobileengagement.CampaignsClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, kind, ID, parameters, resourceGroupName, appCollection, appName)

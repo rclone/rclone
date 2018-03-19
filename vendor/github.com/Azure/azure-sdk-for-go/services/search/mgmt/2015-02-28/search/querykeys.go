@@ -41,8 +41,8 @@ func NewQueryKeysClientWithBaseURI(baseURI string, subscriptionID string) QueryK
 
 // List returns the list of query API keys for the given Azure Search service.
 //
-// resourceGroupName is the name of the resource group within the current subscription. serviceName is the name of the
-// Search service for which to list query keys.
+// resourceGroupName is the name of the resource group within the current subscription. serviceName is the name of
+// the Search service for which to list query keys.
 func (client QueryKeysClient) List(ctx context.Context, resourceGroupName string, serviceName string) (result ListQueryKeysResult, err error) {
 	req, err := client.ListPreparer(ctx, resourceGroupName, serviceName)
 	if err != nil {

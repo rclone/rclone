@@ -44,10 +44,10 @@ func NewProductPolicyClientWithBaseURI(baseURI string, subscriptionID string) Pr
 // CreateOrUpdate creates or updates policy configuration for the Product.
 //
 // resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// productID is product identifier. Must be unique in the current API Management service instance. parameters is the
-// policy contents to apply. parameters will be closed upon successful return. Callers should ensure closure when
-// receiving an error.ifMatch is the entity state (Etag) version of the product policy to update. A value of "*" can be
-// used for If-Match to unconditionally apply the operation.
+// productID is product identifier. Must be unique in the current API Management service instance. parameters is
+// the policy contents to apply. parameters will be closed upon successful return. Callers should ensure closure
+// when receiving an error.ifMatch is the entity state (Etag) version of the product policy to update. A value of
+// "*" can be used for If-Match to unconditionally apply the operation.
 func (client ProductPolicyClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, productID string, parameters io.ReadCloser, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -58,7 +58,7 @@ func (client ProductPolicyClient) CreateOrUpdate(ctx context.Context, resourceGr
 			Constraints: []validation.Constraint{{Target: "productID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "productID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "productID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ProductPolicyClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.ProductPolicyClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, productID, parameters, ifMatch)
@@ -97,6 +97,7 @@ func (client ProductPolicyClient) CreateOrUpdatePreparer(ctx context.Context, re
 	}
 
 	preparer := autorest.CreatePreparer(
+		autorest.AsOctetStream(),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/products/{productId}/policy", pathParameters),
@@ -141,7 +142,7 @@ func (client ProductPolicyClient) Delete(ctx context.Context, resourceGroupName 
 			Constraints: []validation.Constraint{{Target: "productID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "productID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "productID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ProductPolicyClient", "Delete")
+		return result, validation.NewError("apimanagement.ProductPolicyClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, productID, ifMatch)
@@ -221,7 +222,7 @@ func (client ProductPolicyClient) Get(ctx context.Context, resourceGroupName str
 			Constraints: []validation.Constraint{{Target: "productID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "productID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "productID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ProductPolicyClient", "Get")
+		return result, validation.NewError("apimanagement.ProductPolicyClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, productID)

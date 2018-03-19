@@ -215,6 +215,7 @@ const (
 
 // Acceptor a process accepting on a port.
 type Acceptor struct {
+	*AcceptorProperties `json:"properties,omitempty"`
 	// ID - Resource identifier.
 	ID *string `json:"id,omitempty"`
 	// Type - Resource type.
@@ -222,19 +223,26 @@ type Acceptor struct {
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Kind - Possible values include: 'KindRelationship', 'KindRelconnection', 'KindRelacceptor'
-	Kind                KindBasicRelationship `json:"kind,omitempty"`
-	*AcceptorProperties `json:"properties,omitempty"`
+	Kind KindBasicRelationship `json:"kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Acceptor.
 func (a Acceptor) MarshalJSON() ([]byte, error) {
 	a.Kind = KindRelacceptor
-	type Alias Acceptor
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(a),
-	})
+	objectMap := make(map[string]interface{})
+	if a.AcceptorProperties != nil {
+		objectMap["properties"] = a.AcceptorProperties
+	}
+	if a.ID != nil {
+		objectMap["id"] = a.ID
+	}
+	if a.Type != nil {
+		objectMap["type"] = a.Type
+	}
+	if a.Name != nil {
+		objectMap["name"] = a.Name
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsCoreResource is the BasicResource implementation for Acceptor.
@@ -314,56 +322,45 @@ func (a *Acceptor) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties AcceptorProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var acceptorProperties AcceptorProperties
+				err = json.Unmarshal(*v, &acceptorProperties)
+				if err != nil {
+					return err
+				}
+				a.AcceptorProperties = &acceptorProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				a.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				a.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				a.Name = &name
+			}
 		}
-		a.AcceptorProperties = &properties
-	}
-
-	v = m["kind"]
-	if v != nil {
-		var kind KindBasicRelationship
-		err = json.Unmarshal(*m["kind"], &kind)
-		if err != nil {
-			return err
-		}
-		a.Kind = kind
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		a.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		a.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		a.Name = &name
 	}
 
 	return nil
@@ -397,33 +394,44 @@ type AgentConfiguration struct {
 	ClockGranularity *int32 `json:"clockGranularity,omitempty"`
 }
 
-// ClientGroup represents a collection of clients of a resource. A client group can represent the clients of a port,
-// process, or a machine.
+// ClientGroup represents a collection of clients of a resource. A client group can represent the clients of a
+// port, process, or a machine.
 type ClientGroup struct {
 	autorest.Response `json:"-"`
+	// ClientGroupProperties - Resource properties.
+	*ClientGroupProperties `json:"properties,omitempty"`
+	// Etag - Resource ETAG.
+	Etag *string `json:"etag,omitempty"`
 	// ID - Resource identifier.
 	ID *string `json:"id,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
-	// Etag - Resource ETAG.
-	Etag *string `json:"etag,omitempty"`
 	// Kind - Possible values include: 'KindCoreResource', 'KindMachine', 'KindProcess', 'KindPort', 'KindClientGroup', 'KindMachineGroup'
 	Kind KindBasicCoreResource `json:"kind,omitempty"`
-	// ClientGroupProperties - Resource properties.
-	*ClientGroupProperties `json:"properties,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ClientGroup.
 func (cg ClientGroup) MarshalJSON() ([]byte, error) {
 	cg.Kind = KindClientGroup
-	type Alias ClientGroup
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(cg),
-	})
+	objectMap := make(map[string]interface{})
+	if cg.ClientGroupProperties != nil {
+		objectMap["properties"] = cg.ClientGroupProperties
+	}
+	if cg.Etag != nil {
+		objectMap["etag"] = cg.Etag
+	}
+	if cg.ID != nil {
+		objectMap["id"] = cg.ID
+	}
+	if cg.Type != nil {
+		objectMap["type"] = cg.Type
+	}
+	if cg.Name != nil {
+		objectMap["name"] = cg.Name
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsCoreResource is the BasicResource implementation for ClientGroup.
@@ -503,66 +511,54 @@ func (cg *ClientGroup) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ClientGroupProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var clientGroupProperties ClientGroupProperties
+				err = json.Unmarshal(*v, &clientGroupProperties)
+				if err != nil {
+					return err
+				}
+				cg.ClientGroupProperties = &clientGroupProperties
+			}
+		case "etag":
+			if v != nil {
+				var etag string
+				err = json.Unmarshal(*v, &etag)
+				if err != nil {
+					return err
+				}
+				cg.Etag = &etag
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				cg.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				cg.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				cg.Name = &name
+			}
 		}
-		cg.ClientGroupProperties = &properties
-	}
-
-	v = m["etag"]
-	if v != nil {
-		var etag string
-		err = json.Unmarshal(*m["etag"], &etag)
-		if err != nil {
-			return err
-		}
-		cg.Etag = &etag
-	}
-
-	v = m["kind"]
-	if v != nil {
-		var kind KindBasicCoreResource
-		err = json.Unmarshal(*m["kind"], &kind)
-		if err != nil {
-			return err
-		}
-		cg.Kind = kind
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		cg.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		cg.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		cg.Name = &name
 	}
 
 	return nil
@@ -570,14 +566,14 @@ func (cg *ClientGroup) UnmarshalJSON(body []byte) error {
 
 // ClientGroupMember represents a member of a client group
 type ClientGroupMember struct {
+	// ClientGroupMemberProperties - Resource properties.
+	*ClientGroupMemberProperties `json:"properties,omitempty"`
 	// ID - Resource identifier.
 	ID *string `json:"id,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
-	// ClientGroupMemberProperties - Resource properties.
-	*ClientGroupMemberProperties `json:"properties,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for ClientGroupMember struct.
@@ -587,46 +583,45 @@ func (cgm *ClientGroupMember) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ClientGroupMemberProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var clientGroupMemberProperties ClientGroupMemberProperties
+				err = json.Unmarshal(*v, &clientGroupMemberProperties)
+				if err != nil {
+					return err
+				}
+				cgm.ClientGroupMemberProperties = &clientGroupMemberProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				cgm.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				cgm.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				cgm.Name = &name
+			}
 		}
-		cgm.ClientGroupMemberProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		cgm.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		cgm.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		cgm.Name = &name
 	}
 
 	return nil
@@ -772,15 +767,17 @@ func (cg *ClientGroupProperties) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["clientsOf"]
-	if v != nil {
-		clientsOf, err := unmarshalBasicResourceReference(*m["clientsOf"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "clientsOf":
+			if v != nil {
+				clientsOf, err := unmarshalBasicResourceReference(*v)
+				if err != nil {
+					return err
+				}
+				cg.ClientsOf = clientsOf
+			}
 		}
-		cg.ClientsOf = clientsOf
 	}
 
 	return nil
@@ -788,6 +785,7 @@ func (cg *ClientGroupProperties) UnmarshalJSON(body []byte) error {
 
 // Connection a network connection.
 type Connection struct {
+	*ConnectionProperties `json:"properties,omitempty"`
 	// ID - Resource identifier.
 	ID *string `json:"id,omitempty"`
 	// Type - Resource type.
@@ -795,19 +793,26 @@ type Connection struct {
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Kind - Possible values include: 'KindRelationship', 'KindRelconnection', 'KindRelacceptor'
-	Kind                  KindBasicRelationship `json:"kind,omitempty"`
-	*ConnectionProperties `json:"properties,omitempty"`
+	Kind KindBasicRelationship `json:"kind,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Connection.
 func (c Connection) MarshalJSON() ([]byte, error) {
 	c.Kind = KindRelconnection
-	type Alias Connection
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(c),
-	})
+	objectMap := make(map[string]interface{})
+	if c.ConnectionProperties != nil {
+		objectMap["properties"] = c.ConnectionProperties
+	}
+	if c.ID != nil {
+		objectMap["id"] = c.ID
+	}
+	if c.Type != nil {
+		objectMap["type"] = c.Type
+	}
+	if c.Name != nil {
+		objectMap["name"] = c.Name
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsCoreResource is the BasicResource implementation for Connection.
@@ -887,56 +892,45 @@ func (c *Connection) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ConnectionProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var connectionProperties ConnectionProperties
+				err = json.Unmarshal(*v, &connectionProperties)
+				if err != nil {
+					return err
+				}
+				c.ConnectionProperties = &connectionProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				c.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				c.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				c.Name = &name
+			}
 		}
-		c.ConnectionProperties = &properties
-	}
-
-	v = m["kind"]
-	if v != nil {
-		var kind KindBasicRelationship
-		err = json.Unmarshal(*m["kind"], &kind)
-		if err != nil {
-			return err
-		}
-		c.Kind = kind
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		c.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		c.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		c.Name = &name
 	}
 
 	return nil
@@ -1046,6 +1040,10 @@ func (page ConnectionCollectionPage) Values() []Connection {
 
 // ConnectionProperties properties for a connection resource.
 type ConnectionProperties struct {
+	// ServerPort - Reference to the server port via which this connection has been established.
+	ServerPort *PortReference `json:"serverPort,omitempty"`
+	// FailureState - Specifies whether there are only successful, failed or a mixture of both connections represented by this resource. Possible values include: 'Ok', 'Failed', 'Mixed'
+	FailureState ConnectionFailureState `json:"failureState,omitempty"`
 	// Source - Source resource of the relationship.
 	Source BasicResourceReference `json:"source,omitempty"`
 	// Destination - Destination resource of the relationship.
@@ -1054,10 +1052,6 @@ type ConnectionProperties struct {
 	StartTime *date.Time `json:"startTime,omitempty"`
 	// EndTime - Relationship end time.
 	EndTime *date.Time `json:"endTime,omitempty"`
-	// ServerPort - Reference to the server port via which this connection has been established.
-	ServerPort *PortReference `json:"serverPort,omitempty"`
-	// FailureState - Specifies whether there are only successful, failed or a mixture of both connections represented by this resource. Possible values include: 'Ok', 'Failed', 'Mixed'
-	FailureState ConnectionFailureState `json:"failureState,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for ConnectionProperties struct.
@@ -1067,64 +1061,61 @@ func (cp *ConnectionProperties) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["serverPort"]
-	if v != nil {
-		var serverPort PortReference
-		err = json.Unmarshal(*m["serverPort"], &serverPort)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "serverPort":
+			if v != nil {
+				var serverPort PortReference
+				err = json.Unmarshal(*v, &serverPort)
+				if err != nil {
+					return err
+				}
+				cp.ServerPort = &serverPort
+			}
+		case "failureState":
+			if v != nil {
+				var failureState ConnectionFailureState
+				err = json.Unmarshal(*v, &failureState)
+				if err != nil {
+					return err
+				}
+				cp.FailureState = failureState
+			}
+		case "source":
+			if v != nil {
+				source, err := unmarshalBasicResourceReference(*v)
+				if err != nil {
+					return err
+				}
+				cp.Source = source
+			}
+		case "destination":
+			if v != nil {
+				destination, err := unmarshalBasicResourceReference(*v)
+				if err != nil {
+					return err
+				}
+				cp.Destination = destination
+			}
+		case "startTime":
+			if v != nil {
+				var startTime date.Time
+				err = json.Unmarshal(*v, &startTime)
+				if err != nil {
+					return err
+				}
+				cp.StartTime = &startTime
+			}
+		case "endTime":
+			if v != nil {
+				var endTime date.Time
+				err = json.Unmarshal(*v, &endTime)
+				if err != nil {
+					return err
+				}
+				cp.EndTime = &endTime
+			}
 		}
-		cp.ServerPort = &serverPort
-	}
-
-	v = m["failureState"]
-	if v != nil {
-		var failureState ConnectionFailureState
-		err = json.Unmarshal(*m["failureState"], &failureState)
-		if err != nil {
-			return err
-		}
-		cp.FailureState = failureState
-	}
-
-	v = m["source"]
-	if v != nil {
-		source, err := unmarshalBasicResourceReference(*m["source"])
-		if err != nil {
-			return err
-		}
-		cp.Source = source
-	}
-
-	v = m["destination"]
-	if v != nil {
-		destination, err := unmarshalBasicResourceReference(*m["destination"])
-		if err != nil {
-			return err
-		}
-		cp.Destination = destination
-	}
-
-	v = m["startTime"]
-	if v != nil {
-		var startTime date.Time
-		err = json.Unmarshal(*m["startTime"], &startTime)
-		if err != nil {
-			return err
-		}
-		cp.StartTime = &startTime
-	}
-
-	v = m["endTime"]
-	if v != nil {
-		var endTime date.Time
-		err = json.Unmarshal(*m["endTime"], &endTime)
-		if err != nil {
-			return err
-		}
-		cp.EndTime = &endTime
 	}
 
 	return nil
@@ -1142,16 +1133,16 @@ type BasicCoreResource interface {
 
 // CoreResource marker resource for the core Service Map resources
 type CoreResource struct {
+	// Etag - Resource ETAG.
+	Etag *string `json:"etag,omitempty"`
+	// Kind - Possible values include: 'KindCoreResource', 'KindMachine', 'KindProcess', 'KindPort', 'KindClientGroup', 'KindMachineGroup'
+	Kind KindBasicCoreResource `json:"kind,omitempty"`
 	// ID - Resource identifier.
 	ID *string `json:"id,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
-	// Etag - Resource ETAG.
-	Etag *string `json:"etag,omitempty"`
-	// Kind - Possible values include: 'KindCoreResource', 'KindMachine', 'KindProcess', 'KindPort', 'KindClientGroup', 'KindMachineGroup'
-	Kind KindBasicCoreResource `json:"kind,omitempty"`
 }
 
 func unmarshalBasicCoreResource(body []byte) (BasicCoreResource, error) {
@@ -1210,12 +1201,21 @@ func unmarshalBasicCoreResourceArray(body []byte) ([]BasicCoreResource, error) {
 // MarshalJSON is the custom marshaler for CoreResource.
 func (cr CoreResource) MarshalJSON() ([]byte, error) {
 	cr.Kind = KindCoreResource
-	type Alias CoreResource
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(cr),
-	})
+	objectMap := make(map[string]interface{})
+	if cr.Etag != nil {
+		objectMap["etag"] = cr.Etag
+	}
+	objectMap["kind"] = cr.Kind
+	if cr.ID != nil {
+		objectMap["id"] = cr.ID
+	}
+	if cr.Type != nil {
+		objectMap["type"] = cr.Type
+	}
+	if cr.Name != nil {
+		objectMap["name"] = cr.Name
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsCoreResource is the BasicResource implementation for CoreResource.
@@ -1335,36 +1335,49 @@ type Liveness struct {
 	Live *bool `json:"live,omitempty"`
 }
 
-// Machine a machine resource represents a discovered computer system. It can be *monitored*, i.e., a Dependency Agent
-// is running on it, or *discovered*, i.e., its existence was inferred by observing the data stream from monitored
-// machines. As machines change, prior versions of the machine resource are preserved and available for access. A
-// machine is live during an interval of time, if either its Dependency Agent has reported data during (parts) of that
-// interval, or a Dependency agent running on other machines has reported activity associated with the machine.
+// Machine a machine resource represents a discovered computer system. It can be *monitored*, i.e., a Dependency
+// Agent is running on it, or *discovered*, i.e., its existence was inferred by observing the data stream from
+// monitored machines. As machines change, prior versions of the machine resource are preserved and available for
+// access. A machine is live during an interval of time, if either its Dependency Agent has reported data during
+// (parts) of that interval, or a Dependency agent running on other machines has reported activity associated with
+// the machine.
 type Machine struct {
 	autorest.Response `json:"-"`
+	// MachineProperties - Resource properties.
+	*MachineProperties `json:"properties,omitempty"`
+	// Etag - Resource ETAG.
+	Etag *string `json:"etag,omitempty"`
+	// Kind - Possible values include: 'KindCoreResource', 'KindMachine', 'KindProcess', 'KindPort', 'KindClientGroup', 'KindMachineGroup'
+	Kind KindBasicCoreResource `json:"kind,omitempty"`
 	// ID - Resource identifier.
 	ID *string `json:"id,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
-	// Etag - Resource ETAG.
-	Etag *string `json:"etag,omitempty"`
-	// Kind - Possible values include: 'KindCoreResource', 'KindMachine', 'KindProcess', 'KindPort', 'KindClientGroup', 'KindMachineGroup'
-	Kind KindBasicCoreResource `json:"kind,omitempty"`
-	// MachineProperties - Resource properties.
-	*MachineProperties `json:"properties,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Machine.
 func (mVar Machine) MarshalJSON() ([]byte, error) {
 	mVar.Kind = KindMachine
-	type Alias Machine
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(mVar),
-	})
+	objectMap := make(map[string]interface{})
+	if mVar.MachineProperties != nil {
+		objectMap["properties"] = mVar.MachineProperties
+	}
+	if mVar.Etag != nil {
+		objectMap["etag"] = mVar.Etag
+	}
+	objectMap["kind"] = mVar.Kind
+	if mVar.ID != nil {
+		objectMap["id"] = mVar.ID
+	}
+	if mVar.Type != nil {
+		objectMap["type"] = mVar.Type
+	}
+	if mVar.Name != nil {
+		objectMap["name"] = mVar.Name
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsCoreResource is the BasicResource implementation for Machine.
@@ -1444,66 +1457,63 @@ func (mVar *Machine) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties MachineProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var machineProperties MachineProperties
+				err = json.Unmarshal(*v, &machineProperties)
+				if err != nil {
+					return err
+				}
+				mVar.MachineProperties = &machineProperties
+			}
+		case "etag":
+			if v != nil {
+				var etag string
+				err = json.Unmarshal(*v, &etag)
+				if err != nil {
+					return err
+				}
+				mVar.Etag = &etag
+			}
+		case "kind":
+			if v != nil {
+				var kind KindBasicCoreResource
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				mVar.Kind = kind
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				mVar.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				mVar.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				mVar.Name = &name
+			}
 		}
-		mVar.MachineProperties = &properties
-	}
-
-	v = m["etag"]
-	if v != nil {
-		var etag string
-		err = json.Unmarshal(*m["etag"], &etag)
-		if err != nil {
-			return err
-		}
-		mVar.Etag = &etag
-	}
-
-	v = m["kind"]
-	if v != nil {
-		var kind KindBasicCoreResource
-		err = json.Unmarshal(*m["kind"], &kind)
-		if err != nil {
-			return err
-		}
-		mVar.Kind = kind
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		mVar.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		mVar.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		mVar.Name = &name
 	}
 
 	return nil
@@ -1622,29 +1632,41 @@ type MachineCountsByOperatingSystem struct {
 // MachineGroup a user-defined logical grouping of machines.
 type MachineGroup struct {
 	autorest.Response `json:"-"`
+	// MachineGroupProperties - Resource properties.
+	*MachineGroupProperties `json:"properties,omitempty"`
+	// Etag - Resource ETAG.
+	Etag *string `json:"etag,omitempty"`
+	// Kind - Possible values include: 'KindCoreResource', 'KindMachine', 'KindProcess', 'KindPort', 'KindClientGroup', 'KindMachineGroup'
+	Kind KindBasicCoreResource `json:"kind,omitempty"`
 	// ID - Resource identifier.
 	ID *string `json:"id,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
-	// Etag - Resource ETAG.
-	Etag *string `json:"etag,omitempty"`
-	// Kind - Possible values include: 'KindCoreResource', 'KindMachine', 'KindProcess', 'KindPort', 'KindClientGroup', 'KindMachineGroup'
-	Kind KindBasicCoreResource `json:"kind,omitempty"`
-	// MachineGroupProperties - Resource properties.
-	*MachineGroupProperties `json:"properties,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for MachineGroup.
 func (mg MachineGroup) MarshalJSON() ([]byte, error) {
 	mg.Kind = KindMachineGroup
-	type Alias MachineGroup
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(mg),
-	})
+	objectMap := make(map[string]interface{})
+	if mg.MachineGroupProperties != nil {
+		objectMap["properties"] = mg.MachineGroupProperties
+	}
+	if mg.Etag != nil {
+		objectMap["etag"] = mg.Etag
+	}
+	objectMap["kind"] = mg.Kind
+	if mg.ID != nil {
+		objectMap["id"] = mg.ID
+	}
+	if mg.Type != nil {
+		objectMap["type"] = mg.Type
+	}
+	if mg.Name != nil {
+		objectMap["name"] = mg.Name
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsCoreResource is the BasicResource implementation for MachineGroup.
@@ -1724,66 +1746,63 @@ func (mg *MachineGroup) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties MachineGroupProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var machineGroupProperties MachineGroupProperties
+				err = json.Unmarshal(*v, &machineGroupProperties)
+				if err != nil {
+					return err
+				}
+				mg.MachineGroupProperties = &machineGroupProperties
+			}
+		case "etag":
+			if v != nil {
+				var etag string
+				err = json.Unmarshal(*v, &etag)
+				if err != nil {
+					return err
+				}
+				mg.Etag = &etag
+			}
+		case "kind":
+			if v != nil {
+				var kind KindBasicCoreResource
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				mg.Kind = kind
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				mg.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				mg.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				mg.Name = &name
+			}
 		}
-		mg.MachineGroupProperties = &properties
-	}
-
-	v = m["etag"]
-	if v != nil {
-		var etag string
-		err = json.Unmarshal(*m["etag"], &etag)
-		if err != nil {
-			return err
-		}
-		mg.Etag = &etag
-	}
-
-	v = m["kind"]
-	if v != nil {
-		var kind KindBasicCoreResource
-		err = json.Unmarshal(*m["kind"], &kind)
-		if err != nil {
-			return err
-		}
-		mg.Kind = kind
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		mg.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		mg.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		mg.Name = &name
 	}
 
 	return nil
@@ -1891,30 +1910,39 @@ func (page MachineGroupCollectionPage) Values() []MachineGroup {
 	return *page.mgc.Value
 }
 
-// MachineGroupMapRequest specifies the computation of a machine group dependency map. A machine group dependency map
-// includes all direct dependencies of a group of machines.
+// MachineGroupMapRequest specifies the computation of a machine group dependency map. A machine group dependency
+// map includes all direct dependencies of a group of machines.
 type MachineGroupMapRequest struct {
+	// MachineGroupID - URI of machine group resource for which to generate the map.
+	MachineGroupID *string `json:"machineGroupId,omitempty"`
+	// FilterProcesses - If true, only processes between grouped machines will be included. Any connections in or out of those processes will be included.
+	FilterProcesses *bool `json:"filterProcesses,omitempty"`
 	// StartTime - Map interval start time.
 	StartTime *date.Time `json:"startTime,omitempty"`
 	// EndTime - Map interval end time.
 	EndTime *date.Time `json:"endTime,omitempty"`
 	// Kind - Possible values include: 'KindMapRequest', 'KindMapsingleMachineDependency', 'KindMapmachineGroupDependency'
 	Kind KindBasicMapRequest `json:"kind,omitempty"`
-	// MachineGroupID - URI of machine group resource for which to generate the map.
-	MachineGroupID *string `json:"machineGroupId,omitempty"`
-	// FilterProcesses - If true, only processes between grouped machines will be included. Any connections in or out of those processes will be included.
-	FilterProcesses *bool `json:"filterProcesses,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for MachineGroupMapRequest.
 func (mgmr MachineGroupMapRequest) MarshalJSON() ([]byte, error) {
 	mgmr.Kind = KindMapmachineGroupDependency
-	type Alias MachineGroupMapRequest
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(mgmr),
-	})
+	objectMap := make(map[string]interface{})
+	if mgmr.MachineGroupID != nil {
+		objectMap["machineGroupId"] = mgmr.MachineGroupID
+	}
+	if mgmr.FilterProcesses != nil {
+		objectMap["filterProcesses"] = mgmr.FilterProcesses
+	}
+	if mgmr.StartTime != nil {
+		objectMap["startTime"] = mgmr.StartTime
+	}
+	if mgmr.EndTime != nil {
+		objectMap["endTime"] = mgmr.EndTime
+	}
+	objectMap["kind"] = mgmr.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsSingleMachineDependencyMapRequest is the BasicMapRequest implementation for MachineGroupMapRequest.
@@ -1992,12 +2020,18 @@ type MachineReference struct {
 // MarshalJSON is the custom marshaler for MachineReference.
 func (mr MachineReference) MarshalJSON() ([]byte, error) {
 	mr.Kind = KindRefmachine
-	type Alias MachineReference
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(mr),
-	})
+	objectMap := make(map[string]interface{})
+	if mr.ID != nil {
+		objectMap["id"] = mr.ID
+	}
+	if mr.Type != nil {
+		objectMap["type"] = mr.Type
+	}
+	if mr.Name != nil {
+		objectMap["name"] = mr.Name
+	}
+	objectMap["kind"] = mr.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsMachineReference is the BasicResourceReference implementation for MachineReference.
@@ -2032,6 +2066,8 @@ func (mr MachineReference) AsBasicResourceReference() (BasicResourceReference, b
 
 // MachineReferenceWithHints a machine reference with a hint of the machine's name and operating system.
 type MachineReferenceWithHints struct {
+	// MachineReferenceWithHintsProperties - Machine reference with name and os hints.
+	*MachineReferenceWithHintsProperties `json:"properties,omitempty"`
 	// ID - Resource URI.
 	ID *string `json:"id,omitempty"`
 	// Type - Resource type qualifier.
@@ -2040,19 +2076,26 @@ type MachineReferenceWithHints struct {
 	Name *string `json:"name,omitempty"`
 	// Kind - Possible values include: 'KindResourceReference', 'KindRefmachine', 'KindRefprocess', 'KindRefport', 'KindRefmachinewithhints'
 	Kind Kind `json:"kind,omitempty"`
-	// MachineReferenceWithHintsProperties - Machine reference with name and os hints.
-	*MachineReferenceWithHintsProperties `json:"properties,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for MachineReferenceWithHints.
 func (mrwh MachineReferenceWithHints) MarshalJSON() ([]byte, error) {
 	mrwh.Kind = KindRefmachinewithhints
-	type Alias MachineReferenceWithHints
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(mrwh),
-	})
+	objectMap := make(map[string]interface{})
+	if mrwh.MachineReferenceWithHintsProperties != nil {
+		objectMap["properties"] = mrwh.MachineReferenceWithHintsProperties
+	}
+	if mrwh.ID != nil {
+		objectMap["id"] = mrwh.ID
+	}
+	if mrwh.Type != nil {
+		objectMap["type"] = mrwh.Type
+	}
+	if mrwh.Name != nil {
+		objectMap["name"] = mrwh.Name
+	}
+	objectMap["kind"] = mrwh.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsMachineReference is the BasicResourceReference implementation for MachineReferenceWithHints.
@@ -2092,56 +2135,54 @@ func (mrwh *MachineReferenceWithHints) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties MachineReferenceWithHintsProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var machineReferenceWithHintsProperties MachineReferenceWithHintsProperties
+				err = json.Unmarshal(*v, &machineReferenceWithHintsProperties)
+				if err != nil {
+					return err
+				}
+				mrwh.MachineReferenceWithHintsProperties = &machineReferenceWithHintsProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				mrwh.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				mrwh.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				mrwh.Name = &name
+			}
+		case "kind":
+			if v != nil {
+				var kind Kind
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				mrwh.Kind = kind
+			}
 		}
-		mrwh.MachineReferenceWithHintsProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		mrwh.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		mrwh.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		mrwh.Name = &name
-	}
-
-	v = m["kind"]
-	if v != nil {
-		var kind Kind
-		err = json.Unmarshal(*m["kind"], &kind)
-		if err != nil {
-			return err
-		}
-		mrwh.Kind = kind
 	}
 
 	return nil
@@ -2169,14 +2210,14 @@ type MachineResourcesConfiguration struct {
 
 // MachinesSummary a summary of the machines in the workspace.
 type MachinesSummary struct {
-	autorest.Response `json:"-"`
+	autorest.Response          `json:"-"`
+	*MachinesSummaryProperties `json:"properties,omitempty"`
 	// ID - Resource identifier.
 	ID *string `json:"id,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
 	// Name - Resource name.
-	Name                       *string `json:"name,omitempty"`
-	*MachinesSummaryProperties `json:"properties,omitempty"`
+	Name *string `json:"name,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for MachinesSummary struct.
@@ -2186,46 +2227,45 @@ func (ms *MachinesSummary) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties MachinesSummaryProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var machinesSummaryProperties MachinesSummaryProperties
+				err = json.Unmarshal(*v, &machinesSummaryProperties)
+				if err != nil {
+					return err
+				}
+				ms.MachinesSummaryProperties = &machinesSummaryProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ms.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ms.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ms.Name = &name
+			}
 		}
-		ms.MachinesSummaryProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		ms.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		ms.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ms.Name = &name
 	}
 
 	return nil
@@ -2233,16 +2273,16 @@ func (ms *MachinesSummary) UnmarshalJSON(body []byte) error {
 
 // MachinesSummaryProperties summarizes machines in the workspace.
 type MachinesSummaryProperties struct {
-	// StartTime - Summary interval start time.
-	StartTime *date.Time `json:"startTime,omitempty"`
-	// EndTime - Summary interval end time.
-	EndTime *date.Time `json:"endTime,omitempty"`
 	// Total - Total number of machines.
 	Total *int32 `json:"total,omitempty"`
 	// Live - Number of live machines.
 	Live *int32 `json:"live,omitempty"`
 	// Os - Machine counts by operating system.
 	Os *MachineCountsByOperatingSystem `json:"os,omitempty"`
+	// StartTime - Summary interval start time.
+	StartTime *date.Time `json:"startTime,omitempty"`
+	// EndTime - Summary interval end time.
+	EndTime *date.Time `json:"endTime,omitempty"`
 }
 
 // Map a map of resources and relationships between them.
@@ -2332,12 +2372,15 @@ func unmarshalBasicMapRequestArray(body []byte) ([]BasicMapRequest, error) {
 // MarshalJSON is the custom marshaler for MapRequest.
 func (mr MapRequest) MarshalJSON() ([]byte, error) {
 	mr.Kind = KindMapRequest
-	type Alias MapRequest
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(mr),
-	})
+	objectMap := make(map[string]interface{})
+	if mr.StartTime != nil {
+		objectMap["startTime"] = mr.StartTime
+	}
+	if mr.EndTime != nil {
+		objectMap["endTime"] = mr.EndTime
+	}
+	objectMap["kind"] = mr.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsSingleMachineDependencyMapRequest is the BasicMapRequest implementation for MapRequest.
@@ -2395,35 +2438,47 @@ type OperatingSystemConfiguration struct {
 	Bitness Bitness `json:"bitness,omitempty"`
 }
 
-// Port a port resource represents a server port on a machine. The port may be actively *monitored*, i.e., a Dependency
-// Agent is running on its machine, or *discovered*, i.e., its existence was inferred by observing the data stream from
-// monitored machines. A port is live during an interval of time, if that port had associated activity during (parts)
-// of that interval.
+// Port a port resource represents a server port on a machine. The port may be actively *monitored*, i.e., a
+// Dependency Agent is running on its machine, or *discovered*, i.e., its existence was inferred by observing the
+// data stream from monitored machines. A port is live during an interval of time, if that port had associated
+// activity during (parts) of that interval.
 type Port struct {
 	autorest.Response `json:"-"`
+	// PortProperties - Resource properties.
+	*PortProperties `json:"properties,omitempty"`
+	// Etag - Resource ETAG.
+	Etag *string `json:"etag,omitempty"`
+	// Kind - Possible values include: 'KindCoreResource', 'KindMachine', 'KindProcess', 'KindPort', 'KindClientGroup', 'KindMachineGroup'
+	Kind KindBasicCoreResource `json:"kind,omitempty"`
 	// ID - Resource identifier.
 	ID *string `json:"id,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
-	// Etag - Resource ETAG.
-	Etag *string `json:"etag,omitempty"`
-	// Kind - Possible values include: 'KindCoreResource', 'KindMachine', 'KindProcess', 'KindPort', 'KindClientGroup', 'KindMachineGroup'
-	Kind KindBasicCoreResource `json:"kind,omitempty"`
-	// PortProperties - Resource properties.
-	*PortProperties `json:"properties,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Port.
 func (p Port) MarshalJSON() ([]byte, error) {
 	p.Kind = KindPort
-	type Alias Port
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(p),
-	})
+	objectMap := make(map[string]interface{})
+	if p.PortProperties != nil {
+		objectMap["properties"] = p.PortProperties
+	}
+	if p.Etag != nil {
+		objectMap["etag"] = p.Etag
+	}
+	objectMap["kind"] = p.Kind
+	if p.ID != nil {
+		objectMap["id"] = p.ID
+	}
+	if p.Type != nil {
+		objectMap["type"] = p.Type
+	}
+	if p.Name != nil {
+		objectMap["name"] = p.Name
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsCoreResource is the BasicResource implementation for Port.
@@ -2503,66 +2558,63 @@ func (p *Port) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties PortProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var portProperties PortProperties
+				err = json.Unmarshal(*v, &portProperties)
+				if err != nil {
+					return err
+				}
+				p.PortProperties = &portProperties
+			}
+		case "etag":
+			if v != nil {
+				var etag string
+				err = json.Unmarshal(*v, &etag)
+				if err != nil {
+					return err
+				}
+				p.Etag = &etag
+			}
+		case "kind":
+			if v != nil {
+				var kind KindBasicCoreResource
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				p.Kind = kind
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				p.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				p.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				p.Name = &name
+			}
 		}
-		p.PortProperties = &properties
-	}
-
-	v = m["etag"]
-	if v != nil {
-		var etag string
-		err = json.Unmarshal(*m["etag"], &etag)
-		if err != nil {
-			return err
-		}
-		p.Etag = &etag
-	}
-
-	v = m["kind"]
-	if v != nil {
-		var kind KindBasicCoreResource
-		err = json.Unmarshal(*m["kind"], &kind)
-		if err != nil {
-			return err
-		}
-		p.Kind = kind
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		p.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		p.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		p.Name = &name
 	}
 
 	return nil
@@ -2691,55 +2743,53 @@ func (p *PortProperties) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["monitoringState"]
-	if v != nil {
-		var monitoringState MonitoringState
-		err = json.Unmarshal(*m["monitoringState"], &monitoringState)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "monitoringState":
+			if v != nil {
+				var monitoringState MonitoringState
+				err = json.Unmarshal(*v, &monitoringState)
+				if err != nil {
+					return err
+				}
+				p.MonitoringState = monitoringState
+			}
+		case "machine":
+			if v != nil {
+				machine, err := unmarshalBasicResourceReference(*v)
+				if err != nil {
+					return err
+				}
+				p.Machine = machine
+			}
+		case "displayName":
+			if v != nil {
+				var displayName string
+				err = json.Unmarshal(*v, &displayName)
+				if err != nil {
+					return err
+				}
+				p.DisplayName = &displayName
+			}
+		case "ipAddress":
+			if v != nil {
+				var IPAddress string
+				err = json.Unmarshal(*v, &IPAddress)
+				if err != nil {
+					return err
+				}
+				p.IPAddress = &IPAddress
+			}
+		case "portNumber":
+			if v != nil {
+				var portNumber int32
+				err = json.Unmarshal(*v, &portNumber)
+				if err != nil {
+					return err
+				}
+				p.PortNumber = &portNumber
+			}
 		}
-		p.MonitoringState = monitoringState
-	}
-
-	v = m["machine"]
-	if v != nil {
-		machine, err := unmarshalBasicResourceReference(*m["machine"])
-		if err != nil {
-			return err
-		}
-		p.Machine = machine
-	}
-
-	v = m["displayName"]
-	if v != nil {
-		var displayName string
-		err = json.Unmarshal(*m["displayName"], &displayName)
-		if err != nil {
-			return err
-		}
-		p.DisplayName = &displayName
-	}
-
-	v = m["ipAddress"]
-	if v != nil {
-		var IPAddress string
-		err = json.Unmarshal(*m["ipAddress"], &IPAddress)
-		if err != nil {
-			return err
-		}
-		p.IPAddress = &IPAddress
-	}
-
-	v = m["portNumber"]
-	if v != nil {
-		var portNumber int32
-		err = json.Unmarshal(*m["portNumber"], &portNumber)
-		if err != nil {
-			return err
-		}
-		p.PortNumber = &portNumber
 	}
 
 	return nil
@@ -2747,6 +2797,8 @@ func (p *PortProperties) UnmarshalJSON(body []byte) error {
 
 // PortReference reference to a port.
 type PortReference struct {
+	// PortReferenceProperties - Resource properties.
+	*PortReferenceProperties `json:"properties,omitempty"`
 	// ID - Resource URI.
 	ID *string `json:"id,omitempty"`
 	// Type - Resource type qualifier.
@@ -2755,19 +2807,26 @@ type PortReference struct {
 	Name *string `json:"name,omitempty"`
 	// Kind - Possible values include: 'KindResourceReference', 'KindRefmachine', 'KindRefprocess', 'KindRefport', 'KindRefmachinewithhints'
 	Kind Kind `json:"kind,omitempty"`
-	// PortReferenceProperties - Resource properties.
-	*PortReferenceProperties `json:"properties,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for PortReference.
 func (pr PortReference) MarshalJSON() ([]byte, error) {
 	pr.Kind = KindRefport
-	type Alias PortReference
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(pr),
-	})
+	objectMap := make(map[string]interface{})
+	if pr.PortReferenceProperties != nil {
+		objectMap["properties"] = pr.PortReferenceProperties
+	}
+	if pr.ID != nil {
+		objectMap["id"] = pr.ID
+	}
+	if pr.Type != nil {
+		objectMap["type"] = pr.Type
+	}
+	if pr.Name != nil {
+		objectMap["name"] = pr.Name
+	}
+	objectMap["kind"] = pr.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsMachineReference is the BasicResourceReference implementation for PortReference.
@@ -2807,56 +2866,54 @@ func (pr *PortReference) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties PortReferenceProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var portReferenceProperties PortReferenceProperties
+				err = json.Unmarshal(*v, &portReferenceProperties)
+				if err != nil {
+					return err
+				}
+				pr.PortReferenceProperties = &portReferenceProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				pr.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				pr.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				pr.Name = &name
+			}
+		case "kind":
+			if v != nil {
+				var kind Kind
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				pr.Kind = kind
+			}
 		}
-		pr.PortReferenceProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		pr.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		pr.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		pr.Name = &name
-	}
-
-	v = m["kind"]
-	if v != nil {
-		var kind Kind
-		err = json.Unmarshal(*m["kind"], &kind)
-		if err != nil {
-			return err
-		}
-		pr.Kind = kind
 	}
 
 	return nil
@@ -2872,37 +2929,49 @@ type PortReferenceProperties struct {
 	PortNumber *int32 `json:"portNumber,omitempty"`
 }
 
-// Process a process resource represents a process running on a machine. The process may be actively *monitored*, i.e.,
-// a Dependency Agent is running on its machine, or *discovered*, i.e., its existence was inferred by observing the
-// data stream from monitored machines. A process resource represents a pool of actual operating system resources that
-// share command lines and metadata. As the process pool evolves over time, prior versions of the process resource are
-// preserved and available for access. A process is live during an interval of time, if that process is executing
-// during (parts) of that interval
+// Process a process resource represents a process running on a machine. The process may be actively *monitored*,
+// i.e., a Dependency Agent is running on its machine, or *discovered*, i.e., its existence was inferred by
+// observing the data stream from monitored machines. A process resource represents a pool of actual operating
+// system resources that share command lines and metadata. As the process pool evolves over time, prior versions of
+// the process resource are preserved and available for access. A process is live during an interval of time, if
+// that process is executing during (parts) of that interval
 type Process struct {
 	autorest.Response `json:"-"`
+	// ProcessProperties - Resource properties.
+	*ProcessProperties `json:"properties,omitempty"`
+	// Etag - Resource ETAG.
+	Etag *string `json:"etag,omitempty"`
+	// Kind - Possible values include: 'KindCoreResource', 'KindMachine', 'KindProcess', 'KindPort', 'KindClientGroup', 'KindMachineGroup'
+	Kind KindBasicCoreResource `json:"kind,omitempty"`
 	// ID - Resource identifier.
 	ID *string `json:"id,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
-	// Etag - Resource ETAG.
-	Etag *string `json:"etag,omitempty"`
-	// Kind - Possible values include: 'KindCoreResource', 'KindMachine', 'KindProcess', 'KindPort', 'KindClientGroup', 'KindMachineGroup'
-	Kind KindBasicCoreResource `json:"kind,omitempty"`
-	// ProcessProperties - Resource properties.
-	*ProcessProperties `json:"properties,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for Process.
 func (p Process) MarshalJSON() ([]byte, error) {
 	p.Kind = KindProcess
-	type Alias Process
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(p),
-	})
+	objectMap := make(map[string]interface{})
+	if p.ProcessProperties != nil {
+		objectMap["properties"] = p.ProcessProperties
+	}
+	if p.Etag != nil {
+		objectMap["etag"] = p.Etag
+	}
+	objectMap["kind"] = p.Kind
+	if p.ID != nil {
+		objectMap["id"] = p.ID
+	}
+	if p.Type != nil {
+		objectMap["type"] = p.Type
+	}
+	if p.Name != nil {
+		objectMap["name"] = p.Name
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsCoreResource is the BasicResource implementation for Process.
@@ -2982,66 +3051,63 @@ func (p *Process) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ProcessProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var processProperties ProcessProperties
+				err = json.Unmarshal(*v, &processProperties)
+				if err != nil {
+					return err
+				}
+				p.ProcessProperties = &processProperties
+			}
+		case "etag":
+			if v != nil {
+				var etag string
+				err = json.Unmarshal(*v, &etag)
+				if err != nil {
+					return err
+				}
+				p.Etag = &etag
+			}
+		case "kind":
+			if v != nil {
+				var kind KindBasicCoreResource
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				p.Kind = kind
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				p.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				p.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				p.Name = &name
+			}
 		}
-		p.ProcessProperties = &properties
-	}
-
-	v = m["etag"]
-	if v != nil {
-		var etag string
-		err = json.Unmarshal(*m["etag"], &etag)
-		if err != nil {
-			return err
-		}
-		p.Etag = &etag
-	}
-
-	v = m["kind"]
-	if v != nil {
-		var kind KindBasicCoreResource
-		err = json.Unmarshal(*m["kind"], &kind)
-		if err != nil {
-			return err
-		}
-		p.Kind = kind
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		p.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		p.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		p.Name = &name
 	}
 
 	return nil
@@ -3210,113 +3276,105 @@ func (p *ProcessProperties) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["timestamp"]
-	if v != nil {
-		var timestamp date.Time
-		err = json.Unmarshal(*m["timestamp"], &timestamp)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "timestamp":
+			if v != nil {
+				var timestamp date.Time
+				err = json.Unmarshal(*v, &timestamp)
+				if err != nil {
+					return err
+				}
+				p.Timestamp = &timestamp
+			}
+		case "monitoringState":
+			if v != nil {
+				var monitoringState MonitoringState
+				err = json.Unmarshal(*v, &monitoringState)
+				if err != nil {
+					return err
+				}
+				p.MonitoringState = monitoringState
+			}
+		case "machine":
+			if v != nil {
+				machine, err := unmarshalBasicResourceReference(*v)
+				if err != nil {
+					return err
+				}
+				p.Machine = machine
+			}
+		case "executableName":
+			if v != nil {
+				var executableName string
+				err = json.Unmarshal(*v, &executableName)
+				if err != nil {
+					return err
+				}
+				p.ExecutableName = &executableName
+			}
+		case "displayName":
+			if v != nil {
+				var displayName string
+				err = json.Unmarshal(*v, &displayName)
+				if err != nil {
+					return err
+				}
+				p.DisplayName = &displayName
+			}
+		case "startTime":
+			if v != nil {
+				var startTime date.Time
+				err = json.Unmarshal(*v, &startTime)
+				if err != nil {
+					return err
+				}
+				p.StartTime = &startTime
+			}
+		case "role":
+			if v != nil {
+				var role ProcessRole
+				err = json.Unmarshal(*v, &role)
+				if err != nil {
+					return err
+				}
+				p.Role = role
+			}
+		case "details":
+			if v != nil {
+				var details ProcessDetails
+				err = json.Unmarshal(*v, &details)
+				if err != nil {
+					return err
+				}
+				p.Details = &details
+			}
+		case "user":
+			if v != nil {
+				var userVar ProcessUser
+				err = json.Unmarshal(*v, &userVar)
+				if err != nil {
+					return err
+				}
+				p.User = &userVar
+			}
+		case "clientOf":
+			if v != nil {
+				clientOf, err := unmarshalBasicResourceReference(*v)
+				if err != nil {
+					return err
+				}
+				p.ClientOf = clientOf
+			}
+		case "acceptorOf":
+			if v != nil {
+				acceptorOf, err := unmarshalBasicResourceReference(*v)
+				if err != nil {
+					return err
+				}
+				p.AcceptorOf = acceptorOf
+			}
 		}
-		p.Timestamp = &timestamp
-	}
-
-	v = m["monitoringState"]
-	if v != nil {
-		var monitoringState MonitoringState
-		err = json.Unmarshal(*m["monitoringState"], &monitoringState)
-		if err != nil {
-			return err
-		}
-		p.MonitoringState = monitoringState
-	}
-
-	v = m["machine"]
-	if v != nil {
-		machine, err := unmarshalBasicResourceReference(*m["machine"])
-		if err != nil {
-			return err
-		}
-		p.Machine = machine
-	}
-
-	v = m["executableName"]
-	if v != nil {
-		var executableName string
-		err = json.Unmarshal(*m["executableName"], &executableName)
-		if err != nil {
-			return err
-		}
-		p.ExecutableName = &executableName
-	}
-
-	v = m["displayName"]
-	if v != nil {
-		var displayName string
-		err = json.Unmarshal(*m["displayName"], &displayName)
-		if err != nil {
-			return err
-		}
-		p.DisplayName = &displayName
-	}
-
-	v = m["startTime"]
-	if v != nil {
-		var startTime date.Time
-		err = json.Unmarshal(*m["startTime"], &startTime)
-		if err != nil {
-			return err
-		}
-		p.StartTime = &startTime
-	}
-
-	v = m["role"]
-	if v != nil {
-		var role ProcessRole
-		err = json.Unmarshal(*m["role"], &role)
-		if err != nil {
-			return err
-		}
-		p.Role = role
-	}
-
-	v = m["details"]
-	if v != nil {
-		var details ProcessDetails
-		err = json.Unmarshal(*m["details"], &details)
-		if err != nil {
-			return err
-		}
-		p.Details = &details
-	}
-
-	v = m["user"]
-	if v != nil {
-		var userVar ProcessUser
-		err = json.Unmarshal(*m["user"], &userVar)
-		if err != nil {
-			return err
-		}
-		p.User = &userVar
-	}
-
-	v = m["clientOf"]
-	if v != nil {
-		clientOf, err := unmarshalBasicResourceReference(*m["clientOf"])
-		if err != nil {
-			return err
-		}
-		p.ClientOf = clientOf
-	}
-
-	v = m["acceptorOf"]
-	if v != nil {
-		acceptorOf, err := unmarshalBasicResourceReference(*m["acceptorOf"])
-		if err != nil {
-			return err
-		}
-		p.AcceptorOf = acceptorOf
 	}
 
 	return nil
@@ -3324,6 +3382,8 @@ func (p *ProcessProperties) UnmarshalJSON(body []byte) error {
 
 // ProcessReference reference to a process.
 type ProcessReference struct {
+	// ProcessReferenceProperties - Resource properties.
+	*ProcessReferenceProperties `json:"properties,omitempty"`
 	// ID - Resource URI.
 	ID *string `json:"id,omitempty"`
 	// Type - Resource type qualifier.
@@ -3332,19 +3392,26 @@ type ProcessReference struct {
 	Name *string `json:"name,omitempty"`
 	// Kind - Possible values include: 'KindResourceReference', 'KindRefmachine', 'KindRefprocess', 'KindRefport', 'KindRefmachinewithhints'
 	Kind Kind `json:"kind,omitempty"`
-	// ProcessReferenceProperties - Resource properties.
-	*ProcessReferenceProperties `json:"properties,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ProcessReference.
 func (pr ProcessReference) MarshalJSON() ([]byte, error) {
 	pr.Kind = KindRefprocess
-	type Alias ProcessReference
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(pr),
-	})
+	objectMap := make(map[string]interface{})
+	if pr.ProcessReferenceProperties != nil {
+		objectMap["properties"] = pr.ProcessReferenceProperties
+	}
+	if pr.ID != nil {
+		objectMap["id"] = pr.ID
+	}
+	if pr.Type != nil {
+		objectMap["type"] = pr.Type
+	}
+	if pr.Name != nil {
+		objectMap["name"] = pr.Name
+	}
+	objectMap["kind"] = pr.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsMachineReference is the BasicResourceReference implementation for ProcessReference.
@@ -3384,56 +3451,54 @@ func (pr *ProcessReference) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ProcessReferenceProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var processReferenceProperties ProcessReferenceProperties
+				err = json.Unmarshal(*v, &processReferenceProperties)
+				if err != nil {
+					return err
+				}
+				pr.ProcessReferenceProperties = &processReferenceProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				pr.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				pr.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				pr.Name = &name
+			}
+		case "kind":
+			if v != nil {
+				var kind Kind
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				pr.Kind = kind
+			}
 		}
-		pr.ProcessReferenceProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		pr.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		pr.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		pr.Name = &name
-	}
-
-	v = m["kind"]
-	if v != nil {
-		var kind Kind
-		err = json.Unmarshal(*m["kind"], &kind)
-		if err != nil {
-			return err
-		}
-		pr.Kind = kind
 	}
 
 	return nil
@@ -3462,14 +3527,14 @@ type BasicRelationship interface {
 
 // Relationship a typed relationship between two entities.
 type Relationship struct {
+	// Kind - Possible values include: 'KindRelationship', 'KindRelconnection', 'KindRelacceptor'
+	Kind KindBasicRelationship `json:"kind,omitempty"`
 	// ID - Resource identifier.
 	ID *string `json:"id,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
-	// Kind - Possible values include: 'KindRelationship', 'KindRelconnection', 'KindRelacceptor'
-	Kind KindBasicRelationship `json:"kind,omitempty"`
 }
 
 func unmarshalBasicRelationship(body []byte) (BasicRelationship, error) {
@@ -3516,12 +3581,18 @@ func unmarshalBasicRelationshipArray(body []byte) ([]BasicRelationship, error) {
 // MarshalJSON is the custom marshaler for Relationship.
 func (r Relationship) MarshalJSON() ([]byte, error) {
 	r.Kind = KindRelationship
-	type Alias Relationship
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(r),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["kind"] = r.Kind
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	return json.Marshal(objectMap)
 }
 
 // AsCoreResource is the BasicResource implementation for Relationship.
@@ -3613,44 +3684,43 @@ func (rp *RelationshipProperties) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["source"]
-	if v != nil {
-		source, err := unmarshalBasicResourceReference(*m["source"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "source":
+			if v != nil {
+				source, err := unmarshalBasicResourceReference(*v)
+				if err != nil {
+					return err
+				}
+				rp.Source = source
+			}
+		case "destination":
+			if v != nil {
+				destination, err := unmarshalBasicResourceReference(*v)
+				if err != nil {
+					return err
+				}
+				rp.Destination = destination
+			}
+		case "startTime":
+			if v != nil {
+				var startTime date.Time
+				err = json.Unmarshal(*v, &startTime)
+				if err != nil {
+					return err
+				}
+				rp.StartTime = &startTime
+			}
+		case "endTime":
+			if v != nil {
+				var endTime date.Time
+				err = json.Unmarshal(*v, &endTime)
+				if err != nil {
+					return err
+				}
+				rp.EndTime = &endTime
+			}
 		}
-		rp.Source = source
-	}
-
-	v = m["destination"]
-	if v != nil {
-		destination, err := unmarshalBasicResourceReference(*m["destination"])
-		if err != nil {
-			return err
-		}
-		rp.Destination = destination
-	}
-
-	v = m["startTime"]
-	if v != nil {
-		var startTime date.Time
-		err = json.Unmarshal(*m["startTime"], &startTime)
-		if err != nil {
-			return err
-		}
-		rp.StartTime = &startTime
-	}
-
-	v = m["endTime"]
-	if v != nil {
-		var endTime date.Time
-		err = json.Unmarshal(*m["endTime"], &endTime)
-		if err != nil {
-			return err
-		}
-		rp.EndTime = &endTime
 	}
 
 	return nil
@@ -3739,12 +3809,18 @@ func unmarshalBasicResourceReferenceArray(body []byte) ([]BasicResourceReference
 // MarshalJSON is the custom marshaler for ResourceReference.
 func (rr ResourceReference) MarshalJSON() ([]byte, error) {
 	rr.Kind = KindResourceReference
-	type Alias ResourceReference
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(rr),
-	})
+	objectMap := make(map[string]interface{})
+	if rr.ID != nil {
+		objectMap["id"] = rr.ID
+	}
+	if rr.Type != nil {
+		objectMap["type"] = rr.Type
+	}
+	if rr.Name != nil {
+		objectMap["name"] = rr.Name
+	}
+	objectMap["kind"] = rr.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsMachineReference is the BasicResourceReference implementation for ResourceReference.
@@ -3780,25 +3856,31 @@ func (rr ResourceReference) AsBasicResourceReference() (BasicResourceReference, 
 // SingleMachineDependencyMapRequest specifies the computation of a single server dependency map. A single server
 // dependency map includes all direct dependencies of a given machine.
 type SingleMachineDependencyMapRequest struct {
+	// MachineID - URI of machine resource for which to generate the map.
+	MachineID *string `json:"machineId,omitempty"`
 	// StartTime - Map interval start time.
 	StartTime *date.Time `json:"startTime,omitempty"`
 	// EndTime - Map interval end time.
 	EndTime *date.Time `json:"endTime,omitempty"`
 	// Kind - Possible values include: 'KindMapRequest', 'KindMapsingleMachineDependency', 'KindMapmachineGroupDependency'
 	Kind KindBasicMapRequest `json:"kind,omitempty"`
-	// MachineID - URI of machine resource for which to generate the map.
-	MachineID *string `json:"machineId,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for SingleMachineDependencyMapRequest.
 func (smdmr SingleMachineDependencyMapRequest) MarshalJSON() ([]byte, error) {
 	smdmr.Kind = KindMapsingleMachineDependency
-	type Alias SingleMachineDependencyMapRequest
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(smdmr),
-	})
+	objectMap := make(map[string]interface{})
+	if smdmr.MachineID != nil {
+		objectMap["machineId"] = smdmr.MachineID
+	}
+	if smdmr.StartTime != nil {
+		objectMap["startTime"] = smdmr.StartTime
+	}
+	if smdmr.EndTime != nil {
+		objectMap["endTime"] = smdmr.EndTime
+	}
+	objectMap["kind"] = smdmr.Kind
+	return json.Marshal(objectMap)
 }
 
 // AsSingleMachineDependencyMapRequest is the BasicMapRequest implementation for SingleMachineDependencyMapRequest.

@@ -425,7 +425,10 @@
         "RDSReaderAverageDatabaseConnections",
         "EC2SpotFleetRequestAverageCPUUtilization",
         "EC2SpotFleetRequestAverageNetworkIn",
-        "EC2SpotFleetRequestAverageNetworkOut"
+        "EC2SpotFleetRequestAverageNetworkOut",
+        "SageMakerVariantInvocationsPerInstance",
+        "ECSServiceAverageCPUUtilization",
+        "ECSServiceAverageMemoryUtilization"
       ]
     },
     "MetricUnit":{"type":"string"},
@@ -559,7 +562,8 @@
         "dynamodb:table:WriteCapacityUnits",
         "dynamodb:index:ReadCapacityUnits",
         "dynamodb:index:WriteCapacityUnits",
-        "rds:cluster:ReadReplicaCount"
+        "rds:cluster:ReadReplicaCount",
+        "sagemaker:variant:DesiredInstanceCount"
       ]
     },
     "ScalableTarget":{
@@ -705,7 +709,8 @@
         "ec2",
         "appstream",
         "dynamodb",
-        "rds"
+        "rds",
+        "sagemaker"
       ]
     },
     "StepAdjustment":{

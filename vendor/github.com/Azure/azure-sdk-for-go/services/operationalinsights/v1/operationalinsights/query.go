@@ -43,9 +43,9 @@ func NewQueryClientWithBaseURI(baseURI string, workspaceID string) QueryClient {
 // Get executes an Analytics query for data
 //
 // query is the Analytics query. Learn more about the [Analytics query
-// syntax](https://azure.microsoft.com/documentation/articles/app-insights-analytics-reference/) timespan is optional.
-// The timespan over which to query data. This is an ISO8601 time period value.  This timespan is applied in addition
-// to any that are specified in the query expression.
+// syntax](https://azure.microsoft.com/documentation/articles/app-insights-analytics-reference/) timespan is
+// optional. The timespan over which to query data. This is an ISO8601 time period value.  This timespan is applied
+// in addition to any that are specified in the query expression.
 func (client QueryClient) Get(ctx context.Context, query string, timespan *string) (result QueryResults, err error) {
 	req, err := client.GetPreparer(ctx, query, timespan)
 	if err != nil {
@@ -118,7 +118,7 @@ func (client QueryClient) Post(ctx context.Context, body QueryBody) (result Quer
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: body,
 			Constraints: []validation.Constraint{{Target: "body.Query", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.QueryClient", "Post")
+		return result, validation.NewError("operationalinsights.QueryClient", "Post", err.Error())
 	}
 
 	req, err := client.PostPreparer(ctx, body)

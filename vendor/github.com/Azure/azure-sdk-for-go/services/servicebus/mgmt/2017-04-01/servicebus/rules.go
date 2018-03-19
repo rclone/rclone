@@ -42,9 +42,9 @@ func NewRulesClientWithBaseURI(baseURI string, subscriptionID string) RulesClien
 
 // CreateOrUpdate creates a new rule and updates an existing rule
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name. subscriptionName is the subscription name. ruleName is the rule name. parameters is
-// parameters supplied to create a rule.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name. subscriptionName is the subscription name. ruleName is the rule name.
+// parameters is parameters supplied to create a rule.
 func (client RulesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, namespaceName string, topicName string, subscriptionName string, ruleName string, parameters Rule) (result Rule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -61,7 +61,7 @@ func (client RulesClient) CreateOrUpdate(ctx context.Context, resourceGroupName 
 		{TargetValue: ruleName,
 			Constraints: []validation.Constraint{{Target: "ruleName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "ruleName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.RulesClient", "CreateOrUpdate")
+		return result, validation.NewError("servicebus.RulesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, namespaceName, topicName, subscriptionName, ruleName, parameters)
@@ -133,8 +133,8 @@ func (client RulesClient) CreateOrUpdateResponder(resp *http.Response) (result R
 
 // Delete deletes an existing rule.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name. subscriptionName is the subscription name. ruleName is the rule name.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name. subscriptionName is the subscription name. ruleName is the rule name.
 func (client RulesClient) Delete(ctx context.Context, resourceGroupName string, namespaceName string, topicName string, subscriptionName string, ruleName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -151,7 +151,7 @@ func (client RulesClient) Delete(ctx context.Context, resourceGroupName string, 
 		{TargetValue: ruleName,
 			Constraints: []validation.Constraint{{Target: "ruleName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "ruleName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.RulesClient", "Delete")
+		return result, validation.NewError("servicebus.RulesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, namespaceName, topicName, subscriptionName, ruleName)
@@ -220,8 +220,8 @@ func (client RulesClient) DeleteResponder(resp *http.Response) (result autorest.
 
 // Get retrieves the description for the specified rule.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name. subscriptionName is the subscription name. ruleName is the rule name.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name. subscriptionName is the subscription name. ruleName is the rule name.
 func (client RulesClient) Get(ctx context.Context, resourceGroupName string, namespaceName string, topicName string, subscriptionName string, ruleName string) (result Rule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -238,7 +238,7 @@ func (client RulesClient) Get(ctx context.Context, resourceGroupName string, nam
 		{TargetValue: ruleName,
 			Constraints: []validation.Constraint{{Target: "ruleName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "ruleName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.RulesClient", "Get")
+		return result, validation.NewError("servicebus.RulesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, namespaceName, topicName, subscriptionName, ruleName)
@@ -308,8 +308,8 @@ func (client RulesClient) GetResponder(resp *http.Response) (result Rule, err er
 
 // ListBySubscriptions list all the rules within given topic-subscription
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name. subscriptionName is the subscription name.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name. subscriptionName is the subscription name.
 func (client RulesClient) ListBySubscriptions(ctx context.Context, resourceGroupName string, namespaceName string, topicName string, subscriptionName string) (result RuleListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -323,7 +323,7 @@ func (client RulesClient) ListBySubscriptions(ctx context.Context, resourceGroup
 		{TargetValue: subscriptionName,
 			Constraints: []validation.Constraint{{Target: "subscriptionName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "subscriptionName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.RulesClient", "ListBySubscriptions")
+		return result, validation.NewError("servicebus.RulesClient", "ListBySubscriptions", err.Error())
 	}
 
 	result.fn = client.listBySubscriptionsNextResults

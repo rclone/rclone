@@ -44,15 +44,15 @@ func NewInteractionsClientWithBaseURI(baseURI string, subscriptionID string) Int
 
 // CreateOrUpdate creates an interaction or updates an existing interaction within a hub.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. interactionName is the name of
-// the interaction. parameters is parameters supplied to the CreateOrUpdate Interaction operation.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. interactionName is the name
+// of the interaction. parameters is parameters supplied to the CreateOrUpdate Interaction operation.
 func (client InteractionsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, interactionName string, parameters InteractionResourceFormat) (result InteractionsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: interactionName,
 			Constraints: []validation.Constraint{{Target: "interactionName", Name: validation.MaxLength, Rule: 128, Chain: nil},
 				{Target: "interactionName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "interactionName", Name: validation.Pattern, Rule: `^[a-zA-Z][a-zA-Z0-9_]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "customerinsights.InteractionsClient", "CreateOrUpdate")
+		return result, validation.NewError("customerinsights.InteractionsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, hubName, interactionName, parameters)
@@ -124,8 +124,8 @@ func (client InteractionsClient) CreateOrUpdateResponder(resp *http.Response) (r
 
 // Get gets information about the specified interaction.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. interactionName is the name of
-// the interaction. localeCode is locale of interaction to retrieve, default is en-us.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. interactionName is the name
+// of the interaction. localeCode is locale of interaction to retrieve, default is en-us.
 func (client InteractionsClient) Get(ctx context.Context, resourceGroupName string, hubName string, interactionName string, localeCode string) (result InteractionResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, interactionName, localeCode)
 	if err != nil {
@@ -163,6 +163,8 @@ func (client InteractionsClient) GetPreparer(ctx context.Context, resourceGroupN
 	}
 	if len(localeCode) > 0 {
 		queryParameters["locale-code"] = autorest.Encode("query", localeCode)
+	} else {
+		queryParameters["locale-code"] = autorest.Encode("query", "en-us")
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -234,6 +236,8 @@ func (client InteractionsClient) ListByHubPreparer(ctx context.Context, resource
 	}
 	if len(localeCode) > 0 {
 		queryParameters["locale-code"] = autorest.Encode("query", localeCode)
+	} else {
+		queryParameters["locale-code"] = autorest.Encode("query", "en-us")
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -293,8 +297,8 @@ func (client InteractionsClient) ListByHubComplete(ctx context.Context, resource
 
 // SuggestRelationshipLinks suggests relationships to create relationship links.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. interactionName is the name of
-// the interaction.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. interactionName is the name
+// of the interaction.
 func (client InteractionsClient) SuggestRelationshipLinks(ctx context.Context, resourceGroupName string, hubName string, interactionName string) (result SuggestRelationshipLinksResponse, err error) {
 	req, err := client.SuggestRelationshipLinksPreparer(ctx, resourceGroupName, hubName, interactionName)
 	if err != nil {

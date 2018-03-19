@@ -207,7 +207,8 @@ type ClientCertificateThumbprint struct {
 
 // Cluster the cluster resource
 type Cluster struct {
-	autorest.Response `json:"-"`
+	autorest.Response  `json:"-"`
+	*ClusterProperties `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
@@ -217,8 +218,31 @@ type Cluster struct {
 	// Location - Resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags.
-	Tags               *map[string]*string `json:"tags,omitempty"`
-	*ClusterProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Cluster.
+func (c Cluster) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if c.ClusterProperties != nil {
+		objectMap["properties"] = c.ClusterProperties
+	}
+	if c.ID != nil {
+		objectMap["id"] = c.ID
+	}
+	if c.Name != nil {
+		objectMap["name"] = c.Name
+	}
+	if c.Type != nil {
+		objectMap["type"] = c.Type
+	}
+	if c.Location != nil {
+		objectMap["location"] = c.Location
+	}
+	if c.Tags != nil {
+		objectMap["tags"] = c.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Cluster struct.
@@ -228,66 +252,63 @@ func (c *Cluster) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ClusterProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var clusterProperties ClusterProperties
+				err = json.Unmarshal(*v, &clusterProperties)
+				if err != nil {
+					return err
+				}
+				c.ClusterProperties = &clusterProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				c.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				c.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				c.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				c.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				c.Tags = tags
+			}
 		}
-		c.ClusterProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		c.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		c.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		c.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		c.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		c.Tags = &tags
 	}
 
 	return nil
@@ -413,46 +434,45 @@ func (ccvr *ClusterCodeVersionsResult) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ccvr.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ccvr.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ccvr.Type = &typeVar
+			}
+		case "properties":
+			if v != nil {
+				var clusterVersionDetails ClusterVersionDetails
+				err = json.Unmarshal(*v, &clusterVersionDetails)
+				if err != nil {
+					return err
+				}
+				ccvr.ClusterVersionDetails = &clusterVersionDetails
+			}
 		}
-		ccvr.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ccvr.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		ccvr.Type = &typeVar
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties ClusterVersionDetails
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		ccvr.ClusterVersionDetails = &properties
 	}
 
 	return nil
@@ -582,9 +602,9 @@ type ClusterProperties struct {
 	// Certificate - This primay certificate will be used as cluster node to node security, SSL certificate for cluster management endpoint and default admin client
 	Certificate *CertificateDescription `json:"certificate,omitempty"`
 	// ReliabilityLevel - Cluster reliability level indicates replica set size of system service. Possible values include: 'ReliabilityLevel1Bronze', 'ReliabilityLevel1Silver', 'ReliabilityLevel1Gold', 'ReliabilityLevel1Platinum'
-	ReliabilityLevel ReliabilityLevel `json:"reliabilityLevel,omitempty"`
+	ReliabilityLevel ReliabilityLevel1 `json:"reliabilityLevel,omitempty"`
 	// UpgradeMode - Cluster upgrade mode indicates if fabric upgrade is initiated automatically by the system or not. Possible values include: 'UpgradeMode1Automatic', 'UpgradeMode1Manual'
-	UpgradeMode UpgradeMode `json:"upgradeMode,omitempty"`
+	UpgradeMode UpgradeMode1 `json:"upgradeMode,omitempty"`
 	// ClientCertificateThumbprints - The client thumbprint details ,it is used for client access for cluster operation
 	ClientCertificateThumbprints *[]ClientCertificateThumbprint `json:"clientCertificateThumbprints,omitempty"`
 	// ClientCertificateCommonNames -  List of client certificates to whitelist based on common names
@@ -645,22 +665,39 @@ func (future ClustersCreateFuture) Result(client ClustersClient) (c Cluster, err
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ClustersCreateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return c, autorest.NewError("servicefabric.ClustersCreateFuture", "Result", "asynchronous operation has not completed")
+		return c, azure.NewAsyncOpIncompleteError("servicefabric.ClustersCreateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		c, err = client.CreateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "servicefabric.ClustersCreateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ClustersCreateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	c, err = client.CreateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ClustersCreateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -676,22 +713,39 @@ func (future ClustersUpdateFuture) Result(client ClustersClient) (c Cluster, err
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ClustersUpdateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return c, autorest.NewError("servicefabric.ClustersUpdateFuture", "Result", "asynchronous operation has not completed")
+		return c, azure.NewAsyncOpIncompleteError("servicefabric.ClustersUpdateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		c, err = client.UpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "servicefabric.ClustersUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ClustersUpdateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	c, err = client.UpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ClustersUpdateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -699,7 +753,19 @@ func (future ClustersUpdateFuture) Result(client ClustersClient) (c Cluster, err
 type ClusterUpdateParameters struct {
 	*ClusterPropertiesUpdateParameters `json:"properties,omitempty"`
 	// Tags - Cluster update parameters
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for ClusterUpdateParameters.
+func (cup ClusterUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cup.ClusterPropertiesUpdateParameters != nil {
+		objectMap["properties"] = cup.ClusterPropertiesUpdateParameters
+	}
+	if cup.Tags != nil {
+		objectMap["tags"] = cup.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ClusterUpdateParameters struct.
@@ -709,26 +775,27 @@ func (cup *ClusterUpdateParameters) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ClusterPropertiesUpdateParameters
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var clusterPropertiesUpdateParameters ClusterPropertiesUpdateParameters
+				err = json.Unmarshal(*v, &clusterPropertiesUpdateParameters)
+				if err != nil {
+					return err
+				}
+				cup.ClusterPropertiesUpdateParameters = &clusterPropertiesUpdateParameters
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				cup.Tags = tags
+			}
 		}
-		cup.ClusterPropertiesUpdateParameters = &properties
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		cup.Tags = &tags
 	}
 
 	return nil
@@ -814,14 +881,15 @@ type ErrorModelError struct {
 	Message *string `json:"message,omitempty"`
 }
 
-// NodeTypeDescription describes a node type in the cluster, each node type represents sub set of nodes in the cluster
+// NodeTypeDescription describes a node type in the cluster, each node type represents sub set of nodes in the
+// cluster
 type NodeTypeDescription struct {
 	// Name - Name of the node type
 	Name *string `json:"name,omitempty"`
 	// PlacementProperties - The placement tags applied to nodes in the node type, which can be used to indicate where certain services (workload) should run
-	PlacementProperties *map[string]*string `json:"placementProperties,omitempty"`
+	PlacementProperties map[string]*string `json:"placementProperties"`
 	// Capacities - The capacity tags applied to the nodes in the node type, the cluster resource manager uses these tags to understand how much of a resource a node has
-	Capacities *map[string]*string `json:"capacities,omitempty"`
+	Capacities map[string]*string `json:"capacities"`
 	// ClientConnectionEndpointPort - The TCP cluster management endpoint port
 	ClientConnectionEndpointPort *int32 `json:"clientConnectionEndpointPort,omitempty"`
 	// HTTPGatewayEndpointPort - The HTTP cluster management endpoint port
@@ -840,8 +908,45 @@ type NodeTypeDescription struct {
 	ReverseProxyEndpointPort *int32 `json:"reverseProxyEndpointPort,omitempty"`
 }
 
-// OperationListResult result of the request to list ServiceFabric operations. It contains a list of operations and a
-// URL link to get the next set of results.
+// MarshalJSON is the custom marshaler for NodeTypeDescription.
+func (ntd NodeTypeDescription) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ntd.Name != nil {
+		objectMap["name"] = ntd.Name
+	}
+	if ntd.PlacementProperties != nil {
+		objectMap["placementProperties"] = ntd.PlacementProperties
+	}
+	if ntd.Capacities != nil {
+		objectMap["capacities"] = ntd.Capacities
+	}
+	if ntd.ClientConnectionEndpointPort != nil {
+		objectMap["clientConnectionEndpointPort"] = ntd.ClientConnectionEndpointPort
+	}
+	if ntd.HTTPGatewayEndpointPort != nil {
+		objectMap["httpGatewayEndpointPort"] = ntd.HTTPGatewayEndpointPort
+	}
+	objectMap["durabilityLevel"] = ntd.DurabilityLevel
+	if ntd.ApplicationPorts != nil {
+		objectMap["applicationPorts"] = ntd.ApplicationPorts
+	}
+	if ntd.EphemeralPorts != nil {
+		objectMap["ephemeralPorts"] = ntd.EphemeralPorts
+	}
+	if ntd.IsPrimary != nil {
+		objectMap["isPrimary"] = ntd.IsPrimary
+	}
+	if ntd.VMInstanceCount != nil {
+		objectMap["vmInstanceCount"] = ntd.VMInstanceCount
+	}
+	if ntd.ReverseProxyEndpointPort != nil {
+		objectMap["reverseProxyEndpointPort"] = ntd.ReverseProxyEndpointPort
+	}
+	return json.Marshal(objectMap)
+}
+
+// OperationListResult result of the request to list ServiceFabric operations. It contains a list of operations and
+// a URL link to get the next set of results.
 type OperationListResult struct {
 	autorest.Response `json:"-"`
 	// Value - List of ServiceFabric operations supported by the Microsoft.ServiceFabric resource provider.
@@ -966,7 +1071,28 @@ type Resource struct {
 	// Location - Resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // SettingsParameterDescription serviceFabric settings under sections

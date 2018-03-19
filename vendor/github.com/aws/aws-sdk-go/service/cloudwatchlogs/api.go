@@ -3464,7 +3464,6 @@ func (c *CloudWatchLogs) UntagLogGroupWithContext(ctx aws.Context, input *UntagL
 	return out, req.Send()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/AssociateKmsKeyRequest
 type AssociateKmsKeyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3522,7 +3521,6 @@ func (s *AssociateKmsKeyInput) SetLogGroupName(v string) *AssociateKmsKeyInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/AssociateKmsKeyOutput
 type AssociateKmsKeyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3537,7 +3535,6 @@ func (s AssociateKmsKeyOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/CancelExportTaskRequest
 type CancelExportTaskInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3579,7 +3576,6 @@ func (s *CancelExportTaskInput) SetTaskId(v string) *CancelExportTaskInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/CancelExportTaskOutput
 type CancelExportTaskOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3594,7 +3590,6 @@ func (s CancelExportTaskOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/CreateExportTaskRequest
 type CreateExportTaskInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3721,7 +3716,6 @@ func (s *CreateExportTaskInput) SetTo(v int64) *CreateExportTaskInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/CreateExportTaskResponse
 type CreateExportTaskOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3745,7 +3739,6 @@ func (s *CreateExportTaskOutput) SetTaskId(v string) *CreateExportTaskOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/CreateLogGroupRequest
 type CreateLogGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3810,7 +3803,6 @@ func (s *CreateLogGroupInput) SetTags(v map[string]*string) *CreateLogGroupInput
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/CreateLogGroupOutput
 type CreateLogGroupOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3825,7 +3817,6 @@ func (s CreateLogGroupOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/CreateLogStreamRequest
 type CreateLogStreamInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3884,7 +3875,6 @@ func (s *CreateLogStreamInput) SetLogStreamName(v string) *CreateLogStreamInput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/CreateLogStreamOutput
 type CreateLogStreamOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3899,7 +3889,6 @@ func (s CreateLogStreamOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteDestinationRequest
 type DeleteDestinationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3941,7 +3930,6 @@ func (s *DeleteDestinationInput) SetDestinationName(v string) *DeleteDestination
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteDestinationOutput
 type DeleteDestinationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3956,7 +3944,6 @@ func (s DeleteDestinationOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteLogGroupRequest
 type DeleteLogGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3998,7 +3985,6 @@ func (s *DeleteLogGroupInput) SetLogGroupName(v string) *DeleteLogGroupInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteLogGroupOutput
 type DeleteLogGroupOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4013,7 +3999,6 @@ func (s DeleteLogGroupOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteLogStreamRequest
 type DeleteLogStreamInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4072,7 +4057,6 @@ func (s *DeleteLogStreamInput) SetLogStreamName(v string) *DeleteLogStreamInput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteLogStreamOutput
 type DeleteLogStreamOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4087,7 +4071,6 @@ func (s DeleteLogStreamOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteMetricFilterRequest
 type DeleteMetricFilterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4146,7 +4129,6 @@ func (s *DeleteMetricFilterInput) SetLogGroupName(v string) *DeleteMetricFilterI
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteMetricFilterOutput
 type DeleteMetricFilterOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4161,7 +4143,6 @@ func (s DeleteMetricFilterOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteResourcePolicyRequest
 type DeleteResourcePolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4185,7 +4166,6 @@ func (s *DeleteResourcePolicyInput) SetPolicyName(v string) *DeleteResourcePolic
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteResourcePolicyOutput
 type DeleteResourcePolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4200,7 +4180,6 @@ func (s DeleteResourcePolicyOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteRetentionPolicyRequest
 type DeleteRetentionPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4242,7 +4221,6 @@ func (s *DeleteRetentionPolicyInput) SetLogGroupName(v string) *DeleteRetentionP
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteRetentionPolicyOutput
 type DeleteRetentionPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4257,7 +4235,6 @@ func (s DeleteRetentionPolicyOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteSubscriptionFilterRequest
 type DeleteSubscriptionFilterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4316,7 +4293,6 @@ func (s *DeleteSubscriptionFilterInput) SetLogGroupName(v string) *DeleteSubscri
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteSubscriptionFilterOutput
 type DeleteSubscriptionFilterOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4331,7 +4307,6 @@ func (s DeleteSubscriptionFilterOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeDestinationsRequest
 type DescribeDestinationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4394,7 +4369,6 @@ func (s *DescribeDestinationsInput) SetNextToken(v string) *DescribeDestinations
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeDestinationsResponse
 type DescribeDestinationsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4428,7 +4402,6 @@ func (s *DescribeDestinationsOutput) SetNextToken(v string) *DescribeDestination
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeExportTasksRequest
 type DescribeExportTasksInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4502,7 +4475,6 @@ func (s *DescribeExportTasksInput) SetTaskId(v string) *DescribeExportTasksInput
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeExportTasksResponse
 type DescribeExportTasksOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4536,7 +4508,6 @@ func (s *DescribeExportTasksOutput) SetNextToken(v string) *DescribeExportTasksO
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeLogGroupsRequest
 type DescribeLogGroupsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4599,7 +4570,6 @@ func (s *DescribeLogGroupsInput) SetNextToken(v string) *DescribeLogGroupsInput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeLogGroupsResponse
 type DescribeLogGroupsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4633,7 +4603,6 @@ func (s *DescribeLogGroupsOutput) SetNextToken(v string) *DescribeLogGroupsOutpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeLogStreamsRequest
 type DescribeLogStreamsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4746,7 +4715,6 @@ func (s *DescribeLogStreamsInput) SetOrderBy(v string) *DescribeLogStreamsInput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeLogStreamsResponse
 type DescribeLogStreamsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4780,7 +4748,6 @@ func (s *DescribeLogStreamsOutput) SetNextToken(v string) *DescribeLogStreamsOut
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeMetricFiltersRequest
 type DescribeMetricFiltersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4874,7 +4841,6 @@ func (s *DescribeMetricFiltersInput) SetNextToken(v string) *DescribeMetricFilte
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeMetricFiltersResponse
 type DescribeMetricFiltersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4908,7 +4874,6 @@ func (s *DescribeMetricFiltersOutput) SetNextToken(v string) *DescribeMetricFilt
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeResourcePoliciesRequest
 type DescribeResourcePoliciesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4959,7 +4924,6 @@ func (s *DescribeResourcePoliciesInput) SetNextToken(v string) *DescribeResource
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeResourcePoliciesResponse
 type DescribeResourcePoliciesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4993,7 +4957,6 @@ func (s *DescribeResourcePoliciesOutput) SetResourcePolicies(v []*ResourcePolicy
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeSubscriptionFiltersRequest
 type DescribeSubscriptionFiltersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5073,7 +5036,6 @@ func (s *DescribeSubscriptionFiltersInput) SetNextToken(v string) *DescribeSubsc
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeSubscriptionFiltersResponse
 type DescribeSubscriptionFiltersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5108,7 +5070,6 @@ func (s *DescribeSubscriptionFiltersOutput) SetSubscriptionFilters(v []*Subscrip
 }
 
 // Represents a cross-account destination that receives subscription log events.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/Destination
 type Destination struct {
 	_ struct{} `type:"structure"`
 
@@ -5180,7 +5141,6 @@ func (s *Destination) SetTargetArn(v string) *Destination {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DisassociateKmsKeyRequest
 type DisassociateKmsKeyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5222,7 +5182,6 @@ func (s *DisassociateKmsKeyInput) SetLogGroupName(v string) *DisassociateKmsKeyI
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DisassociateKmsKeyOutput
 type DisassociateKmsKeyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5238,7 +5197,6 @@ func (s DisassociateKmsKeyOutput) GoString() string {
 }
 
 // Represents an export task.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/ExportTask
 type ExportTask struct {
 	_ struct{} `type:"structure"`
 
@@ -5337,7 +5295,6 @@ func (s *ExportTask) SetTo(v int64) *ExportTask {
 }
 
 // Represents the status of an export task.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/ExportTaskExecutionInfo
 type ExportTaskExecutionInfo struct {
 	_ struct{} `type:"structure"`
 
@@ -5373,7 +5330,6 @@ func (s *ExportTaskExecutionInfo) SetCreationTime(v int64) *ExportTaskExecutionI
 }
 
 // Represents the status of an export task.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/ExportTaskStatus
 type ExportTaskStatus struct {
 	_ struct{} `type:"structure"`
 
@@ -5406,7 +5362,6 @@ func (s *ExportTaskStatus) SetMessage(v string) *ExportTaskStatus {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/FilterLogEventsRequest
 type FilterLogEventsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5529,7 +5484,6 @@ func (s *FilterLogEventsInput) SetStartTime(v int64) *FilterLogEventsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/FilterLogEventsResponse
 type FilterLogEventsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5574,7 +5528,6 @@ func (s *FilterLogEventsOutput) SetSearchedLogStreams(v []*SearchedLogStream) *F
 }
 
 // Represents a matched event.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/FilteredLogEvent
 type FilteredLogEvent struct {
 	_ struct{} `type:"structure"`
 
@@ -5636,7 +5589,6 @@ func (s *FilteredLogEvent) SetTimestamp(v int64) *FilteredLogEvent {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/GetLogEventsRequest
 type GetLogEventsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5755,7 +5707,6 @@ func (s *GetLogEventsInput) SetStartTime(v int64) *GetLogEventsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/GetLogEventsResponse
 type GetLogEventsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5801,7 +5752,6 @@ func (s *GetLogEventsOutput) SetNextForwardToken(v string) *GetLogEventsOutput {
 
 // Represents a log event, which is a record of activity that was recorded by
 // the application or resource being monitored.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/InputLogEvent
 type InputLogEvent struct {
 	_ struct{} `type:"structure"`
 
@@ -5858,7 +5808,6 @@ func (s *InputLogEvent) SetTimestamp(v int64) *InputLogEvent {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/ListTagsLogGroupRequest
 type ListTagsLogGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5900,7 +5849,6 @@ func (s *ListTagsLogGroupInput) SetLogGroupName(v string) *ListTagsLogGroupInput
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/ListTagsLogGroupResponse
 type ListTagsLogGroupOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5925,7 +5873,6 @@ func (s *ListTagsLogGroupOutput) SetTags(v map[string]*string) *ListTagsLogGroup
 }
 
 // Represents a log group.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/LogGroup
 type LogGroup struct {
 	_ struct{} `type:"structure"`
 
@@ -6008,7 +5955,6 @@ func (s *LogGroup) SetStoredBytes(v int64) *LogGroup {
 
 // Represents a log stream, which is a sequence of log events from a single
 // emitter of logs.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/LogStream
 type LogStream struct {
 	_ struct{} `type:"structure"`
 
@@ -6105,7 +6051,6 @@ func (s *LogStream) SetUploadSequenceToken(v string) *LogStream {
 // Metric filters express how CloudWatch Logs would extract metric observations
 // from ingested log events and transform them into metric data in a CloudWatch
 // metric.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/MetricFilter
 type MetricFilter struct {
 	_ struct{} `type:"structure"`
 
@@ -6170,7 +6115,6 @@ func (s *MetricFilter) SetMetricTransformations(v []*MetricTransformation) *Metr
 }
 
 // Represents a matched event.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/MetricFilterMatchRecord
 type MetricFilterMatchRecord struct {
 	_ struct{} `type:"structure"`
 
@@ -6214,7 +6158,6 @@ func (s *MetricFilterMatchRecord) SetExtractedValues(v map[string]*string) *Metr
 
 // Indicates how to transform ingested log events in to metric data in a CloudWatch
 // metric.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/MetricTransformation
 type MetricTransformation struct {
 	_ struct{} `type:"structure"`
 
@@ -6293,7 +6236,6 @@ func (s *MetricTransformation) SetMetricValue(v string) *MetricTransformation {
 }
 
 // Represents a log event.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/OutputLogEvent
 type OutputLogEvent struct {
 	_ struct{} `type:"structure"`
 
@@ -6337,7 +6279,6 @@ func (s *OutputLogEvent) SetTimestamp(v int64) *OutputLogEvent {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutDestinationRequest
 type PutDestinationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6414,7 +6355,6 @@ func (s *PutDestinationInput) SetTargetArn(v string) *PutDestinationInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutDestinationResponse
 type PutDestinationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6438,7 +6378,6 @@ func (s *PutDestinationOutput) SetDestination(v *Destination) *PutDestinationOut
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutDestinationPolicyRequest
 type PutDestinationPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6498,7 +6437,6 @@ func (s *PutDestinationPolicyInput) SetDestinationName(v string) *PutDestination
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutDestinationPolicyOutput
 type PutDestinationPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6513,7 +6451,6 @@ func (s PutDestinationPolicyOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutLogEventsRequest
 type PutLogEventsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6615,7 +6552,6 @@ func (s *PutLogEventsInput) SetSequenceToken(v string) *PutLogEventsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutLogEventsResponse
 type PutLogEventsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6648,7 +6584,6 @@ func (s *PutLogEventsOutput) SetRejectedLogEventsInfo(v *RejectedLogEventsInfo) 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutMetricFilterRequest
 type PutMetricFilterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6748,7 +6683,6 @@ func (s *PutMetricFilterInput) SetMetricTransformations(v []*MetricTransformatio
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutMetricFilterOutput
 type PutMetricFilterOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6763,7 +6697,6 @@ func (s PutMetricFilterOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutResourcePolicyRequest
 type PutResourcePolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6818,7 +6751,6 @@ func (s *PutResourcePolicyInput) SetPolicyName(v string) *PutResourcePolicyInput
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutResourcePolicyResponse
 type PutResourcePolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6842,7 +6774,6 @@ func (s *PutResourcePolicyOutput) SetResourcePolicy(v *ResourcePolicy) *PutResou
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutRetentionPolicyRequest
 type PutRetentionPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6900,7 +6831,6 @@ func (s *PutRetentionPolicyInput) SetRetentionInDays(v int64) *PutRetentionPolic
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutRetentionPolicyOutput
 type PutRetentionPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6915,7 +6845,6 @@ func (s PutRetentionPolicyOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutSubscriptionFilterRequest
 type PutSubscriptionFilterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7048,7 +6977,6 @@ func (s *PutSubscriptionFilterInput) SetRoleArn(v string) *PutSubscriptionFilter
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutSubscriptionFilterOutput
 type PutSubscriptionFilterOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -7064,7 +6992,6 @@ func (s PutSubscriptionFilterOutput) GoString() string {
 }
 
 // Represents the rejected events.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/RejectedLogEventsInfo
 type RejectedLogEventsInfo struct {
 	_ struct{} `type:"structure"`
 
@@ -7108,7 +7035,6 @@ func (s *RejectedLogEventsInfo) SetTooOldLogEventEndIndex(v int64) *RejectedLogE
 
 // A policy enabling one or more entities to put logs to a log group in this
 // account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/ResourcePolicy
 type ResourcePolicy struct {
 	_ struct{} `type:"structure"`
 
@@ -7152,7 +7078,6 @@ func (s *ResourcePolicy) SetPolicyName(v string) *ResourcePolicy {
 }
 
 // Represents the search status of a log stream.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/SearchedLogStream
 type SearchedLogStream struct {
 	_ struct{} `type:"structure"`
 
@@ -7186,7 +7111,6 @@ func (s *SearchedLogStream) SetSearchedCompletely(v bool) *SearchedLogStream {
 }
 
 // Represents a subscription filter.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/SubscriptionFilter
 type SubscriptionFilter struct {
 	_ struct{} `type:"structure"`
 
@@ -7268,7 +7192,6 @@ func (s *SubscriptionFilter) SetRoleArn(v string) *SubscriptionFilter {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/TagLogGroupRequest
 type TagLogGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7327,7 +7250,6 @@ func (s *TagLogGroupInput) SetTags(v map[string]*string) *TagLogGroupInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/TagLogGroupOutput
 type TagLogGroupOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -7342,7 +7264,6 @@ func (s TagLogGroupOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/TestMetricFilterRequest
 type TestMetricFilterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7401,7 +7322,6 @@ func (s *TestMetricFilterInput) SetLogEventMessages(v []*string) *TestMetricFilt
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/TestMetricFilterResponse
 type TestMetricFilterOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7425,7 +7345,6 @@ func (s *TestMetricFilterOutput) SetMatches(v []*MetricFilterMatchRecord) *TestM
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/UntagLogGroupRequest
 type UntagLogGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7484,7 +7403,6 @@ func (s *UntagLogGroupInput) SetTags(v []*string) *UntagLogGroupInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/UntagLogGroupOutput
 type UntagLogGroupOutput struct {
 	_ struct{} `type:"structure"`
 }

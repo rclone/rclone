@@ -42,14 +42,14 @@ func NewPartnersClientWithBaseURI(baseURI string, subscriptionID string) Partner
 
 // CreateOrUpdate creates or updates an integration account partner.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. partnerName is
-// the integration account partner name. partner is the integration account partner.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
+// partnerName is the integration account partner name. partner is the integration account partner.
 func (client PartnersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, integrationAccountName string, partnerName string, partner IntegrationAccountPartner) (result IntegrationAccountPartner, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: partner,
 			Constraints: []validation.Constraint{{Target: "partner.IntegrationAccountPartnerProperties", Name: validation.Null, Rule: true,
 				Chain: []validation.Constraint{{Target: "partner.IntegrationAccountPartnerProperties.Content", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "logic.PartnersClient", "CreateOrUpdate")
+		return result, validation.NewError("logic.PartnersClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, integrationAccountName, partnerName, partner)
@@ -119,8 +119,8 @@ func (client PartnersClient) CreateOrUpdateResponder(resp *http.Response) (resul
 
 // Delete deletes an integration account partner.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. partnerName is
-// the integration account partner name.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
+// partnerName is the integration account partner name.
 func (client PartnersClient) Delete(ctx context.Context, resourceGroupName string, integrationAccountName string, partnerName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, integrationAccountName, partnerName)
 	if err != nil {
@@ -186,8 +186,8 @@ func (client PartnersClient) DeleteResponder(resp *http.Response) (result autore
 
 // Get gets an integration account partner.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. partnerName is
-// the integration account partner name.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
+// partnerName is the integration account partner name.
 func (client PartnersClient) Get(ctx context.Context, resourceGroupName string, integrationAccountName string, partnerName string) (result IntegrationAccountPartner, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, integrationAccountName, partnerName)
 	if err != nil {

@@ -47,8 +47,8 @@ func NewPortsClientWithBaseURI(baseURI string, subscriptionID string) PortsClien
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
 // containing the resources of interest. machineName is machine resource name. portName is port resource name.
 // startTime is UTC date and time specifying the start time of an interval. When not specified the service uses
-// DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an interval. When not specified the
-// service uses DateTime.UtcNow
+// DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an interval. When not specified
+// the service uses DateTime.UtcNow
 func (client PortsClient) Get(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, portName string, startTime *date.Time, endTime *date.Time) (result Port, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -65,7 +65,7 @@ func (client PortsClient) Get(ctx context.Context, resourceGroupName string, wor
 		{TargetValue: portName,
 			Constraints: []validation.Constraint{{Target: "portName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "portName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.PortsClient", "Get")
+		return result, validation.NewError("servicemap.PortsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, workspaceName, machineName, portName, startTime, endTime)
@@ -143,8 +143,8 @@ func (client PortsClient) GetResponder(resp *http.Response) (result Port, err er
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
 // containing the resources of interest. machineName is machine resource name. portName is port resource name.
 // startTime is UTC date and time specifying the start time of an interval. When not specified the service uses
-// DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an interval. When not specified the
-// service uses DateTime.UtcNow
+// DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an interval. When not specified
+// the service uses DateTime.UtcNow
 func (client PortsClient) GetLiveness(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, portName string, startTime *date.Time, endTime *date.Time) (result Liveness, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -161,7 +161,7 @@ func (client PortsClient) GetLiveness(ctx context.Context, resourceGroupName str
 		{TargetValue: portName,
 			Constraints: []validation.Constraint{{Target: "portName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "portName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.PortsClient", "GetLiveness")
+		return result, validation.NewError("servicemap.PortsClient", "GetLiveness", err.Error())
 	}
 
 	req, err := client.GetLivenessPreparer(ctx, resourceGroupName, workspaceName, machineName, portName, startTime, endTime)
@@ -239,8 +239,8 @@ func (client PortsClient) GetLivenessResponder(resp *http.Response) (result Live
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
 // containing the resources of interest. machineName is machine resource name. portName is port resource name.
 // startTime is UTC date and time specifying the start time of an interval. When not specified the service uses
-// DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an interval. When not specified the
-// service uses DateTime.UtcNow
+// DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an interval. When not specified
+// the service uses DateTime.UtcNow
 func (client PortsClient) ListAcceptingProcesses(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, portName string, startTime *date.Time, endTime *date.Time) (result ProcessCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -257,7 +257,7 @@ func (client PortsClient) ListAcceptingProcesses(ctx context.Context, resourceGr
 		{TargetValue: portName,
 			Constraints: []validation.Constraint{{Target: "portName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "portName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.PortsClient", "ListAcceptingProcesses")
+		return result, validation.NewError("servicemap.PortsClient", "ListAcceptingProcesses", err.Error())
 	}
 
 	result.fn = client.listAcceptingProcessesNextResults
@@ -363,8 +363,8 @@ func (client PortsClient) ListAcceptingProcessesComplete(ctx context.Context, re
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
 // containing the resources of interest. machineName is machine resource name. portName is port resource name.
 // startTime is UTC date and time specifying the start time of an interval. When not specified the service uses
-// DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an interval. When not specified the
-// service uses DateTime.UtcNow
+// DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an interval. When not specified
+// the service uses DateTime.UtcNow
 func (client PortsClient) ListConnections(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, portName string, startTime *date.Time, endTime *date.Time) (result ConnectionCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -381,7 +381,7 @@ func (client PortsClient) ListConnections(ctx context.Context, resourceGroupName
 		{TargetValue: portName,
 			Constraints: []validation.Constraint{{Target: "portName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "portName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.PortsClient", "ListConnections")
+		return result, validation.NewError("servicemap.PortsClient", "ListConnections", err.Error())
 	}
 
 	result.fn = client.listConnectionsNextResults

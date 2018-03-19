@@ -389,8 +389,8 @@ type Avail struct {
 }
 
 func (s *Avail) MarshalJSON() ([]byte, error) {
-	type noMethod Avail
-	raw := noMethod(*s)
+	type NoMethod Avail
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -428,8 +428,8 @@ type ListAvailsResponse struct {
 }
 
 func (s *ListAvailsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListAvailsResponse
-	raw := noMethod(*s)
+	type NoMethod ListAvailsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -467,8 +467,8 @@ type ListOrdersResponse struct {
 }
 
 func (s *ListOrdersResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListOrdersResponse
-	raw := noMethod(*s)
+	type NoMethod ListOrdersResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -506,8 +506,8 @@ type ListStoreInfosResponse struct {
 }
 
 func (s *ListStoreInfosResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListStoreInfosResponse
-	raw := noMethod(*s)
+	type NoMethod ListStoreInfosResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -698,18 +698,18 @@ type Order struct {
 }
 
 func (s *Order) MarshalJSON() ([]byte, error) {
-	type noMethod Order
-	raw := noMethod(*s)
+	type NoMethod Order
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *Order) UnmarshalJSON(data []byte) error {
-	type noMethod Order
+	type NoMethod Order
 	var s1 struct {
 		Priority gensupport.JSONFloat64 `json:"priority"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -872,8 +872,8 @@ type StoreInfo struct {
 }
 
 func (s *StoreInfo) MarshalJSON() ([]byte, error) {
-	type noMethod StoreInfo
-	raw := noMethod(*s)
+	type NoMethod StoreInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -987,7 +987,7 @@ func (c *AccountsAvailsGetCall) Do(opts ...googleapi.CallOption) (*Avail, error)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1206,7 +1206,7 @@ func (c *AccountsAvailsListCall) Do(opts ...googleapi.CallOption) (*ListAvailsRe
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1422,7 +1422,7 @@ func (c *AccountsOrdersGetCall) Do(opts ...googleapi.CallOption) (*Order, error)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1635,7 +1635,7 @@ func (c *AccountsOrdersListCall) Do(opts ...googleapi.CallOption) (*ListOrdersRe
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1926,7 +1926,7 @@ func (c *AccountsStoreInfosListCall) Do(opts ...googleapi.CallOption) (*ListStor
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2151,7 +2151,7 @@ func (c *AccountsStoreInfosCountryGetCall) Do(opts ...googleapi.CallOption) (*St
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

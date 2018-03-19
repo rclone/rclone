@@ -47,7 +47,7 @@ func (client NodeReportsClient) Get(ctx context.Context, automationAccountName s
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.NodeReportsClient", "Get")
+		return result, validation.NewError("automation.NodeReportsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, nodeID, reportID)
@@ -121,7 +121,7 @@ func (client NodeReportsClient) GetContent(ctx context.Context, automationAccoun
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.NodeReportsClient", "GetContent")
+		return result, validation.NewError("automation.NodeReportsClient", "GetContent", err.Error())
 	}
 
 	req, err := client.GetContentPreparer(ctx, automationAccountName, nodeID, reportID)
@@ -195,7 +195,7 @@ func (client NodeReportsClient) ListByNode(ctx context.Context, automationAccoun
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.NodeReportsClient", "ListByNode")
+		return result, validation.NewError("automation.NodeReportsClient", "ListByNode", err.Error())
 	}
 
 	result.fn = client.listByNodeNextResults

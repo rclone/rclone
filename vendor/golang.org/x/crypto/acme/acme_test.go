@@ -549,6 +549,34 @@ func TestWaitAuthorizationInvalid(t *testing.T) {
 	}
 }
 
+func TestWaitAuthorizationClientError(t *testing.T) {
+	const code = http.StatusBadRequest
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(code)
+	}))
+	defer ts.Close()
+
+	ch := make(chan error, 1)
+	go func() {
+		var client Client
+		_, err := client.WaitAuthorization(context.Background(), ts.URL)
+		ch <- err
+	}()
+
+	select {
+	case <-time.After(3 * time.Second):
+		t.Fatal("WaitAuthz took too long to return")
+	case err := <-ch:
+		res, ok := err.(*Error)
+		if !ok {
+			t.Fatalf("err is %v (%T); want a non-nil *Error", err, err)
+		}
+		if res.StatusCode != code {
+			t.Errorf("res.StatusCode = %d; want %d", res.StatusCode, code)
+		}
+	}
+}
+
 func TestWaitAuthorizationCancel(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Retry-After", "60")

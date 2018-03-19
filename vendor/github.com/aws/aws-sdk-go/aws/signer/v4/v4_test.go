@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -61,17 +62,42 @@ func TestStripExcessHeaders(t *testing.T) {
 }
 
 func buildRequest(serviceName, region, body string) (*http.Request, io.ReadSeeker) {
-	endpoint := "https://" + serviceName + "." + region + ".amazonaws.com"
 	reader := strings.NewReader(body)
-	req, _ := http.NewRequest("POST", endpoint, reader)
+	return buildRequestWithBodyReader(serviceName, region, reader)
+}
+
+func buildRequestWithBodyReader(serviceName, region string, body io.Reader) (*http.Request, io.ReadSeeker) {
+	var bodyLen int
+
+	type lenner interface {
+		Len() int
+	}
+	if lr, ok := body.(lenner); ok {
+		bodyLen = lr.Len()
+	}
+
+	endpoint := "https://" + serviceName + "." + region + ".amazonaws.com"
+	req, _ := http.NewRequest("POST", endpoint, body)
 	req.URL.Opaque = "//example.org/bucket/key-._~,!@#$%^&*()"
-	req.Header.Add("X-Amz-Target", "prefix.Operation")
-	req.Header.Add("Content-Type", "application/x-amz-json-1.0")
-	req.Header.Add("Content-Length", string(len(body)))
-	req.Header.Add("X-Amz-Meta-Other-Header", "some-value=!@#$%^&* (+)")
+	req.Header.Set("X-Amz-Target", "prefix.Operation")
+	req.Header.Set("Content-Type", "application/x-amz-json-1.0")
+
+	if bodyLen > 0 {
+		req.Header.Set("Content-Length", strconv.Itoa(bodyLen))
+	}
+
+	req.Header.Set("X-Amz-Meta-Other-Header", "some-value=!@#$%^&* (+)")
 	req.Header.Add("X-Amz-Meta-Other-Header_With_Underscore", "some-value=!@#$%^&* (+)")
 	req.Header.Add("X-amz-Meta-Other-Header_With_Underscore", "some-value=!@#$%^&* (+)")
-	return req, reader
+
+	var seeker io.ReadSeeker
+	if sr, ok := body.(io.ReadSeeker); ok {
+		seeker = sr
+	} else {
+		seeker = aws.ReadSeekCloser(body)
+	}
+
+	return req, seeker
 }
 
 func buildSigner() Signer {
@@ -101,7 +127,7 @@ func TestPresignRequest(t *testing.T) {
 
 	expectedDate := "19700101T000000Z"
 	expectedHeaders := "content-length;content-type;host;x-amz-meta-other-header;x-amz-meta-other-header_with_underscore"
-	expectedSig := "ea7856749041f727690c580569738282e99c79355fe0d8f125d3b5535d2ece83"
+	expectedSig := "122f0b9e091e4ba84286097e2b3404a1f1f4c4aad479adda95b7dff0ccbe5581"
 	expectedCred := "AKID/19700101/us-east-1/dynamodb/aws4_request"
 	expectedTarget := "prefix.Operation"
 
@@ -135,7 +161,7 @@ func TestPresignBodyWithArrayRequest(t *testing.T) {
 
 	expectedDate := "19700101T000000Z"
 	expectedHeaders := "content-length;content-type;host;x-amz-meta-other-header;x-amz-meta-other-header_with_underscore"
-	expectedSig := "fef6002062400bbf526d70f1a6456abc0fb2e213fe1416012737eebd42a62924"
+	expectedSig := "e3ac55addee8711b76c6d608d762cff285fe8b627a057f8b5ec9268cf82c08b1"
 	expectedCred := "AKID/19700101/us-east-1/dynamodb/aws4_request"
 	expectedTarget := "prefix.Operation"
 
@@ -166,14 +192,14 @@ func TestSignRequest(t *testing.T) {
 	signer.Sign(req, body, "dynamodb", "us-east-1", time.Unix(0, 0))
 
 	expectedDate := "19700101T000000Z"
-	expectedSig := "AWS4-HMAC-SHA256 Credential=AKID/19700101/us-east-1/dynamodb/aws4_request, SignedHeaders=content-length;content-type;host;x-amz-date;x-amz-meta-other-header;x-amz-meta-other-header_with_underscore;x-amz-security-token;x-amz-target, Signature=ea766cabd2ec977d955a3c2bae1ae54f4515d70752f2207618396f20aa85bd21"
+	expectedSig := "AWS4-HMAC-SHA256 Credential=AKID/19700101/us-east-1/dynamodb/aws4_request, SignedHeaders=content-length;content-type;host;x-amz-date;x-amz-meta-other-header;x-amz-meta-other-header_with_underscore;x-amz-security-token;x-amz-target, Signature=a518299330494908a70222cec6899f6f32f297f8595f6df1776d998936652ad9"
 
 	q := req.Header
 	if e, a := expectedSig, q.Get("Authorization"); e != a {
-		t.Errorf("expect %v, got %v", e, a)
+		t.Errorf("expect\n%v\nactual\n%v\n", e, a)
 	}
 	if e, a := expectedDate, q.Get("X-Amz-Date"); e != a {
-		t.Errorf("expect %v, got %v", e, a)
+		t.Errorf("expect\n%v\nactual\n%v\n", e, a)
 	}
 }
 
@@ -203,6 +229,53 @@ func TestPresignEmptyBodyS3(t *testing.T) {
 	signer.Presign(req, body, "s3", "us-east-1", 5*time.Minute, time.Now())
 	hash := req.Header.Get("X-Amz-Content-Sha256")
 	if e, a := "UNSIGNED-PAYLOAD", hash; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+}
+
+func TestSignUnseekableBody(t *testing.T) {
+	req, body := buildRequestWithBodyReader("mock-service", "mock-region", bytes.NewBuffer([]byte("hello")))
+	signer := buildSigner()
+	_, err := signer.Sign(req, body, "mock-service", "mock-region", time.Now())
+	if err == nil {
+		t.Fatalf("expect error signing request")
+	}
+
+	if e, a := "unseekable request body", err.Error(); !strings.Contains(a, e) {
+		t.Errorf("expect %q to be in %q", e, a)
+	}
+}
+
+func TestSignUnsignedPayloadUnseekableBody(t *testing.T) {
+	req, body := buildRequestWithBodyReader("mock-service", "mock-region", bytes.NewBuffer([]byte("hello")))
+
+	signer := buildSigner()
+	signer.UnsignedPayload = true
+
+	_, err := signer.Sign(req, body, "mock-service", "mock-region", time.Now())
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+
+	hash := req.Header.Get("X-Amz-Content-Sha256")
+	if e, a := "UNSIGNED-PAYLOAD", hash; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+}
+
+func TestSignPreComputedHashUnseekableBody(t *testing.T) {
+	req, body := buildRequestWithBodyReader("mock-service", "mock-region", bytes.NewBuffer([]byte("hello")))
+
+	signer := buildSigner()
+
+	req.Header.Set("X-Amz-Content-Sha256", "some-content-sha256")
+	_, err := signer.Sign(req, body, "mock-service", "mock-region", time.Now())
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+
+	hash := req.Header.Get("X-Amz-Content-Sha256")
+	if e, a := "some-content-sha256", hash; e != a {
 		t.Errorf("expect %v, got %v", e, a)
 	}
 }

@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -214,7 +214,7 @@ func TestDatabaseAdminListDatabases(t *testing.T) {
 
 	mockDatabaseAdmin.resps = append(mockDatabaseAdmin.resps[:0], expectedResponse)
 
-	var formattedParent string = DatabaseAdminInstancePath("[PROJECT]", "[INSTANCE]")
+	var formattedParent string = fmt.Sprintf("projects/%s/instances/%s", "[PROJECT]", "[INSTANCE]")
 	var request = &databasepb.ListDatabasesRequest{
 		Parent: formattedParent,
 	}
@@ -253,7 +253,7 @@ func TestDatabaseAdminListDatabasesError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDatabaseAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = DatabaseAdminInstancePath("[PROJECT]", "[INSTANCE]")
+	var formattedParent string = fmt.Sprintf("projects/%s/instances/%s", "[PROJECT]", "[INSTANCE]")
 	var request = &databasepb.ListDatabasesRequest{
 		Parent: formattedParent,
 	}
@@ -291,7 +291,7 @@ func TestDatabaseAdminCreateDatabase(t *testing.T) {
 		Result: &longrunningpb.Operation_Response{Response: any},
 	})
 
-	var formattedParent string = DatabaseAdminInstancePath("[PROJECT]", "[INSTANCE]")
+	var formattedParent string = fmt.Sprintf("projects/%s/instances/%s", "[PROJECT]", "[INSTANCE]")
 	var createStatement string = "createStatement552974828"
 	var request = &databasepb.CreateDatabaseRequest{
 		Parent:          formattedParent,
@@ -336,7 +336,7 @@ func TestDatabaseAdminCreateDatabaseError(t *testing.T) {
 		},
 	})
 
-	var formattedParent string = DatabaseAdminInstancePath("[PROJECT]", "[INSTANCE]")
+	var formattedParent string = fmt.Sprintf("projects/%s/instances/%s", "[PROJECT]", "[INSTANCE]")
 	var createStatement string = "createStatement552974828"
 	var request = &databasepb.CreateDatabaseRequest{
 		Parent:          formattedParent,
@@ -372,7 +372,7 @@ func TestDatabaseAdminGetDatabase(t *testing.T) {
 
 	mockDatabaseAdmin.resps = append(mockDatabaseAdmin.resps[:0], expectedResponse)
 
-	var formattedName string = DatabaseAdminDatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedName string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var request = &databasepb.GetDatabaseRequest{
 		Name: formattedName,
 	}
@@ -401,7 +401,7 @@ func TestDatabaseAdminGetDatabaseError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDatabaseAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = DatabaseAdminDatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedName string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var request = &databasepb.GetDatabaseRequest{
 		Name: formattedName,
 	}
@@ -436,7 +436,7 @@ func TestDatabaseAdminUpdateDatabaseDdl(t *testing.T) {
 		Result: &longrunningpb.Operation_Response{Response: any},
 	})
 
-	var formattedDatabase string = DatabaseAdminDatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var statements []string = nil
 	var request = &databasepb.UpdateDatabaseDdlRequest{
 		Database:   formattedDatabase,
@@ -478,7 +478,7 @@ func TestDatabaseAdminUpdateDatabaseDdlError(t *testing.T) {
 		},
 	})
 
-	var formattedDatabase string = DatabaseAdminDatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var statements []string = nil
 	var request = &databasepb.UpdateDatabaseDdlRequest{
 		Database:   formattedDatabase,
@@ -510,7 +510,7 @@ func TestDatabaseAdminDropDatabase(t *testing.T) {
 
 	mockDatabaseAdmin.resps = append(mockDatabaseAdmin.resps[:0], expectedResponse)
 
-	var formattedDatabase string = DatabaseAdminDatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var request = &databasepb.DropDatabaseRequest{
 		Database: formattedDatabase,
 	}
@@ -536,7 +536,7 @@ func TestDatabaseAdminDropDatabaseError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDatabaseAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedDatabase string = DatabaseAdminDatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var request = &databasepb.DropDatabaseRequest{
 		Database: formattedDatabase,
 	}
@@ -562,7 +562,7 @@ func TestDatabaseAdminGetDatabaseDdl(t *testing.T) {
 
 	mockDatabaseAdmin.resps = append(mockDatabaseAdmin.resps[:0], expectedResponse)
 
-	var formattedDatabase string = DatabaseAdminDatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var request = &databasepb.GetDatabaseDdlRequest{
 		Database: formattedDatabase,
 	}
@@ -591,7 +591,7 @@ func TestDatabaseAdminGetDatabaseDdlError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDatabaseAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedDatabase string = DatabaseAdminDatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var request = &databasepb.GetDatabaseDdlRequest{
 		Database: formattedDatabase,
 	}
@@ -623,7 +623,7 @@ func TestDatabaseAdminSetIamPolicy(t *testing.T) {
 
 	mockDatabaseAdmin.resps = append(mockDatabaseAdmin.resps[:0], expectedResponse)
 
-	var formattedResource string = DatabaseAdminDatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedResource string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var policy *iampb.Policy = &iampb.Policy{}
 	var request = &iampb.SetIamPolicyRequest{
 		Resource: formattedResource,
@@ -654,7 +654,7 @@ func TestDatabaseAdminSetIamPolicyError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDatabaseAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedResource string = DatabaseAdminDatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedResource string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var policy *iampb.Policy = &iampb.Policy{}
 	var request = &iampb.SetIamPolicyRequest{
 		Resource: formattedResource,
@@ -688,7 +688,7 @@ func TestDatabaseAdminGetIamPolicy(t *testing.T) {
 
 	mockDatabaseAdmin.resps = append(mockDatabaseAdmin.resps[:0], expectedResponse)
 
-	var formattedResource string = DatabaseAdminDatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedResource string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var request = &iampb.GetIamPolicyRequest{
 		Resource: formattedResource,
 	}
@@ -717,7 +717,7 @@ func TestDatabaseAdminGetIamPolicyError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDatabaseAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedResource string = DatabaseAdminDatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedResource string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var request = &iampb.GetIamPolicyRequest{
 		Resource: formattedResource,
 	}
@@ -744,7 +744,7 @@ func TestDatabaseAdminTestIamPermissions(t *testing.T) {
 
 	mockDatabaseAdmin.resps = append(mockDatabaseAdmin.resps[:0], expectedResponse)
 
-	var formattedResource string = DatabaseAdminDatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedResource string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var permissions []string = nil
 	var request = &iampb.TestIamPermissionsRequest{
 		Resource:    formattedResource,
@@ -775,7 +775,7 @@ func TestDatabaseAdminTestIamPermissionsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDatabaseAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedResource string = DatabaseAdminDatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedResource string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var permissions []string = nil
 	var request = &iampb.TestIamPermissionsRequest{
 		Resource:    formattedResource,

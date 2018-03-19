@@ -380,6 +380,14 @@ type GetObjectOutput struct {
 	XQSEncryptionCustomerAlgorithm *string `json:"X-QS-Encryption-Customer-Algorithm,omitempty" name:"X-QS-Encryption-Customer-Algorithm" location:"headers"`
 }
 
+// Close will close the underlay body.
+func (o *GetObjectOutput) Close() (err error) {
+	if o.Body != nil {
+		return o.Body.Close()
+	}
+	return
+}
+
 // HeadObject does Check whether the object exists and available.
 // Documentation URL: https://docs.qingcloud.com/qingstor/api/object/head.html
 func (s *Bucket) HeadObject(objectKey string, input *HeadObjectInput) (*HeadObjectOutput, error) {
@@ -569,6 +577,14 @@ type ImageProcessOutput struct {
 
 	// Object content length
 	ContentLength *int64 `json:"Content-Length,omitempty" name:"Content-Length" location:"headers"`
+}
+
+// Close will close the underlay body.
+func (o *ImageProcessOutput) Close() (err error) {
+	if o.Body != nil {
+		return o.Body.Close()
+	}
+	return
 }
 
 // InitiateMultipartUpload does Initial multipart upload on the object.

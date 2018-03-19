@@ -41,8 +41,8 @@ func NewBitLockerKeysClientWithBaseURI(baseURI string, subscriptionID string, ac
 
 // List returns the BitLocker Keys for all drives in the specified job.
 //
-// jobName is the name of the import/export job. resourceGroupName is the resource group name uniquely identifies the
-// resource group within the user subscription.
+// jobName is the name of the import/export job. resourceGroupName is the resource group name uniquely identifies
+// the resource group within the user subscription.
 func (client BitLockerKeysClient) List(ctx context.Context, jobName string, resourceGroupName string) (result GetBitLockerKeysResponse, err error) {
 	req, err := client.ListPreparer(ctx, jobName, resourceGroupName)
 	if err != nil {

@@ -41,8 +41,8 @@ func NewVirtualNetworkClientWithBaseURI(baseURI string, subscriptionID string) V
 
 // CreateOrUpdateResource create or replace an existing virtual network. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// network.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual network.
 func (client VirtualNetworkClient) CreateOrUpdateResource(ctx context.Context, resourceGroupName string, labName string, name string, virtualNetwork VirtualNetwork) (result VirtualNetworkCreateOrUpdateResourceFuture, err error) {
 	req, err := client.CreateOrUpdateResourcePreparer(ctx, resourceGroupName, labName, name, virtualNetwork)
 	if err != nil {
@@ -113,8 +113,8 @@ func (client VirtualNetworkClient) CreateOrUpdateResourceResponder(resp *http.Re
 
 // DeleteResource delete virtual network. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// network.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual network.
 func (client VirtualNetworkClient) DeleteResource(ctx context.Context, resourceGroupName string, labName string, name string) (result VirtualNetworkDeleteResourceFuture, err error) {
 	req, err := client.DeleteResourcePreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -182,8 +182,8 @@ func (client VirtualNetworkClient) DeleteResourceResponder(resp *http.Response) 
 
 // GetResource get virtual network.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// network.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual network.
 func (client VirtualNetworkClient) GetResource(ctx context.Context, resourceGroupName string, labName string, name string) (result VirtualNetwork, err error) {
 	req, err := client.GetResourcePreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -250,8 +250,8 @@ func (client VirtualNetworkClient) GetResourceResponder(resp *http.Response) (re
 
 // List list virtual networks.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to apply
-// on the operation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to
+// apply on the operation.
 func (client VirtualNetworkClient) List(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (result ResponseWithContinuationVirtualNetworkPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, filter, top, orderBy)
@@ -354,8 +354,8 @@ func (client VirtualNetworkClient) ListComplete(ctx context.Context, resourceGro
 
 // PatchResource modify properties of virtual networks.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// network.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual network.
 func (client VirtualNetworkClient) PatchResource(ctx context.Context, resourceGroupName string, labName string, name string, virtualNetwork VirtualNetwork) (result VirtualNetwork, err error) {
 	req, err := client.PatchResourcePreparer(ctx, resourceGroupName, labName, name, virtualNetwork)
 	if err != nil {

@@ -43,8 +43,8 @@ func NewServersClientWithBaseURI(baseURI string, subscriptionID string) ServersC
 
 // CheckNameAvailability check the name availability in the target location.
 //
-// location is the region name which the operation will lookup into. serverParameters is contains the information used
-// to provision the Analysis Services server.
+// location is the region name which the operation will lookup into. serverParameters is contains the information
+// used to provision the Analysis Services server.
 func (client ServersClient) CheckNameAvailability(ctx context.Context, location string, serverParameters CheckServerNameAvailabilityParameters) (result CheckServerNameAvailabilityResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serverParameters,
@@ -53,7 +53,7 @@ func (client ServersClient) CheckNameAvailability(ctx context.Context, location 
 					{Target: "serverParameters.Name", Name: validation.MinLength, Rule: 3, Chain: nil},
 					{Target: "serverParameters.Name", Name: validation.Pattern, Rule: `^[a-z][a-z0-9]*$`, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "analysisservices.ServersClient", "CheckNameAvailability")
+		return result, validation.NewError("analysisservices.ServersClient", "CheckNameAvailability", err.Error())
 	}
 
 	req, err := client.CheckNameAvailabilityPreparer(ctx, location, serverParameters)
@@ -121,10 +121,10 @@ func (client ServersClient) CheckNameAvailabilityResponder(resp *http.Response) 
 
 // Create provisions the specified Analysis Services server based on the configuration specified in the request.
 //
-// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part. This
-// name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis Services
-// server. It must be a minimum of 3 characters, and a maximum of 63. serverParameters is contains the information used
-// to provision the Analysis Services server.
+// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part.
+// This name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis
+// Services server. It must be a minimum of 3 characters, and a maximum of 63. serverParameters is contains the
+// information used to provision the Analysis Services server.
 func (client ServersClient) Create(ctx context.Context, resourceGroupName string, serverName string, serverParameters Server) (result ServersCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -135,7 +135,7 @@ func (client ServersClient) Create(ctx context.Context, resourceGroupName string
 			Constraints: []validation.Constraint{{Target: "serverName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "serverName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "serverName", Name: validation.Pattern, Rule: `^[a-z][a-z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "analysisservices.ServersClient", "Create")
+		return result, validation.NewError("analysisservices.ServersClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, serverName, serverParameters)
@@ -206,9 +206,9 @@ func (client ServersClient) CreateResponder(resp *http.Response) (result Server,
 
 // Delete deletes the specified Analysis Services server.
 //
-// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part. This
-// name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis Services
-// server. It must be at least 3 characters in length, and no more than 63.
+// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part.
+// This name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis
+// Services server. It must be at least 3 characters in length, and no more than 63.
 func (client ServersClient) Delete(ctx context.Context, resourceGroupName string, serverName string) (result ServersDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -219,7 +219,7 @@ func (client ServersClient) Delete(ctx context.Context, resourceGroupName string
 			Constraints: []validation.Constraint{{Target: "serverName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "serverName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "serverName", Name: validation.Pattern, Rule: `^[a-z][a-z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "analysisservices.ServersClient", "Delete")
+		return result, validation.NewError("analysisservices.ServersClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName)
@@ -287,9 +287,9 @@ func (client ServersClient) DeleteResponder(resp *http.Response) (result autores
 
 // DissociateGateway dissociates a Unified Gateway associated with the server.
 //
-// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part. This
-// name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis Services
-// server. It must be at least 3 characters in length, and no more than 63.
+// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part.
+// This name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis
+// Services server. It must be at least 3 characters in length, and no more than 63.
 func (client ServersClient) DissociateGateway(ctx context.Context, resourceGroupName string, serverName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -300,7 +300,7 @@ func (client ServersClient) DissociateGateway(ctx context.Context, resourceGroup
 			Constraints: []validation.Constraint{{Target: "serverName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "serverName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "serverName", Name: validation.Pattern, Rule: `^[a-z][a-z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "analysisservices.ServersClient", "DissociateGateway")
+		return result, validation.NewError("analysisservices.ServersClient", "DissociateGateway", err.Error())
 	}
 
 	req, err := client.DissociateGatewayPreparer(ctx, resourceGroupName, serverName)
@@ -366,9 +366,9 @@ func (client ServersClient) DissociateGatewayResponder(resp *http.Response) (res
 
 // GetDetails gets details about the specified Analysis Services server.
 //
-// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part. This
-// name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis Services
-// server. It must be a minimum of 3 characters, and a maximum of 63.
+// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part.
+// This name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis
+// Services server. It must be a minimum of 3 characters, and a maximum of 63.
 func (client ServersClient) GetDetails(ctx context.Context, resourceGroupName string, serverName string) (result Server, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -379,7 +379,7 @@ func (client ServersClient) GetDetails(ctx context.Context, resourceGroupName st
 			Constraints: []validation.Constraint{{Target: "serverName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "serverName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "serverName", Name: validation.Pattern, Rule: `^[a-z][a-z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "analysisservices.ServersClient", "GetDetails")
+		return result, validation.NewError("analysisservices.ServersClient", "GetDetails", err.Error())
 	}
 
 	req, err := client.GetDetailsPreparer(ctx, resourceGroupName, serverName)
@@ -508,15 +508,15 @@ func (client ServersClient) ListResponder(resp *http.Response) (result Servers, 
 
 // ListByResourceGroup gets all the Analysis Services servers for the given resource group.
 //
-// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part. This
-// name must be at least 1 character in length, and no more than 90.
+// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part.
+// This name must be at least 1 character in length, and no more than 90.
 func (client ServersClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result Servers, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "analysisservices.ServersClient", "ListByResourceGroup")
+		return result, validation.NewError("analysisservices.ServersClient", "ListByResourceGroup", err.Error())
 	}
 
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
@@ -582,9 +582,9 @@ func (client ServersClient) ListByResourceGroupResponder(resp *http.Response) (r
 
 // ListGatewayStatus return the gateway status of the specified Analysis Services server instance.
 //
-// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part. This
-// name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis Services
-// server. It must be at least 3 characters in length, and no more than 63.
+// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part.
+// This name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis
+// Services server. It must be at least 3 characters in length, and no more than 63.
 func (client ServersClient) ListGatewayStatus(ctx context.Context, resourceGroupName string, serverName string) (result GatewayListStatusLive, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -595,7 +595,7 @@ func (client ServersClient) ListGatewayStatus(ctx context.Context, resourceGroup
 			Constraints: []validation.Constraint{{Target: "serverName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "serverName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "serverName", Name: validation.Pattern, Rule: `^[a-z][a-z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "analysisservices.ServersClient", "ListGatewayStatus")
+		return result, validation.NewError("analysisservices.ServersClient", "ListGatewayStatus", err.Error())
 	}
 
 	req, err := client.ListGatewayStatusPreparer(ctx, resourceGroupName, serverName)
@@ -793,9 +793,9 @@ func (client ServersClient) ListOperationStatusesResponder(resp *http.Response) 
 
 // ListSkusForExisting lists eligible SKUs for an Analysis Services resource.
 //
-// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part. This
-// name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis Services
-// server. It must be at least 3 characters in length, and no more than 63.
+// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part.
+// This name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis
+// Services server. It must be at least 3 characters in length, and no more than 63.
 func (client ServersClient) ListSkusForExisting(ctx context.Context, resourceGroupName string, serverName string) (result SkuEnumerationForExistingResourceResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -806,7 +806,7 @@ func (client ServersClient) ListSkusForExisting(ctx context.Context, resourceGro
 			Constraints: []validation.Constraint{{Target: "serverName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "serverName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "serverName", Name: validation.Pattern, Rule: `^[a-z][a-z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "analysisservices.ServersClient", "ListSkusForExisting")
+		return result, validation.NewError("analysisservices.ServersClient", "ListSkusForExisting", err.Error())
 	}
 
 	req, err := client.ListSkusForExistingPreparer(ctx, resourceGroupName, serverName)
@@ -935,9 +935,9 @@ func (client ServersClient) ListSkusForNewResponder(resp *http.Response) (result
 
 // Resume resumes operation of the specified Analysis Services server instance.
 //
-// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part. This
-// name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis Services
-// server. It must be at least 3 characters in length, and no more than 63.
+// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part.
+// This name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis
+// Services server. It must be at least 3 characters in length, and no more than 63.
 func (client ServersClient) Resume(ctx context.Context, resourceGroupName string, serverName string) (result ServersResumeFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -948,7 +948,7 @@ func (client ServersClient) Resume(ctx context.Context, resourceGroupName string
 			Constraints: []validation.Constraint{{Target: "serverName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "serverName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "serverName", Name: validation.Pattern, Rule: `^[a-z][a-z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "analysisservices.ServersClient", "Resume")
+		return result, validation.NewError("analysisservices.ServersClient", "Resume", err.Error())
 	}
 
 	req, err := client.ResumePreparer(ctx, resourceGroupName, serverName)
@@ -1016,9 +1016,9 @@ func (client ServersClient) ResumeResponder(resp *http.Response) (result autores
 
 // Suspend supends operation of the specified Analysis Services server instance.
 //
-// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part. This
-// name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis Services
-// server. It must be at least 3 characters in length, and no more than 63.
+// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part.
+// This name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis
+// Services server. It must be at least 3 characters in length, and no more than 63.
 func (client ServersClient) Suspend(ctx context.Context, resourceGroupName string, serverName string) (result ServersSuspendFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -1029,7 +1029,7 @@ func (client ServersClient) Suspend(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "serverName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "serverName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "serverName", Name: validation.Pattern, Rule: `^[a-z][a-z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "analysisservices.ServersClient", "Suspend")
+		return result, validation.NewError("analysisservices.ServersClient", "Suspend", err.Error())
 	}
 
 	req, err := client.SuspendPreparer(ctx, resourceGroupName, serverName)
@@ -1097,10 +1097,10 @@ func (client ServersClient) SuspendResponder(resp *http.Response) (result autore
 
 // Update updates the current state of the specified Analysis Services server.
 //
-// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part. This
-// name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis Services
-// server. It must be at least 3 characters in length, and no more than 63. serverUpdateParameters is request object
-// that contains the updated information for the server.
+// resourceGroupName is the name of the Azure Resource group of which a given Analysis Services server is part.
+// This name must be at least 1 character in length, and no more than 90. serverName is the name of the Analysis
+// Services server. It must be at least 3 characters in length, and no more than 63. serverUpdateParameters is
+// request object that contains the updated information for the server.
 func (client ServersClient) Update(ctx context.Context, resourceGroupName string, serverName string, serverUpdateParameters ServerUpdateParameters) (result ServersUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -1111,7 +1111,7 @@ func (client ServersClient) Update(ctx context.Context, resourceGroupName string
 			Constraints: []validation.Constraint{{Target: "serverName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "serverName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "serverName", Name: validation.Pattern, Rule: `^[a-z][a-z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "analysisservices.ServersClient", "Update")
+		return result, validation.NewError("analysisservices.ServersClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serverName, serverUpdateParameters)

@@ -640,6 +640,11 @@
       "refs": {
       }
     },
+    "PreconditionFailedException": {
+      "base": "<p>The RevisionId provided does not match the latest RevisionId for the Lambda function or alias. Call the <code>GetFunction</code> or the <code>GetAlias</code> API to retrieve the latest RevisionId for your resource.</p>",
+      "refs": {
+      }
+    },
     "Principal": {
       "base": null,
       "refs": {
@@ -712,7 +717,7 @@
     "Runtime": {
       "base": null,
       "refs": {
-        "CreateFunctionRequest$Runtime": "<p>The runtime environment for the Lambda function you are uploading.</p> <p>To use the Python runtime v3.6, set the value to \"python3.6\". To use the Python runtime v2.7, set the value to \"python2.7\". To use the Node.js runtime v6.10, set the value to \"nodejs6.10\". To use the Node.js runtime v4.3, set the value to \"nodejs4.3\".</p> <note> <p>Node v0.10.42 is currently marked as deprecated. You must migrate existing functions to the newer Node.js runtime versions available on AWS Lambda (nodejs4.3 or nodejs6.10) as soon as possible. Failure to do so will result in an invalid parmaeter error being returned. Note that you will have to follow this procedure for each region that contains functions written in the Node v0.10.42 runtime.</p> </note>",
+        "CreateFunctionRequest$Runtime": "<p>The runtime environment for the Lambda function you are uploading.</p> <p>To use the Python runtime v3.6, set the value to \"python3.6\". To use the Python runtime v2.7, set the value to \"python2.7\". To use the Node.js runtime v6.10, set the value to \"nodejs6.10\". To use the Node.js runtime v4.3, set the value to \"nodejs4.3\".</p> <note> <p>Node v0.10.42 is currently marked as deprecated. You must migrate existing functions to the newer Node.js runtime versions available on AWS Lambda (nodejs4.3 or nodejs6.10) as soon as possible. Failure to do so will result in an invalid parameter error being returned. Note that you will have to follow this procedure for each region that contains functions written in the Node v0.10.42 runtime.</p> </note>",
         "FunctionConfiguration$Runtime": "<p>The runtime environment for the Lambda function.</p>",
         "UpdateFunctionConfigurationRequest$Runtime": "<p>The runtime environment for the Lambda function.</p> <p>To use the Python runtime v3.6, set the value to \"python3.6\". To use the Python runtime v2.7, set the value to \"python2.7\". To use the Node.js runtime v6.10, set the value to \"nodejs6.10\". To use the Node.js runtime v4.3, set the value to \"nodejs4.3\". To use the Python runtime v3.6, set the value to \"python3.6\".</p> <note> <p>Node v0.10.42 is currently marked as deprecated. You must migrate existing functions to the newer Node.js runtime versions available on AWS Lambda (nodejs4.3 or nodejs6.10) as soon as possible. Failure to do so will result in an invalid parameter error being returned. Note that you will have to follow this procedure for each region that contains functions written in the Node v0.10.42 runtime.</p> </note>"
       }
@@ -777,7 +782,9 @@
     "String": {
       "base": null,
       "refs": {
+        "AddPermissionRequest$RevisionId": "<p>An optional value you can use to ensure you are updating the latest update of the function version or alias. If the <code>RevisionID</code> you pass doesn't match the latest <code>RevisionId</code> of the function or alias, it will fail with an error message, advising you to retrieve the latest function version or alias <code>RevisionID</code> using either or .</p>",
         "AddPermissionResponse$Statement": "<p>The permission statement you specified in the request. The response returns the same as a string using a backslash (\"\\\") as an escape character in the JSON.</p>",
+        "AliasConfiguration$RevisionId": "<p>Represents the latest updated revision of the function or alias.</p>",
         "CodeStorageExceededException$Type": "<p/>",
         "CodeStorageExceededException$message": null,
         "DeleteEventSourceMappingRequest$UUID": "<p>The event source mapping ID.</p>",
@@ -798,8 +805,10 @@
         "FunctionCodeLocation$RepositoryType": "<p>The repository from which you can download the function.</p>",
         "FunctionCodeLocation$Location": "<p>The presigned URL you can use to download the function's .zip file that you previously uploaded. The URL is valid for up to 10 minutes.</p>",
         "FunctionConfiguration$CodeSha256": "<p>It is the SHA256 hash of your function deployment package.</p>",
+        "FunctionConfiguration$RevisionId": "<p>Represents the latest updated revision of the function or alias.</p>",
         "GetEventSourceMappingRequest$UUID": "<p>The AWS Lambda assigned ID of the event source mapping.</p>",
         "GetPolicyResponse$Policy": "<p>The resource policy associated with the specified function. The response returns the same as a string using a backslash (\"\\\") as an escape character in the JSON.</p>",
+        "GetPolicyResponse$RevisionId": "<p>Represents the latest updated revision of the function or alias.</p>",
         "InvalidParameterValueException$Type": "<p/>",
         "InvalidParameterValueException$message": "<p/>",
         "InvalidRequestContentException$Type": "<p/>",
@@ -833,7 +842,11 @@
         "ListVersionsByFunctionResponse$NextMarker": "<p>A string, present if there are more function versions.</p>",
         "PolicyLengthExceededException$Type": null,
         "PolicyLengthExceededException$message": null,
+        "PreconditionFailedException$Type": "<p/>",
+        "PreconditionFailedException$message": "<p/>",
         "PublishVersionRequest$CodeSha256": "<p>The SHA256 hash of the deployment package you want to publish. This provides validation on the code you are publishing. If you provide this parameter, the value must match the SHA256 of the $LATEST version for the publication to succeed. You can use the <b>DryRun</b> parameter of <a>UpdateFunctionCode</a> to verify the hash value that will be returned before publishing your new version.</p>",
+        "PublishVersionRequest$RevisionId": "<p>An optional value you can use to ensure you are updating the latest update of the function version or alias. If the <code>RevisionID</code> you pass doesn't match the latest <code>RevisionId</code> of the function or alias, it will fail with an error message, advising you to retrieve the latest function version or alias <code>RevisionID</code> using either or .</p>",
+        "RemovePermissionRequest$RevisionId": "<p>An optional value you can use to ensure you are updating the latest update of the function version or alias. If the <code>RevisionID</code> you pass doesn't match the latest <code>RevisionId</code> of the function or alias, it will fail with an error message, advising you to retrieve the latest function version or alias <code>RevisionID</code> using either or .</p>",
         "RequestTooLargeException$Type": null,
         "RequestTooLargeException$message": null,
         "ResourceConflictException$Type": "<p/>",
@@ -849,7 +862,10 @@
         "TooManyRequestsException$message": null,
         "UnsupportedMediaTypeException$Type": null,
         "UnsupportedMediaTypeException$message": null,
-        "UpdateEventSourceMappingRequest$UUID": "<p>The event source mapping identifier.</p>"
+        "UpdateAliasRequest$RevisionId": "<p>An optional value you can use to ensure you are updating the latest update of the function version or alias. If the <code>RevisionID</code> you pass doesn't match the latest <code>RevisionId</code> of the function or alias, it will fail with an error message, advising you to retrieve the latest function version or alias <code>RevisionID</code> using either or .</p>",
+        "UpdateEventSourceMappingRequest$UUID": "<p>The event source mapping identifier.</p>",
+        "UpdateFunctionCodeRequest$RevisionId": "<p>An optional value you can use to ensure you are updating the latest update of the function version or alias. If the <code>RevisionID</code> you pass doesn't match the latest <code>RevisionId</code> of the function or alias, it will fail with an error message, advising you to retrieve the latest function version or alias <code>RevisionID</code> using either or .</p>",
+        "UpdateFunctionConfigurationRequest$RevisionId": "<p>An optional value you can use to ensure you are updating the latest update of the function version or alias. If the <code>RevisionID</code> you pass doesn't match the latest <code>RevisionId</code> of the function or alias, it will fail with an error message, advising you to retrieve the latest function version or alias <code>RevisionID</code> using either or .</p>"
       }
     },
     "SubnetIPAddressLimitReachedException": {

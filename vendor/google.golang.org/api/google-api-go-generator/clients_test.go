@@ -30,14 +30,14 @@ import (
 	"golang.org/x/net/context"
 
 	// If you add a client, add a matching go:generate line below.
-	dfa "google.golang.org/api/dfareporting/v2.7"
+	dfa "google.golang.org/api/dfareporting/v2.8"
 	mon "google.golang.org/api/monitoring/v3"
 	storage "google.golang.org/api/storage/v1"
 )
 
 //go:generate -command api go run gen.go docurls.go -install -api
 
-//go:generate api dfareporting:v2.7
+//go:generate api dfareporting:v2.8
 //go:generate api monitoring:v3
 //go:generate api storage:v1
 

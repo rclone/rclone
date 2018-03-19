@@ -1070,7 +1070,6 @@ func (c *Comprehend) StartTopicsDetectionJobWithContext(ctx aws.Context, input *
 	return out, req.Send()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/BatchDetectDominantLanguageRequest
 type BatchDetectDominantLanguageInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1113,7 +1112,6 @@ func (s *BatchDetectDominantLanguageInput) SetTextList(v []*string) *BatchDetect
 
 // The result of calling the operation. The operation returns one object for
 // each document that is successfully processed by the operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/BatchDetectDominantLanguageItemResult
 type BatchDetectDominantLanguageItemResult struct {
 	_ struct{} `type:"structure"`
 
@@ -1147,7 +1145,6 @@ func (s *BatchDetectDominantLanguageItemResult) SetLanguages(v []*DominantLangua
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/BatchDetectDominantLanguageResponse
 type BatchDetectDominantLanguageOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1190,7 +1187,6 @@ func (s *BatchDetectDominantLanguageOutput) SetResultList(v []*BatchDetectDomina
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/BatchDetectEntitiesRequest
 type BatchDetectEntitiesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1250,7 +1246,6 @@ func (s *BatchDetectEntitiesInput) SetTextList(v []*string) *BatchDetectEntities
 
 // The result of calling the operation. The operation returns one object for
 // each document that is successfully processed by the operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/BatchDetectEntitiesItemResult
 type BatchDetectEntitiesItemResult struct {
 	_ struct{} `type:"structure"`
 
@@ -1283,7 +1278,6 @@ func (s *BatchDetectEntitiesItemResult) SetIndex(v int64) *BatchDetectEntitiesIt
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/BatchDetectEntitiesResponse
 type BatchDetectEntitiesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1326,7 +1320,6 @@ func (s *BatchDetectEntitiesOutput) SetResultList(v []*BatchDetectEntitiesItemRe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/BatchDetectKeyPhrasesRequest
 type BatchDetectKeyPhrasesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1386,7 +1379,6 @@ func (s *BatchDetectKeyPhrasesInput) SetTextList(v []*string) *BatchDetectKeyPhr
 
 // The result of calling the operation. The operation returns one object for
 // each document that is successfully processed by the operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/BatchDetectKeyPhrasesItemResult
 type BatchDetectKeyPhrasesItemResult struct {
 	_ struct{} `type:"structure"`
 
@@ -1419,7 +1411,6 @@ func (s *BatchDetectKeyPhrasesItemResult) SetKeyPhrases(v []*KeyPhrase) *BatchDe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/BatchDetectKeyPhrasesResponse
 type BatchDetectKeyPhrasesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1462,7 +1453,6 @@ func (s *BatchDetectKeyPhrasesOutput) SetResultList(v []*BatchDetectKeyPhrasesIt
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/BatchDetectSentimentRequest
 type BatchDetectSentimentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1522,7 +1512,6 @@ func (s *BatchDetectSentimentInput) SetTextList(v []*string) *BatchDetectSentime
 
 // The result of calling the operation. The operation returns one object for
 // each document that is successfully processed by the operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/BatchDetectSentimentItemResult
 type BatchDetectSentimentItemResult struct {
 	_ struct{} `type:"structure"`
 
@@ -1565,7 +1554,6 @@ func (s *BatchDetectSentimentItemResult) SetSentimentScore(v *SentimentScore) *B
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/BatchDetectSentimentResponse
 type BatchDetectSentimentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1611,7 +1599,6 @@ func (s *BatchDetectSentimentOutput) SetResultList(v []*BatchDetectSentimentItem
 // Describes an error that occurred while processing a document in a batch.
 // The operation returns on BatchItemError object for each document that contained
 // an error.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/BatchItemError
 type BatchItemError struct {
 	_ struct{} `type:"structure"`
 
@@ -1653,7 +1640,6 @@ func (s *BatchItemError) SetIndex(v int64) *BatchItemError {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/DescribeTopicsDetectionJobRequest
 type DescribeTopicsDetectionJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1695,7 +1681,6 @@ func (s *DescribeTopicsDetectionJobInput) SetJobId(v string) *DescribeTopicsDete
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/DescribeTopicsDetectionJobResponse
 type DescribeTopicsDetectionJobOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1719,7 +1704,6 @@ func (s *DescribeTopicsDetectionJobOutput) SetTopicsDetectionJobProperties(v *To
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/DetectDominantLanguageRequest
 type DetectDominantLanguageInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1762,7 +1746,6 @@ func (s *DetectDominantLanguageInput) SetText(v string) *DetectDominantLanguageI
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/DetectDominantLanguageResponse
 type DetectDominantLanguageOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1790,7 +1773,6 @@ func (s *DetectDominantLanguageOutput) SetLanguages(v []*DominantLanguage) *Dete
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/DetectEntitiesRequest
 type DetectEntitiesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1851,7 +1833,6 @@ func (s *DetectEntitiesInput) SetText(v string) *DetectEntitiesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/DetectEntitiesResponse
 type DetectEntitiesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1878,7 +1859,6 @@ func (s *DetectEntitiesOutput) SetEntities(v []*Entity) *DetectEntitiesOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/DetectKeyPhrasesRequest
 type DetectKeyPhrasesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1940,7 +1920,6 @@ func (s *DetectKeyPhrasesInput) SetText(v string) *DetectKeyPhrasesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/DetectKeyPhrasesResponse
 type DetectKeyPhrasesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1967,7 +1946,6 @@ func (s *DetectKeyPhrasesOutput) SetKeyPhrases(v []*KeyPhrase) *DetectKeyPhrases
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/DetectSentimentRequest
 type DetectSentimentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2029,7 +2007,6 @@ func (s *DetectSentimentInput) SetText(v string) *DetectSentimentInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/DetectSentimentResponse
 type DetectSentimentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2065,7 +2042,6 @@ func (s *DetectSentimentOutput) SetSentimentScore(v *SentimentScore) *DetectSent
 
 // Returns the code for the dominant language in the input text and the level
 // of confidence that Amazon Comprehend has in the accuracy of the detection.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/DominantLanguage
 type DominantLanguage struct {
 	_ struct{} `type:"structure"`
 
@@ -2100,7 +2076,6 @@ func (s *DominantLanguage) SetScore(v float64) *DominantLanguage {
 }
 
 // Provides information about an entity.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/Entity
 type Entity struct {
 	_ struct{} `type:"structure"`
 
@@ -2169,7 +2144,6 @@ func (s *Entity) SetType(v string) *Entity {
 }
 
 // The input properties for a topic detection job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/InputDataConfig
 type InputDataConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -2232,7 +2206,6 @@ func (s *InputDataConfig) SetS3Uri(v string) *InputDataConfig {
 }
 
 // Describes a key noun phrase.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/KeyPhrase
 type KeyPhrase struct {
 	_ struct{} `type:"structure"`
 
@@ -2291,7 +2264,6 @@ func (s *KeyPhrase) SetText(v string) *KeyPhrase {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/ListTopicsDetectionJobsRequest
 type ListTopicsDetectionJobsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2356,7 +2328,6 @@ func (s *ListTopicsDetectionJobsInput) SetNextToken(v string) *ListTopicsDetecti
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/ListTopicsDetectionJobsResponse
 type ListTopicsDetectionJobsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2390,7 +2361,6 @@ func (s *ListTopicsDetectionJobsOutput) SetTopicsDetectionJobPropertiesList(v []
 }
 
 // Provides configuration parameters for the output of topic detection jobs.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/OutputDataConfig
 type OutputDataConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -2437,7 +2407,6 @@ func (s *OutputDataConfig) SetS3Uri(v string) *OutputDataConfig {
 
 // Describes the level of confidence that Amazon Comprehend has in the accuracy
 // of its detection of sentiments.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/SentimentScore
 type SentimentScore struct {
 	_ struct{} `type:"structure"`
 
@@ -2492,7 +2461,6 @@ func (s *SentimentScore) SetPositive(v float64) *SentimentScore {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/StartTopicsDetectionJobRequest
 type StartTopicsDetectionJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2607,7 +2575,6 @@ func (s *StartTopicsDetectionJobInput) SetOutputDataConfig(v *OutputDataConfig) 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/StartTopicsDetectionJobResponse
 type StartTopicsDetectionJobOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2652,7 +2619,6 @@ func (s *StartTopicsDetectionJobOutput) SetJobStatus(v string) *StartTopicsDetec
 
 // Provides information for filtering topic detection jobs. For more information,
 // see .
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/TopicsDetectionJobFilter
 type TopicsDetectionJobFilter struct {
 	_ struct{} `type:"structure"`
 
@@ -2721,7 +2687,6 @@ func (s *TopicsDetectionJobFilter) SetSubmitTimeBefore(v time.Time) *TopicsDetec
 }
 
 // Provides information about a topic detection job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/comprehend-2017-11-27/TopicsDetectionJobProperties
 type TopicsDetectionJobProperties struct {
 	_ struct{} `type:"structure"`
 

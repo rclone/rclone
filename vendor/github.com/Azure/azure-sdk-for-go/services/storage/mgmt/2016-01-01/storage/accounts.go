@@ -42,14 +42,14 @@ func NewAccountsClientWithBaseURI(baseURI string, subscriptionID string) Account
 
 // CheckNameAvailability checks that the storage account name is valid and is not already in use.
 //
-// accountName is the name of the storage account within the specified resource group. Storage account names must be
-// between 3 and 24 characters in length and use numbers and lower-case letters only.
+// accountName is the name of the storage account within the specified resource group. Storage account names must
+// be between 3 and 24 characters in length and use numbers and lower-case letters only.
 func (client AccountsClient) CheckNameAvailability(ctx context.Context, accountName AccountCheckNameAvailabilityParameters) (result CheckNameAvailabilityResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName.Name", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "accountName.Type", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storage.AccountsClient", "CheckNameAvailability")
+		return result, validation.NewError("storage.AccountsClient", "CheckNameAvailability", err.Error())
 	}
 
 	req, err := client.CheckNameAvailabilityPreparer(ctx, accountName)
@@ -119,9 +119,10 @@ func (client AccountsClient) CheckNameAvailabilityResponder(resp *http.Response)
 // account is already created and a subsequent create or update request is issued with the exact same set of
 // properties, the request will succeed.
 //
-// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of the
-// storage account within the specified resource group. Storage account names must be between 3 and 24 characters in
-// length and use numbers and lower-case letters only. parameters is the parameters to provide for the created account.
+// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
+// the storage account within the specified resource group. Storage account names must be between 3 and 24
+// characters in length and use numbers and lower-case letters only. parameters is the parameters to provide for
+// the created account.
 func (client AccountsClient) Create(ctx context.Context, resourceGroupName string, accountName string, parameters AccountCreateParameters) (result AccountsCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -136,7 +137,7 @@ func (client AccountsClient) Create(ctx context.Context, resourceGroupName strin
 						{Target: "parameters.AccountPropertiesCreateParameters.Encryption", Name: validation.Null, Rule: false,
 							Chain: []validation.Constraint{{Target: "parameters.AccountPropertiesCreateParameters.Encryption.KeySource", Name: validation.Null, Rule: true, Chain: nil}}},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storage.AccountsClient", "Create")
+		return result, validation.NewError("storage.AccountsClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, accountName, parameters)
@@ -207,15 +208,15 @@ func (client AccountsClient) CreateResponder(resp *http.Response) (result Accoun
 
 // Delete deletes a storage account in Microsoft Azure.
 //
-// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of the
-// storage account within the specified resource group. Storage account names must be between 3 and 24 characters in
-// length and use numbers and lower-case letters only.
+// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
+// the storage account within the specified resource group. Storage account names must be between 3 and 24
+// characters in length and use numbers and lower-case letters only.
 func (client AccountsClient) Delete(ctx context.Context, resourceGroupName string, accountName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storage.AccountsClient", "Delete")
+		return result, validation.NewError("storage.AccountsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName)
@@ -282,15 +283,15 @@ func (client AccountsClient) DeleteResponder(resp *http.Response) (result autore
 // GetProperties returns the properties for the specified storage account including but not limited to name, SKU name,
 // location, and account status. The ListKeys operation should be used to retrieve storage keys.
 //
-// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of the
-// storage account within the specified resource group. Storage account names must be between 3 and 24 characters in
-// length and use numbers and lower-case letters only.
+// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
+// the storage account within the specified resource group. Storage account names must be between 3 and 24
+// characters in length and use numbers and lower-case letters only.
 func (client AccountsClient) GetProperties(ctx context.Context, resourceGroupName string, accountName string) (result Account, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storage.AccountsClient", "GetProperties")
+		return result, validation.NewError("storage.AccountsClient", "GetProperties", err.Error())
 	}
 
 	req, err := client.GetPropertiesPreparer(ctx, resourceGroupName, accountName)
@@ -486,15 +487,15 @@ func (client AccountsClient) ListByResourceGroupResponder(resp *http.Response) (
 
 // ListKeys lists the access keys for the specified storage account.
 //
-// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of the
-// storage account within the specified resource group. Storage account names must be between 3 and 24 characters in
-// length and use numbers and lower-case letters only.
+// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
+// the storage account within the specified resource group. Storage account names must be between 3 and 24
+// characters in length and use numbers and lower-case letters only.
 func (client AccountsClient) ListKeys(ctx context.Context, resourceGroupName string, accountName string) (result AccountListKeysResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storage.AccountsClient", "ListKeys")
+		return result, validation.NewError("storage.AccountsClient", "ListKeys", err.Error())
 	}
 
 	req, err := client.ListKeysPreparer(ctx, resourceGroupName, accountName)
@@ -561,10 +562,10 @@ func (client AccountsClient) ListKeysResponder(resp *http.Response) (result Acco
 
 // RegenerateKey regenerates one of the access keys for the specified storage account.
 //
-// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of the
-// storage account within the specified resource group. Storage account names must be between 3 and 24 characters in
-// length and use numbers and lower-case letters only. regenerateKey is specifies name of the key which should be
-// regenerated -- key1 or key2.
+// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
+// the storage account within the specified resource group. Storage account names must be between 3 and 24
+// characters in length and use numbers and lower-case letters only. regenerateKey is specifies name of the key
+// which should be regenerated -- key1 or key2.
 func (client AccountsClient) RegenerateKey(ctx context.Context, resourceGroupName string, accountName string, regenerateKey AccountRegenerateKeyParameters) (result AccountListKeysResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -572,7 +573,7 @@ func (client AccountsClient) RegenerateKey(ctx context.Context, resourceGroupNam
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil}}},
 		{TargetValue: regenerateKey,
 			Constraints: []validation.Constraint{{Target: "regenerateKey.KeyName", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storage.AccountsClient", "RegenerateKey")
+		return result, validation.NewError("storage.AccountsClient", "RegenerateKey", err.Error())
 	}
 
 	req, err := client.RegenerateKeyPreparer(ctx, resourceGroupName, accountName, regenerateKey)
@@ -646,15 +647,16 @@ func (client AccountsClient) RegenerateKeyResponder(resp *http.Response) (result
 // call does not change the storage keys for the account. If you want to change the storage account keys, use the
 // regenerate keys operation. The location and name of the storage account cannot be changed after creation.
 //
-// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of the
-// storage account within the specified resource group. Storage account names must be between 3 and 24 characters in
-// length and use numbers and lower-case letters only. parameters is the parameters to provide for the updated account.
+// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
+// the storage account within the specified resource group. Storage account names must be between 3 and 24
+// characters in length and use numbers and lower-case letters only. parameters is the parameters to provide for
+// the updated account.
 func (client AccountsClient) Update(ctx context.Context, resourceGroupName string, accountName string, parameters AccountUpdateParameters) (result Account, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storage.AccountsClient", "Update")
+		return result, validation.NewError("storage.AccountsClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, parameters)

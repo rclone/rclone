@@ -1078,6 +1078,15 @@ func ExampleWAFRegional_UpdateByteMatchSet_shared00() {
 		Updates: []*waf.ByteMatchSetUpdate{
 			{
 				Action: aws.String("DELETE"),
+				ByteMatchTuple: &waf.ByteMatchTuple{
+					FieldToMatch: &waf.FieldToMatch{
+						Data: aws.String("referer"),
+						Type: aws.String("HEADER"),
+					},
+					PositionalConstraint: aws.String("CONTAINS"),
+					TargetString:         []byte("badrefer1"),
+					TextTransformation:   aws.String("NONE"),
+				},
 			},
 		},
 	}
@@ -1128,6 +1137,10 @@ func ExampleWAFRegional_UpdateIPSet_shared00() {
 		Updates: []*waf.IPSetUpdate{
 			{
 				Action: aws.String("DELETE"),
+				IPSetDescriptor: &waf.IPSetDescriptor{
+					Type:  aws.String("IPV4"),
+					Value: aws.String("192.0.2.44/32"),
+				},
 			},
 		},
 	}
@@ -1179,6 +1192,11 @@ func ExampleWAFRegional_UpdateRule_shared00() {
 		Updates: []*waf.RuleUpdate{
 			{
 				Action: aws.String("DELETE"),
+				Predicate: &waf.Predicate{
+					DataId:  aws.String("MyByteMatchSetID"),
+					Negated: aws.Bool(false),
+					Type:    aws.String("ByteMatch"),
+				},
 			},
 		},
 	}
@@ -1231,6 +1249,14 @@ func ExampleWAFRegional_UpdateSizeConstraintSet_shared00() {
 		Updates: []*waf.SizeConstraintSetUpdate{
 			{
 				Action: aws.String("DELETE"),
+				SizeConstraint: &waf.SizeConstraint{
+					ComparisonOperator: aws.String("GT"),
+					FieldToMatch: &waf.FieldToMatch{
+						Type: aws.String("QUERY_STRING"),
+					},
+					Size:               aws.Int64(0),
+					TextTransformation: aws.String("NONE"),
+				},
 			},
 		},
 	}
@@ -1283,6 +1309,12 @@ func ExampleWAFRegional_UpdateSqlInjectionMatchSet_shared00() {
 		Updates: []*waf.SqlInjectionMatchSetUpdate{
 			{
 				Action: aws.String("DELETE"),
+				SqlInjectionMatchTuple: &waf.SqlInjectionMatchTuple{
+					FieldToMatch: &waf.FieldToMatch{
+						Type: aws.String("QUERY_STRING"),
+					},
+					TextTransformation: aws.String("URL_DECODE"),
+				},
 			},
 		},
 	}
@@ -1334,6 +1366,13 @@ func ExampleWAFRegional_UpdateWebACL_shared00() {
 		Updates: []*waf.WebACLUpdate{
 			{
 				Action: aws.String("DELETE"),
+				ActivatedRule: &waf.ActivatedRule{
+					Action: &waf.WafAction{
+						Type: aws.String("ALLOW"),
+					},
+					Priority: aws.Int64(1),
+					RuleId:   aws.String("WAFRule-1-Example"),
+				},
 			},
 		},
 		WebACLId: aws.String("webacl-1472061481310"),
@@ -1388,6 +1427,12 @@ func ExampleWAFRegional_UpdateXssMatchSet_shared00() {
 		Updates: []*waf.XssMatchSetUpdate{
 			{
 				Action: aws.String("DELETE"),
+				XssMatchTuple: &waf.XssMatchTuple{
+					FieldToMatch: &waf.FieldToMatch{
+						Type: aws.String("QUERY_STRING"),
+					},
+					TextTransformation: aws.String("URL_DECODE"),
+				},
 			},
 		},
 		XssMatchSetId: aws.String("example1ds3t-46da-4fdb-b8d5-abc321j569j5"),

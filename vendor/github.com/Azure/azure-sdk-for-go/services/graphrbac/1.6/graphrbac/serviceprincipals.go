@@ -49,7 +49,7 @@ func (client ServicePrincipalsClient) Create(ctx context.Context, parameters Ser
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.AppID", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.AccountEnabled", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "graphrbac.ServicePrincipalsClient", "Create")
+		return result, validation.NewError("graphrbac.ServicePrincipalsClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, parameters)
@@ -651,8 +651,8 @@ func (client ServicePrincipalsClient) UpdateKeyCredentialsResponder(resp *http.R
 
 // UpdatePasswordCredentials updates the passwordCredentials associated with a service principal.
 //
-// objectID is the object ID of the service principal. parameters is parameters to update the passwordCredentials of an
-// existing service principal.
+// objectID is the object ID of the service principal. parameters is parameters to update the passwordCredentials
+// of an existing service principal.
 func (client ServicePrincipalsClient) UpdatePasswordCredentials(ctx context.Context, objectID string, parameters PasswordCredentialsUpdateParameters) (result autorest.Response, err error) {
 	req, err := client.UpdatePasswordCredentialsPreparer(ctx, objectID, parameters)
 	if err != nil {

@@ -263,6 +263,43 @@ type Y2 struct {
 	F []int64
 }
 
+type Pointers struct {
+	Pi *int
+	Ps *string
+	Pb *bool
+	Pf *float64
+	Pg *GeoPoint
+	Pt *time.Time
+}
+
+type PointersOmitEmpty struct {
+	Pi *int       `datastore:",omitempty"`
+	Ps *string    `datastore:",omitempty"`
+	Pb *bool      `datastore:",omitempty"`
+	Pf *float64   `datastore:",omitempty"`
+	Pg *GeoPoint  `datastore:",omitempty"`
+	Pt *time.Time `datastore:",omitempty"`
+}
+
+func populatedPointers() *Pointers {
+	var (
+		i int
+		s string
+		b bool
+		f float64
+		g GeoPoint
+		t time.Time
+	)
+	return &Pointers{
+		Pi: &i,
+		Ps: &s,
+		Pb: &b,
+		Pf: &f,
+		Pg: &g,
+		Pt: &t,
+	}
+}
+
 type Tagged struct {
 	A int   `datastore:"a,noindex"`
 	B []int `datastore:"b"`
@@ -405,10 +442,6 @@ type PtrToStructField struct {
 }
 
 var two int = 2
-
-type PtrToInt struct {
-	I *int
-}
 
 type EmbeddedTime struct {
 	time.Time
@@ -1646,15 +1679,6 @@ var testCases = []testCase{
 		"",
 	},
 	{
-		"save struct with pointer to int field",
-		&PtrToInt{
-			I: &two,
-		},
-		&PtrToInt{},
-		"unsupported struct field",
-		"",
-	},
-	{
 		"struct with nil ptr to struct fields",
 		&PtrToStructField{
 			nil,
@@ -1900,6 +1924,20 @@ var testCases = []testCase{
 			Property{Name: "MyTime.Time", Value: ts},
 		},
 		&SpecialTime{MyTime: EmbeddedTime{ts}},
+		"",
+		"",
+	},
+	{
+		"pointer fields: nil",
+		&Pointers{},
+		&Pointers{},
+		"",
+		"",
+	},
+	{
+		"pointer fields: populated with zeroes",
+		populatedPointers(),
+		populatedPointers(),
 		"",
 		"",
 	},

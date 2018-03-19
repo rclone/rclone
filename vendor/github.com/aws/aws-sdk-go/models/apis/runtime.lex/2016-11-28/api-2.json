@@ -6,6 +6,7 @@
     "jsonVersion":"1.1",
     "protocol":"rest-json",
     "serviceFullName":"Amazon Lex Runtime Service",
+    "serviceId":"Lex Runtime Service",
     "signatureVersion":"v4",
     "signingName":"lex",
     "uid":"runtime.lex-2016-11-28"
@@ -177,6 +178,15 @@
       "error":{"httpStatusCode":508},
       "exception":true
     },
+    "MessageFormatType":{
+      "type":"string",
+      "enum":[
+        "PlainText",
+        "CustomPayload",
+        "SSML",
+        "Composite"
+      ]
+    },
     "NotAcceptableException":{
       "type":"structure",
       "members":{
@@ -274,6 +284,11 @@
           "location":"header",
           "locationName":"x-amz-lex-message"
         },
+        "messageFormat":{
+          "shape":"MessageFormatType",
+          "location":"header",
+          "locationName":"x-amz-lex-message-format"
+        },
         "dialogState":{
           "shape":"DialogState",
           "location":"header",
@@ -329,6 +344,7 @@
         "slots":{"shape":"StringMap"},
         "sessionAttributes":{"shape":"StringMap"},
         "message":{"shape":"Text"},
+        "messageFormat":{"shape":"MessageFormatType"},
         "dialogState":{"shape":"DialogState"},
         "slotToElicit":{"shape":"String"},
         "responseCard":{"shape":"ResponseCard"}

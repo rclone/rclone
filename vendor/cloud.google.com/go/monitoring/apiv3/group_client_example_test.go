@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,7 +41,7 @@ func ExampleGroupClient_ListGroups() {
 	}
 
 	req := &monitoringpb.ListGroupsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListGroups(ctx, req)
 	for {
@@ -65,7 +65,7 @@ func ExampleGroupClient_GetGroup() {
 	}
 
 	req := &monitoringpb.GetGroupRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.GetGroup(ctx, req)
 	if err != nil {
@@ -83,7 +83,7 @@ func ExampleGroupClient_CreateGroup() {
 	}
 
 	req := &monitoringpb.CreateGroupRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.CreateGroup(ctx, req)
 	if err != nil {
@@ -101,7 +101,7 @@ func ExampleGroupClient_UpdateGroup() {
 	}
 
 	req := &monitoringpb.UpdateGroupRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.UpdateGroup(ctx, req)
 	if err != nil {
@@ -119,7 +119,7 @@ func ExampleGroupClient_DeleteGroup() {
 	}
 
 	req := &monitoringpb.DeleteGroupRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	err = c.DeleteGroup(ctx, req)
 	if err != nil {
@@ -135,7 +135,7 @@ func ExampleGroupClient_ListGroupMembers() {
 	}
 
 	req := &monitoringpb.ListGroupMembersRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListGroupMembers(ctx, req)
 	for {

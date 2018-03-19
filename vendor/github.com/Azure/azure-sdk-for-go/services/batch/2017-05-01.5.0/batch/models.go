@@ -1,4 +1,4 @@
-package xpackagex
+package batch
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
 //
@@ -711,21 +711,8 @@ type AutoUserSpecification struct {
 	ElevationLevel ElevationLevel `json:"elevationLevel,omitempty"`
 }
 
-// BatchError ...
-type BatchError struct {
-	Code    *string             `json:"code,omitempty"`
-	Message *ErrorMessage       `json:"message,omitempty"`
-	Values  *[]BatchErrorDetail `json:"values,omitempty"`
-}
-
-// BatchErrorDetail ...
-type BatchErrorDetail struct {
-	Key   *string `json:"key,omitempty"`
-	Value *string `json:"value,omitempty"`
-}
-
-// Certificate a certificate that can be installed on compute nodes and can be used to authenticate operations on the
-// machine.
+// Certificate a certificate that can be installed on compute nodes and can be used to authenticate operations on
+// the machine.
 type Certificate struct {
 	autorest.Response   `json:"-"`
 	Thumbprint          *string `json:"thumbprint,omitempty"`
@@ -1734,6 +1721,19 @@ type EnvironmentSetting struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// Error ...
+type Error struct {
+	Code    *string        `json:"code,omitempty"`
+	Message *ErrorMessage  `json:"message,omitempty"`
+	Values  *[]ErrorDetail `json:"values,omitempty"`
+}
+
+// ErrorDetail ...
+type ErrorDetail struct {
+	Key   *string `json:"key,omitempty"`
+	Value *string `json:"value,omitempty"`
+}
+
 // ErrorMessage ...
 type ErrorMessage struct {
 	Lang  *string `json:"lang,omitempty"`
@@ -2120,7 +2120,8 @@ type LinuxUserConfiguration struct {
 	SSHPrivateKey *string `json:"sshPrivateKey,omitempty"`
 }
 
-// MetadataItem the Batch service does not assign any meaning to this metadata; it is solely for the use of user code.
+// MetadataItem the Batch service does not assign any meaning to this metadata; it is solely for the use of user
+// code.
 type MetadataItem struct {
 	Name  *string `json:"name,omitempty"`
 	Value *string `json:"value,omitempty"`
@@ -2765,7 +2766,7 @@ type TaskAddResult struct {
 	ETag         *string       `json:"eTag,omitempty"`
 	LastModified *date.Time    `json:"lastModified,omitempty"`
 	Location     *string       `json:"location,omitempty"`
-	Error        *BatchError   `json:"error,omitempty"`
+	Error        *Error        `json:"error,omitempty"`
 }
 
 // TaskConstraints ...
@@ -2815,8 +2816,8 @@ type TaskFailureInformation struct {
 	Details  *[]NameValuePair `json:"details,omitempty"`
 }
 
-// TaskIDRange the start and end of the range are inclusive. For example, if a range has start 9 and end 12, then it
-// represents tasks '9', '10', '11' and '12'.
+// TaskIDRange the start and end of the range are inclusive. For example, if a range has start 9 and end 12, then
+// it represents tasks '9', '10', '11' and '12'.
 type TaskIDRange struct {
 	Start *int32 `json:"start,omitempty"`
 	End   *int32 `json:"end,omitempty"`

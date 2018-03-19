@@ -4,11 +4,11 @@
 // requests to Amazon GameLift.
 //
 // Amazon GameLift is a managed service for developers who need a scalable,
-// dedicated server solution for their multiplayer games. Amazon GameLift provides
-// tools for the following tasks: (1) acquire computing resources and deploy
-// game servers, (2) scale game server capacity to meet player demand, (3) host
-// game sessions and manage player access, and (4) track in-depth metrics on
-// player usage and server performance.
+// dedicated server solution for their multiplayer games. Use Amazon GameLift
+// for these tasks: (1) set up computing resources and deploy your game servers,
+// (2) run game sessions and get players into games, (3) automatically scale
+// your resources to meet player demand and manage costs, and (4) track in-depth
+// metrics on game server performance and player usage.
 //
 // The Amazon GameLift service API includes two important function sets:
 //
@@ -43,13 +43,13 @@
 //    a subset of key API actions, which can be called from either the AWS CLI
 //    or programmatically. See Testing an Integration (http://docs.aws.amazon.com/gamelift/latest/developerguide/integration-testing-local.html).
 //
-// MORE RESOURCES
+// Learn more
 //
-//    * Amazon GameLift Developer Guide (http://docs.aws.amazon.com/gamelift/latest/developerguide/)
-//    -- Learn more about Amazon GameLift features and how to use them.
+//    *  Developer Guide (http://docs.aws.amazon.com/gamelift/latest/developerguide/)
+//    -- Read about Amazon GameLift features and how to use them.
 //
-//    * Lumberyard and Amazon GameLift Tutorials (https://gamedev.amazon.com/forums/tutorials)
-//    -- Get started fast with walkthroughs and sample projects.
+//    * Tutorials (https://gamedev.amazon.com/forums/tutorials) -- Get started
+//    fast with walkthroughs and sample projects.
 //
 //    * GameDev Blog (http://aws.amazon.com/blogs/gamedev/) -- Stay up to date
 //    with new features and techniques.
@@ -57,9 +57,10 @@
 //    * GameDev Forums (https://gamedev.amazon.com/forums/spaces/123/gamelift-discussion.html)
 //    -- Connect with the GameDev community.
 //
-//    * Amazon GameLift Document History (http://docs.aws.amazon.com/gamelift/latest/developerguide/doc-history.html)
-//    -- See changes to the Amazon GameLift service, SDKs, and documentation,
-//    as well as links to release notes.
+//    * Release notes (http://aws.amazon.com/releasenotes/Amazon-GameLift/)
+//    and document history (http://docs.aws.amazon.com/gamelift/latest/developerguide/doc-history.html)
+//    -- Stay current with updates to the Amazon GameLift service, SDKs, and
+//    documentation.
 //
 // API SUMMARY
 //
@@ -93,10 +94,13 @@
 // CreateGameSession -- Start a new game session on a specific fleet. Available
 //    in Amazon GameLift Local.
 //
-//    * Start new game sessions with FlexMatch matchmaking
+//    * Match players to game sessions with FlexMatch matchmaking
 //
 // StartMatchmaking -- Request matchmaking for one players or a group who want
 //    to play together.
+//
+// StartMatchBackfill - Request additional player matches to fill empty slots
+//    in an existing game session.
 //
 // DescribeMatchmaking -- Get details on a matchmaking request, including status.
 //
@@ -141,8 +145,8 @@
 //    * Manage game builds
 //
 // CreateBuild -- Create a new build using files stored in an Amazon S3 bucket.
-//    (Update uploading permissions with RequestUploadCredentials.) To create
-//    a build and upload files from a local path, use the AWS CLI command upload-build.
+//    To create a build and upload files from a local path, use the AWS CLI
+//    command upload-build.
 //
 // ListBuilds -- Get a list of all builds uploaded to a Amazon GameLift region.
 //

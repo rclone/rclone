@@ -18,6 +18,7 @@ import (
 	"unsafe"
 )
 
+// SockaddrDatalink implements the Sockaddr interface for AF_LINK type sockets.
 type SockaddrDatalink struct {
 	Len    uint8
 	Family uint8
@@ -40,18 +41,6 @@ func nametomib(name string) (mib []_C_int, err error) {
 		return sysctlMib[i].ctloid, nil
 	}
 	return nil, EINVAL
-}
-
-func direntIno(buf []byte) (uint64, bool) {
-	return readInt(buf, unsafe.Offsetof(Dirent{}.Fileno), unsafe.Sizeof(Dirent{}.Fileno))
-}
-
-func direntReclen(buf []byte) (uint64, bool) {
-	return readInt(buf, unsafe.Offsetof(Dirent{}.Reclen), unsafe.Sizeof(Dirent{}.Reclen))
-}
-
-func direntNamlen(buf []byte) (uint64, bool) {
-	return readInt(buf, unsafe.Offsetof(Dirent{}.Namlen), unsafe.Sizeof(Dirent{}.Namlen))
 }
 
 //sysnb pipe(p *[2]_C_int) (err error)
@@ -219,6 +208,7 @@ func Uname(uname *Utsname) error {
 //sys	Flock(fd int, how int) (err error)
 //sys	Fpathconf(fd int, name int) (val int, err error)
 //sys	Fstat(fd int, stat *Stat_t) (err error)
+//sys	Fstatat(fd int, path string, stat *Stat_t, flags int) (err error)
 //sys	Fstatfs(fd int, stat *Statfs_t) (err error)
 //sys	Fsync(fd int) (err error)
 //sys	Ftruncate(fd int, length int64) (err error)

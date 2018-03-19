@@ -52,7 +52,7 @@ func (client AccessControlRecordsClient) CreateOrUpdate(ctx context.Context, acc
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.AccessControlRecordsClient", "CreateOrUpdate")
+		return result, validation.NewError("storsimple.AccessControlRecordsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, accessControlRecordName, parameters, resourceGroupName, managerName)
@@ -124,14 +124,14 @@ func (client AccessControlRecordsClient) CreateOrUpdateResponder(resp *http.Resp
 
 // Delete deletes the access control record.
 //
-// accessControlRecordName is the name of the access control record to delete. resourceGroupName is the resource group
-// name managerName is the manager name
+// accessControlRecordName is the name of the access control record to delete. resourceGroupName is the resource
+// group name managerName is the manager name
 func (client AccessControlRecordsClient) Delete(ctx context.Context, accessControlRecordName string, resourceGroupName string, managerName string) (result AccessControlRecordsDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.AccessControlRecordsClient", "Delete")
+		return result, validation.NewError("storsimple.AccessControlRecordsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, accessControlRecordName, resourceGroupName, managerName)
@@ -200,14 +200,14 @@ func (client AccessControlRecordsClient) DeleteResponder(resp *http.Response) (r
 
 // Get returns the properties of the specified access control record name.
 //
-// accessControlRecordName is name of access control record to be fetched. resourceGroupName is the resource group name
-// managerName is the manager name
+// accessControlRecordName is name of access control record to be fetched. resourceGroupName is the resource group
+// name managerName is the manager name
 func (client AccessControlRecordsClient) Get(ctx context.Context, accessControlRecordName string, resourceGroupName string, managerName string) (result AccessControlRecord, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.AccessControlRecordsClient", "Get")
+		return result, validation.NewError("storsimple.AccessControlRecordsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, accessControlRecordName, resourceGroupName, managerName)
@@ -281,7 +281,7 @@ func (client AccessControlRecordsClient) ListByManager(ctx context.Context, reso
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.AccessControlRecordsClient", "ListByManager")
+		return result, validation.NewError("storsimple.AccessControlRecordsClient", "ListByManager", err.Error())
 	}
 
 	req, err := client.ListByManagerPreparer(ctx, resourceGroupName, managerName)

@@ -4988,7 +4988,7 @@ type Encryption struct {
 	EncryptionType *string `type:"string" enum:"EncryptionType"`
 
 	// Optional. If the encryption type is aws:kms, you can use this value to specify
-	// the encryption context for the restore results.
+	// the encryption context for the job results.
 	KMSContext *string `type:"string"`
 
 	// The AWS KMS key ID to use for object encryption. All GET and PUT requests
@@ -6256,7 +6256,7 @@ type JobDescription struct {
 	// An Amazon SNS topic that receives notification.
 	SNSTopic *string `type:"string"`
 
-	// Contains the parameters that define a select job.
+	// Contains the parameters used for a select.
 	SelectParameters *SelectParameters `type:"structure"`
 
 	// The status code can be InProgress, Succeeded, or Failed, and indicates the
@@ -6266,7 +6266,7 @@ type JobDescription struct {
 	// A friendly message that describes the job status.
 	StatusMessage *string `type:"string"`
 
-	// The retrieval option to use for the archive retrieval. Valid values are Expedited,
+	// The tier to use for a select or an archive retrieval. Valid values are Expedited,
 	// Standard, or Bulk. Standard is the default.
 	Tier *string `type:"string"`
 
@@ -6458,8 +6458,8 @@ type JobParameters struct {
 	// Contains the parameters that define a job.
 	SelectParameters *SelectParameters `type:"structure"`
 
-	// The retrieval option to use for a select or archive retrieval job. Valid
-	// values are Expedited, Standard, or Bulk. Standard is the default.
+	// The tier to use for a select or an archive retrieval job. Valid values are
+	// Expedited, Standard, or Bulk. Standard is the default.
 	Tier *string `type:"string"`
 
 	// The job type. You can initiate a job to perform a select query on an archive,
@@ -7235,7 +7235,7 @@ func (s *ListVaultsOutput) SetVaultList(v []*DescribeVaultOutput) *ListVaultsOut
 type OutputLocation struct {
 	_ struct{} `type:"structure"`
 
-	// Describes an S3 location that will receive the results of the restore request.
+	// Describes an S3 location that will receive the results of the job request.
 	S3 *S3Location `type:"structure"`
 }
 
@@ -7525,26 +7525,26 @@ type S3Location struct {
 	// A list of grants that control access to the staged results.
 	AccessControlList []*Grant `type:"list"`
 
-	// The name of the bucket where the restore results are stored.
+	// The name of the Amazon S3 bucket where the job results are stored.
 	BucketName *string `type:"string"`
 
-	// The canned ACL to apply to the restore results.
+	// The canned access control list (ACL) to apply to the job results.
 	CannedACL *string `type:"string" enum:"CannedACL"`
 
 	// Contains information about the encryption used to store the job results in
 	// Amazon S3.
 	Encryption *Encryption `type:"structure"`
 
-	// The prefix that is prepended to the restore results for this request.
+	// The prefix that is prepended to the results for this request.
 	Prefix *string `type:"string"`
 
-	// The storage class used to store the restore results.
+	// The storage class used to store the job results.
 	StorageClass *string `type:"string" enum:"StorageClass"`
 
-	// The tag-set that is applied to the restore results.
+	// The tag-set that is applied to the job results.
 	Tagging map[string]*string `type:"map"`
 
-	// A map of metadata to store with the restore results in Amazon S3.
+	// A map of metadata to store with the job results in Amazon S3.
 	UserMetadata map[string]*string `type:"map"`
 }
 

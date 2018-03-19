@@ -42,8 +42,8 @@ func NewAuthorizationServersClientWithBaseURI(baseURI string, subscriptionID str
 
 // CreateOrUpdate creates new authorization server or updates an existing authorization server.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. authsid
-// is identifier of the authorization server. parameters is create or update parameters.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// authsid is identifier of the authorization server. parameters is create or update parameters.
 func (client AuthorizationServersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, authsid string, parameters OAuth2AuthorizationServerContract) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -62,7 +62,7 @@ func (client AuthorizationServersClient) CreateOrUpdate(ctx context.Context, res
 				{Target: "parameters.AuthorizationEndpoint", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.GrantTypes", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.ClientID", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.AuthorizationServersClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.AuthorizationServersClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, authsid, parameters)
@@ -131,9 +131,9 @@ func (client AuthorizationServersClient) CreateOrUpdateResponder(resp *http.Resp
 
 // Delete deletes specific authorization server instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. authsid
-// is identifier of the authorization server. ifMatch is the entity state (Etag) version of the authentication server
-// to delete. A value of "*" can be used for If-Match to unconditionally apply the operation.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// authsid is identifier of the authorization server. ifMatch is the entity state (Etag) version of the
+// authentication server to delete. A value of "*" can be used for If-Match to unconditionally apply the operation.
 func (client AuthorizationServersClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, authsid string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -143,7 +143,7 @@ func (client AuthorizationServersClient) Delete(ctx context.Context, resourceGro
 		{TargetValue: authsid,
 			Constraints: []validation.Constraint{{Target: "authsid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "authsid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.AuthorizationServersClient", "Delete")
+		return result, validation.NewError("apimanagement.AuthorizationServersClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, authsid, ifMatch)
@@ -211,8 +211,8 @@ func (client AuthorizationServersClient) DeleteResponder(resp *http.Response) (r
 
 // Get gets the details of the authorization server specified by its identifier.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. authsid
-// is identifier of the authorization server.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// authsid is identifier of the authorization server.
 func (client AuthorizationServersClient) Get(ctx context.Context, resourceGroupName string, serviceName string, authsid string) (result OAuth2AuthorizationServerContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -222,7 +222,7 @@ func (client AuthorizationServersClient) Get(ctx context.Context, resourceGroupN
 		{TargetValue: authsid,
 			Constraints: []validation.Constraint{{Target: "authsid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "authsid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.AuthorizationServersClient", "Get")
+		return result, validation.NewError("apimanagement.AuthorizationServersClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, authsid)
@@ -290,12 +290,12 @@ func (client AuthorizationServersClient) GetResponder(resp *http.Response) (resu
 
 // ListByService lists a collection of authorization servers defined within a service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. filter
-// is | Field | Supported operators    | Supported functions                         |
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// filter is | Field | Supported operators    | Supported functions                         |
 // |-------|------------------------|---------------------------------------------|
 // | id    | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | name  | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith | top is number of records to return.
-// skip is number of records to skip.
+// | name  | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith | top is number of records to
+// return. skip is number of records to skip.
 func (client AuthorizationServersClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result AuthorizationServerCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -308,7 +308,7 @@ func (client AuthorizationServersClient) ListByService(ctx context.Context, reso
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.AuthorizationServersClient", "ListByService")
+		return result, validation.NewError("apimanagement.AuthorizationServersClient", "ListByService", err.Error())
 	}
 
 	result.fn = client.listByServiceNextResults
@@ -412,10 +412,10 @@ func (client AuthorizationServersClient) ListByServiceComplete(ctx context.Conte
 
 // Update updates the details of the authorization server specified by its identifier.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. authsid
-// is identifier of the authorization server. parameters is oAuth2 Server settings Update parameters. ifMatch is the
-// entity state (Etag) version of the authorization server to update. A value of "*" can be used for If-Match to
-// unconditionally apply the operation.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// authsid is identifier of the authorization server. parameters is oAuth2 Server settings Update parameters.
+// ifMatch is the entity state (Etag) version of the authorization server to update. A value of "*" can be used for
+// If-Match to unconditionally apply the operation.
 func (client AuthorizationServersClient) Update(ctx context.Context, resourceGroupName string, serviceName string, authsid string, parameters OAuth2AuthorizationServerUpdateContract, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -425,7 +425,7 @@ func (client AuthorizationServersClient) Update(ctx context.Context, resourceGro
 		{TargetValue: authsid,
 			Constraints: []validation.Constraint{{Target: "authsid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "authsid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.AuthorizationServersClient", "Update")
+		return result, validation.NewError("apimanagement.AuthorizationServersClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serviceName, authsid, parameters, ifMatch)

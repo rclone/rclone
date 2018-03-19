@@ -321,6 +321,30 @@ func (client *mockS3Client) ListObjects(input *s3.ListObjectsInput) (*s3.ListObj
 	return object, nil
 }
 
+func TestNilOrigError(t *testing.T) {
+	err := Error{
+		Bucket: aws.String("bucket"),
+		Key:    aws.String("key"),
+	}
+	errStr := err.Error()
+	const expected1 = `failed to upload "key" to "bucket"`
+	if errStr != expected1 {
+		t.Errorf("Expected %s, but received %s", expected1, errStr)
+	}
+
+	err = Error{
+		OrigErr: errors.New("foo"),
+		Bucket:  aws.String("bucket"),
+		Key:     aws.String("key"),
+	}
+	errStr = err.Error()
+	const expected2 = "failed to upload \"key\" to \"bucket\":\nfoo"
+	if errStr != expected2 {
+		t.Errorf("Expected %s, but received %s", expected2, errStr)
+	}
+
+}
+
 func TestBatchDeleteList(t *testing.T) {
 	count := 0
 

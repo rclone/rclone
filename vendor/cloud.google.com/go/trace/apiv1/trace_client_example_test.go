@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,7 +41,7 @@ func ExampleClient_PatchTraces() {
 	}
 
 	req := &cloudtracepb.PatchTracesRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	err = c.PatchTraces(ctx, req)
 	if err != nil {
@@ -57,7 +57,7 @@ func ExampleClient_GetTrace() {
 	}
 
 	req := &cloudtracepb.GetTraceRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.GetTrace(ctx, req)
 	if err != nil {
@@ -75,7 +75,7 @@ func ExampleClient_ListTraces() {
 	}
 
 	req := &cloudtracepb.ListTracesRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListTraces(ctx, req)
 	for {

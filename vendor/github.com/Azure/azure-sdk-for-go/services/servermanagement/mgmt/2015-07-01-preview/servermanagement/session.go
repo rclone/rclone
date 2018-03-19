@@ -42,9 +42,9 @@ func NewSessionClientWithBaseURI(baseURI string, subscriptionID string) SessionC
 
 // Create creates a session for a node.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// nodeName is the node name (256 characters maximum). session is the sessionId from the user. sessionParameters is
-// parameters supplied to the CreateOrUpdate operation.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. nodeName is the node name (256 characters maximum). session is the sessionId from the user.
+// sessionParameters is parameters supplied to the CreateOrUpdate operation.
 func (client SessionClient) Create(ctx context.Context, resourceGroupName string, nodeName string, session string, sessionParameters SessionParameters) (result SessionCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -54,7 +54,7 @@ func (client SessionClient) Create(ctx context.Context, resourceGroupName string
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.SessionClient", "Create")
+		return result, validation.NewError("servermanagement.SessionClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, nodeName, session, sessionParameters)
@@ -126,8 +126,8 @@ func (client SessionClient) CreateResponder(resp *http.Response) (result Session
 
 // Delete deletes a session for a node.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// nodeName is the node name (256 characters maximum). session is the sessionId from the user.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. nodeName is the node name (256 characters maximum). session is the sessionId from the user.
 func (client SessionClient) Delete(ctx context.Context, resourceGroupName string, nodeName string, session string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -137,7 +137,7 @@ func (client SessionClient) Delete(ctx context.Context, resourceGroupName string
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.SessionClient", "Delete")
+		return result, validation.NewError("servermanagement.SessionClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, nodeName, session)
@@ -204,8 +204,8 @@ func (client SessionClient) DeleteResponder(resp *http.Response) (result autores
 
 // Get gets a session for a node.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// nodeName is the node name (256 characters maximum). session is the sessionId from the user.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. nodeName is the node name (256 characters maximum). session is the sessionId from the user.
 func (client SessionClient) Get(ctx context.Context, resourceGroupName string, nodeName string, session string) (result SessionResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -215,7 +215,7 @@ func (client SessionClient) Get(ctx context.Context, resourceGroupName string, n
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.SessionClient", "Get")
+		return result, validation.NewError("servermanagement.SessionClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, nodeName, session)

@@ -41,7 +41,6 @@ func Example() {
 		'\U00004dc0',
 
 		'\U00009fd5',
-		'\U00009fd6',
 		'\U00009fff',
 		'\U0000a000',
 		0xdc00, // '\U0000dc00' (Low Surrogate) is an invalid Go literal.
@@ -95,7 +94,6 @@ func Example() {
 	// 00003402 "<CJK Ideograph Extension A>"
 	// 00004dc0 "HEXAGRAM FOR THE CREATIVE HEAVEN"
 	// 00009fd5 "<CJK Ideograph>"
-	// 00009fd6 ""
 	// 00009fff ""
 	// 0000a000 "YI SYLLABLE IT"
 	// 0000dc00 "<Low Surrogate>"

@@ -109,7 +109,8 @@ func (client ConnectionsClient) ConfirmConsentCodeResponder(resp *http.Response)
 
 // CreateOrUpdate creates or updates a connection.
 //
-// resourceGroupName is the resource group name. connectionName is the connection name. connection is the connection.
+// resourceGroupName is the resource group name. connectionName is the connection name. connection is the
+// connection.
 func (client ConnectionsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, connectionName string, connection Connection) (result Connection, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, connectionName, connection)
 	if err != nil {

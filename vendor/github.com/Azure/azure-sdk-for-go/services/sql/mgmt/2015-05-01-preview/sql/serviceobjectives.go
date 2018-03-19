@@ -43,9 +43,9 @@ func NewServiceObjectivesClientWithBaseURI(baseURI string, subscriptionID string
 
 // Get gets a database service objective.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. serviceObjectiveName is the name of
-// the service objective to retrieve.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. serviceObjectiveName is the
+// name of the service objective to retrieve.
 func (client ServiceObjectivesClient) Get(ctx context.Context, resourceGroupName string, serverName string, serviceObjectiveName string) (result ServiceObjective, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, serviceObjectiveName)
 	if err != nil {
@@ -112,8 +112,8 @@ func (client ServiceObjectivesClient) GetResponder(resp *http.Response) (result 
 
 // ListByServer returns database service objectives.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
 func (client ServiceObjectivesClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result ServiceObjectiveListResult, err error) {
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)
 	if err != nil {

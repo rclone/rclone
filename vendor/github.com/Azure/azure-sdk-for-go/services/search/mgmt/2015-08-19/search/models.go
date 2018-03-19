@@ -130,6 +130,7 @@ type CheckNameAvailabilityOutput struct {
 
 // CloudError contains information about an API error.
 type CloudError struct {
+	// Error - Describes a particular API error with an error code and a message.
 	Error *CloudErrorBody `json:"error,omitempty"`
 }
 
@@ -152,6 +153,36 @@ type ListQueryKeysResult struct {
 	Value *[]QueryKey `json:"value,omitempty"`
 }
 
+// Operation describes a REST API operation.
+type Operation struct {
+	// Name - The name of the operation. This name is of the form {provider}/{resource}/{operation}.
+	Name *string `json:"name,omitempty"`
+	// Display - The object that describes the operation.
+	Display *OperationDisplay `json:"display,omitempty"`
+}
+
+// OperationDisplay the object that describes the operation.
+type OperationDisplay struct {
+	// Provider - The friendly name of the resource provider.
+	Provider *string `json:"provider,omitempty"`
+	// Operation - The operation type: read, write, delete, listKeys/action, etc.
+	Operation *string `json:"operation,omitempty"`
+	// Resource - The resource type on which the operation is performed.
+	Resource *string `json:"resource,omitempty"`
+	// Description - The friendly name of the operation.
+	Description *string `json:"description,omitempty"`
+}
+
+// OperationListResult the result of the request to list REST API operations. It contains a list of operations and
+// a URL  to get the next set of results.
+type OperationListResult struct {
+	autorest.Response `json:"-"`
+	// Value - The list of operations supported by the resource provider.
+	Value *[]Operation `json:"value,omitempty"`
+	// NextLink - The URL to get the next set of operation list results, if any.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
 // QueryKey describes an API key for a given Azure Search service that has permissions for query operations only.
 type QueryKey struct {
 	autorest.Response `json:"-"`
@@ -169,29 +200,77 @@ type Resource struct {
 	Name *string `json:"name,omitempty"`
 	// Type - The resource type.
 	Type *string `json:"type,omitempty"`
-	// Location - The geographic location of the resource. This must be one of the supported and registered Azure Geo Regions (for example, West US, East US, Southeast Asia, and so forth).
+	// Location - The geographic location of the resource. This must be one of the supported and registered Azure Geo Regions (for example, West US, East US, Southeast Asia, and so forth). This property is required when creating a new resource.
 	Location *string `json:"location,omitempty"`
 	// Tags - Tags to help categorize the resource in the Azure portal.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // Service describes an Azure Search service and its current state.
 type Service struct {
 	autorest.Response `json:"-"`
+	// ServiceProperties - Properties of the Search service.
+	*ServiceProperties `json:"properties,omitempty"`
+	// Sku - The SKU of the Search Service, which determines price tier and capacity limits. This property is required when creating a new Search Service.
+	Sku *Sku `json:"sku,omitempty"`
 	// ID - The ID of the resource. This can be used with the Azure Resource Manager to link resources together.
 	ID *string `json:"id,omitempty"`
 	// Name - The name of the resource.
 	Name *string `json:"name,omitempty"`
 	// Type - The resource type.
 	Type *string `json:"type,omitempty"`
-	// Location - The geographic location of the resource. This must be one of the supported and registered Azure Geo Regions (for example, West US, East US, Southeast Asia, and so forth).
+	// Location - The geographic location of the resource. This must be one of the supported and registered Azure Geo Regions (for example, West US, East US, Southeast Asia, and so forth). This property is required when creating a new resource.
 	Location *string `json:"location,omitempty"`
 	// Tags - Tags to help categorize the resource in the Azure portal.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// ServiceProperties - Properties of the Search service.
-	*ServiceProperties `json:"properties,omitempty"`
-	// Sku - The SKU of the Search Service, which determines price tier and capacity limits.
-	Sku *Sku `json:"sku,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Service.
+func (s Service) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if s.ServiceProperties != nil {
+		objectMap["properties"] = s.ServiceProperties
+	}
+	if s.Sku != nil {
+		objectMap["sku"] = s.Sku
+	}
+	if s.ID != nil {
+		objectMap["id"] = s.ID
+	}
+	if s.Name != nil {
+		objectMap["name"] = s.Name
+	}
+	if s.Type != nil {
+		objectMap["type"] = s.Type
+	}
+	if s.Location != nil {
+		objectMap["location"] = s.Location
+	}
+	if s.Tags != nil {
+		objectMap["tags"] = s.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Service struct.
@@ -201,76 +280,72 @@ func (s *Service) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ServiceProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var serviceProperties ServiceProperties
+				err = json.Unmarshal(*v, &serviceProperties)
+				if err != nil {
+					return err
+				}
+				s.ServiceProperties = &serviceProperties
+			}
+		case "sku":
+			if v != nil {
+				var sku Sku
+				err = json.Unmarshal(*v, &sku)
+				if err != nil {
+					return err
+				}
+				s.Sku = &sku
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				s.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				s.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				s.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				s.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				s.Tags = tags
+			}
 		}
-		s.ServiceProperties = &properties
-	}
-
-	v = m["sku"]
-	if v != nil {
-		var sku Sku
-		err = json.Unmarshal(*m["sku"], &sku)
-		if err != nil {
-			return err
-		}
-		s.Sku = &sku
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		s.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		s.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		s.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		s.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		s.Tags = &tags
 	}
 
 	return nil
@@ -299,7 +374,8 @@ type ServiceProperties struct {
 	ProvisioningState ProvisioningState `json:"provisioningState,omitempty"`
 }
 
-// ServicesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+// ServicesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
+// operation.
 type ServicesCreateOrUpdateFuture struct {
 	azure.Future
 	req *http.Request
@@ -311,22 +387,39 @@ func (future ServicesCreateOrUpdateFuture) Result(client ServicesClient) (s Serv
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "search.ServicesCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return s, autorest.NewError("search.ServicesCreateOrUpdateFuture", "Result", "asynchronous operation has not completed")
+		return s, azure.NewAsyncOpIncompleteError("search.ServicesCreateOrUpdateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		s, err = client.CreateOrUpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "search.ServicesCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "search.ServicesCreateOrUpdateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	s, err = client.CreateOrUpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "search.ServicesCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 

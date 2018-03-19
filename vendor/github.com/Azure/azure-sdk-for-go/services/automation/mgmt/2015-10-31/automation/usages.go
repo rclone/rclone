@@ -47,7 +47,7 @@ func (client UsagesClient) ListByAutomationAccount(ctx context.Context, resource
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.UsagesClient", "ListByAutomationAccount")
+		return result, validation.NewError("automation.UsagesClient", "ListByAutomationAccount", err.Error())
 	}
 
 	req, err := client.ListByAutomationAccountPreparer(ctx, resourceGroupName, automationAccountName)

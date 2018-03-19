@@ -50,7 +50,7 @@ func (client NetworkStatusClient) GetByService(ctx context.Context, resourceGrou
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.NetworkStatusClient", "GetByService")
+		return result, validation.NewError("apimanagement.NetworkStatusClient", "GetByService", err.Error())
 	}
 
 	req, err := client.GetByServicePreparer(ctx, resourceGroupName, serviceName)

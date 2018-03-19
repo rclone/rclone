@@ -51,7 +51,7 @@ func (cf chainFilter) proto() *btpb.RowFilter {
 		chain.Filters = append(chain.Filters, sf.proto())
 	}
 	return &btpb.RowFilter{
-		Filter: &btpb.RowFilter_Chain_{chain},
+		Filter: &btpb.RowFilter_Chain_{Chain: chain},
 	}
 }
 
@@ -77,7 +77,7 @@ func (ilf interleaveFilter) proto() *btpb.RowFilter {
 		inter.Filters = append(inter.Filters, sf.proto())
 	}
 	return &btpb.RowFilter{
-		Filter: &btpb.RowFilter_Interleave_{inter},
+		Filter: &btpb.RowFilter_Interleave_{Interleave: inter},
 	}
 }
 
@@ -91,7 +91,7 @@ type rowKeyFilter string
 func (rkf rowKeyFilter) String() string { return fmt.Sprintf("row(%s)", string(rkf)) }
 
 func (rkf rowKeyFilter) proto() *btpb.RowFilter {
-	return &btpb.RowFilter{Filter: &btpb.RowFilter_RowKeyRegexFilter{[]byte(rkf)}}
+	return &btpb.RowFilter{Filter: &btpb.RowFilter_RowKeyRegexFilter{RowKeyRegexFilter: []byte(rkf)}}
 }
 
 // FamilyFilter returns a filter that matches cells whose family name
@@ -104,7 +104,7 @@ type familyFilter string
 func (ff familyFilter) String() string { return fmt.Sprintf("col(%s:)", string(ff)) }
 
 func (ff familyFilter) proto() *btpb.RowFilter {
-	return &btpb.RowFilter{Filter: &btpb.RowFilter_FamilyNameRegexFilter{string(ff)}}
+	return &btpb.RowFilter{Filter: &btpb.RowFilter_FamilyNameRegexFilter{FamilyNameRegexFilter: string(ff)}}
 }
 
 // ColumnFilter returns a filter that matches cells whose column name
@@ -117,7 +117,7 @@ type columnFilter string
 func (cf columnFilter) String() string { return fmt.Sprintf("col(.*:%s)", string(cf)) }
 
 func (cf columnFilter) proto() *btpb.RowFilter {
-	return &btpb.RowFilter{Filter: &btpb.RowFilter_ColumnQualifierRegexFilter{[]byte(cf)}}
+	return &btpb.RowFilter{Filter: &btpb.RowFilter_ColumnQualifierRegexFilter{ColumnQualifierRegexFilter: []byte(cf)}}
 }
 
 // ValueFilter returns a filter that matches cells whose value
@@ -130,7 +130,7 @@ type valueFilter string
 func (vf valueFilter) String() string { return fmt.Sprintf("value_match(%s)", string(vf)) }
 
 func (vf valueFilter) proto() *btpb.RowFilter {
-	return &btpb.RowFilter{Filter: &btpb.RowFilter_ValueRegexFilter{[]byte(vf)}}
+	return &btpb.RowFilter{Filter: &btpb.RowFilter_ValueRegexFilter{ValueRegexFilter: []byte(vf)}}
 }
 
 // LatestNFilter returns a filter that matches the most recent N cells in each column.
@@ -141,7 +141,7 @@ type latestNFilter int32
 func (lnf latestNFilter) String() string { return fmt.Sprintf("col(*,%d)", lnf) }
 
 func (lnf latestNFilter) proto() *btpb.RowFilter {
-	return &btpb.RowFilter{Filter: &btpb.RowFilter_CellsPerColumnLimitFilter{int32(lnf)}}
+	return &btpb.RowFilter{Filter: &btpb.RowFilter_CellsPerColumnLimitFilter{CellsPerColumnLimitFilter: int32(lnf)}}
 }
 
 // StripValueFilter returns a filter that replaces each value with the empty string.
@@ -151,7 +151,7 @@ type stripValueFilter struct{}
 
 func (stripValueFilter) String() string { return "strip_value()" }
 func (stripValueFilter) proto() *btpb.RowFilter {
-	return &btpb.RowFilter{Filter: &btpb.RowFilter_StripValueTransformer{true}}
+	return &btpb.RowFilter{Filter: &btpb.RowFilter_StripValueTransformer{StripValueTransformer: true}}
 }
 
 // TimestampRangeFilter returns a filter that matches any cells whose timestamp is within the given time bounds.  A zero
@@ -186,11 +186,10 @@ func (trf timestampRangeFilter) String() string {
 
 func (trf timestampRangeFilter) proto() *btpb.RowFilter {
 	return &btpb.RowFilter{
-		Filter: &btpb.RowFilter_TimestampRangeFilter{
-			&btpb.TimestampRange{
-				int64(trf.startTime.TruncateToMilliseconds()),
-				int64(trf.endTime.TruncateToMilliseconds()),
-			},
+		Filter: &btpb.RowFilter_TimestampRangeFilter{TimestampRangeFilter: &btpb.TimestampRange{
+			StartTimestampMicros: int64(trf.startTime.TruncateToMilliseconds()),
+			EndTimestampMicros:   int64(trf.endTime.TruncateToMilliseconds()),
+		},
 		}}
 }
 
@@ -213,12 +212,12 @@ func (crf columnRangeFilter) String() string {
 func (crf columnRangeFilter) proto() *btpb.RowFilter {
 	r := &btpb.ColumnRange{FamilyName: crf.family}
 	if crf.start != "" {
-		r.StartQualifier = &btpb.ColumnRange_StartQualifierClosed{[]byte(crf.start)}
+		r.StartQualifier = &btpb.ColumnRange_StartQualifierClosed{StartQualifierClosed: []byte(crf.start)}
 	}
 	if crf.end != "" {
-		r.EndQualifier = &btpb.ColumnRange_EndQualifierOpen{[]byte(crf.end)}
+		r.EndQualifier = &btpb.ColumnRange_EndQualifierOpen{EndQualifierOpen: []byte(crf.end)}
 	}
-	return &btpb.RowFilter{&btpb.RowFilter_ColumnRangeFilter{r}}
+	return &btpb.RowFilter{Filter: &btpb.RowFilter_ColumnRangeFilter{ColumnRangeFilter: r}}
 }
 
 // ValueRangeFilter returns a filter that matches cells with values that fall within
@@ -239,12 +238,12 @@ func (vrf valueRangeFilter) String() string {
 func (vrf valueRangeFilter) proto() *btpb.RowFilter {
 	r := &btpb.ValueRange{}
 	if vrf.start != nil {
-		r.StartValue = &btpb.ValueRange_StartValueClosed{vrf.start}
+		r.StartValue = &btpb.ValueRange_StartValueClosed{StartValueClosed: vrf.start}
 	}
 	if vrf.end != nil {
-		r.EndValue = &btpb.ValueRange_EndValueOpen{vrf.end}
+		r.EndValue = &btpb.ValueRange_EndValueOpen{EndValueOpen: vrf.end}
 	}
-	return &btpb.RowFilter{&btpb.RowFilter_ValueRangeFilter{r}}
+	return &btpb.RowFilter{Filter: &btpb.RowFilter_ValueRangeFilter{ValueRangeFilter: r}}
 }
 
 // ConditionFilter returns a filter that evaluates to one of two possible filters depending
@@ -278,10 +277,10 @@ func (cf conditionFilter) proto() *btpb.RowFilter {
 		ff = cf.falseFilter.proto()
 	}
 	return &btpb.RowFilter{
-		&btpb.RowFilter_Condition_{&btpb.RowFilter_Condition{
-			cf.predicateFilter.proto(),
-			tf,
-			ff,
+		Filter: &btpb.RowFilter_Condition_{Condition: &btpb.RowFilter_Condition{
+			PredicateFilter: cf.predicateFilter.proto(),
+			TrueFilter:      tf,
+			FalseFilter:     ff,
 		}}}
 }
 
@@ -297,7 +296,7 @@ func (cof cellsPerRowOffsetFilter) String() string {
 }
 
 func (cof cellsPerRowOffsetFilter) proto() *btpb.RowFilter {
-	return &btpb.RowFilter{Filter: &btpb.RowFilter_CellsPerRowOffsetFilter{int32(cof)}}
+	return &btpb.RowFilter{Filter: &btpb.RowFilter_CellsPerRowOffsetFilter{CellsPerRowOffsetFilter: int32(cof)}}
 }
 
 // CellsPerRowLimitFilter returns a filter that matches only the first N cells of each row.
@@ -312,7 +311,7 @@ func (clf cellsPerRowLimitFilter) String() string {
 }
 
 func (clf cellsPerRowLimitFilter) proto() *btpb.RowFilter {
-	return &btpb.RowFilter{Filter: &btpb.RowFilter_CellsPerRowLimitFilter{int32(clf)}}
+	return &btpb.RowFilter{Filter: &btpb.RowFilter_CellsPerRowLimitFilter{CellsPerRowLimitFilter: int32(clf)}}
 }
 
 // TODO(dsymonds): More filters: sampling

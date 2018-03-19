@@ -963,9 +963,12 @@
         "deviceArn":{"shape":"AmazonResourceName"},
         "sshPublicKey":{"shape":"SshPublicKey"},
         "remoteDebugEnabled":{"shape":"Boolean"},
+        "remoteRecordEnabled":{"shape":"Boolean"},
+        "remoteRecordAppArn":{"shape":"AmazonResourceName"},
         "name":{"shape":"Name"},
         "clientId":{"shape":"ClientId"},
-        "configuration":{"shape":"CreateRemoteAccessSessionConfiguration"}
+        "configuration":{"shape":"CreateRemoteAccessSessionConfiguration"},
+        "interactionMode":{"shape":"InteractionMode"}
       }
     },
     "CreateRemoteAccessSessionResult":{
@@ -1086,6 +1089,7 @@
         "name":{"shape":"Name"},
         "manufacturer":{"shape":"String"},
         "model":{"shape":"String"},
+        "modelId":{"shape":"String"},
         "formFactor":{"shape":"DeviceFormFactor"},
         "platform":{"shape":"DevicePlatform"},
         "os":{"shape":"String"},
@@ -1433,6 +1437,16 @@
       }
     },
     "Integer":{"type":"integer"},
+    "InteractionMode":{
+      "type":"string",
+      "enum":[
+        "INTERACTIVE",
+        "NO_VIDEO",
+        "VIDEO_ONLY"
+      ],
+      "max":64,
+      "min":0
+    },
     "IosPaths":{
       "type":"list",
       "member":{"shape":"String"}
@@ -1960,12 +1974,15 @@
         "stopped":{"shape":"DateTime"},
         "device":{"shape":"Device"},
         "remoteDebugEnabled":{"shape":"Boolean"},
+        "remoteRecordEnabled":{"shape":"Boolean"},
+        "remoteRecordAppArn":{"shape":"AmazonResourceName"},
         "hostAddress":{"shape":"HostAddress"},
         "clientId":{"shape":"ClientId"},
         "billingMethod":{"shape":"BillingMethod"},
         "deviceMinutes":{"shape":"DeviceMinutes"},
         "endpoint":{"shape":"String"},
-        "deviceUdid":{"shape":"String"}
+        "deviceUdid":{"shape":"String"},
+        "interactionMode":{"shape":"InteractionMode"}
       }
     },
     "RemoteAccessSessions":{
@@ -2036,7 +2053,16 @@
         "networkProfile":{"shape":"NetworkProfile"},
         "parsingResultUrl":{"shape":"String"},
         "resultCode":{"shape":"ExecutionResultCode"},
-        "customerArtifactPaths":{"shape":"CustomerArtifactPaths"}
+        "seed":{"shape":"Integer"},
+        "appUpload":{"shape":"AmazonResourceName"},
+        "eventCount":{"shape":"Integer"},
+        "jobTimeoutMinutes":{"shape":"JobTimeoutMinutes"},
+        "devicePoolArn":{"shape":"AmazonResourceName"},
+        "locale":{"shape":"String"},
+        "radios":{"shape":"Radios"},
+        "location":{"shape":"Location"},
+        "customerArtifactPaths":{"shape":"CustomerArtifactPaths"},
+        "webUrl":{"shape":"String"}
       }
     },
     "Runs":{
@@ -2208,6 +2234,7 @@
       "enum":[
         "BUILTIN_FUZZ",
         "BUILTIN_EXPLORER",
+        "WEB_PERFORMANCE_PROFILE",
         "APPIUM_JAVA_JUNIT",
         "APPIUM_JAVA_TESTNG",
         "APPIUM_PYTHON",
@@ -2219,7 +2246,9 @@
         "UIAUTOMATION",
         "UIAUTOMATOR",
         "XCTEST",
-        "XCTEST_UI"
+        "XCTEST_UI",
+        "REMOTE_ACCESS_RECORD",
+        "REMOTE_ACCESS_REPLAY"
       ]
     },
     "Tests":{

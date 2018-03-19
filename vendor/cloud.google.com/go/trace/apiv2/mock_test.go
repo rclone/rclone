@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -123,7 +123,7 @@ func TestTraceServiceBatchWriteSpans(t *testing.T) {
 
 	mockTrace.resps = append(mockTrace.resps[:0], expectedResponse)
 
-	var formattedName string = ProjectPath("[PROJECT]")
+	var formattedName string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var spans []*cloudtracepb.Span = nil
 	var request = &cloudtracepb.BatchWriteSpansRequest{
 		Name:  formattedName,
@@ -151,7 +151,7 @@ func TestTraceServiceBatchWriteSpansError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockTrace.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = ProjectPath("[PROJECT]")
+	var formattedName string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var spans []*cloudtracepb.Span = nil
 	var request = &cloudtracepb.BatchWriteSpansRequest{
 		Name:  formattedName,
@@ -186,7 +186,7 @@ func TestTraceServiceCreateSpan(t *testing.T) {
 
 	mockTrace.resps = append(mockTrace.resps[:0], expectedResponse)
 
-	var formattedName string = SpanPath("[PROJECT]", "[TRACE]", "[SPAN]")
+	var formattedName string = fmt.Sprintf("projects/%s/traces/%s/spans/%s", "[PROJECT]", "[TRACE]", "[SPAN]")
 	var spanId string = "spanId-2011840976"
 	var displayName *cloudtracepb.TruncatableString = &cloudtracepb.TruncatableString{}
 	var startTime *timestamppb.Timestamp = &timestamppb.Timestamp{}
@@ -223,7 +223,7 @@ func TestTraceServiceCreateSpanError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockTrace.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = SpanPath("[PROJECT]", "[TRACE]", "[SPAN]")
+	var formattedName string = fmt.Sprintf("projects/%s/traces/%s/spans/%s", "[PROJECT]", "[TRACE]", "[SPAN]")
 	var spanId string = "spanId-2011840976"
 	var displayName *cloudtracepb.TruncatableString = &cloudtracepb.TruncatableString{}
 	var startTime *timestamppb.Timestamp = &timestamppb.Timestamp{}

@@ -332,7 +332,7 @@ create_repo="创建了仓库 <a href=\"%s\">%s</a>"
 
 ```go
 cfg, err := ini.LoadSources(ini.LoadOptions{UnescapeValueDoubleQuotes: true}, "en-US.ini"))
-cfg.Section("<name of your section>").Key("create_repo").String() 
+cfg.Section("<name of your section>").Key("create_repo").String()
 // You got: 创建了仓库 <a href="%s">%s</a>
 ```
 
@@ -433,7 +433,7 @@ cfg.WriteToIndent(writer, "\t")
 
 ```go
 ini.PrettyFormat = false
-``` 
+```
 
 ## 高级用法
 
@@ -480,6 +480,33 @@ cfg.Section("package.sub").Key("CLONE_URL").String()	// https://gopkg.in/ini.v1
 
 ```go
 cfg.Section("package.sub").ParentKeys() // ["CLONE_URL"]
+```
+
+### 同个键名包含多个值
+
+你是否也曾被下面的配置文件所困扰？
+
+```ini
+[remote "origin"]
+url = https://github.com/Antergone/test1.git
+url = https://github.com/Antergone/test2.git
+fetch = +refs/heads/*:refs/remotes/origin/*
+```
+
+没错！默认情况下，只有最后一次出现的值会被保存到 `url` 中，可我就是想要保留所有的值怎么办啊？不要紧，用 `ShadowLoad` 轻松解决你的烦恼：
+
+```go
+cfg, err := ini.ShadowLoad(".gitconfig")
+// ...
+
+f.Section(`remote "origin"`).Key("url").String() 
+// Result: https://github.com/Antergone/test1.git
+
+f.Section(`remote "origin"`).Key("url").ValueWithShadows()
+// Result:  []string{
+//              "https://github.com/Antergone/test1.git",
+//              "https://github.com/Antergone/test2.git",
+//          }
 ```
 
 ### 无法解析的分区

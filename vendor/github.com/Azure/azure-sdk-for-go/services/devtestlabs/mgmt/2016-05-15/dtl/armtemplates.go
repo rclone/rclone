@@ -41,9 +41,9 @@ func NewArmTemplatesClientWithBaseURI(baseURI string, subscriptionID string) Arm
 
 // Get get azure resource manager template.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. artifactSourceName is the name
-// of the artifact source. name is the name of the azure Resource Manager template. expand is specify the $expand
-// query. Example: 'properties($select=displayName)'
+// resourceGroupName is the name of the resource group. labName is the name of the lab. artifactSourceName is the
+// name of the artifact source. name is the name of the azure Resource Manager template. expand is specify the
+// $expand query. Example: 'properties($select=displayName)'
 func (client ArmTemplatesClient) Get(ctx context.Context, resourceGroupName string, labName string, artifactSourceName string, name string, expand string) (result ArmTemplate, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, labName, artifactSourceName, name, expand)
 	if err != nil {
@@ -114,10 +114,10 @@ func (client ArmTemplatesClient) GetResponder(resp *http.Response) (result ArmTe
 
 // List list azure resource manager templates in a given artifact source.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. artifactSourceName is the name
-// of the artifact source. expand is specify the $expand query. Example: 'properties($select=displayName)' filter is
-// the filter to apply to the operation. top is the maximum number of resources to return from the operation. orderby
-// is the ordering expression for the results, using OData notation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. artifactSourceName is the
+// name of the artifact source. expand is specify the $expand query. Example: 'properties($select=displayName)'
+// filter is the filter to apply to the operation. top is the maximum number of resources to return from the
+// operation. orderby is the ordering expression for the results, using OData notation.
 func (client ArmTemplatesClient) List(ctx context.Context, resourceGroupName string, labName string, artifactSourceName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationArmTemplatePage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, artifactSourceName, expand, filter, top, orderby)

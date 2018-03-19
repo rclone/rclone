@@ -111,7 +111,6 @@ func (r *Request) Do() error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -210,7 +209,7 @@ func (r *Request) send() error {
 	var err error
 
 	if r.Operation.Config.Connection == nil {
-		return errors.New("connection not initialized")
+		r.Operation.Config.InitHTTPClient()
 	}
 
 	retries := r.Operation.Config.ConnectionRetries + 1

@@ -42,15 +42,15 @@ func NewExportTasksClientWithBaseURI(baseURI string, subscriptionID string) Expo
 
 // CreateActivitiesTask creates a task to export activities.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name.
 func (client ExportTasksClient) CreateActivitiesTask(ctx context.Context, resourceGroupName string, appCollection string, appName string, parameters DateRangeExportTaskParameter) (result ExportTaskResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ContainerURL", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.StartDate", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.EndDate", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.ExportTasksClient", "CreateActivitiesTask")
+		return result, validation.NewError("mobileengagement.ExportTasksClient", "CreateActivitiesTask", err.Error())
 	}
 
 	req, err := client.CreateActivitiesTaskPreparer(ctx, resourceGroupName, appCollection, appName, parameters)
@@ -120,15 +120,15 @@ func (client ExportTasksClient) CreateActivitiesTaskResponder(resp *http.Respons
 
 // CreateCrashesTask creates a task to export crashes.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name.
 func (client ExportTasksClient) CreateCrashesTask(ctx context.Context, resourceGroupName string, appCollection string, appName string, parameters DateRangeExportTaskParameter) (result ExportTaskResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ContainerURL", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.StartDate", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.EndDate", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.ExportTasksClient", "CreateCrashesTask")
+		return result, validation.NewError("mobileengagement.ExportTasksClient", "CreateCrashesTask", err.Error())
 	}
 
 	req, err := client.CreateCrashesTaskPreparer(ctx, resourceGroupName, appCollection, appName, parameters)
@@ -198,15 +198,15 @@ func (client ExportTasksClient) CreateCrashesTaskResponder(resp *http.Response) 
 
 // CreateErrorsTask creates a task to export errors.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name.
 func (client ExportTasksClient) CreateErrorsTask(ctx context.Context, resourceGroupName string, appCollection string, appName string, parameters DateRangeExportTaskParameter) (result ExportTaskResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ContainerURL", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.StartDate", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.EndDate", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.ExportTasksClient", "CreateErrorsTask")
+		return result, validation.NewError("mobileengagement.ExportTasksClient", "CreateErrorsTask", err.Error())
 	}
 
 	req, err := client.CreateErrorsTaskPreparer(ctx, resourceGroupName, appCollection, appName, parameters)
@@ -276,15 +276,15 @@ func (client ExportTasksClient) CreateErrorsTaskResponder(resp *http.Response) (
 
 // CreateEventsTask creates a task to export events.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name.
 func (client ExportTasksClient) CreateEventsTask(ctx context.Context, resourceGroupName string, appCollection string, appName string, parameters DateRangeExportTaskParameter) (result ExportTaskResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ContainerURL", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.StartDate", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.EndDate", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.ExportTasksClient", "CreateEventsTask")
+		return result, validation.NewError("mobileengagement.ExportTasksClient", "CreateEventsTask", err.Error())
 	}
 
 	req, err := client.CreateEventsTaskPreparer(ctx, resourceGroupName, appCollection, appName, parameters)
@@ -354,15 +354,15 @@ func (client ExportTasksClient) CreateEventsTaskResponder(resp *http.Response) (
 
 // CreateFeedbackTaskByCampaign creates a task to export push campaign data for a set of campaigns.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name.
 func (client ExportTasksClient) CreateFeedbackTaskByCampaign(ctx context.Context, resourceGroupName string, appCollection string, appName string, parameters FeedbackByCampaignParameter) (result ExportTaskResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ContainerURL", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.CampaignIds", Name: validation.Null, Rule: true,
 					Chain: []validation.Constraint{{Target: "parameters.CampaignIds", Name: validation.MinItems, Rule: 1, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.ExportTasksClient", "CreateFeedbackTaskByCampaign")
+		return result, validation.NewError("mobileengagement.ExportTasksClient", "CreateFeedbackTaskByCampaign", err.Error())
 	}
 
 	req, err := client.CreateFeedbackTaskByCampaignPreparer(ctx, resourceGroupName, appCollection, appName, parameters)
@@ -432,15 +432,15 @@ func (client ExportTasksClient) CreateFeedbackTaskByCampaignResponder(resp *http
 
 // CreateFeedbackTaskByDateRange creates a task to export push campaign data for a date range.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name.
 func (client ExportTasksClient) CreateFeedbackTaskByDateRange(ctx context.Context, resourceGroupName string, appCollection string, appName string, parameters FeedbackByDateRangeParameter) (result ExportTaskResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ContainerURL", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.CampaignWindowStart", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.CampaignWindowEnd", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.ExportTasksClient", "CreateFeedbackTaskByDateRange")
+		return result, validation.NewError("mobileengagement.ExportTasksClient", "CreateFeedbackTaskByDateRange", err.Error())
 	}
 
 	req, err := client.CreateFeedbackTaskByDateRangePreparer(ctx, resourceGroupName, appCollection, appName, parameters)
@@ -510,15 +510,15 @@ func (client ExportTasksClient) CreateFeedbackTaskByDateRangeResponder(resp *htt
 
 // CreateJobsTask creates a task to export jobs.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name.
 func (client ExportTasksClient) CreateJobsTask(ctx context.Context, resourceGroupName string, appCollection string, appName string, parameters DateRangeExportTaskParameter) (result ExportTaskResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ContainerURL", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.StartDate", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.EndDate", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.ExportTasksClient", "CreateJobsTask")
+		return result, validation.NewError("mobileengagement.ExportTasksClient", "CreateJobsTask", err.Error())
 	}
 
 	req, err := client.CreateJobsTaskPreparer(ctx, resourceGroupName, appCollection, appName, parameters)
@@ -588,15 +588,15 @@ func (client ExportTasksClient) CreateJobsTaskResponder(resp *http.Response) (re
 
 // CreateSessionsTask creates a task to export sessions.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name.
 func (client ExportTasksClient) CreateSessionsTask(ctx context.Context, resourceGroupName string, appCollection string, appName string, parameters DateRangeExportTaskParameter) (result ExportTaskResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ContainerURL", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.StartDate", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.EndDate", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.ExportTasksClient", "CreateSessionsTask")
+		return result, validation.NewError("mobileengagement.ExportTasksClient", "CreateSessionsTask", err.Error())
 	}
 
 	req, err := client.CreateSessionsTaskPreparer(ctx, resourceGroupName, appCollection, appName, parameters)
@@ -666,13 +666,13 @@ func (client ExportTasksClient) CreateSessionsTaskResponder(resp *http.Response)
 
 // CreateTagsTask creates a task to export tags.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name.
 func (client ExportTasksClient) CreateTagsTask(ctx context.Context, resourceGroupName string, appCollection string, appName string, parameters ExportTaskParameter) (result ExportTaskResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ContainerURL", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.ExportTasksClient", "CreateTagsTask")
+		return result, validation.NewError("mobileengagement.ExportTasksClient", "CreateTagsTask", err.Error())
 	}
 
 	req, err := client.CreateTagsTaskPreparer(ctx, resourceGroupName, appCollection, appName, parameters)
@@ -742,13 +742,13 @@ func (client ExportTasksClient) CreateTagsTaskResponder(resp *http.Response) (re
 
 // CreateTokensTask creates a task to export tags.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name.
 func (client ExportTasksClient) CreateTokensTask(ctx context.Context, resourceGroupName string, appCollection string, appName string, parameters ExportTaskParameter) (result ExportTaskResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ContainerURL", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.ExportTasksClient", "CreateTokensTask")
+		return result, validation.NewError("mobileengagement.ExportTasksClient", "CreateTokensTask", err.Error())
 	}
 
 	req, err := client.CreateTokensTaskPreparer(ctx, resourceGroupName, appCollection, appName, parameters)
@@ -818,8 +818,8 @@ func (client ExportTasksClient) CreateTokensTaskResponder(resp *http.Response) (
 
 // Get retrieves information about a previously created export task.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. ID is export task identifier.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. ID is export task identifier.
 func (client ExportTasksClient) Get(ctx context.Context, resourceGroupName string, appCollection string, appName string, ID string) (result ExportTaskResult, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, appCollection, appName, ID)
 	if err != nil {
@@ -887,13 +887,13 @@ func (client ExportTasksClient) GetResponder(resp *http.Response) (result Export
 
 // List get the list of export tasks.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. skip is control paging of export tasks, start results at the given offset, defaults to 0 (1st page of
-// data). top is control paging of export tasks, number of export tasks to return with each call. By default, it
-// returns all export tasks with a default paging of 20.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. skip is control paging of export tasks, start results at the given offset, defaults
+// to 0 (1st page of data). top is control paging of export tasks, number of export tasks to return with each call.
+// By default, it returns all export tasks with a default paging of 20.
 // The response contains a `nextLink` property describing the path to get the next page if there are more results.
-// The maximum paging limit for $top is 40. orderby is sort results by an expression which looks like `$orderby=taskId
-// asc` (default when not specified).
+// The maximum paging limit for $top is 40. orderby is sort results by an expression which looks like
+// `$orderby=taskId asc` (default when not specified).
 // The syntax is orderby={property} {direction} or just orderby={property}.
 // Properties that can be specified for sorting: taskId, errorDetails, dateCreated, taskStatus, and dateCreated.
 // The available directions are asc (for ascending order) and desc (for descending order).
@@ -909,7 +909,7 @@ func (client ExportTasksClient) List(ctx context.Context, resourceGroupName stri
 				Chain: []validation.Constraint{{Target: "top", Name: validation.InclusiveMaximum, Rule: 40, Chain: nil},
 					{Target: "top", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.ExportTasksClient", "List")
+		return result, validation.NewError("mobileengagement.ExportTasksClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults
@@ -949,9 +949,13 @@ func (client ExportTasksClient) ListPreparer(ctx context.Context, resourceGroupN
 	}
 	if skip != nil {
 		queryParameters["$skip"] = autorest.Encode("query", *skip)
+	} else {
+		queryParameters["$skip"] = autorest.Encode("query", 0)
 	}
 	if top != nil {
 		queryParameters["$top"] = autorest.Encode("query", *top)
+	} else {
+		queryParameters["$top"] = autorest.Encode("query", 20)
 	}
 	if len(orderby) > 0 {
 		queryParameters["$orderby"] = autorest.Encode("query", orderby)

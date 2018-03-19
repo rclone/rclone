@@ -1013,7 +1013,6 @@ func (c *Mobile) UpdateProjectWithContext(ctx aws.Context, input *UpdateProjectI
 }
 
 // The details of the bundle.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/BundleDetails
 type BundleDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -1083,7 +1082,6 @@ func (s *BundleDetails) SetVersion(v string) *BundleDetails {
 }
 
 // Request structure used to request a project be created.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/CreateProjectRequest
 type CreateProjectInput struct {
 	_ struct{} `type:"structure" payload:"Contents"`
 
@@ -1138,7 +1136,6 @@ func (s *CreateProjectInput) SetSnapshotId(v string) *CreateProjectInput {
 }
 
 // Result structure used in response to a request to create a project.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/CreateProjectResult
 type CreateProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1163,7 +1160,6 @@ func (s *CreateProjectOutput) SetDetails(v *ProjectDetails) *CreateProjectOutput
 }
 
 // Request structure used to request a project be deleted.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DeleteProjectRequest
 type DeleteProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1203,7 +1199,6 @@ func (s *DeleteProjectInput) SetProjectId(v string) *DeleteProjectInput {
 }
 
 // Result structure used in response to request to delete a project.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DeleteProjectResult
 type DeleteProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1238,7 +1233,6 @@ func (s *DeleteProjectOutput) SetOrphanedResources(v []*Resource) *DeleteProject
 }
 
 // Request structure to request the details of a specific bundle.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeBundleRequest
 type DescribeBundleInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1278,7 +1272,6 @@ func (s *DescribeBundleInput) SetBundleId(v string) *DescribeBundleInput {
 }
 
 // Result structure contains the details of the bundle.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeBundleResult
 type DescribeBundleOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1303,7 +1296,6 @@ func (s *DescribeBundleOutput) SetDetails(v *BundleDetails) *DescribeBundleOutpu
 }
 
 // Request structure used to request details about a project.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeProjectRequest
 type DescribeProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1354,7 +1346,6 @@ func (s *DescribeProjectInput) SetSyncFromResources(v bool) *DescribeProjectInpu
 }
 
 // Result structure used for requests of project details.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeProjectResult
 type DescribeProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1380,7 +1371,6 @@ func (s *DescribeProjectOutput) SetDetails(v *ProjectDetails) *DescribeProjectOu
 
 // Request structure used to request generation of custom SDK and tool packages
 // required to integrate mobile web or app clients with backed AWS resources.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportBundleRequest
 type ExportBundleInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1440,7 +1430,6 @@ func (s *ExportBundleInput) SetProjectId(v string) *ExportBundleInput {
 // Result structure which contains link to download custom-generated SDK and
 // tool packages used to integrate mobile web or app clients with backed AWS
 // resources.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportBundleResult
 type ExportBundleOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1467,7 +1456,6 @@ func (s *ExportBundleOutput) SetDownloadUrl(v string) *ExportBundleOutput {
 }
 
 // Request structure used in requests to export project configuration details.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportProjectRequest
 type ExportProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1507,7 +1495,6 @@ func (s *ExportProjectInput) SetProjectId(v string) *ExportProjectInput {
 }
 
 // Result structure used for requests to export project configuration details.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportProjectResult
 type ExportProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1556,7 +1543,6 @@ func (s *ExportProjectOutput) SetSnapshotId(v string) *ExportProjectOutput {
 }
 
 // Request structure to request all available bundles.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListBundlesRequest
 type ListBundlesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1592,7 +1578,6 @@ func (s *ListBundlesInput) SetNextToken(v string) *ListBundlesInput {
 }
 
 // Result structure contains a list of all available bundles with details.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListBundlesResult
 type ListBundlesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1627,7 +1612,6 @@ func (s *ListBundlesOutput) SetNextToken(v string) *ListBundlesOutput {
 }
 
 // Request structure used to request projects list in AWS Mobile Hub.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListProjectsRequest
 type ListProjectsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1663,7 +1647,6 @@ func (s *ListProjectsInput) SetNextToken(v string) *ListProjectsInput {
 }
 
 // Result structure used for requests to list projects in AWS Mobile Hub.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListProjectsResult
 type ListProjectsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1699,7 +1682,6 @@ func (s *ListProjectsOutput) SetProjects(v []*ProjectSummary) *ListProjectsOutpu
 }
 
 // Detailed information about an AWS Mobile Hub project.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ProjectDetails
 type ProjectDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -1787,7 +1769,6 @@ func (s *ProjectDetails) SetState(v string) *ProjectDetails {
 }
 
 // Summary information about an AWS Mobile Hub project.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ProjectSummary
 type ProjectSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -1821,7 +1802,6 @@ func (s *ProjectSummary) SetProjectId(v string) *ProjectSummary {
 }
 
 // Information about an instance of an AWS resource associated with a project.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/Resource
 type Resource struct {
 	_ struct{} `type:"structure"`
 
@@ -1883,7 +1863,6 @@ func (s *Resource) SetType(v string) *Resource {
 }
 
 // Request structure used for requests to update project configuration.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/UpdateProjectRequest
 type UpdateProjectInput struct {
 	_ struct{} `type:"structure" payload:"Contents"`
 
@@ -1934,7 +1913,6 @@ func (s *UpdateProjectInput) SetProjectId(v string) *UpdateProjectInput {
 }
 
 // Result structure used for requests to updated project configuration.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/UpdateProjectResult
 type UpdateProjectOutput struct {
 	_ struct{} `type:"structure"`
 

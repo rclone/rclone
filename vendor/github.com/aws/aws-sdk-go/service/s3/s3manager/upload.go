@@ -443,6 +443,8 @@ type uploader struct {
 
 	readerPos int64 // current reader position
 	totalSize int64 // set to -1 if the size is not known
+
+	bufferPool sync.Pool
 }
 
 // internal logic for deciding whether to upload a single part or use a
@@ -456,7 +458,7 @@ func (u *uploader) upload() (*UploadOutput, error) {
 	}
 
 	// Do one read to determine if we have more than one part
-	reader, _, err := u.nextReader()
+	reader, _, part, err := u.nextReader()
 	if err == io.EOF { // single part
 		return u.singlePart(reader)
 	} else if err != nil {
@@ -464,7 +466,7 @@ func (u *uploader) upload() (*UploadOutput, error) {
 	}
 
 	mu := multiuploader{uploader: u}
-	return mu.upload(reader)
+	return mu.upload(reader, part)
 }
 
 // init will initialize all default options.
@@ -474,6 +476,10 @@ func (u *uploader) init() {
 	}
 	if u.cfg.PartSize == 0 {
 		u.cfg.PartSize = DefaultUploadPartSize
+	}
+
+	u.bufferPool = sync.Pool{
+		New: func() interface{} { return make([]byte, u.cfg.PartSize) },
 	}
 
 	// Try to get the total size for some optimizations
@@ -487,10 +493,7 @@ func (u *uploader) initSize() {
 
 	switch r := u.in.Body.(type) {
 	case io.Seeker:
-		pos, _ := r.Seek(0, 1)
-		defer r.Seek(pos, 0)
-
-		n, err := r.Seek(0, 2)
+		n, err := aws.SeekerLen(r)
 		if err != nil {
 			return
 		}
@@ -510,7 +513,7 @@ func (u *uploader) initSize() {
 // This operation increases the shared u.readerPos counter, but note that it
 // does not need to be wrapped in a mutex because nextReader is only called
 // from the main thread.
-func (u *uploader) nextReader() (io.ReadSeeker, int, error) {
+func (u *uploader) nextReader() (io.ReadSeeker, int, []byte, error) {
 	type readerAtSeeker interface {
 		io.ReaderAt
 		io.ReadSeeker
@@ -532,14 +535,14 @@ func (u *uploader) nextReader() (io.ReadSeeker, int, error) {
 		reader := io.NewSectionReader(r, u.readerPos, n)
 		u.readerPos += n
 
-		return reader, int(n), err
+		return reader, int(n), nil, err
 
 	default:
-		part := make([]byte, u.cfg.PartSize)
+		part := u.bufferPool.Get().([]byte)
 		n, err := readFillBuf(r, part)
 		u.readerPos += int64(n)
 
-		return bytes.NewReader(part[0:n]), n, err
+		return bytes.NewReader(part[0:n]), n, part, err
 	}
 }
 
@@ -589,8 +592,9 @@ type multiuploader struct {
 
 // keeps track of a single chunk of data being sent to S3.
 type chunk struct {
-	buf io.ReadSeeker
-	num int64
+	buf  io.ReadSeeker
+	part []byte
+	num  int64
 }
 
 // completedParts is a wrapper to make parts sortable by their part number,
@@ -603,7 +607,7 @@ func (a completedParts) Less(i, j int) bool { return *a[i].PartNumber < *a[j].Pa
 
 // upload will perform a multipart upload using the firstBuf buffer containing
 // the first chunk of data.
-func (u *multiuploader) upload(firstBuf io.ReadSeeker) (*UploadOutput, error) {
+func (u *multiuploader) upload(firstBuf io.ReadSeeker, firstPart []byte) (*UploadOutput, error) {
 	params := &s3.CreateMultipartUploadInput{}
 	awsutil.Copy(params, u.in)
 
@@ -623,7 +627,7 @@ func (u *multiuploader) upload(firstBuf io.ReadSeeker) (*UploadOutput, error) {
 
 	// Send part 1 to the workers
 	var num int64 = 1
-	ch <- chunk{buf: firstBuf, num: num}
+	ch <- chunk{buf: firstBuf, part: firstPart, num: num}
 
 	// Read and queue the rest of the parts
 	for u.geterr() == nil && err == nil {
@@ -644,7 +648,8 @@ func (u *multiuploader) upload(firstBuf io.ReadSeeker) (*UploadOutput, error) {
 
 		var reader io.ReadSeeker
 		var nextChunkLen int
-		reader, nextChunkLen, err = u.nextReader()
+		var part []byte
+		reader, nextChunkLen, part, err = u.nextReader()
 
 		if err != nil && err != io.EOF {
 			u.seterr(awserr.New(
@@ -661,7 +666,7 @@ func (u *multiuploader) upload(firstBuf io.ReadSeeker) (*UploadOutput, error) {
 			break
 		}
 
-		ch <- chunk{buf: reader, num: num}
+		ch <- chunk{buf: reader, part: part, num: num}
 	}
 
 	// Close the channel, wait for workers, and complete upload
@@ -717,6 +722,8 @@ func (u *multiuploader) send(c chunk) error {
 		PartNumber:           &c.num,
 	}
 	resp, err := u.cfg.S3.UploadPartWithContext(u.ctx, params, u.cfg.RequestOptions...)
+	// put the byte array back into the pool to conserve memory
+	u.bufferPool.Put(c.part)
 	if err != nil {
 		return err
 	}

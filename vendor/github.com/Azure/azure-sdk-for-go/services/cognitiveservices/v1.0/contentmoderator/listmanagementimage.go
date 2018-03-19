@@ -124,7 +124,8 @@ func (client ListManagementImageClient) AddImageResponder(resp *http.Response) (
 // AddImageFileInput add an image to the list with list Id equal to list Id passed.
 //
 // listID is list Id of the image list. imageStream is the image file. imageStream will be closed upon successful
-// return. Callers should ensure closure when receiving an error.tag is tag for the image. label is the image label.
+// return. Callers should ensure closure when receiving an error.tag is tag for the image. label is the image
+// label.
 func (client ListManagementImageClient) AddImageFileInput(ctx context.Context, listID string, imageStream io.ReadCloser, tag *int32, label string) (result Image, err error) {
 	req, err := client.AddImageFileInputPreparer(ctx, listID, imageStream, tag, label)
 	if err != nil {
@@ -166,6 +167,7 @@ func (client ListManagementImageClient) AddImageFileInputPreparer(ctx context.Co
 	}
 
 	preparer := autorest.CreatePreparer(
+		autorest.AsOctetStream(),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{baseUrl}", urlParameters),
 		autorest.WithPathParameters("/contentmoderator/lists/v1.0/imagelists/{listId}/images", pathParameters),
@@ -196,8 +198,8 @@ func (client ListManagementImageClient) AddImageFileInputResponder(resp *http.Re
 
 // AddImageURLInput add an image to the list with list Id equal to list Id passed.
 //
-// listID is list Id of the image list. contentType is the content type. imageURL is the image url. tag is tag for the
-// image. label is the image label.
+// listID is list Id of the image list. contentType is the content type. imageURL is the image url. tag is tag for
+// the image. label is the image label.
 func (client ListManagementImageClient) AddImageURLInput(ctx context.Context, listID string, contentType string, imageURL BodyModel, tag *int32, label string) (result Image, err error) {
 	req, err := client.AddImageURLInputPreparer(ctx, listID, contentType, imageURL, tag, label)
 	if err != nil {

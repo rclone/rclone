@@ -530,7 +530,7 @@ func (b *Blob) putSingleBlockBlob(chunk []byte) error {
 	if err != nil {
 		return err
 	}
-	return checkRespCode(resp.statusCode, []int{http.StatusCreated})
+	return checkRespCode(resp, []int{http.StatusCreated})
 }
 
 func blobName(c *chk.C, extras ...string) string {

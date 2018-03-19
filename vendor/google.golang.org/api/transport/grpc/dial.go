@@ -75,6 +75,10 @@ func dial(ctx context.Context, insecure bool, opts []option.ClientOption) (*grpc
 		// Use the Socket API on App Engine.
 		grpcOpts = append(grpcOpts, appengineDialerHook(ctx))
 	}
+	// Add tracing, but before the other options, so that clients can override the
+	// gRPC stats handler.
+	// This assumes that gRPC options are processed in order, left to right.
+	grpcOpts = addOCStatsHandler(grpcOpts)
 	grpcOpts = append(grpcOpts, o.GRPCDialOpts...)
 	if o.UserAgent != "" {
 		grpcOpts = append(grpcOpts, grpc.WithUserAgent(o.UserAgent))

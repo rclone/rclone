@@ -150,8 +150,9 @@ There are two ways to construct schemas with this package.
 You can build a schema by hand, like so:
 
     schema1 := bigquery.Schema{
-        &bigquery.FieldSchema{Name: "Name", Required: true, Type: bigquery.StringFieldType},
-        &bigquery.FieldSchema{Name: "Grades", Repeated: true, Type: bigquery.IntegerFieldType},
+        {Name: "Name", Required: true, Type: bigquery.StringFieldType},
+        {Name: "Grades", Repeated: true, Type: bigquery.IntegerFieldType},
+        {Name: "Optional", Required: false, Type: bigquery.IntegerFieldType},
     }
 
 Or you can infer the schema from a struct:
@@ -159,6 +160,7 @@ Or you can infer the schema from a struct:
     type student struct {
         Name   string
         Grades []int
+        Optional bigquery.NullInt64
     }
     schema2, err := bigquery.InferSchema(student{})
     if err != nil {
@@ -166,20 +168,24 @@ Or you can infer the schema from a struct:
     }
     // schema1 and schema2 are identical.
 
-Struct inference supports tags like those of the encoding/json package,
-so you can change names, ignore fields, or mark a field as nullable (non-required):
+Struct inference supports tags like those of the encoding/json package, so you can
+change names, ignore fields, or mark a field as nullable (non-required). Fields
+declared as on of the Null types (NullInt64, NullFloat64, NullString, NullBool,
+NullTimestamp, NullDate, NullTime and NullDateTime) are automatically inferred as
+nullable, so the "nullable" tag is only needed for []byte and pointer-to-struct
+fields.
 
     type student2 struct {
         Name     string `bigquery:"full_name"`
         Grades   []int
         Secret   string `bigquery:"-"`
-        Optional int    `bigquery:",nullable"
+        Optional []byte `bigquery:",nullable"
     }
     schema3, err := bigquery.InferSchema(student2{})
     if err != nil {
         // TODO: Handle error.
     }
-    // schema3 has required fields "full_name", "Grade" and nullable field "Optional".
+    // schema3 has required fields "full_name" and "Grade", and nullable BYTES field "Optional".
 
 Having constructed a schema, you can create a table with it like so:
 

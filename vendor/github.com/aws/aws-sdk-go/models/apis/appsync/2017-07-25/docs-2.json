@@ -24,6 +24,7 @@
     "ListResolvers": "<p>Lists the resolvers for a given API and type.</p>",
     "ListTypes": "<p>Lists the types for a given API.</p>",
     "StartSchemaCreation": "<p>Adds a new schema to your GraphQL API.</p> <p>This operation is asynchronous. Use to determine when it has completed.</p>",
+    "UpdateApiKey": "<p>Updates an API key.</p>",
     "UpdateDataSource": "<p>Updates a <code>DataSource</code> object.</p>",
     "UpdateGraphqlApi": "<p>Updates a <code>GraphqlApi</code> object.</p>",
     "UpdateResolver": "<p>Updates a <code>Resolver</code> object.</p>",
@@ -34,11 +35,17 @@
       "base": "<p>Describes an API key.</p>",
       "refs": {
         "ApiKeys$member": null,
-        "CreateApiKeyResponse$apiKey": "<p>The API key.</p>"
+        "CreateApiKeyResponse$apiKey": "<p>The API key.</p>",
+        "UpdateApiKeyResponse$apiKey": "<p>The API key.</p>"
       }
     },
     "ApiKeyLimitExceededException": {
       "base": "<p>The API key exceeded a limit. Try your request again.</p>",
+      "refs": {
+      }
+    },
+    "ApiKeyValidityOutOfBoundsException": {
+      "base": "<p>The API key expiration must be set to a value between 1 and 365 days.</p>",
       "refs": {
       }
     },
@@ -147,7 +154,7 @@
       "base": null,
       "refs": {
         "CreateDataSourceRequest$type": "<p>The type of the <code>DataSource</code>.</p>",
-        "DataSource$type": "<p>The type of the data source.</p>",
+        "DataSource$type": "<p>The type of the data source.</p> <ul> <li> <p> <b>AMAZON_DYNAMODB</b>: The data source is an Amazon DynamoDB table.</p> </li> <li> <p> <b>AMAZON_ELASTICSEARCH</b>: The data source is an Amazon Elasticsearch Service domain.</p> </li> <li> <p> <b>AWS_LAMBDA</b>: The data source is an AWS Lambda function.</p> </li> <li> <p> <b>NONE</b>: There is no data source. This type is used when the required information can be computed on the fly without connecting to a back-end data source.</p> </li> </ul>",
         "UpdateDataSourceRequest$type": "<p>The new data source type.</p>"
       }
     },
@@ -308,7 +315,7 @@
         "CreateGraphqlApiResponse$graphqlApi": "<p>The <code>GraphqlApi</code>.</p>",
         "GetGraphqlApiResponse$graphqlApi": "<p>The <code>GraphqlApi</code> object.</p>",
         "GraphqlApis$member": null,
-        "UpdateGraphqlApiResponse$graphqlApi": "<p>The udpated <code>GraphqlApi</code> object.</p>"
+        "UpdateGraphqlApiResponse$graphqlApi": "<p>The updated <code>GraphqlApi</code> object.</p>"
       }
     },
     "GraphqlApis": {
@@ -388,7 +395,9 @@
     "Long": {
       "base": null,
       "refs": {
-        "ApiKey$expires": "<p>The time when the API key expires.</p>"
+        "ApiKey$expires": "<p>The time after which the API key expires. The date is represented as seconds since the epoch, rounded down to the nearest hour.</p>",
+        "CreateApiKeyRequest$expires": "<p>The time after which the API key expires. The date is represented as seconds since the epoch, rounded down to the nearest hour. The default value for this parameter is 7 days from creation time.</p>",
+        "UpdateApiKeyRequest$expires": "<p>The time after which the API key expires. The date is represented as seconds since the epoch.</p>"
       }
     },
     "MapOfStringToString": {
@@ -400,7 +409,7 @@
     "MappingTemplate": {
       "base": null,
       "refs": {
-        "CreateResolverRequest$requestMappingTemplate": "<p>The mapping template to be used for requests.</p> <p>A resolver use a request mapping template to convert a GraphQL expression into a format that a data source can understand. Mapping templates are written in Apache Velocity Template Language (VTL).</p>",
+        "CreateResolverRequest$requestMappingTemplate": "<p>The mapping template to be used for requests.</p> <p>A resolver uses a request mapping template to convert a GraphQL expression into a format that a data source can understand. Mapping templates are written in Apache Velocity Template Language (VTL).</p>",
         "CreateResolverRequest$responseMappingTemplate": "<p>The mapping template to be used for responses from the data source.</p>",
         "Resolver$requestMappingTemplate": "<p>The request mapping template.</p>",
         "Resolver$responseMappingTemplate": "<p>The response mapping template.</p>",
@@ -463,7 +472,6 @@
       "base": null,
       "refs": {
         "CreateDataSourceRequest$name": "<p>A user-supplied name for the <code>DataSource</code>.</p>",
-        "CreateGraphqlApiRequest$name": "<p>A user-supplied name for the <code>GraphqlApi</code>.</p>",
         "CreateResolverRequest$typeName": "<p>The name of the <code>Type</code>.</p>",
         "CreateResolverRequest$fieldName": "<p>The name of the field to attach the resolver to.</p>",
         "CreateResolverRequest$dataSourceName": "<p>The name of the data source for which the resolver is being created.</p>",
@@ -482,7 +490,6 @@
         "Resolver$dataSourceName": "<p>The resolver data source name.</p>",
         "Type$name": "<p>The type name.</p>",
         "UpdateDataSourceRequest$name": "<p>The new name for the data source.</p>",
-        "UpdateGraphqlApiRequest$name": "<p>The new name for the <code>GraphqlApi</code> object.</p>",
         "UpdateResolverRequest$typeName": "<p>The new type name.</p>",
         "UpdateResolverRequest$fieldName": "<p>The new field name.</p>",
         "UpdateResolverRequest$dataSourceName": "<p>The new data source name.</p>",
@@ -512,12 +519,14 @@
         "ApiKey$id": "<p>The API key ID.</p>",
         "ApiKey$description": "<p>A description of the purpose of the API key.</p>",
         "ApiKeyLimitExceededException$message": null,
+        "ApiKeyValidityOutOfBoundsException$message": null,
         "ApiLimitExceededException$message": null,
         "CreateApiKeyRequest$apiId": "<p>The ID for your GraphQL API.</p>",
         "CreateApiKeyRequest$description": "<p>A description of the purpose of the API key.</p>",
         "CreateDataSourceRequest$apiId": "<p>The API ID for the GraphQL API for the <code>DataSource</code>.</p>",
         "CreateDataSourceRequest$description": "<p>A description of the <code>DataSource</code>.</p>",
         "CreateDataSourceRequest$serviceRoleArn": "<p>The IAM service role ARN for the data source. The system assumes this role when accessing the data source.</p>",
+        "CreateGraphqlApiRequest$name": "<p>A user-supplied name for the <code>GraphqlApi</code>.</p>",
         "CreateResolverRequest$apiId": "<p>The ID for the GraphQL API for which the resolver is being created.</p>",
         "CreateTypeRequest$apiId": "<p>The API ID.</p>",
         "CreateTypeRequest$definition": "<p>The type definition, in GraphQL Schema Definition Language (SDL) format.</p> <p>For more information, see the <a href=\"http://graphql.org/learn/schema/\">GraphQL SDL documentation</a>.</p>",
@@ -560,10 +569,14 @@
         "Type$arn": "<p>The type ARN.</p>",
         "Type$definition": "<p>The type definition.</p>",
         "UnauthorizedException$message": null,
+        "UpdateApiKeyRequest$apiId": "<p>The ID for the GraphQL API</p>",
+        "UpdateApiKeyRequest$id": "<p>The API key ID.</p>",
+        "UpdateApiKeyRequest$description": "<p>A description of the purpose of the API key.</p>",
         "UpdateDataSourceRequest$apiId": "<p>The API ID.</p>",
         "UpdateDataSourceRequest$description": "<p>The new description for the data source.</p>",
         "UpdateDataSourceRequest$serviceRoleArn": "<p>The new service role ARN for the data source.</p>",
         "UpdateGraphqlApiRequest$apiId": "<p>The API ID.</p>",
+        "UpdateGraphqlApiRequest$name": "<p>The new name for the <code>GraphqlApi</code> object.</p>",
         "UpdateResolverRequest$apiId": "<p>The API ID.</p>",
         "UpdateTypeRequest$apiId": "<p>The API ID.</p>",
         "UpdateTypeRequest$definition": "<p>The new definition.</p>",
@@ -599,6 +612,16 @@
     },
     "UnauthorizedException": {
       "base": "<p>You are not authorized to perform this operation.</p>",
+      "refs": {
+      }
+    },
+    "UpdateApiKeyRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateApiKeyResponse": {
+      "base": null,
       "refs": {
       }
     },

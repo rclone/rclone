@@ -1513,7 +1513,8 @@
         "MAX_LIMIT_EXCEEDED_FILTER",
         "MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS",
         "INVALID_FULL_NAME_TARGET",
-        "UNRECOGNIZED_SERVICE_PRINCIPAL"
+        "UNRECOGNIZED_SERVICE_PRINCIPAL",
+        "INVALID_ROLE_NAME"
       ]
     },
     "InviteAccountToOrganizationRequest":{
@@ -2052,8 +2053,9 @@
     },
     "ServicePrincipal":{
       "type":"string",
-      "max":1000,
-      "min":1
+      "max":128,
+      "min":1,
+      "pattern":"[\\w+=,.@-]*"
     },
     "SourceParentNotFoundException":{
       "type":"structure",

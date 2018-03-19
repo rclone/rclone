@@ -49,7 +49,7 @@ func (client TenantAccessGitClient) Get(ctx context.Context, resourceGroupName s
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.TenantAccessGitClient", "Get")
+		return result, validation.NewError("apimanagement.TenantAccessGitClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName)
@@ -123,7 +123,7 @@ func (client TenantAccessGitClient) RegeneratePrimaryKey(ctx context.Context, re
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.TenantAccessGitClient", "RegeneratePrimaryKey")
+		return result, validation.NewError("apimanagement.TenantAccessGitClient", "RegeneratePrimaryKey", err.Error())
 	}
 
 	req, err := client.RegeneratePrimaryKeyPreparer(ctx, resourceGroupName, serviceName)
@@ -196,7 +196,7 @@ func (client TenantAccessGitClient) RegenerateSecondaryKey(ctx context.Context, 
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.TenantAccessGitClient", "RegenerateSecondaryKey")
+		return result, validation.NewError("apimanagement.TenantAccessGitClient", "RegenerateSecondaryKey", err.Error())
 	}
 
 	req, err := client.RegenerateSecondaryKeyPreparer(ctx, resourceGroupName, serviceName)

@@ -48,14 +48,14 @@ type AgreementProperties struct {
 // AgreementTerms terms properties for provided Publisher/Offer/Plan tuple
 type AgreementTerms struct {
 	autorest.Response `json:"-"`
+	// AgreementProperties - Represents the properties of the resource.
+	*AgreementProperties `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
-	// AgreementProperties - Represents the properties of the resource.
-	*AgreementProperties `json:"properties,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for AgreementTerms struct.
@@ -65,46 +65,45 @@ func (at *AgreementTerms) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties AgreementProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var agreementProperties AgreementProperties
+				err = json.Unmarshal(*v, &agreementProperties)
+				if err != nil {
+					return err
+				}
+				at.AgreementProperties = &agreementProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				at.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				at.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				at.Type = &typeVar
+			}
 		}
-		at.AgreementProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		at.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		at.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		at.Type = &typeVar
 	}
 
 	return nil
@@ -143,8 +142,8 @@ type OperationDisplay struct {
 	Operation *string `json:"operation,omitempty"`
 }
 
-// OperationListResult result of the request to list MarketplaceOrdering operations. It contains a list of operations
-// and a URL link to get the next set of results.
+// OperationListResult result of the request to list MarketplaceOrdering operations. It contains a list of
+// operations and a URL link to get the next set of results.
 type OperationListResult struct {
 	autorest.Response `json:"-"`
 	// Value - List of Microsoft.MarketplaceOrdering operations supported by the Microsoft.MarketplaceOrdering resource provider.

@@ -42,15 +42,15 @@ func NewDeploymentsClientWithBaseURI(baseURI string, subscriptionID string) Depl
 
 // Cancel cancel a currently running template deployment.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of the
-// deployment.
+// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
+// the deployment.
 func (client DeploymentsClient) Cancel(ctx context.Context, resourceGroupName string, deploymentName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.DeploymentsClient", "Cancel")
+		return result, validation.NewError("resources.DeploymentsClient", "Cancel", err.Error())
 	}
 
 	req, err := client.CancelPreparer(ctx, resourceGroupName, deploymentName)
@@ -116,15 +116,15 @@ func (client DeploymentsClient) CancelResponder(resp *http.Response) (result aut
 
 // CheckExistence checks whether deployment exists.
 //
-// resourceGroupName is the name of the resource group to check. The name is case insensitive. deploymentName is the
-// name of the deployment.
+// resourceGroupName is the name of the resource group to check. The name is case insensitive. deploymentName is
+// the name of the deployment.
 func (client DeploymentsClient) CheckExistence(ctx context.Context, resourceGroupName string, deploymentName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.DeploymentsClient", "CheckExistence")
+		return result, validation.NewError("resources.DeploymentsClient", "CheckExistence", err.Error())
 	}
 
 	req, err := client.CheckExistencePreparer(ctx, resourceGroupName, deploymentName)
@@ -190,8 +190,8 @@ func (client DeploymentsClient) CheckExistenceResponder(resp *http.Response) (re
 
 // CreateOrUpdate create a named template deployment using a template.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of the
-// deployment. parameters is additional parameters supplied to the operation.
+// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
+// the deployment. parameters is additional parameters supplied to the operation.
 func (client DeploymentsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, deploymentName string, parameters Deployment) (result DeploymentsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -205,7 +205,7 @@ func (client DeploymentsClient) CreateOrUpdate(ctx context.Context, resourceGrou
 					{Target: "parameters.Properties.ParametersLink", Name: validation.Null, Rule: false,
 						Chain: []validation.Constraint{{Target: "parameters.Properties.ParametersLink.URI", Name: validation.Null, Rule: true, Chain: nil}}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.DeploymentsClient", "CreateOrUpdate")
+		return result, validation.NewError("resources.DeploymentsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, deploymentName, parameters)
@@ -276,15 +276,15 @@ func (client DeploymentsClient) CreateOrUpdateResponder(resp *http.Response) (re
 
 // Delete delete deployment.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of the
-// deployment to be deleted.
+// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
+// the deployment to be deleted.
 func (client DeploymentsClient) Delete(ctx context.Context, resourceGroupName string, deploymentName string) (result DeploymentsDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.DeploymentsClient", "Delete")
+		return result, validation.NewError("resources.DeploymentsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, deploymentName)
@@ -352,15 +352,15 @@ func (client DeploymentsClient) DeleteResponder(resp *http.Response) (result aut
 
 // ExportTemplate exports a deployment template.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of the
-// deployment.
+// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
+// the deployment.
 func (client DeploymentsClient) ExportTemplate(ctx context.Context, resourceGroupName string, deploymentName string) (result DeploymentExportResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.DeploymentsClient", "ExportTemplate")
+		return result, validation.NewError("resources.DeploymentsClient", "ExportTemplate", err.Error())
 	}
 
 	req, err := client.ExportTemplatePreparer(ctx, resourceGroupName, deploymentName)
@@ -427,15 +427,15 @@ func (client DeploymentsClient) ExportTemplateResponder(resp *http.Response) (re
 
 // Get get a deployment.
 //
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. deploymentName is the name
-// of the deployment.
+// resourceGroupName is the name of the resource group to get. The name is case insensitive. deploymentName is the
+// name of the deployment.
 func (client DeploymentsClient) Get(ctx context.Context, resourceGroupName string, deploymentName string) (result DeploymentExtended, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.DeploymentsClient", "Get")
+		return result, validation.NewError("resources.DeploymentsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, deploymentName)
@@ -502,15 +502,15 @@ func (client DeploymentsClient) GetResponder(resp *http.Response) (result Deploy
 
 // List get a list of deployments.
 //
-// resourceGroupName is the name of the resource group to filter by. The name is case insensitive. filter is the filter
-// to apply on the operation. top is query parameters. If null is passed returns all deployments.
+// resourceGroupName is the name of the resource group to filter by. The name is case insensitive. filter is the
+// filter to apply on the operation. top is query parameters. If null is passed returns all deployments.
 func (client DeploymentsClient) List(ctx context.Context, resourceGroupName string, filter string, top *int32) (result DeploymentListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.DeploymentsClient", "List")
+		return result, validation.NewError("resources.DeploymentsClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults
@@ -610,8 +610,8 @@ func (client DeploymentsClient) ListComplete(ctx context.Context, resourceGroupN
 
 // Validate validate a deployment template.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of the
-// deployment. parameters is deployment to validate.
+// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
+// the deployment. parameters is deployment to validate.
 func (client DeploymentsClient) Validate(ctx context.Context, resourceGroupName string, deploymentName string, parameters Deployment) (result DeploymentValidateResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -625,7 +625,7 @@ func (client DeploymentsClient) Validate(ctx context.Context, resourceGroupName 
 					{Target: "parameters.Properties.ParametersLink", Name: validation.Null, Rule: false,
 						Chain: []validation.Constraint{{Target: "parameters.Properties.ParametersLink.URI", Name: validation.Null, Rule: true, Chain: nil}}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.DeploymentsClient", "Validate")
+		return result, validation.NewError("resources.DeploymentsClient", "Validate", err.Error())
 	}
 
 	req, err := client.ValidatePreparer(ctx, resourceGroupName, deploymentName, parameters)

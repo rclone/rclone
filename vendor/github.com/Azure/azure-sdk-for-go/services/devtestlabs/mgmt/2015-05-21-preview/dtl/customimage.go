@@ -41,8 +41,8 @@ func NewCustomImageClientWithBaseURI(baseURI string, subscriptionID string) Cust
 
 // CreateOrUpdateResource create or replace an existing custom image. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the custom
-// image.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// custom image.
 func (client CustomImageClient) CreateOrUpdateResource(ctx context.Context, resourceGroupName string, labName string, name string, customImage CustomImage) (result CustomImageCreateOrUpdateResourceFuture, err error) {
 	req, err := client.CreateOrUpdateResourcePreparer(ctx, resourceGroupName, labName, name, customImage)
 	if err != nil {
@@ -113,8 +113,8 @@ func (client CustomImageClient) CreateOrUpdateResourceResponder(resp *http.Respo
 
 // DeleteResource delete custom image. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the custom
-// image.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// custom image.
 func (client CustomImageClient) DeleteResource(ctx context.Context, resourceGroupName string, labName string, name string) (result CustomImageDeleteResourceFuture, err error) {
 	req, err := client.DeleteResourcePreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -182,8 +182,8 @@ func (client CustomImageClient) DeleteResourceResponder(resp *http.Response) (re
 
 // GetResource get custom image.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the custom
-// image.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// custom image.
 func (client CustomImageClient) GetResource(ctx context.Context, resourceGroupName string, labName string, name string) (result CustomImage, err error) {
 	req, err := client.GetResourcePreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -250,8 +250,8 @@ func (client CustomImageClient) GetResourceResponder(resp *http.Response) (resul
 
 // List list custom images.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to apply
-// on the operation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to
+// apply on the operation.
 func (client CustomImageClient) List(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (result ResponseWithContinuationCustomImagePage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, filter, top, orderBy)

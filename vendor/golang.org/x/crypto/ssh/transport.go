@@ -233,52 +233,22 @@ var (
 	clientKeys = direction{[]byte{'A'}, []byte{'C'}, []byte{'E'}}
 )
 
-// generateKeys generates key material for IV, MAC and encryption.
-func generateKeys(d direction, algs directionAlgorithms, kex *kexResult) (iv, key, macKey []byte) {
-	cipherMode := cipherModes[algs.Cipher]
-	macMode := macModes[algs.MAC]
-
-	iv = make([]byte, cipherMode.ivSize)
-	key = make([]byte, cipherMode.keySize)
-	macKey = make([]byte, macMode.keySize)
-
-	generateKeyMaterial(iv, d.ivTag, kex)
-	generateKeyMaterial(key, d.keyTag, kex)
-	generateKeyMaterial(macKey, d.macKeyTag, kex)
-	return
-}
-
 // setupKeys sets the cipher and MAC keys from kex.K, kex.H and sessionId, as
 // described in RFC 4253, section 6.4. direction should either be serverKeys
 // (to setup server->client keys) or clientKeys (for client->server keys).
 func newPacketCipher(d direction, algs directionAlgorithms, kex *kexResult) (packetCipher, error) {
-	iv, key, macKey := generateKeys(d, algs, kex)
+	cipherMode := cipherModes[algs.Cipher]
+	macMode := macModes[algs.MAC]
 
-	if algs.Cipher == gcmCipherID {
-		return newGCMCipher(iv, key)
-	}
+	iv := make([]byte, cipherMode.ivSize)
+	key := make([]byte, cipherMode.keySize)
+	macKey := make([]byte, macMode.keySize)
 
-	if algs.Cipher == aes128cbcID {
-		return newAESCBCCipher(iv, key, macKey, algs)
-	}
+	generateKeyMaterial(iv, d.ivTag, kex)
+	generateKeyMaterial(key, d.keyTag, kex)
+	generateKeyMaterial(macKey, d.macKeyTag, kex)
 
-	if algs.Cipher == tripledescbcID {
-		return newTripleDESCBCCipher(iv, key, macKey, algs)
-	}
-
-	c := &streamPacketCipher{
-		mac: macModes[algs.MAC].new(macKey),
-		etm: macModes[algs.MAC].etm,
-	}
-	c.macResult = make([]byte, c.mac.Size())
-
-	var err error
-	c.cipher, err = cipherModes[algs.Cipher].createStream(key, iv)
-	if err != nil {
-		return nil, err
-	}
-
-	return c, nil
+	return cipherModes[algs.Cipher].create(key, iv, macKey, algs)
 }
 
 // generateKeyMaterial fills out with key material generated from tag, K, H

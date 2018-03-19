@@ -296,6 +296,10 @@ type CognitoIdentityProviderAPI interface {
 	GetIdentityProviderByIdentifierWithContext(aws.Context, *cognitoidentityprovider.GetIdentityProviderByIdentifierInput, ...request.Option) (*cognitoidentityprovider.GetIdentityProviderByIdentifierOutput, error)
 	GetIdentityProviderByIdentifierRequest(*cognitoidentityprovider.GetIdentityProviderByIdentifierInput) (*request.Request, *cognitoidentityprovider.GetIdentityProviderByIdentifierOutput)
 
+	GetSigningCertificate(*cognitoidentityprovider.GetSigningCertificateInput) (*cognitoidentityprovider.GetSigningCertificateOutput, error)
+	GetSigningCertificateWithContext(aws.Context, *cognitoidentityprovider.GetSigningCertificateInput, ...request.Option) (*cognitoidentityprovider.GetSigningCertificateOutput, error)
+	GetSigningCertificateRequest(*cognitoidentityprovider.GetSigningCertificateInput) (*request.Request, *cognitoidentityprovider.GetSigningCertificateOutput)
+
 	GetUICustomization(*cognitoidentityprovider.GetUICustomizationInput) (*cognitoidentityprovider.GetUICustomizationOutput, error)
 	GetUICustomizationWithContext(aws.Context, *cognitoidentityprovider.GetUICustomizationInput, ...request.Option) (*cognitoidentityprovider.GetUICustomizationOutput, error)
 	GetUICustomizationRequest(*cognitoidentityprovider.GetUICustomizationInput) (*request.Request, *cognitoidentityprovider.GetUICustomizationOutput)

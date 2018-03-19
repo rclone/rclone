@@ -18,6 +18,7 @@ package storage
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
+	"context"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"net/http"
@@ -25,7 +26,7 @@ import (
 
 // UsageClient is the the Azure Storage Management API.
 type UsageClient struct {
-	ManagementClient
+	BaseClient
 }
 
 // NewUsageClient creates an instance of the UsageClient client.
@@ -39,8 +40,8 @@ func NewUsageClientWithBaseURI(baseURI string, subscriptionID string) UsageClien
 }
 
 // List gets the current usage count and the limit for the resources under the subscription.
-func (client UsageClient) List() (result UsageListResult, err error) {
-	req, err := client.ListPreparer()
+func (client UsageClient) List(ctx context.Context) (result UsageListResult, err error) {
+	req, err := client.ListPreparer(ctx)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "storage.UsageClient", "List", nil, "Failure preparing request")
 		return
@@ -62,7 +63,7 @@ func (client UsageClient) List() (result UsageListResult, err error) {
 }
 
 // ListPreparer prepares the List request.
-func (client UsageClient) ListPreparer() (*http.Request, error) {
+func (client UsageClient) ListPreparer(ctx context.Context) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
 	}
@@ -77,14 +78,13 @@ func (client UsageClient) ListPreparer() (*http.Request, error) {
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.Storage/usages", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
-	return preparer.Prepare(&http.Request{})
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client UsageClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client,
-		req,
+	return autorest.SendWithSender(client, req,
 		azure.DoRetryWithRegistration(client.Client))
 }
 

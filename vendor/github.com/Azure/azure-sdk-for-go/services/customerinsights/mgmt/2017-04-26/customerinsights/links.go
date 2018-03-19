@@ -58,7 +58,7 @@ func (client LinksClient) CreateOrUpdate(ctx context.Context, resourceGroupName 
 					{Target: "parameters.LinkDefinition.TargetEntityTypeName", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "parameters.LinkDefinition.ParticipantPropertyReferences", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "customerinsights.LinksClient", "CreateOrUpdate")
+		return result, validation.NewError("customerinsights.LinksClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, hubName, linkName, parameters)

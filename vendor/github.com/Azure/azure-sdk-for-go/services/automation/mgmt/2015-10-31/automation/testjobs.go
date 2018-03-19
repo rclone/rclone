@@ -42,15 +42,15 @@ func NewTestJobsClientWithBaseURI(baseURI string, subscriptionID string, resourc
 
 // Create create a test job of the runbook.
 //
-// automationAccountName is the automation account name. runbookName is the parameters supplied to the create test job
-// operation. parameters is the parameters supplied to the create test job operation.
+// automationAccountName is the automation account name. runbookName is the parameters supplied to the create test
+// job operation. parameters is the parameters supplied to the create test job operation.
 func (client TestJobsClient) Create(ctx context.Context, automationAccountName string, runbookName string, parameters TestJobCreateParameters) (result TestJob, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.RunbookName", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.TestJobsClient", "Create")
+		return result, validation.NewError("automation.TestJobsClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, automationAccountName, runbookName, parameters)
@@ -125,7 +125,7 @@ func (client TestJobsClient) Get(ctx context.Context, automationAccountName stri
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.TestJobsClient", "Get")
+		return result, validation.NewError("automation.TestJobsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, runbookName)
@@ -198,7 +198,7 @@ func (client TestJobsClient) Resume(ctx context.Context, automationAccountName s
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.TestJobsClient", "Resume")
+		return result, validation.NewError("automation.TestJobsClient", "Resume", err.Error())
 	}
 
 	req, err := client.ResumePreparer(ctx, automationAccountName, runbookName)
@@ -270,7 +270,7 @@ func (client TestJobsClient) Stop(ctx context.Context, automationAccountName str
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.TestJobsClient", "Stop")
+		return result, validation.NewError("automation.TestJobsClient", "Stop", err.Error())
 	}
 
 	req, err := client.StopPreparer(ctx, automationAccountName, runbookName)
@@ -342,7 +342,7 @@ func (client TestJobsClient) Suspend(ctx context.Context, automationAccountName 
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.TestJobsClient", "Suspend")
+		return result, validation.NewError("automation.TestJobsClient", "Suspend", err.Error())
 	}
 
 	req, err := client.SuspendPreparer(ctx, automationAccountName, runbookName)

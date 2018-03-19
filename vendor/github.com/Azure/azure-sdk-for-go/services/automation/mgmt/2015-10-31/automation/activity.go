@@ -42,13 +42,13 @@ func NewActivityClientWithBaseURI(baseURI string, subscriptionID string, resourc
 
 // Get retrieve the activity in the module identified by module name and activity name.
 //
-// automationAccountName is the automation account name. moduleName is the name of module. activityName is the name of
-// activity.
+// automationAccountName is the automation account name. moduleName is the name of module. activityName is the name
+// of activity.
 func (client ActivityClient) Get(ctx context.Context, automationAccountName string, moduleName string, activityName string) (result Activity, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ActivityClient", "Get")
+		return result, validation.NewError("automation.ActivityClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, moduleName, activityName)
@@ -122,7 +122,7 @@ func (client ActivityClient) ListByModule(ctx context.Context, automationAccount
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ActivityClient", "ListByModule")
+		return result, validation.NewError("automation.ActivityClient", "ListByModule", err.Error())
 	}
 
 	result.fn = client.listByModuleNextResults

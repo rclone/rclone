@@ -61,6 +61,7 @@
     "GetDevice": "<p>Gets the device.</p>",
     "GetGroup": "<p>Gets a group.</p> <p>Requires developer credentials.</p>",
     "GetIdentityProviderByIdentifier": "<p>Gets the specified identity provider.</p>",
+    "GetSigningCertificate": "<p>This method takes a user pool ID, and returns the signing certificate.</p>",
     "GetUICustomization": "<p>Gets the UI Customization information for a particular app client's app UI, if there is something set. If nothing is set for the particular client, but there is an existing pool level customization (app <code>clientId</code> will be <code>ALL</code>), then that is returned. If nothing is present, then an empty shape is returned.</p>",
     "GetUser": "<p>Gets the user attributes and metadata for a user.</p>",
     "GetUserAttributeVerificationCode": "<p>Gets the user attribute verification code for the specified attribute name.</p>",
@@ -455,6 +456,7 @@
         "LambdaConfigType$CreateAuthChallenge": "<p>Creates an authentication challenge.</p>",
         "LambdaConfigType$VerifyAuthChallengeResponse": "<p>Verifies the authentication challenge response.</p>",
         "LambdaConfigType$PreTokenGeneration": "<p>A Lambda trigger that is invoked before token generation.</p>",
+        "LambdaConfigType$UserMigration": "<p>The user migration Lambda config type.</p>",
         "NotifyConfigurationType$SourceArn": "<p>The Amazon Resource Name (ARN) of the identity that is associated with the sending authorization policy. It permits Amazon Cognito to send for the email address specified in the <code>From</code> parameter.</p>",
         "SmsConfigurationType$SnsCallerArn": "<p>The Amazon Resource Name (ARN) of the Amazon Simple Notification Service (SNS) caller.</p>",
         "UpdateGroupRequest$RoleArn": "<p>The new role ARN for the group. This is used for setting the <code>cognito:roles</code> and <code>cognito:preferred_role</code> claims in the token.</p>",
@@ -552,15 +554,15 @@
     "AuthFlowType": {
       "base": null,
       "refs": {
-        "AdminInitiateAuthRequest$AuthFlow": "<p>The authentication flow for this call to execute. The API action will depend on this value. For example:</p> <ul> <li> <p> <code>REFRESH_TOKEN_AUTH</code> will take in a valid refresh token and return new tokens.</p> </li> <li> <p> <code>USER_SRP_AUTH</code> will take in <code>USERNAME</code> and <code>SRP_A</code> and return the SRP variables to be used for next challenge execution.</p> </li> </ul> <p>Valid values include:</p> <ul> <li> <p> <code>USER_SRP_AUTH</code>: Authentication flow for the Secure Remote Password (SRP) protocol.</p> </li> <li> <p> <code>REFRESH_TOKEN_AUTH</code>/<code>REFRESH_TOKEN</code>: Authentication flow for refreshing the access token and ID token by supplying a valid refresh token.</p> </li> <li> <p> <code>CUSTOM_AUTH</code>: Custom authentication flow.</p> </li> <li> <p> <code>ADMIN_NO_SRP_AUTH</code>: Non-SRP authentication flow; you can pass in the USERNAME and PASSWORD directly if the flow is enabled for calling the app client.</p> </li> </ul>",
-        "InitiateAuthRequest$AuthFlow": "<p>The authentication flow for this call to execute. The API action will depend on this value. For example: </p> <ul> <li> <p> <code>REFRESH_TOKEN_AUTH</code> will take in a valid refresh token and return new tokens.</p> </li> <li> <p> <code>USER_SRP_AUTH</code> will take in <code>USERNAME</code> and <code>SRP_A</code> and return the SRP variables to be used for next challenge execution.</p> </li> </ul> <p>Valid values include:</p> <ul> <li> <p> <code>USER_SRP_AUTH</code>: Authentication flow for the Secure Remote Password (SRP) protocol.</p> </li> <li> <p> <code>REFRESH_TOKEN_AUTH</code>/<code>REFRESH_TOKEN</code>: Authentication flow for refreshing the access token and ID token by supplying a valid refresh token.</p> </li> <li> <p> <code>CUSTOM_AUTH</code>: Custom authentication flow.</p> </li> </ul> <p> <code>ADMIN_NO_SRP_AUTH</code> is not a valid value.</p>"
+        "AdminInitiateAuthRequest$AuthFlow": "<p>The authentication flow for this call to execute. The API action will depend on this value. For example:</p> <ul> <li> <p> <code>REFRESH_TOKEN_AUTH</code> will take in a valid refresh token and return new tokens.</p> </li> <li> <p> <code>USER_SRP_AUTH</code> will take in <code>USERNAME</code> and <code>SRP_A</code> and return the SRP variables to be used for next challenge execution.</p> </li> <li> <p> <code>USER_PASSWORD_AUTH</code> will take in <code>USERNAME</code> and <code>PASSWORD</code> and return the next challenge or tokens.</p> </li> </ul> <p>Valid values include:</p> <ul> <li> <p> <code>USER_SRP_AUTH</code>: Authentication flow for the Secure Remote Password (SRP) protocol.</p> </li> <li> <p> <code>REFRESH_TOKEN_AUTH</code>/<code>REFRESH_TOKEN</code>: Authentication flow for refreshing the access token and ID token by supplying a valid refresh token.</p> </li> <li> <p> <code>CUSTOM_AUTH</code>: Custom authentication flow.</p> </li> <li> <p> <code>ADMIN_NO_SRP_AUTH</code>: Non-SRP authentication flow; you can pass in the USERNAME and PASSWORD directly if the flow is enabled for calling the app client.</p> </li> <li> <p> <code>USER_PASSWORD_AUTH</code>: Non-SRP authentication flow; USERNAME and PASSWORD are passed directly. If a user migration Lambda trigger is set, this flow will invoke the user migration Lambda if the USERNAME is not found in the user pool. </p> </li> </ul>",
+        "InitiateAuthRequest$AuthFlow": "<p>The authentication flow for this call to execute. The API action will depend on this value. For example: </p> <ul> <li> <p> <code>REFRESH_TOKEN_AUTH</code> will take in a valid refresh token and return new tokens.</p> </li> <li> <p> <code>USER_SRP_AUTH</code> will take in <code>USERNAME</code> and <code>SRP_A</code> and return the SRP variables to be used for next challenge execution.</p> </li> <li> <p> <code>USER_PASSWORD_AUTH</code> will take in <code>USERNAME</code> and <code>PASSWORD</code> and return the next challenge or tokens.</p> </li> </ul> <p>Valid values include:</p> <ul> <li> <p> <code>USER_SRP_AUTH</code>: Authentication flow for the Secure Remote Password (SRP) protocol.</p> </li> <li> <p> <code>REFRESH_TOKEN_AUTH</code>/<code>REFRESH_TOKEN</code>: Authentication flow for refreshing the access token and ID token by supplying a valid refresh token.</p> </li> <li> <p> <code>CUSTOM_AUTH</code>: Custom authentication flow.</p> </li> <li> <p> <code>USER_PASSWORD_AUTH</code>: Non-SRP authentication flow; USERNAME and PASSWORD are passed directly. If a user migration Lambda trigger is set, this flow will invoke the user migration Lambda if the USERNAME is not found in the user pool. </p> </li> </ul> <p> <code>ADMIN_NO_SRP_AUTH</code> is not a valid value.</p>"
       }
     },
     "AuthParametersType": {
       "base": null,
       "refs": {
-        "AdminInitiateAuthRequest$AuthParameters": "<p>The authentication parameters. These are inputs corresponding to the <code>AuthFlow</code> that you are invoking. The required values depend on the value of <code>AuthFlow</code>:</p> <ul> <li> <p>For <code>USER_SRP_AUTH</code>: <code>USERNAME</code> (required), <code>SRP_A</code> (required), <code>SECRET_HASH</code> (required if the app client is configured with a client secret), <code>DEVICE_KEY</code> </p> </li> <li> <p>For <code>REFRESH_TOKEN_AUTH/REFRESH_TOKEN</code>: <code>USERNAME</code> (required), <code>SECRET_HASH</code> (required if the app client is configured with a client secret), <code>REFRESH_TOKEN</code> (required), <code>DEVICE_KEY</code> </p> </li> <li> <p>For <code>ADMIN_NO_SRP_AUTH</code>: <code>USERNAME</code> (required), <code>SECRET_HASH</code> (if app client is configured with client secret), <code>PASSWORD</code> (required), <code>DEVICE_KEY</code> </p> </li> <li> <p>For <code>CUSTOM_AUTH</code>: <code>USERNAME</code> (required), <code>SECRET_HASH</code> (if app client is configured with client secret), <code>DEVICE_KEY</code> </p> </li> </ul>",
-        "InitiateAuthRequest$AuthParameters": "<p>The authentication parameters. These are inputs corresponding to the <code>AuthFlow</code> that you are invoking. The required values depend on the value of <code>AuthFlow</code>:</p> <ul> <li> <p>For <code>USER_SRP_AUTH</code>: <code>USERNAME</code> (required), <code>SRP_A</code> (required), <code>SECRET_HASH</code> (required if the app client is configured with a client secret), <code>DEVICE_KEY</code> </p> </li> <li> <p>For <code>REFRESH_TOKEN_AUTH/REFRESH_TOKEN</code>: <code>USERNAME</code> (required), <code>SECRET_HASH</code> (required if the app client is configured with a client secret), <code>REFRESH_TOKEN</code> (required), <code>DEVICE_KEY</code> </p> </li> <li> <p>For <code>CUSTOM_AUTH</code>: <code>USERNAME</code> (required), <code>SECRET_HASH</code> (if app client is configured with client secret), <code>DEVICE_KEY</code> </p> </li> </ul>"
+        "AdminInitiateAuthRequest$AuthParameters": "<p>The authentication parameters. These are inputs corresponding to the <code>AuthFlow</code> that you are invoking. The required values depend on the value of <code>AuthFlow</code>:</p> <ul> <li> <p>For <code>USER_SRP_AUTH</code>: <code>USERNAME</code> (required), <code>SRP_A</code> (required), <code>SECRET_HASH</code> (required if the app client is configured with a client secret), <code>DEVICE_KEY</code> </p> </li> <li> <p>For <code>REFRESH_TOKEN_AUTH/REFRESH_TOKEN</code>: <code>REFRESH_TOKEN</code> (required), <code>SECRET_HASH</code> (required if the app client is configured with a client secret), <code>DEVICE_KEY</code> </p> </li> <li> <p>For <code>ADMIN_NO_SRP_AUTH</code>: <code>USERNAME</code> (required), <code>SECRET_HASH</code> (if app client is configured with client secret), <code>PASSWORD</code> (required), <code>DEVICE_KEY</code> </p> </li> <li> <p>For <code>CUSTOM_AUTH</code>: <code>USERNAME</code> (required), <code>SECRET_HASH</code> (if app client is configured with client secret), <code>DEVICE_KEY</code> </p> </li> </ul>",
+        "InitiateAuthRequest$AuthParameters": "<p>The authentication parameters. These are inputs corresponding to the <code>AuthFlow</code> that you are invoking. The required values depend on the value of <code>AuthFlow</code>:</p> <ul> <li> <p>For <code>USER_SRP_AUTH</code>: <code>USERNAME</code> (required), <code>SRP_A</code> (required), <code>SECRET_HASH</code> (required if the app client is configured with a client secret), <code>DEVICE_KEY</code> </p> </li> <li> <p>For <code>REFRESH_TOKEN_AUTH/REFRESH_TOKEN</code>: <code>REFRESH_TOKEN</code> (required), <code>SECRET_HASH</code> (required if the app client is configured with a client secret), <code>DEVICE_KEY</code> </p> </li> <li> <p>For <code>CUSTOM_AUTH</code>: <code>USERNAME</code> (required), <code>SECRET_HASH</code> (if app client is configured with client secret), <code>DEVICE_KEY</code> </p> </li> </ul>"
       }
     },
     "AuthenticationResultType": {
@@ -647,7 +649,7 @@
     "ChallengeParametersType": {
       "base": null,
       "refs": {
-        "AdminInitiateAuthResponse$ChallengeParameters": "<p>The challenge parameters. These are returned to you in the <code>AdminInitiateAuth</code> response if you need to pass another challenge. The responses in this parameter should be used to compute inputs to the next call (<code>AdminRespondToAuthChallenge</code>).</p> <p>All challenges require <code>USERNAME</code> and <code>SECRET_HASH</code> (if applicable).</p> <p>The value of the <code>USER_IF_FOR_SRP</code> attribute will be the user's actual username, not an alias (such as email address or phone number), even if you specified an alias in your call to <code>AdminInitiateAuth</code>. This is because, in the <code>AdminRespondToAuthChallenge</code> API <code>ChallengeResponses</code>, the <code>USERNAME</code> attribute cannot be an alias.</p>",
+        "AdminInitiateAuthResponse$ChallengeParameters": "<p>The challenge parameters. These are returned to you in the <code>AdminInitiateAuth</code> response if you need to pass another challenge. The responses in this parameter should be used to compute inputs to the next call (<code>AdminRespondToAuthChallenge</code>).</p> <p>All challenges require <code>USERNAME</code> and <code>SECRET_HASH</code> (if applicable).</p> <p>The value of the <code>USER_ID_FOR_SRP</code> attribute will be the user's actual username, not an alias (such as email address or phone number), even if you specified an alias in your call to <code>AdminInitiateAuth</code>. This is because, in the <code>AdminRespondToAuthChallenge</code> API <code>ChallengeResponses</code>, the <code>USERNAME</code> attribute cannot be an alias.</p>",
         "AdminRespondToAuthChallengeResponse$ChallengeParameters": "<p>The challenge parameters. For more information, see .</p>",
         "InitiateAuthResponse$ChallengeParameters": "<p>The challenge parameters. These are returned to you in the <code>InitiateAuth</code> response if you need to pass another challenge. The responses in this parameter should be used to compute inputs to the next call (<code>RespondToAuthChallenge</code>). </p> <p>All challenges require <code>USERNAME</code> and <code>SECRET_HASH</code> (if applicable).</p>",
         "RespondToAuthChallengeResponse$ChallengeParameters": "<p>The challenge parameters. For more information, see .</p>"
@@ -1412,6 +1414,16 @@
       "refs": {
       }
     },
+    "GetSigningCertificateRequest": {
+      "base": "<p>Request to get a signing certificate from Cognito.</p>",
+      "refs": {
+      }
+    },
+    "GetSigningCertificateResponse": {
+      "base": "<p>Response from Cognito for a signing certificate request.</p>",
+      "refs": {
+      }
+    },
     "GetUICustomizationRequest": {
       "base": null,
       "refs": {
@@ -1623,7 +1635,7 @@
     "LambdaConfigType": {
       "base": "<p>Specifies the configuration for AWS Lambda triggers.</p>",
       "refs": {
-        "CreateUserPoolRequest$LambdaConfig": "<p>The Lambda trigger configuration information for the new user pool.</p>",
+        "CreateUserPoolRequest$LambdaConfig": "<p>The Lambda trigger configuration information for the new user pool.</p> <note> <p>In a push model, event sources (such as Amazon S3 and custom applications) need permission to invoke a function. So you will need to make an extra call to add permission for these event sources to invoke your Lambda function.</p> <p/> <p>For more information on using the Lambda API to add permission, see <a href=\"https://docs.aws.amazon.com/lambda/latest/dg/API_AddPermission.html\"> AddPermission </a>. </p> <p>For adding permission using the AWS CLI, see <a href=\"https://docs.aws.amazon.com/cli/latest/reference/lambda/add-permission.html\"> add-permission </a>.</p> </note>",
         "UpdateUserPoolRequest$LambdaConfig": "<p>The AWS Lambda configuration information from the request to update the user pool.</p>",
         "UserPoolDescriptionType$LambdaConfig": "<p>The AWS Lambda configuration information in a user pool description.</p>",
         "UserPoolType$LambdaConfig": "<p>The AWS Lambda triggers associated with tue user pool.</p>"
@@ -2434,6 +2446,7 @@
         "EventContextDataType$City": "<p>The user's city.</p>",
         "EventContextDataType$Country": "<p>The user's country.</p>",
         "EventFeedbackType$Provider": "<p>The provider.</p>",
+        "GetSigningCertificateResponse$Certificate": "<p>The signing certificate.</p>",
         "GetUserResponse$PreferredMfaSetting": "<p>The user's preferred MFA setting.</p>",
         "HttpHeader$headerName": "<p>The header name</p>",
         "HttpHeader$headerValue": "<p>The header value.</p>",
@@ -2779,6 +2792,7 @@
         "GetCSVHeaderResponse$UserPoolId": "<p>The user pool ID for the user pool that the users are to be imported into.</p>",
         "GetGroupRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "GetIdentityProviderByIdentifierRequest$UserPoolId": "<p>The user pool ID.</p>",
+        "GetSigningCertificateRequest$UserPoolId": "<p>The user pool ID.</p>",
         "GetUICustomizationRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "GetUserPoolMfaConfigRequest$UserPoolId": "<p>The user pool ID.</p>",
         "GroupType$UserPoolId": "<p>The user pool ID for the user pool.</p>",
@@ -2912,10 +2926,10 @@
         "AdminGetUserResponse$Username": "<p>The user name of the user about whom you are receiving information.</p>",
         "AdminListDevicesRequest$Username": "<p>The user name.</p>",
         "AdminListGroupsForUserRequest$Username": "<p>The username for the user.</p>",
-        "AdminListUserAuthEventsRequest$Username": "<p>The user pool username.</p>",
+        "AdminListUserAuthEventsRequest$Username": "<p>The user pool username or an alias.</p>",
         "AdminRemoveUserFromGroupRequest$Username": "<p>The username for the user.</p>",
         "AdminResetUserPasswordRequest$Username": "<p>The user name of the user whose password you wish to reset.</p>",
-        "AdminSetUserMFAPreferenceRequest$Username": "<p>The user pool username.</p>",
+        "AdminSetUserMFAPreferenceRequest$Username": "<p>The user pool username or alias.</p>",
         "AdminSetUserSettingsRequest$Username": "<p>The user name of the user for whom you wish to set user settings.</p>",
         "AdminUpdateAuthEventFeedbackRequest$Username": "<p>The user pool username.</p>",
         "AdminUpdateDeviceStatusRequest$Username": "<p>The user name.</p>",

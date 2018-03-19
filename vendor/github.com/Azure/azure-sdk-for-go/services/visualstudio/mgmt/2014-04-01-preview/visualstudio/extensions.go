@@ -45,8 +45,8 @@ func NewExtensionsClientWithBaseURI(baseURI string, subscriptionID string) Exten
 // Create registers the extension with a Visual Studio Team Services account.
 //
 // resourceGroupName is name of the resource group within the Azure subscription. body is an object containing
-// additional information related to the extension request. accountResourceName is the name of the Visual Studio Team
-// Services account resource. extensionResourceName is the name of the extension.
+// additional information related to the extension request. accountResourceName is the name of the Visual Studio
+// Team Services account resource. extensionResourceName is the name of the extension.
 func (client ExtensionsClient) Create(ctx context.Context, resourceGroupName string, body ExtensionResourceRequest, accountResourceName string, extensionResourceName string) (result ExtensionResource, err error) {
 	req, err := client.CreatePreparer(ctx, resourceGroupName, body, accountResourceName, extensionResourceName)
 	if err != nil {
@@ -115,8 +115,8 @@ func (client ExtensionsClient) CreateResponder(resp *http.Response) (result Exte
 
 // Delete removes an extension resource registration for a Visual Studio Team Services account.
 //
-// resourceGroupName is name of the resource group within the Azure subscription. accountResourceName is the name of
-// the Visual Studio Team Services account resource. extensionResourceName is the name of the extension.
+// resourceGroupName is name of the resource group within the Azure subscription. accountResourceName is the name
+// of the Visual Studio Team Services account resource. extensionResourceName is the name of the extension.
 func (client ExtensionsClient) Delete(ctx context.Context, resourceGroupName string, accountResourceName string, extensionResourceName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountResourceName, extensionResourceName)
 	if err != nil {
@@ -182,8 +182,8 @@ func (client ExtensionsClient) DeleteResponder(resp *http.Response) (result auto
 
 // Get gets the details of an extension associated with a Visual Studio Team Services account resource.
 //
-// resourceGroupName is name of the resource group within the Azure subscription. accountResourceName is the name of
-// the Visual Studio Team Services account resource. extensionResourceName is the name of the extension.
+// resourceGroupName is name of the resource group within the Azure subscription. accountResourceName is the name
+// of the Visual Studio Team Services account resource. extensionResourceName is the name of the extension.
 func (client ExtensionsClient) Get(ctx context.Context, resourceGroupName string, accountResourceName string, extensionResourceName string) (result ExtensionResource, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountResourceName, extensionResourceName)
 	if err != nil {
@@ -250,8 +250,8 @@ func (client ExtensionsClient) GetResponder(resp *http.Response) (result Extensi
 
 // ListByAccount gets the details of the extension resources created within the resource group.
 //
-// resourceGroupName is name of the resource group within the Azure subscription. accountResourceName is the name of
-// the Visual Studio Team Services account resource.
+// resourceGroupName is name of the resource group within the Azure subscription. accountResourceName is the name
+// of the Visual Studio Team Services account resource.
 func (client ExtensionsClient) ListByAccount(ctx context.Context, resourceGroupName string, accountResourceName string) (result ExtensionResourceListResult, err error) {
 	req, err := client.ListByAccountPreparer(ctx, resourceGroupName, accountResourceName)
 	if err != nil {
@@ -318,8 +318,8 @@ func (client ExtensionsClient) ListByAccountResponder(resp *http.Response) (resu
 // Update updates an existing extension registration for the Visual Studio Team Services account.
 //
 // resourceGroupName is name of the resource group within the Azure subscription. body is an object containing
-// additional information related to the extension request. accountResourceName is the name of the Visual Studio Team
-// Services account resource. extensionResourceName is the name of the extension.
+// additional information related to the extension request. accountResourceName is the name of the Visual Studio
+// Team Services account resource. extensionResourceName is the name of the extension.
 func (client ExtensionsClient) Update(ctx context.Context, resourceGroupName string, body ExtensionResourceRequest, accountResourceName string, extensionResourceName string) (result ExtensionResource, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, body, accountResourceName, extensionResourceName)
 	if err != nil {

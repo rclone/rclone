@@ -41,8 +41,8 @@ func NewClusterVersionsClientWithBaseURI(baseURI string) ClusterVersionsClient {
 
 // Get get cluster code versions by location
 //
-// location is the location for the cluster code versions, this is different from cluster location subscriptionID is
-// the customer subscription identifier clusterVersion is the cluster code version
+// location is the location for the cluster code versions, this is different from cluster location subscriptionID
+// is the customer subscription identifier clusterVersion is the cluster code version
 func (client ClusterVersionsClient) Get(ctx context.Context, location string, subscriptionID string, clusterVersion string) (result ClusterCodeVersionsListResult, err error) {
 	req, err := client.GetPreparer(ctx, location, subscriptionID, clusterVersion)
 	if err != nil {
@@ -177,8 +177,8 @@ func (client ClusterVersionsClient) GetByEnvironmentResponder(resp *http.Respons
 
 // List list cluster code versions by location
 //
-// location is the location for the cluster code versions, this is different from cluster location subscriptionID is
-// the customer subscription identifier
+// location is the location for the cluster code versions, this is different from cluster location subscriptionID
+// is the customer subscription identifier
 func (client ClusterVersionsClient) List(ctx context.Context, location string, subscriptionID string) (result ClusterCodeVersionsListResult, err error) {
 	req, err := client.ListPreparer(ctx, location, subscriptionID)
 	if err != nil {

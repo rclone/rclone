@@ -50,7 +50,7 @@ func (client ApplicationsClient) AddOwner(ctx context.Context, applicationObject
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.URL", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "graphrbac.ApplicationsClient", "AddOwner")
+		return result, validation.NewError("graphrbac.ApplicationsClient", "AddOwner", err.Error())
 	}
 
 	req, err := client.AddOwnerPreparer(ctx, applicationObjectID, parameters)
@@ -124,7 +124,7 @@ func (client ApplicationsClient) Create(ctx context.Context, parameters Applicat
 			Constraints: []validation.Constraint{{Target: "parameters.AvailableToOtherTenants", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.DisplayName", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.IdentifierUris", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "graphrbac.ApplicationsClient", "Create")
+		return result, validation.NewError("graphrbac.ApplicationsClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, parameters)
@@ -725,8 +725,8 @@ func (client ApplicationsClient) PatchResponder(resp *http.Response) (result aut
 
 // UpdateKeyCredentials update the keyCredentials associated with an application.
 //
-// applicationObjectID is application object ID. parameters is parameters to update the keyCredentials of an existing
-// application.
+// applicationObjectID is application object ID. parameters is parameters to update the keyCredentials of an
+// existing application.
 func (client ApplicationsClient) UpdateKeyCredentials(ctx context.Context, applicationObjectID string, parameters KeyCredentialsUpdateParameters) (result autorest.Response, err error) {
 	req, err := client.UpdateKeyCredentialsPreparer(ctx, applicationObjectID, parameters)
 	if err != nil {
@@ -792,8 +792,8 @@ func (client ApplicationsClient) UpdateKeyCredentialsResponder(resp *http.Respon
 
 // UpdatePasswordCredentials update passwordCredentials associated with an application.
 //
-// applicationObjectID is application object ID. parameters is parameters to update passwordCredentials of an existing
-// application.
+// applicationObjectID is application object ID. parameters is parameters to update passwordCredentials of an
+// existing application.
 func (client ApplicationsClient) UpdatePasswordCredentials(ctx context.Context, applicationObjectID string, parameters PasswordCredentialsUpdateParameters) (result autorest.Response, err error) {
 	req, err := client.UpdatePasswordCredentialsPreparer(ctx, applicationObjectID, parameters)
 	if err != nil {

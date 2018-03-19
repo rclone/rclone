@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,7 +41,7 @@ func ExampleMetricsClient_ListLogMetrics() {
 	}
 
 	req := &loggingpb.ListLogMetricsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListLogMetrics(ctx, req)
 	for {
@@ -65,7 +65,7 @@ func ExampleMetricsClient_GetLogMetric() {
 	}
 
 	req := &loggingpb.GetLogMetricRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.GetLogMetric(ctx, req)
 	if err != nil {
@@ -83,7 +83,7 @@ func ExampleMetricsClient_CreateLogMetric() {
 	}
 
 	req := &loggingpb.CreateLogMetricRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.CreateLogMetric(ctx, req)
 	if err != nil {
@@ -101,7 +101,7 @@ func ExampleMetricsClient_UpdateLogMetric() {
 	}
 
 	req := &loggingpb.UpdateLogMetricRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.UpdateLogMetric(ctx, req)
 	if err != nil {
@@ -119,7 +119,7 @@ func ExampleMetricsClient_DeleteLogMetric() {
 	}
 
 	req := &loggingpb.DeleteLogMetricRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	err = c.DeleteLogMetric(ctx, req)
 	if err != nil {

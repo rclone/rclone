@@ -439,8 +439,8 @@ func (client WorkflowsClient) GetResponder(resp *http.Response) (result Workflow
 
 // ListByResourceGroup gets a list of workflows by resource group.
 //
-// resourceGroupName is the resource group name. top is the number of items to be included in the result. filter is the
-// filter to apply on the operation.
+// resourceGroupName is the resource group name. top is the number of items to be included in the result. filter is
+// the filter to apply on the operation.
 func (client WorkflowsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, top *int32, filter string) (result WorkflowListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, top, filter)
@@ -838,8 +838,8 @@ func (client WorkflowsClient) UpdateResponder(resp *http.Response) (result Workf
 
 // Validate validates the workflow definition.
 //
-// resourceGroupName is the resource group name. location is the workflow location. workflowName is the workflow name.
-// workflow is the workflow definition.
+// resourceGroupName is the resource group name. location is the workflow location. workflowName is the workflow
+// name. workflow is the workflow definition.
 func (client WorkflowsClient) Validate(ctx context.Context, resourceGroupName string, location string, workflowName string, workflow Workflow) (result autorest.Response, err error) {
 	req, err := client.ValidatePreparer(ctx, resourceGroupName, location, workflowName, workflow)
 	if err != nil {

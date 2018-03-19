@@ -166,13 +166,10 @@ func (c *Organizations) AcceptHandshakeRequest(input *AcceptHandshakeInput) (req
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -181,6 +178,29 @@ func (c *Organizations) AcceptHandshakeRequest(input *AcceptHandshakeInput) (req
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -193,23 +213,6 @@ func (c *Organizations) AcceptHandshakeRequest(input *AcceptHandshakeInput) (req
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -458,13 +461,10 @@ func (c *Organizations) AttachPolicyRequest(input *AttachPolicyInput) (req *requ
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -473,6 +473,29 @@ func (c *Organizations) AttachPolicyRequest(input *AttachPolicyInput) (req *requ
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -485,23 +508,6 @@ func (c *Organizations) AttachPolicyRequest(input *AttachPolicyInput) (req *requ
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -642,13 +648,10 @@ func (c *Organizations) CancelHandshakeRequest(input *CancelHandshakeInput) (req
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -657,6 +660,29 @@ func (c *Organizations) CancelHandshakeRequest(input *CancelHandshakeInput) (req
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -669,23 +695,6 @@ func (c *Organizations) CancelHandshakeRequest(input *CancelHandshakeInput) (req
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -930,13 +939,10 @@ func (c *Organizations) CreateAccountRequest(input *CreateAccountInput) (req *re
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -945,6 +951,29 @@ func (c *Organizations) CreateAccountRequest(input *CreateAccountInput) (req *re
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -957,23 +986,6 @@ func (c *Organizations) CreateAccountRequest(input *CreateAccountInput) (req *re
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -1187,13 +1199,10 @@ func (c *Organizations) CreateOrganizationRequest(input *CreateOrganizationInput
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -1202,6 +1211,29 @@ func (c *Organizations) CreateOrganizationRequest(input *CreateOrganizationInput
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -1214,23 +1246,6 @@ func (c *Organizations) CreateOrganizationRequest(input *CreateOrganizationInput
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -1444,13 +1459,10 @@ func (c *Organizations) CreateOrganizationalUnitRequest(input *CreateOrganizatio
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -1459,6 +1471,29 @@ func (c *Organizations) CreateOrganizationalUnitRequest(input *CreateOrganizatio
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -1471,23 +1506,6 @@ func (c *Organizations) CreateOrganizationalUnitRequest(input *CreateOrganizatio
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -1697,13 +1715,10 @@ func (c *Organizations) CreatePolicyRequest(input *CreatePolicyInput) (req *requ
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -1712,6 +1727,29 @@ func (c *Organizations) CreatePolicyRequest(input *CreatePolicyInput) (req *requ
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -1724,23 +1762,6 @@ func (c *Organizations) CreatePolicyRequest(input *CreatePolicyInput) (req *requ
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -1882,13 +1903,10 @@ func (c *Organizations) DeclineHandshakeRequest(input *DeclineHandshakeInput) (r
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -1897,6 +1915,29 @@ func (c *Organizations) DeclineHandshakeRequest(input *DeclineHandshakeInput) (r
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -1909,23 +1950,6 @@ func (c *Organizations) DeclineHandshakeRequest(input *DeclineHandshakeInput) (r
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -2041,13 +2065,10 @@ func (c *Organizations) DeleteOrganizationRequest(input *DeleteOrganizationInput
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -2056,6 +2077,29 @@ func (c *Organizations) DeleteOrganizationRequest(input *DeleteOrganizationInput
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -2068,23 +2112,6 @@ func (c *Organizations) DeleteOrganizationRequest(input *DeleteOrganizationInput
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -2206,13 +2233,10 @@ func (c *Organizations) DeleteOrganizationalUnitRequest(input *DeleteOrganizatio
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -2221,6 +2245,29 @@ func (c *Organizations) DeleteOrganizationalUnitRequest(input *DeleteOrganizatio
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -2233,23 +2280,6 @@ func (c *Organizations) DeleteOrganizationalUnitRequest(input *DeleteOrganizatio
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -2375,13 +2405,10 @@ func (c *Organizations) DeletePolicyRequest(input *DeletePolicyInput) (req *requ
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -2390,6 +2417,29 @@ func (c *Organizations) DeletePolicyRequest(input *DeletePolicyInput) (req *requ
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -2402,23 +2452,6 @@ func (c *Organizations) DeletePolicyRequest(input *DeletePolicyInput) (req *requ
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -2540,13 +2573,10 @@ func (c *Organizations) DescribeAccountRequest(input *DescribeAccountInput) (req
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -2555,6 +2585,29 @@ func (c *Organizations) DescribeAccountRequest(input *DescribeAccountInput) (req
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -2567,23 +2620,6 @@ func (c *Organizations) DescribeAccountRequest(input *DescribeAccountInput) (req
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -2697,13 +2733,10 @@ func (c *Organizations) DescribeCreateAccountStatusRequest(input *DescribeCreate
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -2712,6 +2745,29 @@ func (c *Organizations) DescribeCreateAccountStatusRequest(input *DescribeCreate
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -2724,23 +2780,6 @@ func (c *Organizations) DescribeCreateAccountStatusRequest(input *DescribeCreate
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -2859,13 +2898,10 @@ func (c *Organizations) DescribeHandshakeRequest(input *DescribeHandshakeInput) 
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -2874,6 +2910,29 @@ func (c *Organizations) DescribeHandshakeRequest(input *DescribeHandshakeInput) 
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -2886,23 +2945,6 @@ func (c *Organizations) DescribeHandshakeRequest(input *DescribeHandshakeInput) 
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -2985,6 +3027,10 @@ func (c *Organizations) DescribeOrganizationRequest(input *DescribeOrganizationI
 // to.
 //
 // This operation can be called from any account in the organization.
+//
+// Even if a policy type is shown as available in the organization, it can be
+// disabled separately at the root level with DisablePolicyType. Use ListRoots
+// to see the status of policy types for a specified root.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3114,13 +3160,10 @@ func (c *Organizations) DescribeOrganizationalUnitRequest(input *DescribeOrganiz
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -3129,6 +3172,29 @@ func (c *Organizations) DescribeOrganizationalUnitRequest(input *DescribeOrganiz
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -3141,23 +3207,6 @@ func (c *Organizations) DescribeOrganizationalUnitRequest(input *DescribeOrganiz
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -3271,13 +3320,10 @@ func (c *Organizations) DescribePolicyRequest(input *DescribePolicyInput) (req *
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -3286,6 +3332,29 @@ func (c *Organizations) DescribePolicyRequest(input *DescribePolicyInput) (req *
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -3298,23 +3367,6 @@ func (c *Organizations) DescribePolicyRequest(input *DescribePolicyInput) (req *
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -3530,13 +3582,10 @@ func (c *Organizations) DetachPolicyRequest(input *DetachPolicyInput) (req *requ
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -3545,6 +3594,29 @@ func (c *Organizations) DetachPolicyRequest(input *DetachPolicyInput) (req *requ
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -3557,23 +3629,6 @@ func (c *Organizations) DetachPolicyRequest(input *DetachPolicyInput) (req *requ
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -3803,13 +3858,10 @@ func (c *Organizations) DisableAWSServiceAccessRequest(input *DisableAWSServiceA
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -3818,6 +3870,29 @@ func (c *Organizations) DisableAWSServiceAccessRequest(input *DisableAWSServiceA
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -3830,23 +3905,6 @@ func (c *Organizations) DisableAWSServiceAccessRequest(input *DisableAWSServiceA
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -3932,6 +3990,11 @@ func (c *Organizations) DisablePolicyTypeRequest(input *DisablePolicyTypeInput) 
 // You can undo this by using the EnablePolicyType operation.
 //
 // This operation can be called only from the organization's master account.
+//
+// If you disable a policy type for a root, it still shows as enabled for the
+// organization if all features are enabled in that organization. Use ListRoots
+// to see the status of policy types for a specified root. Use DescribeOrganization
+// to see the status of policy types in the organization.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4049,13 +4112,10 @@ func (c *Organizations) DisablePolicyTypeRequest(input *DisablePolicyTypeInput) 
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -4064,6 +4124,29 @@ func (c *Organizations) DisablePolicyTypeRequest(input *DisablePolicyTypeInput) 
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -4076,23 +4159,6 @@ func (c *Organizations) DisablePolicyTypeRequest(input *DisablePolicyTypeInput) 
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -4320,13 +4386,10 @@ func (c *Organizations) EnableAWSServiceAccessRequest(input *EnableAWSServiceAcc
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -4335,6 +4398,29 @@ func (c *Organizations) EnableAWSServiceAccessRequest(input *EnableAWSServiceAcc
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -4347,23 +4433,6 @@ func (c *Organizations) EnableAWSServiceAccessRequest(input *EnableAWSServiceAcc
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -4458,6 +4527,10 @@ func (c *Organizations) EnableAllFeaturesRequest(input *EnableAllFeaturesInput) 
 // only after all administrators in the invited accounts approve the change
 // by accepting the handshake.
 //
+// After you enable all features, you can separately enable or disable individual
+// policy types in a root using EnablePolicyType and DisablePolicyType. To see
+// the status of policy types in a root, use ListRoots.
+//
 // After all invited member accounts accept the handshake, you finalize the
 // feature set change by accepting the handshake that contains "Action": "ENABLE_ALL_FEATURES".
 // This completes the change.
@@ -4543,13 +4616,10 @@ func (c *Organizations) EnableAllFeaturesRequest(input *EnableAllFeaturesInput) 
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -4558,6 +4628,29 @@ func (c *Organizations) EnableAllFeaturesRequest(input *EnableAllFeaturesInput) 
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -4570,23 +4663,6 @@ func (c *Organizations) EnableAllFeaturesRequest(input *EnableAllFeaturesInput) 
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -4670,6 +4746,12 @@ func (c *Organizations) EnablePolicyTypeRequest(input *EnablePolicyTypeInput) (r
 // root. You can undo this by using the DisablePolicyType operation.
 //
 // This operation can be called only from the organization's master account.
+//
+// You can enable a policy type in a root only if that policy type is available
+// in the organization. Use DescribeOrganization to view the status of available
+// policy types in the organization.
+//
+// To view the status of policy type in a root, use ListRoots.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4787,13 +4869,10 @@ func (c *Organizations) EnablePolicyTypeRequest(input *EnablePolicyTypeInput) (r
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -4802,6 +4881,29 @@ func (c *Organizations) EnablePolicyTypeRequest(input *EnablePolicyTypeInput) (r
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -4814,23 +4916,6 @@ func (c *Organizations) EnablePolicyTypeRequest(input *EnablePolicyTypeInput) (r
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -5020,13 +5105,10 @@ func (c *Organizations) InviteAccountToOrganizationRequest(input *InviteAccountT
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -5035,6 +5117,29 @@ func (c *Organizations) InviteAccountToOrganizationRequest(input *InviteAccountT
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -5047,23 +5152,6 @@ func (c *Organizations) InviteAccountToOrganizationRequest(input *InviteAccountT
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -5299,13 +5387,10 @@ func (c *Organizations) LeaveOrganizationRequest(input *LeaveOrganizationInput) 
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -5314,6 +5399,29 @@ func (c *Organizations) LeaveOrganizationRequest(input *LeaveOrganizationInput) 
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -5326,23 +5434,6 @@ func (c *Organizations) LeaveOrganizationRequest(input *LeaveOrganizationInput) 
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -5556,13 +5647,10 @@ func (c *Organizations) ListAWSServiceAccessForOrganizationRequest(input *ListAW
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -5571,6 +5659,29 @@ func (c *Organizations) ListAWSServiceAccessForOrganizationRequest(input *ListAW
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -5583,23 +5694,6 @@ func (c *Organizations) ListAWSServiceAccessForOrganizationRequest(input *ListAW
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -5735,7 +5829,12 @@ func (c *Organizations) ListAccountsRequest(input *ListAccountsInput) (req *requ
 // ListAccounts API operation for AWS Organizations.
 //
 // Lists all the accounts in the organization. To request only the accounts
-// in a root or OU, use the ListAccountsForParent operation instead.
+// in a specified root or OU, use the ListAccountsForParent operation instead.
+//
+// Always check the NextToken response parameter for a null value when calling
+// a List* operation. These operations can occasionally return an empty set
+// of results even when there are more results available. The NextToken response
+// parameter value is nullonly when there are no more results to display.
 //
 // This operation can be called only from the organization's master account.
 //
@@ -5766,13 +5865,10 @@ func (c *Organizations) ListAccountsRequest(input *ListAccountsInput) (req *requ
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -5781,6 +5877,29 @@ func (c *Organizations) ListAccountsRequest(input *ListAccountsInput) (req *requ
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -5793,23 +5912,6 @@ func (c *Organizations) ListAccountsRequest(input *ListAccountsInput) (req *requ
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -5951,6 +6053,11 @@ func (c *Organizations) ListAccountsForParentRequest(input *ListAccountsForParen
 // OUs. To get a list of all accounts in the organization, use the ListAccounts
 // operation.
 //
+// Always check the NextToken response parameter for a null value when calling
+// a List* operation. These operations can occasionally return an empty set
+// of results even when there are more results available. The NextToken response
+// parameter value is nullonly when there are no more results to display.
+//
 // This operation can be called only from the organization's master account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -5980,13 +6087,10 @@ func (c *Organizations) ListAccountsForParentRequest(input *ListAccountsForParen
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -5995,6 +6099,29 @@ func (c *Organizations) ListAccountsForParentRequest(input *ListAccountsForParen
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -6007,23 +6134,6 @@ func (c *Organizations) ListAccountsForParentRequest(input *ListAccountsForParen
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -6166,6 +6276,11 @@ func (c *Organizations) ListChildrenRequest(input *ListChildrenInput) (req *requ
 // OU or root. This operation, along with ListParents enables you to traverse
 // the tree structure that makes up this root.
 //
+// Always check the NextToken response parameter for a null value when calling
+// a List* operation. These operations can occasionally return an empty set
+// of results even when there are more results available. The NextToken response
+// parameter value is nullonly when there are no more results to display.
+//
 // This operation can be called only from the organization's master account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -6195,13 +6310,10 @@ func (c *Organizations) ListChildrenRequest(input *ListChildrenInput) (req *requ
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -6210,6 +6322,29 @@ func (c *Organizations) ListChildrenRequest(input *ListChildrenInput) (req *requ
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -6222,23 +6357,6 @@ func (c *Organizations) ListChildrenRequest(input *ListChildrenInput) (req *requ
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -6380,6 +6498,11 @@ func (c *Organizations) ListCreateAccountStatusRequest(input *ListCreateAccountS
 // Lists the account creation requests that match the specified status that
 // is currently being tracked for the organization.
 //
+// Always check the NextToken response parameter for a null value when calling
+// a List* operation. These operations can occasionally return an empty set
+// of results even when there are more results available. The NextToken response
+// parameter value is nullonly when there are no more results to display.
+//
 // This operation can be called only from the organization's master account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -6409,13 +6532,10 @@ func (c *Organizations) ListCreateAccountStatusRequest(input *ListCreateAccountS
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -6424,6 +6544,29 @@ func (c *Organizations) ListCreateAccountStatusRequest(input *ListCreateAccountS
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -6436,23 +6579,6 @@ func (c *Organizations) ListCreateAccountStatusRequest(input *ListCreateAccountS
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -6594,6 +6720,11 @@ func (c *Organizations) ListHandshakesForAccountRequest(input *ListHandshakesFor
 // of this API for only 30 days after changing to that state. After that they
 // are deleted and no longer accessible.
 //
+// Always check the NextToken response parameter for a null value when calling
+// a List* operation. These operations can occasionally return an empty set
+// of results even when there are more results available. The NextToken response
+// parameter value is nullonly when there are no more results to display.
+//
 // This operation can be called from any account in the organization.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -6623,13 +6754,10 @@ func (c *Organizations) ListHandshakesForAccountRequest(input *ListHandshakesFor
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -6638,6 +6766,29 @@ func (c *Organizations) ListHandshakesForAccountRequest(input *ListHandshakesFor
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -6650,23 +6801,6 @@ func (c *Organizations) ListHandshakesForAccountRequest(input *ListHandshakesFor
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -6810,6 +6944,11 @@ func (c *Organizations) ListHandshakesForOrganizationRequest(input *ListHandshak
 // of this API for only 30 days after changing to that state. After that they
 // are deleted and no longer accessible.
 //
+// Always check the NextToken response parameter for a null value when calling
+// a List* operation. These operations can occasionally return an empty set
+// of results even when there are more results available. The NextToken response
+// parameter value is nullonly when there are no more results to display.
+//
 // This operation can be called only from the organization's master account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -6843,13 +6982,10 @@ func (c *Organizations) ListHandshakesForOrganizationRequest(input *ListHandshak
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -6858,6 +6994,29 @@ func (c *Organizations) ListHandshakesForOrganizationRequest(input *ListHandshak
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -6870,23 +7029,6 @@ func (c *Organizations) ListHandshakesForOrganizationRequest(input *ListHandshak
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -7023,6 +7165,11 @@ func (c *Organizations) ListOrganizationalUnitsForParentRequest(input *ListOrgan
 //
 // Lists the organizational units (OUs) in a parent organizational unit or root.
 //
+// Always check the NextToken response parameter for a null value when calling
+// a List* operation. These operations can occasionally return an empty set
+// of results even when there are more results available. The NextToken response
+// parameter value is nullonly when there are no more results to display.
+//
 // This operation can be called only from the organization's master account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -7052,13 +7199,10 @@ func (c *Organizations) ListOrganizationalUnitsForParentRequest(input *ListOrgan
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -7067,6 +7211,29 @@ func (c *Organizations) ListOrganizationalUnitsForParentRequest(input *ListOrgan
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -7079,23 +7246,6 @@ func (c *Organizations) ListOrganizationalUnitsForParentRequest(input *ListOrgan
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -7238,6 +7388,11 @@ func (c *Organizations) ListParentsRequest(input *ListParentsInput) (req *reques
 // parent of the specified child OU or account. This operation, along with ListChildren
 // enables you to traverse the tree structure that makes up this root.
 //
+// Always check the NextToken response parameter for a null value when calling
+// a List* operation. These operations can occasionally return an empty set
+// of results even when there are more results available. The NextToken response
+// parameter value is nullonly when there are no more results to display.
+//
 // This operation can be called only from the organization's master account.
 //
 // In the current release, a child can have only a single parent.
@@ -7273,13 +7428,10 @@ func (c *Organizations) ListParentsRequest(input *ListParentsInput) (req *reques
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -7288,6 +7440,29 @@ func (c *Organizations) ListParentsRequest(input *ListParentsInput) (req *reques
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -7300,23 +7475,6 @@ func (c *Organizations) ListParentsRequest(input *ListParentsInput) (req *reques
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -7453,6 +7611,11 @@ func (c *Organizations) ListPoliciesRequest(input *ListPoliciesInput) (req *requ
 //
 // Retrieves the list of all policies in an organization of a specified type.
 //
+// Always check the NextToken response parameter for a null value when calling
+// a List* operation. These operations can occasionally return an empty set
+// of results even when there are more results available. The NextToken response
+// parameter value is nullonly when there are no more results to display.
+//
 // This operation can be called only from the organization's master account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -7482,13 +7645,10 @@ func (c *Organizations) ListPoliciesRequest(input *ListPoliciesInput) (req *requ
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -7497,6 +7657,29 @@ func (c *Organizations) ListPoliciesRequest(input *ListPoliciesInput) (req *requ
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -7509,23 +7692,6 @@ func (c *Organizations) ListPoliciesRequest(input *ListPoliciesInput) (req *requ
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -7664,6 +7830,11 @@ func (c *Organizations) ListPoliciesForTargetRequest(input *ListPoliciesForTarge
 // organizational unit (OU), or account. You must specify the policy type that
 // you want included in the returned list.
 //
+// Always check the NextToken response parameter for a null value when calling
+// a List* operation. These operations can occasionally return an empty set
+// of results even when there are more results available. The NextToken response
+// parameter value is nullonly when there are no more results to display.
+//
 // This operation can be called only from the organization's master account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -7693,13 +7864,10 @@ func (c *Organizations) ListPoliciesForTargetRequest(input *ListPoliciesForTarge
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -7708,6 +7876,29 @@ func (c *Organizations) ListPoliciesForTargetRequest(input *ListPoliciesForTarge
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -7720,23 +7911,6 @@ func (c *Organizations) ListPoliciesForTargetRequest(input *ListPoliciesForTarge
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -7876,7 +8050,18 @@ func (c *Organizations) ListRootsRequest(input *ListRootsInput) (req *request.Re
 //
 // Lists the roots that are defined in the current organization.
 //
+// Always check the NextToken response parameter for a null value when calling
+// a List* operation. These operations can occasionally return an empty set
+// of results even when there are more results available. The NextToken response
+// parameter value is nullonly when there are no more results to display.
+//
 // This operation can be called only from the organization's master account.
+//
+// Policy types can be enabled and disabled in roots. This is distinct from
+// whether they are available in the organization. When you enable all features,
+// you make policy types available for use in that organization. Individual
+// policy types can then be enabled and disabled in a root. To see the availability
+// of a policy type in an organization, use DescribeOrganization.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -7905,13 +8090,10 @@ func (c *Organizations) ListRootsRequest(input *ListRootsInput) (req *request.Re
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -7920,6 +8102,29 @@ func (c *Organizations) ListRootsRequest(input *ListRootsInput) (req *request.Re
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -7932,23 +8137,6 @@ func (c *Organizations) ListRootsRequest(input *ListRootsInput) (req *request.Re
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -8085,6 +8273,11 @@ func (c *Organizations) ListTargetsForPolicyRequest(input *ListTargetsForPolicyI
 //
 // Lists all the roots, OUs, and accounts to which the specified policy is attached.
 //
+// Always check the NextToken response parameter for a null value when calling
+// a List* operation. These operations can occasionally return an empty set
+// of results even when there are more results available. The NextToken response
+// parameter value is nullonly when there are no more results to display.
+//
 // This operation can be called only from the organization's master account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -8114,13 +8307,10 @@ func (c *Organizations) ListTargetsForPolicyRequest(input *ListTargetsForPolicyI
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -8129,6 +8319,29 @@ func (c *Organizations) ListTargetsForPolicyRequest(input *ListTargetsForPolicyI
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -8141,23 +8354,6 @@ func (c *Organizations) ListTargetsForPolicyRequest(input *ListTargetsForPolicyI
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -8319,13 +8515,10 @@ func (c *Organizations) MoveAccountRequest(input *MoveAccountInput) (req *reques
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -8334,6 +8527,29 @@ func (c *Organizations) MoveAccountRequest(input *MoveAccountInput) (req *reques
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -8346,23 +8562,6 @@ func (c *Organizations) MoveAccountRequest(input *MoveAccountInput) (req *reques
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -8618,13 +8817,10 @@ func (c *Organizations) RemoveAccountFromOrganizationRequest(input *RemoveAccoun
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -8633,6 +8829,29 @@ func (c *Organizations) RemoveAccountFromOrganizationRequest(input *RemoveAccoun
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -8645,23 +8864,6 @@ func (c *Organizations) RemoveAccountFromOrganizationRequest(input *RemoveAccoun
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -8785,13 +8987,10 @@ func (c *Organizations) UpdateOrganizationalUnitRequest(input *UpdateOrganizatio
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -8800,6 +8999,29 @@ func (c *Organizations) UpdateOrganizationalUnitRequest(input *UpdateOrganizatio
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -8812,23 +9034,6 @@ func (c *Organizations) UpdateOrganizationalUnitRequest(input *UpdateOrganizatio
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -9036,13 +9241,10 @@ func (c *Organizations) UpdatePolicyRequest(input *UpdatePolicyInput) (req *requ
 //   Some of the reasons in the following list might not be applicable to this
 //   specific API or operation:
 //
-//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-//      organization, or email) as a party.
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
 //
-//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-//      organization.
-//
-//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
 //
 //      * INVALID_ENUM: You specified a value that is not valid for that parameter.
 //
@@ -9051,6 +9253,29 @@ func (c *Organizations) UpdatePolicyRequest(input *UpdatePolicyInput) (req *requ
 //
 //      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 //      at least one invalid value.
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+//      name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
 //
 //      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 //      than allowed.
@@ -9063,23 +9288,6 @@ func (c *Organizations) UpdatePolicyRequest(input *UpdatePolicyInput) (req *requ
 //
 //      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 //      value than allowed.
-//
-//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-//      cannot be modified.
-//
-//      * INVALID_PATTERN: You provided a value that doesn't match the required
-//      pattern.
-//
-//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-//      match the required pattern.
-//
-//      * INPUT_REQUIRED: You must include a value for all required parameters.
-//
-//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-//      from the response to a previous call of the operation.
-//
-//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-//      for the operation.
 //
 //      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 //      between entities in the same root.
@@ -9123,7 +9331,6 @@ func (c *Organizations) UpdatePolicyWithContext(ctx aws.Context, input *UpdatePo
 	return out, req.Send()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AcceptHandshakeRequest
 type AcceptHandshakeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9165,7 +9372,6 @@ func (s *AcceptHandshakeInput) SetHandshakeId(v string) *AcceptHandshakeInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AcceptHandshakeResponse
 type AcceptHandshakeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9190,7 +9396,6 @@ func (s *AcceptHandshakeOutput) SetHandshake(v *Handshake) *AcceptHandshakeOutpu
 }
 
 // Contains information about an AWS account that is a member of an organization.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Account
 type Account struct {
 	_ struct{} `type:"structure"`
 
@@ -9282,7 +9487,6 @@ func (s *Account) SetStatus(v string) *Account {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AttachPolicyRequest
 type AttachPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9354,7 +9558,6 @@ func (s *AttachPolicyInput) SetTargetId(v string) *AttachPolicyInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AttachPolicyOutput
 type AttachPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9369,7 +9572,6 @@ func (s AttachPolicyOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CancelHandshakeRequest
 type CancelHandshakeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9412,7 +9614,6 @@ func (s *CancelHandshakeInput) SetHandshakeId(v string) *CancelHandshakeInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CancelHandshakeResponse
 type CancelHandshakeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9437,7 +9638,6 @@ func (s *CancelHandshakeOutput) SetHandshake(v *Handshake) *CancelHandshakeOutpu
 }
 
 // Contains a list of child entities, either OUs or accounts.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Child
 type Child struct {
 	_ struct{} `type:"structure"`
 
@@ -9480,7 +9680,6 @@ func (s *Child) SetType(v string) *Child {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateAccountRequest
 type CreateAccountInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9589,7 +9788,6 @@ func (s *CreateAccountInput) SetRoleName(v string) *CreateAccountInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateAccountResponse
 type CreateAccountOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9619,7 +9817,6 @@ func (s *CreateAccountOutput) SetCreateAccountStatus(v *CreateAccountStatus) *Cr
 
 // Contains the status about a CreateAccount request to create an AWS account
 // in an organization.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateAccountStatus
 type CreateAccountStatus struct {
 	_ struct{} `type:"structure"`
 
@@ -9721,7 +9918,6 @@ func (s *CreateAccountStatus) SetState(v string) *CreateAccountStatus {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationRequest
 type CreateOrganizationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9757,7 +9953,6 @@ func (s *CreateOrganizationInput) SetFeatureSet(v string) *CreateOrganizationInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationResponse
 type CreateOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9781,7 +9976,6 @@ func (s *CreateOrganizationOutput) SetOrganization(v *Organization) *CreateOrgan
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationalUnitRequest
 type CreateOrganizationalUnitInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9849,7 +10043,6 @@ func (s *CreateOrganizationalUnitInput) SetParentId(v string) *CreateOrganizatio
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationalUnitResponse
 type CreateOrganizationalUnitOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9873,7 +10066,6 @@ func (s *CreateOrganizationalUnitOutput) SetOrganizationalUnit(v *Organizational
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreatePolicyRequest
 type CreatePolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9973,7 +10165,6 @@ func (s *CreatePolicyInput) SetType(v string) *CreatePolicyInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreatePolicyResponse
 type CreatePolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9997,7 +10188,6 @@ func (s *CreatePolicyOutput) SetPolicy(v *Policy) *CreatePolicyOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeclineHandshakeRequest
 type DeclineHandshakeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10040,7 +10230,6 @@ func (s *DeclineHandshakeInput) SetHandshakeId(v string) *DeclineHandshakeInput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeclineHandshakeResponse
 type DeclineHandshakeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10065,7 +10254,6 @@ func (s *DeclineHandshakeOutput) SetHandshake(v *Handshake) *DeclineHandshakeOut
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationInput
 type DeleteOrganizationInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10080,7 +10268,6 @@ func (s DeleteOrganizationInput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationOutput
 type DeleteOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10095,7 +10282,6 @@ func (s DeleteOrganizationOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationalUnitRequest
 type DeleteOrganizationalUnitInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10140,7 +10326,6 @@ func (s *DeleteOrganizationalUnitInput) SetOrganizationalUnitId(v string) *Delet
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationalUnitOutput
 type DeleteOrganizationalUnitOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10155,7 +10340,6 @@ func (s DeleteOrganizationalUnitOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeletePolicyRequest
 type DeletePolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10198,7 +10382,6 @@ func (s *DeletePolicyInput) SetPolicyId(v string) *DeletePolicyInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeletePolicyOutput
 type DeletePolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10213,7 +10396,6 @@ func (s DeletePolicyOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeAccountRequest
 type DescribeAccountInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10256,7 +10438,6 @@ func (s *DescribeAccountInput) SetAccountId(v string) *DescribeAccountInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeAccountResponse
 type DescribeAccountOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10280,7 +10461,6 @@ func (s *DescribeAccountOutput) SetAccount(v *Account) *DescribeAccountOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeCreateAccountStatusRequest
 type DescribeCreateAccountStatusInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10325,7 +10505,6 @@ func (s *DescribeCreateAccountStatusInput) SetCreateAccountRequestId(v string) *
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeCreateAccountStatusResponse
 type DescribeCreateAccountStatusOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10349,7 +10528,6 @@ func (s *DescribeCreateAccountStatusOutput) SetCreateAccountStatus(v *CreateAcco
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeHandshakeRequest
 type DescribeHandshakeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10393,7 +10571,6 @@ func (s *DescribeHandshakeInput) SetHandshakeId(v string) *DescribeHandshakeInpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeHandshakeResponse
 type DescribeHandshakeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10417,7 +10594,6 @@ func (s *DescribeHandshakeOutput) SetHandshake(v *Handshake) *DescribeHandshakeO
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationInput
 type DescribeOrganizationInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10432,7 +10608,6 @@ func (s DescribeOrganizationInput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationResponse
 type DescribeOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10456,7 +10631,6 @@ func (s *DescribeOrganizationOutput) SetOrganization(v *Organization) *DescribeO
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationalUnitRequest
 type DescribeOrganizationalUnitInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10501,7 +10675,6 @@ func (s *DescribeOrganizationalUnitInput) SetOrganizationalUnitId(v string) *Des
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationalUnitResponse
 type DescribeOrganizationalUnitOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10525,7 +10698,6 @@ func (s *DescribeOrganizationalUnitOutput) SetOrganizationalUnit(v *Organization
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribePolicyRequest
 type DescribePolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10568,7 +10740,6 @@ func (s *DescribePolicyInput) SetPolicyId(v string) *DescribePolicyInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribePolicyResponse
 type DescribePolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10592,7 +10763,6 @@ func (s *DescribePolicyOutput) SetPolicy(v *Policy) *DescribePolicyOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DetachPolicyRequest
 type DetachPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10664,7 +10834,6 @@ func (s *DetachPolicyInput) SetTargetId(v string) *DetachPolicyInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DetachPolicyOutput
 type DetachPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10679,7 +10848,6 @@ func (s DetachPolicyOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisableAWSServiceAccessRequest
 type DisableAWSServiceAccessInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10723,7 +10891,6 @@ func (s *DisableAWSServiceAccessInput) SetServicePrincipal(v string) *DisableAWS
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisableAWSServiceAccessOutput
 type DisableAWSServiceAccessOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10738,7 +10905,6 @@ func (s DisableAWSServiceAccessOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisablePolicyTypeRequest
 type DisablePolicyTypeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10795,7 +10961,6 @@ func (s *DisablePolicyTypeInput) SetRootId(v string) *DisablePolicyTypeInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisablePolicyTypeResponse
 type DisablePolicyTypeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10819,7 +10984,6 @@ func (s *DisablePolicyTypeOutput) SetRoot(v *Root) *DisablePolicyTypeOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAWSServiceAccessRequest
 type EnableAWSServiceAccessInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10863,7 +11027,6 @@ func (s *EnableAWSServiceAccessInput) SetServicePrincipal(v string) *EnableAWSSe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAWSServiceAccessOutput
 type EnableAWSServiceAccessOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10878,7 +11041,6 @@ func (s EnableAWSServiceAccessOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAllFeaturesRequest
 type EnableAllFeaturesInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10893,7 +11055,6 @@ func (s EnableAllFeaturesInput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAllFeaturesResponse
 type EnableAllFeaturesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10918,7 +11079,6 @@ func (s *EnableAllFeaturesOutput) SetHandshake(v *Handshake) *EnableAllFeaturesO
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnablePolicyTypeRequest
 type EnablePolicyTypeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10975,7 +11135,6 @@ func (s *EnablePolicyTypeInput) SetRootId(v string) *EnablePolicyTypeInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnablePolicyTypeResponse
 type EnablePolicyTypeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11001,7 +11160,6 @@ func (s *EnablePolicyTypeOutput) SetRoot(v *Root) *EnablePolicyTypeOutput {
 
 // A structure that contains details of a service principal that is enabled
 // to integrate with AWS Organizations.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnabledServicePrincipal
 type EnabledServicePrincipal struct {
 	_ struct{} `type:"structure"`
 
@@ -11044,7 +11202,6 @@ func (s *EnabledServicePrincipal) SetServicePrincipal(v string) *EnabledServiceP
 //
 // Note: Handshakes that are CANCELED, ACCEPTED, or DECLINED show up in lists
 // for only 30 days after entering that state After that they are deleted.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Handshake
 type Handshake struct {
 	_ struct{} `type:"structure"`
 
@@ -11180,7 +11337,6 @@ func (s *Handshake) SetState(v string) *Handshake {
 }
 
 // Specifies the criteria that are used to select the handshakes for the operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/HandshakeFilter
 type HandshakeFilter struct {
 	_ struct{} `type:"structure"`
 
@@ -11222,7 +11378,6 @@ func (s *HandshakeFilter) SetParentHandshakeId(v string) *HandshakeFilter {
 }
 
 // Identifies a participant in a handshake.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/HandshakeParty
 type HandshakeParty struct {
 	_ struct{} `type:"structure"`
 
@@ -11282,7 +11437,6 @@ func (s *HandshakeParty) SetType(v string) *HandshakeParty {
 }
 
 // Contains additional data that is needed to process a handshake.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/HandshakeResource
 type HandshakeResource struct {
 	_ struct{} `type:"structure"`
 
@@ -11342,7 +11496,6 @@ func (s *HandshakeResource) SetValue(v string) *HandshakeResource {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/InviteAccountToOrganizationRequest
 type InviteAccountToOrganizationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11410,7 +11563,6 @@ func (s *InviteAccountToOrganizationInput) SetTarget(v *HandshakeParty) *InviteA
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/InviteAccountToOrganizationResponse
 type InviteAccountToOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11435,7 +11587,6 @@ func (s *InviteAccountToOrganizationOutput) SetHandshake(v *Handshake) *InviteAc
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/LeaveOrganizationInput
 type LeaveOrganizationInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -11450,7 +11601,6 @@ func (s LeaveOrganizationInput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/LeaveOrganizationOutput
 type LeaveOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -11465,7 +11615,6 @@ func (s LeaveOrganizationOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAWSServiceAccessForOrganizationRequest
 type ListAWSServiceAccessForOrganizationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11522,7 +11671,6 @@ func (s *ListAWSServiceAccessForOrganizationInput) SetNextToken(v string) *ListA
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAWSServiceAccessForOrganizationResponse
 type ListAWSServiceAccessForOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11561,7 +11709,6 @@ func (s *ListAWSServiceAccessForOrganizationOutput) SetNextToken(v string) *List
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsForParentRequest
 type ListAccountsForParentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11633,7 +11780,6 @@ func (s *ListAccountsForParentInput) SetParentId(v string) *ListAccountsForParen
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsForParentResponse
 type ListAccountsForParentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11670,7 +11816,6 @@ func (s *ListAccountsForParentOutput) SetNextToken(v string) *ListAccountsForPar
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsRequest
 type ListAccountsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11727,7 +11872,6 @@ func (s *ListAccountsInput) SetNextToken(v string) *ListAccountsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsResponse
 type ListAccountsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11764,7 +11908,6 @@ func (s *ListAccountsOutput) SetNextToken(v string) *ListAccountsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListChildrenRequest
 type ListChildrenInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11861,7 +12004,6 @@ func (s *ListChildrenInput) SetParentId(v string) *ListChildrenInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListChildrenResponse
 type ListChildrenOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11898,7 +12040,6 @@ func (s *ListChildrenOutput) SetNextToken(v string) *ListChildrenOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListCreateAccountStatusRequest
 type ListCreateAccountStatusInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11965,7 +12106,6 @@ func (s *ListCreateAccountStatusInput) SetStates(v []*string) *ListCreateAccount
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListCreateAccountStatusResponse
 type ListCreateAccountStatusOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12004,7 +12144,6 @@ func (s *ListCreateAccountStatusOutput) SetNextToken(v string) *ListCreateAccoun
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForAccountRequest
 type ListHandshakesForAccountInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12075,7 +12214,6 @@ func (s *ListHandshakesForAccountInput) SetNextToken(v string) *ListHandshakesFo
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForAccountResponse
 type ListHandshakesForAccountOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12113,7 +12251,6 @@ func (s *ListHandshakesForAccountOutput) SetNextToken(v string) *ListHandshakesF
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForOrganizationRequest
 type ListHandshakesForOrganizationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12184,7 +12321,6 @@ func (s *ListHandshakesForOrganizationInput) SetNextToken(v string) *ListHandsha
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForOrganizationResponse
 type ListHandshakesForOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12222,7 +12358,6 @@ func (s *ListHandshakesForOrganizationOutput) SetNextToken(v string) *ListHandsh
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListOrganizationalUnitsForParentRequest
 type ListOrganizationalUnitsForParentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12305,7 +12440,6 @@ func (s *ListOrganizationalUnitsForParentInput) SetParentId(v string) *ListOrgan
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListOrganizationalUnitsForParentResponse
 type ListOrganizationalUnitsForParentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12342,7 +12476,6 @@ func (s *ListOrganizationalUnitsForParentOutput) SetOrganizationalUnits(v []*Org
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListParentsRequest
 type ListParentsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12424,7 +12557,6 @@ func (s *ListParentsInput) SetNextToken(v string) *ListParentsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListParentsResponse
 type ListParentsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12461,7 +12593,6 @@ func (s *ListParentsOutput) SetParents(v []*Parent) *ListParentsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesForTargetRequest
 type ListPoliciesForTargetInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12560,7 +12691,6 @@ func (s *ListPoliciesForTargetInput) SetTargetId(v string) *ListPoliciesForTarge
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesForTargetResponse
 type ListPoliciesForTargetOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12597,7 +12727,6 @@ func (s *ListPoliciesForTargetOutput) SetPolicies(v []*PolicySummary) *ListPolic
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesRequest
 type ListPoliciesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12668,7 +12797,6 @@ func (s *ListPoliciesInput) SetNextToken(v string) *ListPoliciesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesResponse
 type ListPoliciesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12707,7 +12835,6 @@ func (s *ListPoliciesOutput) SetPolicies(v []*PolicySummary) *ListPoliciesOutput
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListRootsRequest
 type ListRootsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12764,7 +12891,6 @@ func (s *ListRootsInput) SetNextToken(v string) *ListRootsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListRootsResponse
 type ListRootsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12801,7 +12927,6 @@ func (s *ListRootsOutput) SetRoots(v []*Root) *ListRootsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListTargetsForPolicyRequest
 type ListTargetsForPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12875,7 +13000,6 @@ func (s *ListTargetsForPolicyInput) SetPolicyId(v string) *ListTargetsForPolicyI
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListTargetsForPolicyResponse
 type ListTargetsForPolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12913,7 +13037,6 @@ func (s *ListTargetsForPolicyOutput) SetTargets(v []*PolicyTargetSummary) *ListT
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/MoveAccountRequest
 type MoveAccountInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13007,7 +13130,6 @@ func (s *MoveAccountInput) SetSourceParentId(v string) *MoveAccountInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/MoveAccountOutput
 type MoveAccountOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -13026,7 +13148,6 @@ func (s MoveAccountOutput) GoString() string {
 // accounts that are centrally managed together using consolidated billing,
 // organized hierarchically with organizational units (OUs), and controlled
 // with policies .
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Organization
 type Organization struct {
 	_ struct{} `type:"structure"`
 
@@ -13040,6 +13161,11 @@ type Organization struct {
 	// A list of policy types that are enabled for this organization. For example,
 	// if your organization has all features enabled, then service control policies
 	// (SCPs) are included in the list.
+	//
+	// Even if a policy type is shown as available in the organization, you can
+	// separately enable and disable them at the root level by using EnablePolicyType
+	// and DisablePolicyType. Use ListRoots to see the status of a policy type in
+	// that root.
 	AvailablePolicyTypes []*PolicyTypeSummary `type:"list"`
 
 	// Specifies the functionality that currently is available to the organization.
@@ -13130,7 +13256,6 @@ func (s *Organization) SetMasterAccountId(v string) *Organization {
 // Contains details about an organizational unit (OU). An OU is a container
 // of AWS accounts within a root of an organization. Policies that are attached
 // to an OU apply to all accounts contained in that OU and in any child OUs.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/OrganizationalUnit
 type OrganizationalUnit struct {
 	_ struct{} `type:"structure"`
 
@@ -13187,7 +13312,6 @@ func (s *OrganizationalUnit) SetName(v string) *OrganizationalUnit {
 
 // Contains information about either a root or an organizational unit (OU) that
 // can contain OUs or accounts in an organization.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Parent
 type Parent struct {
 	_ struct{} `type:"structure"`
 
@@ -13234,7 +13358,6 @@ func (s *Parent) SetType(v string) *Parent {
 // Contains rules to be applied to the affected accounts. Policies can be attached
 // directly to accounts, or to roots and OUs to affect all accounts in those
 // hierarchies.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Policy
 type Policy struct {
 	_ struct{} `type:"structure"`
 
@@ -13269,7 +13392,6 @@ func (s *Policy) SetPolicySummary(v *PolicySummary) *Policy {
 
 // Contains information about a policy, but does not include the content. To
 // see the content of a policy, see DescribePolicy.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/PolicySummary
 type PolicySummary struct {
 	_ struct{} `type:"structure"`
 
@@ -13353,7 +13475,6 @@ func (s *PolicySummary) SetType(v string) *PolicySummary {
 
 // Contains information about a root, OU, or account that a policy is attached
 // to.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/PolicyTargetSummary
 type PolicyTargetSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -13427,7 +13548,6 @@ func (s *PolicyTargetSummary) SetType(v string) *PolicyTargetSummary {
 
 // Contains information about a policy type and its status in the associated
 // root.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/PolicyTypeSummary
 type PolicyTypeSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -13462,7 +13582,6 @@ func (s *PolicyTypeSummary) SetType(v string) *PolicyTypeSummary {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/RemoveAccountFromOrganizationRequest
 type RemoveAccountFromOrganizationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13505,7 +13624,6 @@ func (s *RemoveAccountFromOrganizationInput) SetAccountId(v string) *RemoveAccou
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/RemoveAccountFromOrganizationOutput
 type RemoveAccountFromOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -13525,7 +13643,6 @@ func (s RemoveAccountFromOrganizationOutput) GoString() string {
 // Every root contains every AWS account in the organization. Each root enables
 // the accounts to be organized in a different way and to have different policy
 // types enabled for use in that root.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Root
 type Root struct {
 	_ struct{} `type:"structure"`
 
@@ -13551,6 +13668,11 @@ type Root struct {
 
 	// The types of policies that are currently enabled for the root and therefore
 	// can be attached to the root or to its OUs or accounts.
+	//
+	// Even if a policy type is shown as available in the organization, you can
+	// separately enable and disable them at the root level by using EnablePolicyType
+	// and DisablePolicyType. Use DescribeOrganization to see the availability of
+	// the policy types in that organization.
 	PolicyTypes []*PolicyTypeSummary `type:"list"`
 }
 
@@ -13588,7 +13710,6 @@ func (s *Root) SetPolicyTypes(v []*PolicyTypeSummary) *Root {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdateOrganizationalUnitRequest
 type UpdateOrganizationalUnitInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13649,7 +13770,6 @@ func (s *UpdateOrganizationalUnitInput) SetOrganizationalUnitId(v string) *Updat
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdateOrganizationalUnitResponse
 type UpdateOrganizationalUnitOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -13674,7 +13794,6 @@ func (s *UpdateOrganizationalUnitOutput) SetOrganizationalUnit(v *Organizational
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdatePolicyRequest
 type UpdatePolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13756,7 +13875,6 @@ func (s *UpdatePolicyInput) SetPolicyId(v string) *UpdatePolicyInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdatePolicyResponse
 type UpdatePolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -14050,6 +14168,9 @@ const (
 
 	// InvalidInputExceptionReasonUnrecognizedServicePrincipal is a InvalidInputExceptionReason enum value
 	InvalidInputExceptionReasonUnrecognizedServicePrincipal = "UNRECOGNIZED_SERVICE_PRINCIPAL"
+
+	// InvalidInputExceptionReasonInvalidRoleName is a InvalidInputExceptionReason enum value
+	InvalidInputExceptionReasonInvalidRoleName = "INVALID_ROLE_NAME"
 )
 
 const (

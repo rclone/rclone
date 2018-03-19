@@ -629,7 +629,8 @@
         "SoftwareVersion":{"shape":"SoftwareVersion"},
         "MacAddress":{"shape":"MacAddress"},
         "RoomArn":{"shape":"Arn"},
-        "DeviceStatus":{"shape":"DeviceStatus"}
+        "DeviceStatus":{"shape":"DeviceStatus"},
+        "DeviceStatusInfo":{"shape":"DeviceStatusInfo"}
       }
     },
     "DeviceData":{
@@ -643,7 +644,8 @@
         "MacAddress":{"shape":"MacAddress"},
         "DeviceStatus":{"shape":"DeviceStatus"},
         "RoomArn":{"shape":"Arn"},
-        "RoomName":{"shape":"RoomName"}
+        "RoomName":{"shape":"RoomName"},
+        "DeviceStatusInfo":{"shape":"DeviceStatusInfo"}
       }
     },
     "DeviceDataList":{
@@ -667,6 +669,29 @@
         "PENDING",
         "WAS_OFFLINE"
       ]
+    },
+    "DeviceStatusDetail":{
+      "type":"structure",
+      "members":{
+        "Code":{"shape":"DeviceStatusDetailCode"}
+      }
+    },
+    "DeviceStatusDetailCode":{
+      "type":"string",
+      "enum":[
+        "DEVICE_SOFTWARE_UPDATE_NEEDED",
+        "DEVICE_WAS_OFFLINE"
+      ]
+    },
+    "DeviceStatusDetails":{
+      "type":"list",
+      "member":{"shape":"DeviceStatusDetail"}
+    },
+    "DeviceStatusInfo":{
+      "type":"structure",
+      "members":{
+        "DeviceStatusDetails":{"shape":"DeviceStatusDetails"}
+      }
     },
     "DeviceType":{
       "type":"string",

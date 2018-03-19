@@ -19,7 +19,7 @@ const (
 	// with a scaling policy due to a client error, for example, if the role ARN
 	// specified for a scalable target does not have permission to call the CloudWatch
 	// DescribeAlarms (http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeAlarms.html)
-	// API operation on behalf of your account.
+	// on your behalf.
 	ErrCodeFailedResourceAccessException = "FailedResourceAccessException"
 
 	// ErrCodeInternalServiceException for service response error code
@@ -37,20 +37,18 @@ const (
 	// ErrCodeLimitExceededException for service response error code
 	// "LimitExceededException".
 	//
-	// Your account exceeded a limit. This exception is thrown when a per-account
-	// resource limit is exceeded. For more information, see Application Auto Scaling
-	// Limits (http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html#limits_as-app).
+	// A per-account resource limit is exceeded. For more information, see Application
+	// Auto Scaling Limits (http://docs.aws.amazon.com/ApplicationAutoScaling/latest/userguide/application-auto-scaling-limits.html).
 	ErrCodeLimitExceededException = "LimitExceededException"
 
 	// ErrCodeObjectNotFoundException for service response error code
 	// "ObjectNotFoundException".
 	//
-	// The specified object could not be found. For any Put or Register API operation,
-	// which depends on the existence of a scalable target, this exception is thrown
-	// if the scalable target with the specified service namespace, resource ID,
-	// and scalable dimension does not exist. For any Delete or Deregister API operation,
-	// this exception is thrown if the resource that is to be deleted or deregistered
-	// cannot be found.
+	// The specified object could not be found. For any operation that depends on
+	// the existence of a scalable target, this exception is thrown if the scalable
+	// target with the specified service namespace, resource ID, and scalable dimension
+	// does not exist. For any operation that deletes or deregisters a resource,
+	// this exception is thrown if the resource cannot be found.
 	ErrCodeObjectNotFoundException = "ObjectNotFoundException"
 
 	// ErrCodeValidationException for service response error code

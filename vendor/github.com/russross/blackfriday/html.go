@@ -620,7 +620,7 @@ func (options *Html) FootnoteRef(out *bytes.Buffer, ref []byte, id int) {
 	out.WriteString(`fnref:`)
 	out.WriteString(options.parameters.FootnoteAnchorPrefix)
 	out.Write(slug)
-	out.WriteString(`"><a rel="footnote" href="#`)
+	out.WriteString(`"><a href="#`)
 	out.WriteString(`fn:`)
 	out.WriteString(options.parameters.FootnoteAnchorPrefix)
 	out.Write(slug)

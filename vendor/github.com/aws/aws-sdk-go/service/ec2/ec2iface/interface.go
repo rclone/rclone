@@ -468,6 +468,10 @@ type EC2API interface {
 	DescribeAddressesWithContext(aws.Context, *ec2.DescribeAddressesInput, ...request.Option) (*ec2.DescribeAddressesOutput, error)
 	DescribeAddressesRequest(*ec2.DescribeAddressesInput) (*request.Request, *ec2.DescribeAddressesOutput)
 
+	DescribeAggregateIdFormat(*ec2.DescribeAggregateIdFormatInput) (*ec2.DescribeAggregateIdFormatOutput, error)
+	DescribeAggregateIdFormatWithContext(aws.Context, *ec2.DescribeAggregateIdFormatInput, ...request.Option) (*ec2.DescribeAggregateIdFormatOutput, error)
+	DescribeAggregateIdFormatRequest(*ec2.DescribeAggregateIdFormatInput) (*request.Request, *ec2.DescribeAggregateIdFormatOutput)
+
 	DescribeAvailabilityZones(*ec2.DescribeAvailabilityZonesInput) (*ec2.DescribeAvailabilityZonesOutput, error)
 	DescribeAvailabilityZonesWithContext(aws.Context, *ec2.DescribeAvailabilityZonesInput, ...request.Option) (*ec2.DescribeAvailabilityZonesOutput, error)
 	DescribeAvailabilityZonesRequest(*ec2.DescribeAvailabilityZonesInput) (*request.Request, *ec2.DescribeAvailabilityZonesOutput)
@@ -628,6 +632,10 @@ type EC2API interface {
 	DescribePrefixLists(*ec2.DescribePrefixListsInput) (*ec2.DescribePrefixListsOutput, error)
 	DescribePrefixListsWithContext(aws.Context, *ec2.DescribePrefixListsInput, ...request.Option) (*ec2.DescribePrefixListsOutput, error)
 	DescribePrefixListsRequest(*ec2.DescribePrefixListsInput) (*request.Request, *ec2.DescribePrefixListsOutput)
+
+	DescribePrincipalIdFormat(*ec2.DescribePrincipalIdFormatInput) (*ec2.DescribePrincipalIdFormatOutput, error)
+	DescribePrincipalIdFormatWithContext(aws.Context, *ec2.DescribePrincipalIdFormatInput, ...request.Option) (*ec2.DescribePrincipalIdFormatOutput, error)
+	DescribePrincipalIdFormatRequest(*ec2.DescribePrincipalIdFormatInput) (*request.Request, *ec2.DescribePrincipalIdFormatOutput)
 
 	DescribeRegions(*ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error)
 	DescribeRegionsWithContext(aws.Context, *ec2.DescribeRegionsInput, ...request.Option) (*ec2.DescribeRegionsOutput, error)

@@ -138,12 +138,35 @@ type Resource struct {
 	// Location - The geographic location of the resource. This must be one of the supported and registered Azure Geo Regions (for example, West US, East US, Southeast Asia, and so forth).
 	Location *string `json:"location,omitempty"`
 	// Tags - Tags to help categorize the resource in the Azure portal.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // Service the properties of a Media Service resource.
 type Service struct {
 	autorest.Response `json:"-"`
+	// ServiceProperties - The additional properties of a Media Service resource.
+	*ServiceProperties `json:"properties,omitempty"`
 	// ID - The id of the resource.
 	ID *string `json:"id,omitempty"`
 	// Name - The name of the resource.
@@ -153,9 +176,31 @@ type Service struct {
 	// Location - The geographic location of the resource. This must be one of the supported and registered Azure Geo Regions (for example, West US, East US, Southeast Asia, and so forth).
 	Location *string `json:"location,omitempty"`
 	// Tags - Tags to help categorize the resource in the Azure portal.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// ServiceProperties - The additional properties of a Media Service resource.
-	*ServiceProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Service.
+func (s Service) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if s.ServiceProperties != nil {
+		objectMap["properties"] = s.ServiceProperties
+	}
+	if s.ID != nil {
+		objectMap["id"] = s.ID
+	}
+	if s.Name != nil {
+		objectMap["name"] = s.Name
+	}
+	if s.Type != nil {
+		objectMap["type"] = s.Type
+	}
+	if s.Location != nil {
+		objectMap["location"] = s.Location
+	}
+	if s.Tags != nil {
+		objectMap["tags"] = s.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Service struct.
@@ -165,66 +210,63 @@ func (s *Service) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ServiceProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var serviceProperties ServiceProperties
+				err = json.Unmarshal(*v, &serviceProperties)
+				if err != nil {
+					return err
+				}
+				s.ServiceProperties = &serviceProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				s.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				s.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				s.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				s.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				s.Tags = tags
+			}
 		}
-		s.ServiceProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		s.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		s.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		s.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		s.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		s.Tags = &tags
 	}
 
 	return nil

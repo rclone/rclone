@@ -19,17 +19,7 @@ func TestName(t *testing.T) {
 
 	wants := make([]string, 1+unicode.MaxRune)
 	ucd.Parse(gen.OpenUCDFile("UnicodeData.txt"), func(p *ucd.Parser) {
-		r, s := p.Rune(0), p.String(ucd.Name)
-		if s == "" {
-			return
-		}
-		if s[0] == '<' {
-			const first = ", First>"
-			if i := strings.Index(s, first); i >= 0 {
-				s = s[:i] + ">"
-			}
-		}
-		wants[r] = s
+		wants[p.Rune(0)] = getName(p)
 	})
 
 	nErrors := 0
@@ -43,4 +33,20 @@ func TestName(t *testing.T) {
 			}
 		}
 	}
+}
+
+// Copied from gen.go.
+func getName(p *ucd.Parser) string {
+	s := p.String(ucd.Name)
+	if s == "" {
+		return ""
+	}
+	if s[0] == '<' {
+		const first = ", First>"
+		if i := strings.Index(s, first); i >= 0 {
+			s = s[:i] + ">"
+		}
+
+	}
+	return s
 }

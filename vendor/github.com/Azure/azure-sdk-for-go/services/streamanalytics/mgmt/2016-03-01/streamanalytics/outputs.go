@@ -41,13 +41,13 @@ func NewOutputsClientWithBaseURI(baseURI string, subscriptionID string) OutputsC
 
 // CreateOrReplace creates an output or replaces an already existing output under an existing streaming job.
 //
-// output is the definition of the output that will be used to create a new output or replace the existing one under
-// the streaming job. resourceGroupName is the name of the resource group that contains the resource. You can obtain
-// this value from the Azure Resource Manager API or the portal. jobName is the name of the streaming job. outputName
-// is the name of the output. ifMatch is the ETag of the output. Omit this value to always overwrite the current
-// output. Specify the last-seen ETag value to prevent accidentally overwritting concurrent changes. ifNoneMatch is set
-// to '*' to allow a new output to be created, but to prevent updating an existing output. Other values will result in
-// a 412 Pre-condition Failed response.
+// output is the definition of the output that will be used to create a new output or replace the existing one
+// under the streaming job. resourceGroupName is the name of the resource group that contains the resource. You can
+// obtain this value from the Azure Resource Manager API or the portal. jobName is the name of the streaming job.
+// outputName is the name of the output. ifMatch is the ETag of the output. Omit this value to always overwrite the
+// current output. Specify the last-seen ETag value to prevent accidentally overwritting concurrent changes.
+// ifNoneMatch is set to '*' to allow a new output to be created, but to prevent updating an existing output. Other
+// values will result in a 412 Pre-condition Failed response.
 func (client OutputsClient) CreateOrReplace(ctx context.Context, output Output, resourceGroupName string, jobName string, outputName string, ifMatch string, ifNoneMatch string) (result Output, err error) {
 	req, err := client.CreateOrReplacePreparer(ctx, output, resourceGroupName, jobName, outputName, ifMatch, ifNoneMatch)
 	if err != nil {
@@ -124,9 +124,9 @@ func (client OutputsClient) CreateOrReplaceResponder(resp *http.Response) (resul
 
 // Delete deletes an output from the streaming job.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. jobName is the name of the streaming job. outputName is the name of the
-// output.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. outputName is the name
+// of the output.
 func (client OutputsClient) Delete(ctx context.Context, resourceGroupName string, jobName string, outputName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, jobName, outputName)
 	if err != nil {
@@ -192,9 +192,9 @@ func (client OutputsClient) DeleteResponder(resp *http.Response) (result autores
 
 // Get gets details about the specified output.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. jobName is the name of the streaming job. outputName is the name of the
-// output.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. outputName is the name
+// of the output.
 func (client OutputsClient) Get(ctx context.Context, resourceGroupName string, jobName string, outputName string) (result Output, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, jobName, outputName)
 	if err != nil {
@@ -261,11 +261,11 @@ func (client OutputsClient) GetResponder(resp *http.Response) (result Output, er
 
 // ListByStreamingJob lists all of the outputs under the specified streaming job.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. jobName is the name of the streaming job. selectParameter is the $select
-// OData query parameter. This is a comma-separated list of structural properties to include in the response, or “*” to
-// include all properties. By default, all properties are returned except diagnostics. Currently only accepts '*' as a
-// valid value.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. selectParameter is the
+// $select OData query parameter. This is a comma-separated list of structural properties to include in the
+// response, or “*” to include all properties. By default, all properties are returned except diagnostics.
+// Currently only accepts '*' as a valid value.
 func (client OutputsClient) ListByStreamingJob(ctx context.Context, resourceGroupName string, jobName string, selectParameter string) (result OutputListResultPage, err error) {
 	result.fn = client.listByStreamingJobNextResults
 	req, err := client.ListByStreamingJobPreparer(ctx, resourceGroupName, jobName, selectParameter)
@@ -362,12 +362,12 @@ func (client OutputsClient) ListByStreamingJobComplete(ctx context.Context, reso
 
 // Test tests whether an output’s datasource is reachable and usable by the Azure Stream Analytics service.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. jobName is the name of the streaming job. outputName is the name of the
-// output. output is if the output specified does not already exist, this parameter must contain the full output
-// definition intended to be tested. If the output specified already exists, this parameter can be left null to test
-// the existing output as is or if specified, the properties specified will overwrite the corresponding properties in
-// the existing output (exactly like a PATCH operation) and the resulting output will be tested.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. outputName is the name
+// of the output. output is if the output specified does not already exist, this parameter must contain the full
+// output definition intended to be tested. If the output specified already exists, this parameter can be left null
+// to test the existing output as is or if specified, the properties specified will overwrite the corresponding
+// properties in the existing output (exactly like a PATCH operation) and the resulting output will be tested.
 func (client OutputsClient) Test(ctx context.Context, resourceGroupName string, jobName string, outputName string, output *Output) (result OutputsTestFuture, err error) {
 	req, err := client.TestPreparer(ctx, resourceGroupName, jobName, outputName, output)
 	if err != nil {
@@ -443,12 +443,12 @@ func (client OutputsClient) TestResponder(resp *http.Response) (result ResourceT
 // one or two properties) an output without affecting the rest the job or output definition.
 //
 // output is an Output object. The properties specified here will overwrite the corresponding properties in the
-// existing output (ie. Those properties will be updated). Any properties that are set to null here will mean that the
-// corresponding property in the existing output will remain the same and not change as a result of this PATCH
-// operation. resourceGroupName is the name of the resource group that contains the resource. You can obtain this value
-// from the Azure Resource Manager API or the portal. jobName is the name of the streaming job. outputName is the name
-// of the output. ifMatch is the ETag of the output. Omit this value to always overwrite the current output. Specify
-// the last-seen ETag value to prevent accidentally overwritting concurrent changes.
+// existing output (ie. Those properties will be updated). Any properties that are set to null here will mean that
+// the corresponding property in the existing output will remain the same and not change as a result of this PATCH
+// operation. resourceGroupName is the name of the resource group that contains the resource. You can obtain this
+// value from the Azure Resource Manager API or the portal. jobName is the name of the streaming job. outputName is
+// the name of the output. ifMatch is the ETag of the output. Omit this value to always overwrite the current
+// output. Specify the last-seen ETag value to prevent accidentally overwritting concurrent changes.
 func (client OutputsClient) Update(ctx context.Context, output Output, resourceGroupName string, jobName string, outputName string, ifMatch string) (result Output, err error) {
 	req, err := client.UpdatePreparer(ctx, output, resourceGroupName, jobName, outputName, ifMatch)
 	if err != nil {

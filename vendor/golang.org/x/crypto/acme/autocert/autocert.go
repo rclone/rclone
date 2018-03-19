@@ -27,7 +27,6 @@ import (
 	"net"
 	"net/http"
 	"path"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -940,16 +939,6 @@ func validCert(domain string, der [][]byte, key crypto.Signer) (leaf *x509.Certi
 		return nil, errors.New("acme/autocert: unknown public key algorithm")
 	}
 	return leaf, nil
-}
-
-func retryAfter(v string) time.Duration {
-	if i, err := strconv.Atoi(v); err == nil {
-		return time.Duration(i) * time.Second
-	}
-	if t, err := http.ParseTime(v); err == nil {
-		return t.Sub(timeNow())
-	}
-	return time.Second
 }
 
 type lockedMathRand struct {

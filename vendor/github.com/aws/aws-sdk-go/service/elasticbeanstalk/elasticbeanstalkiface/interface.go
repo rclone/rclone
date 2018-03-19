@@ -120,6 +120,10 @@ type ElasticBeanstalkAPI interface {
 	DeletePlatformVersionWithContext(aws.Context, *elasticbeanstalk.DeletePlatformVersionInput, ...request.Option) (*elasticbeanstalk.DeletePlatformVersionOutput, error)
 	DeletePlatformVersionRequest(*elasticbeanstalk.DeletePlatformVersionInput) (*request.Request, *elasticbeanstalk.DeletePlatformVersionOutput)
 
+	DescribeAccountAttributes(*elasticbeanstalk.DescribeAccountAttributesInput) (*elasticbeanstalk.DescribeAccountAttributesOutput, error)
+	DescribeAccountAttributesWithContext(aws.Context, *elasticbeanstalk.DescribeAccountAttributesInput, ...request.Option) (*elasticbeanstalk.DescribeAccountAttributesOutput, error)
+	DescribeAccountAttributesRequest(*elasticbeanstalk.DescribeAccountAttributesInput) (*request.Request, *elasticbeanstalk.DescribeAccountAttributesOutput)
+
 	DescribeApplicationVersions(*elasticbeanstalk.DescribeApplicationVersionsInput) (*elasticbeanstalk.DescribeApplicationVersionsOutput, error)
 	DescribeApplicationVersionsWithContext(aws.Context, *elasticbeanstalk.DescribeApplicationVersionsInput, ...request.Option) (*elasticbeanstalk.DescribeApplicationVersionsOutput, error)
 	DescribeApplicationVersionsRequest(*elasticbeanstalk.DescribeApplicationVersionsInput) (*request.Request, *elasticbeanstalk.DescribeApplicationVersionsOutput)

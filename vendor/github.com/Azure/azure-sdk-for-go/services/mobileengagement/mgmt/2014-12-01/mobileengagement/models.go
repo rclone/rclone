@@ -293,23 +293,24 @@ const (
 
 // AnnouncementFeedbackCriterion used to target devices who received an announcement.
 type AnnouncementFeedbackCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// ContentID - The unique identifier of the announcement.
 	ContentID *int32 `json:"content-id,omitempty"`
 	// Action - Action that was performed on the announcement. Possible values include: 'Pushed', 'Replied', 'Actioned', 'Exited'
 	Action CampaignFeedbacks `json:"action,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for AnnouncementFeedbackCriterion.
 func (afc AnnouncementFeedbackCriterion) MarshalJSON() ([]byte, error) {
 	afc.Type = TypeAnnouncementFeedback
-	type Alias AnnouncementFeedbackCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(afc),
-	})
+	objectMap := make(map[string]interface{})
+	if afc.ContentID != nil {
+		objectMap["content-id"] = afc.ContentID
+	}
+	objectMap["action"] = afc.Action
+	objectMap["type"] = afc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for AnnouncementFeedbackCriterion.
@@ -435,6 +436,7 @@ type APIErrorError struct {
 
 // App the Mobile Engagement App resource.
 type App struct {
+	*AppProperties `json:"properties,omitempty"`
 	// ID - Resource Id
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name
@@ -444,8 +446,31 @@ type App struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags           *map[string]*string `json:"tags,omitempty"`
-	*AppProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for App.
+func (a App) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if a.AppProperties != nil {
+		objectMap["properties"] = a.AppProperties
+	}
+	if a.ID != nil {
+		objectMap["id"] = a.ID
+	}
+	if a.Name != nil {
+		objectMap["name"] = a.Name
+	}
+	if a.Type != nil {
+		objectMap["type"] = a.Type
+	}
+	if a.Location != nil {
+		objectMap["location"] = a.Location
+	}
+	if a.Tags != nil {
+		objectMap["tags"] = a.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for App struct.
@@ -455,66 +480,63 @@ func (a *App) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties AppProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var appProperties AppProperties
+				err = json.Unmarshal(*v, &appProperties)
+				if err != nil {
+					return err
+				}
+				a.AppProperties = &appProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				a.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				a.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				a.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				a.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				a.Tags = tags
+			}
 		}
-		a.AppProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		a.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		a.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		a.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		a.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		a.Tags = &tags
 	}
 
 	return nil
@@ -522,6 +544,7 @@ func (a *App) UnmarshalJSON(body []byte) error {
 
 // AppCollection the AppCollection resource.
 type AppCollection struct {
+	*AppCollectionProperties `json:"properties,omitempty"`
 	// ID - Resource Id
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name
@@ -531,8 +554,31 @@ type AppCollection struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags                     *map[string]*string `json:"tags,omitempty"`
-	*AppCollectionProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for AppCollection.
+func (ac AppCollection) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ac.AppCollectionProperties != nil {
+		objectMap["properties"] = ac.AppCollectionProperties
+	}
+	if ac.ID != nil {
+		objectMap["id"] = ac.ID
+	}
+	if ac.Name != nil {
+		objectMap["name"] = ac.Name
+	}
+	if ac.Type != nil {
+		objectMap["type"] = ac.Type
+	}
+	if ac.Location != nil {
+		objectMap["location"] = ac.Location
+	}
+	if ac.Tags != nil {
+		objectMap["tags"] = ac.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AppCollection struct.
@@ -542,66 +588,63 @@ func (ac *AppCollection) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties AppCollectionProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var appCollectionProperties AppCollectionProperties
+				err = json.Unmarshal(*v, &appCollectionProperties)
+				if err != nil {
+					return err
+				}
+				ac.AppCollectionProperties = &appCollectionProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ac.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ac.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ac.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				ac.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				ac.Tags = tags
+			}
 		}
-		ac.AppCollectionProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		ac.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ac.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		ac.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		ac.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		ac.Tags = &tags
 	}
 
 	return nil
@@ -726,25 +769,25 @@ type AppCollectionProperties struct {
 	ProvisioningState ProvisioningStates `json:"provisioningState,omitempty"`
 }
 
-// AppInfoFilter send only to users who have some app info set. This is a special filter that is automatically added if
-// your campaign contains appInfo parameters. It is not intended to be public and should not be used as it could be
-// removed or replaced by the API.
+// AppInfoFilter send only to users who have some app info set. This is a special filter that is automatically
+// added if your campaign contains appInfo parameters. It is not intended to be public and should not be used as it
+// could be removed or replaced by the API.
 type AppInfoFilter struct {
-	// Type - Possible values include: 'TypeFilter', 'TypeEngageSubset', 'TypeEngageOldUsers', 'TypeEngageNewUsers', 'TypeEngageActiveUsers', 'TypeEngageIdleUsers', 'TypeNativePushEnabled', 'TypePushQuota', 'TypeAppInfo'
-	Type TypeBasicFilter `json:"type,omitempty"`
 	// AppInfo - An array containing all the required appInfo.
 	AppInfo *[]string `json:"appInfo,omitempty"`
+	// Type - Possible values include: 'TypeFilter', 'TypeEngageSubset', 'TypeEngageOldUsers', 'TypeEngageNewUsers', 'TypeEngageActiveUsers', 'TypeEngageIdleUsers', 'TypeNativePushEnabled', 'TypePushQuota', 'TypeAppInfo'
+	Type TypeBasicFilter `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for AppInfoFilter.
 func (aif AppInfoFilter) MarshalJSON() ([]byte, error) {
 	aif.Type = TypeAppInfo
-	type Alias AppInfoFilter
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(aif),
-	})
+	objectMap := make(map[string]interface{})
+	if aif.AppInfo != nil {
+		objectMap["appInfo"] = aif.AppInfo
+	}
+	objectMap["type"] = aif.Type
+	return json.Marshal(objectMap)
 }
 
 // AsEngageSubsetFilter is the BasicFilter implementation for AppInfoFilter.
@@ -799,21 +842,21 @@ func (aif AppInfoFilter) AsBasicFilter() (BasicFilter, bool) {
 
 // ApplicationVersionCriterion used to target devices based on the version of the application they are using.
 type ApplicationVersionCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Name - The application version.
 	Name *string `json:"name,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ApplicationVersionCriterion.
 func (avc ApplicationVersionCriterion) MarshalJSON() ([]byte, error) {
 	avc.Type = TypeApplicationVersion
-	type Alias ApplicationVersionCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(avc),
-	})
+	objectMap := make(map[string]interface{})
+	if avc.Name != nil {
+		objectMap["name"] = avc.Name
+	}
+	objectMap["type"] = avc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for ApplicationVersionCriterion.
@@ -1040,23 +1083,26 @@ type AppProperties struct {
 
 // BooleanTagCriterion target devices based on a boolean tag value.
 type BooleanTagCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Name - The name of the custom tag.
 	Name *string `json:"name,omitempty"`
 	// Value - A custom boolean value to match.
 	Value *bool `json:"value,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for BooleanTagCriterion.
 func (btc BooleanTagCriterion) MarshalJSON() ([]byte, error) {
 	btc.Type = TypeBooleanTag
-	type Alias BooleanTagCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(btc),
-	})
+	objectMap := make(map[string]interface{})
+	if btc.Name != nil {
+		objectMap["name"] = btc.Name
+	}
+	if btc.Value != nil {
+		objectMap["value"] = btc.Value
+	}
+	objectMap["type"] = btc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for BooleanTagCriterion.
@@ -1171,26 +1217,6 @@ func (btc BooleanTagCriterion) AsBasicCriterion() (BasicCriterion, bool) {
 
 // Campaign ...
 type Campaign struct {
-	// NotificationTitle - Title of the notification. This field supports appInfo markers.
-	NotificationTitle *string `json:"notificationTitle,omitempty"`
-	// NotificationMessage - Message of the notification. This field supports appInfo markers.
-	NotificationMessage *string `json:"notificationMessage,omitempty"`
-	// NotificationImage - Optional image encoded in base 64. Usually included in the right part of in app notifications (or as a banner if there is neither text nor content icon). For Android system notifications, the image is used as the large icon (displayed only on Android 3+).
-	NotificationImage *[]byte `json:"notificationImage,omitempty"`
-	// NotificationOptions - Additional platform specific options.
-	NotificationOptions *NotificationOptions `json:"notificationOptions,omitempty"`
-	// Title - Title of the announcement or poll. This field supports appInfo markers.
-	Title *string `json:"title,omitempty"`
-	// Body - Body of the text/web announcement, poll or data push. This field supports appInfo markers.
-	Body *string `json:"body,omitempty"`
-	// ActionButtonText - Text of the action button for text/web announcements and polls (answer button).
-	ActionButtonText *string `json:"actionButtonText,omitempty"`
-	// ExitButtonText - Text of the exit button for text/web announcements and polls.
-	ExitButtonText *string `json:"exitButtonText,omitempty"`
-	// ActionURL - URL to launch when the announcement is actioned.
-	ActionURL *string `json:"actionUrl,omitempty"`
-	// Payload - Native push payload.
-	Payload *map[string]interface{} `json:"payload,omitempty"`
 	// Name - Unique name of the campaign.
 	Name *string `json:"name,omitempty"`
 	// Audience - Specify which users will be targeted by this campaign. By default, all users will be targeted. If you set `pushMode` property to `manual`, the only thing you can specify in the audience is the push quota filter. An audience is a boolean expression made of criteria (variables) operators (`not`, `and` or `or`) and parenthesis. Additionally, a set of filters can be added to an audience. 65535 bytes max as per JSON encoding.
@@ -1228,22 +1254,137 @@ type Campaign struct {
 	// NotificationBadge - A flag indicating whether or not you want the native Apple Push notification to update the badge icon to the number of unread messages. The `deliveryTime` property must be set to `any` or `background`.
 	NotificationBadge *bool `json:"notificationBadge,omitempty"`
 	// Localization - Push campaigns can be localized using an optional JSON object. The JSON key is a two-character language code as specified by the ISO 639-1 standard. The corresponding value is an object containing the localizable properties.
-	Localization *map[string]*CampaignLocalization `json:"localization,omitempty"`
+	Localization map[string]*CampaignLocalization `json:"localization"`
 	// Questions - Poll questions.
 	Questions *[]PollQuestion `json:"questions,omitempty"`
+	// NotificationTitle - Title of the notification. This field supports appInfo markers.
+	NotificationTitle *string `json:"notificationTitle,omitempty"`
+	// NotificationMessage - Message of the notification. This field supports appInfo markers.
+	NotificationMessage *string `json:"notificationMessage,omitempty"`
+	// NotificationImage - Optional image encoded in base 64. Usually included in the right part of in app notifications (or as a banner if there is neither text nor content icon). For Android system notifications, the image is used as the large icon (displayed only on Android 3+).
+	NotificationImage *[]byte `json:"notificationImage,omitempty"`
+	// NotificationOptions - Additional platform specific options.
+	NotificationOptions *NotificationOptions `json:"notificationOptions,omitempty"`
+	// Title - Title of the announcement or poll. This field supports appInfo markers.
+	Title *string `json:"title,omitempty"`
+	// Body - Body of the text/web announcement, poll or data push. This field supports appInfo markers.
+	Body *string `json:"body,omitempty"`
+	// ActionButtonText - Text of the action button for text/web announcements and polls (answer button).
+	ActionButtonText *string `json:"actionButtonText,omitempty"`
+	// ExitButtonText - Text of the exit button for text/web announcements and polls.
+	ExitButtonText *string `json:"exitButtonText,omitempty"`
+	// ActionURL - URL to launch when the announcement is actioned.
+	ActionURL *string `json:"actionUrl,omitempty"`
+	// Payload - Native push payload.
+	Payload interface{} `json:"payload,omitempty"`
 }
 
-// CampaignAudience specify which users will be targeted by this campaign. By default, all users will be targeted. If
-// you set `pushMode` property to `manual`, the only thing you can specify in the audience is the push quota filter. An
-// audience is a boolean expression made of criteria (variables) operators (`not`, `and` or `or`) and parenthesis.
-// Additionally, a set of filters can be added to an audience. 65535 bytes max as per JSON encoding.
+// MarshalJSON is the custom marshaler for Campaign.
+func (c Campaign) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if c.Name != nil {
+		objectMap["name"] = c.Name
+	}
+	if c.Audience != nil {
+		objectMap["audience"] = c.Audience
+	}
+	if c.Category != nil {
+		objectMap["category"] = c.Category
+	}
+	objectMap["pushMode"] = c.PushMode
+	objectMap["type"] = c.Type
+	objectMap["deliveryTime"] = c.DeliveryTime
+	if c.DeliveryActivities != nil {
+		objectMap["deliveryActivities"] = c.DeliveryActivities
+	}
+	if c.StartTime != nil {
+		objectMap["startTime"] = c.StartTime
+	}
+	if c.EndTime != nil {
+		objectMap["endTime"] = c.EndTime
+	}
+	if c.Timezone != nil {
+		objectMap["timezone"] = c.Timezone
+	}
+	objectMap["notificationType"] = c.NotificationType
+	if c.NotificationIcon != nil {
+		objectMap["notificationIcon"] = c.NotificationIcon
+	}
+	if c.NotificationCloseable != nil {
+		objectMap["notificationCloseable"] = c.NotificationCloseable
+	}
+	if c.NotificationVibrate != nil {
+		objectMap["notificationVibrate"] = c.NotificationVibrate
+	}
+	if c.NotificationSound != nil {
+		objectMap["notificationSound"] = c.NotificationSound
+	}
+	if c.NotificationBadge != nil {
+		objectMap["notificationBadge"] = c.NotificationBadge
+	}
+	if c.Localization != nil {
+		objectMap["localization"] = c.Localization
+	}
+	if c.Questions != nil {
+		objectMap["questions"] = c.Questions
+	}
+	if c.NotificationTitle != nil {
+		objectMap["notificationTitle"] = c.NotificationTitle
+	}
+	if c.NotificationMessage != nil {
+		objectMap["notificationMessage"] = c.NotificationMessage
+	}
+	if c.NotificationImage != nil {
+		objectMap["notificationImage"] = c.NotificationImage
+	}
+	if c.NotificationOptions != nil {
+		objectMap["notificationOptions"] = c.NotificationOptions
+	}
+	if c.Title != nil {
+		objectMap["title"] = c.Title
+	}
+	if c.Body != nil {
+		objectMap["body"] = c.Body
+	}
+	if c.ActionButtonText != nil {
+		objectMap["actionButtonText"] = c.ActionButtonText
+	}
+	if c.ExitButtonText != nil {
+		objectMap["exitButtonText"] = c.ExitButtonText
+	}
+	if c.ActionURL != nil {
+		objectMap["actionUrl"] = c.ActionURL
+	}
+	objectMap["payload"] = c.Payload
+	return json.Marshal(objectMap)
+}
+
+// CampaignAudience specify which users will be targeted by this campaign. By default, all users will be targeted.
+// If you set `pushMode` property to `manual`, the only thing you can specify in the audience is the push quota
+// filter. An audience is a boolean expression made of criteria (variables) operators (`not`, `and` or `or`) and
+// parenthesis. Additionally, a set of filters can be added to an audience. 65535 bytes max as per JSON encoding.
 type CampaignAudience struct {
 	// Expression - Boolean expression made of criteria (variables) operators (`not`, `and` or `or`) and parenthesis. Criterion names in the audience expression must start with a capital letter and can only contain alphanumeric (A-Z,a-z,0-9) and underscore (_) characters.
 	Expression *string `json:"expression,omitempty"`
 	// Criteria - Criteria by name.
-	Criteria *map[string]*Criterion `json:"criteria,omitempty"`
+	Criteria map[string]*Criterion `json:"criteria"`
 	// Filters - Global filters applied to all devices.
 	Filters *[]BasicFilter `json:"filters,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CampaignAudience.
+func (c CampaignAudience) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if c.Expression != nil {
+		objectMap["expression"] = c.Expression
+	}
+	if c.Criteria != nil {
+		objectMap["criteria"] = c.Criteria
+	}
+	if c.Filters != nil {
+		objectMap["filters"] = c.Filters
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for CampaignAudience struct.
@@ -1253,35 +1394,35 @@ func (c *CampaignAudience) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["expression"]
-	if v != nil {
-		var expression string
-		err = json.Unmarshal(*m["expression"], &expression)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "expression":
+			if v != nil {
+				var expression string
+				err = json.Unmarshal(*v, &expression)
+				if err != nil {
+					return err
+				}
+				c.Expression = &expression
+			}
+		case "criteria":
+			if v != nil {
+				var criteria map[string]*Criterion
+				err = json.Unmarshal(*v, &criteria)
+				if err != nil {
+					return err
+				}
+				c.Criteria = criteria
+			}
+		case "filters":
+			if v != nil {
+				filters, err := unmarshalBasicFilterArray(*v)
+				if err != nil {
+					return err
+				}
+				c.Filters = &filters
+			}
 		}
-		c.Expression = &expression
-	}
-
-	v = m["criteria"]
-	if v != nil {
-		var criteria map[string]*Criterion
-		err = json.Unmarshal(*m["criteria"], &criteria)
-		if err != nil {
-			return err
-		}
-		c.Criteria = &criteria
-	}
-
-	v = m["filters"]
-	if v != nil {
-		filters, err := unmarshalBasicFilterArray(*m["filters"])
-		if err != nil {
-			return err
-		}
-		c.Filters = &filters
 	}
 
 	return nil
@@ -1289,10 +1430,6 @@ func (c *CampaignAudience) UnmarshalJSON(body []byte) error {
 
 // CampaignListResult ...
 type CampaignListResult struct {
-	// State - State of the campaign, or 'queued' when testing a campaign. Possible values include: 'Draft', 'Scheduled', 'InProgress', 'Finished', 'Queued'
-	State CampaignStates `json:"state,omitempty"`
-	// ID - Campaign identifier.
-	ID *int32 `json:"id,omitempty"`
 	// Name - Name of the campaign.
 	Name *string `json:"name,omitempty"`
 	// ActivatedDate - The date at which the campaign was activated (Not present if not yet activated). The date conforms to the following format: `yyyy-MM-ddTHH:mm:ssZ` as specified by the ISO 8601 standard.
@@ -1305,6 +1442,10 @@ type CampaignListResult struct {
 	EndTime *date.Time `json:"endTime,omitempty"`
 	// Timezone - The id of the time zone to use for the `startTime` and `endTime` dates. If not provided, the two date attributes are referencing to the device timezone. Applicable only to announcements and polls.
 	Timezone *string `json:"timezone,omitempty"`
+	// ID - Campaign identifier.
+	ID *int32 `json:"id,omitempty"`
+	// State - State of the campaign, or 'queued' when testing a campaign. Possible values include: 'Draft', 'Scheduled', 'InProgress', 'Finished', 'Queued'
+	State CampaignStates `json:"state,omitempty"`
 }
 
 // CampaignLocalization ...
@@ -1328,7 +1469,7 @@ type CampaignLocalization struct {
 	// ActionURL - URL to launch when the announcement is actioned.
 	ActionURL *string `json:"actionUrl,omitempty"`
 	// Payload - Native push payload.
-	Payload *map[string]interface{} `json:"payload,omitempty"`
+	Payload interface{} `json:"payload,omitempty"`
 }
 
 // CampaignPushParameters ...
@@ -1349,26 +1490,14 @@ type CampaignPushResult struct {
 // CampaignResult ...
 type CampaignResult struct {
 	autorest.Response `json:"-"`
-	// NotificationTitle - Title of the notification. This field supports appInfo markers.
-	NotificationTitle *string `json:"notificationTitle,omitempty"`
-	// NotificationMessage - Message of the notification. This field supports appInfo markers.
-	NotificationMessage *string `json:"notificationMessage,omitempty"`
-	// NotificationImage - Optional image encoded in base 64. Usually included in the right part of in app notifications (or as a banner if there is neither text nor content icon). For Android system notifications, the image is used as the large icon (displayed only on Android 3+).
-	NotificationImage *[]byte `json:"notificationImage,omitempty"`
-	// NotificationOptions - Additional platform specific options.
-	NotificationOptions *NotificationOptions `json:"notificationOptions,omitempty"`
-	// Title - Title of the announcement or poll. This field supports appInfo markers.
-	Title *string `json:"title,omitempty"`
-	// Body - Body of the text/web announcement, poll or data push. This field supports appInfo markers.
-	Body *string `json:"body,omitempty"`
-	// ActionButtonText - Text of the action button for text/web announcements and polls (answer button).
-	ActionButtonText *string `json:"actionButtonText,omitempty"`
-	// ExitButtonText - Text of the exit button for text/web announcements and polls.
-	ExitButtonText *string `json:"exitButtonText,omitempty"`
-	// ActionURL - URL to launch when the announcement is actioned.
-	ActionURL *string `json:"actionUrl,omitempty"`
-	// Payload - Native push payload.
-	Payload *map[string]interface{} `json:"payload,omitempty"`
+	// ID - Campaign identifier.
+	ID *int32 `json:"id,omitempty"`
+	// State - State of the campaign, or 'queued' when testing a campaign. Possible values include: 'Draft', 'Scheduled', 'InProgress', 'Finished', 'Queued'
+	State CampaignStates `json:"state,omitempty"`
+	// ActivatedDate - The date at which the campaign was activated (Not present if not yet activated). The date conforms to the following format: yyyy-MM-ddTHH:mm:ssZ as specified by the ISO 8601 standard.
+	ActivatedDate *date.Time `json:"activatedDate,omitempty"`
+	// FinishedDate - The date at which the campaign was finished (Not present if not yet finished). The date conforms to the following format: yyyy-MM-ddTHH:mm:ssZ as specified by the ISO 8601 standard.
+	FinishedDate *date.Time `json:"finishedDate,omitempty"`
 	// Name - Unique name of the campaign.
 	Name *string `json:"name,omitempty"`
 	// Audience - Specify which users will be targeted by this campaign. By default, all users will be targeted. If you set `pushMode` property to `manual`, the only thing you can specify in the audience is the push quota filter. An audience is a boolean expression made of criteria (variables) operators (`not`, `and` or `or`) and parenthesis. Additionally, a set of filters can be added to an audience. 65535 bytes max as per JSON encoding.
@@ -1406,17 +1535,119 @@ type CampaignResult struct {
 	// NotificationBadge - A flag indicating whether or not you want the native Apple Push notification to update the badge icon to the number of unread messages. The `deliveryTime` property must be set to `any` or `background`.
 	NotificationBadge *bool `json:"notificationBadge,omitempty"`
 	// Localization - Push campaigns can be localized using an optional JSON object. The JSON key is a two-character language code as specified by the ISO 639-1 standard. The corresponding value is an object containing the localizable properties.
-	Localization *map[string]*CampaignLocalization `json:"localization,omitempty"`
+	Localization map[string]*CampaignLocalization `json:"localization"`
 	// Questions - Poll questions.
 	Questions *[]PollQuestion `json:"questions,omitempty"`
-	// ID - Campaign identifier.
-	ID *int32 `json:"id,omitempty"`
-	// State - State of the campaign, or 'queued' when testing a campaign. Possible values include: 'Draft', 'Scheduled', 'InProgress', 'Finished', 'Queued'
-	State CampaignStates `json:"state,omitempty"`
-	// ActivatedDate - The date at which the campaign was activated (Not present if not yet activated). The date conforms to the following format: yyyy-MM-ddTHH:mm:ssZ as specified by the ISO 8601 standard.
-	ActivatedDate *date.Time `json:"activatedDate,omitempty"`
-	// FinishedDate - The date at which the campaign was finished (Not present if not yet finished). The date conforms to the following format: yyyy-MM-ddTHH:mm:ssZ as specified by the ISO 8601 standard.
-	FinishedDate *date.Time `json:"finishedDate,omitempty"`
+	// NotificationTitle - Title of the notification. This field supports appInfo markers.
+	NotificationTitle *string `json:"notificationTitle,omitempty"`
+	// NotificationMessage - Message of the notification. This field supports appInfo markers.
+	NotificationMessage *string `json:"notificationMessage,omitempty"`
+	// NotificationImage - Optional image encoded in base 64. Usually included in the right part of in app notifications (or as a banner if there is neither text nor content icon). For Android system notifications, the image is used as the large icon (displayed only on Android 3+).
+	NotificationImage *[]byte `json:"notificationImage,omitempty"`
+	// NotificationOptions - Additional platform specific options.
+	NotificationOptions *NotificationOptions `json:"notificationOptions,omitempty"`
+	// Title - Title of the announcement or poll. This field supports appInfo markers.
+	Title *string `json:"title,omitempty"`
+	// Body - Body of the text/web announcement, poll or data push. This field supports appInfo markers.
+	Body *string `json:"body,omitempty"`
+	// ActionButtonText - Text of the action button for text/web announcements and polls (answer button).
+	ActionButtonText *string `json:"actionButtonText,omitempty"`
+	// ExitButtonText - Text of the exit button for text/web announcements and polls.
+	ExitButtonText *string `json:"exitButtonText,omitempty"`
+	// ActionURL - URL to launch when the announcement is actioned.
+	ActionURL *string `json:"actionUrl,omitempty"`
+	// Payload - Native push payload.
+	Payload interface{} `json:"payload,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CampaignResult.
+func (cr CampaignResult) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cr.ID != nil {
+		objectMap["id"] = cr.ID
+	}
+	objectMap["state"] = cr.State
+	if cr.ActivatedDate != nil {
+		objectMap["activatedDate"] = cr.ActivatedDate
+	}
+	if cr.FinishedDate != nil {
+		objectMap["finishedDate"] = cr.FinishedDate
+	}
+	if cr.Name != nil {
+		objectMap["name"] = cr.Name
+	}
+	if cr.Audience != nil {
+		objectMap["audience"] = cr.Audience
+	}
+	if cr.Category != nil {
+		objectMap["category"] = cr.Category
+	}
+	objectMap["pushMode"] = cr.PushMode
+	objectMap["type"] = cr.Type
+	objectMap["deliveryTime"] = cr.DeliveryTime
+	if cr.DeliveryActivities != nil {
+		objectMap["deliveryActivities"] = cr.DeliveryActivities
+	}
+	if cr.StartTime != nil {
+		objectMap["startTime"] = cr.StartTime
+	}
+	if cr.EndTime != nil {
+		objectMap["endTime"] = cr.EndTime
+	}
+	if cr.Timezone != nil {
+		objectMap["timezone"] = cr.Timezone
+	}
+	objectMap["notificationType"] = cr.NotificationType
+	if cr.NotificationIcon != nil {
+		objectMap["notificationIcon"] = cr.NotificationIcon
+	}
+	if cr.NotificationCloseable != nil {
+		objectMap["notificationCloseable"] = cr.NotificationCloseable
+	}
+	if cr.NotificationVibrate != nil {
+		objectMap["notificationVibrate"] = cr.NotificationVibrate
+	}
+	if cr.NotificationSound != nil {
+		objectMap["notificationSound"] = cr.NotificationSound
+	}
+	if cr.NotificationBadge != nil {
+		objectMap["notificationBadge"] = cr.NotificationBadge
+	}
+	if cr.Localization != nil {
+		objectMap["localization"] = cr.Localization
+	}
+	if cr.Questions != nil {
+		objectMap["questions"] = cr.Questions
+	}
+	if cr.NotificationTitle != nil {
+		objectMap["notificationTitle"] = cr.NotificationTitle
+	}
+	if cr.NotificationMessage != nil {
+		objectMap["notificationMessage"] = cr.NotificationMessage
+	}
+	if cr.NotificationImage != nil {
+		objectMap["notificationImage"] = cr.NotificationImage
+	}
+	if cr.NotificationOptions != nil {
+		objectMap["notificationOptions"] = cr.NotificationOptions
+	}
+	if cr.Title != nil {
+		objectMap["title"] = cr.Title
+	}
+	if cr.Body != nil {
+		objectMap["body"] = cr.Body
+	}
+	if cr.ActionButtonText != nil {
+		objectMap["actionButtonText"] = cr.ActionButtonText
+	}
+	if cr.ExitButtonText != nil {
+		objectMap["exitButtonText"] = cr.ExitButtonText
+	}
+	if cr.ActionURL != nil {
+		objectMap["actionUrl"] = cr.ActionURL
+	}
+	objectMap["payload"] = cr.Payload
+	return json.Marshal(objectMap)
 }
 
 // CampaignsListResult the campaigns list result.
@@ -1531,10 +1762,10 @@ type CampaignState struct {
 // CampaignStateResult ...
 type CampaignStateResult struct {
 	autorest.Response `json:"-"`
-	// State - State of the campaign, or 'queued' when testing a campaign. Possible values include: 'Draft', 'Scheduled', 'InProgress', 'Finished', 'Queued'
-	State CampaignStates `json:"state,omitempty"`
 	// ID - Campaign identifier.
 	ID *int32 `json:"id,omitempty"`
+	// State - State of the campaign, or 'queued' when testing a campaign. Possible values include: 'Draft', 'Scheduled', 'InProgress', 'Finished', 'Queued'
+	State CampaignStates `json:"state,omitempty"`
 }
 
 // CampaignStatisticsResult ...
@@ -1573,16 +1804,73 @@ type CampaignStatisticsResult struct {
 	// ContentExited - Number of times the campaign’s content view was exited (Not present in case of a notification-only announcement or a native-push).
 	ContentExited *int32 `json:"content-exited,omitempty"`
 	// Answers - Poll specific statistics.
-	Answers *map[string]*map[string]interface{} `json:"answers,omitempty"`
+	Answers map[string]interface{} `json:"answers"`
+}
+
+// MarshalJSON is the custom marshaler for CampaignStatisticsResult.
+func (csr CampaignStatisticsResult) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if csr.Queued != nil {
+		objectMap["queued"] = csr.Queued
+	}
+	if csr.Pushed != nil {
+		objectMap["pushed"] = csr.Pushed
+	}
+	if csr.PushedNative != nil {
+		objectMap["pushed-native"] = csr.PushedNative
+	}
+	if csr.PushedNativeGoogle != nil {
+		objectMap["pushed-native-google"] = csr.PushedNativeGoogle
+	}
+	if csr.PushedNativeAdm != nil {
+		objectMap["pushed-native-adm"] = csr.PushedNativeAdm
+	}
+	if csr.Delivered != nil {
+		objectMap["delivered"] = csr.Delivered
+	}
+	if csr.Dropped != nil {
+		objectMap["dropped"] = csr.Dropped
+	}
+	if csr.SystemNotificationDisplayed != nil {
+		objectMap["system-notification-displayed"] = csr.SystemNotificationDisplayed
+	}
+	if csr.InAppNotificationDisplayed != nil {
+		objectMap["in-app-notification-displayed"] = csr.InAppNotificationDisplayed
+	}
+	if csr.ContentDisplayed != nil {
+		objectMap["content-displayed"] = csr.ContentDisplayed
+	}
+	if csr.SystemNotificationActioned != nil {
+		objectMap["system-notification-actioned"] = csr.SystemNotificationActioned
+	}
+	if csr.SystemNotificationExited != nil {
+		objectMap["system-notification-exited"] = csr.SystemNotificationExited
+	}
+	if csr.InAppNotificationActioned != nil {
+		objectMap["in-app-notification-actioned"] = csr.InAppNotificationActioned
+	}
+	if csr.InAppNotificationExited != nil {
+		objectMap["in-app-notification-exited"] = csr.InAppNotificationExited
+	}
+	if csr.ContentActioned != nil {
+		objectMap["content-actioned"] = csr.ContentActioned
+	}
+	if csr.ContentExited != nil {
+		objectMap["content-exited"] = csr.ContentExited
+	}
+	if csr.Answers != nil {
+		objectMap["answers"] = csr.Answers
+	}
+	return json.Marshal(objectMap)
 }
 
 // CampaignTestNewParameters ...
 type CampaignTestNewParameters struct {
+	Data *Campaign `json:"data,omitempty"`
 	// DeviceID - Device identifier (as returned by the SDK).
 	DeviceID *string `json:"deviceId,omitempty"`
 	// Lang - The language to test expressed using ISO 639-1 code. The default language of the campaign will be used if the parameter is not provided.
-	Lang *string   `json:"lang,omitempty"`
-	Data *Campaign `json:"data,omitempty"`
+	Lang *string `json:"lang,omitempty"`
 }
 
 // CampaignTestSavedParameters ...
@@ -1595,21 +1883,21 @@ type CampaignTestSavedParameters struct {
 
 // CarrierCountryCriterion used to target devices based on their carrier country.
 type CarrierCountryCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Name - Two-characters country code (ISO 3166-1).
 	Name *string `json:"name,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for CarrierCountryCriterion.
 func (ccc CarrierCountryCriterion) MarshalJSON() ([]byte, error) {
 	ccc.Type = TypeCarrierCountry
-	type Alias CarrierCountryCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ccc),
-	})
+	objectMap := make(map[string]interface{})
+	if ccc.Name != nil {
+		objectMap["name"] = ccc.Name
+	}
+	objectMap["type"] = ccc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for CarrierCountryCriterion.
@@ -1724,21 +2012,21 @@ func (ccc CarrierCountryCriterion) AsBasicCriterion() (BasicCriterion, bool) {
 
 // CarrierNameCriterion used to target devices based on their carrier name.
 type CarrierNameCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Name - Carrier name value.
 	Name *string `json:"name,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for CarrierNameCriterion.
 func (cnc CarrierNameCriterion) MarshalJSON() ([]byte, error) {
 	cnc.Type = TypeCarrierName
-	type Alias CarrierNameCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(cnc),
-	})
+	objectMap := make(map[string]interface{})
+	if cnc.Name != nil {
+		objectMap["name"] = cnc.Name
+	}
+	objectMap["type"] = cnc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for CarrierNameCriterion.
@@ -1851,7 +2139,7 @@ func (cnc CarrierNameCriterion) AsBasicCriterion() (BasicCriterion, bool) {
 	return &cnc, true
 }
 
-// BasicCriterion
+// BasicCriterion ...
 type BasicCriterion interface {
 	AsCarrierNameCriterion() (*CarrierNameCriterion, bool)
 	AsCarrierCountryCriterion() (*CarrierCountryCriterion, bool)
@@ -1876,7 +2164,7 @@ type BasicCriterion interface {
 	AsCriterion() (*Criterion, bool)
 }
 
-// Criterion
+// Criterion ...
 type Criterion struct {
 	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
 	Type Type `json:"type,omitempty"`
@@ -1998,12 +2286,9 @@ func unmarshalBasicCriterionArray(body []byte) ([]BasicCriterion, error) {
 // MarshalJSON is the custom marshaler for Criterion.
 func (c Criterion) MarshalJSON() ([]byte, error) {
 	c.Type = TypeCriterion
-	type Alias Criterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(c),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["type"] = c.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for Criterion.
@@ -2118,24 +2403,25 @@ func (c Criterion) AsBasicCriterion() (BasicCriterion, bool) {
 
 // DatapushFeedbackCriterion used to target devices who received a data push.
 type DatapushFeedbackCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// ContentID - The unique identifier of the data push.
 	ContentID *int32 `json:"content-id,omitempty"`
 	// Action - Action that was performed on the data push (action depends on the return value in the callbacks you declared in the client code).
 	// . Possible values include: 'Pushed', 'Replied', 'Actioned', 'Exited'
 	Action CampaignFeedbacks `json:"action,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DatapushFeedbackCriterion.
 func (dfc DatapushFeedbackCriterion) MarshalJSON() ([]byte, error) {
 	dfc.Type = TypeDatapushFeedback
-	type Alias DatapushFeedbackCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dfc),
-	})
+	objectMap := make(map[string]interface{})
+	if dfc.ContentID != nil {
+		objectMap["content-id"] = dfc.ContentID
+	}
+	objectMap["action"] = dfc.Action
+	objectMap["type"] = dfc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for DatapushFeedbackCriterion.
@@ -2263,25 +2549,29 @@ type DateRangeExportTaskParameter struct {
 
 // DateTagCriterion target devices based on a date tag value.
 type DateTagCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Name - The name of the custom tag.
 	Name *string `json:"name,omitempty"`
 	// Value - It can be either: * an absolute date using yyyy-MM-dd format (e.g. 1969-12-07 stands for 7 Dec 1969). * an offset in days relative to the current day (`TODAY` + `value`).
 	Value *date.Date `json:"value,omitempty"`
 	// Op - comparison operator: `EQ` (equal to), `LT` (less than), `GT` (greater than), `LE` (less than or equal to) or `GE` (greater than or equal to). Possible values include: 'EQ', 'LT', 'GT', 'LE', 'GE'
 	Op AudienceOperators `json:"op,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DateTagCriterion.
 func (dtc DateTagCriterion) MarshalJSON() ([]byte, error) {
 	dtc.Type = TypeDateTag
-	type Alias DateTagCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dtc),
-	})
+	objectMap := make(map[string]interface{})
+	if dtc.Name != nil {
+		objectMap["name"] = dtc.Name
+	}
+	if dtc.Value != nil {
+		objectMap["value"] = dtc.Value
+	}
+	objectMap["op"] = dtc.Op
+	objectMap["type"] = dtc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for DateTagCriterion.
@@ -2406,7 +2696,28 @@ type Device struct {
 	// Location - Last geo-location data received.
 	Location *DeviceLocation `json:"location,omitempty"`
 	// AppInfo - Also known as tags, a key-value set as a JSON object.
-	AppInfo *map[string]*string `json:"appInfo,omitempty"`
+	AppInfo map[string]*string `json:"appInfo"`
+}
+
+// MarshalJSON is the custom marshaler for Device.
+func (d Device) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if d.DeviceID != nil {
+		objectMap["deviceId"] = d.DeviceID
+	}
+	if d.Meta != nil {
+		objectMap["meta"] = d.Meta
+	}
+	if d.Info != nil {
+		objectMap["info"] = d.Info
+	}
+	if d.Location != nil {
+		objectMap["location"] = d.Location
+	}
+	if d.AppInfo != nil {
+		objectMap["appInfo"] = d.AppInfo
+	}
+	return json.Marshal(objectMap)
 }
 
 // DeviceInfo ...
@@ -2453,21 +2764,21 @@ type DeviceLocation struct {
 
 // DeviceManufacturerCriterion used to target devices based on the device manufacturer.
 type DeviceManufacturerCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Name - The device manufacturer.
 	Name *string `json:"name,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DeviceManufacturerCriterion.
 func (dmc DeviceManufacturerCriterion) MarshalJSON() ([]byte, error) {
 	dmc.Type = TypeDeviceManufacturer
-	type Alias DeviceManufacturerCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dmc),
-	})
+	objectMap := make(map[string]interface{})
+	if dmc.Name != nil {
+		objectMap["name"] = dmc.Name
+	}
+	objectMap["type"] = dmc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for DeviceManufacturerCriterion.
@@ -2596,21 +2907,21 @@ type DeviceMeta struct {
 
 // DeviceModelCriterion used to target devices based on the device model.
 type DeviceModelCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Name - The device model.
 	Name *string `json:"name,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DeviceModelCriterion.
 func (dmc DeviceModelCriterion) MarshalJSON() ([]byte, error) {
 	dmc.Type = TypeDeviceModel
-	type Alias DeviceModelCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(dmc),
-	})
+	objectMap := make(map[string]interface{})
+	if dmc.Name != nil {
+		objectMap["name"] = dmc.Name
+	}
+	objectMap["type"] = dmc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for DeviceModelCriterion.
@@ -2730,7 +3041,22 @@ type DeviceQueryResult struct {
 	// Meta - Application usage data.
 	Meta *DeviceMeta `json:"meta,omitempty"`
 	// AppInfo - Also known as tags, a key-value set as a JSON object.
-	AppInfo *map[string]*string `json:"appInfo,omitempty"`
+	AppInfo map[string]*string `json:"appInfo"`
+}
+
+// MarshalJSON is the custom marshaler for DeviceQueryResult.
+func (dqr DeviceQueryResult) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dqr.DeviceID != nil {
+		objectMap["deviceId"] = dqr.DeviceID
+	}
+	if dqr.Meta != nil {
+		objectMap["meta"] = dqr.Meta
+	}
+	if dqr.AppInfo != nil {
+		objectMap["appInfo"] = dqr.AppInfo
+	}
+	return json.Marshal(objectMap)
 }
 
 // DevicesQueryResult the campaigns list result.
@@ -2838,9 +3164,21 @@ func (page DevicesQueryResultPage) Values() []DeviceQueryResult {
 // DeviceTagsParameters ...
 type DeviceTagsParameters struct {
 	// Tags - A JSON object describing the set of tags to record for a set of users. Each key is a device/user identifier, each value is itself a key/value set: the tags to set for the specified device/user identifier.
-	Tags *map[string]map[string]*string `json:"tags,omitempty"`
+	Tags map[string]map[string]*string `json:"tags"`
 	// DeleteOnNull - If this parameter is `true`, tags with a null value will be deleted.
 	DeleteOnNull *bool `json:"deleteOnNull,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for DeviceTagsParameters.
+func (dtp DeviceTagsParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dtp.Tags != nil {
+		objectMap["tags"] = dtp.Tags
+	}
+	if dtp.DeleteOnNull != nil {
+		objectMap["deleteOnNull"] = dtp.DeleteOnNull
+	}
+	return json.Marshal(objectMap)
 }
 
 // DeviceTagsResult ...
@@ -2852,21 +3190,21 @@ type DeviceTagsResult struct {
 
 // EngageActiveUsersFilter send only to users who have used the app in the last {threshold} days.
 type EngageActiveUsersFilter struct {
-	// Type - Possible values include: 'TypeFilter', 'TypeEngageSubset', 'TypeEngageOldUsers', 'TypeEngageNewUsers', 'TypeEngageActiveUsers', 'TypeEngageIdleUsers', 'TypeNativePushEnabled', 'TypePushQuota', 'TypeAppInfo'
-	Type TypeBasicFilter `json:"type,omitempty"`
 	// Threshold - An integer value representing the threshold to apply on this filter.
 	Threshold *int32 `json:"threshold,omitempty"`
+	// Type - Possible values include: 'TypeFilter', 'TypeEngageSubset', 'TypeEngageOldUsers', 'TypeEngageNewUsers', 'TypeEngageActiveUsers', 'TypeEngageIdleUsers', 'TypeNativePushEnabled', 'TypePushQuota', 'TypeAppInfo'
+	Type TypeBasicFilter `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for EngageActiveUsersFilter.
 func (eauf EngageActiveUsersFilter) MarshalJSON() ([]byte, error) {
 	eauf.Type = TypeEngageActiveUsers
-	type Alias EngageActiveUsersFilter
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(eauf),
-	})
+	objectMap := make(map[string]interface{})
+	if eauf.Threshold != nil {
+		objectMap["threshold"] = eauf.Threshold
+	}
+	objectMap["type"] = eauf.Type
+	return json.Marshal(objectMap)
 }
 
 // AsEngageSubsetFilter is the BasicFilter implementation for EngageActiveUsersFilter.
@@ -2921,21 +3259,21 @@ func (eauf EngageActiveUsersFilter) AsBasicFilter() (BasicFilter, bool) {
 
 // EngageIdleUsersFilter send only to users who haven't used the app in the last {threshold} days.
 type EngageIdleUsersFilter struct {
-	// Type - Possible values include: 'TypeFilter', 'TypeEngageSubset', 'TypeEngageOldUsers', 'TypeEngageNewUsers', 'TypeEngageActiveUsers', 'TypeEngageIdleUsers', 'TypeNativePushEnabled', 'TypePushQuota', 'TypeAppInfo'
-	Type TypeBasicFilter `json:"type,omitempty"`
 	// Threshold - An integer value representing the threshold to apply on this filter.
 	Threshold *int32 `json:"threshold,omitempty"`
+	// Type - Possible values include: 'TypeFilter', 'TypeEngageSubset', 'TypeEngageOldUsers', 'TypeEngageNewUsers', 'TypeEngageActiveUsers', 'TypeEngageIdleUsers', 'TypeNativePushEnabled', 'TypePushQuota', 'TypeAppInfo'
+	Type TypeBasicFilter `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for EngageIdleUsersFilter.
 func (eiuf EngageIdleUsersFilter) MarshalJSON() ([]byte, error) {
 	eiuf.Type = TypeEngageIdleUsers
-	type Alias EngageIdleUsersFilter
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(eiuf),
-	})
+	objectMap := make(map[string]interface{})
+	if eiuf.Threshold != nil {
+		objectMap["threshold"] = eiuf.Threshold
+	}
+	objectMap["type"] = eiuf.Type
+	return json.Marshal(objectMap)
 }
 
 // AsEngageSubsetFilter is the BasicFilter implementation for EngageIdleUsersFilter.
@@ -2990,21 +3328,21 @@ func (eiuf EngageIdleUsersFilter) AsBasicFilter() (BasicFilter, bool) {
 
 // EngageNewUsersFilter send only to users whose first app use is less than {threshold} days old.
 type EngageNewUsersFilter struct {
-	// Type - Possible values include: 'TypeFilter', 'TypeEngageSubset', 'TypeEngageOldUsers', 'TypeEngageNewUsers', 'TypeEngageActiveUsers', 'TypeEngageIdleUsers', 'TypeNativePushEnabled', 'TypePushQuota', 'TypeAppInfo'
-	Type TypeBasicFilter `json:"type,omitempty"`
 	// Threshold - An integer value representing the threshold to apply on this filter.
 	Threshold *int32 `json:"threshold,omitempty"`
+	// Type - Possible values include: 'TypeFilter', 'TypeEngageSubset', 'TypeEngageOldUsers', 'TypeEngageNewUsers', 'TypeEngageActiveUsers', 'TypeEngageIdleUsers', 'TypeNativePushEnabled', 'TypePushQuota', 'TypeAppInfo'
+	Type TypeBasicFilter `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for EngageNewUsersFilter.
 func (enuf EngageNewUsersFilter) MarshalJSON() ([]byte, error) {
 	enuf.Type = TypeEngageNewUsers
-	type Alias EngageNewUsersFilter
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(enuf),
-	})
+	objectMap := make(map[string]interface{})
+	if enuf.Threshold != nil {
+		objectMap["threshold"] = enuf.Threshold
+	}
+	objectMap["type"] = enuf.Type
+	return json.Marshal(objectMap)
 }
 
 // AsEngageSubsetFilter is the BasicFilter implementation for EngageNewUsersFilter.
@@ -3059,21 +3397,21 @@ func (enuf EngageNewUsersFilter) AsBasicFilter() (BasicFilter, bool) {
 
 // EngageOldUsersFilter send only to users whose first app use is more than {threshold} days old.
 type EngageOldUsersFilter struct {
-	// Type - Possible values include: 'TypeFilter', 'TypeEngageSubset', 'TypeEngageOldUsers', 'TypeEngageNewUsers', 'TypeEngageActiveUsers', 'TypeEngageIdleUsers', 'TypeNativePushEnabled', 'TypePushQuota', 'TypeAppInfo'
-	Type TypeBasicFilter `json:"type,omitempty"`
 	// Threshold - An integer value representing the threshold to apply on this filter.
 	Threshold *int32 `json:"threshold,omitempty"`
+	// Type - Possible values include: 'TypeFilter', 'TypeEngageSubset', 'TypeEngageOldUsers', 'TypeEngageNewUsers', 'TypeEngageActiveUsers', 'TypeEngageIdleUsers', 'TypeNativePushEnabled', 'TypePushQuota', 'TypeAppInfo'
+	Type TypeBasicFilter `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for EngageOldUsersFilter.
 func (eouf EngageOldUsersFilter) MarshalJSON() ([]byte, error) {
 	eouf.Type = TypeEngageOldUsers
-	type Alias EngageOldUsersFilter
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(eouf),
-	})
+	objectMap := make(map[string]interface{})
+	if eouf.Threshold != nil {
+		objectMap["threshold"] = eouf.Threshold
+	}
+	objectMap["type"] = eouf.Type
+	return json.Marshal(objectMap)
 }
 
 // AsEngageSubsetFilter is the BasicFilter implementation for EngageOldUsersFilter.
@@ -3128,21 +3466,21 @@ func (eouf EngageOldUsersFilter) AsBasicFilter() (BasicFilter, bool) {
 
 // EngageSubsetFilter send only to a maximum of max users.
 type EngageSubsetFilter struct {
-	// Type - Possible values include: 'TypeFilter', 'TypeEngageSubset', 'TypeEngageOldUsers', 'TypeEngageNewUsers', 'TypeEngageActiveUsers', 'TypeEngageIdleUsers', 'TypeNativePushEnabled', 'TypePushQuota', 'TypeAppInfo'
-	Type TypeBasicFilter `json:"type,omitempty"`
 	// Max - An integer value representing the maximum users that should be pushed.
 	Max *int32 `json:"max,omitempty"`
+	// Type - Possible values include: 'TypeFilter', 'TypeEngageSubset', 'TypeEngageOldUsers', 'TypeEngageNewUsers', 'TypeEngageActiveUsers', 'TypeEngageIdleUsers', 'TypeNativePushEnabled', 'TypePushQuota', 'TypeAppInfo'
+	Type TypeBasicFilter `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for EngageSubsetFilter.
 func (esf EngageSubsetFilter) MarshalJSON() ([]byte, error) {
 	esf.Type = TypeEngageSubset
-	type Alias EngageSubsetFilter
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(esf),
-	})
+	objectMap := make(map[string]interface{})
+	if esf.Max != nil {
+		objectMap["max"] = esf.Max
+	}
+	objectMap["type"] = esf.Type
+	return json.Marshal(objectMap)
 }
 
 // AsEngageSubsetFilter is the BasicFilter implementation for EngageSubsetFilter.
@@ -3358,7 +3696,7 @@ type FeedbackByDateRangeParameter struct {
 	ExportFormat ExportFormat `json:"exportFormat,omitempty"`
 }
 
-// BasicFilter
+// BasicFilter ...
 type BasicFilter interface {
 	AsEngageSubsetFilter() (*EngageSubsetFilter, bool)
 	AsEngageOldUsersFilter() (*EngageOldUsersFilter, bool)
@@ -3371,7 +3709,7 @@ type BasicFilter interface {
 	AsFilter() (*Filter, bool)
 }
 
-// Filter
+// Filter ...
 type Filter struct {
 	// Type - Possible values include: 'TypeFilter', 'TypeEngageSubset', 'TypeEngageOldUsers', 'TypeEngageNewUsers', 'TypeEngageActiveUsers', 'TypeEngageIdleUsers', 'TypeNativePushEnabled', 'TypePushQuota', 'TypeAppInfo'
 	Type TypeBasicFilter `json:"type,omitempty"`
@@ -3445,12 +3783,9 @@ func unmarshalBasicFilterArray(body []byte) ([]BasicFilter, error) {
 // MarshalJSON is the custom marshaler for Filter.
 func (f Filter) MarshalJSON() ([]byte, error) {
 	f.Type = TypeFilter
-	type Alias Filter
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(f),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["type"] = f.Type
+	return json.Marshal(objectMap)
 }
 
 // AsEngageSubsetFilter is the BasicFilter implementation for Filter.
@@ -3505,21 +3840,21 @@ func (f Filter) AsBasicFilter() (BasicFilter, bool) {
 
 // FirmwareVersionCriterion used to target devices based on their firmware version.
 type FirmwareVersionCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Name - Firmware version.
 	Name *string `json:"name,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for FirmwareVersionCriterion.
 func (fvc FirmwareVersionCriterion) MarshalJSON() ([]byte, error) {
 	fvc.Type = TypeFirmwareVersion
-	type Alias FirmwareVersionCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(fvc),
-	})
+	objectMap := make(map[string]interface{})
+	if fvc.Name != nil {
+		objectMap["name"] = fvc.Name
+	}
+	objectMap["type"] = fvc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for FirmwareVersionCriterion.
@@ -3636,8 +3971,6 @@ func (fvc FirmwareVersionCriterion) AsBasicCriterion() (BasicCriterion, bool) {
 // longitude) and a radius form the boundary for the region. This criterion will be met when the user crosses the
 // boundaries of the region.
 type GeoFencingCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Lat - The latitude of the central point of the region.
 	Lat *float64 `json:"lat,omitempty"`
 	// Lon - The longitude of the central point of the region.
@@ -3646,17 +3979,28 @@ type GeoFencingCriterion struct {
 	Radius *int32 `json:"radius,omitempty"`
 	// Expiration - Number of minutes before device location is considered to be expired.
 	Expiration *int32 `json:"expiration,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for GeoFencingCriterion.
 func (gfc GeoFencingCriterion) MarshalJSON() ([]byte, error) {
 	gfc.Type = TypeGeoFencing
-	type Alias GeoFencingCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(gfc),
-	})
+	objectMap := make(map[string]interface{})
+	if gfc.Lat != nil {
+		objectMap["lat"] = gfc.Lat
+	}
+	if gfc.Lon != nil {
+		objectMap["lon"] = gfc.Lon
+	}
+	if gfc.Radius != nil {
+		objectMap["radius"] = gfc.Radius
+	}
+	if gfc.Expiration != nil {
+		objectMap["expiration"] = gfc.Expiration
+	}
+	objectMap["type"] = gfc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for GeoFencingCriterion.
@@ -3880,8 +4224,6 @@ func (page ImportTaskListResultPage) Values() []ImportTaskResult {
 // ImportTaskResult ...
 type ImportTaskResult struct {
 	autorest.Response `json:"-"`
-	// StorageURL - A shared Access Signature (SAS) Storage URI where the job results will be retrieved from.
-	StorageURL *string `json:"storageUrl,omitempty"`
 	// ID - Unique identifier of the import task.
 	ID *string `json:"id,omitempty"`
 	// State - The current state of the import task. Possible values include: 'JobStatesQueued', 'JobStatesStarted', 'JobStatesSucceeded', 'JobStatesFailed'
@@ -3894,29 +4236,35 @@ type ImportTaskResult struct {
 	DateCompleted *date.Time `json:"dateCompleted,omitempty"`
 	// ErrorDetails - Details of any errors encountered during the import, if any.
 	ErrorDetails *string `json:"errorDetails,omitempty"`
+	// StorageURL - A shared Access Signature (SAS) Storage URI where the job results will be retrieved from.
+	StorageURL *string `json:"storageUrl,omitempty"`
 }
 
 // IntegerTagCriterion target devices based on an integer tag value.
 type IntegerTagCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Name - The name of the custom tag.
 	Name *string `json:"name,omitempty"`
 	// Value - A custom integer value to match.
 	Value *int32 `json:"value,omitempty"`
 	// Op - comparison operator: `EQ` (equal to), `LT` (less than), `GT` (greater than), `LE` (less than or equal to) or `GE` (greater than or equal to). Possible values include: 'EQ', 'LT', 'GT', 'LE', 'GE'
 	Op AudienceOperators `json:"op,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for IntegerTagCriterion.
 func (itc IntegerTagCriterion) MarshalJSON() ([]byte, error) {
 	itc.Type = TypeIntegerTag
-	type Alias IntegerTagCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(itc),
-	})
+	objectMap := make(map[string]interface{})
+	if itc.Name != nil {
+		objectMap["name"] = itc.Name
+	}
+	if itc.Value != nil {
+		objectMap["value"] = itc.Value
+	}
+	objectMap["op"] = itc.Op
+	objectMap["type"] = itc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for IntegerTagCriterion.
@@ -4031,21 +4379,21 @@ func (itc IntegerTagCriterion) AsBasicCriterion() (BasicCriterion, bool) {
 
 // LanguageCriterion used to target devices based on the language of their device.
 type LanguageCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Name - Two character language code (ISO 639-1).
 	Name *string `json:"name,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for LanguageCriterion.
 func (lc LanguageCriterion) MarshalJSON() ([]byte, error) {
 	lc.Type = TypeLanguage
-	type Alias LanguageCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(lc),
-	})
+	objectMap := make(map[string]interface{})
+	if lc.Name != nil {
+		objectMap["name"] = lc.Name
+	}
+	objectMap["type"] = lc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for LanguageCriterion.
@@ -4160,25 +4508,31 @@ func (lc LanguageCriterion) AsBasicCriterion() (BasicCriterion, bool) {
 
 // LocationCriterion used to target devices based on their last know area.
 type LocationCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Country - Two character country code where the user is located (ISO 3166-1).
 	Country *string `json:"country,omitempty"`
 	// Region - An administrative region of the country, such as a state or province.
 	Region *string `json:"region,omitempty"`
 	// Locality - A locality within the administrative region, such as a town or city.
 	Locality *string `json:"locality,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for LocationCriterion.
 func (lc LocationCriterion) MarshalJSON() ([]byte, error) {
 	lc.Type = TypeLocation
-	type Alias LocationCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(lc),
-	})
+	objectMap := make(map[string]interface{})
+	if lc.Country != nil {
+		objectMap["country"] = lc.Country
+	}
+	if lc.Region != nil {
+		objectMap["region"] = lc.Region
+	}
+	if lc.Locality != nil {
+		objectMap["locality"] = lc.Locality
+	}
+	objectMap["type"] = lc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for LocationCriterion.
@@ -4300,12 +4654,9 @@ type NativePushEnabledFilter struct {
 // MarshalJSON is the custom marshaler for NativePushEnabledFilter.
 func (npef NativePushEnabledFilter) MarshalJSON() ([]byte, error) {
 	npef.Type = TypeNativePushEnabled
-	type Alias NativePushEnabledFilter
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(npef),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["type"] = npef.Type
+	return json.Marshal(objectMap)
 }
 
 // AsEngageSubsetFilter is the BasicFilter implementation for NativePushEnabledFilter.
@@ -4360,21 +4711,21 @@ func (npef NativePushEnabledFilter) AsBasicFilter() (BasicFilter, bool) {
 
 // NetworkTypeCriterion used to target devices based their network type.
 type NetworkTypeCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Name - The network type (Wifi, Mobile...).
 	Name *string `json:"name,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for NetworkTypeCriterion.
 func (ntc NetworkTypeCriterion) MarshalJSON() ([]byte, error) {
 	ntc.Type = TypeNetworkType
-	type Alias NetworkTypeCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ntc),
-	})
+	objectMap := make(map[string]interface{})
+	if ntc.Name != nil {
+		objectMap["name"] = ntc.Name
+	}
+	objectMap["type"] = ntc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for NetworkTypeCriterion.
@@ -4515,23 +4866,26 @@ type NotificationOptions struct {
 
 // PollAnswerFeedbackCriterion used to target devices who answered X to a given question.
 type PollAnswerFeedbackCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// ContentID - The unique identifier of the poll.
 	ContentID *int32 `json:"content-id,omitempty"`
 	// ChoiceID - The unique identifier of the choice.
 	ChoiceID *int32 `json:"choice-id,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for PollAnswerFeedbackCriterion.
 func (pafc PollAnswerFeedbackCriterion) MarshalJSON() ([]byte, error) {
 	pafc.Type = TypePollAnswerFeedback
-	type Alias PollAnswerFeedbackCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(pafc),
-	})
+	objectMap := make(map[string]interface{})
+	if pafc.ContentID != nil {
+		objectMap["content-id"] = pafc.ContentID
+	}
+	if pafc.ChoiceID != nil {
+		objectMap["choice-id"] = pafc.ChoiceID
+	}
+	objectMap["type"] = pafc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for PollAnswerFeedbackCriterion.
@@ -4646,23 +5000,24 @@ func (pafc PollAnswerFeedbackCriterion) AsBasicCriterion() (BasicCriterion, bool
 
 // PollFeedbackCriterion used to target devices who received a poll.
 type PollFeedbackCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// ContentID - The unique identifier of the poll.
 	ContentID *int32 `json:"content-id,omitempty"`
 	// Action - Action that was performed on the poll. Possible values include: 'Pushed', 'Replied', 'Actioned', 'Exited'
 	Action CampaignFeedbacks `json:"action,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for PollFeedbackCriterion.
 func (pfc PollFeedbackCriterion) MarshalJSON() ([]byte, error) {
 	pfc.Type = TypePollFeedback
-	type Alias PollFeedbackCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(pfc),
-	})
+	objectMap := make(map[string]interface{})
+	if pfc.ContentID != nil {
+		objectMap["content-id"] = pfc.ContentID
+	}
+	objectMap["action"] = pfc.Action
+	objectMap["type"] = pfc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for PollFeedbackCriterion.
@@ -4777,26 +5132,62 @@ func (pfc PollFeedbackCriterion) AsBasicCriterion() (BasicCriterion, bool) {
 
 // PollQuestion ...
 type PollQuestion struct {
-	// Title - Title of the question.
-	Title *string `json:"title,omitempty"`
 	// ID - Unique identifier of the question.
 	ID *int32 `json:"id,omitempty"`
 	// Localization - Poll questions can be localized using an optional JSON object. The JSON key is a two-character language code as specified by the ISO 639-1 standard. The corresponding value is an object containing the localizable property title.
-	Localization *map[string]*PollQuestionLocalization `json:"localization,omitempty"`
+	Localization map[string]*PollQuestionLocalization `json:"localization"`
 	// Choices - List of possible choices for this question.
 	Choices *[]PollQuestionChoice `json:"choices,omitempty"`
+	// Title - Title of the question.
+	Title *string `json:"title,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for PollQuestion.
+func (pq PollQuestion) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if pq.ID != nil {
+		objectMap["id"] = pq.ID
+	}
+	if pq.Localization != nil {
+		objectMap["localization"] = pq.Localization
+	}
+	if pq.Choices != nil {
+		objectMap["choices"] = pq.Choices
+	}
+	if pq.Title != nil {
+		objectMap["title"] = pq.Title
+	}
+	return json.Marshal(objectMap)
 }
 
 // PollQuestionChoice ...
 type PollQuestionChoice struct {
-	// Title - Title of the choice.
-	Title *string `json:"title,omitempty"`
 	// ID - Unique identifier of the choice.
 	ID *int32 `json:"id,omitempty"`
 	// Localization - Poll choices can be localized using an optional JSON object. The JSON key is a two-character language code as specified by the ISO 639-1 standard. The corresponding value is an object containing the localizable property title.
-	Localization *map[string]*PollQuestionChoiceLocalization `json:"localization,omitempty"`
+	Localization map[string]*PollQuestionChoiceLocalization `json:"localization"`
 	// IsDefault - A flag indicating if this choice is the default choice for the associated question. Only one choice in the array can have this value set to true.
 	IsDefault *bool `json:"isDefault,omitempty"`
+	// Title - Title of the choice.
+	Title *string `json:"title,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for PollQuestionChoice.
+func (pqc PollQuestionChoice) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if pqc.ID != nil {
+		objectMap["id"] = pqc.ID
+	}
+	if pqc.Localization != nil {
+		objectMap["localization"] = pqc.Localization
+	}
+	if pqc.IsDefault != nil {
+		objectMap["isDefault"] = pqc.IsDefault
+	}
+	if pqc.Title != nil {
+		objectMap["title"] = pqc.Title
+	}
+	return json.Marshal(objectMap)
 }
 
 // PollQuestionChoiceLocalization ...
@@ -4820,12 +5211,9 @@ type PushQuotaFilter struct {
 // MarshalJSON is the custom marshaler for PushQuotaFilter.
 func (pqf PushQuotaFilter) MarshalJSON() ([]byte, error) {
 	pqf.Type = TypePushQuota
-	type Alias PushQuotaFilter
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(pqf),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["type"] = pqf.Type
+	return json.Marshal(objectMap)
 }
 
 // AsEngageSubsetFilter is the BasicFilter implementation for PushQuotaFilter.
@@ -4889,26 +5277,47 @@ type Resource struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // ScreenSizeCriterion used to target devices based on the screen resolution of their device.
 type ScreenSizeCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Name - Screen size using the following format WIDTH**x**HEIGHT.
 	Name *string `json:"name,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for ScreenSizeCriterion.
 func (ssc ScreenSizeCriterion) MarshalJSON() ([]byte, error) {
 	ssc.Type = TypeScreenSize
-	type Alias ScreenSizeCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssc),
-	})
+	objectMap := make(map[string]interface{})
+	if ssc.Name != nil {
+		objectMap["name"] = ssc.Name
+	}
+	objectMap["type"] = ssc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for ScreenSizeCriterion.
@@ -5023,23 +5432,26 @@ func (ssc ScreenSizeCriterion) AsBasicCriterion() (BasicCriterion, bool) {
 
 // SegmentCriterion target devices based on an existing segment.
 type SegmentCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// ID - Segment identifier.
 	ID *int32 `json:"id,omitempty"`
 	// Exclude - If value is true, the criterion will target users that are NOT part of the segment.
 	Exclude *bool `json:"exclude,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for SegmentCriterion.
 func (sc SegmentCriterion) MarshalJSON() ([]byte, error) {
 	sc.Type = TypeSegment
-	type Alias SegmentCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sc),
-	})
+	objectMap := make(map[string]interface{})
+	if sc.ID != nil {
+		objectMap["id"] = sc.ID
+	}
+	if sc.Exclude != nil {
+		objectMap["exclude"] = sc.Exclude
+	}
+	objectMap["type"] = sc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for SegmentCriterion.
@@ -5154,23 +5566,26 @@ func (sc SegmentCriterion) AsBasicCriterion() (BasicCriterion, bool) {
 
 // StringTagCriterion target devices based on a string tag value.
 type StringTagCriterion struct {
-	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
-	Type Type `json:"type,omitempty"`
 	// Name - The name of the custom tag.
 	Name *string `json:"name,omitempty"`
 	// Value - A custom string to match for tag value (? and * characters can be used to perform wildcard matching).
 	Value *string `json:"value,omitempty"`
+	// Type - Possible values include: 'TypeCriterion', 'TypeCarrierName', 'TypeCarrierCountry', 'TypeFirmwareVersion', 'TypeDeviceManufacturer', 'TypeDeviceModel', 'TypeApplicationVersion', 'TypeNetworkType', 'TypeLanguage', 'TypeScreenSize', 'TypeLocation', 'TypeGeoFencing', 'TypeAnnouncementFeedback', 'TypePollFeedback', 'TypePollAnswerFeedback', 'TypeDatapushFeedback', 'TypeSegment', 'TypeStringTag', 'TypeDateTag', 'TypeIntegerTag', 'TypeBooleanTag'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StringTagCriterion.
 func (stc StringTagCriterion) MarshalJSON() ([]byte, error) {
 	stc.Type = TypeStringTag
-	type Alias StringTagCriterion
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(stc),
-	})
+	objectMap := make(map[string]interface{})
+	if stc.Name != nil {
+		objectMap["name"] = stc.Name
+	}
+	if stc.Value != nil {
+		objectMap["value"] = stc.Value
+	}
+	objectMap["type"] = stc.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCarrierNameCriterion is the BasicCriterion implementation for StringTagCriterion.

@@ -42,8 +42,8 @@ func NewOpenIDConnectProvidersClientWithBaseURI(baseURI string, subscriptionID s
 
 // CreateOrUpdate creates or updates the OpenID Connect Provider.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. opid is
-// identifier of the OpenID Connect Provider. parameters is create parameters.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. opid
+// is identifier of the OpenID Connect Provider. parameters is create parameters.
 func (client OpenIDConnectProvidersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, opid string, parameters OpenidConnectProviderCreateContract) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -58,7 +58,7 @@ func (client OpenIDConnectProvidersClient) CreateOrUpdate(ctx context.Context, r
 				Chain: []validation.Constraint{{Target: "parameters.Name", Name: validation.MaxLength, Rule: 50, Chain: nil}}},
 				{Target: "parameters.MetadataEndpoint", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.ClientID", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.OpenIDConnectProvidersClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.OpenIDConnectProvidersClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, opid, parameters)
@@ -127,9 +127,9 @@ func (client OpenIDConnectProvidersClient) CreateOrUpdateResponder(resp *http.Re
 
 // Delete deletes specific OpenID Connect Provider of the API Management service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. opid is
-// identifier of the OpenID Connect Provider. ifMatch is the entity state (Etag) version of the OpenID Connect Provider
-// to delete. A value of "*" can be used for If-Match to unconditionally apply the operation.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. opid
+// is identifier of the OpenID Connect Provider. ifMatch is the entity state (Etag) version of the OpenID Connect
+// Provider to delete. A value of "*" can be used for If-Match to unconditionally apply the operation.
 func (client OpenIDConnectProvidersClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, opid string, ifMatch string) (result ErrorBodyContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -139,7 +139,7 @@ func (client OpenIDConnectProvidersClient) Delete(ctx context.Context, resourceG
 		{TargetValue: opid,
 			Constraints: []validation.Constraint{{Target: "opid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "opid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.OpenIDConnectProvidersClient", "Delete")
+		return result, validation.NewError("apimanagement.OpenIDConnectProvidersClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, opid, ifMatch)
@@ -208,8 +208,8 @@ func (client OpenIDConnectProvidersClient) DeleteResponder(resp *http.Response) 
 
 // Get gets specific OpenID Connect Provider.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. opid is
-// identifier of the OpenID Connect Provider.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. opid
+// is identifier of the OpenID Connect Provider.
 func (client OpenIDConnectProvidersClient) Get(ctx context.Context, resourceGroupName string, serviceName string, opid string) (result OpenidConnectProviderContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -219,7 +219,7 @@ func (client OpenIDConnectProvidersClient) Get(ctx context.Context, resourceGrou
 		{TargetValue: opid,
 			Constraints: []validation.Constraint{{Target: "opid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "opid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.OpenIDConnectProvidersClient", "Get")
+		return result, validation.NewError("apimanagement.OpenIDConnectProvidersClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, opid)
@@ -287,12 +287,12 @@ func (client OpenIDConnectProvidersClient) GetResponder(resp *http.Response) (re
 
 // ListByService lists all OpenID Connect Providers.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. filter
-// is | Field | Supported operators    | Supported functions                         |
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// filter is | Field | Supported operators    | Supported functions                         |
 // |-------|------------------------|---------------------------------------------|
 // | id    | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | name  | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith | top is number of records to return.
-// skip is number of records to skip.
+// | name  | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith | top is number of records to
+// return. skip is number of records to skip.
 func (client OpenIDConnectProvidersClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result OpenIDConnectProviderCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -305,7 +305,7 @@ func (client OpenIDConnectProvidersClient) ListByService(ctx context.Context, re
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.OpenIDConnectProvidersClient", "ListByService")
+		return result, validation.NewError("apimanagement.OpenIDConnectProvidersClient", "ListByService", err.Error())
 	}
 
 	result.fn = client.listByServiceNextResults
@@ -409,10 +409,10 @@ func (client OpenIDConnectProvidersClient) ListByServiceComplete(ctx context.Con
 
 // Update updates the specific OpenID Connect Provider.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. opid is
-// identifier of the OpenID Connect Provider. parameters is update parameters. ifMatch is the entity state (Etag)
-// version of the OpenID Connect Provider to update. A value of "*" can be used for If-Match to unconditionally apply
-// the operation.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. opid
+// is identifier of the OpenID Connect Provider. parameters is update parameters. ifMatch is the entity state
+// (Etag) version of the OpenID Connect Provider to update. A value of "*" can be used for If-Match to
+// unconditionally apply the operation.
 func (client OpenIDConnectProvidersClient) Update(ctx context.Context, resourceGroupName string, serviceName string, opid string, parameters OpenidConnectProviderUpdateContract, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -422,7 +422,7 @@ func (client OpenIDConnectProvidersClient) Update(ctx context.Context, resourceG
 		{TargetValue: opid,
 			Constraints: []validation.Constraint{{Target: "opid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "opid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.OpenIDConnectProvidersClient", "Update")
+		return result, validation.NewError("apimanagement.OpenIDConnectProvidersClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serviceName, opid, parameters, ifMatch)

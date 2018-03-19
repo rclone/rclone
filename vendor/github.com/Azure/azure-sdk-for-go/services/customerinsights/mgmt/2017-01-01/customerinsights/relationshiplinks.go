@@ -45,7 +45,8 @@ func NewRelationshipLinksClientWithBaseURI(baseURI string, subscriptionID string
 // CreateOrUpdate creates a relationship link or updates an existing relationship link within a hub.
 //
 // resourceGroupName is the name of the resource group. hubName is the name of the hub. relationshipLinkName is the
-// name of the relationship link. parameters is parameters supplied to the CreateOrUpdate relationship link operation.
+// name of the relationship link. parameters is parameters supplied to the CreateOrUpdate relationship link
+// operation.
 func (client RelationshipLinksClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, relationshipLinkName string, parameters RelationshipLinkResourceFormat) (result RelationshipLinksCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: relationshipLinkName,
@@ -59,7 +60,7 @@ func (client RelationshipLinksClient) CreateOrUpdate(ctx context.Context, resour
 					{Target: "parameters.RelationshipLinkDefinition.RelatedProfilePropertyReferences", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "parameters.RelationshipLinkDefinition.RelationshipName", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "customerinsights.RelationshipLinksClient", "CreateOrUpdate")
+		return result, validation.NewError("customerinsights.RelationshipLinksClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, hubName, relationshipLinkName, parameters)

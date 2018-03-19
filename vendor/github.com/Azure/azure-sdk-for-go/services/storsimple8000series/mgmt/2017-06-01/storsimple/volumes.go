@@ -55,7 +55,7 @@ func (client VolumesClient) CreateOrUpdate(ctx context.Context, deviceName strin
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.VolumesClient", "CreateOrUpdate")
+		return result, validation.NewError("storsimple.VolumesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, deviceName, volumeContainerName, volumeName, parameters, resourceGroupName, managerName)
@@ -136,7 +136,7 @@ func (client VolumesClient) Delete(ctx context.Context, deviceName string, volum
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.VolumesClient", "Delete")
+		return result, validation.NewError("storsimple.VolumesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, deviceName, volumeContainerName, volumeName, resourceGroupName, managerName)
@@ -214,7 +214,7 @@ func (client VolumesClient) Get(ctx context.Context, deviceName string, volumeCo
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.VolumesClient", "Get")
+		return result, validation.NewError("storsimple.VolumesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, deviceName, volumeContainerName, volumeName, resourceGroupName, managerName)
@@ -290,7 +290,7 @@ func (client VolumesClient) ListByDevice(ctx context.Context, deviceName string,
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.VolumesClient", "ListByDevice")
+		return result, validation.NewError("storsimple.VolumesClient", "ListByDevice", err.Error())
 	}
 
 	req, err := client.ListByDevicePreparer(ctx, deviceName, resourceGroupName, managerName)
@@ -358,14 +358,14 @@ func (client VolumesClient) ListByDeviceResponder(resp *http.Response) (result V
 
 // ListByVolumeContainer retrieves all the volumes in a volume container.
 //
-// deviceName is the device name volumeContainerName is the volume container name. resourceGroupName is the resource
-// group name managerName is the manager name
+// deviceName is the device name volumeContainerName is the volume container name. resourceGroupName is the
+// resource group name managerName is the manager name
 func (client VolumesClient) ListByVolumeContainer(ctx context.Context, deviceName string, volumeContainerName string, resourceGroupName string, managerName string) (result VolumeList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.VolumesClient", "ListByVolumeContainer")
+		return result, validation.NewError("storsimple.VolumesClient", "ListByVolumeContainer", err.Error())
 	}
 
 	req, err := client.ListByVolumeContainerPreparer(ctx, deviceName, volumeContainerName, resourceGroupName, managerName)
@@ -441,7 +441,7 @@ func (client VolumesClient) ListMetricDefinition(ctx context.Context, deviceName
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.VolumesClient", "ListMetricDefinition")
+		return result, validation.NewError("storsimple.VolumesClient", "ListMetricDefinition", err.Error())
 	}
 
 	req, err := client.ListMetricDefinitionPreparer(ctx, deviceName, volumeContainerName, volumeName, resourceGroupName, managerName)
@@ -518,7 +518,7 @@ func (client VolumesClient) ListMetrics(ctx context.Context, deviceName string, 
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.VolumesClient", "ListMetrics")
+		return result, validation.NewError("storsimple.VolumesClient", "ListMetrics", err.Error())
 	}
 
 	req, err := client.ListMetricsPreparer(ctx, deviceName, volumeContainerName, volumeName, resourceGroupName, managerName, filter)

@@ -42,9 +42,9 @@ func NewPowerShellClientWithBaseURI(baseURI string, subscriptionID string) Power
 
 // CancelCommand cancels a PowerShell command.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// nodeName is the node name (256 characters maximum). session is the sessionId from the user. pssession is the
-// PowerShell sessionId from the user.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. nodeName is the node name (256 characters maximum). session is the sessionId from the user.
+// pssession is the PowerShell sessionId from the user.
 func (client PowerShellClient) CancelCommand(ctx context.Context, resourceGroupName string, nodeName string, session string, pssession string) (result PowerShellCancelCommandFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -54,7 +54,7 @@ func (client PowerShellClient) CancelCommand(ctx context.Context, resourceGroupN
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.PowerShellClient", "CancelCommand")
+		return result, validation.NewError("servermanagement.PowerShellClient", "CancelCommand", err.Error())
 	}
 
 	req, err := client.CancelCommandPreparer(ctx, resourceGroupName, nodeName, session, pssession)
@@ -125,9 +125,9 @@ func (client PowerShellClient) CancelCommandResponder(resp *http.Response) (resu
 
 // CreateSession creates a PowerShell session.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// nodeName is the node name (256 characters maximum). session is the sessionId from the user. pssession is the
-// PowerShell sessionId from the user.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. nodeName is the node name (256 characters maximum). session is the sessionId from the user.
+// pssession is the PowerShell sessionId from the user.
 func (client PowerShellClient) CreateSession(ctx context.Context, resourceGroupName string, nodeName string, session string, pssession string) (result PowerShellCreateSessionFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -137,7 +137,7 @@ func (client PowerShellClient) CreateSession(ctx context.Context, resourceGroupN
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.PowerShellClient", "CreateSession")
+		return result, validation.NewError("servermanagement.PowerShellClient", "CreateSession", err.Error())
 	}
 
 	req, err := client.CreateSessionPreparer(ctx, resourceGroupName, nodeName, session, pssession)
@@ -208,9 +208,9 @@ func (client PowerShellClient) CreateSessionResponder(resp *http.Response) (resu
 
 // GetCommandStatus gets the status of a command.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// nodeName is the node name (256 characters maximum). session is the sessionId from the user. pssession is the
-// PowerShell sessionId from the user. expand is gets current output from an ongoing call.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. nodeName is the node name (256 characters maximum). session is the sessionId from the user.
+// pssession is the PowerShell sessionId from the user. expand is gets current output from an ongoing call.
 func (client PowerShellClient) GetCommandStatus(ctx context.Context, resourceGroupName string, nodeName string, session string, pssession string, expand PowerShellExpandOption) (result PowerShellCommandStatus, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -220,7 +220,7 @@ func (client PowerShellClient) GetCommandStatus(ctx context.Context, resourceGro
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.PowerShellClient", "GetCommandStatus")
+		return result, validation.NewError("servermanagement.PowerShellClient", "GetCommandStatus", err.Error())
 	}
 
 	req, err := client.GetCommandStatusPreparer(ctx, resourceGroupName, nodeName, session, pssession, expand)
@@ -292,10 +292,10 @@ func (client PowerShellClient) GetCommandStatusResponder(resp *http.Response) (r
 
 // InvokeCommand creates a PowerShell script and invokes it.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// nodeName is the node name (256 characters maximum). session is the sessionId from the user. pssession is the
-// PowerShell sessionId from the user. powerShellCommandParameters is parameters supplied to the Invoke PowerShell
-// Command operation.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. nodeName is the node name (256 characters maximum). session is the sessionId from the user.
+// pssession is the PowerShell sessionId from the user. powerShellCommandParameters is parameters supplied to the
+// Invoke PowerShell Command operation.
 func (client PowerShellClient) InvokeCommand(ctx context.Context, resourceGroupName string, nodeName string, session string, pssession string, powerShellCommandParameters PowerShellCommandParameters) (result PowerShellInvokeCommandFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -305,7 +305,7 @@ func (client PowerShellClient) InvokeCommand(ctx context.Context, resourceGroupN
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.PowerShellClient", "InvokeCommand")
+		return result, validation.NewError("servermanagement.PowerShellClient", "InvokeCommand", err.Error())
 	}
 
 	req, err := client.InvokeCommandPreparer(ctx, resourceGroupName, nodeName, session, pssession, powerShellCommandParameters)
@@ -378,8 +378,8 @@ func (client PowerShellClient) InvokeCommandResponder(resp *http.Response) (resu
 
 // ListSession gets a list of the active sessions.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// nodeName is the node name (256 characters maximum). session is the sessionId from the user.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. nodeName is the node name (256 characters maximum). session is the sessionId from the user.
 func (client PowerShellClient) ListSession(ctx context.Context, resourceGroupName string, nodeName string, session string) (result PowerShellSessionResources, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -389,7 +389,7 @@ func (client PowerShellClient) ListSession(ctx context.Context, resourceGroupNam
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.PowerShellClient", "ListSession")
+		return result, validation.NewError("servermanagement.PowerShellClient", "ListSession", err.Error())
 	}
 
 	req, err := client.ListSessionPreparer(ctx, resourceGroupName, nodeName, session)
@@ -457,10 +457,10 @@ func (client PowerShellClient) ListSessionResponder(resp *http.Response) (result
 
 // TabCompletion gets tab completion values for a command.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// nodeName is the node name (256 characters maximum). session is the sessionId from the user. pssession is the
-// PowerShell sessionId from the user. powerShellTabCompletionParamters is parameters supplied to the tab completion
-// call.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. nodeName is the node name (256 characters maximum). session is the sessionId from the user.
+// pssession is the PowerShell sessionId from the user. powerShellTabCompletionParamters is parameters supplied to
+// the tab completion call.
 func (client PowerShellClient) TabCompletion(ctx context.Context, resourceGroupName string, nodeName string, session string, pssession string, powerShellTabCompletionParamters PowerShellTabCompletionParameters) (result PowerShellTabCompletionResults, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -470,7 +470,7 @@ func (client PowerShellClient) TabCompletion(ctx context.Context, resourceGroupN
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.PowerShellClient", "TabCompletion")
+		return result, validation.NewError("servermanagement.PowerShellClient", "TabCompletion", err.Error())
 	}
 
 	req, err := client.TabCompletionPreparer(ctx, resourceGroupName, nodeName, session, pssession, powerShellTabCompletionParamters)
@@ -541,9 +541,9 @@ func (client PowerShellClient) TabCompletionResponder(resp *http.Response) (resu
 
 // UpdateCommand updates a running PowerShell command with more data.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// nodeName is the node name (256 characters maximum). session is the sessionId from the user. pssession is the
-// PowerShell sessionId from the user.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. nodeName is the node name (256 characters maximum). session is the sessionId from the user.
+// pssession is the PowerShell sessionId from the user.
 func (client PowerShellClient) UpdateCommand(ctx context.Context, resourceGroupName string, nodeName string, session string, pssession string) (result PowerShellUpdateCommandFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -553,7 +553,7 @@ func (client PowerShellClient) UpdateCommand(ctx context.Context, resourceGroupN
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.PowerShellClient", "UpdateCommand")
+		return result, validation.NewError("servermanagement.PowerShellClient", "UpdateCommand", err.Error())
 	}
 
 	req, err := client.UpdateCommandPreparer(ctx, resourceGroupName, nodeName, session, pssession)

@@ -54,18 +54,18 @@ const (
 	ChildType1Subscription ChildType1 = "Subscription"
 )
 
-// ManagementGroupType enumerates the values for management group type.
-type ManagementGroupType string
+// GroupType enumerates the values for group type.
+type GroupType string
 
 const (
-	// ManagementGroupTypeAccount ...
-	ManagementGroupTypeAccount ManagementGroupType = "Account"
-	// ManagementGroupTypeDepartment ...
-	ManagementGroupTypeDepartment ManagementGroupType = "Department"
-	// ManagementGroupTypeEnrollment ...
-	ManagementGroupTypeEnrollment ManagementGroupType = "Enrollment"
-	// ManagementGroupTypeSubscription ...
-	ManagementGroupTypeSubscription ManagementGroupType = "Subscription"
+	// GroupTypeAccount ...
+	GroupTypeAccount GroupType = "Account"
+	// GroupTypeDepartment ...
+	GroupTypeDepartment GroupType = "Department"
+	// GroupTypeEnrollment ...
+	GroupTypeEnrollment GroupType = "Enrollment"
+	// GroupTypeSubscription ...
+	GroupTypeSubscription GroupType = "Subscription"
 )
 
 // ErrorDetails the details of the error.
@@ -101,46 +101,45 @@ func (g *Group) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				g.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				g.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name uuid.UUID
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				g.Name = &name
+			}
+		case "properties":
+			if v != nil {
+				var groupProperties GroupProperties
+				err = json.Unmarshal(*v, &groupProperties)
+				if err != nil {
+					return err
+				}
+				g.GroupProperties = &groupProperties
+			}
 		}
-		g.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		g.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name uuid.UUID
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		g.Name = &name
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties GroupProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		g.GroupProperties = &properties
 	}
 
 	return nil
@@ -167,8 +166,8 @@ type GroupDetailsProperties struct {
 	// UpdatedBy - The identity of the principal or process that updated the object.
 	UpdatedBy *string          `json:"updatedBy,omitempty"`
 	Parent    *ParentGroupInfo `json:"parent,omitempty"`
-	// ManagementGroupType - Possible values include: 'ManagementGroupTypeEnrollment', 'ManagementGroupTypeDepartment', 'ManagementGroupTypeAccount', 'ManagementGroupTypeSubscription'
-	ManagementGroupType ManagementGroupType `json:"managementGroupType,omitempty"`
+	// ManagementGroupType - Possible values include: 'GroupTypeEnrollment', 'GroupTypeDepartment', 'GroupTypeAccount', 'GroupTypeSubscription'
+	ManagementGroupType GroupType `json:"managementGroupType,omitempty"`
 }
 
 // GroupInfo the management group.
@@ -189,46 +188,45 @@ func (gi *GroupInfo) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				gi.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				gi.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name uuid.UUID
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				gi.Name = &name
+			}
+		case "properties":
+			if v != nil {
+				var groupInfoProperties GroupInfoProperties
+				err = json.Unmarshal(*v, &groupInfoProperties)
+				if err != nil {
+					return err
+				}
+				gi.GroupInfoProperties = &groupInfoProperties
+			}
 		}
-		gi.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		gi.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name uuid.UUID
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		gi.Name = &name
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties GroupInfoProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		gi.GroupInfoProperties = &properties
 	}
 
 	return nil
@@ -378,7 +376,7 @@ type GroupPropertiesWithHierarchy struct {
 // GroupRecursiveChildInfo the unique identifier (ID) of a management group.
 type GroupRecursiveChildInfo struct {
 	// ChildType - Possible values include: 'ChildType1Enrollment', 'ChildType1Department', 'ChildType1Account', 'ChildType1Subscription'
-	ChildType ChildType `json:"childType,omitempty"`
+	ChildType ChildType1 `json:"childType,omitempty"`
 	// ChildID - The ID of the child resource (management group or subscription). E.g. /providers/Microsoft.Management/managementGroups/40000000-0000-0000-0000-000000000000
 	ChildID *string `json:"childId,omitempty"`
 	// DisplayName - The friendly name of the child resource.
@@ -407,46 +405,45 @@ func (gwc *GroupWithChildren) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				gwc.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				gwc.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name uuid.UUID
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				gwc.Name = &name
+			}
+		case "properties":
+			if v != nil {
+				var groupPropertiesWithChildren GroupPropertiesWithChildren
+				err = json.Unmarshal(*v, &groupPropertiesWithChildren)
+				if err != nil {
+					return err
+				}
+				gwc.GroupPropertiesWithChildren = &groupPropertiesWithChildren
+			}
 		}
-		gwc.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		gwc.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name uuid.UUID
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		gwc.Name = &name
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties GroupPropertiesWithChildren
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		gwc.GroupPropertiesWithChildren = &properties
 	}
 
 	return nil
@@ -471,46 +468,45 @@ func (gwh *GroupWithHierarchy) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				gwh.ID = &ID
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				gwh.Type = &typeVar
+			}
+		case "name":
+			if v != nil {
+				var name uuid.UUID
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				gwh.Name = &name
+			}
+		case "properties":
+			if v != nil {
+				var groupPropertiesWithHierarchy GroupPropertiesWithHierarchy
+				err = json.Unmarshal(*v, &groupPropertiesWithHierarchy)
+				if err != nil {
+					return err
+				}
+				gwh.GroupPropertiesWithHierarchy = &groupPropertiesWithHierarchy
+			}
 		}
-		gwh.ID = &ID
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		gwh.Type = &typeVar
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name uuid.UUID
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		gwh.Name = &name
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties GroupPropertiesWithHierarchy
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		gwh.GroupPropertiesWithHierarchy = &properties
 	}
 
 	return nil
@@ -534,8 +530,8 @@ type OperationDisplay struct {
 	Operation *string `json:"operation,omitempty"`
 }
 
-// OperationListResult result listing  operations. It contains a list of operations and a URL link to get the next set
-// of results.
+// OperationListResult result listing  operations. It contains a list of operations and a URL link to get the next
+// set of results.
 type OperationListResult struct {
 	autorest.Response `json:"-"`
 	// Value - List of management operations supported by the Microsoft.Management resource provider.

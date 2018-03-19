@@ -1842,7 +1842,6 @@ func (c *CognitoIdentity) UpdateIdentityPoolWithContext(ctx aws.Context, input *
 }
 
 // Input to the CreateIdentityPool action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/CreateIdentityPoolInput
 type CreateIdentityPoolInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1964,7 +1963,6 @@ func (s *CreateIdentityPoolInput) SetSupportedLoginProviders(v map[string]*strin
 }
 
 // Credentials for the provided identity ID.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/Credentials
 type Credentials struct {
 	_ struct{} `type:"structure"`
 
@@ -2016,7 +2014,6 @@ func (s *Credentials) SetSessionToken(v string) *Credentials {
 }
 
 // Input to the DeleteIdentities action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/DeleteIdentitiesInput
 type DeleteIdentitiesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2059,7 +2056,6 @@ func (s *DeleteIdentitiesInput) SetIdentityIdsToDelete(v []*string) *DeleteIdent
 }
 
 // Returned in response to a successful DeleteIdentities operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/DeleteIdentitiesResponse
 type DeleteIdentitiesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2085,7 +2081,6 @@ func (s *DeleteIdentitiesOutput) SetUnprocessedIdentityIds(v []*UnprocessedIdent
 }
 
 // Input to the DeleteIdentityPool action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/DeleteIdentityPoolInput
 type DeleteIdentityPoolInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2127,7 +2122,6 @@ func (s *DeleteIdentityPoolInput) SetIdentityPoolId(v string) *DeleteIdentityPoo
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/DeleteIdentityPoolOutput
 type DeleteIdentityPoolOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2143,7 +2137,6 @@ func (s DeleteIdentityPoolOutput) GoString() string {
 }
 
 // Input to the DescribeIdentity action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/DescribeIdentityInput
 type DescribeIdentityInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2186,7 +2179,6 @@ func (s *DescribeIdentityInput) SetIdentityId(v string) *DescribeIdentityInput {
 }
 
 // Input to the DescribeIdentityPool action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/DescribeIdentityPoolInput
 type DescribeIdentityPoolInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2229,7 +2221,6 @@ func (s *DescribeIdentityPoolInput) SetIdentityPoolId(v string) *DescribeIdentit
 }
 
 // Input to the GetCredentialsForIdentity action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/GetCredentialsForIdentityInput
 type GetCredentialsForIdentityInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2296,7 +2287,6 @@ func (s *GetCredentialsForIdentityInput) SetLogins(v map[string]*string) *GetCre
 }
 
 // Returned in response to a successful GetCredentialsForIdentity operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/GetCredentialsForIdentityResponse
 type GetCredentialsForIdentityOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2330,7 +2320,6 @@ func (s *GetCredentialsForIdentityOutput) SetIdentityId(v string) *GetCredential
 }
 
 // Input to the GetId action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/GetIdInput
 type GetIdInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2407,7 +2396,6 @@ func (s *GetIdInput) SetLogins(v map[string]*string) *GetIdInput {
 }
 
 // Returned in response to a GetId request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/GetIdResponse
 type GetIdOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2432,7 +2420,6 @@ func (s *GetIdOutput) SetIdentityId(v string) *GetIdOutput {
 }
 
 // Input to the GetIdentityPoolRoles action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/GetIdentityPoolRolesInput
 type GetIdentityPoolRolesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2475,7 +2462,6 @@ func (s *GetIdentityPoolRolesInput) SetIdentityPoolId(v string) *GetIdentityPool
 }
 
 // Returned in response to a successful GetIdentityPoolRoles operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/GetIdentityPoolRolesResponse
 type GetIdentityPoolRolesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2521,7 +2507,6 @@ func (s *GetIdentityPoolRolesOutput) SetRoles(v map[string]*string) *GetIdentity
 }
 
 // Input to the GetOpenIdTokenForDeveloperIdentity action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/GetOpenIdTokenForDeveloperIdentityInput
 type GetOpenIdTokenForDeveloperIdentityInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2617,7 +2602,6 @@ func (s *GetOpenIdTokenForDeveloperIdentityInput) SetTokenDuration(v int64) *Get
 }
 
 // Returned in response to a successful GetOpenIdTokenForDeveloperIdentity request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/GetOpenIdTokenForDeveloperIdentityResponse
 type GetOpenIdTokenForDeveloperIdentityOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2651,7 +2635,6 @@ func (s *GetOpenIdTokenForDeveloperIdentityOutput) SetToken(v string) *GetOpenId
 }
 
 // Input to the GetOpenIdToken action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/GetOpenIdTokenInput
 type GetOpenIdTokenInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2707,7 +2690,6 @@ func (s *GetOpenIdTokenInput) SetLogins(v map[string]*string) *GetOpenIdTokenInp
 }
 
 // Returned in response to a successful GetOpenIdToken request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/GetOpenIdTokenResponse
 type GetOpenIdTokenOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2742,7 +2724,6 @@ func (s *GetOpenIdTokenOutput) SetToken(v string) *GetOpenIdTokenOutput {
 }
 
 // A description of the identity.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/IdentityDescription
 type IdentityDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -2794,7 +2775,6 @@ func (s *IdentityDescription) SetLogins(v []*string) *IdentityDescription {
 }
 
 // An object representing an Amazon Cognito identity pool.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/IdentityPool
 type IdentityPool struct {
 	_ struct{} `type:"structure"`
 
@@ -2927,7 +2907,6 @@ func (s *IdentityPool) SetSupportedLoginProviders(v map[string]*string) *Identit
 }
 
 // A description of the identity pool.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/IdentityPoolShortDescription
 type IdentityPoolShortDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -2961,7 +2940,6 @@ func (s *IdentityPoolShortDescription) SetIdentityPoolName(v string) *IdentityPo
 }
 
 // Input to the ListIdentities action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/ListIdentitiesInput
 type ListIdentitiesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3044,7 +3022,6 @@ func (s *ListIdentitiesInput) SetNextToken(v string) *ListIdentitiesInput {
 }
 
 // The response to a ListIdentities request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/ListIdentitiesResponse
 type ListIdentitiesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3087,7 +3064,6 @@ func (s *ListIdentitiesOutput) SetNextToken(v string) *ListIdentitiesOutput {
 }
 
 // Input to the ListIdentityPools action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/ListIdentityPoolsInput
 type ListIdentityPoolsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3142,7 +3118,6 @@ func (s *ListIdentityPoolsInput) SetNextToken(v string) *ListIdentityPoolsInput 
 }
 
 // The result of a successful ListIdentityPools action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/ListIdentityPoolsResponse
 type ListIdentityPoolsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3176,7 +3151,6 @@ func (s *ListIdentityPoolsOutput) SetNextToken(v string) *ListIdentityPoolsOutpu
 }
 
 // Input to the LookupDeveloperIdentityInput action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/LookupDeveloperIdentityInput
 type LookupDeveloperIdentityInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3274,7 +3248,6 @@ func (s *LookupDeveloperIdentityInput) SetNextToken(v string) *LookupDeveloperId
 }
 
 // Returned in response to a successful LookupDeveloperIdentity action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/LookupDeveloperIdentityResponse
 type LookupDeveloperIdentityOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3325,7 +3298,6 @@ func (s *LookupDeveloperIdentityOutput) SetNextToken(v string) *LookupDeveloperI
 
 // A rule that maps a claim name, a claim value, and a match type to a role
 // ARN.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/MappingRule
 type MappingRule struct {
 	_ struct{} `type:"structure"`
 
@@ -3418,7 +3390,6 @@ func (s *MappingRule) SetValue(v string) *MappingRule {
 }
 
 // Input to the MergeDeveloperIdentities action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/MergeDeveloperIdentitiesInput
 type MergeDeveloperIdentitiesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3516,7 +3487,6 @@ func (s *MergeDeveloperIdentitiesInput) SetSourceUserIdentifier(v string) *Merge
 }
 
 // Returned in response to a successful MergeDeveloperIdentities action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/MergeDeveloperIdentitiesResponse
 type MergeDeveloperIdentitiesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3542,7 +3512,6 @@ func (s *MergeDeveloperIdentitiesOutput) SetIdentityId(v string) *MergeDeveloper
 
 // A provider representing an Amazon Cognito Identity User Pool and its client
 // ID.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/CognitoIdentityProvider
 type Provider struct {
 	_ struct{} `type:"structure"`
 
@@ -3603,7 +3572,6 @@ func (s *Provider) SetServerSideTokenCheck(v bool) *Provider {
 }
 
 // A role mapping.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/RoleMapping
 type RoleMapping struct {
 	_ struct{} `type:"structure"`
 
@@ -3674,7 +3642,6 @@ func (s *RoleMapping) SetType(v string) *RoleMapping {
 }
 
 // A container for rules.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/RulesConfigurationType
 type RulesConfigurationType struct {
 	_ struct{} `type:"structure"`
 
@@ -3729,7 +3696,6 @@ func (s *RulesConfigurationType) SetRules(v []*MappingRule) *RulesConfigurationT
 }
 
 // Input to the SetIdentityPoolRoles action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/SetIdentityPoolRolesInput
 type SetIdentityPoolRolesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3810,7 +3776,6 @@ func (s *SetIdentityPoolRolesInput) SetRoles(v map[string]*string) *SetIdentityP
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/SetIdentityPoolRolesOutput
 type SetIdentityPoolRolesOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3826,7 +3791,6 @@ func (s SetIdentityPoolRolesOutput) GoString() string {
 }
 
 // Input to the UnlinkDeveloperIdentity action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/UnlinkDeveloperIdentityInput
 type UnlinkDeveloperIdentityInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3919,7 +3883,6 @@ func (s *UnlinkDeveloperIdentityInput) SetIdentityPoolId(v string) *UnlinkDevelo
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/UnlinkDeveloperIdentityOutput
 type UnlinkDeveloperIdentityOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3935,7 +3898,6 @@ func (s UnlinkDeveloperIdentityOutput) GoString() string {
 }
 
 // Input to the UnlinkIdentity action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/UnlinkIdentityInput
 type UnlinkIdentityInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4005,7 +3967,6 @@ func (s *UnlinkIdentityInput) SetLoginsToRemove(v []*string) *UnlinkIdentityInpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/UnlinkIdentityOutput
 type UnlinkIdentityOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4022,7 +3983,6 @@ func (s UnlinkIdentityOutput) GoString() string {
 
 // An array of UnprocessedIdentityId objects, each of which contains an ErrorCode
 // and IdentityId.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cognito-identity-2014-06-30/UnprocessedIdentityId
 type UnprocessedIdentityId struct {
 	_ struct{} `type:"structure"`
 

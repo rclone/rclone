@@ -42,9 +42,9 @@ func NewDataSourcesClientWithBaseURI(baseURI string, subscriptionID string) Data
 
 // CreateOrUpdate create or update a data source.
 //
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name of
-// the Log Analytics Workspace that will contain the datasource dataSourceName is the name of the datasource resource.
-// parameters is the parameters required to create or update a datasource.
+// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name
+// of the Log Analytics Workspace that will contain the datasource dataSourceName is the name of the datasource
+// resource. parameters is the parameters required to create or update a datasource.
 func (client DataSourcesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, workspaceName string, dataSourceName string, parameters DataSource) (result DataSource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -53,7 +53,7 @@ func (client DataSourcesClient) CreateOrUpdate(ctx context.Context, resourceGrou
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Properties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.DataSourcesClient", "CreateOrUpdate")
+		return result, validation.NewError("operationalinsights.DataSourcesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, workspaceName, dataSourceName, parameters)
@@ -123,15 +123,15 @@ func (client DataSourcesClient) CreateOrUpdateResponder(resp *http.Response) (re
 
 // Delete deletes a data source instance.
 //
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name of
-// the Log Analytics Workspace that contains the datasource. dataSourceName is name of the datasource.
+// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name
+// of the Log Analytics Workspace that contains the datasource. dataSourceName is name of the datasource.
 func (client DataSourcesClient) Delete(ctx context.Context, resourceGroupName string, workspaceName string, dataSourceName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.DataSourcesClient", "Delete")
+		return result, validation.NewError("operationalinsights.DataSourcesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, workspaceName, dataSourceName)
@@ -198,15 +198,15 @@ func (client DataSourcesClient) DeleteResponder(resp *http.Response) (result aut
 
 // Get gets a datasource instance.
 //
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name of
-// the Log Analytics Workspace that contains the datasource. dataSourceName is name of the datasource
+// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name
+// of the Log Analytics Workspace that contains the datasource. dataSourceName is name of the datasource
 func (client DataSourcesClient) Get(ctx context.Context, resourceGroupName string, workspaceName string, dataSourceName string) (result DataSource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.DataSourcesClient", "Get")
+		return result, validation.NewError("operationalinsights.DataSourcesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, workspaceName, dataSourceName)
@@ -283,7 +283,7 @@ func (client DataSourcesClient) ListByWorkspace(ctx context.Context, resourceGro
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.DataSourcesClient", "ListByWorkspace")
+		return result, validation.NewError("operationalinsights.DataSourcesClient", "ListByWorkspace", err.Error())
 	}
 
 	result.fn = client.listByWorkspaceNextResults

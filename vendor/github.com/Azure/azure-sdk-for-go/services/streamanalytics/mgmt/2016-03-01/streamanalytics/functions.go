@@ -41,13 +41,13 @@ func NewFunctionsClientWithBaseURI(baseURI string, subscriptionID string) Functi
 
 // CreateOrReplace creates a function or replaces an already existing function under an existing streaming job.
 //
-// function is the definition of the function that will be used to create a new function or replace the existing one
-// under the streaming job. resourceGroupName is the name of the resource group that contains the resource. You can
-// obtain this value from the Azure Resource Manager API or the portal. jobName is the name of the streaming job.
-// functionName is the name of the function. ifMatch is the ETag of the function. Omit this value to always overwrite
-// the current function. Specify the last-seen ETag value to prevent accidentally overwritting concurrent changes.
-// ifNoneMatch is set to '*' to allow a new function to be created, but to prevent updating an existing function. Other
-// values will result in a 412 Pre-condition Failed response.
+// function is the definition of the function that will be used to create a new function or replace the existing
+// one under the streaming job. resourceGroupName is the name of the resource group that contains the resource. You
+// can obtain this value from the Azure Resource Manager API or the portal. jobName is the name of the streaming
+// job. functionName is the name of the function. ifMatch is the ETag of the function. Omit this value to always
+// overwrite the current function. Specify the last-seen ETag value to prevent accidentally overwritting concurrent
+// changes. ifNoneMatch is set to '*' to allow a new function to be created, but to prevent updating an existing
+// function. Other values will result in a 412 Pre-condition Failed response.
 func (client FunctionsClient) CreateOrReplace(ctx context.Context, function Function, resourceGroupName string, jobName string, functionName string, ifMatch string, ifNoneMatch string) (result Function, err error) {
 	req, err := client.CreateOrReplacePreparer(ctx, function, resourceGroupName, jobName, functionName, ifMatch, ifNoneMatch)
 	if err != nil {
@@ -124,9 +124,9 @@ func (client FunctionsClient) CreateOrReplaceResponder(resp *http.Response) (res
 
 // Delete deletes a function from the streaming job.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. jobName is the name of the streaming job. functionName is the name of the
-// function.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. functionName is the name
+// of the function.
 func (client FunctionsClient) Delete(ctx context.Context, resourceGroupName string, jobName string, functionName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, jobName, functionName)
 	if err != nil {
@@ -192,9 +192,9 @@ func (client FunctionsClient) DeleteResponder(resp *http.Response) (result autor
 
 // Get gets details about the specified function.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. jobName is the name of the streaming job. functionName is the name of the
-// function.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. functionName is the name
+// of the function.
 func (client FunctionsClient) Get(ctx context.Context, resourceGroupName string, jobName string, functionName string) (result Function, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, jobName, functionName)
 	if err != nil {
@@ -261,11 +261,11 @@ func (client FunctionsClient) GetResponder(resp *http.Response) (result Function
 
 // ListByStreamingJob lists all of the functions under the specified streaming job.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. jobName is the name of the streaming job. selectParameter is the $select
-// OData query parameter. This is a comma-separated list of structural properties to include in the response, or “*” to
-// include all properties. By default, all properties are returned except diagnostics. Currently only accepts '*' as a
-// valid value.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. selectParameter is the
+// $select OData query parameter. This is a comma-separated list of structural properties to include in the
+// response, or “*” to include all properties. By default, all properties are returned except diagnostics.
+// Currently only accepts '*' as a valid value.
 func (client FunctionsClient) ListByStreamingJob(ctx context.Context, resourceGroupName string, jobName string, selectParameter string) (result FunctionListResultPage, err error) {
 	result.fn = client.listByStreamingJobNextResults
 	req, err := client.ListByStreamingJobPreparer(ctx, resourceGroupName, jobName, selectParameter)
@@ -362,10 +362,10 @@ func (client FunctionsClient) ListByStreamingJobComplete(ctx context.Context, re
 
 // RetrieveDefaultDefinition retrieves the default definition of a function based on the parameters specified.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. jobName is the name of the streaming job. functionName is the name of the
-// function. functionRetrieveDefaultDefinitionParameters is parameters used to specify the type of function to retrieve
-// the default definition for.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. functionName is the name
+// of the function. functionRetrieveDefaultDefinitionParameters is parameters used to specify the type of function
+// to retrieve the default definition for.
 func (client FunctionsClient) RetrieveDefaultDefinition(ctx context.Context, resourceGroupName string, jobName string, functionName string, functionRetrieveDefaultDefinitionParameters *BasicFunctionRetrieveDefaultDefinitionParameters) (result Function, err error) {
 	req, err := client.RetrieveDefaultDefinitionPreparer(ctx, resourceGroupName, jobName, functionName, functionRetrieveDefaultDefinitionParameters)
 	if err != nil {
@@ -438,12 +438,13 @@ func (client FunctionsClient) RetrieveDefaultDefinitionResponder(resp *http.Resp
 // Test tests if the information provided for a function is valid. This can range from testing the connection to the
 // underlying web service behind the function or making sure the function code provided is syntactically correct.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. jobName is the name of the streaming job. functionName is the name of the
-// function. function is if the function specified does not already exist, this parameter must contain the full
-// function definition intended to be tested. If the function specified already exists, this parameter can be left null
-// to test the existing function as is or if specified, the properties specified will overwrite the corresponding
-// properties in the existing function (exactly like a PATCH operation) and the resulting function will be tested.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. functionName is the name
+// of the function. function is if the function specified does not already exist, this parameter must contain the
+// full function definition intended to be tested. If the function specified already exists, this parameter can be
+// left null to test the existing function as is or if specified, the properties specified will overwrite the
+// corresponding properties in the existing function (exactly like a PATCH operation) and the resulting function
+// will be tested.
 func (client FunctionsClient) Test(ctx context.Context, resourceGroupName string, jobName string, functionName string, function *Function) (result FunctionsTestFuture, err error) {
 	req, err := client.TestPreparer(ctx, resourceGroupName, jobName, functionName, function)
 	if err != nil {
@@ -519,12 +520,13 @@ func (client FunctionsClient) TestResponder(resp *http.Response) (result Resourc
 // update one or two properties) a function without affecting the rest the job or function definition.
 //
 // function is a function object. The properties specified here will overwrite the corresponding properties in the
-// existing function (ie. Those properties will be updated). Any properties that are set to null here will mean that
-// the corresponding property in the existing function will remain the same and not change as a result of this PATCH
-// operation. resourceGroupName is the name of the resource group that contains the resource. You can obtain this value
-// from the Azure Resource Manager API or the portal. jobName is the name of the streaming job. functionName is the
-// name of the function. ifMatch is the ETag of the function. Omit this value to always overwrite the current function.
-// Specify the last-seen ETag value to prevent accidentally overwritting concurrent changes.
+// existing function (ie. Those properties will be updated). Any properties that are set to null here will mean
+// that the corresponding property in the existing function will remain the same and not change as a result of this
+// PATCH operation. resourceGroupName is the name of the resource group that contains the resource. You can obtain
+// this value from the Azure Resource Manager API or the portal. jobName is the name of the streaming job.
+// functionName is the name of the function. ifMatch is the ETag of the function. Omit this value to always
+// overwrite the current function. Specify the last-seen ETag value to prevent accidentally overwritting concurrent
+// changes.
 func (client FunctionsClient) Update(ctx context.Context, function Function, resourceGroupName string, jobName string, functionName string, ifMatch string) (result Function, err error) {
 	req, err := client.UpdatePreparer(ctx, function, resourceGroupName, jobName, functionName, ifMatch)
 	if err != nil {

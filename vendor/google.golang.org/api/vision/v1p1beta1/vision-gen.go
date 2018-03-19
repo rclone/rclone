@@ -1490,13 +1490,17 @@ type GoogleCloudVisionV1p1beta1Page struct {
 	// Confidence: Confidence of the OCR results on the page. Range [0, 1].
 	Confidence float64 `json:"confidence,omitempty"`
 
-	// Height: Page height in pixels.
+	// Height: Page height. For PDFs the unit is points. For images
+	// (including
+	// TIFFs) the unit is pixels.
 	Height int64 `json:"height,omitempty"`
 
 	// Property: Additional information detected on the page.
 	Property *GoogleCloudVisionV1p1beta1TextAnnotationTextProperty `json:"property,omitempty"`
 
-	// Width: Page width in pixels.
+	// Width: Page width. For PDFs the unit is points. For images
+	// (including
+	// TIFFs) the unit is pixels.
 	Width int64 `json:"width,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Blocks") to
@@ -2434,6 +2438,205 @@ func (s *GoogleCloudVisionV1p1beta1Word) UnmarshalJSON(data []byte) error {
 	}
 	s.Confidence = float64(s1.Confidence)
 	return nil
+}
+
+// GoogleCloudVisionV1p2beta1AsyncAnnotateFileResponse: The response for
+// a single offline file annotation request.
+type GoogleCloudVisionV1p2beta1AsyncAnnotateFileResponse struct {
+	// OutputConfig: The output location and metadata from
+	// AsyncAnnotateFileRequest.
+	OutputConfig *GoogleCloudVisionV1p2beta1OutputConfig `json:"outputConfig,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "OutputConfig") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "OutputConfig") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p2beta1AsyncAnnotateFileResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p2beta1AsyncAnnotateFileResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVisionV1p2beta1AsyncBatchAnnotateFilesResponse: Response
+// to an async batch file annotation request.
+type GoogleCloudVisionV1p2beta1AsyncBatchAnnotateFilesResponse struct {
+	// Responses: The list of file annotation responses, one for each
+	// request in
+	// AsyncBatchAnnotateFilesRequest.
+	Responses []*GoogleCloudVisionV1p2beta1AsyncAnnotateFileResponse `json:"responses,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Responses") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Responses") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p2beta1AsyncBatchAnnotateFilesResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p2beta1AsyncBatchAnnotateFilesResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVisionV1p2beta1GcsDestination: The Google Cloud Storage
+// location where the output will be written to.
+type GoogleCloudVisionV1p2beta1GcsDestination struct {
+	// Uri: Google Cloud Storage URI where the results will be stored.
+	// Results will
+	// be in JSON format and preceded by its corresponding input URI. This
+	// field
+	// can either represent a single file, or a prefix for multiple
+	// outputs.
+	// Prefixes must end in a `/`.
+	//
+	// Examples:
+	//
+	// *    File: gs://bucket-name/filename.json
+	// *    Prefix: gs://bucket-name/prefix/here/
+	// *    File: gs://bucket-name/prefix/here
+	//
+	// If multiple outputs, each response is still AnnotateFileResponse,
+	// each of
+	// which contains some subset of the full list of
+	// AnnotateImageResponse.
+	// Multiple outputs can happen if, for example, the output JSON is too
+	// large
+	// and overflows into multiple sharded files.
+	Uri string `json:"uri,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Uri") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Uri") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p2beta1GcsDestination) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p2beta1GcsDestination
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVisionV1p2beta1OperationMetadata: Contains metadata for
+// the BatchAnnotateImages operation.
+type GoogleCloudVisionV1p2beta1OperationMetadata struct {
+	// CreateTime: The time when the batch request was received.
+	CreateTime string `json:"createTime,omitempty"`
+
+	// State: Current state of the batch operation.
+	//
+	// Possible values:
+	//   "STATE_UNSPECIFIED" - Invalid.
+	//   "CREATED" - Request is received.
+	//   "RUNNING" - Request is actively being processed.
+	//   "DONE" - The batch processing is done.
+	//   "CANCELLED" - The batch processing was cancelled.
+	State string `json:"state,omitempty"`
+
+	// UpdateTime: The time when the operation result was last updated.
+	UpdateTime string `json:"updateTime,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CreateTime") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CreateTime") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p2beta1OperationMetadata) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p2beta1OperationMetadata
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVisionV1p2beta1OutputConfig: The desired output location
+// and metadata.
+type GoogleCloudVisionV1p2beta1OutputConfig struct {
+	// BatchSize: The max number of response protos to put into each output
+	// JSON file on GCS.
+	// The valid range is [1, 100]. If not specified, the default value is
+	// 20.
+	//
+	// For example, for one pdf file with 100 pages, 100 response protos
+	// will
+	// be generated. If `batch_size` = 20, then 5 json files each
+	// containing 20 response protos will be written under the
+	// prefix
+	// `gcs_destination`.`uri`.
+	//
+	// Currently, batch_size only applies to GcsDestination, with potential
+	// future
+	// support for other output configurations.
+	BatchSize int64 `json:"batchSize,omitempty"`
+
+	// GcsDestination: The Google Cloud Storage location to write the
+	// output(s) to.
+	GcsDestination *GoogleCloudVisionV1p2beta1GcsDestination `json:"gcsDestination,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BatchSize") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BatchSize") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p2beta1OutputConfig) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p2beta1OutputConfig
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // LatLng: An object representing a latitude/longitude pair. This is

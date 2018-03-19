@@ -22,7 +22,7 @@
       "delay": 15,
       "operation": "DescribeDeployments",
       "maxAttempts": 40,
-      "description": "Wait until a deployment has completed successfully",
+      "description": "Wait until a deployment has completed successfully.",
       "acceptors": [
         {
           "expected": "successful",
@@ -170,12 +170,6 @@
         },
         {
           "expected": "booting",
-          "matcher": "pathAny",
-          "state": "failure",
-          "argument": "Instances[].Status"
-        },
-        {
-          "expected": "online",
           "matcher": "pathAny",
           "state": "failure",
           "argument": "Instances[].Status"

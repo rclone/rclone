@@ -42,9 +42,9 @@ func NewArtifactsClientWithBaseURI(baseURI string, subscriptionID string) Artifa
 // GenerateArmTemplate generates an ARM template for the given artifact, uploads the required files to a storage
 // account, and validates the generated artifact.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. artifactSourceName is the name
-// of the artifact source. name is the name of the artifact. generateArmTemplateRequest is parameters for generating an
-// ARM template for deploying artifacts.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. artifactSourceName is the
+// name of the artifact source. name is the name of the artifact. generateArmTemplateRequest is parameters for
+// generating an ARM template for deploying artifacts.
 func (client ArtifactsClient) GenerateArmTemplate(ctx context.Context, resourceGroupName string, labName string, artifactSourceName string, name string, generateArmTemplateRequest GenerateArmTemplateRequest) (result ArmTemplateInfo, err error) {
 	req, err := client.GenerateArmTemplatePreparer(ctx, resourceGroupName, labName, artifactSourceName, name, generateArmTemplateRequest)
 	if err != nil {
@@ -114,8 +114,8 @@ func (client ArtifactsClient) GenerateArmTemplateResponder(resp *http.Response) 
 
 // Get get artifact.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. artifactSourceName is the name
-// of the artifact source. name is the name of the artifact. expand is specify the $expand query. Example:
+// resourceGroupName is the name of the resource group. labName is the name of the lab. artifactSourceName is the
+// name of the artifact source. name is the name of the artifact. expand is specify the $expand query. Example:
 // 'properties($select=title)'
 func (client ArtifactsClient) Get(ctx context.Context, resourceGroupName string, labName string, artifactSourceName string, name string, expand string) (result Artifact, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, labName, artifactSourceName, name, expand)
@@ -187,10 +187,10 @@ func (client ArtifactsClient) GetResponder(resp *http.Response) (result Artifact
 
 // List list artifacts in a given artifact source.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. artifactSourceName is the name
-// of the artifact source. expand is specify the $expand query. Example: 'properties($select=title)' filter is the
-// filter to apply to the operation. top is the maximum number of resources to return from the operation. orderby is
-// the ordering expression for the results, using OData notation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. artifactSourceName is the
+// name of the artifact source. expand is specify the $expand query. Example: 'properties($select=title)' filter is
+// the filter to apply to the operation. top is the maximum number of resources to return from the operation.
+// orderby is the ordering expression for the results, using OData notation.
 func (client ArtifactsClient) List(ctx context.Context, resourceGroupName string, labName string, artifactSourceName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationArtifactPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, artifactSourceName, expand, filter, top, orderby)

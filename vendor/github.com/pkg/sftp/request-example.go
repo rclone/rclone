@@ -24,18 +24,10 @@ func InMemHandler() Handlers {
 	return Handlers{root, root, root, root}
 }
 
-// So I can test Handlers returning errors
-var (
-	readErr  error = nil
-	writeErr error = nil
-	cmdErr   error = nil
-	listErr  error = nil
-)
-
 // Handlers
 func (fs *root) Fileread(r *Request) (io.ReaderAt, error) {
-	if readErr != nil {
-		return nil, readErr
+	if fs.mockErr != nil {
+		return nil, fs.mockErr
 	}
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
@@ -53,8 +45,8 @@ func (fs *root) Fileread(r *Request) (io.ReaderAt, error) {
 }
 
 func (fs *root) Filewrite(r *Request) (io.WriterAt, error) {
-	if writeErr != nil {
-		return nil, writeErr
+	if fs.mockErr != nil {
+		return nil, fs.mockErr
 	}
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
@@ -74,8 +66,8 @@ func (fs *root) Filewrite(r *Request) (io.WriterAt, error) {
 }
 
 func (fs *root) Filecmd(r *Request) error {
-	if cmdErr != nil {
-		return cmdErr
+	if fs.mockErr != nil {
+		return fs.mockErr
 	}
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
@@ -133,8 +125,8 @@ func (f listerat) ListAt(ls []os.FileInfo, offset int64) (int, error) {
 }
 
 func (fs *root) Filelist(r *Request) (ListerAt, error) {
-	if listErr != nil {
-		return nil, listErr
+	if fs.mockErr != nil {
+		return nil, fs.mockErr
 	}
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
@@ -147,7 +139,7 @@ func (fs *root) Filelist(r *Request) (ListerAt, error) {
 				ordered_names = append(ordered_names, fn)
 			}
 		}
-		sort.Sort(sort.StringSlice(ordered_names))
+		sort.Strings(ordered_names)
 		list := make([]os.FileInfo, len(ordered_names))
 		for i, fn := range ordered_names {
 			list[i] = fs.files[fn]
@@ -180,6 +172,13 @@ type root struct {
 	*memFile
 	files     map[string]*memFile
 	filesLock sync.Mutex
+	mockErr   error
+}
+
+// Set a mocked error that the next handler call will return.
+// Set to nil to reset for no error.
+func (fs *root) returnErr(err error) {
+	fs.mockErr = err
 }
 
 func (fs *root) fetch(path string) (*memFile, error) {

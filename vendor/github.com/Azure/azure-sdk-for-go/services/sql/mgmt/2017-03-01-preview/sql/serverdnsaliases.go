@@ -43,9 +43,9 @@ func NewServerDNSAliasesClientWithBaseURI(baseURI string, subscriptionID string)
 
 // Acquire acquires server DNS alias from another server.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server that the alias is pointing to.
-// DNSAliasName is the name of the server dns alias.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server that the alias is pointing
+// to. DNSAliasName is the name of the server dns alias.
 func (client ServerDNSAliasesClient) Acquire(ctx context.Context, resourceGroupName string, serverName string, DNSAliasName string, parameters ServerDNSAliasAcquisition) (result ServerDNSAliasesAcquireFuture, err error) {
 	req, err := client.AcquirePreparer(ctx, resourceGroupName, serverName, DNSAliasName, parameters)
 	if err != nil {
@@ -115,9 +115,9 @@ func (client ServerDNSAliasesClient) AcquireResponder(resp *http.Response) (resu
 
 // CreateOrUpdate creates a server dns alias.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server that the alias is pointing to.
-// DNSAliasName is the name of the server DNS alias.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server that the alias is pointing
+// to. DNSAliasName is the name of the server DNS alias.
 func (client ServerDNSAliasesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, DNSAliasName string) (result ServerDNSAliasesCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, DNSAliasName)
 	if err != nil {
@@ -186,9 +186,9 @@ func (client ServerDNSAliasesClient) CreateOrUpdateResponder(resp *http.Response
 
 // Delete deletes the server DNS alias with the given name.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server that the alias is pointing to.
-// DNSAliasName is the name of the server DNS alias.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server that the alias is pointing
+// to. DNSAliasName is the name of the server DNS alias.
 func (client ServerDNSAliasesClient) Delete(ctx context.Context, resourceGroupName string, serverName string, DNSAliasName string) (result ServerDNSAliasesDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName, DNSAliasName)
 	if err != nil {
@@ -256,9 +256,9 @@ func (client ServerDNSAliasesClient) DeleteResponder(resp *http.Response) (resul
 
 // Get gets a server DNS alias.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server that the alias is pointing to.
-// DNSAliasName is the name of the server DNS alias.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server that the alias is pointing
+// to. DNSAliasName is the name of the server DNS alias.
 func (client ServerDNSAliasesClient) Get(ctx context.Context, resourceGroupName string, serverName string, DNSAliasName string) (result ServerDNSAlias, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, DNSAliasName)
 	if err != nil {
@@ -325,8 +325,9 @@ func (client ServerDNSAliasesClient) GetResponder(resp *http.Response) (result S
 
 // ListByServer gets a list of server DNS aliases for a server.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server that the alias is pointing to.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server that the alias is pointing
+// to.
 func (client ServerDNSAliasesClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result ServerDNSAliasListResultPage, err error) {
 	result.fn = client.listByServerNextResults
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)

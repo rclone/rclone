@@ -43,12 +43,11 @@ func NewDataMaskingPoliciesClientWithBaseURI(baseURI string, subscriptionID stri
 
 // CreateOrUpdate creates or updates a database data masking policy
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database. dataMaskingPolicyName is the name of the database for which the data masking rule applies. parameters is
-// parameters for creating or updating a data masking policy.
-func (client DataMaskingPoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, databaseName string, dataMaskingPolicyName string, parameters DataMaskingPolicy) (result DataMaskingPolicy, err error) {
-	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, databaseName, dataMaskingPolicyName, parameters)
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database. parameters is parameters for creating or updating a data masking policy.
+func (client DataMaskingPoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters DataMaskingPolicy) (result DataMaskingPolicy, err error) {
+	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, databaseName, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.DataMaskingPoliciesClient", "CreateOrUpdate", nil, "Failure preparing request")
 		return
@@ -70,10 +69,10 @@ func (client DataMaskingPoliciesClient) CreateOrUpdate(ctx context.Context, reso
 }
 
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
-func (client DataMaskingPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, dataMaskingPolicyName string, parameters DataMaskingPolicy) (*http.Request, error) {
+func (client DataMaskingPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters DataMaskingPolicy) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"databaseName":          autorest.Encode("path", databaseName),
-		"dataMaskingPolicyName": autorest.Encode("path", dataMaskingPolicyName),
+		"dataMaskingPolicyName": autorest.Encode("path", "Default"),
 		"resourceGroupName":     autorest.Encode("path", resourceGroupName),
 		"serverName":            autorest.Encode("path", serverName),
 		"subscriptionId":        autorest.Encode("path", client.SubscriptionID),
@@ -116,11 +115,11 @@ func (client DataMaskingPoliciesClient) CreateOrUpdateResponder(resp *http.Respo
 
 // Get gets a database data masking policy.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database. dataMaskingPolicyName is the name of the database for which the data masking rule applies.
-func (client DataMaskingPoliciesClient) Get(ctx context.Context, resourceGroupName string, serverName string, databaseName string, dataMaskingPolicyName string) (result DataMaskingPolicy, err error) {
-	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, databaseName, dataMaskingPolicyName)
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database.
+func (client DataMaskingPoliciesClient) Get(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result DataMaskingPolicy, err error) {
+	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, databaseName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.DataMaskingPoliciesClient", "Get", nil, "Failure preparing request")
 		return
@@ -142,10 +141,10 @@ func (client DataMaskingPoliciesClient) Get(ctx context.Context, resourceGroupNa
 }
 
 // GetPreparer prepares the Get request.
-func (client DataMaskingPoliciesClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, dataMaskingPolicyName string) (*http.Request, error) {
+func (client DataMaskingPoliciesClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"databaseName":          autorest.Encode("path", databaseName),
-		"dataMaskingPolicyName": autorest.Encode("path", dataMaskingPolicyName),
+		"dataMaskingPolicyName": autorest.Encode("path", "Default"),
 		"resourceGroupName":     autorest.Encode("path", resourceGroupName),
 		"serverName":            autorest.Encode("path", serverName),
 		"subscriptionId":        autorest.Encode("path", client.SubscriptionID),

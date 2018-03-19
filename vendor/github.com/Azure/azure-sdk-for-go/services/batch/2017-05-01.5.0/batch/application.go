@@ -1,4 +1,4 @@
-package xpackagex
+package batch
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
 //
@@ -47,26 +47,26 @@ func NewApplicationClientWithBaseURI(baseURI string) ApplicationClient {
 // applicationID is the ID of the application. timeout is the maximum time that the server can spend processing the
 // request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the
 // form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the time
-// the request was issued. Client libraries typically set this to the current system clock time; set it explicitly if
-// you are calling the REST API directly.
+// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the
+// time the request was issued. Client libraries typically set this to the current system clock time; set it
+// explicitly if you are calling the REST API directly.
 func (client ApplicationClient) Get(ctx context.Context, applicationID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result ApplicationSummary, err error) {
 	req, err := client.GetPreparer(ctx, applicationID, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ApplicationClient", "Get", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.ApplicationClient", "Get", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.GetSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.ApplicationClient", "Get", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.ApplicationClient", "Get", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.GetResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ApplicationClient", "Get", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.ApplicationClient", "Get", resp, "Failure responding to request")
 	}
 
 	return
@@ -84,6 +84,8 @@ func (client ApplicationClient) GetPreparer(ctx context.Context, applicationID s
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -98,6 +100,9 @@ func (client ApplicationClient) GetPreparer(ctx context.Context, applicationID s
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -130,12 +135,13 @@ func (client ApplicationClient) GetResponder(resp *http.Response) (result Applic
 // that can be used in an application package reference. For administrator information about applications and versions
 // that are not yet available to compute nodes, use the Azure portal or the Azure Resource Manager API.
 //
-// maxResults is the maximum number of items to return in the response. A maximum of 1000 applications can be returned.
-// timeout is the maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
-// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
-// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly.
+// maxResults is the maximum number of items to return in the response. A maximum of 1000 applications can be
+// returned. timeout is the maximum time that the server can spend processing the request, in seconds. The default
+// is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no
+// decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the
+// server should return the client-request-id in the response. ocpDate is the time the request was issued. Client
+// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
+// directly.
 func (client ApplicationClient) List(ctx context.Context, maxResults *int32, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result ApplicationListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxResults,
@@ -143,26 +149,26 @@ func (client ApplicationClient) List(ctx context.Context, maxResults *int32, tim
 				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
 					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "xpackagex.ApplicationClient", "List")
+		return result, validation.NewError("batch.ApplicationClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, maxResults, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ApplicationClient", "List", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.ApplicationClient", "List", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.ListSender(req)
 	if err != nil {
 		result.alr.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.ApplicationClient", "List", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.ApplicationClient", "List", resp, "Failure sending request")
 		return
 	}
 
 	result.alr, err = client.ListResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ApplicationClient", "List", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.ApplicationClient", "List", resp, "Failure responding to request")
 	}
 
 	return
@@ -176,9 +182,13 @@ func (client ApplicationClient) ListPreparer(ctx context.Context, maxResults *in
 	}
 	if maxResults != nil {
 		queryParameters["maxresults"] = autorest.Encode("query", *maxResults)
+	} else {
+		queryParameters["maxresults"] = autorest.Encode("query", 1000)
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -193,6 +203,9 @@ func (client ApplicationClient) ListPreparer(ctx context.Context, maxResults *in
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -225,7 +238,7 @@ func (client ApplicationClient) ListResponder(resp *http.Response) (result Appli
 func (client ApplicationClient) listNextResults(lastResults ApplicationListResult) (result ApplicationListResult, err error) {
 	req, err := lastResults.applicationListResultPreparer()
 	if err != nil {
-		return result, autorest.NewErrorWithError(err, "xpackagex.ApplicationClient", "listNextResults", nil, "Failure preparing next results request")
+		return result, autorest.NewErrorWithError(err, "batch.ApplicationClient", "listNextResults", nil, "Failure preparing next results request")
 	}
 	if req == nil {
 		return
@@ -233,11 +246,11 @@ func (client ApplicationClient) listNextResults(lastResults ApplicationListResul
 	resp, err := client.ListSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		return result, autorest.NewErrorWithError(err, "xpackagex.ApplicationClient", "listNextResults", resp, "Failure sending next results request")
+		return result, autorest.NewErrorWithError(err, "batch.ApplicationClient", "listNextResults", resp, "Failure sending next results request")
 	}
 	result, err = client.ListResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ApplicationClient", "listNextResults", resp, "Failure responding to next results request")
+		err = autorest.NewErrorWithError(err, "batch.ApplicationClient", "listNextResults", resp, "Failure responding to next results request")
 	}
 	return
 }

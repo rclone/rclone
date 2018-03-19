@@ -6,6 +6,7 @@
     "jsonVersion":"1.1",
     "protocol":"rest-json",
     "serviceFullName":"Amazon Lex Model Building Service",
+    "serviceId":"Lex Model Building Service",
     "signatureVersion":"v4",
     "signingName":"lex",
     "uid":"lex-models-2017-04-19"
@@ -387,6 +388,22 @@
         {"shape":"BadRequestException"}
       ]
     },
+    "GetImport":{
+      "name":"GetImport",
+      "http":{
+        "method":"GET",
+        "requestUri":"/imports/{importId}",
+        "responseCode":200
+      },
+      "input":{"shape":"GetImportRequest"},
+      "output":{"shape":"GetImportResponse"},
+      "errors":[
+        {"shape":"NotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"BadRequestException"}
+      ]
+    },
     "GetIntent":{
       "name":"GetIntent",
       "http":{
@@ -565,6 +582,21 @@
         {"shape":"BadRequestException"},
         {"shape":"PreconditionFailedException"}
       ]
+    },
+    "StartImport":{
+      "name":"StartImport",
+      "http":{
+        "method":"POST",
+        "requestUri":"/imports/",
+        "responseCode":201
+      },
+      "input":{"shape":"StartImportRequest"},
+      "output":{"shape":"StartImportResponse"},
+      "errors":[
+        {"shape":"LimitExceededException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"BadRequestException"}
+      ]
     }
   },
   "shapes":{
@@ -588,6 +620,7 @@
       "error":{"httpStatusCode":400},
       "exception":true
     },
+    "Blob":{"type":"blob"},
     "Boolean":{"type":"boolean"},
     "BotAliasMetadata":{
       "type":"structure",
@@ -711,7 +744,8 @@
       "enum":[
         "Facebook",
         "Slack",
-        "Twilio-Sms"
+        "Twilio-Sms",
+        "Kik"
       ]
     },
     "CodeHook":{
@@ -742,7 +776,8 @@
       "type":"string",
       "enum":[
         "PlainText",
-        "SSML"
+        "SSML",
+        "CustomPayload"
       ]
     },
     "Count":{"type":"integer"},
@@ -1023,7 +1058,10 @@
     },
     "ExportType":{
       "type":"string",
-      "enum":["ALEXA_SKILLS_KIT"]
+      "enum":[
+        "ALEXA_SKILLS_KIT",
+        "LEX"
+      ]
     },
     "FollowUpPrompt":{
       "type":"structure",
@@ -1415,6 +1453,29 @@
         "url":{"shape":"String"}
       }
     },
+    "GetImportRequest":{
+      "type":"structure",
+      "required":["importId"],
+      "members":{
+        "importId":{
+          "shape":"String",
+          "location":"uri",
+          "locationName":"importId"
+        }
+      }
+    },
+    "GetImportResponse":{
+      "type":"structure",
+      "members":{
+        "name":{"shape":"Name"},
+        "resourceType":{"shape":"ResourceType"},
+        "mergeStrategy":{"shape":"MergeStrategy"},
+        "importId":{"shape":"String"},
+        "importStatus":{"shape":"ImportStatus"},
+        "failureReason":{"shape":"StringList"},
+        "createdDate":{"shape":"Timestamp"}
+      }
+    },
     "GetIntentRequest":{
       "type":"structure",
       "required":[
@@ -1628,6 +1689,20 @@
         "utterances":{"shape":"ListsOfUtterances"}
       }
     },
+    "GroupNumber":{
+      "type":"integer",
+      "box":true,
+      "max":5,
+      "min":1
+    },
+    "ImportStatus":{
+      "type":"string",
+      "enum":[
+        "IN_PROGRESS",
+        "COMPLETE",
+        "FAILED"
+      ]
+    },
     "Intent":{
       "type":"structure",
       "required":[
@@ -1707,7 +1782,11 @@
     },
     "Locale":{
       "type":"string",
-      "enum":["en-US"]
+      "enum":[
+        "en-US",
+        "en-GB",
+        "de-DE"
+      ]
     },
     "LocaleList":{
       "type":"list",
@@ -1719,6 +1798,13 @@
       "max":50,
       "min":1
     },
+    "MergeStrategy":{
+      "type":"string",
+      "enum":[
+        "OVERWRITE_LATEST",
+        "FAIL_ON_CONFLICT"
+      ]
+    },
     "Message":{
       "type":"structure",
       "required":[
@@ -1727,13 +1813,14 @@
       ],
       "members":{
         "contentType":{"shape":"ContentType"},
-        "content":{"shape":"ContentString"}
+        "content":{"shape":"ContentString"},
+        "groupNumber":{"shape":"GroupNumber"}
       }
     },
     "MessageList":{
       "type":"list",
       "member":{"shape":"Message"},
-      "max":5,
+      "max":15,
       "min":1
     },
     "MessageVersion":{
@@ -1743,7 +1830,7 @@
     },
     "Name":{
       "type":"string",
-      "max":64,
+      "max":100,
       "min":1,
       "pattern":"[a-zA-Z_]+"
     },
@@ -1856,7 +1943,8 @@
         "checksum":{"shape":"String"},
         "processBehavior":{"shape":"ProcessBehavior"},
         "locale":{"shape":"Locale"},
-        "childDirected":{"shape":"Boolean"}
+        "childDirected":{"shape":"Boolean"},
+        "createVersion":{"shape":"Boolean"}
       }
     },
     "PutBotResponse":{
@@ -1876,7 +1964,8 @@
         "checksum":{"shape":"String"},
         "version":{"shape":"Version"},
         "locale":{"shape":"Locale"},
-        "childDirected":{"shape":"Boolean"}
+        "childDirected":{"shape":"Boolean"},
+        "createVersion":{"shape":"Boolean"}
       }
     },
     "PutIntentRequest":{
@@ -1898,7 +1987,8 @@
         "dialogCodeHook":{"shape":"CodeHook"},
         "fulfillmentActivity":{"shape":"FulfillmentActivity"},
         "parentIntentSignature":{"shape":"BuiltinIntentSignature"},
-        "checksum":{"shape":"String"}
+        "checksum":{"shape":"String"},
+        "createVersion":{"shape":"Boolean"}
       }
     },
     "PutIntentResponse":{
@@ -1918,7 +2008,8 @@
         "lastUpdatedDate":{"shape":"Timestamp"},
         "createdDate":{"shape":"Timestamp"},
         "version":{"shape":"Version"},
-        "checksum":{"shape":"String"}
+        "checksum":{"shape":"String"},
+        "createVersion":{"shape":"Boolean"}
       }
     },
     "PutSlotTypeRequest":{
@@ -1933,7 +2024,8 @@
         "description":{"shape":"Description"},
         "enumerationValues":{"shape":"EnumerationValues"},
         "checksum":{"shape":"String"},
-        "valueSelectionStrategy":{"shape":"SlotValueSelectionStrategy"}
+        "valueSelectionStrategy":{"shape":"SlotValueSelectionStrategy"},
+        "createVersion":{"shape":"Boolean"}
       }
     },
     "PutSlotTypeResponse":{
@@ -1946,7 +2038,8 @@
         "createdDate":{"shape":"Timestamp"},
         "version":{"shape":"Version"},
         "checksum":{"shape":"String"},
-        "valueSelectionStrategy":{"shape":"SlotValueSelectionStrategy"}
+        "valueSelectionStrategy":{"shape":"SlotValueSelectionStrategy"},
+        "createVersion":{"shape":"Boolean"}
       }
     },
     "ReferenceType":{
@@ -1976,7 +2069,11 @@
     },
     "ResourceType":{
       "type":"string",
-      "enum":["BOT"]
+      "enum":[
+        "BOT",
+        "INTENT",
+        "SLOT_TYPE"
+      ]
     },
     "ResponseCard":{
       "type":"string",
@@ -2058,6 +2155,30 @@
         "TOP_RESOLUTION"
       ]
     },
+    "StartImportRequest":{
+      "type":"structure",
+      "required":[
+        "payload",
+        "resourceType",
+        "mergeStrategy"
+      ],
+      "members":{
+        "payload":{"shape":"Blob"},
+        "resourceType":{"shape":"ResourceType"},
+        "mergeStrategy":{"shape":"MergeStrategy"}
+      }
+    },
+    "StartImportResponse":{
+      "type":"structure",
+      "members":{
+        "name":{"shape":"Name"},
+        "resourceType":{"shape":"ResourceType"},
+        "mergeStrategy":{"shape":"MergeStrategy"},
+        "importId":{"shape":"String"},
+        "importStatus":{"shape":"ImportStatus"},
+        "createdDate":{"shape":"Timestamp"}
+      }
+    },
     "Statement":{
       "type":"structure",
       "required":["messages"],
@@ -2083,6 +2204,10 @@
       ]
     },
     "String":{"type":"string"},
+    "StringList":{
+      "type":"list",
+      "member":{"shape":"String"}
+    },
     "SynonymList":{
       "type":"list",
       "member":{"shape":"Value"}

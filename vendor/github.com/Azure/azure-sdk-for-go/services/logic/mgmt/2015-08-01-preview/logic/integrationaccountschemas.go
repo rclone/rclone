@@ -41,8 +41,8 @@ func NewIntegrationAccountSchemasClientWithBaseURI(baseURI string, subscriptionI
 
 // CreateOrUpdate creates or updates an integration account schema.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. schemaName is
-// the integration account schema name. schema is the integration account schema.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name. schemaName
+// is the integration account schema name. schema is the integration account schema.
 func (client IntegrationAccountSchemasClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, integrationAccountName string, schemaName string, schema IntegrationAccountSchema) (result IntegrationAccountSchema, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, integrationAccountName, schemaName, schema)
 	if err != nil {
@@ -111,8 +111,8 @@ func (client IntegrationAccountSchemasClient) CreateOrUpdateResponder(resp *http
 
 // Delete deletes an integration account schema.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. schemaName is
-// the integration account schema name.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name. schemaName
+// is the integration account schema name.
 func (client IntegrationAccountSchemasClient) Delete(ctx context.Context, resourceGroupName string, integrationAccountName string, schemaName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, integrationAccountName, schemaName)
 	if err != nil {
@@ -178,8 +178,8 @@ func (client IntegrationAccountSchemasClient) DeleteResponder(resp *http.Respons
 
 // Get gets an integration account schema.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. schemaName is
-// the integration account schema name.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name. schemaName
+// is the integration account schema name.
 func (client IntegrationAccountSchemasClient) Get(ctx context.Context, resourceGroupName string, integrationAccountName string, schemaName string) (result IntegrationAccountSchema, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, integrationAccountName, schemaName)
 	if err != nil {

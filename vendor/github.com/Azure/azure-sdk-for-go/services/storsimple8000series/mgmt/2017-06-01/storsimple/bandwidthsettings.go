@@ -52,7 +52,7 @@ func (client BandwidthSettingsClient) CreateOrUpdate(ctx context.Context, bandwi
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.BandwidthSettingsClient", "CreateOrUpdate")
+		return result, validation.NewError("storsimple.BandwidthSettingsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, bandwidthSettingName, parameters, resourceGroupName, managerName)
@@ -124,14 +124,14 @@ func (client BandwidthSettingsClient) CreateOrUpdateResponder(resp *http.Respons
 
 // Delete deletes the bandwidth setting
 //
-// bandwidthSettingName is the name of the bandwidth setting. resourceGroupName is the resource group name managerName
-// is the manager name
+// bandwidthSettingName is the name of the bandwidth setting. resourceGroupName is the resource group name
+// managerName is the manager name
 func (client BandwidthSettingsClient) Delete(ctx context.Context, bandwidthSettingName string, resourceGroupName string, managerName string) (result BandwidthSettingsDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.BandwidthSettingsClient", "Delete")
+		return result, validation.NewError("storsimple.BandwidthSettingsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, bandwidthSettingName, resourceGroupName, managerName)
@@ -200,14 +200,14 @@ func (client BandwidthSettingsClient) DeleteResponder(resp *http.Response) (resu
 
 // Get returns the properties of the specified bandwidth setting name.
 //
-// bandwidthSettingName is the name of bandwidth setting to be fetched. resourceGroupName is the resource group name
-// managerName is the manager name
+// bandwidthSettingName is the name of bandwidth setting to be fetched. resourceGroupName is the resource group
+// name managerName is the manager name
 func (client BandwidthSettingsClient) Get(ctx context.Context, bandwidthSettingName string, resourceGroupName string, managerName string) (result BandwidthSetting, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.BandwidthSettingsClient", "Get")
+		return result, validation.NewError("storsimple.BandwidthSettingsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, bandwidthSettingName, resourceGroupName, managerName)
@@ -281,7 +281,7 @@ func (client BandwidthSettingsClient) ListByManager(ctx context.Context, resourc
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.BandwidthSettingsClient", "ListByManager")
+		return result, validation.NewError("storsimple.BandwidthSettingsClient", "ListByManager", err.Error())
 	}
 
 	req, err := client.ListByManagerPreparer(ctx, resourceGroupName, managerName)

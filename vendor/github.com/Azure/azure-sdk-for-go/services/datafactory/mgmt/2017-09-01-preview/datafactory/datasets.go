@@ -44,8 +44,8 @@ func NewDatasetsClientWithBaseURI(baseURI string, subscriptionID string) Dataset
 // CreateOrUpdate creates or updates a dataset.
 //
 // resourceGroupName is the resource group name. factoryName is the factory name. datasetName is the dataset name.
-// dataset is dataset resource definition. ifMatch is eTag of the dataset entity.  Should only be specified for update,
-// for which it should match existing entity or can be * for unconditional update.
+// dataset is dataset resource definition. ifMatch is eTag of the dataset entity.  Should only be specified for
+// update, for which it should match existing entity or can be * for unconditional update.
 func (client DatasetsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, factoryName string, datasetName string, dataset DatasetResource, ifMatch string) (result DatasetResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -67,7 +67,7 @@ func (client DatasetsClient) CreateOrUpdate(ctx context.Context, resourceGroupNa
 						{Target: "dataset.Properties.LinkedServiceName.ReferenceName", Name: validation.Null, Rule: true, Chain: nil},
 					}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.DatasetsClient", "CreateOrUpdate")
+		return result, validation.NewError("datafactory.DatasetsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, factoryName, datasetName, dataset, ifMatch)
@@ -156,7 +156,7 @@ func (client DatasetsClient) Delete(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "datasetName", Name: validation.MaxLength, Rule: 260, Chain: nil},
 				{Target: "datasetName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "datasetName", Name: validation.Pattern, Rule: `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.DatasetsClient", "Delete")
+		return result, validation.NewError("datafactory.DatasetsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, factoryName, datasetName)
@@ -238,7 +238,7 @@ func (client DatasetsClient) Get(ctx context.Context, resourceGroupName string, 
 			Constraints: []validation.Constraint{{Target: "datasetName", Name: validation.MaxLength, Rule: 260, Chain: nil},
 				{Target: "datasetName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "datasetName", Name: validation.Pattern, Rule: `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.DatasetsClient", "Get")
+		return result, validation.NewError("datafactory.DatasetsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, factoryName, datasetName)
@@ -317,7 +317,7 @@ func (client DatasetsClient) ListByFactory(ctx context.Context, resourceGroupNam
 			Constraints: []validation.Constraint{{Target: "factoryName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "factoryName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "factoryName", Name: validation.Pattern, Rule: `^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.DatasetsClient", "ListByFactory")
+		return result, validation.NewError("datafactory.DatasetsClient", "ListByFactory", err.Error())
 	}
 
 	result.fn = client.listByFactoryNextResults

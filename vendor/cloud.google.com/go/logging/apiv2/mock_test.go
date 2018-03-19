@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -374,7 +374,7 @@ func TestLoggingServiceV2DeleteLog(t *testing.T) {
 
 	mockLogging.resps = append(mockLogging.resps[:0], expectedResponse)
 
-	var formattedLogName string = LogPath("[PROJECT]", "[LOG]")
+	var formattedLogName string = fmt.Sprintf("projects/%s/logs/%s", "[PROJECT]", "[LOG]")
 	var request = &loggingpb.DeleteLogRequest{
 		LogName: formattedLogName,
 	}
@@ -400,7 +400,7 @@ func TestLoggingServiceV2DeleteLogError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockLogging.err = gstatus.Error(errCode, "test error")
 
-	var formattedLogName string = LogPath("[PROJECT]", "[LOG]")
+	var formattedLogName string = fmt.Sprintf("projects/%s/logs/%s", "[PROJECT]", "[LOG]")
 	var request = &loggingpb.DeleteLogRequest{
 		LogName: formattedLogName,
 	}
@@ -626,7 +626,7 @@ func TestLoggingServiceV2ListLogs(t *testing.T) {
 
 	mockLogging.resps = append(mockLogging.resps[:0], expectedResponse)
 
-	var formattedParent string = ProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &loggingpb.ListLogsRequest{
 		Parent: formattedParent,
 	}
@@ -665,7 +665,7 @@ func TestLoggingServiceV2ListLogsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockLogging.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = ProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &loggingpb.ListLogsRequest{
 		Parent: formattedParent,
 	}
@@ -698,7 +698,7 @@ func TestConfigServiceV2ListSinks(t *testing.T) {
 
 	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
 
-	var formattedParent string = ConfigProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &loggingpb.ListSinksRequest{
 		Parent: formattedParent,
 	}
@@ -737,7 +737,7 @@ func TestConfigServiceV2ListSinksError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockConfig.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = ConfigProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &loggingpb.ListSinksRequest{
 		Parent: formattedParent,
 	}
@@ -775,7 +775,7 @@ func TestConfigServiceV2GetSink(t *testing.T) {
 
 	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
 
-	var formattedSinkName string = ConfigSinkPath("[PROJECT]", "[SINK]")
+	var formattedSinkName string = fmt.Sprintf("projects/%s/sinks/%s", "[PROJECT]", "[SINK]")
 	var request = &loggingpb.GetSinkRequest{
 		SinkName: formattedSinkName,
 	}
@@ -804,7 +804,7 @@ func TestConfigServiceV2GetSinkError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockConfig.err = gstatus.Error(errCode, "test error")
 
-	var formattedSinkName string = ConfigSinkPath("[PROJECT]", "[SINK]")
+	var formattedSinkName string = fmt.Sprintf("projects/%s/sinks/%s", "[PROJECT]", "[SINK]")
 	var request = &loggingpb.GetSinkRequest{
 		SinkName: formattedSinkName,
 	}
@@ -842,7 +842,7 @@ func TestConfigServiceV2CreateSink(t *testing.T) {
 
 	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
 
-	var formattedParent string = ConfigProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var sink *loggingpb.LogSink = &loggingpb.LogSink{}
 	var request = &loggingpb.CreateSinkRequest{
 		Parent: formattedParent,
@@ -873,7 +873,7 @@ func TestConfigServiceV2CreateSinkError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockConfig.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = ConfigProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var sink *loggingpb.LogSink = &loggingpb.LogSink{}
 	var request = &loggingpb.CreateSinkRequest{
 		Parent: formattedParent,
@@ -913,7 +913,7 @@ func TestConfigServiceV2UpdateSink(t *testing.T) {
 
 	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
 
-	var formattedSinkName string = ConfigSinkPath("[PROJECT]", "[SINK]")
+	var formattedSinkName string = fmt.Sprintf("projects/%s/sinks/%s", "[PROJECT]", "[SINK]")
 	var sink *loggingpb.LogSink = &loggingpb.LogSink{}
 	var request = &loggingpb.UpdateSinkRequest{
 		SinkName: formattedSinkName,
@@ -944,7 +944,7 @@ func TestConfigServiceV2UpdateSinkError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockConfig.err = gstatus.Error(errCode, "test error")
 
-	var formattedSinkName string = ConfigSinkPath("[PROJECT]", "[SINK]")
+	var formattedSinkName string = fmt.Sprintf("projects/%s/sinks/%s", "[PROJECT]", "[SINK]")
 	var sink *loggingpb.LogSink = &loggingpb.LogSink{}
 	var request = &loggingpb.UpdateSinkRequest{
 		SinkName: formattedSinkName,
@@ -973,7 +973,7 @@ func TestConfigServiceV2DeleteSink(t *testing.T) {
 
 	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
 
-	var formattedSinkName string = ConfigSinkPath("[PROJECT]", "[SINK]")
+	var formattedSinkName string = fmt.Sprintf("projects/%s/sinks/%s", "[PROJECT]", "[SINK]")
 	var request = &loggingpb.DeleteSinkRequest{
 		SinkName: formattedSinkName,
 	}
@@ -999,7 +999,7 @@ func TestConfigServiceV2DeleteSinkError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockConfig.err = gstatus.Error(errCode, "test error")
 
-	var formattedSinkName string = ConfigSinkPath("[PROJECT]", "[SINK]")
+	var formattedSinkName string = fmt.Sprintf("projects/%s/sinks/%s", "[PROJECT]", "[SINK]")
 	var request = &loggingpb.DeleteSinkRequest{
 		SinkName: formattedSinkName,
 	}
@@ -1031,7 +1031,7 @@ func TestConfigServiceV2ListExclusions(t *testing.T) {
 
 	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
 
-	var formattedParent string = ConfigProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &loggingpb.ListExclusionsRequest{
 		Parent: formattedParent,
 	}
@@ -1070,7 +1070,7 @@ func TestConfigServiceV2ListExclusionsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockConfig.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = ConfigProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &loggingpb.ListExclusionsRequest{
 		Parent: formattedParent,
 	}
@@ -1106,7 +1106,7 @@ func TestConfigServiceV2GetExclusion(t *testing.T) {
 
 	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
 
-	var formattedName string = ConfigExclusionPath("[PROJECT]", "[EXCLUSION]")
+	var formattedName string = fmt.Sprintf("projects/%s/exclusions/%s", "[PROJECT]", "[EXCLUSION]")
 	var request = &loggingpb.GetExclusionRequest{
 		Name: formattedName,
 	}
@@ -1135,7 +1135,7 @@ func TestConfigServiceV2GetExclusionError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockConfig.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = ConfigExclusionPath("[PROJECT]", "[EXCLUSION]")
+	var formattedName string = fmt.Sprintf("projects/%s/exclusions/%s", "[PROJECT]", "[EXCLUSION]")
 	var request = &loggingpb.GetExclusionRequest{
 		Name: formattedName,
 	}
@@ -1171,7 +1171,7 @@ func TestConfigServiceV2CreateExclusion(t *testing.T) {
 
 	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
 
-	var formattedParent string = ConfigProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var exclusion *loggingpb.LogExclusion = &loggingpb.LogExclusion{}
 	var request = &loggingpb.CreateExclusionRequest{
 		Parent:    formattedParent,
@@ -1202,7 +1202,7 @@ func TestConfigServiceV2CreateExclusionError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockConfig.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = ConfigProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var exclusion *loggingpb.LogExclusion = &loggingpb.LogExclusion{}
 	var request = &loggingpb.CreateExclusionRequest{
 		Parent:    formattedParent,
@@ -1240,7 +1240,7 @@ func TestConfigServiceV2UpdateExclusion(t *testing.T) {
 
 	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
 
-	var formattedName string = ConfigExclusionPath("[PROJECT]", "[EXCLUSION]")
+	var formattedName string = fmt.Sprintf("projects/%s/exclusions/%s", "[PROJECT]", "[EXCLUSION]")
 	var exclusion *loggingpb.LogExclusion = &loggingpb.LogExclusion{}
 	var updateMask *field_maskpb.FieldMask = &field_maskpb.FieldMask{}
 	var request = &loggingpb.UpdateExclusionRequest{
@@ -1273,7 +1273,7 @@ func TestConfigServiceV2UpdateExclusionError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockConfig.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = ConfigExclusionPath("[PROJECT]", "[EXCLUSION]")
+	var formattedName string = fmt.Sprintf("projects/%s/exclusions/%s", "[PROJECT]", "[EXCLUSION]")
 	var exclusion *loggingpb.LogExclusion = &loggingpb.LogExclusion{}
 	var updateMask *field_maskpb.FieldMask = &field_maskpb.FieldMask{}
 	var request = &loggingpb.UpdateExclusionRequest{
@@ -1304,7 +1304,7 @@ func TestConfigServiceV2DeleteExclusion(t *testing.T) {
 
 	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
 
-	var formattedName string = ConfigExclusionPath("[PROJECT]", "[EXCLUSION]")
+	var formattedName string = fmt.Sprintf("projects/%s/exclusions/%s", "[PROJECT]", "[EXCLUSION]")
 	var request = &loggingpb.DeleteExclusionRequest{
 		Name: formattedName,
 	}
@@ -1330,7 +1330,7 @@ func TestConfigServiceV2DeleteExclusionError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockConfig.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = ConfigExclusionPath("[PROJECT]", "[EXCLUSION]")
+	var formattedName string = fmt.Sprintf("projects/%s/exclusions/%s", "[PROJECT]", "[EXCLUSION]")
 	var request = &loggingpb.DeleteExclusionRequest{
 		Name: formattedName,
 	}
@@ -1362,7 +1362,7 @@ func TestMetricsServiceV2ListLogMetrics(t *testing.T) {
 
 	mockMetrics.resps = append(mockMetrics.resps[:0], expectedResponse)
 
-	var formattedParent string = MetricsProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &loggingpb.ListLogMetricsRequest{
 		Parent: formattedParent,
 	}
@@ -1401,7 +1401,7 @@ func TestMetricsServiceV2ListLogMetricsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockMetrics.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = MetricsProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &loggingpb.ListLogMetricsRequest{
 		Parent: formattedParent,
 	}
@@ -1437,7 +1437,7 @@ func TestMetricsServiceV2GetLogMetric(t *testing.T) {
 
 	mockMetrics.resps = append(mockMetrics.resps[:0], expectedResponse)
 
-	var formattedMetricName string = MetricsMetricPath("[PROJECT]", "[METRIC]")
+	var formattedMetricName string = fmt.Sprintf("projects/%s/metrics/%s", "[PROJECT]", "[METRIC]")
 	var request = &loggingpb.GetLogMetricRequest{
 		MetricName: formattedMetricName,
 	}
@@ -1466,7 +1466,7 @@ func TestMetricsServiceV2GetLogMetricError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockMetrics.err = gstatus.Error(errCode, "test error")
 
-	var formattedMetricName string = MetricsMetricPath("[PROJECT]", "[METRIC]")
+	var formattedMetricName string = fmt.Sprintf("projects/%s/metrics/%s", "[PROJECT]", "[METRIC]")
 	var request = &loggingpb.GetLogMetricRequest{
 		MetricName: formattedMetricName,
 	}
@@ -1502,7 +1502,7 @@ func TestMetricsServiceV2CreateLogMetric(t *testing.T) {
 
 	mockMetrics.resps = append(mockMetrics.resps[:0], expectedResponse)
 
-	var formattedParent string = MetricsProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var metric *loggingpb.LogMetric = &loggingpb.LogMetric{}
 	var request = &loggingpb.CreateLogMetricRequest{
 		Parent: formattedParent,
@@ -1533,7 +1533,7 @@ func TestMetricsServiceV2CreateLogMetricError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockMetrics.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = MetricsProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var metric *loggingpb.LogMetric = &loggingpb.LogMetric{}
 	var request = &loggingpb.CreateLogMetricRequest{
 		Parent: formattedParent,
@@ -1571,7 +1571,7 @@ func TestMetricsServiceV2UpdateLogMetric(t *testing.T) {
 
 	mockMetrics.resps = append(mockMetrics.resps[:0], expectedResponse)
 
-	var formattedMetricName string = MetricsMetricPath("[PROJECT]", "[METRIC]")
+	var formattedMetricName string = fmt.Sprintf("projects/%s/metrics/%s", "[PROJECT]", "[METRIC]")
 	var metric *loggingpb.LogMetric = &loggingpb.LogMetric{}
 	var request = &loggingpb.UpdateLogMetricRequest{
 		MetricName: formattedMetricName,
@@ -1602,7 +1602,7 @@ func TestMetricsServiceV2UpdateLogMetricError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockMetrics.err = gstatus.Error(errCode, "test error")
 
-	var formattedMetricName string = MetricsMetricPath("[PROJECT]", "[METRIC]")
+	var formattedMetricName string = fmt.Sprintf("projects/%s/metrics/%s", "[PROJECT]", "[METRIC]")
 	var metric *loggingpb.LogMetric = &loggingpb.LogMetric{}
 	var request = &loggingpb.UpdateLogMetricRequest{
 		MetricName: formattedMetricName,
@@ -1631,7 +1631,7 @@ func TestMetricsServiceV2DeleteLogMetric(t *testing.T) {
 
 	mockMetrics.resps = append(mockMetrics.resps[:0], expectedResponse)
 
-	var formattedMetricName string = MetricsMetricPath("[PROJECT]", "[METRIC]")
+	var formattedMetricName string = fmt.Sprintf("projects/%s/metrics/%s", "[PROJECT]", "[METRIC]")
 	var request = &loggingpb.DeleteLogMetricRequest{
 		MetricName: formattedMetricName,
 	}
@@ -1657,7 +1657,7 @@ func TestMetricsServiceV2DeleteLogMetricError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockMetrics.err = gstatus.Error(errCode, "test error")
 
-	var formattedMetricName string = MetricsMetricPath("[PROJECT]", "[METRIC]")
+	var formattedMetricName string = fmt.Sprintf("projects/%s/metrics/%s", "[PROJECT]", "[METRIC]")
 	var request = &loggingpb.DeleteLogMetricRequest{
 		MetricName: formattedMetricName,
 	}

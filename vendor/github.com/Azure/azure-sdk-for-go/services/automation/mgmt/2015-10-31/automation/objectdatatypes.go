@@ -48,7 +48,7 @@ func (client ObjectDataTypesClient) ListFieldsByModuleAndType(ctx context.Contex
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ObjectDataTypesClient", "ListFieldsByModuleAndType")
+		return result, validation.NewError("automation.ObjectDataTypesClient", "ListFieldsByModuleAndType", err.Error())
 	}
 
 	req, err := client.ListFieldsByModuleAndTypePreparer(ctx, automationAccountName, moduleName, typeName)
@@ -122,7 +122,7 @@ func (client ObjectDataTypesClient) ListFieldsByType(ctx context.Context, automa
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ObjectDataTypesClient", "ListFieldsByType")
+		return result, validation.NewError("automation.ObjectDataTypesClient", "ListFieldsByType", err.Error())
 	}
 
 	req, err := client.ListFieldsByTypePreparer(ctx, automationAccountName, typeName)

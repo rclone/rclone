@@ -1939,7 +1939,6 @@ func (c *DAX) UpdateSubnetGroupWithContext(ctx aws.Context, input *UpdateSubnetG
 }
 
 // Contains all of the attributes of a specific DAX cluster.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/Cluster
 type Cluster struct {
 	_ struct{} `type:"structure"`
 
@@ -2109,7 +2108,6 @@ func (s *Cluster) SetTotalNodes(v int64) *Cluster {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/CreateClusterRequest
 type CreateClusterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2312,7 +2310,6 @@ func (s *CreateClusterInput) SetTags(v []*Tag) *CreateClusterInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/CreateClusterResponse
 type CreateClusterOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2336,7 +2333,6 @@ func (s *CreateClusterOutput) SetCluster(v *Cluster) *CreateClusterOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/CreateParameterGroupRequest
 type CreateParameterGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2385,7 +2381,6 @@ func (s *CreateParameterGroupInput) SetParameterGroupName(v string) *CreateParam
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/CreateParameterGroupResponse
 type CreateParameterGroupOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2409,7 +2404,6 @@ func (s *CreateParameterGroupOutput) SetParameterGroup(v *ParameterGroup) *Creat
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/CreateSubnetGroupRequest
 type CreateSubnetGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2471,7 +2465,6 @@ func (s *CreateSubnetGroupInput) SetSubnetIds(v []*string) *CreateSubnetGroupInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/CreateSubnetGroupResponse
 type CreateSubnetGroupOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2495,7 +2488,6 @@ func (s *CreateSubnetGroupOutput) SetSubnetGroup(v *SubnetGroup) *CreateSubnetGr
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DecreaseReplicationFactorRequest
 type DecreaseReplicationFactorInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2566,7 +2558,6 @@ func (s *DecreaseReplicationFactorInput) SetNodeIdsToRemove(v []*string) *Decrea
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DecreaseReplicationFactorResponse
 type DecreaseReplicationFactorOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2591,7 +2582,6 @@ func (s *DecreaseReplicationFactorOutput) SetCluster(v *Cluster) *DecreaseReplic
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DeleteClusterRequest
 type DeleteClusterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2630,7 +2620,6 @@ func (s *DeleteClusterInput) SetClusterName(v string) *DeleteClusterInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DeleteClusterResponse
 type DeleteClusterOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2654,7 +2643,6 @@ func (s *DeleteClusterOutput) SetCluster(v *Cluster) *DeleteClusterOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DeleteParameterGroupRequest
 type DeleteParameterGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2693,7 +2681,6 @@ func (s *DeleteParameterGroupInput) SetParameterGroupName(v string) *DeleteParam
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DeleteParameterGroupResponse
 type DeleteParameterGroupOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2718,7 +2705,6 @@ func (s *DeleteParameterGroupOutput) SetDeletionMessage(v string) *DeleteParamet
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DeleteSubnetGroupRequest
 type DeleteSubnetGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2757,7 +2743,6 @@ func (s *DeleteSubnetGroupInput) SetSubnetGroupName(v string) *DeleteSubnetGroup
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DeleteSubnetGroupResponse
 type DeleteSubnetGroupOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2782,7 +2767,6 @@ func (s *DeleteSubnetGroupOutput) SetDeletionMessage(v string) *DeleteSubnetGrou
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DescribeClustersRequest
 type DescribeClustersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2830,7 +2814,6 @@ func (s *DescribeClustersInput) SetNextToken(v string) *DescribeClustersInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DescribeClustersResponse
 type DescribeClustersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2864,7 +2847,6 @@ func (s *DescribeClustersOutput) SetNextToken(v string) *DescribeClustersOutput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DescribeDefaultParametersRequest
 type DescribeDefaultParametersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2903,7 +2885,6 @@ func (s *DescribeDefaultParametersInput) SetNextToken(v string) *DescribeDefault
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DescribeDefaultParametersResponse
 type DescribeDefaultParametersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2936,7 +2917,6 @@ func (s *DescribeDefaultParametersOutput) SetParameters(v []*Parameter) *Describ
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DescribeEventsRequest
 type DescribeEventsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3024,7 +3004,6 @@ func (s *DescribeEventsInput) SetStartTime(v time.Time) *DescribeEventsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DescribeEventsResponse
 type DescribeEventsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3057,7 +3036,6 @@ func (s *DescribeEventsOutput) SetNextToken(v string) *DescribeEventsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DescribeParameterGroupsRequest
 type DescribeParameterGroupsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3105,7 +3083,6 @@ func (s *DescribeParameterGroupsInput) SetParameterGroupNames(v []*string) *Desc
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DescribeParameterGroupsResponse
 type DescribeParameterGroupsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3139,7 +3116,6 @@ func (s *DescribeParameterGroupsOutput) SetParameterGroups(v []*ParameterGroup) 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DescribeParametersRequest
 type DescribeParametersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3212,7 +3188,6 @@ func (s *DescribeParametersInput) SetSource(v string) *DescribeParametersInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DescribeParametersResponse
 type DescribeParametersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3246,7 +3221,6 @@ func (s *DescribeParametersOutput) SetParameters(v []*Parameter) *DescribeParame
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DescribeSubnetGroupsRequest
 type DescribeSubnetGroupsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3294,7 +3268,6 @@ func (s *DescribeSubnetGroupsInput) SetSubnetGroupNames(v []*string) *DescribeSu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/DescribeSubnetGroupsResponse
 type DescribeSubnetGroupsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3331,7 +3304,6 @@ func (s *DescribeSubnetGroupsOutput) SetSubnetGroups(v []*SubnetGroup) *Describe
 // Represents the information required for client programs to connect to the
 // configuration endpoint for a DAX cluster, or to an individual node within
 // the cluster.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/Endpoint
 type Endpoint struct {
 	_ struct{} `type:"structure"`
 
@@ -3367,7 +3339,6 @@ func (s *Endpoint) SetPort(v int64) *Endpoint {
 // Represents a single occurrence of something interesting within the system.
 // Some examples of events are creating a DAX cluster, adding or removing a
 // node, or rebooting a node.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/Event
 type Event struct {
 	_ struct{} `type:"structure"`
 
@@ -3420,7 +3391,6 @@ func (s *Event) SetSourceType(v string) *Event {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/IncreaseReplicationFactorRequest
 type IncreaseReplicationFactorInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3484,7 +3454,6 @@ func (s *IncreaseReplicationFactorInput) SetNewReplicationFactor(v int64) *Incre
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/IncreaseReplicationFactorResponse
 type IncreaseReplicationFactorOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3508,7 +3477,6 @@ func (s *IncreaseReplicationFactorOutput) SetCluster(v *Cluster) *IncreaseReplic
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/ListTagsRequest
 type ListTagsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3558,7 +3526,6 @@ func (s *ListTagsInput) SetResourceName(v string) *ListTagsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/ListTagsResponse
 type ListTagsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3593,7 +3560,6 @@ func (s *ListTagsOutput) SetTags(v []*Tag) *ListTagsOutput {
 }
 
 // Represents an individual node within a DAX cluster.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/Node
 type Node struct {
 	_ struct{} `type:"structure"`
 
@@ -3667,7 +3633,6 @@ func (s *Node) SetParameterGroupStatus(v string) *Node {
 }
 
 // Represents a parameter value that is applicable to a particular node type.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/NodeTypeSpecificValue
 type NodeTypeSpecificValue struct {
 	_ struct{} `type:"structure"`
 
@@ -3703,7 +3668,6 @@ func (s *NodeTypeSpecificValue) SetValue(v string) *NodeTypeSpecificValue {
 // Describes a notification topic and its status. Notification topics are used
 // for publishing DAX events to subscribers using Amazon Simple Notification
 // Service (SNS).
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/NotificationConfiguration
 type NotificationConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -3737,7 +3701,6 @@ func (s *NotificationConfiguration) SetTopicStatus(v string) *NotificationConfig
 }
 
 // Describes an individual setting that controls some aspect of DAX behavior.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/Parameter
 type Parameter struct {
 	_ struct{} `type:"structure"`
 
@@ -3847,7 +3810,6 @@ func (s *Parameter) SetSource(v string) *Parameter {
 }
 
 // A named set of parameters that are applied to all of the nodes in a DAX cluster.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/ParameterGroup
 type ParameterGroup struct {
 	_ struct{} `type:"structure"`
 
@@ -3881,7 +3843,6 @@ func (s *ParameterGroup) SetParameterGroupName(v string) *ParameterGroup {
 }
 
 // The status of a parameter group.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/ParameterGroupStatus
 type ParameterGroupStatus struct {
 	_ struct{} `type:"structure"`
 
@@ -3924,7 +3885,6 @@ func (s *ParameterGroupStatus) SetParameterGroupName(v string) *ParameterGroupSt
 }
 
 // An individual DAX parameter.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/ParameterNameValue
 type ParameterNameValue struct {
 	_ struct{} `type:"structure"`
 
@@ -3957,7 +3917,6 @@ func (s *ParameterNameValue) SetParameterValue(v string) *ParameterNameValue {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/RebootNodeRequest
 type RebootNodeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4010,7 +3969,6 @@ func (s *RebootNodeInput) SetNodeId(v string) *RebootNodeInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/RebootNodeResponse
 type RebootNodeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4035,7 +3993,6 @@ func (s *RebootNodeOutput) SetCluster(v *Cluster) *RebootNodeOutput {
 }
 
 // An individual VPC security group and its status.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/SecurityGroupMembership
 type SecurityGroupMembership struct {
 	_ struct{} `type:"structure"`
 
@@ -4071,7 +4028,6 @@ func (s *SecurityGroupMembership) SetStatus(v string) *SecurityGroupMembership {
 // Represents the subnet associated with a DAX cluster. This parameter refers
 // to subnets defined in Amazon Virtual Private Cloud (Amazon VPC) and used
 // with DAX.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/Subnet
 type Subnet struct {
 	_ struct{} `type:"structure"`
 
@@ -4109,7 +4065,6 @@ func (s *Subnet) SetSubnetIdentifier(v string) *Subnet {
 //    * CreateSubnetGroup
 //
 //    * ModifySubnetGroup
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/SubnetGroup
 type SubnetGroup struct {
 	_ struct{} `type:"structure"`
 
@@ -4168,7 +4123,6 @@ func (s *SubnetGroup) SetVpcId(v string) *SubnetGroup {
 // the tag limit of 50. User-assigned tag names have the prefix user:.
 //
 // You cannot backdate the application of a tag.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/Tag
 type Tag struct {
 	_ struct{} `type:"structure"`
 
@@ -4203,7 +4157,6 @@ func (s *Tag) SetValue(v string) *Tag {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/TagResourceRequest
 type TagResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4256,7 +4209,6 @@ func (s *TagResourceInput) SetTags(v []*Tag) *TagResourceInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/TagResourceResponse
 type TagResourceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4280,7 +4232,6 @@ func (s *TagResourceOutput) SetTags(v []*Tag) *TagResourceOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/UntagResourceRequest
 type UntagResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4334,7 +4285,6 @@ func (s *UntagResourceInput) SetTagKeys(v []*string) *UntagResourceInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/UntagResourceResponse
 type UntagResourceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4358,7 +4308,6 @@ func (s *UntagResourceOutput) SetTags(v []*Tag) *UntagResourceOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/UpdateClusterRequest
 type UpdateClusterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4455,7 +4404,6 @@ func (s *UpdateClusterInput) SetSecurityGroupIds(v []*string) *UpdateClusterInpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/UpdateClusterResponse
 type UpdateClusterOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4479,7 +4427,6 @@ func (s *UpdateClusterOutput) SetCluster(v *Cluster) *UpdateClusterOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/UpdateParameterGroupRequest
 type UpdateParameterGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4533,7 +4480,6 @@ func (s *UpdateParameterGroupInput) SetParameterNameValues(v []*ParameterNameVal
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/UpdateParameterGroupResponse
 type UpdateParameterGroupOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4557,7 +4503,6 @@ func (s *UpdateParameterGroupOutput) SetParameterGroup(v *ParameterGroup) *Updat
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/UpdateSubnetGroupRequest
 type UpdateSubnetGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4614,7 +4559,6 @@ func (s *UpdateSubnetGroupInput) SetSubnetIds(v []*string) *UpdateSubnetGroupInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/dax-2017-04-19/UpdateSubnetGroupResponse
 type UpdateSubnetGroupOutput struct {
 	_ struct{} `type:"structure"`
 

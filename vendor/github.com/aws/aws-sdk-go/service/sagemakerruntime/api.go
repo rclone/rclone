@@ -104,7 +104,6 @@ func (c *SageMakerRuntime) InvokeEndpointWithContext(ctx aws.Context, input *Inv
 	return out, req.Send()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.sagemaker-2017-05-13/InvokeEndpointInput
 type InvokeEndpointInput struct {
 	_ struct{} `type:"structure" payload:"Body"`
 
@@ -178,7 +177,6 @@ func (s *InvokeEndpointInput) SetEndpointName(v string) *InvokeEndpointInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.sagemaker-2017-05-13/InvokeEndpointOutput
 type InvokeEndpointOutput struct {
 	_ struct{} `type:"structure" payload:"Body"`
 

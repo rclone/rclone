@@ -38,8 +38,8 @@ func NewPipelineClient() PipelineClient {
 
 // Get gets the Pipeline information for the specified pipeline ID.
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. pipelineIdentity is pipeline ID.
-// startDateTime is the start date for when to get the pipeline and aggregate its data. The startDateTime and
+// accountName is the Azure Data Lake Analytics account to execute job operations on. pipelineIdentity is pipeline
+// ID. startDateTime is the start date for when to get the pipeline and aggregate its data. The startDateTime and
 // endDateTime can be no more than 30 days apart. endDateTime is the end date for when to get the pipeline and
 // aggregate its data. The startDateTime and endDateTime can be no more than 30 days apart.
 func (client PipelineClient) Get(ctx context.Context, accountName string, pipelineIdentity uuid.UUID, startDateTime *date.Time, endDateTime *date.Time) (result PipelineInformation, err error) {
@@ -116,10 +116,10 @@ func (client PipelineClient) GetResponder(resp *http.Response) (result PipelineI
 
 // List lists all pipelines.
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. startDateTime is the start date
-// for when to get the list of pipelines. The startDateTime and endDateTime can be no more than 30 days apart.
-// endDateTime is the end date for when to get the list of pipelines. The startDateTime and endDateTime can be no more
-// than 30 days apart.
+// accountName is the Azure Data Lake Analytics account to execute job operations on. startDateTime is the start
+// date for when to get the list of pipelines. The startDateTime and endDateTime can be no more than 30 days apart.
+// endDateTime is the end date for when to get the list of pipelines. The startDateTime and endDateTime can be no
+// more than 30 days apart.
 func (client PipelineClient) List(ctx context.Context, accountName string, startDateTime *date.Time, endDateTime *date.Time) (result PipelineInformationListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, accountName, startDateTime, endDateTime)

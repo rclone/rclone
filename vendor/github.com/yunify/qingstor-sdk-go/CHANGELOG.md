@@ -1,6 +1,13 @@
 # Change Log
 All notable changes to QingStor SDK for Go will be documented in this file.
 
+## [v2.2.10] - 2018-3-14
+
+### Changed
+
+- Close body for every API except GetObject and ImageProcess
+- Add correct i/o timeout behavior for http client
+
 ## [v2.2.9] - 2017-11-25
 
 ### Changed

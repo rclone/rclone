@@ -10,6 +10,13 @@ const (
 	// The provided iterator exceeds the maximum age allowed.
 	ErrCodeExpiredIteratorException = "ExpiredIteratorException"
 
+	// ErrCodeExpiredNextTokenException for service response error code
+	// "ExpiredNextTokenException".
+	//
+	// The pagination token passed to the ListShards operation is expired. For more
+	// information, see ListShardsInput$NextToken.
+	ErrCodeExpiredNextTokenException = "ExpiredNextTokenException"
+
 	// ErrCodeInvalidArgumentException for service response error code
 	// "InvalidArgumentException".
 	//
@@ -74,8 +81,8 @@ const (
 	// The request rate for the stream is too high, or the requested data is too
 	// large for the available throughput. Reduce the frequency or size of your
 	// requests. For more information, see Streams Limits (http://docs.aws.amazon.com/kinesis/latest/dev/service-sizes-and-limits.html)
-	// in the Amazon Kinesis Streams Developer Guide, and Error Retries and Exponential
-	// Backoff in AWS (http://docs.aws.amazon.com/general/latest/gr/api-retries.html)
+	// in the Amazon Kinesis Data Streams Developer Guide, and Error Retries and
+	// Exponential Backoff in AWS (http://docs.aws.amazon.com/general/latest/gr/api-retries.html)
 	// in the AWS General Reference.
 	ErrCodeProvisionedThroughputExceededException = "ProvisionedThroughputExceededException"
 

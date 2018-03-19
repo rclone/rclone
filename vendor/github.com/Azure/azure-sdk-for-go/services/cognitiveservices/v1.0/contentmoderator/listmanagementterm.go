@@ -254,8 +254,8 @@ func (client ListManagementTermClient) DeleteTermResponder(resp *http.Response) 
 
 // GetAllTerms gets all terms from the list with list Id equal to the list Id passed.
 //
-// listID is list Id of the image list. language is language of the terms. offset is the pagination start index. limit
-// is the max limit.
+// listID is list Id of the image list. language is language of the terms. offset is the pagination start index.
+// limit is the max limit.
 func (client ListManagementTermClient) GetAllTerms(ctx context.Context, listID string, language string, offset *int32, limit *int32) (result Terms, err error) {
 	req, err := client.GetAllTermsPreparer(ctx, listID, language, offset, limit)
 	if err != nil {

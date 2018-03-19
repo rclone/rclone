@@ -1344,6 +1344,84 @@ func (c *ElasticBeanstalk) DeletePlatformVersionWithContext(ctx aws.Context, inp
 	return out, req.Send()
 }
 
+const opDescribeAccountAttributes = "DescribeAccountAttributes"
+
+// DescribeAccountAttributesRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeAccountAttributes operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeAccountAttributes for more information on using the DescribeAccountAttributes
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeAccountAttributesRequest method.
+//    req, resp := client.DescribeAccountAttributesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeAccountAttributes
+func (c *ElasticBeanstalk) DescribeAccountAttributesRequest(input *DescribeAccountAttributesInput) (req *request.Request, output *DescribeAccountAttributesOutput) {
+	op := &request.Operation{
+		Name:       opDescribeAccountAttributes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeAccountAttributesInput{}
+	}
+
+	output = &DescribeAccountAttributesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeAccountAttributes API operation for AWS Elastic Beanstalk.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Elastic Beanstalk's
+// API operation DescribeAccountAttributes for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInsufficientPrivilegesException "InsufficientPrivilegesException"
+//   The specified account does not have sufficient privileges for one of more
+//   AWS services.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeAccountAttributes
+func (c *ElasticBeanstalk) DescribeAccountAttributes(input *DescribeAccountAttributesInput) (*DescribeAccountAttributesOutput, error) {
+	req, out := c.DescribeAccountAttributesRequest(input)
+	return out, req.Send()
+}
+
+// DescribeAccountAttributesWithContext is the same as DescribeAccountAttributes with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeAccountAttributes for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ElasticBeanstalk) DescribeAccountAttributesWithContext(ctx aws.Context, input *DescribeAccountAttributesInput, opts ...request.Option) (*DescribeAccountAttributesOutput, error) {
+	req, out := c.DescribeAccountAttributesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribeApplicationVersions = "DescribeApplicationVersions"
 
 // DescribeApplicationVersionsRequest generates a "aws/request.Request" representing the
@@ -3719,7 +3797,6 @@ func (c *ElasticBeanstalk) ValidateConfigurationSettingsWithContext(ctx aws.Cont
 	return out, req.Send()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/AbortEnvironmentUpdateMessage
 type AbortEnvironmentUpdateInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3767,7 +3844,6 @@ func (s *AbortEnvironmentUpdateInput) SetEnvironmentName(v string) *AbortEnviron
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/AbortEnvironmentUpdateOutput
 type AbortEnvironmentUpdateOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3783,7 +3859,6 @@ func (s AbortEnvironmentUpdateOutput) GoString() string {
 }
 
 // Describes the properties of an application.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ApplicationDescription
 type ApplicationDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -3862,7 +3937,6 @@ func (s *ApplicationDescription) SetVersions(v []*string) *ApplicationDescriptio
 }
 
 // Result message containing a single description of an application.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ApplicationDescriptionMessage
 type ApplicationDescriptionMessage struct {
 	_ struct{} `type:"structure"`
 
@@ -3887,7 +3961,6 @@ func (s *ApplicationDescriptionMessage) SetApplication(v *ApplicationDescription
 }
 
 // Application request metrics for an AWS Elastic Beanstalk environment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ApplicationMetrics
 type ApplicationMetrics struct {
 	_ struct{} `type:"structure"`
 
@@ -3948,7 +4021,6 @@ func (s *ApplicationMetrics) SetStatusCodes(v *StatusCodes) *ApplicationMetrics 
 // that Elastic Beanstalk assumes in order to apply lifecycle settings. The
 // version lifecycle configuration defines lifecycle settings for application
 // versions.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ApplicationResourceLifecycleConfig
 type ApplicationResourceLifecycleConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -3997,7 +4069,6 @@ func (s *ApplicationResourceLifecycleConfig) SetVersionLifecycleConfig(v *Applic
 }
 
 // Describes the properties of an application version.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ApplicationVersionDescription
 type ApplicationVersionDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -4096,7 +4167,6 @@ func (s *ApplicationVersionDescription) SetVersionLabel(v string) *ApplicationVe
 }
 
 // Result message wrapping a single description of an application version.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ApplicationVersionDescriptionMessage
 type ApplicationVersionDescriptionMessage struct {
 	_ struct{} `type:"structure"`
 
@@ -4127,7 +4197,6 @@ func (s *ApplicationVersionDescriptionMessage) SetApplicationVersion(v *Applicat
 // When Elastic Beanstalk deletes an application version from its database,
 // you can no longer deploy that version to an environment. The source bundle
 // remains in S3 unless you configure the rule to delete it.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ApplicationVersionLifecycleConfig
 type ApplicationVersionLifecycleConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -4183,7 +4252,6 @@ func (s *ApplicationVersionLifecycleConfig) SetMaxCountRule(v *MaxCountRule) *Ap
 }
 
 // Request to execute a scheduled managed action immediately.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ApplyEnvironmentManagedActionRequest
 type ApplyEnvironmentManagedActionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4241,7 +4309,6 @@ func (s *ApplyEnvironmentManagedActionInput) SetEnvironmentName(v string) *Apply
 }
 
 // The result message containing information about the managed action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ApplyEnvironmentManagedActionResult
 type ApplyEnvironmentManagedActionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4293,7 +4360,6 @@ func (s *ApplyEnvironmentManagedActionOutput) SetStatus(v string) *ApplyEnvironm
 }
 
 // Describes an Auto Scaling launch configuration.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/AutoScalingGroup
 type AutoScalingGroup struct {
 	_ struct{} `type:"structure"`
 
@@ -4318,7 +4384,6 @@ func (s *AutoScalingGroup) SetName(v string) *AutoScalingGroup {
 }
 
 // Settings for an AWS CodeBuild build.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/BuildConfiguration
 type BuildConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -4412,7 +4477,6 @@ func (s *BuildConfiguration) SetTimeoutInMinutes(v int64) *BuildConfiguration {
 }
 
 // The builder used to build the custom platform.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/Builder
 type Builder struct {
 	_ struct{} `type:"structure"`
 
@@ -4437,7 +4501,6 @@ func (s *Builder) SetARN(v string) *Builder {
 }
 
 // CPU utilization metrics for an instance.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/CPUUtilization
 type CPUUtilization struct {
 	_ struct{} `type:"structure"`
 
@@ -4523,7 +4586,6 @@ func (s *CPUUtilization) SetUser(v float64) *CPUUtilization {
 }
 
 // Results message indicating whether a CNAME is available.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/CheckDNSAvailabilityMessage
 type CheckDNSAvailabilityInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4566,7 +4628,6 @@ func (s *CheckDNSAvailabilityInput) SetCNAMEPrefix(v string) *CheckDNSAvailabili
 }
 
 // Indicates if the specified CNAME is available.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/CheckDNSAvailabilityResultMessage
 type CheckDNSAvailabilityOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4605,7 +4666,6 @@ func (s *CheckDNSAvailabilityOutput) SetFullyQualifiedCNAME(v string) *CheckDNSA
 }
 
 // Request to create or update a group of environments.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ComposeEnvironmentsMessage
 type ComposeEnvironmentsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4672,7 +4732,6 @@ func (s *ComposeEnvironmentsInput) SetVersionLabels(v []*string) *ComposeEnviron
 }
 
 // Describes the possible values for a configuration option.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ConfigurationOptionDescription
 type ConfigurationOptionDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -4829,7 +4888,6 @@ func (s *ConfigurationOptionDescription) SetValueType(v string) *ConfigurationOp
 // its current value. For a list of possible option values, go to Option Values
 // (http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/command-options.html)
 // in the AWS Elastic Beanstalk Developer Guide.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ConfigurationOptionSetting
 type ConfigurationOptionSetting struct {
 	_ struct{} `type:"structure"`
 
@@ -4894,7 +4952,6 @@ func (s *ConfigurationOptionSetting) SetValue(v string) *ConfigurationOptionSett
 }
 
 // Describes the settings for a configuration set.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ConfigurationSettingsDescription
 type ConfigurationSettingsDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -5013,7 +5070,6 @@ func (s *ConfigurationSettingsDescription) SetTemplateName(v string) *Configurat
 }
 
 // Request to create an application.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/CreateApplicationMessage
 type CreateApplicationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5082,7 +5138,6 @@ func (s *CreateApplicationInput) SetResourceLifecycleConfig(v *ApplicationResour
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/CreateApplicationVersionMessage
 type CreateApplicationVersionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5227,7 +5282,6 @@ func (s *CreateApplicationVersionInput) SetVersionLabel(v string) *CreateApplica
 }
 
 // Request to create a configuration template.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/CreateConfigurationTemplateMessage
 type CreateConfigurationTemplateInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5387,7 +5441,6 @@ func (s *CreateConfigurationTemplateInput) SetTemplateName(v string) *CreateConf
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/CreateEnvironmentMessage
 type CreateEnvironmentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5615,7 +5668,6 @@ func (s *CreateEnvironmentInput) SetVersionLabel(v string) *CreateEnvironmentInp
 }
 
 // Request to create a new platform version.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/CreatePlatformVersionRequest
 type CreatePlatformVersionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5713,7 +5765,6 @@ func (s *CreatePlatformVersionInput) SetPlatformVersion(v string) *CreatePlatfor
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/CreatePlatformVersionResult
 type CreatePlatformVersionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5746,7 +5797,6 @@ func (s *CreatePlatformVersionOutput) SetPlatformSummary(v *PlatformSummary) *Cr
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/CreateStorageLocationInput
 type CreateStorageLocationInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5762,7 +5812,6 @@ func (s CreateStorageLocationInput) GoString() string {
 }
 
 // Results of a CreateStorageLocationResult call.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/CreateStorageLocationResultMessage
 type CreateStorageLocationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5787,7 +5836,6 @@ func (s *CreateStorageLocationOutput) SetS3Bucket(v string) *CreateStorageLocati
 }
 
 // A custom AMI available to platforms.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/CustomAmi
 type CustomAmi struct {
 	_ struct{} `type:"structure"`
 
@@ -5821,7 +5869,6 @@ func (s *CustomAmi) SetVirtualizationType(v string) *CustomAmi {
 }
 
 // Request to delete an application.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DeleteApplicationMessage
 type DeleteApplicationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5873,7 +5920,6 @@ func (s *DeleteApplicationInput) SetTerminateEnvByForce(v bool) *DeleteApplicati
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DeleteApplicationOutput
 type DeleteApplicationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5889,7 +5935,6 @@ func (s DeleteApplicationOutput) GoString() string {
 }
 
 // Request to delete an application version.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DeleteApplicationVersionMessage
 type DeleteApplicationVersionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5959,7 +6004,6 @@ func (s *DeleteApplicationVersionInput) SetVersionLabel(v string) *DeleteApplica
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DeleteApplicationVersionOutput
 type DeleteApplicationVersionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5975,7 +6019,6 @@ func (s DeleteApplicationVersionOutput) GoString() string {
 }
 
 // Request to delete a configuration template.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DeleteConfigurationTemplateMessage
 type DeleteConfigurationTemplateInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6034,7 +6077,6 @@ func (s *DeleteConfigurationTemplateInput) SetTemplateName(v string) *DeleteConf
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DeleteConfigurationTemplateOutput
 type DeleteConfigurationTemplateOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6050,7 +6092,6 @@ func (s DeleteConfigurationTemplateOutput) GoString() string {
 }
 
 // Request to delete a draft environment configuration.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DeleteEnvironmentConfigurationMessage
 type DeleteEnvironmentConfigurationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6109,7 +6150,6 @@ func (s *DeleteEnvironmentConfigurationInput) SetEnvironmentName(v string) *Dele
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DeleteEnvironmentConfigurationOutput
 type DeleteEnvironmentConfigurationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6124,7 +6164,6 @@ func (s DeleteEnvironmentConfigurationOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DeletePlatformVersionRequest
 type DeletePlatformVersionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6148,7 +6187,6 @@ func (s *DeletePlatformVersionInput) SetPlatformArn(v string) *DeletePlatformVer
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DeletePlatformVersionResult
 type DeletePlatformVersionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6173,7 +6211,6 @@ func (s *DeletePlatformVersionOutput) SetPlatformSummary(v *PlatformSummary) *De
 }
 
 // Information about an application version deployment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/Deployment
 type Deployment struct {
 	_ struct{} `type:"structure"`
 
@@ -6233,8 +6270,43 @@ func (s *Deployment) SetVersionLabel(v string) *Deployment {
 	return s
 }
 
+type DescribeAccountAttributesInput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DescribeAccountAttributesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeAccountAttributesInput) GoString() string {
+	return s.String()
+}
+
+type DescribeAccountAttributesOutput struct {
+	_ struct{} `type:"structure"`
+
+	ResourceQuotas *ResourceQuotas `type:"structure"`
+}
+
+// String returns the string representation
+func (s DescribeAccountAttributesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeAccountAttributesOutput) GoString() string {
+	return s.String()
+}
+
+// SetResourceQuotas sets the ResourceQuotas field's value.
+func (s *DescribeAccountAttributesOutput) SetResourceQuotas(v *ResourceQuotas) *DescribeAccountAttributesOutput {
+	s.ResourceQuotas = v
+	return s
+}
+
 // Request to describe application versions.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeApplicationVersionsMessage
 type DescribeApplicationVersionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6310,7 +6382,6 @@ func (s *DescribeApplicationVersionsInput) SetVersionLabels(v []*string) *Descri
 }
 
 // Result message wrapping a list of application version descriptions.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ApplicationVersionDescriptionsMessage
 type DescribeApplicationVersionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6345,7 +6416,6 @@ func (s *DescribeApplicationVersionsOutput) SetNextToken(v string) *DescribeAppl
 }
 
 // Request to describe one or more applications.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeApplicationsMessage
 type DescribeApplicationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6371,7 +6441,6 @@ func (s *DescribeApplicationsInput) SetApplicationNames(v []*string) *DescribeAp
 }
 
 // Result message containing a list of application descriptions.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ApplicationDescriptionsMessage
 type DescribeApplicationsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6396,7 +6465,6 @@ func (s *DescribeApplicationsOutput) SetApplications(v []*ApplicationDescription
 }
 
 // Result message containing a list of application version descriptions.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeConfigurationOptionsMessage
 type DescribeConfigurationOptionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6498,7 +6566,6 @@ func (s *DescribeConfigurationOptionsInput) SetTemplateName(v string) *DescribeC
 }
 
 // Describes the settings for a specified configuration set.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ConfigurationOptionsDescription
 type DescribeConfigurationOptionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6542,7 +6609,6 @@ func (s *DescribeConfigurationOptionsOutput) SetSolutionStackName(v string) *Des
 
 // Result message containing all of the configuration settings for a specified
 // solution stack or configuration template.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeConfigurationSettingsMessage
 type DescribeConfigurationSettingsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6619,7 +6685,6 @@ func (s *DescribeConfigurationSettingsInput) SetTemplateName(v string) *Describe
 }
 
 // The results from a request to change the configuration settings of an environment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ConfigurationSettingsDescriptions
 type DescribeConfigurationSettingsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6644,7 +6709,6 @@ func (s *DescribeConfigurationSettingsOutput) SetConfigurationSettings(v []*Conf
 }
 
 // See the example below to learn how to create a request body.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeEnvironmentHealthRequest
 type DescribeEnvironmentHealthInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6705,7 +6769,6 @@ func (s *DescribeEnvironmentHealthInput) SetEnvironmentName(v string) *DescribeE
 }
 
 // Health details for an AWS Elastic Beanstalk environment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeEnvironmentHealthResult
 type DescribeEnvironmentHealthOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6797,7 +6860,6 @@ func (s *DescribeEnvironmentHealthOutput) SetStatus(v string) *DescribeEnvironme
 }
 
 // Request to list completed and failed managed actions.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeEnvironmentManagedActionHistoryRequest
 type DescribeEnvironmentManagedActionHistoryInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6862,7 +6924,6 @@ func (s *DescribeEnvironmentManagedActionHistoryInput) SetNextToken(v string) *D
 }
 
 // A result message containing a list of completed and failed managed actions.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeEnvironmentManagedActionHistoryResult
 type DescribeEnvironmentManagedActionHistoryOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6897,7 +6958,6 @@ func (s *DescribeEnvironmentManagedActionHistoryOutput) SetNextToken(v string) *
 }
 
 // Request to list an environment's upcoming and in-progress managed actions.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeEnvironmentManagedActionsRequest
 type DescribeEnvironmentManagedActionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6940,7 +7000,6 @@ func (s *DescribeEnvironmentManagedActionsInput) SetStatus(v string) *DescribeEn
 }
 
 // The result message containing a list of managed actions.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeEnvironmentManagedActionsResult
 type DescribeEnvironmentManagedActionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6965,7 +7024,6 @@ func (s *DescribeEnvironmentManagedActionsOutput) SetManagedActions(v []*Managed
 }
 
 // Request to describe the resources in an environment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeEnvironmentResourcesMessage
 type DescribeEnvironmentResourcesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7020,7 +7078,6 @@ func (s *DescribeEnvironmentResourcesInput) SetEnvironmentName(v string) *Descri
 }
 
 // Result message containing a list of environment resource descriptions.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/EnvironmentResourceDescriptionsMessage
 type DescribeEnvironmentResourcesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7045,7 +7102,6 @@ func (s *DescribeEnvironmentResourcesOutput) SetEnvironmentResources(v *Environm
 }
 
 // Request to describe one or more environments.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeEnvironmentsMessage
 type DescribeEnvironmentsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7170,7 +7226,6 @@ func (s *DescribeEnvironmentsInput) SetVersionLabel(v string) *DescribeEnvironme
 }
 
 // Request to retrieve a list of events for an environment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeEventsMessage
 type DescribeEventsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7329,7 +7384,6 @@ func (s *DescribeEventsInput) SetVersionLabel(v string) *DescribeEventsInput {
 }
 
 // Result message wrapping a list of event descriptions.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/EventDescriptionsMessage
 type DescribeEventsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7364,7 +7418,6 @@ func (s *DescribeEventsOutput) SetNextToken(v string) *DescribeEventsOutput {
 }
 
 // Parameters for a call to DescribeInstancesHealth.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeInstancesHealthRequest
 type DescribeInstancesHealthInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7434,7 +7487,6 @@ func (s *DescribeInstancesHealthInput) SetNextToken(v string) *DescribeInstances
 
 // Detailed health information about the Amazon EC2 instances in an AWS Elastic
 // Beanstalk environment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeInstancesHealthResult
 type DescribeInstancesHealthOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7476,7 +7528,6 @@ func (s *DescribeInstancesHealthOutput) SetRefreshedAt(v time.Time) *DescribeIns
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribePlatformVersionRequest
 type DescribePlatformVersionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7500,7 +7551,6 @@ func (s *DescribePlatformVersionInput) SetPlatformArn(v string) *DescribePlatfor
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribePlatformVersionResult
 type DescribePlatformVersionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7525,7 +7575,6 @@ func (s *DescribePlatformVersionOutput) SetPlatformDescription(v *PlatformDescri
 }
 
 // Describes the properties of an environment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/EnvironmentDescription
 type EnvironmentDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -7756,7 +7805,6 @@ func (s *EnvironmentDescription) SetVersionLabel(v string) *EnvironmentDescripti
 }
 
 // Result message containing a list of environment descriptions.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/EnvironmentDescriptionsMessage
 type EnvironmentDescriptionsMessage struct {
 	_ struct{} `type:"structure"`
 
@@ -7791,7 +7839,6 @@ func (s *EnvironmentDescriptionsMessage) SetNextToken(v string) *EnvironmentDesc
 }
 
 // The information retrieved from the Amazon EC2 instances.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/EnvironmentInfoDescription
 type EnvironmentInfoDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -7847,7 +7894,6 @@ func (s *EnvironmentInfoDescription) SetSampleTimestamp(v time.Time) *Environmen
 // to another environment in the same group. See Environment Manifest (env.yaml)
 // (http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environment-cfg-manifest.html)
 // for details.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/EnvironmentLink
 type EnvironmentLink struct {
 	_ struct{} `type:"structure"`
 
@@ -7881,7 +7927,6 @@ func (s *EnvironmentLink) SetLinkName(v string) *EnvironmentLink {
 }
 
 // Describes the AWS resources in use by this environment. This data is live.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/EnvironmentResourceDescription
 type EnvironmentResourceDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -7961,7 +8006,6 @@ func (s *EnvironmentResourceDescription) SetTriggers(v []*Trigger) *EnvironmentR
 
 // Describes the AWS resources in use by this environment. This data is not
 // live data.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/EnvironmentResourcesDescription
 type EnvironmentResourcesDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -7986,7 +8030,6 @@ func (s *EnvironmentResourcesDescription) SetLoadBalancer(v *LoadBalancerDescrip
 }
 
 // Describes the properties of an environment tier
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/EnvironmentTier
 type EnvironmentTier struct {
 	_ struct{} `type:"structure"`
 
@@ -8029,7 +8072,6 @@ func (s *EnvironmentTier) SetVersion(v string) *EnvironmentTier {
 }
 
 // Describes an event.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/EventDescription
 type EventDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -8126,7 +8168,6 @@ func (s *EventDescription) SetVersionLabel(v string) *EventDescription {
 }
 
 // The description of an Amazon EC2 instance.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/Instance
 type Instance struct {
 	_ struct{} `type:"structure"`
 
@@ -8152,7 +8193,6 @@ func (s *Instance) SetId(v string) *Instance {
 
 // Represents summary information about the health of an instance. For more
 // information, see Health Colors and Statuses (http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/health-enhanced-status.html).
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/InstanceHealthSummary
 type InstanceHealthSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -8247,7 +8287,6 @@ func (s *InstanceHealthSummary) SetWarning(v int64) *InstanceHealthSummary {
 
 // Represents the average latency for the slowest X percent of requests over
 // the last 10 seconds.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/Latency
 type Latency struct {
 	_ struct{} `type:"structure"`
 
@@ -8343,7 +8382,6 @@ func (s *Latency) SetP999(v float64) *Latency {
 }
 
 // Describes an Auto Scaling launch configuration.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/LaunchConfiguration
 type LaunchConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -8367,7 +8405,6 @@ func (s *LaunchConfiguration) SetName(v string) *LaunchConfiguration {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ListAvailableSolutionStacksInput
 type ListAvailableSolutionStacksInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -8383,7 +8420,6 @@ func (s ListAvailableSolutionStacksInput) GoString() string {
 }
 
 // A list of available AWS Elastic Beanstalk solution stacks.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ListAvailableSolutionStacksResultMessage
 type ListAvailableSolutionStacksOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8416,7 +8452,6 @@ func (s *ListAvailableSolutionStacksOutput) SetSolutionStacks(v []*string) *List
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ListPlatformVersionsRequest
 type ListPlatformVersionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8473,7 +8508,6 @@ func (s *ListPlatformVersionsInput) SetNextToken(v string) *ListPlatformVersions
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ListPlatformVersionsResult
 type ListPlatformVersionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8507,7 +8541,6 @@ func (s *ListPlatformVersionsOutput) SetPlatformSummaryList(v []*PlatformSummary
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ListTagsForResourceMessage
 type ListTagsForResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8548,7 +8581,6 @@ func (s *ListTagsForResourceInput) SetResourceArn(v string) *ListTagsForResource
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ResourceTagsDescriptionMessage
 type ListTagsForResourceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8582,7 +8614,6 @@ func (s *ListTagsForResourceOutput) SetResourceTags(v []*Tag) *ListTagsForResour
 }
 
 // Describes the properties of a Listener for the LoadBalancer.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/Listener
 type Listener struct {
 	_ struct{} `type:"structure"`
 
@@ -8616,7 +8647,6 @@ func (s *Listener) SetProtocol(v string) *Listener {
 }
 
 // Describes a LoadBalancer.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/LoadBalancer
 type LoadBalancer struct {
 	_ struct{} `type:"structure"`
 
@@ -8641,7 +8671,6 @@ func (s *LoadBalancer) SetName(v string) *LoadBalancer {
 }
 
 // Describes the details of a LoadBalancer.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/LoadBalancerDescription
 type LoadBalancerDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -8684,7 +8713,6 @@ func (s *LoadBalancerDescription) SetLoadBalancerName(v string) *LoadBalancerDes
 }
 
 // The record of an upcoming or in-progress managed action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ManagedAction
 type ManagedAction struct {
 	_ struct{} `type:"structure"`
 
@@ -8747,7 +8775,6 @@ func (s *ManagedAction) SetWindowStartTime(v time.Time) *ManagedAction {
 }
 
 // The record of a completed or failed managed action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ManagedActionHistoryItem
 type ManagedActionHistoryItem struct {
 	_ struct{} `type:"structure"`
 
@@ -8836,7 +8863,6 @@ func (s *ManagedActionHistoryItem) SetStatus(v string) *ManagedActionHistoryItem
 
 // A lifecycle rule that deletes application versions after the specified number
 // of days.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/MaxAgeRule
 type MaxAgeRule struct {
 	_ struct{} `type:"structure"`
 
@@ -8896,7 +8922,6 @@ func (s *MaxAgeRule) SetMaxAgeInDays(v int64) *MaxAgeRule {
 
 // A lifecycle rule that deletes the oldest application version when the maximum
 // count is exceeded.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/MaxCountRule
 type MaxCountRule struct {
 	_ struct{} `type:"structure"`
 
@@ -8956,7 +8981,6 @@ func (s *MaxCountRule) SetMaxCount(v int64) *MaxCountRule {
 
 // A regular expression representing a restriction on a string configuration
 // option value.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/OptionRestrictionRegex
 type OptionRestrictionRegex struct {
 	_ struct{} `type:"structure"`
 
@@ -8991,7 +9015,6 @@ func (s *OptionRestrictionRegex) SetPattern(v string) *OptionRestrictionRegex {
 }
 
 // A specification identifying an individual configuration option.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/OptionSpecification
 type OptionSpecification struct {
 	_ struct{} `type:"structure"`
 
@@ -9047,7 +9070,6 @@ func (s *OptionSpecification) SetResourceName(v string) *OptionSpecification {
 }
 
 // Detailed information about a platform.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/PlatformDescription
 type PlatformDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -9229,7 +9251,6 @@ func (s *PlatformDescription) SetSupportedTierList(v []*string) *PlatformDescrip
 // The filter is evaluated as the expression:
 //
 // TypeOperatorValues[i]
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/PlatformFilter
 type PlatformFilter struct {
 	_ struct{} `type:"structure"`
 
@@ -9278,7 +9299,6 @@ func (s *PlatformFilter) SetValues(v []*string) *PlatformFilter {
 }
 
 // A framework supported by the custom platform.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/PlatformFramework
 type PlatformFramework struct {
 	_ struct{} `type:"structure"`
 
@@ -9312,7 +9332,6 @@ func (s *PlatformFramework) SetVersion(v string) *PlatformFramework {
 }
 
 // A programming language supported by the platform.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/PlatformProgrammingLanguage
 type PlatformProgrammingLanguage struct {
 	_ struct{} `type:"structure"`
 
@@ -9346,7 +9365,6 @@ func (s *PlatformProgrammingLanguage) SetVersion(v string) *PlatformProgrammingL
 }
 
 // Detailed information about a platform.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/PlatformSummary
 type PlatformSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -9435,7 +9453,6 @@ func (s *PlatformSummary) SetSupportedTierList(v []*string) *PlatformSummary {
 }
 
 // Describes a queue.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/Queue
 type Queue struct {
 	_ struct{} `type:"structure"`
 
@@ -9468,7 +9485,6 @@ func (s *Queue) SetURL(v string) *Queue {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/RebuildEnvironmentMessage
 type RebuildEnvironmentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9522,7 +9538,6 @@ func (s *RebuildEnvironmentInput) SetEnvironmentName(v string) *RebuildEnvironme
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/RebuildEnvironmentOutput
 type RebuildEnvironmentOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9539,7 +9554,6 @@ func (s RebuildEnvironmentOutput) GoString() string {
 
 // Request to retrieve logs from an environment and store them in your Elastic
 // Beanstalk storage bucket.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/RequestEnvironmentInfoMessage
 type RequestEnvironmentInfoInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9613,7 +9627,6 @@ func (s *RequestEnvironmentInfoInput) SetInfoType(v string) *RequestEnvironmentI
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/RequestEnvironmentInfoOutput
 type RequestEnvironmentInfoOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9628,7 +9641,82 @@ func (s RequestEnvironmentInfoOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/RestartAppServerMessage
+type ResourceQuota struct {
+	_ struct{} `type:"structure"`
+
+	Maximum *int64 `type:"integer"`
+}
+
+// String returns the string representation
+func (s ResourceQuota) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ResourceQuota) GoString() string {
+	return s.String()
+}
+
+// SetMaximum sets the Maximum field's value.
+func (s *ResourceQuota) SetMaximum(v int64) *ResourceQuota {
+	s.Maximum = &v
+	return s
+}
+
+type ResourceQuotas struct {
+	_ struct{} `type:"structure"`
+
+	ApplicationQuota *ResourceQuota `type:"structure"`
+
+	ApplicationVersionQuota *ResourceQuota `type:"structure"`
+
+	ConfigurationTemplateQuota *ResourceQuota `type:"structure"`
+
+	CustomPlatformQuota *ResourceQuota `type:"structure"`
+
+	EnvironmentQuota *ResourceQuota `type:"structure"`
+}
+
+// String returns the string representation
+func (s ResourceQuotas) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ResourceQuotas) GoString() string {
+	return s.String()
+}
+
+// SetApplicationQuota sets the ApplicationQuota field's value.
+func (s *ResourceQuotas) SetApplicationQuota(v *ResourceQuota) *ResourceQuotas {
+	s.ApplicationQuota = v
+	return s
+}
+
+// SetApplicationVersionQuota sets the ApplicationVersionQuota field's value.
+func (s *ResourceQuotas) SetApplicationVersionQuota(v *ResourceQuota) *ResourceQuotas {
+	s.ApplicationVersionQuota = v
+	return s
+}
+
+// SetConfigurationTemplateQuota sets the ConfigurationTemplateQuota field's value.
+func (s *ResourceQuotas) SetConfigurationTemplateQuota(v *ResourceQuota) *ResourceQuotas {
+	s.ConfigurationTemplateQuota = v
+	return s
+}
+
+// SetCustomPlatformQuota sets the CustomPlatformQuota field's value.
+func (s *ResourceQuotas) SetCustomPlatformQuota(v *ResourceQuota) *ResourceQuotas {
+	s.CustomPlatformQuota = v
+	return s
+}
+
+// SetEnvironmentQuota sets the EnvironmentQuota field's value.
+func (s *ResourceQuotas) SetEnvironmentQuota(v *ResourceQuota) *ResourceQuotas {
+	s.EnvironmentQuota = v
+	return s
+}
+
 type RestartAppServerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9682,7 +9770,6 @@ func (s *RestartAppServerInput) SetEnvironmentName(v string) *RestartAppServerIn
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/RestartAppServerOutput
 type RestartAppServerOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9698,7 +9785,6 @@ func (s RestartAppServerOutput) GoString() string {
 }
 
 // Request to download logs retrieved with RequestEnvironmentInfo.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/RetrieveEnvironmentInfoMessage
 type RetrieveEnvironmentInfoInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9771,7 +9857,6 @@ func (s *RetrieveEnvironmentInfoInput) SetInfoType(v string) *RetrieveEnvironmen
 }
 
 // Result message containing a description of the requested environment info.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/RetrieveEnvironmentInfoResultMessage
 type RetrieveEnvironmentInfoOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9796,7 +9881,6 @@ func (s *RetrieveEnvironmentInfoOutput) SetEnvironmentInfo(v []*EnvironmentInfoD
 }
 
 // The bucket and key of an item stored in Amazon S3.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/S3Location
 type S3Location struct {
 	_ struct{} `type:"structure"`
 
@@ -9831,7 +9915,6 @@ func (s *S3Location) SetS3Key(v string) *S3Location {
 
 // Detailed health information about an Amazon EC2 instance in your Elastic
 // Beanstalk environment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/SingleInstanceHealth
 type SingleInstanceHealth struct {
 	_ struct{} `type:"structure"`
 
@@ -9941,7 +10024,6 @@ func (s *SingleInstanceHealth) SetSystem(v *SystemStatus) *SingleInstanceHealth 
 }
 
 // Describes the solution stack.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/SolutionStackDescription
 type SolutionStackDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -9975,7 +10057,6 @@ func (s *SolutionStackDescription) SetSolutionStackName(v string) *SolutionStack
 }
 
 // Location of the source code for an application version.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/SourceBuildInformation
 type SourceBuildInformation struct {
 	_ struct{} `type:"structure"`
 
@@ -10061,7 +10142,6 @@ func (s *SourceBuildInformation) SetSourceType(v string) *SourceBuildInformation
 }
 
 // A specification for an environment configuration
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/SourceConfiguration
 type SourceConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -10113,7 +10193,6 @@ func (s *SourceConfiguration) SetTemplateName(v string) *SourceConfiguration {
 // Represents the percentage of requests over the last 10 seconds that resulted
 // in each type of status code response. For more information, see Status Code
 // Definitions (http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html).
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/StatusCodes
 type StatusCodes struct {
 	_ struct{} `type:"structure"`
 
@@ -10169,7 +10248,6 @@ func (s *StatusCodes) SetStatus5xx(v int64) *StatusCodes {
 }
 
 // Swaps the CNAMEs of two environments.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/SwapEnvironmentCNAMEsMessage
 type SwapEnvironmentCNAMEsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10252,7 +10330,6 @@ func (s *SwapEnvironmentCNAMEsInput) SetSourceEnvironmentName(v string) *SwapEnv
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/SwapEnvironmentCNAMEsOutput
 type SwapEnvironmentCNAMEsOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10268,7 +10345,6 @@ func (s SwapEnvironmentCNAMEsOutput) GoString() string {
 }
 
 // CPU utilization and load average metrics for an Amazon EC2 instance.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/SystemStatus
 type SystemStatus struct {
 	_ struct{} `type:"structure"`
 
@@ -10303,7 +10379,6 @@ func (s *SystemStatus) SetLoadAverage(v []*float64) *SystemStatus {
 }
 
 // Describes a tag applied to a resource in an environment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/Tag
 type Tag struct {
 	_ struct{} `type:"structure"`
 
@@ -10353,7 +10428,6 @@ func (s *Tag) SetValue(v string) *Tag {
 }
 
 // Request to terminate an environment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/TerminateEnvironmentMessage
 type TerminateEnvironmentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10440,7 +10514,6 @@ func (s *TerminateEnvironmentInput) SetTerminateResources(v bool) *TerminateEnvi
 }
 
 // Describes a trigger.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/Trigger
 type Trigger struct {
 	_ struct{} `type:"structure"`
 
@@ -10465,7 +10538,6 @@ func (s *Trigger) SetName(v string) *Trigger {
 }
 
 // Request to update an application.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/UpdateApplicationMessage
 type UpdateApplicationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10519,7 +10591,6 @@ func (s *UpdateApplicationInput) SetDescription(v string) *UpdateApplicationInpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/UpdateApplicationResourceLifecycleMessage
 type UpdateApplicationResourceLifecycleInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10580,7 +10651,6 @@ func (s *UpdateApplicationResourceLifecycleInput) SetResourceLifecycleConfig(v *
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ApplicationResourceLifecycleDescriptionMessage
 type UpdateApplicationResourceLifecycleOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10613,7 +10683,6 @@ func (s *UpdateApplicationResourceLifecycleOutput) SetResourceLifecycleConfig(v 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/UpdateApplicationVersionMessage
 type UpdateApplicationVersionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10688,7 +10757,6 @@ func (s *UpdateApplicationVersionInput) SetVersionLabel(v string) *UpdateApplica
 }
 
 // The result message containing the options for the specified solution stack.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/UpdateConfigurationTemplateMessage
 type UpdateConfigurationTemplateInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10805,7 +10873,6 @@ func (s *UpdateConfigurationTemplateInput) SetTemplateName(v string) *UpdateConf
 }
 
 // Request to update an environment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/UpdateEnvironmentMessage
 type UpdateEnvironmentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11001,7 +11068,6 @@ func (s *UpdateEnvironmentInput) SetVersionLabel(v string) *UpdateEnvironmentInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/UpdateTagsForResourceMessage
 type UpdateTagsForResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11074,7 +11140,6 @@ func (s *UpdateTagsForResourceInput) SetTagsToRemove(v []*string) *UpdateTagsFor
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/UpdateTagsForResourceOutput
 type UpdateTagsForResourceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -11090,7 +11155,6 @@ func (s UpdateTagsForResourceOutput) GoString() string {
 }
 
 // A list of validation messages for a specified configuration template.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ValidateConfigurationSettingsMessage
 type ValidateConfigurationSettingsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11186,7 +11250,6 @@ func (s *ValidateConfigurationSettingsInput) SetTemplateName(v string) *Validate
 }
 
 // Provides a list of validation messages.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ConfigurationSettingsValidationMessages
 type ValidateConfigurationSettingsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11211,7 +11274,6 @@ func (s *ValidateConfigurationSettingsOutput) SetMessages(v []*ValidationMessage
 }
 
 // An error or warning for a desired configuration option value.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ValidationMessage
 type ValidationMessage struct {
 	_ struct{} `type:"structure"`
 

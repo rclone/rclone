@@ -50,6 +50,7 @@ import (
 //go:cgo_import_dynamic libc_flock flock "libc.so"
 //go:cgo_import_dynamic libc_fpathconf fpathconf "libc.so"
 //go:cgo_import_dynamic libc_fstat fstat "libc.so"
+//go:cgo_import_dynamic libc_fstatat fstatat "libc.so"
 //go:cgo_import_dynamic libc_fstatvfs fstatvfs "libc.so"
 //go:cgo_import_dynamic libc_getdents getdents "libc.so"
 //go:cgo_import_dynamic libc_getgid getgid "libc.so"
@@ -176,6 +177,7 @@ import (
 //go:linkname procFlock libc_flock
 //go:linkname procFpathconf libc_fpathconf
 //go:linkname procFstat libc_fstat
+//go:linkname procFstatat libc_fstatat
 //go:linkname procFstatvfs libc_fstatvfs
 //go:linkname procGetdents libc_getdents
 //go:linkname procGetgid libc_getgid
@@ -303,6 +305,7 @@ var (
 	procFlock,
 	procFpathconf,
 	procFstat,
+	procFstatat,
 	procFstatvfs,
 	procGetdents,
 	procGetgid,
@@ -766,6 +769,19 @@ func Fpathconf(fd int, name int) (val int, err error) {
 
 func Fstat(fd int, stat *Stat_t) (err error) {
 	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&procFstat)), 2, uintptr(fd), uintptr(unsafe.Pointer(stat)), 0, 0, 0, 0)
+	if e1 != 0 {
+		err = e1
+	}
+	return
+}
+
+func Fstatat(fd int, path string, stat *Stat_t, flags int) (err error) {
+	var _p0 *byte
+	_p0, err = BytePtrFromString(path)
+	if err != nil {
+		return
+	}
+	_, _, e1 := sysvicall6(uintptr(unsafe.Pointer(&procFstatat)), 4, uintptr(fd), uintptr(unsafe.Pointer(_p0)), uintptr(unsafe.Pointer(stat)), uintptr(flags), 0, 0)
 	if e1 != 0 {
 		err = e1
 	}

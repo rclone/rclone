@@ -41,8 +41,8 @@ func NewWorkflowTriggersClientWithBaseURI(baseURI string, subscriptionID string)
 
 // Get gets a workflow trigger.
 //
-// resourceGroupName is the resource group name. workflowName is the workflow name. triggerName is the workflow trigger
-// name.
+// resourceGroupName is the resource group name. workflowName is the workflow name. triggerName is the workflow
+// trigger name.
 func (client WorkflowTriggersClient) Get(ctx context.Context, resourceGroupName string, workflowName string, triggerName string) (result WorkflowTrigger, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, workflowName, triggerName)
 	if err != nil {
@@ -109,8 +109,8 @@ func (client WorkflowTriggersClient) GetResponder(resp *http.Response) (result W
 
 // List gets a list of workflow triggers.
 //
-// resourceGroupName is the resource group name. workflowName is the workflow name. top is the number of items to be
-// included in the result. filter is the filter to apply on the operation.
+// resourceGroupName is the resource group name. workflowName is the workflow name. top is the number of items to
+// be included in the result. filter is the filter to apply on the operation.
 func (client WorkflowTriggersClient) List(ctx context.Context, resourceGroupName string, workflowName string, top *int32, filter string) (result WorkflowTriggerListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, workflowName, top, filter)
@@ -210,8 +210,8 @@ func (client WorkflowTriggersClient) ListComplete(ctx context.Context, resourceG
 
 // Run runs a workflow trigger.
 //
-// resourceGroupName is the resource group name. workflowName is the workflow name. triggerName is the workflow trigger
-// name.
+// resourceGroupName is the resource group name. workflowName is the workflow name. triggerName is the workflow
+// trigger name.
 func (client WorkflowTriggersClient) Run(ctx context.Context, resourceGroupName string, workflowName string, triggerName string) (result autorest.Response, err error) {
 	req, err := client.RunPreparer(ctx, resourceGroupName, workflowName, triggerName)
 	if err != nil {

@@ -43,9 +43,9 @@ func NewSyncGroupsClientWithBaseURI(baseURI string, subscriptionID string) SyncG
 
 // CancelSync cancels a sync group synchronization.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group.
 func (client SyncGroupsClient) CancelSync(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string) (result autorest.Response, err error) {
 	req, err := client.CancelSyncPreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName)
 	if err != nil {
@@ -112,10 +112,10 @@ func (client SyncGroupsClient) CancelSyncResponder(resp *http.Response) (result 
 
 // CreateOrUpdate creates or updates a sync group.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group. parameters is the requested
-// sync group resource state.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group. parameters is the
+// requested sync group resource state.
 func (client SyncGroupsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string, parameters SyncGroup) (result SyncGroupsCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName, parameters)
 	if err != nil {
@@ -187,9 +187,9 @@ func (client SyncGroupsClient) CreateOrUpdateResponder(resp *http.Response) (res
 
 // Delete deletes a sync group.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group.
 func (client SyncGroupsClient) Delete(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string) (result SyncGroupsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName)
 	if err != nil {
@@ -258,9 +258,9 @@ func (client SyncGroupsClient) DeleteResponder(resp *http.Response) (result auto
 
 // Get gets a sync group.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group.
 func (client SyncGroupsClient) Get(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string) (result SyncGroup, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName)
 	if err != nil {
@@ -328,9 +328,9 @@ func (client SyncGroupsClient) GetResponder(resp *http.Response) (result SyncGro
 
 // ListByDatabase lists sync groups under a hub database.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted.
 func (client SyncGroupsClient) ListByDatabase(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result SyncGroupListResultPage, err error) {
 	result.fn = client.listByDatabaseNextResults
 	req, err := client.ListByDatabasePreparer(ctx, resourceGroupName, serverName, databaseName)
@@ -425,9 +425,9 @@ func (client SyncGroupsClient) ListByDatabaseComplete(ctx context.Context, resou
 
 // ListHubSchemas gets a collection of hub database schemas.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group.
 func (client SyncGroupsClient) ListHubSchemas(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string) (result SyncFullSchemaPropertiesListResultPage, err error) {
 	result.fn = client.listHubSchemasNextResults
 	req, err := client.ListHubSchemasPreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName)
@@ -523,11 +523,11 @@ func (client SyncGroupsClient) ListHubSchemasComplete(ctx context.Context, resou
 
 // ListLogs gets a collection of sync group logs.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group. startTime is get logs
-// generated after this time. endTime is get logs generated before this time. typeParameter is the types of logs to
-// retrieve. continuationToken is the continuation token for this operation.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group. startTime is get
+// logs generated after this time. endTime is get logs generated before this time. typeParameter is the types of
+// logs to retrieve. continuationToken is the continuation token for this operation.
 func (client SyncGroupsClient) ListLogs(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string, startTime string, endTime string, typeParameter string, continuationToken string) (result SyncGroupLogListResultPage, err error) {
 	result.fn = client.listLogsNextResults
 	req, err := client.ListLogsPreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName, startTime, endTime, typeParameter, continuationToken)
@@ -722,9 +722,9 @@ func (client SyncGroupsClient) ListSyncDatabaseIdsComplete(ctx context.Context, 
 
 // RefreshHubSchema refreshes a hub database schema.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group.
 func (client SyncGroupsClient) RefreshHubSchema(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string) (result SyncGroupsRefreshHubSchemaFuture, err error) {
 	req, err := client.RefreshHubSchemaPreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName)
 	if err != nil {
@@ -793,9 +793,9 @@ func (client SyncGroupsClient) RefreshHubSchemaResponder(resp *http.Response) (r
 
 // TriggerSync triggers a sync group synchronization.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group.
 func (client SyncGroupsClient) TriggerSync(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string) (result autorest.Response, err error) {
 	req, err := client.TriggerSyncPreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName)
 	if err != nil {
@@ -862,10 +862,10 @@ func (client SyncGroupsClient) TriggerSyncResponder(resp *http.Response) (result
 
 // Update updates a sync group.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group. parameters is the requested
-// sync group resource state.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group. parameters is the
+// requested sync group resource state.
 func (client SyncGroupsClient) Update(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string, parameters SyncGroup) (result SyncGroupsUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName, parameters)
 	if err != nil {

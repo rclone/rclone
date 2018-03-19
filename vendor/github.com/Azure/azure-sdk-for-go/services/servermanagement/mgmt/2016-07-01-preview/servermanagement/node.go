@@ -42,9 +42,9 @@ func NewNodeClientWithBaseURI(baseURI string, subscriptionID string) NodeClient 
 
 // Create creates or updates a management node.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// nodeName is the node name (256 characters maximum). gatewayParameters is parameters supplied to the CreateOrUpdate
-// operation.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. nodeName is the node name (256 characters maximum). gatewayParameters is parameters supplied to
+// the CreateOrUpdate operation.
 func (client NodeClient) Create(ctx context.Context, resourceGroupName string, nodeName string, gatewayParameters NodeParameters) (result NodeCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -54,7 +54,7 @@ func (client NodeClient) Create(ctx context.Context, resourceGroupName string, n
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.NodeClient", "Create")
+		return result, validation.NewError("servermanagement.NodeClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, nodeName, gatewayParameters)
@@ -125,8 +125,8 @@ func (client NodeClient) CreateResponder(resp *http.Response) (result NodeResour
 
 // Delete deletes a management node
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// nodeName is the node name (256 characters maximum).
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. nodeName is the node name (256 characters maximum).
 func (client NodeClient) Delete(ctx context.Context, resourceGroupName string, nodeName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -136,7 +136,7 @@ func (client NodeClient) Delete(ctx context.Context, resourceGroupName string, n
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.NodeClient", "Delete")
+		return result, validation.NewError("servermanagement.NodeClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, nodeName)
@@ -202,8 +202,8 @@ func (client NodeClient) DeleteResponder(resp *http.Response) (result autorest.R
 
 // Get gets a management node.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// nodeName is the node name (256 characters maximum).
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. nodeName is the node name (256 characters maximum).
 func (client NodeClient) Get(ctx context.Context, resourceGroupName string, nodeName string) (result NodeResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -213,7 +213,7 @@ func (client NodeClient) Get(ctx context.Context, resourceGroupName string, node
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.NodeClient", "Get")
+		return result, validation.NewError("servermanagement.NodeClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, nodeName)
@@ -370,13 +370,14 @@ func (client NodeClient) ListComplete(ctx context.Context) (result NodeResources
 
 // ListForResourceGroup lists nodes in a resource group.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId.
 func (client NodeClient) ListForResourceGroup(ctx context.Context, resourceGroupName string) (result NodeResourcesPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `[a-zA-Z0-9]+`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.NodeClient", "ListForResourceGroup")
+		return result, validation.NewError("servermanagement.NodeClient", "ListForResourceGroup", err.Error())
 	}
 
 	result.fn = client.listForResourceGroupNextResults
@@ -470,9 +471,9 @@ func (client NodeClient) ListForResourceGroupComplete(ctx context.Context, resou
 
 // Update updates a management node.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// nodeName is the node name (256 characters maximum). nodeParameters is parameters supplied to the CreateOrUpdate
-// operation.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. nodeName is the node name (256 characters maximum). nodeParameters is parameters supplied to the
+// CreateOrUpdate operation.
 func (client NodeClient) Update(ctx context.Context, resourceGroupName string, nodeName string, nodeParameters NodeParameters) (result NodeUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -482,7 +483,7 @@ func (client NodeClient) Update(ctx context.Context, resourceGroupName string, n
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.NodeClient", "Update")
+		return result, validation.NewError("servermanagement.NodeClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, nodeName, nodeParameters)

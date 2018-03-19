@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -119,26 +119,6 @@ func (c *Client) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", version.Go()}, keyval...)
 	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", grpc.Version)
 	c.xGoogMetadata = metadata.Pairs("x-goog-api-client", gax.XGoogHeader(kv...))
-}
-
-// ProjectPath returns the path for the project resource.
-func ProjectPath(project string) string {
-	return "" +
-		"projects/" +
-		project +
-		""
-}
-
-// SpanPath returns the path for the span resource.
-func SpanPath(project, trace, span string) string {
-	return "" +
-		"projects/" +
-		project +
-		"/traces/" +
-		trace +
-		"/spans/" +
-		span +
-		""
 }
 
 // BatchWriteSpans sends new spans to new or existing traces. You cannot update

@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,7 +41,7 @@ func ExampleClient_GetDataSource() {
 	}
 
 	req := &datatransferpb.GetDataSourceRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.GetDataSource(ctx, req)
 	if err != nil {
@@ -59,7 +59,7 @@ func ExampleClient_ListDataSources() {
 	}
 
 	req := &datatransferpb.ListDataSourcesRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListDataSources(ctx, req)
 	for {
@@ -83,7 +83,7 @@ func ExampleClient_CreateTransferConfig() {
 	}
 
 	req := &datatransferpb.CreateTransferConfigRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.CreateTransferConfig(ctx, req)
 	if err != nil {
@@ -101,7 +101,7 @@ func ExampleClient_UpdateTransferConfig() {
 	}
 
 	req := &datatransferpb.UpdateTransferConfigRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.UpdateTransferConfig(ctx, req)
 	if err != nil {
@@ -119,7 +119,7 @@ func ExampleClient_DeleteTransferConfig() {
 	}
 
 	req := &datatransferpb.DeleteTransferConfigRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	err = c.DeleteTransferConfig(ctx, req)
 	if err != nil {
@@ -135,7 +135,7 @@ func ExampleClient_GetTransferConfig() {
 	}
 
 	req := &datatransferpb.GetTransferConfigRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.GetTransferConfig(ctx, req)
 	if err != nil {
@@ -153,7 +153,7 @@ func ExampleClient_ListTransferConfigs() {
 	}
 
 	req := &datatransferpb.ListTransferConfigsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListTransferConfigs(ctx, req)
 	for {
@@ -177,7 +177,7 @@ func ExampleClient_ScheduleTransferRuns() {
 	}
 
 	req := &datatransferpb.ScheduleTransferRunsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.ScheduleTransferRuns(ctx, req)
 	if err != nil {
@@ -195,7 +195,7 @@ func ExampleClient_GetTransferRun() {
 	}
 
 	req := &datatransferpb.GetTransferRunRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.GetTransferRun(ctx, req)
 	if err != nil {
@@ -213,7 +213,7 @@ func ExampleClient_DeleteTransferRun() {
 	}
 
 	req := &datatransferpb.DeleteTransferRunRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	err = c.DeleteTransferRun(ctx, req)
 	if err != nil {
@@ -229,7 +229,7 @@ func ExampleClient_ListTransferRuns() {
 	}
 
 	req := &datatransferpb.ListTransferRunsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListTransferRuns(ctx, req)
 	for {
@@ -253,7 +253,7 @@ func ExampleClient_ListTransferLogs() {
 	}
 
 	req := &datatransferpb.ListTransferLogsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListTransferLogs(ctx, req)
 	for {
@@ -277,7 +277,7 @@ func ExampleClient_CheckValidCreds() {
 	}
 
 	req := &datatransferpb.CheckValidCredsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.CheckValidCreds(ctx, req)
 	if err != nil {

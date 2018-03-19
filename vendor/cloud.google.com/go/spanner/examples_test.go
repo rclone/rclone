@@ -427,6 +427,22 @@ func ExampleReadOnlyTransaction_ReadUsingIndex() {
 	_ = iter // TODO: iterate using Next or Do.
 }
 
+func ExampleReadOnlyTransaction_ReadWithOptions() {
+	ctx := context.Background()
+	client, err := spanner.NewClient(ctx, myDB)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// Use an index, and limit to 100 rows at most.
+	iter := client.Single().ReadWithOptions(ctx, "Users",
+		spanner.KeySets(spanner.Key{"a@example.com"}, spanner.Key{"b@example.com"}),
+		[]string{"name", "email"}, &spanner.ReadOptions{
+			Index: "UsersByEmail",
+			Limit: 100,
+		})
+	_ = iter // TODO: iterate using Next or Do.
+}
+
 func ExampleReadOnlyTransaction_ReadRow() {
 	ctx := context.Background()
 	client, err := spanner.NewClient(ctx, myDB)

@@ -11,10 +11,12 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/des"
-	"golang.org/x/crypto/cast5"
-	"golang.org/x/crypto/openpgp/errors"
+	"crypto/rsa"
 	"io"
 	"math/big"
+
+	"golang.org/x/crypto/cast5"
+	"golang.org/x/crypto/openpgp/errors"
 )
 
 // readFull is the same as io.ReadFull except that reading zero bytes returns
@@ -500,19 +502,17 @@ func readMPI(r io.Reader) (mpi []byte, bitLength uint16, err error) {
 	numBytes := (int(bitLength) + 7) / 8
 	mpi = make([]byte, numBytes)
 	_, err = readFull(r, mpi)
-	return
-}
-
-// mpiLength returns the length of the given *big.Int when serialized as an
-// MPI.
-func mpiLength(n *big.Int) (mpiLengthInBytes int) {
-	mpiLengthInBytes = 2 /* MPI length */
-	mpiLengthInBytes += (n.BitLen() + 7) / 8
+	// According to RFC 4880 3.2. we should check that the MPI has no leading
+	// zeroes (at least when not an encrypted MPI?), but this implementation
+	// does generate leading zeroes, so we keep accepting them.
 	return
 }
 
 // writeMPI serializes a big integer to w.
 func writeMPI(w io.Writer, bitLength uint16, mpiBytes []byte) (err error) {
+	// Note that we can produce leading zeroes, in violation of RFC 4880 3.2.
+	// Implementations seem to be tolerant of them, and stripping them would
+	// make it complex to guarantee matching re-serialization.
 	_, err = w.Write([]byte{byte(bitLength >> 8), byte(bitLength)})
 	if err == nil {
 		_, err = w.Write(mpiBytes)
@@ -523,6 +523,18 @@ func writeMPI(w io.Writer, bitLength uint16, mpiBytes []byte) (err error) {
 // writeBig serializes a *big.Int to w.
 func writeBig(w io.Writer, i *big.Int) error {
 	return writeMPI(w, uint16(i.BitLen()), i.Bytes())
+}
+
+// padToKeySize left-pads a MPI with zeroes to match the length of the
+// specified RSA public.
+func padToKeySize(pub *rsa.PublicKey, b []byte) []byte {
+	k := (pub.N.BitLen() + 7) / 8
+	if len(b) >= k {
+		return b
+	}
+	bb := make([]byte, k)
+	copy(bb[len(bb)-len(b):], b)
+	return bb
 }
 
 // CompressionAlgo Represents the different compression algorithms

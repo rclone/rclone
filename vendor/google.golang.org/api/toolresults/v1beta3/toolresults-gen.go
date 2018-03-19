@@ -312,7 +312,7 @@ func (s *AndroidRoboTest) MarshalJSON() ([]byte, error) {
 
 // AndroidTest: An Android mobile test specification.
 type AndroidTest struct {
-	// AndroidAppInfo: Infomation about the application under test.
+	// AndroidAppInfo: Information about the application under test.
 	AndroidAppInfo *AndroidAppInfo `json:"androidAppInfo,omitempty"`
 
 	// AndroidInstrumentationTest: An Android instrumentation test.
@@ -1064,7 +1064,7 @@ type History struct {
 	HistoryId string `json:"historyId,omitempty"`
 
 	// Name: A name to uniquely identify a history within a project. Maximum
-	// of 100 characters.
+	// of 200 characters.
 	//
 	// - In response always set - In create request: always set
 	Name string `json:"name,omitempty"`
@@ -1329,7 +1329,7 @@ func (s *ListPerfSamplesResponse) MarshalJSON() ([]byte, error) {
 }
 
 type ListScreenshotClustersResponse struct {
-	// Clusters: The set of clustres associated with an execution Always set
+	// Clusters: The set of clusters associated with an execution Always set
 	Clusters []*ScreenshotCluster `json:"clusters,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -2775,8 +2775,10 @@ func (s *Thumbnail) MarshalJSON() ([]byte, error) {
 // {day}, {hour}, {min}, and {sec} are zero-padded to two digits each.
 // The fractional seconds, which can go up to 9 digits (i.e. up to 1
 // nanosecond resolution), are optional. The "Z" suffix indicates the
-// timezone ("UTC"); the timezone is required, though only UTC (as
-// indicated by "Z") is currently supported.
+// timezone ("UTC"); the timezone is required. A proto3 JSON serializer
+// should always use UTC (as indicated by "Z") when printing the
+// Timestamp type and a proto3 JSON parser should be able to accept both
+// UTC and other timezones (as indicated by an offset).
 //
 // For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
 // 01:30 UTC on January 15, 2017.

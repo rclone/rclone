@@ -43,13 +43,14 @@ func NewSubnetsClientWithBaseURI(baseURI string, subscriptionID string) SubnetsC
 // CreateOrUpdate the Put Subnet operation creates/updates a subnet in thespecified virtual network
 //
 // resourceGroupName is the name of the resource group. virtualNetworkName is the name of the virtual network.
-// subnetName is the name of the subnet. subnetParameters is parameters supplied to the create/update Subnet operation
+// subnetName is the name of the subnet. subnetParameters is parameters supplied to the create/update Subnet
+// operation
 func (client SubnetsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, virtualNetworkName string, subnetName string, subnetParameters Subnet) (result SubnetsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: subnetParameters,
 			Constraints: []validation.Constraint{{Target: "subnetParameters.SubnetPropertiesFormat", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "subnetParameters.SubnetPropertiesFormat.AddressPrefix", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "network.SubnetsClient", "CreateOrUpdate")
+		return result, validation.NewError("network.SubnetsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, virtualNetworkName, subnetName, subnetParameters)

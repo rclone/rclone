@@ -44,15 +44,16 @@ func NewOriginsClientWithBaseURI(baseURI string, subscriptionID string) OriginsC
 
 // Create sends the create request.
 //
-// originName is name of the origin, an arbitrary value but it needs to be unique under endpoint originProperties is
-// origin properties endpointName is name of the endpoint within the CDN profile. profileName is name of the CDN
-// profile within the resource group. resourceGroupName is name of the resource group within the Azure subscription.
+// originName is name of the origin, an arbitrary value but it needs to be unique under endpoint originProperties
+// is origin properties endpointName is name of the endpoint within the CDN profile. profileName is name of the CDN
+// profile within the resource group. resourceGroupName is name of the resource group within the Azure
+// subscription.
 func (client OriginsClient) Create(ctx context.Context, originName string, originProperties OriginParameters, endpointName string, profileName string, resourceGroupName string) (result OriginsCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: originProperties,
 			Constraints: []validation.Constraint{{Target: "originProperties.OriginPropertiesParameters", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "originProperties.OriginPropertiesParameters.HostName", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.OriginsClient", "Create")
+		return result, validation.NewError("cdn.OriginsClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, originName, originProperties, endpointName, profileName, resourceGroupName)
@@ -125,9 +126,9 @@ func (client OriginsClient) CreateResponder(resp *http.Response) (result Origin,
 
 // DeleteIfExists sends the delete if exists request.
 //
-// originName is name of the origin. Must be unique within endpoint. endpointName is name of the endpoint within the
-// CDN profile. profileName is name of the CDN profile within the resource group. resourceGroupName is name of the
-// resource group within the Azure subscription.
+// originName is name of the origin. Must be unique within endpoint. endpointName is name of the endpoint within
+// the CDN profile. profileName is name of the CDN profile within the resource group. resourceGroupName is name of
+// the resource group within the Azure subscription.
 func (client OriginsClient) DeleteIfExists(ctx context.Context, originName string, endpointName string, profileName string, resourceGroupName string) (result OriginsDeleteIfExistsFuture, err error) {
 	req, err := client.DeleteIfExistsPreparer(ctx, originName, endpointName, profileName, resourceGroupName)
 	if err != nil {
@@ -197,8 +198,8 @@ func (client OriginsClient) DeleteIfExistsResponder(resp *http.Response) (result
 
 // Get sends the get request.
 //
-// originName is name of the origin, an arbitrary value but it needs to be unique under endpoint endpointName is name
-// of the endpoint within the CDN profile. profileName is name of the CDN profile within the resource group.
+// originName is name of the origin, an arbitrary value but it needs to be unique under endpoint endpointName is
+// name of the endpoint within the CDN profile. profileName is name of the CDN profile within the resource group.
 // resourceGroupName is name of the resource group within the Azure subscription.
 func (client OriginsClient) Get(ctx context.Context, originName string, endpointName string, profileName string, resourceGroupName string) (result Origin, err error) {
 	req, err := client.GetPreparer(ctx, originName, endpointName, profileName, resourceGroupName)
@@ -335,9 +336,9 @@ func (client OriginsClient) ListByEndpointResponder(resp *http.Response) (result
 
 // Update sends the update request.
 //
-// originName is name of the origin. Must be unique within endpoint. originProperties is origin properties endpointName
-// is name of the endpoint within the CDN profile. profileName is name of the CDN profile within the resource group.
-// resourceGroupName is name of the resource group within the Azure subscription.
+// originName is name of the origin. Must be unique within endpoint. originProperties is origin properties
+// endpointName is name of the endpoint within the CDN profile. profileName is name of the CDN profile within the
+// resource group. resourceGroupName is name of the resource group within the Azure subscription.
 func (client OriginsClient) Update(ctx context.Context, originName string, originProperties OriginParameters, endpointName string, profileName string, resourceGroupName string) (result OriginsUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, originName, originProperties, endpointName, profileName, resourceGroupName)
 	if err != nil {

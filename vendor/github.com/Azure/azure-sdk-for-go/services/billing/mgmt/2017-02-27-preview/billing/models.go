@@ -43,22 +43,22 @@ type ErrorDetails struct {
 	Target *string `json:"target,omitempty"`
 }
 
-// ErrorResponse error response indicates that the service is not able to process the incoming request. The reason is
-// provided in the error message.
+// ErrorResponse error response indicates that the service is not able to process the incoming request. The reason
+// is provided in the error message.
 type ErrorResponse struct {
 	Error *ErrorDetails `json:"error,omitempty"`
 }
 
 // Invoice an invoice resource can be used download a PDF version of an invoice.
 type Invoice struct {
-	autorest.Response `json:"-"`
+	autorest.Response  `json:"-"`
+	*InvoiceProperties `json:"properties,omitempty"`
 	// ID - Resource Id
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type
-	Type               *string `json:"type,omitempty"`
-	*InvoiceProperties `json:"properties,omitempty"`
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for Invoice struct.
@@ -68,46 +68,45 @@ func (i *Invoice) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties InvoiceProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var invoiceProperties InvoiceProperties
+				err = json.Unmarshal(*v, &invoiceProperties)
+				if err != nil {
+					return err
+				}
+				i.InvoiceProperties = &invoiceProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				i.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				i.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				i.Type = &typeVar
+			}
 		}
-		i.InvoiceProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		i.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		i.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		i.Type = &typeVar
 	}
 
 	return nil

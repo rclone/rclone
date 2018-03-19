@@ -26,7 +26,7 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/Azure/go-autorest/autorest/azure"
-	"gopkg.in/mgo.v2"
+	"github.com/globalsign/mgo"
 )
 
 const (
@@ -64,7 +64,7 @@ func NewMongoDBClientWithSPToken(spToken *adal.ServicePrincipalToken, subscripti
 
 	authorizer := autorest.NewBearerAuthorizer(spToken)
 
-	cosmosDbClient := documentdb.NewDatabaseAccountsClientWithBaseURI(subscriptionID, environment.ResourceManagerEndpoint, "", "", "", "", "")
+	cosmosDbClient := documentdb.NewDatabaseAccountsClientWithBaseURI(environment.ResourceManagerEndpoint, subscriptionID)
 	cosmosDbClient.Authorizer = authorizer
 	cosmosDbClient.AddToUserAgent("dataplane mongodb")
 

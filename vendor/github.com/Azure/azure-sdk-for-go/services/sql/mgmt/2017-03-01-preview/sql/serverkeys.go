@@ -43,12 +43,13 @@ func NewServerKeysClientWithBaseURI(baseURI string, subscriptionID string) Serve
 
 // CreateOrUpdate creates or updates a server key.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. keyName is the name of the server
-// key to be operated on (updated or created). The key name is required to be in the format of 'vault_key_version'. For
-// example, if the keyId is https://YourVaultName.vault.azure.net/keys/YourKeyName/01234567890123456789012345678901,
-// then the server key name should be formatted as: YourVaultName_YourKeyName_01234567890123456789012345678901
-// parameters is the requested server key resource state.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. keyName is the name of the
+// server key to be operated on (updated or created). The key name is required to be in the format of
+// 'vault_key_version'. For example, if the keyId is
+// https://YourVaultName.vault.azure.net/keys/YourKeyName/01234567890123456789012345678901, then the server key
+// name should be formatted as: YourVaultName_YourKeyName_01234567890123456789012345678901 parameters is the
+// requested server key resource state.
 func (client ServerKeysClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, keyName string, parameters ServerKey) (result ServerKeysCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, keyName, parameters)
 	if err != nil {
@@ -119,9 +120,9 @@ func (client ServerKeysClient) CreateOrUpdateResponder(resp *http.Response) (res
 
 // Delete deletes the server key with the given name.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. keyName is the name of the server
-// key to be deleted.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. keyName is the name of the
+// server key to be deleted.
 func (client ServerKeysClient) Delete(ctx context.Context, resourceGroupName string, serverName string, keyName string) (result ServerKeysDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName, keyName)
 	if err != nil {
@@ -189,9 +190,9 @@ func (client ServerKeysClient) DeleteResponder(resp *http.Response) (result auto
 
 // Get gets a server key.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. keyName is the name of the server
-// key to be retrieved.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. keyName is the name of the
+// server key to be retrieved.
 func (client ServerKeysClient) Get(ctx context.Context, resourceGroupName string, serverName string, keyName string) (result ServerKey, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, keyName)
 	if err != nil {
@@ -258,8 +259,8 @@ func (client ServerKeysClient) GetResponder(resp *http.Response) (result ServerK
 
 // ListByServer gets a list of server keys.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
 func (client ServerKeysClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result ServerKeyListResultPage, err error) {
 	result.fn = client.listByServerNextResults
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)

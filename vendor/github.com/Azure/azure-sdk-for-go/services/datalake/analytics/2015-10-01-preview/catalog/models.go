@@ -98,10 +98,6 @@ type TypeFieldInfo struct {
 // USQLAssembly a Data Lake Analytics catalog U-SQL Assembly.
 type USQLAssembly struct {
 	autorest.Response `json:"-"`
-	// ComputeAccountName - the name of the Data Lake Analytics account.
-	ComputeAccountName *string `json:"computeAccountName,omitempty"`
-	// Version - the version of the catalog item.
-	Version *uuid.UUID `json:"version,omitempty"`
 	// DatabaseName - the name of the database.
 	DatabaseName *string `json:"databaseName,omitempty"`
 	// Name - the name of the assembly.
@@ -116,20 +112,24 @@ type USQLAssembly struct {
 	Files *[]USQLAssemblyFileInfo `json:"files,omitempty"`
 	// Dependencies - the list of dependencies associated with the assembly
 	Dependencies *[]USQLAssemblyDependencyInfo `json:"dependencies,omitempty"`
-}
-
-// USQLAssemblyClr a Data Lake Analytics catalog U-SQL assembly CLR item.
-type USQLAssemblyClr struct {
 	// ComputeAccountName - the name of the Data Lake Analytics account.
 	ComputeAccountName *string `json:"computeAccountName,omitempty"`
 	// Version - the version of the catalog item.
 	Version *uuid.UUID `json:"version,omitempty"`
+}
+
+// USQLAssemblyClr a Data Lake Analytics catalog U-SQL assembly CLR item.
+type USQLAssemblyClr struct {
 	// DatabaseName - the name of the database.
 	DatabaseName *string `json:"databaseName,omitempty"`
 	// Name - the name of the assembly.
 	Name *string `json:"assemblyClrName,omitempty"`
 	// ClrName - the name of the CLR.
 	ClrName *string `json:"clrName,omitempty"`
+	// ComputeAccountName - the name of the Data Lake Analytics account.
+	ComputeAccountName *string `json:"computeAccountName,omitempty"`
+	// Version - the version of the catalog item.
+	Version *uuid.UUID `json:"version,omitempty"`
 }
 
 // USQLAssemblyDependencyInfo a Data Lake Analytics catalog U-SQL dependency information item.
@@ -151,12 +151,12 @@ type USQLAssemblyFileInfo struct {
 // USQLAssemblyList a Data Lake Analytics catalog U-SQL assembly CLR item list.
 type USQLAssemblyList struct {
 	autorest.Response `json:"-"`
+	// Value - the list of assemblies in the database
+	Value *[]USQLAssemblyClr `json:"value,omitempty"`
 	// Count - the count of items in the list.
 	Count *int32 `json:"count,omitempty"`
 	// NextLink - the link to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
-	// Value - the list of assemblies in the database
-	Value *[]USQLAssemblyClr `json:"value,omitempty"`
 }
 
 // USQLAssemblyListIterator provides access to a complete listing of USQLAssemblyClr values.
@@ -255,10 +255,6 @@ func (page USQLAssemblyListPage) Values() []USQLAssemblyClr {
 // USQLCredential a Data Lake Analytics catalog U-SQL credential item.
 type USQLCredential struct {
 	autorest.Response `json:"-"`
-	// ComputeAccountName - the name of the Data Lake Analytics account.
-	ComputeAccountName *string `json:"computeAccountName,omitempty"`
-	// Version - the version of the catalog item.
-	Version *uuid.UUID `json:"version,omitempty"`
 	// DatabaseName - the name of the database the credential is in.
 	DatabaseName *string `json:"databaseName,omitempty"`
 	// Identity - the name of the secret associated with the credential.
@@ -267,17 +263,21 @@ type USQLCredential struct {
 	Name *string `json:"credentialName,omitempty"`
 	// UserName - the user name associated with the credential.
 	UserName *string `json:"userName,omitempty"`
+	// ComputeAccountName - the name of the Data Lake Analytics account.
+	ComputeAccountName *string `json:"computeAccountName,omitempty"`
+	// Version - the version of the catalog item.
+	Version *uuid.UUID `json:"version,omitempty"`
 }
 
 // USQLCredentialList a Data Lake Analytics catalog U-SQL credential item list.
 type USQLCredentialList struct {
 	autorest.Response `json:"-"`
+	// Value - the list of credentials in the database
+	Value *[]USQLCredential `json:"value,omitempty"`
 	// Count - the count of items in the list.
 	Count *int32 `json:"count,omitempty"`
 	// NextLink - the link to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
-	// Value - the list of credentials in the database
-	Value *[]USQLCredential `json:"value,omitempty"`
 }
 
 // USQLCredentialListIterator provides access to a complete listing of USQLCredential values.
@@ -376,23 +376,23 @@ func (page USQLCredentialListPage) Values() []USQLCredential {
 // USQLDatabase a Data Lake Analytics catalog U-SQL database item.
 type USQLDatabase struct {
 	autorest.Response `json:"-"`
+	// Name - the name of the database.
+	Name *string `json:"databaseName,omitempty"`
 	// ComputeAccountName - the name of the Data Lake Analytics account.
 	ComputeAccountName *string `json:"computeAccountName,omitempty"`
 	// Version - the version of the catalog item.
 	Version *uuid.UUID `json:"version,omitempty"`
-	// Name - the name of the database.
-	Name *string `json:"databaseName,omitempty"`
 }
 
 // USQLDatabaseList a Data Lake Analytics catalog U-SQL database item list.
 type USQLDatabaseList struct {
 	autorest.Response `json:"-"`
+	// Value - the list of databases
+	Value *[]USQLDatabase `json:"value,omitempty"`
 	// Count - the count of items in the list.
 	Count *int32 `json:"count,omitempty"`
 	// NextLink - the link to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
-	// Value - the list of databases
-	Value *[]USQLDatabase `json:"value,omitempty"`
 }
 
 // USQLDatabaseListIterator provides access to a complete listing of USQLDatabase values.
@@ -511,10 +511,6 @@ type USQLDistributionInfo struct {
 // USQLExternalDataSource a Data Lake Analytics catalog U-SQL external datasource item.
 type USQLExternalDataSource struct {
 	autorest.Response `json:"-"`
-	// ComputeAccountName - the name of the Data Lake Analytics account.
-	ComputeAccountName *string `json:"computeAccountName,omitempty"`
-	// Version - the version of the catalog item.
-	Version *uuid.UUID `json:"version,omitempty"`
 	// DatabaseName - the name of the database.
 	DatabaseName *string `json:"databaseName,omitempty"`
 	// Name - the name of the external data source.
@@ -525,17 +521,21 @@ type USQLExternalDataSource struct {
 	ProviderString *string `json:"providerString,omitempty"`
 	// PushdownTypes - the list of types to push down from the external data source.
 	PushdownTypes *[]string `json:"pushdownTypes,omitempty"`
+	// ComputeAccountName - the name of the Data Lake Analytics account.
+	ComputeAccountName *string `json:"computeAccountName,omitempty"`
+	// Version - the version of the catalog item.
+	Version *uuid.UUID `json:"version,omitempty"`
 }
 
 // USQLExternalDataSourceList a Data Lake Analytics catalog U-SQL external datasource item list.
 type USQLExternalDataSourceList struct {
 	autorest.Response `json:"-"`
+	// Value - the list of external data sources in the database
+	Value *[]USQLExternalDataSource `json:"value,omitempty"`
 	// Count - the count of items in the list.
 	Count *int32 `json:"count,omitempty"`
 	// NextLink - the link to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
-	// Value - the list of external data sources in the database
-	Value *[]USQLExternalDataSource `json:"value,omitempty"`
 }
 
 // USQLExternalDataSourceListIterator provides access to a complete listing of USQLExternalDataSource values.
@@ -658,10 +658,6 @@ type USQLIndex struct {
 // USQLProcedure a Data Lake Analytics catalog U-SQL procedure item.
 type USQLProcedure struct {
 	autorest.Response `json:"-"`
-	// ComputeAccountName - the name of the Data Lake Analytics account.
-	ComputeAccountName *string `json:"computeAccountName,omitempty"`
-	// Version - the version of the catalog item.
-	Version *uuid.UUID `json:"version,omitempty"`
 	// DatabaseName - the name of the database.
 	DatabaseName *string `json:"databaseName,omitempty"`
 	// SchemaName - the name of the schema associated with this procedure and database.
@@ -670,17 +666,21 @@ type USQLProcedure struct {
 	Name *string `json:"procName,omitempty"`
 	// Definition - the defined query of the procedure.
 	Definition *string `json:"definition,omitempty"`
+	// ComputeAccountName - the name of the Data Lake Analytics account.
+	ComputeAccountName *string `json:"computeAccountName,omitempty"`
+	// Version - the version of the catalog item.
+	Version *uuid.UUID `json:"version,omitempty"`
 }
 
 // USQLProcedureList a Data Lake Analytics catalog U-SQL procedure item list.
 type USQLProcedureList struct {
 	autorest.Response `json:"-"`
+	// Value - the list of procedure in the database and schema combination
+	Value *[]USQLProcedure `json:"value,omitempty"`
 	// Count - the count of items in the list.
 	Count *int32 `json:"count,omitempty"`
 	// NextLink - the link to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
-	// Value - the list of procedure in the database and schema combination
-	Value *[]USQLProcedure `json:"value,omitempty"`
 }
 
 // USQLProcedureListIterator provides access to a complete listing of USQLProcedure values.
@@ -779,25 +779,25 @@ func (page USQLProcedureListPage) Values() []USQLProcedure {
 // USQLSchema a Data Lake Analytics catalog U-SQL schema item.
 type USQLSchema struct {
 	autorest.Response `json:"-"`
-	// ComputeAccountName - the name of the Data Lake Analytics account.
-	ComputeAccountName *string `json:"computeAccountName,omitempty"`
-	// Version - the version of the catalog item.
-	Version *uuid.UUID `json:"version,omitempty"`
 	// DatabaseName - the name of the database.
 	DatabaseName *string `json:"databaseName,omitempty"`
 	// Name - the name of the schema.
 	Name *string `json:"schemaName,omitempty"`
+	// ComputeAccountName - the name of the Data Lake Analytics account.
+	ComputeAccountName *string `json:"computeAccountName,omitempty"`
+	// Version - the version of the catalog item.
+	Version *uuid.UUID `json:"version,omitempty"`
 }
 
 // USQLSchemaList a Data Lake Analytics catalog U-SQL schema item list.
 type USQLSchemaList struct {
 	autorest.Response `json:"-"`
+	// Value - the list of schemas in the database
+	Value *[]USQLSchema `json:"value,omitempty"`
 	// Count - the count of items in the list.
 	Count *int32 `json:"count,omitempty"`
 	// NextLink - the link to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
-	// Value - the list of schemas in the database
-	Value *[]USQLSchema `json:"value,omitempty"`
 }
 
 // USQLSchemaListIterator provides access to a complete listing of USQLSchema values.
@@ -896,10 +896,6 @@ func (page USQLSchemaListPage) Values() []USQLSchema {
 // USQLSecret a Data Lake Analytics catalog U-SQL secret item.
 type USQLSecret struct {
 	autorest.Response `json:"-"`
-	// ComputeAccountName - the name of the Data Lake Analytics account.
-	ComputeAccountName *string `json:"computeAccountName,omitempty"`
-	// Version - the version of the catalog item.
-	Version *uuid.UUID `json:"version,omitempty"`
 	// DatabaseName - the name of the database.
 	DatabaseName *string `json:"databaseName,omitempty"`
 	// Name - the name of the secret.
@@ -910,15 +906,15 @@ type USQLSecret struct {
 	URI *string `json:"uri,omitempty"`
 	// Password - the password for the secret to pass in
 	Password *string `json:"password,omitempty"`
+	// ComputeAccountName - the name of the Data Lake Analytics account.
+	ComputeAccountName *string `json:"computeAccountName,omitempty"`
+	// Version - the version of the catalog item.
+	Version *uuid.UUID `json:"version,omitempty"`
 }
 
 // USQLTable a Data Lake Analytics catalog U-SQL table item.
 type USQLTable struct {
 	autorest.Response `json:"-"`
-	// ComputeAccountName - the name of the Data Lake Analytics account.
-	ComputeAccountName *string `json:"computeAccountName,omitempty"`
-	// Version - the version of the catalog item.
-	Version *uuid.UUID `json:"version,omitempty"`
 	// DatabaseName - the name of the database.
 	DatabaseName *string `json:"databaseName,omitempty"`
 	// SchemaName - the name of the schema associated with this table and database.
@@ -935,6 +931,10 @@ type USQLTable struct {
 	ExternalTable *ExternalTable `json:"externalTable,omitempty"`
 	// DistributionInfo - the distributions info of the table
 	DistributionInfo *USQLDistributionInfo `json:"distributionInfo,omitempty"`
+	// ComputeAccountName - the name of the Data Lake Analytics account.
+	ComputeAccountName *string `json:"computeAccountName,omitempty"`
+	// Version - the version of the catalog item.
+	Version *uuid.UUID `json:"version,omitempty"`
 }
 
 // USQLTableColumn a Data Lake Analytics catalog U-SQL table column item.
@@ -948,12 +948,12 @@ type USQLTableColumn struct {
 // USQLTableList a Data Lake Analytics catalog U-SQL table item list.
 type USQLTableList struct {
 	autorest.Response `json:"-"`
+	// Value - the list of tables in the database and schema combination
+	Value *[]USQLTable `json:"value,omitempty"`
 	// Count - the count of items in the list.
 	Count *int32 `json:"count,omitempty"`
 	// NextLink - the link to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
-	// Value - the list of tables in the database and schema combination
-	Value *[]USQLTable `json:"value,omitempty"`
 }
 
 // USQLTableListIterator provides access to a complete listing of USQLTable values.
@@ -1052,10 +1052,6 @@ func (page USQLTableListPage) Values() []USQLTable {
 // USQLTablePartition a Data Lake Analytics catalog U-SQL table partition item.
 type USQLTablePartition struct {
 	autorest.Response `json:"-"`
-	// ComputeAccountName - the name of the Data Lake Analytics account.
-	ComputeAccountName *string `json:"computeAccountName,omitempty"`
-	// Version - the version of the catalog item.
-	Version *uuid.UUID `json:"version,omitempty"`
 	// DatabaseName - the name of the database.
 	DatabaseName *string `json:"databaseName,omitempty"`
 	// SchemaName - the name of the schema associated with this table partition and database.
@@ -1070,17 +1066,21 @@ type USQLTablePartition struct {
 	Label *[]string `json:"label,omitempty"`
 	// CreateDate - the creation time of the partition
 	CreateDate *date.Time `json:"createDate,omitempty"`
+	// ComputeAccountName - the name of the Data Lake Analytics account.
+	ComputeAccountName *string `json:"computeAccountName,omitempty"`
+	// Version - the version of the catalog item.
+	Version *uuid.UUID `json:"version,omitempty"`
 }
 
 // USQLTablePartitionList a Data Lake Analytics catalog U-SQL table partition item list.
 type USQLTablePartitionList struct {
 	autorest.Response `json:"-"`
+	// Value - the list of table partitions in the database, schema and table combination
+	Value *[]USQLTablePartition `json:"value,omitempty"`
 	// Count - the count of items in the list.
 	Count *int32 `json:"count,omitempty"`
 	// NextLink - the link to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
-	// Value - the list of table partitions in the database, schema and table combination
-	Value *[]USQLTablePartition `json:"value,omitempty"`
 }
 
 // USQLTablePartitionListIterator provides access to a complete listing of USQLTablePartition values.
@@ -1179,10 +1179,6 @@ func (page USQLTablePartitionListPage) Values() []USQLTablePartition {
 // USQLTableStatistics a Data Lake Analytics catalog U-SQL table statistics item.
 type USQLTableStatistics struct {
 	autorest.Response `json:"-"`
-	// ComputeAccountName - the name of the Data Lake Analytics account.
-	ComputeAccountName *string `json:"computeAccountName,omitempty"`
-	// Version - the version of the catalog item.
-	Version *uuid.UUID `json:"version,omitempty"`
 	// DatabaseName - the name of the database.
 	DatabaseName *string `json:"databaseName,omitempty"`
 	// SchemaName - the name of the schema associated with this table and database.
@@ -1209,17 +1205,21 @@ type USQLTableStatistics struct {
 	FilterDefinition *string `json:"filterDefinition,omitempty"`
 	// ColNames - the list of column names associated with these statistics.
 	ColNames *[]string `json:"colNames,omitempty"`
+	// ComputeAccountName - the name of the Data Lake Analytics account.
+	ComputeAccountName *string `json:"computeAccountName,omitempty"`
+	// Version - the version of the catalog item.
+	Version *uuid.UUID `json:"version,omitempty"`
 }
 
 // USQLTableStatisticsList a Data Lake Analytics catalog U-SQL table statistics item list.
 type USQLTableStatisticsList struct {
 	autorest.Response `json:"-"`
+	// Value - the list of table statistics in the database, schema and table combination
+	Value *[]USQLTableStatistics `json:"value,omitempty"`
 	// Count - the count of items in the list.
 	Count *int32 `json:"count,omitempty"`
 	// NextLink - the link to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
-	// Value - the list of table statistics in the database, schema and table combination
-	Value *[]USQLTableStatistics `json:"value,omitempty"`
 }
 
 // USQLTableStatisticsListIterator provides access to a complete listing of USQLTableStatistics values.
@@ -1318,10 +1318,8 @@ func (page USQLTableStatisticsListPage) Values() []USQLTableStatistics {
 // USQLTableType a Data Lake Analytics catalog U-SQL table type item.
 type USQLTableType struct {
 	autorest.Response `json:"-"`
-	// ComputeAccountName - the name of the Data Lake Analytics account.
-	ComputeAccountName *string `json:"computeAccountName,omitempty"`
-	// Version - the version of the catalog item.
-	Version *uuid.UUID `json:"version,omitempty"`
+	// Columns - the type field information associated with this table type.
+	Columns *[]TypeFieldInfo `json:"columns,omitempty"`
 	// DatabaseName - the name of the database.
 	DatabaseName *string `json:"databaseName,omitempty"`
 	// SchemaName - the name of the schema associated with this table and database.
@@ -1352,19 +1350,21 @@ type USQLTableType struct {
 	IsTableType *bool `json:"isTableType,omitempty"`
 	// IsComplexType - the the switch indicating if this type is a complex type.
 	IsComplexType *bool `json:"isComplexType,omitempty"`
-	// Columns - the type field information associated with this table type.
-	Columns *[]TypeFieldInfo `json:"columns,omitempty"`
+	// ComputeAccountName - the name of the Data Lake Analytics account.
+	ComputeAccountName *string `json:"computeAccountName,omitempty"`
+	// Version - the version of the catalog item.
+	Version *uuid.UUID `json:"version,omitempty"`
 }
 
 // USQLTableTypeList a Data Lake Analytics catalog U-SQL table type item list.
 type USQLTableTypeList struct {
 	autorest.Response `json:"-"`
+	// Value - the list of table types in the database and schema combination
+	Value *[]USQLTableType `json:"value,omitempty"`
 	// Count - the count of items in the list.
 	Count *int32 `json:"count,omitempty"`
 	// NextLink - the link to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
-	// Value - the list of table types in the database and schema combination
-	Value *[]USQLTableType `json:"value,omitempty"`
 }
 
 // USQLTableTypeListIterator provides access to a complete listing of USQLTableType values.
@@ -1463,10 +1463,6 @@ func (page USQLTableTypeListPage) Values() []USQLTableType {
 // USQLTableValuedFunction a Data Lake Analytics catalog U-SQL table valued function item.
 type USQLTableValuedFunction struct {
 	autorest.Response `json:"-"`
-	// ComputeAccountName - the name of the Data Lake Analytics account.
-	ComputeAccountName *string `json:"computeAccountName,omitempty"`
-	// Version - the version of the catalog item.
-	Version *uuid.UUID `json:"version,omitempty"`
 	// DatabaseName - the name of the database.
 	DatabaseName *string `json:"databaseName,omitempty"`
 	// SchemaName - the name of the schema associated with this database.
@@ -1475,17 +1471,21 @@ type USQLTableValuedFunction struct {
 	Name *string `json:"tvfName,omitempty"`
 	// Definition - the definition of the table valued function.
 	Definition *string `json:"definition,omitempty"`
+	// ComputeAccountName - the name of the Data Lake Analytics account.
+	ComputeAccountName *string `json:"computeAccountName,omitempty"`
+	// Version - the version of the catalog item.
+	Version *uuid.UUID `json:"version,omitempty"`
 }
 
 // USQLTableValuedFunctionList a Data Lake Analytics catalog U-SQL table valued function item list.
 type USQLTableValuedFunctionList struct {
 	autorest.Response `json:"-"`
+	// Value - the list of table valued functions in the database and schema combination
+	Value *[]USQLTableValuedFunction `json:"value,omitempty"`
 	// Count - the count of items in the list.
 	Count *int32 `json:"count,omitempty"`
 	// NextLink - the link to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
-	// Value - the list of table valued functions in the database and schema combination
-	Value *[]USQLTableValuedFunction `json:"value,omitempty"`
 }
 
 // USQLTableValuedFunctionListIterator provides access to a complete listing of USQLTableValuedFunction values.
@@ -1583,10 +1583,6 @@ func (page USQLTableValuedFunctionListPage) Values() []USQLTableValuedFunction {
 
 // USQLType a Data Lake Analytics catalog U-SQL type item.
 type USQLType struct {
-	// ComputeAccountName - the name of the Data Lake Analytics account.
-	ComputeAccountName *string `json:"computeAccountName,omitempty"`
-	// Version - the version of the catalog item.
-	Version *uuid.UUID `json:"version,omitempty"`
 	// DatabaseName - the name of the database.
 	DatabaseName *string `json:"databaseName,omitempty"`
 	// SchemaName - the name of the schema associated with this table and database.
@@ -1617,17 +1613,21 @@ type USQLType struct {
 	IsTableType *bool `json:"isTableType,omitempty"`
 	// IsComplexType - the the switch indicating if this type is a complex type.
 	IsComplexType *bool `json:"isComplexType,omitempty"`
+	// ComputeAccountName - the name of the Data Lake Analytics account.
+	ComputeAccountName *string `json:"computeAccountName,omitempty"`
+	// Version - the version of the catalog item.
+	Version *uuid.UUID `json:"version,omitempty"`
 }
 
 // USQLTypeList a Data Lake Analytics catalog U-SQL type item list.
 type USQLTypeList struct {
 	autorest.Response `json:"-"`
+	// Value - the list of types in the database and schema combination
+	Value *[]USQLType `json:"value,omitempty"`
 	// Count - the count of items in the list.
 	Count *int32 `json:"count,omitempty"`
 	// NextLink - the link to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
-	// Value - the list of types in the database and schema combination
-	Value *[]USQLType `json:"value,omitempty"`
 }
 
 // USQLTypeListIterator provides access to a complete listing of USQLType values.
@@ -1726,10 +1726,6 @@ func (page USQLTypeListPage) Values() []USQLType {
 // USQLView a Data Lake Analytics catalog U-SQL view item.
 type USQLView struct {
 	autorest.Response `json:"-"`
-	// ComputeAccountName - the name of the Data Lake Analytics account.
-	ComputeAccountName *string `json:"computeAccountName,omitempty"`
-	// Version - the version of the catalog item.
-	Version *uuid.UUID `json:"version,omitempty"`
 	// DatabaseName - the name of the database.
 	DatabaseName *string `json:"databaseName,omitempty"`
 	// SchemaName - the name of the schema associated with this view and database.
@@ -1738,17 +1734,21 @@ type USQLView struct {
 	Name *string `json:"viewName,omitempty"`
 	// Definition - the defined query of the view.
 	Definition *string `json:"definition,omitempty"`
+	// ComputeAccountName - the name of the Data Lake Analytics account.
+	ComputeAccountName *string `json:"computeAccountName,omitempty"`
+	// Version - the version of the catalog item.
+	Version *uuid.UUID `json:"version,omitempty"`
 }
 
 // USQLViewList a Data Lake Analytics catalog U-SQL view item list.
 type USQLViewList struct {
 	autorest.Response `json:"-"`
+	// Value - the list of view in the database and schema combination
+	Value *[]USQLView `json:"value,omitempty"`
 	// Count - the count of items in the list.
 	Count *int32 `json:"count,omitempty"`
 	// NextLink - the link to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
-	// Value - the list of view in the database and schema combination
-	Value *[]USQLView `json:"value,omitempty"`
 }
 
 // USQLViewListIterator provides access to a complete listing of USQLView values.

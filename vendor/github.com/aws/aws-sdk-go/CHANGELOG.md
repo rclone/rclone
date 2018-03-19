@@ -1,3 +1,351 @@
+Release v1.13.16 (2018-03-16)
+===
+
+### Service Client Updates
+* `service/elasticbeanstalk`: Updates service API and documentation
+  * AWS Elastic Beanstalk is launching a new public API named DescribeAccountAttributes which allows customers to access account level attributes. In this release, the API will support quotas for resources such as applications, application versions, and environments.
+
+Release v1.13.15 (2018-03-15)
+===
+
+### Service Client Updates
+* `service/organizations`: Updates service API and documentation
+  * This release adds additional reason codes to improve clarity to exceptions that can occur.
+* `service/pinpoint`: Updates service API and documentation
+  * With this release, you can delete endpoints from your Amazon Pinpoint projects. Customers can now specify one of their leased dedicated long or short codes to send text messages.
+* `service/sagemaker`: Updates service API, documentation, and paginators
+  * This release provides support for ml.p3.xlarge instance types for notebook instances.  Lifecycle configuration is now available to customize your notebook instances on start; the configuration can be reused between multiple notebooks.  If a notebook instance is attached to a VPC you can now opt out of internet access that by default is provided by SageMaker.
+
+Release v1.13.14 (2018-03-14)
+===
+
+### Service Client Updates
+* `service/lightsail`: Updates service API and documentation
+  * Updates to existing Lightsail documentation
+
+Release v1.13.13 (2018-03-13)
+===
+
+### Service Client Updates
+* `service/servicediscovery`: Updates service API and documentation
+  * This release adds support for custom health checks, which let you check the health of resources that aren't accessible over the internet. For example, you can use a custom health check when the instance is in an Amazon VPC.
+
+Release v1.13.12 (2018-03-12)
+===
+
+### Service Client Updates
+* `service/cloudhsmv2`: Updates service API
+  * CreateCluster can now take both 8 and 17 character Subnet IDs. DeleteHsm can now take both 8 and 17 character ENI IDs.
+* `service/discovery`: Updates service API and documentation
+  * Documentation updates for discovery
+* `service/iot`: Updates service API and documentation
+  * We added new fields to the response of the following APIs. (1) describe-certificate: added new generationId, customerVersion fields (2) describe-ca-certificate: added new generationId, customerVersion and lastModifiedDate fields (3) get-policy: added generationId, creationDate and lastModifiedDate fields
+* `service/redshift`: Updates service API and documentation
+  * DescribeClusterSnapshotsMessage with ClusterExists flag returns snapshots of existing clusters. Else both existing and deleted cluster snapshots are returned
+
+Release v1.13.11 (2018-03-08)
+===
+
+### Service Client Updates
+* `service/AWSMigrationHub`: Updates service API and documentation
+* `service/ecs`: Updates service API and documentation
+  * Amazon Elastic Container Service (ECS) now supports container health checks. Customers can now specify a docker container health check command and parameters in their task definition. ECS will monitor, report and take scheduling action based on the health status.
+* `service/pinpoint`: Updates service API and documentation
+  * With this release, you can export endpoints from your Amazon Pinpoint projects. You can export a) all of the endpoints assigned to a project or b) the subset of endpoints assigned to a segment.
+* `service/rds`: Updates service documentation
+  * Documentation updates for RDS
+
+Release v1.13.10 (2018-03-07)
+===
+
+### Service Client Updates
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/medialive`: Updates service API and documentation
+  * Updates API to model required traits and minimum/maximum constraints.
+
+Release v1.13.9 (2018-03-06)
+===
+
+### Service Client Updates
+* `service/ecs`: Updates service documentation
+  * Documentation updates for Amazon ECS
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+
+Release v1.13.8 (2018-03-01)
+===
+
+### Service Client Updates
+* `service/ec2`: Updates service API and documentation
+  * Added support for modifying Placement Group association of instances via ModifyInstancePlacement API.
+* `service/events`: Updates service API and documentation
+  * Added BatchParameters to the PutTargets API
+* `service/servicecatalog`: Updates service API and documentation
+  * This release of ServiceCatalog adds the DeleteTagOption API.
+* `service/ssm`: Updates service API and documentation
+  * This Inventory release supports the status message details reported by the last sync for the resource data sync API.
+* `service/storagegateway`: Updates service API and documentation
+  * AWS Storage Gateway (File) support for two new file share attributes are added.           1. Users can specify the S3 Canned ACL to use for new objects created in the file share.         2. Users can create file shares for requester-pays buckets.
+
+Release v1.13.7 (2018-02-28)
+===
+
+### Service Client Updates
+* `service/application-autoscaling`: Updates service API and documentation
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+
+Release v1.13.6 (2018-02-27)
+===
+
+### Service Client Updates
+* `service/ecr`: Updates service documentation
+  * Documentation updates for Amazon ECR.
+
+Release v1.13.5 (2018-02-26)
+===
+
+### Service Client Updates
+* `service/route53`: Updates service API
+  * Added support for creating LBR rules using ap-northeast-3 region.
+* `service/sts`: Updates service API and documentation
+  * Increased SAMLAssertion parameter size from 50000 to 100000 for AWS Security Token Service AssumeRoleWithSAML API to allow customers to pass bigger SAML assertions
+
+Release v1.13.4 (2018-02-23)
+===
+
+### Service Client Updates
+* `service/appstream`: Updates service API and documentation
+  * This API update is to enable customers to copy their Amazon AppStream 2.0 images within and between AWS Regions
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+
+Release v1.13.3 (2018-02-22)
+===
+
+### Service Client Updates
+* `service/ce`: Updates service API and documentation
+* `service/elasticloadbalancingv2`: Updates service documentation
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+
+Release v1.13.2 (2018-02-21)
+===
+
+### Service Client Updates
+* `service/codecommit`: Updates service API and documentation
+  * This release adds an API for adding a file directly to an AWS CodeCommit repository without requiring a Git client.
+* `service/ec2`: Updates service API and documentation
+  * Adds support for tagging an EBS snapshot as part of the API call that creates the EBS snapshot
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/serverlessrepo`: Updates service API, documentation, and paginators
+
+Release v1.13.1 (2018-02-20)
+===
+
+### Service Client Updates
+* `service/autoscaling`: Updates service API and documentation
+  * Amazon EC2 Auto Scaling support for service-linked roles
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/waf`: Updates service API and documentation
+  * The new PermissionPolicy APIs in AWS WAF Regional allow customers to attach resource-based policies to their entities.
+* `service/waf-regional`: Updates service API and documentation
+
+Release v1.13.0 (2018-02-19)
+===
+
+### Service Client Updates
+* `service/config`: Updates service API
+  * With this release, AWS Config updated the ConfigurationItemStatus enum values. The values prior to this update did not represent appropriate values returned by GetResourceConfigHistory. You must update your code to enumerate the new enum values so this is a breaking change. To map old properties to new properties, use the following descriptions: New discovered resource - Old property: Discovered, New property: ResourceDiscovered. Updated resource - Old property: Ok, New property: OK. Deleted resource - Old property: Deleted, New property: ResourceDeleted or ResourceDeletedNotRecorded. Not-recorded resource - Old property: N/A, New property: ResourceNotRecorded or ResourceDeletedNotRecorded.
+
+Release v1.12.79 (2018-02-16)
+===
+
+### Service Client Updates
+* `service/rds`: Updates service API and documentation
+  * Updates RDS API to indicate whether a DBEngine supports read replicas.
+
+Release v1.12.78 (2018-02-15)
+===
+
+### Service Client Updates
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/gamelift`: Updates service API and documentation
+  * Updates to allow Fleets to run on On-Demand or Spot instances.
+* `service/mediaconvert`: Updates service API and documentation
+  * Nielsen ID3 tags can now be inserted into transport stream (TS) and HLS outputs. For more information on Nielsen configuration you can go to https://docs.aws.amazon.com/mediaconvert/latest/apireference/jobs.html#jobs-nielsenconfiguration
+
+Release v1.12.77 (2018-02-14)
+===
+
+### Service Client Updates
+* `service/appsync`: Updates service API and documentation
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/lex-models`: Updates service API and documentation
+
+Release v1.12.76 (2018-02-13)
+===
+
+### Service Client Updates
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/glacier`: Updates service documentation
+  * Documentation updates for glacier
+* `service/route53`: Updates service API
+  * Added support for creating Private Hosted Zones and metric-based healthchecks in the ap-northeast-3 region for whitelisted customers.
+
+Release v1.12.75 (2018-02-12)
+===
+
+### Service Client Updates
+* `service/cognito-idp`: Updates service API and documentation
+* `service/ec2`: Updates service API and documentation
+  * Network interfaces now supply the following additional status of "associated" to better distinguish the current status.
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/guardduty`: Updates service API and documentation
+  * Added PortProbeAction information to the Action section of the port probe-type finding.
+* `service/kms`: Updates service API
+  * This release of AWS Key Management Service includes support for InvalidArnException in the RetireGrant API.
+* `service/rds`: Updates service documentation
+  * Aurora MySQL now supports MySQL 5.7.
+
+Release v1.12.74 (2018-02-09)
+===
+
+### Service Client Updates
+* `service/ec2`: Updates service API and documentation
+  * Users can now better understand the longer ID opt-in status of their account using the two new APIs DescribeAggregateIdFormat and DescribePrincipalIdFormat
+* `service/lex-models`: Updates service API and documentation
+* `service/runtime.lex`: Updates service API and documentation
+
+Release v1.12.73 (2018-02-08)
+===
+
+### Service Client Updates
+* `service/appstream`: Updates service API and documentation
+  * Adds support for allowing customers to provide a redirect URL for a stack. Users will be redirected to the link provided by the admin at the end of their streaming session.
+* `service/budgets`: Updates service API and documentation
+  * Making budgetLimit and timePeriod optional, and updating budgets docs.
+* `service/dms`: Updates service API, documentation, and paginators
+  * This release includes the addition of two new APIs: describe replication instance task logs and reboot instance. The first allows user to see how much storage each log for a task on a given instance is occupying. The second gives users the option to reboot the application software on the instance and force a fail over for MAZ instances to test robustness of their integration with our service.
+* `service/ds`: Updates service API
+  * Updated the regex of some input parameters to support longer EC2 identifiers.
+* `service/dynamodb`: Updates service API and documentation
+  * Amazon DynamoDB now supports server-side encryption using a default service key (alias/aws/dynamodb) from the AWS Key Management Service (KMS). AWS KMS is a service that combines secure, highly available hardware and software to provide a key management system scaled for the cloud. AWS KMS is used via the AWS Management Console or APIs to centrally create encryption keys, define the policies that control how keys can be used, and audit key usage to prove they are being used correctly. For more information, see the Amazon DynamoDB Developer Guide.
+* `service/gamelift`: Updates service API and documentation
+  * Amazon GameLift FlexMatch added the StartMatchBackfill API.  This API allows developers to add new players to an existing game session using the same matchmaking rules and player data that were used to initially create the session.
+* `service/medialive`: Updates service API and documentation
+  * AWS Elemental MediaLive has added support for updating channel settings for idle channels. You can now update channel name, channel outputs and output destinations, encoder settings, user role ARN, and input specifications. Channel settings can be updated in the console or with API calls. Please note that running channels need to be stopped before they can be updated. We've also deprecated the 'Reserved' field.
+* `service/mediastore`: Updates service API and documentation
+  * AWS Elemental MediaStore now supports per-container CORS configuration.
+
+Release v1.12.72 (2018-02-07)
+===
+
+### Service Client Updates
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/glue`: Updates service API and documentation
+  * This new feature will now allow customers to add a customized json classifier. They can specify a json path to indicate the object, array or field of the json documents they'd like crawlers to inspect when they crawl json files.
+* `service/servicecatalog`: Updates service API, documentation, and paginators
+  * This release of Service Catalog adds SearchProvisionedProducts API and ProvisionedProductPlan APIs.
+* `service/servicediscovery`: Updates service API and documentation
+  * This release adds support for registering CNAME record types and creating Route 53 alias records that route traffic to Amazon Elastic Load Balancers using Amazon Route 53 Auto Naming APIs.
+* `service/ssm`: Updates service API and documentation
+  * This Patch Manager release supports configuring Linux repos as part of patch baselines, controlling updates of non-OS security packages and also creating patch baselines for SUSE12
+
+### SDK Enhancements
+* `private/model/api`: Add validation to ensure there is no duplication of services in models/apis ([#1758](https://github.com/aws/aws-sdk-go/pull/1758))
+    * Prevents the SDK from mistakenly generating code a single service multiple times with different model versions.
+* `example/service/ec2/instancesbyRegion`: Fix typos in example ([#1762](https://github.com/aws/aws-sdk-go/pull/1762))
+* `private/model/api`: removing SDK API reference crosslinks from input/output shapes. (#1765) 
+
+### SDK Bugs
+* `aws/session`: Fix bug in session.New not supporting AWS_SDK_LOAD_CONFIG ([#1770](https://github.com/aws/aws-sdk-go/pull/1770))
+    * Fixes a bug in the session.New function that was not correctly sourcing the shared configuration files' path.
+    * Fixes [#1771](https://github.com/aws/aws-sdk-go/pull/1771)
+Release v1.12.71 (2018-02-05)
+===
+
+### Service Client Updates
+* `service/acm`: Updates service documentation
+  * Documentation updates for acm
+* `service/cloud9`: Updates service documentation and examples
+  * API usage examples for AWS Cloud9.
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/kinesis`: Updates service API and documentation
+  * Using ListShards a Kinesis Data Streams customer or client can get information about shards in a data stream (including meta-data for each shard) without obtaining data stream level information.
+* `service/opsworks`: Updates service API, documentation, and waiters
+  * AWS OpsWorks Stacks supports EBS encryption and HDD volume types. Also, a new DescribeOperatingSystems API is available, which lists all operating systems supported by OpsWorks Stacks.
+
+Release v1.12.70 (2018-01-26)
+===
+
+### Service Client Updates
+* `service/devicefarm`: Updates service API and documentation
+  * Add InteractionMode in CreateRemoteAccessSession for DirectDeviceAccess feature.
+* `service/medialive`: Updates service API and documentation
+  * Add InputSpecification to CreateChannel (specification of input attributes is used for channel sizing and affects pricing);  add NotFoundException to DeleteInputSecurityGroups.
+* `service/mturk-requester`: Updates service documentation
+
+Release v1.12.69 (2018-01-26)
+===
+
+### SDK Bugs
+* `models/api`: Fix colliding names [#1754](https://github.com/aws/aws-sdk-go/pull/1754) [#1756](https://github.com/aws/aws-sdk-go/pull/1756)
+    * SDK had duplicate folders that were causing errors in some builds.
+    * Fixes [#1753](https://github.com/aws/aws-sdk-go/issues/1753)
+Release v1.12.68 (2018-01-25)
+===
+
+### Service Client Updates
+* `service/alexaforbusiness`: Updates service API and documentation
+* `service/codebuild`: Updates service API and documentation
+  * Adding support for Shallow Clone and GitHub Enterprise in AWS CodeBuild.
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/guardduty`: Adds new service
+  * Added the missing AccessKeyDetails object to the resource shape.
+* `service/lambda`: Updates service API and documentation
+  * AWS Lambda now supports Revision ID on your function versions and aliases, to track and apply conditional updates when you are updating your function version or alias resources.
+
+### SDK Bugs
+* `service/s3/s3manager`: Fix check for nil OrigErr in Error() [#1749](https://github.com/aws/aws-sdk-go/issues/1749)
+    * S3 Manager's `Error` type did not check for nil of `OrigErr` when calling `Error()`
+    * Fixes [#1748](https://github.com/aws/aws-sdk-go/issues/1748)
+Release v1.12.67 (2018-01-22)
+===
+
+### Service Client Updates
+* `service/budgets`: Updates service API and documentation
+  * Add additional costTypes: IncludeDiscount, UseAmortized,  to support finer control for different charges included in a cost budget.
+
+Release v1.12.66 (2018-01-19)
+===
+
+### Service Client Updates
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/glue`: Updates service API and documentation
+  * New AWS Glue DataCatalog APIs to manage table versions and a new feature to skip archiving of the old table version when updating table.
+* `service/transcribe`: Adds new service
+
+Release v1.12.65 (2018-01-18)
+===
+
+### Service Client Updates
+* `service/sagemaker`: Updates service API and documentation
+  * CreateTrainingJob and CreateEndpointConfig now supports KMS Key for volume encryption.
+
+Release v1.12.64 (2018-01-17)
+===
+
+### Service Client Updates
+* `service/autoscaling-plans`: Updates service documentation
+* `service/ec2`: Updates service documentation
+  * Documentation updates for EC2
+
+Release v1.12.63 (2018-01-17)
+===
+
+### Service Client Updates
+* `service/application-autoscaling`: Updates service API and documentation
+* `service/autoscaling-plans`: Adds new service
+* `service/rds`: Updates service API and documentation
+  * With this release you can now integrate RDS DB instances with CloudWatch Logs. We have added parameters to the operations for creating and modifying DB instances (for example CreateDBInstance) to allow you to take advantage of this capability through the CLI and API. Once you enable this feature, a stream of log events will publish to CloudWatch Logs for each log type you enable.
+
 Release v1.12.62 (2018-01-15)
 ===
 

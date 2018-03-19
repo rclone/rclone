@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -142,94 +142,6 @@ func (c *Client) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", version.Go()}, keyval...)
 	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", grpc.Version)
 	c.xGoogMetadata = metadata.Pairs("x-goog-api-client", gax.XGoogHeader(kv...))
-}
-
-// ProjectPath returns the path for the project resource.
-func ProjectPath(project string) string {
-	return "" +
-		"projects/" +
-		project +
-		""
-}
-
-// LocationPath returns the path for the location resource.
-func LocationPath(project, location string) string {
-	return "" +
-		"projects/" +
-		project +
-		"/locations/" +
-		location +
-		""
-}
-
-// LocationDataSourcePath returns the path for the location data source resource.
-func LocationDataSourcePath(project, location, dataSource string) string {
-	return "" +
-		"projects/" +
-		project +
-		"/locations/" +
-		location +
-		"/dataSources/" +
-		dataSource +
-		""
-}
-
-// LocationTransferConfigPath returns the path for the location transfer config resource.
-func LocationTransferConfigPath(project, location, transferConfig string) string {
-	return "" +
-		"projects/" +
-		project +
-		"/locations/" +
-		location +
-		"/transferConfigs/" +
-		transferConfig +
-		""
-}
-
-// LocationRunPath returns the path for the location run resource.
-func LocationRunPath(project, location, transferConfig, run string) string {
-	return "" +
-		"projects/" +
-		project +
-		"/locations/" +
-		location +
-		"/transferConfigs/" +
-		transferConfig +
-		"/runs/" +
-		run +
-		""
-}
-
-// DataSourcePath returns the path for the data source resource.
-func DataSourcePath(project, dataSource string) string {
-	return "" +
-		"projects/" +
-		project +
-		"/dataSources/" +
-		dataSource +
-		""
-}
-
-// TransferConfigPath returns the path for the transfer config resource.
-func TransferConfigPath(project, transferConfig string) string {
-	return "" +
-		"projects/" +
-		project +
-		"/transferConfigs/" +
-		transferConfig +
-		""
-}
-
-// RunPath returns the path for the run resource.
-func RunPath(project, transferConfig, run string) string {
-	return "" +
-		"projects/" +
-		project +
-		"/transferConfigs/" +
-		transferConfig +
-		"/runs/" +
-		run +
-		""
 }
 
 // GetDataSource retrieves a supported data source and returns its settings,

@@ -1712,7 +1712,8 @@
         {"shape":"ThrottlingException"},
         {"shape":"UnauthorizedException"},
         {"shape":"ServiceUnavailableException"},
-        {"shape":"InternalFailureException"}
+        {"shape":"InternalFailureException"},
+        {"shape":"ResourceAlreadyExistsException"}
       ]
     },
     "SetDefaultPolicyVersion":{
@@ -2318,7 +2319,10 @@
         "certificatePem":{"shape":"CertificatePem"},
         "ownedBy":{"shape":"AwsAccountId"},
         "creationDate":{"shape":"DateType"},
-        "autoRegistrationStatus":{"shape":"AutoRegistrationStatus"}
+        "autoRegistrationStatus":{"shape":"AutoRegistrationStatus"},
+        "lastModifiedDate":{"shape":"DateType"},
+        "customerVersion":{"shape":"CustomerVersion"},
+        "generationId":{"shape":"GenerationId"}
       }
     },
     "CACertificateStatus":{
@@ -2407,7 +2411,9 @@
         "previousOwnedBy":{"shape":"AwsAccountId"},
         "creationDate":{"shape":"DateType"},
         "lastModifiedDate":{"shape":"DateType"},
-        "transferData":{"shape":"TransferData"}
+        "customerVersion":{"shape":"CustomerVersion"},
+        "transferData":{"shape":"TransferData"},
+        "generationId":{"shape":"GenerationId"}
       }
     },
     "CertificateId":{
@@ -2869,6 +2875,10 @@
         "hashAlgorithm":{"shape":"HashAlgorithm"},
         "signatureAlgorithm":{"shape":"SignatureAlgorithm"}
       }
+    },
+    "CustomerVersion":{
+      "type":"integer",
+      "min":1
     },
     "DateType":{"type":"timestamp"},
     "DeleteAuthorizerRequest":{
@@ -3662,6 +3672,7 @@
       "max":10000,
       "min":1
     },
+    "GenerationId":{"type":"string"},
     "GetEffectivePoliciesRequest":{
       "type":"structure",
       "members":{
@@ -3754,7 +3765,10 @@
         "policyName":{"shape":"PolicyName"},
         "policyArn":{"shape":"PolicyArn"},
         "policyDocument":{"shape":"PolicyDocument"},
-        "defaultVersionId":{"shape":"PolicyVersionId"}
+        "defaultVersionId":{"shape":"PolicyVersionId"},
+        "creationDate":{"shape":"DateType"},
+        "lastModifiedDate":{"shape":"DateType"},
+        "generationId":{"shape":"GenerationId"}
       }
     },
     "GetPolicyVersionRequest":{
@@ -3783,7 +3797,10 @@
         "policyName":{"shape":"PolicyName"},
         "policyDocument":{"shape":"PolicyDocument"},
         "policyVersionId":{"shape":"PolicyVersionId"},
-        "isDefaultVersion":{"shape":"IsDefaultVersion"}
+        "isDefaultVersion":{"shape":"IsDefaultVersion"},
+        "creationDate":{"shape":"DateType"},
+        "lastModifiedDate":{"shape":"DateType"},
+        "generationId":{"shape":"GenerationId"}
       }
     },
     "GetRegistrationCodeRequest":{
@@ -5525,6 +5542,7 @@
       "type":"structure",
       "members":{
         "roleAlias":{"shape":"RoleAlias"},
+        "roleAliasArn":{"shape":"RoleAliasArn"},
         "roleArn":{"shape":"RoleArn"},
         "owner":{"shape":"AwsAccountId"},
         "credentialDurationSeconds":{"shape":"CredentialDurationSeconds"},

@@ -360,6 +360,8 @@ type AgentPoolProfile struct {
 // ContainerService container service.
 type ContainerService struct {
 	autorest.Response `json:"-"`
+	// Properties - Properties of the container service.
+	*Properties `json:"properties,omitempty"`
 	// ID - Resource Id
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name
@@ -369,9 +371,31 @@ type ContainerService struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// Properties - Properties of the container service.
-	*Properties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for ContainerService.
+func (cs ContainerService) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cs.Properties != nil {
+		objectMap["properties"] = cs.Properties
+	}
+	if cs.ID != nil {
+		objectMap["id"] = cs.ID
+	}
+	if cs.Name != nil {
+		objectMap["name"] = cs.Name
+	}
+	if cs.Type != nil {
+		objectMap["type"] = cs.Type
+	}
+	if cs.Location != nil {
+		objectMap["location"] = cs.Location
+	}
+	if cs.Tags != nil {
+		objectMap["tags"] = cs.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ContainerService struct.
@@ -381,131 +405,163 @@ func (cs *ContainerService) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties Properties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var properties Properties
+				err = json.Unmarshal(*v, &properties)
+				if err != nil {
+					return err
+				}
+				cs.Properties = &properties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				cs.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				cs.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				cs.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				cs.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				cs.Tags = tags
+			}
 		}
-		cs.Properties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		cs.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		cs.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		cs.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		cs.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		cs.Tags = &tags
 	}
 
 	return nil
 }
 
-// ContainerServicesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
-// operation.
-type ContainerServicesCreateOrUpdateFuture struct {
+// ContainerServicesCreateOrUpdateFutureType an abstraction for monitoring and retrieving the results of a
+// long-running operation.
+type ContainerServicesCreateOrUpdateFutureType struct {
 	azure.Future
 	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ContainerServicesCreateOrUpdateFuture) Result(client ContainerServicesClient) (cs ContainerService, err error) {
+func (future ContainerServicesCreateOrUpdateFutureType) Result(client ContainerServicesClient) (cs ContainerService, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerservice.ContainerServicesCreateOrUpdateFutureType", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return cs, autorest.NewError("containerservice.ContainerServicesCreateOrUpdateFuture", "Result", "asynchronous operation has not completed")
+		return cs, azure.NewAsyncOpIncompleteError("containerservice.ContainerServicesCreateOrUpdateFutureType")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		cs, err = client.CreateOrUpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "containerservice.ContainerServicesCreateOrUpdateFutureType", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerservice.ContainerServicesCreateOrUpdateFutureType", "Result", resp, "Failure sending request")
 		return
 	}
 	cs, err = client.CreateOrUpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerservice.ContainerServicesCreateOrUpdateFutureType", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
-// ContainerServicesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
-type ContainerServicesDeleteFuture struct {
+// ContainerServicesDeleteFutureType an abstraction for monitoring and retrieving the results of a long-running
+// operation.
+type ContainerServicesDeleteFutureType struct {
 	azure.Future
 	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ContainerServicesDeleteFuture) Result(client ContainerServicesClient) (ar autorest.Response, err error) {
+func (future ContainerServicesDeleteFutureType) Result(client ContainerServicesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerservice.ContainerServicesDeleteFutureType", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("containerservice.ContainerServicesDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("containerservice.ContainerServicesDeleteFutureType")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "containerservice.ContainerServicesDeleteFutureType", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerservice.ContainerServicesDeleteFutureType", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerservice.ContainerServicesDeleteFutureType", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -644,6 +700,8 @@ func (page ListResultPage) Values() []ContainerService {
 // ManagedCluster managed cluster.
 type ManagedCluster struct {
 	autorest.Response `json:"-"`
+	// ManagedClusterProperties - Properties of a managed cluster.
+	*ManagedClusterProperties `json:"properties,omitempty"`
 	// ID - Resource Id
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name
@@ -653,9 +711,31 @@ type ManagedCluster struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// ManagedClusterProperties - Properties of a managed cluster.
-	*ManagedClusterProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for ManagedCluster.
+func (mc ManagedCluster) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if mc.ManagedClusterProperties != nil {
+		objectMap["properties"] = mc.ManagedClusterProperties
+	}
+	if mc.ID != nil {
+		objectMap["id"] = mc.ID
+	}
+	if mc.Name != nil {
+		objectMap["name"] = mc.Name
+	}
+	if mc.Type != nil {
+		objectMap["type"] = mc.Type
+	}
+	if mc.Location != nil {
+		objectMap["location"] = mc.Location
+	}
+	if mc.Tags != nil {
+		objectMap["tags"] = mc.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ManagedCluster struct.
@@ -665,66 +745,63 @@ func (mc *ManagedCluster) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ManagedClusterProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var managedClusterProperties ManagedClusterProperties
+				err = json.Unmarshal(*v, &managedClusterProperties)
+				if err != nil {
+					return err
+				}
+				mc.ManagedClusterProperties = &managedClusterProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				mc.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				mc.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				mc.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				mc.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				mc.Tags = tags
+			}
 		}
-		mc.ManagedClusterProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		mc.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		mc.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		mc.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		mc.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		mc.Tags = &tags
 	}
 
 	return nil
@@ -733,6 +810,8 @@ func (mc *ManagedCluster) UnmarshalJSON(body []byte) error {
 // ManagedClusterAccessProfile managed cluster Access Profile.
 type ManagedClusterAccessProfile struct {
 	autorest.Response `json:"-"`
+	// AccessProfile - AccessProfile of a managed cluster.
+	*AccessProfile `json:"properties,omitempty"`
 	// ID - Resource Id
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name
@@ -742,9 +821,31 @@ type ManagedClusterAccessProfile struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// AccessProfile - AccessProfile of a managed cluster.
-	*AccessProfile `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for ManagedClusterAccessProfile.
+func (mcap ManagedClusterAccessProfile) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if mcap.AccessProfile != nil {
+		objectMap["properties"] = mcap.AccessProfile
+	}
+	if mcap.ID != nil {
+		objectMap["id"] = mcap.ID
+	}
+	if mcap.Name != nil {
+		objectMap["name"] = mcap.Name
+	}
+	if mcap.Type != nil {
+		objectMap["type"] = mcap.Type
+	}
+	if mcap.Location != nil {
+		objectMap["location"] = mcap.Location
+	}
+	if mcap.Tags != nil {
+		objectMap["tags"] = mcap.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ManagedClusterAccessProfile struct.
@@ -754,66 +855,63 @@ func (mcap *ManagedClusterAccessProfile) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties AccessProfile
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var accessProfile AccessProfile
+				err = json.Unmarshal(*v, &accessProfile)
+				if err != nil {
+					return err
+				}
+				mcap.AccessProfile = &accessProfile
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				mcap.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				mcap.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				mcap.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				mcap.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				mcap.Tags = tags
+			}
 		}
-		mcap.AccessProfile = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		mcap.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		mcap.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		mcap.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		mcap.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		mcap.Tags = &tags
 	}
 
 	return nil
@@ -964,26 +1062,44 @@ func (future ManagedClustersCreateOrUpdateFuture) Result(client ManagedClustersC
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerservice.ManagedClustersCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return mc, autorest.NewError("containerservice.ManagedClustersCreateOrUpdateFuture", "Result", "asynchronous operation has not completed")
+		return mc, azure.NewAsyncOpIncompleteError("containerservice.ManagedClustersCreateOrUpdateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		mc, err = client.CreateOrUpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "containerservice.ManagedClustersCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerservice.ManagedClustersCreateOrUpdateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	mc, err = client.CreateOrUpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerservice.ManagedClustersCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
-// ManagedClustersDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+// ManagedClustersDeleteFuture an abstraction for monitoring and retrieving the results of a long-running
+// operation.
 type ManagedClustersDeleteFuture struct {
 	azure.Future
 	req *http.Request
@@ -995,22 +1111,39 @@ func (future ManagedClustersDeleteFuture) Result(client ManagedClustersClient) (
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerservice.ManagedClustersDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("containerservice.ManagedClustersDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("containerservice.ManagedClustersDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "containerservice.ManagedClustersDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerservice.ManagedClustersDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerservice.ManagedClustersDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -1034,46 +1167,45 @@ func (mcup *ManagedClusterUpgradeProfile) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				mcup.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				mcup.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				mcup.Type = &typeVar
+			}
+		case "properties":
+			if v != nil {
+				var managedClusterUpgradeProfileProperties ManagedClusterUpgradeProfileProperties
+				err = json.Unmarshal(*v, &managedClusterUpgradeProfileProperties)
+				if err != nil {
+					return err
+				}
+				mcup.ManagedClusterUpgradeProfileProperties = &managedClusterUpgradeProfileProperties
+			}
 		}
-		mcup.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		mcup.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		mcup.Type = &typeVar
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties ManagedClusterUpgradeProfileProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		mcup.ManagedClusterUpgradeProfileProperties = &properties
 	}
 
 	return nil
@@ -1155,46 +1287,45 @@ func (ovplr *OrchestratorVersionProfileListResult) UnmarshalJSON(body []byte) er
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ovplr.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ovplr.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ovplr.Type = &typeVar
+			}
+		case "properties":
+			if v != nil {
+				var orchestratorVersionProfileProperties OrchestratorVersionProfileProperties
+				err = json.Unmarshal(*v, &orchestratorVersionProfileProperties)
+				if err != nil {
+					return err
+				}
+				ovplr.OrchestratorVersionProfileProperties = &orchestratorVersionProfileProperties
+			}
 		}
-		ovplr.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ovplr.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		ovplr.Type = &typeVar
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties OrchestratorVersionProfileProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		ovplr.OrchestratorVersionProfileProperties = &properties
 	}
 
 	return nil
@@ -1202,8 +1333,8 @@ func (ovplr *OrchestratorVersionProfileListResult) UnmarshalJSON(body []byte) er
 
 // OrchestratorVersionProfileProperties the properties of an orchestrator version profile.
 type OrchestratorVersionProfileProperties struct {
-	// Orchestrators - List of orchstrator version profiles.
-	Orchestrators *OrchestratorVersionProfile `json:"orchestrators,omitempty"`
+	// Orchestrators - List of orchestrator version profiles.
+	Orchestrators *[]OrchestratorVersionProfile `json:"orchestrators,omitempty"`
 }
 
 // Properties properties of the container service.
@@ -1239,11 +1370,32 @@ type Resource struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 }
 
-// ServicePrincipalProfile information about a service principal identity for the cluster to use for manipulating Azure
-// APIs. Either secret or keyVaultSecretRef must be specified.
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
+}
+
+// ServicePrincipalProfile information about a service principal identity for the cluster to use for manipulating
+// Azure APIs. Either secret or keyVaultSecretRef must be specified.
 type ServicePrincipalProfile struct {
 	// ClientID - The ID for the service principal.
 	ClientID *string `json:"clientId,omitempty"`

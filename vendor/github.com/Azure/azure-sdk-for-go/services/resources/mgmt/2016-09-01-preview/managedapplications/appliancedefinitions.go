@@ -42,8 +42,9 @@ func NewApplianceDefinitionsClientWithBaseURI(baseURI string, subscriptionID str
 
 // CreateOrUpdate creates a new appliance definition.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. applianceDefinitionName is the
-// name of the appliance definition. parameters is parameters supplied to the create or update an appliance definition.
+// resourceGroupName is the name of the resource group. The name is case insensitive. applianceDefinitionName is
+// the name of the appliance definition. parameters is parameters supplied to the create or update an appliance
+// definition.
 func (client ApplianceDefinitionsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, applianceDefinitionName string, parameters ApplianceDefinition) (result ApplianceDefinitionsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -58,7 +59,7 @@ func (client ApplianceDefinitionsClient) CreateOrUpdate(ctx context.Context, res
 				Chain: []validation.Constraint{{Target: "parameters.ApplianceDefinitionProperties.Authorizations", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "parameters.ApplianceDefinitionProperties.PackageFileURI", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "managedapplications.ApplianceDefinitionsClient", "CreateOrUpdate")
+		return result, validation.NewError("managedapplications.ApplianceDefinitionsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, applianceDefinitionName, parameters)
@@ -129,8 +130,8 @@ func (client ApplianceDefinitionsClient) CreateOrUpdateResponder(resp *http.Resp
 
 // CreateOrUpdateByID creates a new appliance definition.
 //
-// applianceDefinitionID is the fully qualified ID of the appliance definition, including the appliance name and the
-// appliance definition resource type. Use the format,
+// applianceDefinitionID is the fully qualified ID of the appliance definition, including the appliance name and
+// the appliance definition resource type. Use the format,
 // /subscriptions/{guid}/resourceGroups/{resource-group-name}/Microsoft.Solutions/applianceDefinitions/{applianceDefinition-name}
 // parameters is parameters supplied to the create or update an appliance definition.
 func (client ApplianceDefinitionsClient) CreateOrUpdateByID(ctx context.Context, applianceDefinitionID string, parameters ApplianceDefinition) (result ApplianceDefinitionsCreateOrUpdateByIDFuture, err error) {
@@ -140,7 +141,7 @@ func (client ApplianceDefinitionsClient) CreateOrUpdateByID(ctx context.Context,
 				Chain: []validation.Constraint{{Target: "parameters.ApplianceDefinitionProperties.Authorizations", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "parameters.ApplianceDefinitionProperties.PackageFileURI", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "managedapplications.ApplianceDefinitionsClient", "CreateOrUpdateByID")
+		return result, validation.NewError("managedapplications.ApplianceDefinitionsClient", "CreateOrUpdateByID", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateByIDPreparer(ctx, applianceDefinitionID, parameters)
@@ -209,8 +210,8 @@ func (client ApplianceDefinitionsClient) CreateOrUpdateByIDResponder(resp *http.
 
 // Delete deletes the appliance definition.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. applianceDefinitionName is the
-// name of the appliance definition to delete.
+// resourceGroupName is the name of the resource group. The name is case insensitive. applianceDefinitionName is
+// the name of the appliance definition to delete.
 func (client ApplianceDefinitionsClient) Delete(ctx context.Context, resourceGroupName string, applianceDefinitionName string) (result ApplianceDefinitionsDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -220,7 +221,7 @@ func (client ApplianceDefinitionsClient) Delete(ctx context.Context, resourceGro
 		{TargetValue: applianceDefinitionName,
 			Constraints: []validation.Constraint{{Target: "applianceDefinitionName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "applianceDefinitionName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "managedapplications.ApplianceDefinitionsClient", "Delete")
+		return result, validation.NewError("managedapplications.ApplianceDefinitionsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, applianceDefinitionName)
@@ -288,8 +289,8 @@ func (client ApplianceDefinitionsClient) DeleteResponder(resp *http.Response) (r
 
 // DeleteByID deletes the appliance definition.
 //
-// applianceDefinitionID is the fully qualified ID of the appliance definition, including the appliance name and the
-// appliance definition resource type. Use the format,
+// applianceDefinitionID is the fully qualified ID of the appliance definition, including the appliance name and
+// the appliance definition resource type. Use the format,
 // /subscriptions/{guid}/resourceGroups/{resource-group-name}/Microsoft.Solutions/applianceDefinitions/{applianceDefinition-name}
 func (client ApplianceDefinitionsClient) DeleteByID(ctx context.Context, applianceDefinitionID string) (result ApplianceDefinitionsDeleteByIDFuture, err error) {
 	req, err := client.DeleteByIDPreparer(ctx, applianceDefinitionID)
@@ -355,8 +356,8 @@ func (client ApplianceDefinitionsClient) DeleteByIDResponder(resp *http.Response
 
 // Get gets the appliance definition.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. applianceDefinitionName is the
-// name of the appliance definition.
+// resourceGroupName is the name of the resource group. The name is case insensitive. applianceDefinitionName is
+// the name of the appliance definition.
 func (client ApplianceDefinitionsClient) Get(ctx context.Context, resourceGroupName string, applianceDefinitionName string) (result ApplianceDefinition, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -366,7 +367,7 @@ func (client ApplianceDefinitionsClient) Get(ctx context.Context, resourceGroupN
 		{TargetValue: applianceDefinitionName,
 			Constraints: []validation.Constraint{{Target: "applianceDefinitionName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "applianceDefinitionName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "managedapplications.ApplianceDefinitionsClient", "Get")
+		return result, validation.NewError("managedapplications.ApplianceDefinitionsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, applianceDefinitionName)
@@ -433,8 +434,8 @@ func (client ApplianceDefinitionsClient) GetResponder(resp *http.Response) (resu
 
 // GetByID gets the appliance definition.
 //
-// applianceDefinitionID is the fully qualified ID of the appliance definition, including the appliance name and the
-// appliance definition resource type. Use the format,
+// applianceDefinitionID is the fully qualified ID of the appliance definition, including the appliance name and
+// the appliance definition resource type. Use the format,
 // /subscriptions/{guid}/resourceGroups/{resource-group-name}/Microsoft.Solutions/applianceDefinitions/{applianceDefinition-name}
 func (client ApplianceDefinitionsClient) GetByID(ctx context.Context, applianceDefinitionID string) (result ApplianceDefinition, err error) {
 	req, err := client.GetByIDPreparer(ctx, applianceDefinitionID)
@@ -506,7 +507,7 @@ func (client ApplianceDefinitionsClient) ListByResourceGroup(ctx context.Context
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "managedapplications.ApplianceDefinitionsClient", "ListByResourceGroup")
+		return result, validation.NewError("managedapplications.ApplianceDefinitionsClient", "ListByResourceGroup", err.Error())
 	}
 
 	result.fn = client.listByResourceGroupNextResults

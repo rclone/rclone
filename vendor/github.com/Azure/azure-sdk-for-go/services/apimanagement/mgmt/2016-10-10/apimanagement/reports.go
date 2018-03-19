@@ -45,9 +45,9 @@ func NewReportsClientWithBaseURI(baseURI string, subscriptionID string) ReportsC
 // resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
 // aggregation is report aggregation. filter is the filter to apply on the operation. top is number of records to
 // return. skip is number of records to skip. interval is by time interval. This value is only applicable to ByTime
-// aggregation. Interval must be multiple of 15 minutes and may not be zero. The value should be in ISO  8601 format
-// (http://en.wikipedia.org/wiki/ISO_8601#Durations).This code can be used to convert TimSpan to a valid interval
-// string: XmlConvert.ToString(new TimeSpan(hours, minutes, secconds))
+// aggregation. Interval must be multiple of 15 minutes and may not be zero. The value should be in ISO  8601
+// format (http://en.wikipedia.org/wiki/ISO_8601#Durations).This code can be used to convert TimSpan to a valid
+// interval string: XmlConvert.ToString(new TimeSpan(hours, minutes, secconds))
 func (client ReportsClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, aggregation ReportsAggregation, filter string, top *int32, skip *int32, interval *string) (result ReportCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -60,7 +60,7 @@ func (client ReportsClient) ListByService(ctx context.Context, resourceGroupName
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ReportsClient", "ListByService")
+		return result, validation.NewError("apimanagement.ReportsClient", "ListByService", err.Error())
 	}
 
 	result.fn = client.listByServiceNextResults

@@ -42,15 +42,15 @@ func NewUsageAggregatesClientWithBaseURI(baseURI string, subscriptionID string) 
 
 // List query aggregated Azure subscription consumption data for a date range.
 //
-// reportedStartTime is the start of the time range to retrieve data for. reportedEndTime is the end of the time range
-// to retrieve data for. showDetails is `True` returns usage data in instance-level detail, `false` causes server-side
-// aggregation with fewer details. For example, if you have 3 website instances, by default you will get 3 line items
-// for website consumption. If you specify showDetails = false, the data will be aggregated as a single line item for
-// website consumption within the time period (for the given subscriptionId, meterId, usageStartTime and usageEndTime).
-// aggregationGranularity is `Daily` (default) returns the data in daily granularity, `Hourly` returns the data in
-// hourly granularity. continuationToken is used when a continuation token string is provided in the response body of
-// the previous call, enabling paging through a large result set. If not present, the data is retrieved from the
-// beginning of the day/hour (based on the granularity) passed in.
+// reportedStartTime is the start of the time range to retrieve data for. reportedEndTime is the end of the time
+// range to retrieve data for. showDetails is `True` returns usage data in instance-level detail, `false` causes
+// server-side aggregation with fewer details. For example, if you have 3 website instances, by default you will
+// get 3 line items for website consumption. If you specify showDetails = false, the data will be aggregated as a
+// single line item for website consumption within the time period (for the given subscriptionId, meterId,
+// usageStartTime and usageEndTime). aggregationGranularity is `Daily` (default) returns the data in daily
+// granularity, `Hourly` returns the data in hourly granularity. continuationToken is used when a continuation
+// token string is provided in the response body of the previous call, enabling paging through a large result set.
+// If not present, the data is retrieved from the beginning of the day/hour (based on the granularity) passed in.
 func (client UsageAggregatesClient) List(ctx context.Context, reportedStartTime date.Time, reportedEndTime date.Time, showDetails *bool, aggregationGranularity AggregationGranularity, continuationToken string) (result UsageAggregationListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, reportedStartTime, reportedEndTime, showDetails, aggregationGranularity, continuationToken)
@@ -91,6 +91,8 @@ func (client UsageAggregatesClient) ListPreparer(ctx context.Context, reportedSt
 	}
 	if len(string(aggregationGranularity)) > 0 {
 		queryParameters["aggregationGranularity"] = autorest.Encode("query", aggregationGranularity)
+	} else {
+		queryParameters["aggregationGranularity"] = autorest.Encode("query", "Daily")
 	}
 	if len(continuationToken) > 0 {
 		queryParameters["continuationToken"] = autorest.Encode("query", continuationToken)

@@ -3,6 +3,8 @@ package glacier
 import (
 	"crypto/sha256"
 	"io"
+
+	"github.com/aws/aws-sdk-go/internal/sdkio"
 )
 
 const bufsize = 1024 * 1024
@@ -18,8 +20,8 @@ type Hash struct {
 //
 // See http://docs.aws.amazon.com/amazonglacier/latest/dev/checksum-calculations.html for more information.
 func ComputeHashes(r io.ReadSeeker) Hash {
-	r.Seek(0, 0)       // Read the whole stream
-	defer r.Seek(0, 0) // Rewind stream at end
+	start, _ := r.Seek(0, sdkio.SeekCurrent) // Read the whole stream
+	defer r.Seek(start, sdkio.SeekStart)     // Rewind stream at end
 
 	buf := make([]byte, bufsize)
 	hashes := [][]byte{}

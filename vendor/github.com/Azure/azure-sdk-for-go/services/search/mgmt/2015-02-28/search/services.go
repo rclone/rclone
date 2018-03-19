@@ -42,8 +42,8 @@ func NewServicesClientWithBaseURI(baseURI string, subscriptionID string) Service
 // CreateOrUpdate creates or updates a Search service in the given resource group. If the Search service already
 // exists, all properties will be updated with the given values.
 //
-// resourceGroupName is the name of the resource group within the current subscription. serviceName is the name of the
-// Search service to create or update. parameters is the properties to set or update on the Search service.
+// resourceGroupName is the name of the resource group within the current subscription. serviceName is the name of
+// the Search service to create or update. parameters is the properties to set or update on the Search service.
 func (client ServicesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, parameters ServiceCreateOrUpdateParameters) (result ServiceResource, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, parameters)
 	if err != nil {
@@ -111,8 +111,8 @@ func (client ServicesClient) CreateOrUpdateResponder(resp *http.Response) (resul
 
 // Delete deletes a Search service in the given resource group, along with its associated resources.
 //
-// resourceGroupName is the name of the resource group within the current subscription. serviceName is the name of the
-// Search service to delete.
+// resourceGroupName is the name of the resource group within the current subscription. serviceName is the name of
+// the Search service to delete.
 func (client ServicesClient) Delete(ctx context.Context, resourceGroupName string, serviceName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName)
 	if err != nil {

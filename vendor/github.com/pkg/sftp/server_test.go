@@ -1,12 +1,16 @@
 package sftp
 
 import (
-	"testing"
+	"io"
 	"os"
 	"regexp"
-	"time"
-	"io"
 	"sync"
+	"syscall"
+	"testing"
+	"time"
+
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -61,7 +65,7 @@ func TestRunLsWithLicensesFile(t *testing.T) {
 
    where `id' is the request identifier, and `attrs' is the returned
    file attributes as described in Section ``File Attributes''.
- */
+*/
 func runLsTestHelper(t *testing.T, result, expectedType, path string) {
 	// using regular expressions to make tests work on all systems
 	// a virtual file system (like afero) would be needed to mock valid filesystem checks
@@ -240,4 +244,32 @@ func TestConcurrentRequests(t *testing.T) {
 		}()
 	}
 	wg.Wait()
+}
+
+// Test error conversion
+func TestStatusFromError(t *testing.T) {
+	type test struct {
+		err error
+		pkt sshFxpStatusPacket
+	}
+	tpkt := func(id, code uint32) sshFxpStatusPacket {
+		return sshFxpStatusPacket{
+			ID:          id,
+			StatusError: StatusError{Code: code},
+		}
+	}
+	test_cases := []test{
+		test{syscall.ENOENT, tpkt(1, ssh_FX_NO_SUCH_FILE)},
+		test{&os.PathError{Err: syscall.ENOENT},
+			tpkt(2, ssh_FX_NO_SUCH_FILE)},
+		test{&os.PathError{Err: errors.New("foo")}, tpkt(3, ssh_FX_FAILURE)},
+		test{ErrSshFxEof, tpkt(4, ssh_FX_EOF)},
+		test{ErrSshFxOpUnsupported, tpkt(5, ssh_FX_OP_UNSUPPORTED)},
+		test{io.EOF, tpkt(6, ssh_FX_EOF)},
+		test{os.ErrNotExist, tpkt(7, ssh_FX_NO_SUCH_FILE)},
+	}
+	for _, tc := range test_cases {
+		tc.pkt.StatusError.msg = tc.err.Error()
+		assert.Equal(t, tc.pkt, statusFromError(tc.pkt, tc.err))
+	}
 }

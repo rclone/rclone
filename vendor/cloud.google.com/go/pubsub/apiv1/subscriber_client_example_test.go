@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -77,7 +77,7 @@ func ExampleSubscriberClient_CreateSubscription() {
 	}
 
 	req := &pubsubpb.Subscription{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.CreateSubscription(ctx, req)
 	if err != nil {
@@ -95,7 +95,7 @@ func ExampleSubscriberClient_GetSubscription() {
 	}
 
 	req := &pubsubpb.GetSubscriptionRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.GetSubscription(ctx, req)
 	if err != nil {
@@ -113,7 +113,7 @@ func ExampleSubscriberClient_UpdateSubscription() {
 	}
 
 	req := &pubsubpb.UpdateSubscriptionRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.UpdateSubscription(ctx, req)
 	if err != nil {
@@ -131,7 +131,7 @@ func ExampleSubscriberClient_ListSubscriptions() {
 	}
 
 	req := &pubsubpb.ListSubscriptionsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListSubscriptions(ctx, req)
 	for {
@@ -155,7 +155,7 @@ func ExampleSubscriberClient_DeleteSubscription() {
 	}
 
 	req := &pubsubpb.DeleteSubscriptionRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	err = c.DeleteSubscription(ctx, req)
 	if err != nil {
@@ -171,7 +171,7 @@ func ExampleSubscriberClient_ModifyAckDeadline() {
 	}
 
 	req := &pubsubpb.ModifyAckDeadlineRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	err = c.ModifyAckDeadline(ctx, req)
 	if err != nil {
@@ -187,7 +187,7 @@ func ExampleSubscriberClient_Acknowledge() {
 	}
 
 	req := &pubsubpb.AcknowledgeRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	err = c.Acknowledge(ctx, req)
 	if err != nil {
@@ -203,7 +203,7 @@ func ExampleSubscriberClient_Pull() {
 	}
 
 	req := &pubsubpb.PullRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.Pull(ctx, req)
 	if err != nil {
@@ -225,7 +225,7 @@ func ExampleSubscriberClient_StreamingPull() {
 	}
 	go func() {
 		reqs := []*pubsubpb.StreamingPullRequest{
-		// TODO: Create requests.
+			// TODO: Create requests.
 		}
 		for _, req := range reqs {
 			if err := stream.Send(req); err != nil {
@@ -255,7 +255,7 @@ func ExampleSubscriberClient_ModifyPushConfig() {
 	}
 
 	req := &pubsubpb.ModifyPushConfigRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	err = c.ModifyPushConfig(ctx, req)
 	if err != nil {
@@ -271,7 +271,7 @@ func ExampleSubscriberClient_ListSnapshots() {
 	}
 
 	req := &pubsubpb.ListSnapshotsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListSnapshots(ctx, req)
 	for {
@@ -295,7 +295,7 @@ func ExampleSubscriberClient_CreateSnapshot() {
 	}
 
 	req := &pubsubpb.CreateSnapshotRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.CreateSnapshot(ctx, req)
 	if err != nil {
@@ -313,7 +313,7 @@ func ExampleSubscriberClient_UpdateSnapshot() {
 	}
 
 	req := &pubsubpb.UpdateSnapshotRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.UpdateSnapshot(ctx, req)
 	if err != nil {
@@ -331,7 +331,7 @@ func ExampleSubscriberClient_DeleteSnapshot() {
 	}
 
 	req := &pubsubpb.DeleteSnapshotRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	err = c.DeleteSnapshot(ctx, req)
 	if err != nil {
@@ -347,7 +347,7 @@ func ExampleSubscriberClient_Seek() {
 	}
 
 	req := &pubsubpb.SeekRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.Seek(ctx, req)
 	if err != nil {

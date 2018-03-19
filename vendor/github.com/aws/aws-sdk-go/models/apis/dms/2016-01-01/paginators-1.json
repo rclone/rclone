@@ -35,6 +35,11 @@
       "output_token": "Marker",
       "limit_key": "MaxRecords"
     },
+    "DescribeReplicationInstanceTaskLogs": {
+      "input_token": "Marker",
+      "output_token": "Marker",
+      "limit_key": "MaxRecords"
+    },
     "DescribeReplicationInstances": {
       "input_token": "Marker",
       "output_token": "Marker",

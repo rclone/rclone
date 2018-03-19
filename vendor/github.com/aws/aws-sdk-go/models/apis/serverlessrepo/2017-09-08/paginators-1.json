@@ -1,0 +1,14 @@
+{
+  "pagination" : {
+    "ListApplicationVersions" : {
+      "input_token" : "NextToken",
+      "output_token" : "NextToken",
+      "limit_key" : "MaxItems"
+    },
+    "ListApplications" : {
+      "input_token" : "NextToken",
+      "output_token" : "NextToken",
+      "limit_key" : "MaxItems"
+    }
+  }
+}

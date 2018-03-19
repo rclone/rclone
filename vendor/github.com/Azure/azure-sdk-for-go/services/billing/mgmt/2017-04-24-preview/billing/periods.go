@@ -109,11 +109,11 @@ func (client PeriodsClient) GetResponder(resp *http.Response) (result Period, er
 
 // List lists the available billing periods for a subscription in reverse chronological order.
 //
-// filter is may be used to filter billing periods by billingPeriodEndDate. The filter supports 'eq', 'lt', 'gt', 'le',
-// 'ge', and 'and'. It does not currently support 'ne', 'or', or 'not'. skiptoken is skiptoken is only used if a
-// previous operation returned a partial result. If a previous response contains a nextLink element, the value of the
-// nextLink element will include a skiptoken parameter that specifies a starting point to use for subsequent calls. top
-// is may be used to limit the number of results to the most recent N billing periods.
+// filter is may be used to filter billing periods by billingPeriodEndDate. The filter supports 'eq', 'lt', 'gt',
+// 'le', 'ge', and 'and'. It does not currently support 'ne', 'or', or 'not'. skiptoken is skiptoken is only used
+// if a previous operation returned a partial result. If a previous response contains a nextLink element, the value
+// of the nextLink element will include a skiptoken parameter that specifies a starting point to use for subsequent
+// calls. top is may be used to limit the number of results to the most recent N billing periods.
 func (client PeriodsClient) List(ctx context.Context, filter string, skiptoken string, top *int32) (result PeriodsListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: top,
@@ -121,7 +121,7 @@ func (client PeriodsClient) List(ctx context.Context, filter string, skiptoken s
 				Chain: []validation.Constraint{{Target: "top", Name: validation.InclusiveMaximum, Rule: 100, Chain: nil},
 					{Target: "top", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "billing.PeriodsClient", "List")
+		return result, validation.NewError("billing.PeriodsClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults

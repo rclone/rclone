@@ -15,9 +15,9 @@
 package breakpoints
 
 import (
-	"reflect"
 	"testing"
 
+	"cloud.google.com/go/internal/testutil"
 	"golang.org/x/debug"
 	cd "google.golang.org/api/clouddebugger/v2"
 )
@@ -63,7 +63,7 @@ func TestBreakpointStore(t *testing.T) {
 	p := &Program{breakpointPCs: make(map[uint64]bool)}
 	bs := NewBreakpointStore(p)
 	checkPCs := func(expected map[uint64]bool) {
-		if !reflect.DeepEqual(p.breakpointPCs, expected) {
+		if !testutil.Equal(p.breakpointPCs, expected) {
 			t.Errorf("got breakpoint map %v want %v", p.breakpointPCs, expected)
 		}
 	}
@@ -83,7 +83,7 @@ func TestBreakpointStore(t *testing.T) {
 		{testPC3, []*cd.Breakpoint{testBP2}},
 		{testLogPC, []*cd.Breakpoint{testLogBP}},
 	} {
-		if bps := bs.BreakpointsAtPC(test.pc); !reflect.DeepEqual(bps, test.expected) {
+		if bps := bs.BreakpointsAtPC(test.pc); !testutil.Equal(bps, test.expected) {
 			t.Errorf("BreakpointsAtPC(%x): got %v want %v", test.pc, bps, test.expected)
 		}
 	}

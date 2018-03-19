@@ -426,6 +426,47 @@ func TestGetwd(t *testing.T) {
 	}
 }
 
+func TestFstatat(t *testing.T) {
+	defer chtmpdir(t)()
+
+	touch(t, "file1")
+
+	var st1 unix.Stat_t
+	err := unix.Stat("file1", &st1)
+	if err != nil {
+		t.Fatalf("Stat: %v", err)
+	}
+
+	var st2 unix.Stat_t
+	err = unix.Fstatat(unix.AT_FDCWD, "file1", &st2, 0)
+	if err != nil {
+		t.Fatalf("Fstatat: %v", err)
+	}
+
+	if st1 != st2 {
+		t.Errorf("Fstatat: returned stat does not match Stat")
+	}
+
+	err = os.Symlink("file1", "symlink1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = unix.Lstat("symlink1", &st1)
+	if err != nil {
+		t.Fatalf("Lstat: %v", err)
+	}
+
+	err = unix.Fstatat(unix.AT_FDCWD, "symlink1", &st2, unix.AT_SYMLINK_NOFOLLOW)
+	if err != nil {
+		t.Fatalf("Fstatat: %v", err)
+	}
+
+	if st1 != st2 {
+		t.Errorf("Fstatat: returned stat does not match Lstat")
+	}
+}
+
 // mktmpfifo creates a temporary FIFO and provides a cleanup function.
 func mktmpfifo(t *testing.T) (*os.File, func()) {
 	err := unix.Mkfifo("fifo", 0666)
@@ -442,5 +483,39 @@ func mktmpfifo(t *testing.T) (*os.File, func()) {
 	return f, func() {
 		f.Close()
 		os.Remove("fifo")
+	}
+}
+
+// utilities taken from os/os_test.go
+
+func touch(t *testing.T, name string) {
+	f, err := os.Create(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// chtmpdir changes the working directory to a new temporary directory and
+// provides a cleanup function. Used when PWD is read-only.
+func chtmpdir(t *testing.T) func() {
+	oldwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("chtmpdir: %v", err)
+	}
+	d, err := ioutil.TempDir("", "test")
+	if err != nil {
+		t.Fatalf("chtmpdir: %v", err)
+	}
+	if err := os.Chdir(d); err != nil {
+		t.Fatalf("chtmpdir: %v", err)
+	}
+	return func() {
+		if err := os.Chdir(oldwd); err != nil {
+			t.Fatalf("chtmpdir: %v", err)
+		}
+		os.RemoveAll(d)
 	}
 }

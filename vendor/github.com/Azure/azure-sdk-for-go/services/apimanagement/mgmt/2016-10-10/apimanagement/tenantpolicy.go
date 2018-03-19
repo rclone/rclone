@@ -44,16 +44,16 @@ func NewTenantPolicyClientWithBaseURI(baseURI string, subscriptionID string) Ten
 // CreateOrUpdate creates or updates global policy configuration for the tenant.
 //
 // resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// parameters is the policy content details. parameters will be closed upon successful return. Callers should ensure
-// closure when receiving an error.ifMatch is the entity state (Etag) version of the tenant policy to update. A value
-// of "*" can be used for If-Match to unconditionally apply the operation.
+// parameters is the policy content details. parameters will be closed upon successful return. Callers should
+// ensure closure when receiving an error.ifMatch is the entity state (Etag) version of the tenant policy to
+// update. A value of "*" can be used for If-Match to unconditionally apply the operation.
 func (client TenantPolicyClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, parameters io.ReadCloser, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.TenantPolicyClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.TenantPolicyClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, parameters, ifMatch)
@@ -91,6 +91,7 @@ func (client TenantPolicyClient) CreateOrUpdatePreparer(ctx context.Context, res
 	}
 
 	preparer := autorest.CreatePreparer(
+		autorest.AsOctetStream(),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/tenant/policy", pathParameters),
@@ -121,16 +122,16 @@ func (client TenantPolicyClient) CreateOrUpdateResponder(resp *http.Response) (r
 
 // Delete deletes the global tenant policy configuration.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. ifMatch
-// is the entity state (Etag) version of the tenant policy to update. A value of "*" can be used for If-Match to
-// unconditionally apply the operation.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// ifMatch is the entity state (Etag) version of the tenant policy to update. A value of "*" can be used for
+// If-Match to unconditionally apply the operation.
 func (client TenantPolicyClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.TenantPolicyClient", "Delete")
+		return result, validation.NewError("apimanagement.TenantPolicyClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, ifMatch)
@@ -204,7 +205,7 @@ func (client TenantPolicyClient) Get(ctx context.Context, resourceGroupName stri
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.TenantPolicyClient", "Get")
+		return result, validation.NewError("apimanagement.TenantPolicyClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName)

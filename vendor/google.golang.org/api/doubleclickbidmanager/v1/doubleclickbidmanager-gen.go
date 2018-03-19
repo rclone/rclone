@@ -212,6 +212,7 @@ type DownloadRequest struct {
 	// Possible values:
 	//   "AD"
 	//   "AD_GROUP"
+	//   "CAMPAIGN"
 	//   "INSERTION_ORDER"
 	//   "LINE_ITEM"
 	FileTypes []string `json:"fileTypes,omitempty"`
@@ -227,6 +228,7 @@ type DownloadRequest struct {
 	//
 	// Possible values:
 	//   "ADVERTISER_ID"
+	//   "CAMPAIGN_ID"
 	//   "INSERTION_ORDER_ID"
 	//   "LINE_ITEM_ID"
 	FilterType string `json:"filterType,omitempty"`
@@ -265,6 +267,9 @@ type DownloadResponse struct {
 
 	// Ads: Retrieved ads in SDF format.
 	Ads string `json:"ads,omitempty"`
+
+	// Campaigns: Retrieved campaigns in SDF format.
+	Campaigns string `json:"campaigns,omitempty"`
 
 	// InsertionOrders: Retrieved insertion orders in SDF format.
 	InsertionOrders string `json:"insertionOrders,omitempty"`
@@ -695,6 +700,8 @@ type Parameters struct {
 	//   "METRIC_COMSCORE_VCE_POPULATION"
 	//   "METRIC_COMSCORE_VCE_UNIQUE_AUDIENCE"
 	//   "METRIC_CONVERSIONS_PER_MILLE"
+	//   "METRIC_COOKIE_REACH_AVERAGE_IMPRESSION_FREQUENCY"
+	//   "METRIC_COOKIE_REACH_IMPRESSION_REACH"
 	//   "METRIC_CPM_FEE1_ADVERTISER"
 	//   "METRIC_CPM_FEE1_PARTNER"
 	//   "METRIC_CPM_FEE1_USD"
@@ -960,6 +967,7 @@ type Parameters struct {
 	//   "METRIC_VIDEO_COMPANION_CLICKS"
 	//   "METRIC_VIDEO_COMPANION_IMPRESSIONS"
 	//   "METRIC_VIDEO_COMPLETION_RATE"
+	//   "METRIC_VIEWABLE_BID_REQUESTS"
 	Metrics []string `json:"metrics,omitempty"`
 
 	// Type: Report type.
@@ -978,6 +986,7 @@ type Parameters struct {
 	//   "TYPE_GENERAL"
 	//   "TYPE_INVENTORY_AVAILABILITY"
 	//   "TYPE_KEYWORD"
+	//   "TYPE_LINEAR_TV_SEARCH_LIFT"
 	//   "TYPE_NIELSEN_AUDIENCE_PROFILE"
 	//   "TYPE_NIELSEN_DAILY_REACH_BUILD"
 	//   "TYPE_NIELSEN_ONLINE_GLOBAL_MARKET"
@@ -1647,7 +1656,8 @@ type LineitemsDownloadlineitemsCall struct {
 	header_                  http.Header
 }
 
-// Downloadlineitems: Retrieves line items in CSV format.
+// Downloadlineitems: Retrieves line items in CSV format. TrueView line
+// items are not supported.
 func (r *LineitemsService) Downloadlineitems(downloadlineitemsrequest *DownloadLineItemsRequest) *LineitemsDownloadlineitemsCall {
 	c := &LineitemsDownloadlineitemsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.downloadlineitemsrequest = downloadlineitemsrequest
@@ -1737,7 +1747,7 @@ func (c *LineitemsDownloadlineitemsCall) Do(opts ...googleapi.CallOption) (*Down
 	}
 	return ret, nil
 	// {
-	//   "description": "Retrieves line items in CSV format.",
+	//   "description": "Retrieves line items in CSV format. TrueView line items are not supported.",
 	//   "httpMethod": "POST",
 	//   "id": "doubleclickbidmanager.lineitems.downloadlineitems",
 	//   "path": "lineitems/downloadlineitems",
@@ -1764,7 +1774,8 @@ type LineitemsUploadlineitemsCall struct {
 	header_                http.Header
 }
 
-// Uploadlineitems: Uploads line items in CSV format.
+// Uploadlineitems: Uploads line items in CSV format. TrueView line
+// items are not supported.
 func (r *LineitemsService) Uploadlineitems(uploadlineitemsrequest *UploadLineItemsRequest) *LineitemsUploadlineitemsCall {
 	c := &LineitemsUploadlineitemsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.uploadlineitemsrequest = uploadlineitemsrequest
@@ -1854,7 +1865,7 @@ func (c *LineitemsUploadlineitemsCall) Do(opts ...googleapi.CallOption) (*Upload
 	}
 	return ret, nil
 	// {
-	//   "description": "Uploads line items in CSV format.",
+	//   "description": "Uploads line items in CSV format. TrueView line items are not supported.",
 	//   "httpMethod": "POST",
 	//   "id": "doubleclickbidmanager.lineitems.uploadlineitems",
 	//   "path": "lineitems/uploadlineitems",

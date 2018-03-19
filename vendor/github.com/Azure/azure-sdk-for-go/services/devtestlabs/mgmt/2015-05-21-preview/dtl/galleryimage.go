@@ -41,8 +41,8 @@ func NewGalleryImageClientWithBaseURI(baseURI string, subscriptionID string) Gal
 
 // List list gallery images.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to apply
-// on the operation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to
+// apply on the operation.
 func (client GalleryImageClient) List(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (result ResponseWithContinuationGalleryImagePage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, filter, top, orderBy)

@@ -93,16 +93,18 @@ func (er *ErrorResponse) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["error"]
-	if v != nil {
-		var errorVar ErrorResponseError
-		err = json.Unmarshal(*m["error"], &errorVar)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "error":
+			if v != nil {
+				var errorResponseError ErrorResponseError
+				err = json.Unmarshal(*v, &errorResponseError)
+				if err != nil {
+					return err
+				}
+				er.ErrorResponseError = &errorResponseError
+			}
 		}
-		er.ErrorResponseError = &errorVar
 	}
 
 	return nil
@@ -119,7 +121,7 @@ type ErrorResponseError struct {
 	// Details - Describes the error details if present.
 	Details *[]ErrorResponseErrorDetailsItem `json:"details,omitempty"`
 	// Innererror - Inner error object if present.
-	Innererror *map[string]interface{} `json:"innererror,omitempty"`
+	Innererror interface{} `json:"innererror,omitempty"`
 }
 
 // ErrorResponseErrorDetailsItem ...
@@ -132,8 +134,8 @@ type ErrorResponseErrorDetailsItem struct {
 	Message *string `json:"message,omitempty"`
 }
 
-// Export a property containing information about the blobs to be exported for an export job. This property is required
-// for export jobs, but must not be specified for import jobs.
+// Export a property containing information about the blobs to be exported for an export job. This property is
+// required for export jobs, but must not be specified for import jobs.
 type Export struct {
 	// ExportBlobList - A list of the blobs to be exported.
 	*ExportBlobList `json:"blobList,omitempty"`
@@ -148,26 +150,27 @@ func (e *Export) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["blobList"]
-	if v != nil {
-		var blobList ExportBlobList
-		err = json.Unmarshal(*m["blobList"], &blobList)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "blobList":
+			if v != nil {
+				var exportBlobList ExportBlobList
+				err = json.Unmarshal(*v, &exportBlobList)
+				if err != nil {
+					return err
+				}
+				e.ExportBlobList = &exportBlobList
+			}
+		case "blobListblobPath":
+			if v != nil {
+				var blobListblobPath string
+				err = json.Unmarshal(*v, &blobListblobPath)
+				if err != nil {
+					return err
+				}
+				e.BlobListblobPath = &blobListblobPath
+			}
 		}
-		e.ExportBlobList = &blobList
-	}
-
-	v = m["blobListblobPath"]
-	if v != nil {
-		var blobListblobPath string
-		err = json.Unmarshal(*m["blobListblobPath"], &blobListblobPath)
-		if err != nil {
-			return err
-		}
-		e.BlobListblobPath = &blobListblobPath
 	}
 
 	return nil
@@ -238,7 +241,7 @@ type JobResponse struct {
 	// Location - Specifies the Azure location where the job is created.
 	Location *string `json:"location,omitempty"`
 	// Tags - Specifies the tags that are assigned to the job.
-	Tags *map[string]interface{} `json:"tags,omitempty"`
+	Tags interface{} `json:"tags,omitempty"`
 	// Properties - Specifies the job properties
 	Properties *JobDetails `json:"properties,omitempty"`
 }
@@ -372,46 +375,45 @@ func (l *Location) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				l.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				l.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				l.Type = &typeVar
+			}
+		case "properties":
+			if v != nil {
+				var locationProperties LocationProperties
+				err = json.Unmarshal(*v, &locationProperties)
+				if err != nil {
+					return err
+				}
+				l.LocationProperties = &locationProperties
+			}
 		}
-		l.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		l.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		l.Type = &typeVar
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties LocationProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		l.LocationProperties = &properties
 	}
 
 	return nil
@@ -463,26 +465,27 @@ func (o *Operation) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				o.Name = &name
+			}
+		case "display":
+			if v != nil {
+				var operationDisplay OperationDisplay
+				err = json.Unmarshal(*v, &operationDisplay)
+				if err != nil {
+					return err
+				}
+				o.OperationDisplay = &operationDisplay
+			}
 		}
-		o.Name = &name
-	}
-
-	v = m["display"]
-	if v != nil {
-		var display OperationDisplay
-		err = json.Unmarshal(*m["display"], &display)
-		if err != nil {
-			return err
-		}
-		o.OperationDisplay = &display
 	}
 
 	return nil
@@ -500,7 +503,8 @@ type OperationDisplay struct {
 	Description *string `json:"description,omitempty"`
 }
 
-// PackageInfomation contains information about the package being shipped by the customer to the Microsoft data center.
+// PackageInfomation contains information about the package being shipped by the customer to the Microsoft data
+// center.
 type PackageInfomation struct {
 	// CarrierName - The name of the carrier that is used to ship the import or export drives.
 	CarrierName *string `json:"carrierName,omitempty"`
@@ -517,7 +521,7 @@ type PutJobParameters struct {
 	// Location - Specifies the supported Azure location where the job should be created
 	Location *string `json:"location,omitempty"`
 	// Tags - Specifies the tags that will be assigned to the job.
-	Tags *map[string]interface{} `json:"tags,omitempty"`
+	Tags interface{} `json:"tags,omitempty"`
 	// Properties - Specifies the job properties
 	Properties *JobDetails `json:"properties,omitempty"`
 }
@@ -575,7 +579,7 @@ type ShippingInformation struct {
 // UpdateJobParameters update Job parameters
 type UpdateJobParameters struct {
 	// Tags - Specifies the tags that will be assigned to the job
-	Tags *map[string]interface{} `json:"tags,omitempty"`
+	Tags interface{} `json:"tags,omitempty"`
 	// UpdateJobParametersProperties - Specifies the properties of a UpdateJob.
 	*UpdateJobParametersProperties `json:"properties,omitempty"`
 }
@@ -587,26 +591,27 @@ func (ujp *UpdateJobParameters) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]interface{}
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "tags":
+			if v != nil {
+				var tags interface{}
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				ujp.Tags = tags
+			}
+		case "properties":
+			if v != nil {
+				var updateJobParametersProperties UpdateJobParametersProperties
+				err = json.Unmarshal(*v, &updateJobParametersProperties)
+				if err != nil {
+					return err
+				}
+				ujp.UpdateJobParametersProperties = &updateJobParametersProperties
+			}
 		}
-		ujp.Tags = &tags
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties UpdateJobParametersProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		ujp.UpdateJobParametersProperties = &properties
 	}
 
 	return nil

@@ -41,8 +41,8 @@ func NewIntegrationAccountMapsClientWithBaseURI(baseURI string, subscriptionID s
 
 // CreateOrUpdate creates or updates an integration account map.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. mapName is the
-// integration account map name. mapParameter is the integration account map.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name. mapName is
+// the integration account map name. mapParameter is the integration account map.
 func (client IntegrationAccountMapsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, integrationAccountName string, mapName string, mapParameter IntegrationAccountMap) (result IntegrationAccountMap, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, integrationAccountName, mapName, mapParameter)
 	if err != nil {
@@ -111,8 +111,8 @@ func (client IntegrationAccountMapsClient) CreateOrUpdateResponder(resp *http.Re
 
 // Delete deletes an integration account map.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. mapName is the
-// integration account map name.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name. mapName is
+// the integration account map name.
 func (client IntegrationAccountMapsClient) Delete(ctx context.Context, resourceGroupName string, integrationAccountName string, mapName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, integrationAccountName, mapName)
 	if err != nil {
@@ -178,8 +178,8 @@ func (client IntegrationAccountMapsClient) DeleteResponder(resp *http.Response) 
 
 // Get gets an integration account map.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. mapName is the
-// integration account map name.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name. mapName is
+// the integration account map name.
 func (client IntegrationAccountMapsClient) Get(ctx context.Context, resourceGroupName string, integrationAccountName string, mapName string) (result IntegrationAccountMap, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, integrationAccountName, mapName)
 	if err != nil {

@@ -4,8 +4,8 @@
   "operations": {
     "AllocateStaticIp": "<p>Allocates a static IP address.</p>",
     "AttachDisk": "<p>Attaches a block storage disk to a running or stopped Lightsail instance and exposes it to the instance with the specified disk name.</p>",
-    "AttachInstancesToLoadBalancer": "<p>Attaches one or more Lightsail instances to a load balancer.</p>",
-    "AttachLoadBalancerTlsCertificate": "<p>Attaches a Transport Layer Security (TLS) certificate to your load balancer.</p> <p>TLS is just an updated, more secure version of Secure Socket Layer (SSL).</p>",
+    "AttachInstancesToLoadBalancer": "<p>Attaches one or more Lightsail instances to a load balancer.</p> <p>After some time, the instances are attached to the load balancer and the health check status is available.</p>",
+    "AttachLoadBalancerTlsCertificate": "<p>Attaches a Transport Layer Security (TLS) certificate to your load balancer. TLS is just an updated, more secure version of Secure Socket Layer (SSL).</p> <p>Once you create and validate your certificate, you can attach it to your load balancer. You can also use this API to rotate the certificates on your account. Use the <code>AttachLoadBalancerTlsCertificate</code> operation with the non-attached certificate, and it will replace the existing one and become the attached certificate.</p>",
     "AttachStaticIp": "<p>Attaches a static IP address to a specific Amazon Lightsail instance.</p>",
     "CloseInstancePublicPorts": "<p>Closes the public ports on a specific Amazon Lightsail instance.</p>",
     "CreateDisk": "<p>Creates a block storage disk that can be attached to a Lightsail instance in the same Availability Zone (e.g., <code>us-east-2a</code>). The disk is created in the regional endpoint that you send the HTTP request to. For more information, see <a href=\"https://lightsail.aws.amazon.com/ls/docs/overview/article/understanding-regions-and-availability-zones-in-amazon-lightsail\">Regions and Availability Zones in Lightsail</a>.</p>",
@@ -17,7 +17,7 @@
     "CreateInstances": "<p>Creates one or more Amazon Lightsail virtual private servers, or <i>instances</i>.</p>",
     "CreateInstancesFromSnapshot": "<p>Uses a specific snapshot as a blueprint for creating one or more new instances that are based on that identical configuration.</p>",
     "CreateKeyPair": "<p>Creates sn SSH key pair.</p>",
-    "CreateLoadBalancer": "<p>Creates a Lightsail load balancer.</p> <p>When you create a load balancer, you can specify certificates and port settings. You can create up to 5 load balancers per AWS Region in your account.</p>",
+    "CreateLoadBalancer": "<p>Creates a Lightsail load balancer. To learn more about deciding whether to load balance your application, see <a href=\"https://lightsail.aws.amazon.com/ls/docs/how-to/article/configure-lightsail-instances-for-load-balancing\">Configure your Lightsail instances for load balancing</a>. You can create up to 5 load balancers per AWS Region in your account.</p> <p>When you create a load balancer, you can specify a unique name and port settings. To change additional load balancer settings, use the <code>UpdateLoadBalancerAttribute</code> operation.</p>",
     "CreateLoadBalancerTlsCertificate": "<p>Creates a Lightsail load balancer TLS certificate.</p> <p>TLS is just an updated, more secure version of Secure Socket Layer (SSL).</p>",
     "DeleteDisk": "<p>Deletes the specified block storage disk. The disk must be in the <code>available</code> state (not attached to a Lightsail instance).</p> <note> <p>The disk may remain in the <code>deleting</code> state for several minutes.</p> </note>",
     "DeleteDiskSnapshot": "<p>Deletes the specified disk snapshot.</p> <p>When you make periodic snapshots of a disk, the snapshots are incremental, and only the blocks on the device that have changed since your last snapshot are saved in the new snapshot. When you delete a snapshot, only the data not needed for any other snapshot is removed. So regardless of which prior snapshots have been deleted, all active snapshots will have access to all the information needed to restore the disk.</p>",
@@ -26,10 +26,10 @@
     "DeleteInstance": "<p>Deletes a specific Amazon Lightsail virtual private server, or <i>instance</i>.</p>",
     "DeleteInstanceSnapshot": "<p>Deletes a specific snapshot of a virtual private server (or <i>instance</i>).</p>",
     "DeleteKeyPair": "<p>Deletes a specific SSH key pair.</p>",
-    "DeleteLoadBalancer": "<p>Deletes a Lightsail load balancer.</p>",
-    "DeleteLoadBalancerTlsCertificate": "<p>Deletes a TLS/SSL certificate associated with a Lightsail load balancer.</p>",
+    "DeleteLoadBalancer": "<p>Deletes a Lightsail load balancer and all its associated SSL/TLS certificates. Once the load balancer is deleted, you will need to create a new load balancer, create a new certificate, and verify domain ownership again.</p>",
+    "DeleteLoadBalancerTlsCertificate": "<p>Deletes an SSL/TLS certificate associated with a Lightsail load balancer.</p>",
     "DetachDisk": "<p>Detaches a stopped block storage disk from a Lightsail instance. Make sure to unmount any file systems on the device within your operating system before stopping the instance and detaching the disk.</p>",
-    "DetachInstancesFromLoadBalancer": "<p>Detaches the specified instances from a Lightsail load balancer.</p>",
+    "DetachInstancesFromLoadBalancer": "<p>Detaches the specified instances from a Lightsail load balancer.</p> <p>This operation waits until the instances are no longer needed before they are detached from the load balancer.</p>",
     "DetachStaticIp": "<p>Detaches a static IP from the Amazon Lightsail instance to which it is attached.</p>",
     "DownloadDefaultKeyPair": "<p>Downloads the default SSH key pair from the user's account.</p>",
     "GetActiveNames": "<p>Returns the names of all active (not deleted) resources.</p>",
@@ -53,7 +53,7 @@
     "GetKeyPairs": "<p>Returns information about all key pairs in the user's account.</p>",
     "GetLoadBalancer": "<p>Returns information about the specified Lightsail load balancer.</p>",
     "GetLoadBalancerMetricData": "<p>Returns information about health metrics for your Lightsail load balancer.</p>",
-    "GetLoadBalancerTlsCertificates": "<p>Returns information about the TLS certificates that are associated with the specified Lightsail load balancer.</p> <p>TLS is just an updated, more secure version of Secure Socket Layer (SSL).</p>",
+    "GetLoadBalancerTlsCertificates": "<p>Returns information about the TLS certificates that are associated with the specified Lightsail load balancer.</p> <p>TLS is just an updated, more secure version of Secure Socket Layer (SSL).</p> <p>You can have a maximum of 2 certificates associated with a Lightsail load balancer. One is active and the other is inactive.</p>",
     "GetLoadBalancers": "<p>Returns information about all load balancers in an account.</p> <p>If you are describing a long list of load balancers, you can paginate the output to make the list more manageable. You can use the pageToken and nextPageToken values to retrieve the next items in the list.</p>",
     "GetOperation": "<p>Returns information about a specific operation. Operations include events such as when you create an instance, allocate a static IP, attach a static IP, and so on.</p>",
     "GetOperations": "<p>Returns information about all operations.</p> <p>Results are returned from oldest to newest, up to a maximum of 200. Results can be paged by making each subsequent call to <code>GetOperations</code> use the maximum (last) <code>statusChangedAt</code> value from the previous request.</p>",
@@ -72,7 +72,7 @@
     "StopInstance": "<p>Stops a specific Amazon Lightsail instance that is currently running.</p>",
     "UnpeerVpc": "<p>Attempts to unpeer the Lightsail VPC from the user's default VPC.</p>",
     "UpdateDomainEntry": "<p>Updates a domain recordset after it is created.</p>",
-    "UpdateLoadBalancerAttribute": "<p>Updates the specified attribute for a load balancer.</p>"
+    "UpdateLoadBalancerAttribute": "<p>Updates the specified attribute for a load balancer. You can only update one attribute at a time.</p>"
   },
   "shapes": {
     "AccessDeniedException": {
@@ -544,23 +544,23 @@
         "CreateDomainEntryRequest$domainName": "<p>The domain name (e.g., <code>example.com</code>) for which you want to create the domain entry.</p>",
         "CreateDomainRequest$domainName": "<p>The domain name to manage (e.g., <code>example.com</code>).</p> <note> <p>You cannot register a new domain name using Lightsail. You must register a domain name using Amazon Route 53 or another domain name registrar. If you have already registered your domain, you can enter its name in this parameter to manage the DNS records for that domain.</p> </note>",
         "CreateLoadBalancerRequest$certificateDomainName": "<p>The domain name with which your certificate is associated (e.g., <code>example.com</code>).</p> <p>If you specify <code>certificateDomainName</code>, then <code>certificateName</code> is required (and vice-versa).</p>",
-        "CreateLoadBalancerTlsCertificateRequest$certificateDomainName": "<p>The domain name (e.g., <code>example.com</code>) for your TLS/SSL certificate.</p>",
+        "CreateLoadBalancerTlsCertificateRequest$certificateDomainName": "<p>The domain name (e.g., <code>example.com</code>) for your SSL/TLS certificate.</p>",
         "DeleteDomainEntryRequest$domainName": "<p>The name of the domain entry to delete.</p>",
         "DeleteDomainRequest$domainName": "<p>The specific domain name to delete.</p>",
         "DomainEntry$name": "<p>The name of the domain.</p>",
         "DomainNameList$member": null,
         "GetDomainRequest$domainName": "<p>The domain name for which your want to return information about.</p>",
-        "LoadBalancerTlsCertificate$domainName": "<p>The domain name for your TLS/SSL certificate.</p>",
-        "LoadBalancerTlsCertificateDomainValidationOption$domainName": "<p>A fully qualified domain name in the certificate request.</p>",
-        "LoadBalancerTlsCertificateDomainValidationRecord$domainName": "<p>The domain name against which your TLS/SSL certificate was validated.</p>",
+        "LoadBalancerTlsCertificate$domainName": "<p>The domain name for your SSL/TLS certificate.</p>",
+        "LoadBalancerTlsCertificateDomainValidationOption$domainName": "<p>The fully qualified domain name in the certificate request.</p>",
+        "LoadBalancerTlsCertificateDomainValidationRecord$domainName": "<p>The domain name against which your SSL/TLS certificate was validated.</p>",
         "UpdateDomainEntryRequest$domainName": "<p>The name of the domain recordset to update.</p>"
       }
     },
     "DomainNameList": {
       "base": null,
       "refs": {
-        "CreateLoadBalancerRequest$certificateAlternativeNames": "<p>The alternative domain names to use with your TLS/SSL certificate (e.g., <code>www.example.com</code>, <code>www.ejemplo.com</code>, <code>ejemplo.com</code>).</p>",
-        "CreateLoadBalancerTlsCertificateRequest$certificateAlternativeNames": "<p>An array of strings listing alternative domain names for your TLS/SSL certificate.</p>"
+        "CreateLoadBalancerRequest$certificateAlternativeNames": "<p>The optional alternative domains and subdomains to use with your SSL/TLS certificate (e.g., <code>www.example.com</code>, <code>example.com</code>, <code>m.example.com</code>, <code>blog.example.com</code>).</p>",
+        "CreateLoadBalancerTlsCertificateRequest$certificateAlternativeNames": "<p>An array of strings listing alternative domains and subdomains for your SSL/TLS certificate. Lightsail will de-dupe the names for you. You can have a maximum of 9 alternative names (in addition to the 1 primary domain). We do not support wildcards (e.g., <code>*.example.com</code>).</p>"
       }
     },
     "DownloadDefaultKeyPairRequest": {
@@ -902,7 +902,7 @@
     "InstanceHealthReason": {
       "base": null,
       "refs": {
-        "InstanceHealthSummary$instanceHealthReason": "<p>More information about the instance health. Valid values are below.</p>"
+        "InstanceHealthSummary$instanceHealthReason": "<p>More information about the instance health. If the <code>instanceHealth</code> is <code>healthy</code>, then an <code>instanceHealthReason</code> value is not provided.</p> <p>If <b> <code>instanceHealth</code> </b> is <code>initial</code>, the <b> <code>instanceHealthReason</code> </b> value can be one of the following:</p> <ul> <li> <p> <b> <code>Lb.RegistrationInProgress</code> </b> - The target instance is in the process of being registered with the load balancer.</p> </li> <li> <p> <b> <code>Lb.InitialHealthChecking</code> </b> - The Lightsail load balancer is still sending the target instance the minimum number of health checks required to determine its health status.</p> </li> </ul> <p>If <b> <code>instanceHealth</code> </b> is <code>unhealthy</code>, the <b> <code>instanceHealthReason</code> </b> value can be one of the following:</p> <ul> <li> <p> <b> <code>Instance.ResponseCodeMismatch</code> </b> - The health checks did not return an expected HTTP code.</p> </li> <li> <p> <b> <code>Instance.Timeout</code> </b> - The health check requests timed out.</p> </li> <li> <p> <b> <code>Instance.FailedHealthChecks</code> </b> - The health checks failed because the connection to the target instance timed out, the target instance response was malformed, or the target instance failed the health check for an unknown reason.</p> </li> <li> <p> <b> <code>Lb.InternalError</code> </b> - The health checks failed due to an internal error.</p> </li> </ul> <p>If <b> <code>instanceHealth</code> </b> is <code>unused</code>, the <b> <code>instanceHealthReason</code> </b> value can be one of the following:</p> <ul> <li> <p> <b> <code>Instance.NotRegistered</code> </b> - The target instance is not registered with the target group.</p> </li> <li> <p> <b> <code>Instance.NotInUse</code> </b> - The target group is not used by any load balancer, or the target instance is in an Availability Zone that is not enabled for its load balancer.</p> </li> <li> <p> <b> <code>Instance.IpUnusable</code> </b> - The target IP address is reserved for use by a Lightsail load balancer.</p> </li> <li> <p> <b> <code>Instance.InvalidState</code> </b> - The target is in the stopped or terminated state.</p> </li> </ul> <p>If <b> <code>instanceHealth</code> </b> is <code>draining</code>, the <b> <code>instanceHealthReason</code> </b> value can be one of the following:</p> <ul> <li> <p> <b> <code>Instance.DeregistrationInProgress</code> </b> - The target instance is in the process of being deregistered and the deregistration delay period has not expired.</p> </li> </ul>"
       }
     },
     "InstanceHealthState": {
@@ -1006,7 +1006,7 @@
       }
     },
     "InvalidInputException": {
-      "base": "<p>Lightsail throws this exception when user input does not conform to the validation rules of an input field.</p> <note> <p>Domain-related APIs are only available in the N. Virginia (us-east-1) Region. Please set your Region configuration to us-east-1 to create, view, or edit these resources.</p> </note>",
+      "base": "<p>Lightsail throws this exception when user input does not conform to the validation rules of an input field.</p> <note> <p>Domain-related APIs are only available in the N. Virginia (us-east-1) Region. Please set your AWS Region configuration to us-east-1 to create, view, or edit these resources.</p> </note>",
       "refs": {
       }
     },
@@ -1046,11 +1046,11 @@
         "InstanceSnapshot$createdAt": "<p>The timestamp when the snapshot was created (e.g., <code>1479907467.024</code>).</p>",
         "KeyPair$createdAt": "<p>The timestamp when the key pair was created (e.g., <code>1479816991.349</code>).</p>",
         "LoadBalancer$createdAt": "<p>The date when your load balancer was created.</p>",
-        "LoadBalancerTlsCertificate$createdAt": "<p>The time when you created your TLS/SSL certificate.</p>",
-        "LoadBalancerTlsCertificate$issuedAt": "<p>The time when the TLS/SSL certificate was issued.</p>",
-        "LoadBalancerTlsCertificate$notAfter": "<p>The timestamp when the TLS/SSL certificate expires.</p>",
-        "LoadBalancerTlsCertificate$notBefore": "<p>The timestamp when the TLS/SSL certificate is first valid.</p>",
-        "LoadBalancerTlsCertificate$revokedAt": "<p>The timestamp when the TLS/SSL certificate was revoked.</p>",
+        "LoadBalancerTlsCertificate$createdAt": "<p>The time when you created your SSL/TLS certificate.</p>",
+        "LoadBalancerTlsCertificate$issuedAt": "<p>The time when the SSL/TLS certificate was issued.</p>",
+        "LoadBalancerTlsCertificate$notAfter": "<p>The timestamp when the SSL/TLS certificate expires.</p>",
+        "LoadBalancerTlsCertificate$notBefore": "<p>The timestamp when the SSL/TLS certificate is first valid.</p>",
+        "LoadBalancerTlsCertificate$revokedAt": "<p>The timestamp when the SSL/TLS certificate was revoked.</p>",
         "Operation$createdAt": "<p>The timestamp when the operation was initialized (e.g., <code>1479816991.349</code>).</p>",
         "Operation$statusChangedAt": "<p>The timestamp when the status was changed (e.g., <code>1479816991.349</code>).</p>",
         "StaticIp$createdAt": "<p>The timestamp when the static IP was created (e.g., <code>1479735304.222</code>).</p>"
@@ -1100,13 +1100,13 @@
       "base": null,
       "refs": {
         "GetLoadBalancerMetricDataRequest$metricName": "<p>The metric about which you want to return information. Valid values are listed below, along with the most useful <code>statistics</code> to include in your request.</p> <ul> <li> <p> <b> <code>ClientTLSNegotiationErrorCount</code> </b> - The number of TLS connections initiated by the client that did not establish a session with the load balancer. Possible causes include a mismatch of ciphers or protocols.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>.</p> </li> <li> <p> <b> <code>HealthyHostCount</code> </b> - The number of target instances that are considered healthy.</p> <p> <code>Statistics</code>: The most useful statistic are <code>Average</code>, <code>Minimum</code>, and <code>Maximum</code>.</p> </li> <li> <p> <b> <code>UnhealthyHostCount</code> </b> - The number of target instances that are considered unhealthy.</p> <p> <code>Statistics</code>: The most useful statistic are <code>Average</code>, <code>Minimum</code>, and <code>Maximum</code>.</p> </li> <li> <p> <b> <code>HTTPCode_LB_4XX_Count</code> </b> - The number of HTTP 4XX client error codes that originate from the load balancer. Client errors are generated when requests are malformed or incomplete. These requests have not been received by the target instance. This count does not include any response codes generated by the target instances.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>.</p> </li> <li> <p> <b> <code>HTTPCode_LB_5XX_Count</code> </b> - The number of HTTP 5XX server error codes that originate from the load balancer. This count does not include any response codes generated by the target instances.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>.</p> </li> <li> <p> <b> <code>HTTPCode_Instance_2XX_Count</code> </b> - The number of HTTP response codes generated by the target instances. This does not include any response codes generated by the load balancer.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>.</p> </li> <li> <p> <b> <code>HTTPCode_Instance_3XX_Count</code> </b> - The number of HTTP response codes generated by the target instances. This does not include any response codes generated by the load balancer. </p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>.</p> </li> <li> <p> <b> <code>HTTPCode_Instance_4XX_Count</code> </b> - The number of HTTP response codes generated by the target instances. This does not include any response codes generated by the load balancer.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>.</p> </li> <li> <p> <b> <code>HTTPCode_Instance_5XX_Count</code> </b> - The number of HTTP response codes generated by the target instances. This does not include any response codes generated by the load balancer.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>.</p> </li> <li> <p> <b> <code>InstanceResponseTime</code> </b> - The time elapsed, in seconds, after the request leaves the load balancer until a response from the target instance is received.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Average</code>.</p> </li> <li> <p> <b> <code>RejectedConnectionCount</code> </b> - The number of connections that were rejected because the load balancer had reached its maximum number of connections.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>.</p> </li> <li> <p> <b> <code>RequestCount</code> </b> - The number of requests processed over IPv4. This count includes only the requests with a response generated by a target instance of the load balancer.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>.</p> </li> </ul>",
-        "GetLoadBalancerMetricDataResult$metricName": "<p>The metric about which you are receiving information. Valid values are listed below.</p>"
+        "GetLoadBalancerMetricDataResult$metricName": "<p>The metric about which you are receiving information. Valid values are listed below, along with the most useful <code>statistics</code> to include in your request.</p> <ul> <li> <p> <b> <code>ClientTLSNegotiationErrorCount</code> </b> - The number of TLS connections initiated by the client that did not establish a session with the load balancer. Possible causes include a mismatch of ciphers or protocols.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>.</p> </li> <li> <p> <b> <code>HealthyHostCount</code> </b> - The number of target instances that are considered healthy.</p> <p> <code>Statistics</code>: The most useful statistic are <code>Average</code>, <code>Minimum</code>, and <code>Maximum</code>.</p> </li> <li> <p> <b> <code>UnhealthyHostCount</code> </b> - The number of target instances that are considered unhealthy.</p> <p> <code>Statistics</code>: The most useful statistic are <code>Average</code>, <code>Minimum</code>, and <code>Maximum</code>.</p> </li> <li> <p> <b> <code>HTTPCode_LB_4XX_Count</code> </b> - The number of HTTP 4XX client error codes that originate from the load balancer. Client errors are generated when requests are malformed or incomplete. These requests have not been received by the target instance. This count does not include any response codes generated by the target instances.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>.</p> </li> <li> <p> <b> <code>HTTPCode_LB_5XX_Count</code> </b> - The number of HTTP 5XX server error codes that originate from the load balancer. This count does not include any response codes generated by the target instances.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>.</p> </li> <li> <p> <b> <code>HTTPCode_Instance_2XX_Count</code> </b> - The number of HTTP response codes generated by the target instances. This does not include any response codes generated by the load balancer.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>.</p> </li> <li> <p> <b> <code>HTTPCode_Instance_3XX_Count</code> </b> - The number of HTTP response codes generated by the target instances. This does not include any response codes generated by the load balancer. </p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>.</p> </li> <li> <p> <b> <code>HTTPCode_Instance_4XX_Count</code> </b> - The number of HTTP response codes generated by the target instances. This does not include any response codes generated by the load balancer.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>.</p> </li> <li> <p> <b> <code>HTTPCode_Instance_5XX_Count</code> </b> - The number of HTTP response codes generated by the target instances. This does not include any response codes generated by the load balancer.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>.</p> </li> <li> <p> <b> <code>InstanceResponseTime</code> </b> - The time elapsed, in seconds, after the request leaves the load balancer until a response from the target instance is received.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Average</code>.</p> </li> <li> <p> <b> <code>RejectedConnectionCount</code> </b> - The number of connections that were rejected because the load balancer had reached its maximum number of connections.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>.</p> </li> <li> <p> <b> <code>RequestCount</code> </b> - The number of requests processed over IPv4. This count includes only the requests with a response generated by a target instance of the load balancer.</p> <p> <code>Statistics</code>: The most useful statistic is <code>Sum</code>. Note that <code>Minimum</code>, <code>Maximum</code>, and <code>Average</code> all return <code>1</code>.</p> </li> </ul>"
       }
     },
     "LoadBalancerProtocol": {
       "base": null,
       "refs": {
-        "LoadBalancer$protocol": "<p>The protocol you have enabled for your load balancer. Valid values are below.</p>"
+        "LoadBalancer$protocol": "<p>The protocol you have enabled for your load balancer. Valid values are below.</p> <p>You can't just have <code>HTTP_HTTPS</code>, but you can have just <code>HTTP</code>.</p>"
       }
     },
     "LoadBalancerState": {
@@ -1116,7 +1116,7 @@
       }
     },
     "LoadBalancerTlsCertificate": {
-      "base": "<p>Describes a load balancer TLS/SSL certificate.</p> <p>TLS is just an updated, more secure version of Secure Socket Layer (SSL).</p>",
+      "base": "<p>Describes a load balancer SSL/TLS certificate.</p> <p>TLS is just an updated, more secure version of Secure Socket Layer (SSL).</p>",
       "refs": {
         "LoadBalancerTlsCertificateList$member": null
       }
@@ -1129,7 +1129,7 @@
       }
     },
     "LoadBalancerTlsCertificateDomainValidationOption": {
-      "base": "<p>Contains information about the domain names on a TLS/SSL certificate that you will use to validate domain ownership.</p>",
+      "base": "<p>Contains information about the domain names on an SSL/TLS certificate that you will use to validate domain ownership.</p>",
       "refs": {
         "LoadBalancerTlsCertificateDomainValidationOptionList$member": null
       }
@@ -1141,7 +1141,7 @@
       }
     },
     "LoadBalancerTlsCertificateDomainValidationRecord": {
-      "base": "<p>Describes the validation record of each domain name in the TLS/SSL certificate.</p>",
+      "base": "<p>Describes the validation record of each domain name in the SSL/TLS certificate.</p>",
       "refs": {
         "LoadBalancerTlsCertificateDomainValidationRecordList$member": null
       }
@@ -1155,13 +1155,13 @@
     "LoadBalancerTlsCertificateFailureReason": {
       "base": null,
       "refs": {
-        "LoadBalancerTlsCertificate$failureReason": "<p>The reason for the TLS/SSL certificate validation failure.</p>"
+        "LoadBalancerTlsCertificate$failureReason": "<p>The reason for the SSL/TLS certificate validation failure.</p>"
       }
     },
     "LoadBalancerTlsCertificateList": {
       "base": null,
       "refs": {
-        "GetLoadBalancerTlsCertificatesResult$tlsCertificates": "<p>An array of LoadBalancerTlsCertificate objects describing your TLS/SSL certificates.</p>"
+        "GetLoadBalancerTlsCertificatesResult$tlsCertificates": "<p>An array of LoadBalancerTlsCertificate objects describing your SSL/TLS certificates.</p>"
       }
     },
     "LoadBalancerTlsCertificateRenewalStatus": {
@@ -1185,11 +1185,11 @@
     "LoadBalancerTlsCertificateStatus": {
       "base": null,
       "refs": {
-        "LoadBalancerTlsCertificate$status": "<p>The status of the TLS/SSL certificate. Valid values are below.</p>"
+        "LoadBalancerTlsCertificate$status": "<p>The status of the SSL/TLS certificate. Valid values are below.</p>"
       }
     },
     "LoadBalancerTlsCertificateSummary": {
-      "base": "<p>Provides a summary of TLS/SSL certificate metadata.</p>",
+      "base": "<p>Provides a summary of SSL/TLS certificate metadata.</p>",
       "refs": {
         "LoadBalancerTlsCertificateSummaryList$member": null
       }
@@ -1197,7 +1197,7 @@
     "LoadBalancerTlsCertificateSummaryList": {
       "base": null,
       "refs": {
-        "LoadBalancer$tlsCertificateSummaries": "<p>An array of LoadBalancerTlsCertificateSummary objects that provide additional information about the TLS/SSL certificates.</p>"
+        "LoadBalancer$tlsCertificateSummaries": "<p>An array of LoadBalancerTlsCertificateSummary objects that provide additional information about the SSL/TLS certificates. For example, if <code>true</code>, the certificate is attached to the load balancer.</p>"
       }
     },
     "MetricDatapoint": {
@@ -1230,7 +1230,7 @@
       "base": null,
       "refs": {
         "GetInstanceMetricDataRequest$statistics": "<p>The instance statistics. </p>",
-        "GetLoadBalancerMetricDataRequest$statistics": "<p>An array of statistics that you want to request metrics for. Valid values are listed below.</p>"
+        "GetLoadBalancerMetricDataRequest$statistics": "<p>An array of statistics that you want to request metrics for. Valid values are listed below.</p> <ul> <li> <p> <b> <code>SampleCount</code> </b> - The count (number) of data points used for the statistical calculation.</p> </li> <li> <p> <b> <code>Average</code> </b> - The value of Sum / SampleCount during the specified period. By comparing this statistic with the Minimum and Maximum, you can determine the full scope of a metric and how close the average use is to the Minimum and Maximum. This comparison helps you to know when to increase or decrease your resources as needed.</p> </li> <li> <p> <b> <code>Sum</code> </b> - All values submitted for the matching metric added together. This statistic can be useful for determining the total volume of a metric.</p> </li> <li> <p> <b> <code>Minimum</code> </b> - The lowest value observed during the specified period. You can use this value to determine low volumes of activity for your application.</p> </li> <li> <p> <b> <code>Maximum</code> </b> - The highest value observed during the specified period. You can use this value to determine high volumes of activity for your application.</p> </li> </ul>"
       }
     },
     "MetricUnit": {
@@ -1287,7 +1287,7 @@
         "LoadBalancer$arn": "<p>The Amazon Resource Name (ARN) of the load balancer.</p>",
         "LoadBalancer$dnsName": "<p>The DNS name of your Lightsail load balancer.</p>",
         "LoadBalancer$healthCheckPath": "<p>The path you specified to perform your health checks. If no path is specified, the load balancer tries to make a request to the default (root) page.</p>",
-        "LoadBalancerTlsCertificate$arn": "<p>The Amazon Resource Name (ARN) of the TLS/SSL certificate.</p>",
+        "LoadBalancerTlsCertificate$arn": "<p>The Amazon Resource Name (ARN) of the SSL/TLS certificate.</p>",
         "LoadBalancerTlsCertificate$issuer": "<p>The issuer of the certificate.</p>",
         "LoadBalancerTlsCertificate$keyAlgorithm": "<p>The algorithm that was used to generate the key pair (the public and private key).</p>",
         "LoadBalancerTlsCertificate$serial": "<p>The serial number of the certificate.</p>",
@@ -1345,7 +1345,7 @@
         "AllocateStaticIpResult$operations": "<p>An array of key-value pairs containing information about the static IP address you allocated.</p>",
         "AttachDiskResult$operations": "<p>An object describing the API operations.</p>",
         "AttachInstancesToLoadBalancerResult$operations": "<p>An object representing the API operations.</p>",
-        "AttachLoadBalancerTlsCertificateResult$operations": "<p>An object representing the API operations.</p>",
+        "AttachLoadBalancerTlsCertificateResult$operations": "<p>An object representing the API operations.</p> <p>These SSL/TLS certificates are only usable by Lightsail load balancers. You can't get the certificate and use it for another purpose.</p>",
         "AttachStaticIpResult$operations": "<p>An array of key-value pairs containing information about your API operations.</p>",
         "CreateDiskFromSnapshotResult$operations": "<p>An object describing the API operations.</p>",
         "CreateDiskResult$operations": "<p>An object describing the API operations.</p>",
@@ -1366,7 +1366,7 @@
         "DetachStaticIpResult$operations": "<p>An array of key-value pairs containing information about the results of your detach static IP request.</p>",
         "GetOperationsForResourceResult$operations": "<p>An array of key-value pairs containing information about the results of your get operations for resource request.</p>",
         "GetOperationsResult$operations": "<p>An array of key-value pairs containing information about the results of your get operations request.</p>",
-        "RebootInstanceResult$operations": "<p>An array of key-value pairs containing information about the request operation.</p>",
+        "RebootInstanceResult$operations": "<p>An array of key-value pairs containing information about the request operations.</p>",
         "ReleaseStaticIpResult$operations": "<p>An array of key-value pairs containing information about the request operation.</p>",
         "StartInstanceResult$operations": "<p>An array of key-value pairs containing information about the request operation.</p>",
         "StopInstanceResult$operations": "<p>An array of key-value pairs containing information about the request operation.</p>",
@@ -1438,7 +1438,7 @@
     "PortList": {
       "base": null,
       "refs": {
-        "LoadBalancer$publicPorts": "<p>An array of public port settings for your load balancer.</p>"
+        "LoadBalancer$publicPorts": "<p>An array of public port settings for your load balancer. For HTTP, use port 80. For HTTPS, use port 443.</p>"
       }
     },
     "PortState": {
@@ -1505,7 +1505,7 @@
         "Instance$location": "<p>The region name and availability zone where the instance is located.</p>",
         "InstanceSnapshot$location": "<p>The region name and availability zone where you created the snapshot.</p>",
         "KeyPair$location": "<p>The region name and Availability Zone where the key pair was created.</p>",
-        "LoadBalancer$location": "<p>The AWS Region and Availability Zone where your load balancer was created (e.g., <code>us-east-2a</code>).</p>",
+        "LoadBalancer$location": "<p>The AWS Region where your load balancer was created (e.g., <code>us-east-2a</code>). Lightsail automatically creates your load balancer across Availability Zones.</p>",
         "LoadBalancerTlsCertificate$location": "<p>The AWS Region and Availability Zone where you created your certificate.</p>",
         "Operation$location": "<p>The region and Availability Zone.</p>",
         "StaticIp$location": "<p>The region and Availability Zone where the static IP was created.</p>"
@@ -1518,8 +1518,8 @@
         "AttachDiskRequest$diskName": "<p>The unique Lightsail disk name (e.g., <code>my-disk</code>).</p>",
         "AttachDiskRequest$instanceName": "<p>The name of the Lightsail instance where you want to utilize the storage disk.</p>",
         "AttachInstancesToLoadBalancerRequest$loadBalancerName": "<p>The name of the load balancer.</p>",
-        "AttachLoadBalancerTlsCertificateRequest$loadBalancerName": "<p>The name of the load balancer to which you want to associate the TLS/SSL certificate.</p>",
-        "AttachLoadBalancerTlsCertificateRequest$certificateName": "<p>The name of your TLS/SSL certificate.</p>",
+        "AttachLoadBalancerTlsCertificateRequest$loadBalancerName": "<p>The name of the load balancer to which you want to associate the SSL/TLS certificate.</p>",
+        "AttachLoadBalancerTlsCertificateRequest$certificateName": "<p>The name of your SSL/TLS certificate.</p>",
         "AttachStaticIpRequest$staticIpName": "<p>The name of the static IP.</p>",
         "AttachStaticIpRequest$instanceName": "<p>The instance name to which you want to attach the static IP address.</p>",
         "AttachedDiskMap$key": null,
@@ -1538,9 +1538,9 @@
         "CreateInstancesRequest$keyPairName": "<p>The name of your key pair.</p>",
         "CreateKeyPairRequest$keyPairName": "<p>The name for your new key pair.</p>",
         "CreateLoadBalancerRequest$loadBalancerName": "<p>The name of your load balancer.</p>",
-        "CreateLoadBalancerRequest$certificateName": "<p>The name of the TLS/SSL certificate.</p> <p>If you specify <code>certificateName</code>, then <code>certificateDomainName</code> is required (and vice-versa).</p>",
-        "CreateLoadBalancerTlsCertificateRequest$loadBalancerName": "<p>The load balancer name where you want to create the TLS/SSL certificate.</p>",
-        "CreateLoadBalancerTlsCertificateRequest$certificateName": "<p>The TLS/SSL certificate name.</p>",
+        "CreateLoadBalancerRequest$certificateName": "<p>The name of the SSL/TLS certificate.</p> <p>If you specify <code>certificateName</code>, then <code>certificateDomainName</code> is required (and vice-versa).</p>",
+        "CreateLoadBalancerTlsCertificateRequest$loadBalancerName": "<p>The load balancer name where you want to create the SSL/TLS certificate.</p>",
+        "CreateLoadBalancerTlsCertificateRequest$certificateName": "<p>The SSL/TLS certificate name.</p> <p>You can have up to 10 certificates in your account at one time. Each Lightsail load balancer can have up to 2 certificates associated with it at one time. There is also an overall limit to the number of certificates that can be issue in a 365-day period. For more information, see <a href=\"http://docs.aws.amazon.com/acm/latest/userguide/acm-limits.html\">Limits</a>.</p>",
         "DeleteDiskRequest$diskName": "<p>The unique name of the disk you want to delete (e.g., <code>my-disk</code>).</p>",
         "DeleteDiskSnapshotRequest$diskSnapshotName": "<p>The name of the disk snapshot you want to delete (e.g., <code>my-disk-snapshot</code>).</p>",
         "DeleteInstanceRequest$instanceName": "<p>The name of the instance to delete.</p>",
@@ -1548,7 +1548,7 @@
         "DeleteKeyPairRequest$keyPairName": "<p>The name of the key pair to delete.</p>",
         "DeleteLoadBalancerRequest$loadBalancerName": "<p>The name of the load balancer you want to delete.</p>",
         "DeleteLoadBalancerTlsCertificateRequest$loadBalancerName": "<p>The load balancer name.</p>",
-        "DeleteLoadBalancerTlsCertificateRequest$certificateName": "<p>The TLS/SSL certificate name.</p>",
+        "DeleteLoadBalancerTlsCertificateRequest$certificateName": "<p>The SSL/TLS certificate name.</p>",
         "DetachDiskRequest$diskName": "<p>The unique name of the disk you want to detach from your instance (e.g., <code>my-disk</code>).</p>",
         "DetachInstancesFromLoadBalancerRequest$loadBalancerName": "<p>The name of the Lightsail load balancer.</p>",
         "DetachStaticIpRequest$staticIpName": "<p>The name of the static IP to detach from the instance.</p>",
@@ -1569,7 +1569,7 @@
         "GetKeyPairRequest$keyPairName": "<p>The name of the key pair for which you are requesting information.</p>",
         "GetLoadBalancerMetricDataRequest$loadBalancerName": "<p>The name of the load balancer.</p>",
         "GetLoadBalancerRequest$loadBalancerName": "<p>The name of the load balancer.</p>",
-        "GetLoadBalancerTlsCertificatesRequest$loadBalancerName": "<p>The name of the load balancer where you stored your TLS/SSL certificate.</p>",
+        "GetLoadBalancerTlsCertificatesRequest$loadBalancerName": "<p>The name of the load balancer you associated with your SSL/TLS certificate.</p>",
         "GetOperationsForResourceRequest$resourceName": "<p>The name of the resource for which you are requesting information.</p>",
         "GetStaticIpRequest$staticIpName": "<p>The name of the static IP in Lightsail.</p>",
         "ImportKeyPairRequest$keyPairName": "<p>The name of the key pair for which you want to import the public key.</p>",
@@ -1581,9 +1581,9 @@
         "InstanceSnapshot$fromInstanceName": "<p>The instance from which the snapshot was created.</p>",
         "KeyPair$name": "<p>The friendly name of the SSH key pair.</p>",
         "LoadBalancer$name": "<p>The name of the load balancer (e.g., <code>my-load-balancer</code>).</p>",
-        "LoadBalancerTlsCertificate$name": "<p>The name of the TLS/SSL certificate (e.g., <code>my-certificate</code>).</p>",
-        "LoadBalancerTlsCertificate$loadBalancerName": "<p>The load balancer name where your TLS/SSL certificate is attached.</p>",
-        "LoadBalancerTlsCertificateSummary$name": "<p>The name of the TLS/SSL certificate.</p>",
+        "LoadBalancerTlsCertificate$name": "<p>The name of the SSL/TLS certificate (e.g., <code>my-certificate</code>).</p>",
+        "LoadBalancerTlsCertificate$loadBalancerName": "<p>The load balancer name where your SSL/TLS certificate is attached.</p>",
+        "LoadBalancerTlsCertificateSummary$name": "<p>The name of the SSL/TLS certificate.</p>",
         "OpenInstancePublicPortsRequest$instanceName": "<p>The name of the instance for which you want to open the public ports.</p>",
         "Operation$resourceName": "<p>The resource name.</p>",
         "PasswordData$keyPairName": "<p>The name of the key pair that you used when creating your instance. If no key pair name was specified when creating the instance, Lightsail uses the default key pair (<code>LightsailDefaultKeyPair</code>).</p> <p>If you are using a custom key pair, you need to use your own means of decrypting your password using the <code>ciphertext</code>. Lightsail creates the ciphertext by encrypting your password with the public key part of this key pair.</p>",
@@ -1595,13 +1595,13 @@
         "StaticIp$name": "<p>The name of the static IP (e.g., <code>StaticIP-Ohio-EXAMPLE</code>).</p>",
         "StaticIp$attachedTo": "<p>The instance where the static IP is attached (e.g., <code>Amazon_Linux-1GB-Ohio-1</code>).</p>",
         "StopInstanceRequest$instanceName": "<p>The name of the instance (a virtual private server) to stop.</p>",
-        "UpdateLoadBalancerAttributeRequest$loadBalancerName": "<p>The name of the load balancer that you want to modify.</p>"
+        "UpdateLoadBalancerAttributeRequest$loadBalancerName": "<p>The name of the load balancer that you want to modify (e.g., <code>my-load-balancer</code>.</p>"
       }
     },
     "ResourceNameList": {
       "base": null,
       "refs": {
-        "AttachInstancesToLoadBalancerRequest$instanceNames": "<p>An array of strings representing the instance name(s) you want to attach to your load balancer.</p>",
+        "AttachInstancesToLoadBalancerRequest$instanceNames": "<p>An array of strings representing the instance name(s) you want to attach to your load balancer.</p> <p>An instance must be <code>running</code> before you can attach it to your load balancer.</p> <p>There are no additional limits on the number of instances you can attach to your load balancer, aside from the limit of Lightsail instances you can create in your account (20).</p>",
         "DetachInstancesFromLoadBalancerRequest$instanceNames": "<p>An array of strings containing the names of the instances you want to detach from the load balancer.</p>"
       }
     },
@@ -1615,7 +1615,7 @@
         "InstanceSnapshot$resourceType": "<p>The type of resource (usually <code>InstanceSnapshot</code>).</p>",
         "KeyPair$resourceType": "<p>The resource type (usually <code>KeyPair</code>).</p>",
         "LoadBalancer$resourceType": "<p>The resource type (e.g., <code>LoadBalancer</code>.</p>",
-        "LoadBalancerTlsCertificate$resourceType": "<p>The resource type (e.g., <code>LoadBalancerTlsCertificate</code>.</p>",
+        "LoadBalancerTlsCertificate$resourceType": "<p>The resource type (e.g., <code>LoadBalancerTlsCertificate</code>).</p> <ul> <li> <p> <b> <code>Instance</code> </b> - A Lightsail instance (a virtual private server)</p> </li> <li> <p> <b> <code>StaticIp</code> </b> - A static IP address</p> </li> <li> <p> <b> <code>KeyPair</code> </b> - The key pair used to connect to a Lightsail instance</p> </li> <li> <p> <b> <code>InstanceSnapshot</code> </b> - A Lightsail instance snapshot</p> </li> <li> <p> <b> <code>Domain</code> </b> - A DNS zone</p> </li> <li> <p> <b> <code>PeeredVpc</code> </b> - A peered VPC</p> </li> <li> <p> <b> <code>LoadBalancer</code> </b> - A Lightsail load balancer</p> </li> <li> <p> <b> <code>LoadBalancerTlsCertificate</code> </b> - An SSL/TLS certificate associated with a Lightsail load balancer</p> </li> <li> <p> <b> <code>Disk</code> </b> - A Lightsail block storage disk</p> </li> <li> <p> <b> <code>DiskSnapshot</code> </b> - A block storage disk snapshot</p> </li> </ul>",
         "Operation$resourceType": "<p>The resource type. </p>",
         "StaticIp$resourceType": "<p>The resource type (usually <code>StaticIp</code>).</p>"
       }
@@ -1664,7 +1664,7 @@
         "CreateInstancesFromSnapshotRequest$instanceNames": "<p>The names for your new instances.</p>",
         "CreateInstancesRequest$instanceNames": "<p>The names to use for your new Lightsail instances. Separate multiple values using quotation marks and commas, for example: <code>[\"MyFirstInstance\",\"MySecondInstance\"]</code> </p>",
         "GetActiveNamesResult$activeNames": "<p>The list of active names returned by the get active names request.</p>",
-        "LoadBalancerTlsCertificate$subjectAlternativeNames": "<p>One or more domain names (subject alternative names) included in the certificate. This list contains the domain names that are bound to the public key that is contained in the certificate. The subject alternative names include the canonical domain name (CN) of the certificate and additional domain names that can be used to connect to the website.</p>"
+        "LoadBalancerTlsCertificate$subjectAlternativeNames": "<p>One or more domains or subdomains included in the certificate. This list contains the domain names that are bound to the public key that is contained in the certificate. The subject alternative names include the canonical domain name (CNAME) of the certificate and additional domain names that can be used to connect to the website, such as <code>example.com</code>, <code>www.example.com</code>, or <code>m.example.com</code>.</p>"
       }
     },
     "StringMax256": {
@@ -1713,17 +1713,17 @@
       "refs": {
         "Blueprint$isActive": "<p>A Boolean value indicating whether the blueprint is active. When you update your blueprints, you will inactivate old blueprints and keep the most recent versions active.</p>",
         "Bundle$isActive": "<p>A Boolean value indicating whether the bundle is active.</p>",
-        "DeleteLoadBalancerTlsCertificateRequest$force": "<p>When <code>true</code>, forces the deletion of a TLS/SSL certificate.</p>",
+        "DeleteLoadBalancerTlsCertificateRequest$force": "<p>When <code>true</code>, forces the deletion of an SSL/TLS certificate.</p> <p>There can be two certificates associated with a Lightsail load balancer: the primary and the backup. The force parameter is required when the primary SSL/TLS certificate is in use by an instance attached to the load balancer.</p>",
         "Disk$isSystemDisk": "<p>A Boolean value indicating whether this disk is a system disk (has an operating system loaded on it).</p>",
         "Disk$isAttached": "<p>A Boolean value indicating whether the disk is attached.</p>",
-        "DomainEntry$isAlias": "<p>When <code>true</code>, specifies whether the domain entry is an alias used by the Lightsail load balancer.</p>",
+        "DomainEntry$isAlias": "<p>When <code>true</code>, specifies whether the domain entry is an alias used by the Lightsail load balancer. You can include an alias (A type) record in your request, which points to a load balancer DNS name and routes traffic to your load balancer</p>",
         "GetBlueprintsRequest$includeInactive": "<p>A Boolean value indicating whether to include inactive results in your request.</p>",
         "GetBundlesRequest$includeInactive": "<p>A Boolean value that indicates whether to include inactive bundle results in your request.</p>",
         "GetRegionsRequest$includeAvailabilityZones": "<p>A Boolean value indicating whether to also include Availability Zones in your get regions request. Availability Zones are indicated with a letter: e.g., <code>us-east-2a</code>.</p>",
         "Instance$isStaticIp": "<p>A Boolean value indicating whether this instance has a static IP assigned to it.</p>",
         "IsVpcPeeredResult$isPeered": "<p>Returns <code>true</code> if the Lightsail VPC is peered; otherwise, <code>false</code>.</p>",
-        "LoadBalancerTlsCertificate$isAttached": "<p>When <code>true</code>, the TLS/SSL certificate is attached to the Lightsail load balancer.</p>",
-        "LoadBalancerTlsCertificateSummary$isAttached": "<p>When <code>true</code>, the TLS/SSL certificate is attached to the Lightsail load balancer.</p>",
+        "LoadBalancerTlsCertificate$isAttached": "<p>When <code>true</code>, the SSL/TLS certificate is attached to the Lightsail load balancer.</p>",
+        "LoadBalancerTlsCertificateSummary$isAttached": "<p>When <code>true</code>, the SSL/TLS certificate is attached to the Lightsail load balancer.</p>",
         "Operation$isTerminal": "<p>A Boolean value indicating whether the operation is terminal.</p>",
         "StaticIp$isAttached": "<p>A Boolean value indicating whether the static IP is attached.</p>",
         "StopInstanceRequest$force": "<p>When set to <code>True</code>, forces a Lightsail instance that is stuck in a <code>stopping</code> state to stop.</p> <important> <p>Only use the <code>force</code> parameter if your instance is stuck in the <code>stopping</code> state. In any other state, your instance should stop normally without adding this parameter to your API request.</p> </important>"
@@ -1764,7 +1764,7 @@
         "InstanceHardware$cpuCount": "<p>The number of vCPUs the instance has.</p>",
         "InstanceSnapshot$sizeInGb": "<p>The size in GB of the SSD.</p>",
         "InstanceState$code": "<p>The status code for the instance.</p>",
-        "LoadBalancer$instancePort": "<p>The instance port where the load balancer is listening.</p>",
+        "LoadBalancer$instancePort": "<p>The port where the load balancer will direct traffic to your Lightsail instances. For HTTP traffic, it's port 80. For HTTPS traffic, it's port 443.</p>",
         "MonthlyTransfer$gbPerMonthAllocated": "<p>The amount allocated per month (in GB).</p>"
       }
     },
@@ -1790,14 +1790,14 @@
         "CreateInstancesFromSnapshotRequest$userData": "<p>You can create a launch script that configures a server with additional user data. For example, <code>apt-get -y update</code>.</p> <note> <p>Depending on the machine image you choose, the command to get software on your instance varies. Amazon Linux and CentOS use <code>yum</code>, Debian and Ubuntu use <code>apt-get</code>, and FreeBSD uses <code>pkg</code>. For a complete list, see the <a href=\"http://lightsail.aws.amazon.com/ls/docs/getting-started/articles/pre-installed-apps\">Dev Guide</a>.</p> </note>",
         "CreateInstancesRequest$availabilityZone": "<p>The Availability Zone in which to create your instance. Use the following format: <code>us-east-2a</code> (case sensitive). You can get a list of availability zones by using the <a href=\"http://docs.aws.amazon.com/lightsail/2016-11-28/api-reference/API_GetRegions.html\">get regions</a> operation. Be sure to add the <code>include availability zones</code> parameter to your request.</p>",
         "CreateInstancesRequest$userData": "<p>A launch script you can create that configures a server with additional user data. For example, you might want to run <code>apt-get -y update</code>.</p> <note> <p>Depending on the machine image you choose, the command to get software on your instance varies. Amazon Linux and CentOS use <code>yum</code>, Debian and Ubuntu use <code>apt-get</code>, and FreeBSD uses <code>pkg</code>. For a complete list, see the <a href=\"https://lightsail.aws.amazon.com/ls/docs/getting-started/article/compare-options-choose-lightsail-instance-image\">Dev Guide</a>.</p> </note>",
-        "CreateLoadBalancerRequest$healthCheckPath": "<p>The path you provided to perform the load balancer health check. If you didn't specify a health check path, Lightsail uses the root path of your website (e.g., <code>\"/\"</code>).</p>",
+        "CreateLoadBalancerRequest$healthCheckPath": "<p>The path you provided to perform the load balancer health check. If you didn't specify a health check path, Lightsail uses the root path of your website (e.g., <code>\"/\"</code>).</p> <p>You may want to specify a custom health check path other than the root of your application if your home page loads slowly or has a lot of media or scripting on it.</p>",
         "Disk$supportCode": "<p>The support code. Include this code in your email to support when you have questions about an instance or another resource in Lightsail. This code enables our support team to look up your Lightsail information more easily.</p>",
         "Disk$path": "<p>The disk path.</p>",
         "Disk$attachmentState": "<p>(Deprecated) The attachment state of the disk.</p> <note> <p>In releases prior to November 14, 2017, this parameter returned <code>attached</code> for system disks in the API response. It is now deprecated, but still included in the response. Use <code>isAttached</code> instead.</p> </note>",
         "DiskSnapshot$supportCode": "<p>The support code. Include this code in your email to support when you have questions about an instance or another resource in Lightsail. This code enables our support team to look up your Lightsail information more easily.</p>",
         "DiskSnapshot$progress": "<p>The progress of the disk snapshot operation.</p>",
         "Domain$supportCode": "<p>The support code. Include this code in your email to support when you have questions about an instance or another resource in Lightsail. This code enables our support team to look up your Lightsail information more easily.</p>",
-        "DomainEntry$target": "<p>The target AWS name server (e.g., <code>ns-111.awsdns-22.com.</code>).</p>",
+        "DomainEntry$target": "<p>The target AWS name server (e.g., <code>ns-111.awsdns-22.com.</code>).</p> <p>For Lightsail load balancers, the value looks like <code>ab1234c56789c6b86aba6fb203d443bc-123456789.us-east-2.elb.amazonaws.com</code>. Be sure to also set <code>isAlias</code> to <code>true</code> when setting up an A record for a load balancer.</p>",
         "DomainEntryOptions$value": null,
         "GetActiveNamesRequest$pageToken": "<p>A token used for paginating results from your get active names request.</p>",
         "GetActiveNamesResult$nextPageToken": "<p>A token used for advancing to the next page of results from your get active names request.</p>",
@@ -1845,7 +1845,7 @@
         "KeyPair$supportCode": "<p>The support code. Include this code in your email to support when you have questions about an instance or another resource in Lightsail. This code enables our support team to look up your Lightsail information more easily.</p>",
         "LoadBalancer$supportCode": "<p>The support code. Include this code in your email to support when you have questions about your Lightsail load balancer. This code enables our support team to look up your Lightsail information more easily.</p>",
         "LoadBalancerConfigurationOptions$value": null,
-        "LoadBalancerTlsCertificate$supportCode": "<p>The support code. Include this code in your email to support when you have questions about your Lightsail load balancer or TLS/SSL certificate. This code enables our support team to look up your Lightsail information more easily.</p>",
+        "LoadBalancerTlsCertificate$supportCode": "<p>The support code. Include this code in your email to support when you have questions about your Lightsail load balancer or SSL/TLS certificate. This code enables our support team to look up your Lightsail information more easily.</p>",
         "NotFoundException$code": null,
         "NotFoundException$docs": null,
         "NotFoundException$message": null,

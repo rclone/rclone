@@ -48,7 +48,7 @@ func (client DevicesClient) AuthorizeForServiceEncryptionKeyRollover(ctx context
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "AuthorizeForServiceEncryptionKeyRollover")
+		return result, validation.NewError("storsimple.DevicesClient", "AuthorizeForServiceEncryptionKeyRollover", err.Error())
 	}
 
 	req, err := client.AuthorizeForServiceEncryptionKeyRolloverPreparer(ctx, deviceName, resourceGroupName, managerName)
@@ -115,8 +115,8 @@ func (client DevicesClient) AuthorizeForServiceEncryptionKeyRolloverResponder(re
 
 // Configure complete minimal setup before using the device.
 //
-// parameters is the minimal properties to configure a device. resourceGroupName is the resource group name managerName
-// is the manager name
+// parameters is the minimal properties to configure a device. resourceGroupName is the resource group name
+// managerName is the manager name
 func (client DevicesClient) Configure(ctx context.Context, parameters ConfigureDeviceRequest, resourceGroupName string, managerName string) (result DevicesConfigureFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -128,7 +128,7 @@ func (client DevicesClient) Configure(ctx context.Context, parameters ConfigureD
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "Configure")
+		return result, validation.NewError("storsimple.DevicesClient", "Configure", err.Error())
 	}
 
 	req, err := client.ConfigurePreparer(ctx, parameters, resourceGroupName, managerName)
@@ -204,7 +204,7 @@ func (client DevicesClient) Deactivate(ctx context.Context, deviceName string, r
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "Deactivate")
+		return result, validation.NewError("storsimple.DevicesClient", "Deactivate", err.Error())
 	}
 
 	req, err := client.DeactivatePreparer(ctx, deviceName, resourceGroupName, managerName)
@@ -279,7 +279,7 @@ func (client DevicesClient) Delete(ctx context.Context, deviceName string, resou
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "Delete")
+		return result, validation.NewError("storsimple.DevicesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, deviceName, resourceGroupName, managerName)
@@ -348,15 +348,15 @@ func (client DevicesClient) DeleteResponder(resp *http.Response) (result autores
 
 // Failover failovers a set of volume containers from a specified source device to a target device.
 //
-// sourceDeviceName is the source device name on which failover is performed. parameters is failoverRequest containing
-// the source device and the list of volume containers to be failed over. resourceGroupName is the resource group name
-// managerName is the manager name
+// sourceDeviceName is the source device name on which failover is performed. parameters is failoverRequest
+// containing the source device and the list of volume containers to be failed over. resourceGroupName is the
+// resource group name managerName is the manager name
 func (client DevicesClient) Failover(ctx context.Context, sourceDeviceName string, parameters FailoverRequest, resourceGroupName string, managerName string) (result DevicesFailoverFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "Failover")
+		return result, validation.NewError("storsimple.DevicesClient", "Failover", err.Error())
 	}
 
 	req, err := client.FailoverPreparer(ctx, sourceDeviceName, parameters, resourceGroupName, managerName)
@@ -427,15 +427,15 @@ func (client DevicesClient) FailoverResponder(resp *http.Response) (result autor
 
 // Get returns the properties of the specified device.
 //
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name expand is
-// specify $expand=details to populate additional fields related to the device or $expand=rolloverdetails to populate
-// additional fields related to the service data encryption key rollover on device
+// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// expand is specify $expand=details to populate additional fields related to the device or $expand=rolloverdetails
+// to populate additional fields related to the service data encryption key rollover on device
 func (client DevicesClient) Get(ctx context.Context, deviceName string, resourceGroupName string, managerName string, expand string) (result Device, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "Get")
+		return result, validation.NewError("storsimple.DevicesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, deviceName, resourceGroupName, managerName, expand)
@@ -512,7 +512,7 @@ func (client DevicesClient) GetUpdateSummary(ctx context.Context, deviceName str
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "GetUpdateSummary")
+		return result, validation.NewError("storsimple.DevicesClient", "GetUpdateSummary", err.Error())
 	}
 
 	req, err := client.GetUpdateSummaryPreparer(ctx, deviceName, resourceGroupName, managerName)
@@ -586,7 +586,7 @@ func (client DevicesClient) InstallUpdates(ctx context.Context, deviceName strin
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "InstallUpdates")
+		return result, validation.NewError("storsimple.DevicesClient", "InstallUpdates", err.Error())
 	}
 
 	req, err := client.InstallUpdatesPreparer(ctx, deviceName, resourceGroupName, managerName)
@@ -655,15 +655,15 @@ func (client DevicesClient) InstallUpdatesResponder(resp *http.Response) (result
 
 // ListByManager returns the list of devices for the specified manager.
 //
-// resourceGroupName is the resource group name managerName is the manager name expand is specify $expand=details to
-// populate additional fields related to the device or $expand=rolloverdetails to populate additional fields related to
-// the service data encryption key rollover on device
+// resourceGroupName is the resource group name managerName is the manager name expand is specify $expand=details
+// to populate additional fields related to the device or $expand=rolloverdetails to populate additional fields
+// related to the service data encryption key rollover on device
 func (client DevicesClient) ListByManager(ctx context.Context, resourceGroupName string, managerName string, expand string) (result DeviceList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "ListByManager")
+		return result, validation.NewError("storsimple.DevicesClient", "ListByManager", err.Error())
 	}
 
 	req, err := client.ListByManagerPreparer(ctx, resourceGroupName, managerName, expand)
@@ -741,7 +741,7 @@ func (client DevicesClient) ListFailoverSets(ctx context.Context, deviceName str
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "ListFailoverSets")
+		return result, validation.NewError("storsimple.DevicesClient", "ListFailoverSets", err.Error())
 	}
 
 	req, err := client.ListFailoverSetsPreparer(ctx, deviceName, resourceGroupName, managerName)
@@ -810,15 +810,15 @@ func (client DevicesClient) ListFailoverSetsResponder(resp *http.Response) (resu
 // ListFailoverTargets given a list of volume containers to be failed over from a source device, this method returns
 // the eligibility result, as a failover target, for all devices under that resource.
 //
-// sourceDeviceName is the source device name on which failover is performed. parameters is listFailoverTargetsRequest
-// containing the list of volume containers to be failed over. resourceGroupName is the resource group name managerName
-// is the manager name
+// sourceDeviceName is the source device name on which failover is performed. parameters is
+// listFailoverTargetsRequest containing the list of volume containers to be failed over. resourceGroupName is the
+// resource group name managerName is the manager name
 func (client DevicesClient) ListFailoverTargets(ctx context.Context, sourceDeviceName string, parameters ListFailoverTargetsRequest, resourceGroupName string, managerName string) (result FailoverTargetsList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "ListFailoverTargets")
+		return result, validation.NewError("storsimple.DevicesClient", "ListFailoverTargets", err.Error())
 	}
 
 	req, err := client.ListFailoverTargetsPreparer(ctx, sourceDeviceName, parameters, resourceGroupName, managerName)
@@ -894,7 +894,7 @@ func (client DevicesClient) ListMetricDefinition(ctx context.Context, deviceName
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "ListMetricDefinition")
+		return result, validation.NewError("storsimple.DevicesClient", "ListMetricDefinition", err.Error())
 	}
 
 	req, err := client.ListMetricDefinitionPreparer(ctx, deviceName, resourceGroupName, managerName)
@@ -962,14 +962,14 @@ func (client DevicesClient) ListMetricDefinitionResponder(resp *http.Response) (
 
 // ListMetrics gets the metrics for the specified device.
 //
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name filter is
-// oData Filter options
+// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// filter is oData Filter options
 func (client DevicesClient) ListMetrics(ctx context.Context, deviceName string, resourceGroupName string, managerName string, filter string) (result MetricList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "ListMetrics")
+		return result, validation.NewError("storsimple.DevicesClient", "ListMetrics", err.Error())
 	}
 
 	req, err := client.ListMetricsPreparer(ctx, deviceName, resourceGroupName, managerName, filter)
@@ -1044,7 +1044,7 @@ func (client DevicesClient) ScanForUpdates(ctx context.Context, deviceName strin
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "ScanForUpdates")
+		return result, validation.NewError("storsimple.DevicesClient", "ScanForUpdates", err.Error())
 	}
 
 	req, err := client.ScanForUpdatesPreparer(ctx, deviceName, resourceGroupName, managerName)
@@ -1113,14 +1113,14 @@ func (client DevicesClient) ScanForUpdatesResponder(resp *http.Response) (result
 
 // Update patches the device.
 //
-// deviceName is the device name parameters is patch representation of the device. resourceGroupName is the resource
-// group name managerName is the manager name
+// deviceName is the device name parameters is patch representation of the device. resourceGroupName is the
+// resource group name managerName is the manager name
 func (client DevicesClient) Update(ctx context.Context, deviceName string, parameters DevicePatch, resourceGroupName string, managerName string) (result Device, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DevicesClient", "Update")
+		return result, validation.NewError("storsimple.DevicesClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, deviceName, parameters, resourceGroupName, managerName)

@@ -48,7 +48,7 @@ func (client CheckSkuAvailabilityClient) List(ctx context.Context, location stri
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Skus", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.Type", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.CheckSkuAvailabilityClient", "List")
+		return result, validation.NewError("cognitiveservices.CheckSkuAvailabilityClient", "List", err.Error())
 	}
 
 	req, err := client.ListPreparer(ctx, location, parameters)

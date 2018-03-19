@@ -84,6 +84,30 @@
         "shape" : "ForbiddenException"
       } ]
     },
+    "DeleteApplication" : {
+      "name" : "DeleteApplication",
+      "http" : {
+        "method" : "DELETE",
+        "requestUri" : "/applications/{applicationId}",
+        "responseCode" : 204
+      },
+      "input" : {
+        "shape" : "DeleteApplicationRequest"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      }, {
+        "shape" : "ConflictException"
+      } ]
+    },
     "GetApplication" : {
       "name" : "GetApplication",
       "http" : {
@@ -255,8 +279,12 @@
           "shape" : "__string",
           "locationName" : "description"
         },
+        "HomePageUrl" : {
+          "shape" : "__string",
+          "locationName" : "homePageUrl"
+        },
         "Labels" : {
-          "shape" : "ListOf__string",
+          "shape" : "__listOf__string",
           "locationName" : "labels"
         },
         "LicenseUrl" : {
@@ -279,46 +307,50 @@
           "shape" : "Version",
           "locationName" : "version"
         }
-      }
+      },
+      "required" : [ "Description", "Author", "ApplicationId", "Name" ]
     },
     "ApplicationPage" : {
       "type" : "structure",
       "members" : {
         "Applications" : {
-          "shape" : "ListOfApplicationSummary",
+          "shape" : "__listOfApplicationSummary",
           "locationName" : "applications"
         },
         "NextToken" : {
           "shape" : "__string",
           "locationName" : "nextToken"
         }
-      }
+      },
+      "required" : [ "Applications" ]
     },
     "ApplicationPolicy" : {
       "type" : "structure",
       "members" : {
         "Statements" : {
-          "shape" : "ListOfApplicationPolicyStatement",
+          "shape" : "__listOfApplicationPolicyStatement",
           "locationName" : "statements"
         }
-      }
+      },
+      "required" : [ "Statements" ]
     },
     "ApplicationPolicyStatement" : {
       "type" : "structure",
       "members" : {
         "Actions" : {
-          "shape" : "ListOf__string",
+          "shape" : "__listOf__string",
           "locationName" : "actions"
         },
         "Principals" : {
-          "shape" : "ListOf__string",
+          "shape" : "__listOf__string",
           "locationName" : "principals"
         },
         "StatementId" : {
           "shape" : "__string",
           "locationName" : "statementId"
         }
-      }
+      },
+      "required" : [ "Principals", "Actions" ]
     },
     "ApplicationSummary" : {
       "type" : "structure",
@@ -339,8 +371,12 @@
           "shape" : "__string",
           "locationName" : "description"
         },
+        "HomePageUrl" : {
+          "shape" : "__string",
+          "locationName" : "homePageUrl"
+        },
         "Labels" : {
-          "shape" : "ListOf__string",
+          "shape" : "__listOf__string",
           "locationName" : "labels"
         },
         "Name" : {
@@ -351,7 +387,8 @@
           "shape" : "__string",
           "locationName" : "spdxLicenseId"
         }
-      }
+      },
+      "required" : [ "Description", "Author", "ApplicationId", "Name" ]
     },
     "ApplicationVersionPage" : {
       "type" : "structure",
@@ -361,10 +398,11 @@
           "locationName" : "nextToken"
         },
         "Versions" : {
-          "shape" : "ListOfVersionSummary",
+          "shape" : "__listOfVersionSummary",
           "locationName" : "versions"
         }
-      }
+      },
+      "required" : [ "Versions" ]
     },
     "BadRequestException" : {
       "type" : "structure",
@@ -402,7 +440,8 @@
           "shape" : "__string",
           "locationName" : "stackId"
         }
-      }
+      },
+      "required" : [ "ChangeSetId", "ApplicationId", "StackId", "SemanticVersion" ]
     },
     "ConflictException" : {
       "type" : "structure",
@@ -432,8 +471,12 @@
           "shape" : "__string",
           "locationName" : "description"
         },
+        "HomePageUrl" : {
+          "shape" : "__string",
+          "locationName" : "homePageUrl"
+        },
         "Labels" : {
-          "shape" : "ListOf__string",
+          "shape" : "__listOf__string",
           "locationName" : "labels"
         },
         "LicenseBody" : {
@@ -476,7 +519,8 @@
           "shape" : "__string",
           "locationName" : "templateUrl"
         }
-      }
+      },
+      "required" : [ "Description", "Name", "Author" ]
     },
     "CreateApplicationRequest" : {
       "type" : "structure",
@@ -489,8 +533,12 @@
           "shape" : "__string",
           "locationName" : "description"
         },
+        "HomePageUrl" : {
+          "shape" : "__string",
+          "locationName" : "homePageUrl"
+        },
         "Labels" : {
-          "shape" : "ListOf__string",
+          "shape" : "__listOf__string",
           "locationName" : "labels"
         },
         "LicenseBody" : {
@@ -554,8 +602,12 @@
           "shape" : "__string",
           "locationName" : "description"
         },
+        "HomePageUrl" : {
+          "shape" : "__string",
+          "locationName" : "homePageUrl"
+        },
         "Labels" : {
-          "shape" : "ListOf__string",
+          "shape" : "__listOf__string",
           "locationName" : "labels"
         },
         "LicenseUrl" : {
@@ -637,7 +689,7 @@
           "locationName" : "creationTime"
         },
         "ParameterDefinitions" : {
-          "shape" : "ListOfParameterDefinition",
+          "shape" : "__listOfParameterDefinition",
           "locationName" : "parameterDefinitions"
         },
         "SemanticVersion" : {
@@ -658,7 +710,7 @@
       "type" : "structure",
       "members" : {
         "ParameterOverrides" : {
-          "shape" : "ListOfParameterValue",
+          "shape" : "__listOfParameterValue",
           "locationName" : "parameterOverrides"
         },
         "SemanticVersion" : {
@@ -669,7 +721,8 @@
           "shape" : "__string",
           "locationName" : "stackName"
         }
-      }
+      },
+      "required" : [ "StackName" ]
     },
     "CreateCloudFormationChangeSetRequest" : {
       "type" : "structure",
@@ -680,7 +733,7 @@
           "locationName" : "applicationId"
         },
         "ParameterOverrides" : {
-          "shape" : "ListOfParameterValue",
+          "shape" : "__listOfParameterValue",
           "locationName" : "parameterOverrides"
         },
         "SemanticVersion" : {
@@ -715,6 +768,17 @@
         }
       }
     },
+    "DeleteApplicationRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "applicationId"
+        }
+      },
+      "required" : [ "ApplicationId" ]
+    },
     "ForbiddenException" : {
       "type" : "structure",
       "members" : {
@@ -747,7 +811,7 @@
       "type" : "structure",
       "members" : {
         "Statements" : {
-          "shape" : "ListOfApplicationPolicyStatement",
+          "shape" : "__listOfApplicationPolicyStatement",
           "locationName" : "statements"
         }
       }
@@ -787,8 +851,12 @@
           "shape" : "__string",
           "locationName" : "description"
         },
+        "HomePageUrl" : {
+          "shape" : "__string",
+          "locationName" : "homePageUrl"
+        },
         "Labels" : {
-          "shape" : "ListOf__string",
+          "shape" : "__listOf__string",
           "locationName" : "labels"
         },
         "LicenseUrl" : {
@@ -859,7 +927,7 @@
           "locationName" : "nextToken"
         },
         "Versions" : {
-          "shape" : "ListOfVersionSummary",
+          "shape" : "__listOfVersionSummary",
           "locationName" : "versions"
         }
       }
@@ -883,49 +951,13 @@
       "type" : "structure",
       "members" : {
         "Applications" : {
-          "shape" : "ListOfApplicationSummary",
+          "shape" : "__listOfApplicationSummary",
           "locationName" : "applications"
         },
         "NextToken" : {
           "shape" : "__string",
           "locationName" : "nextToken"
         }
-      }
-    },
-    "ListOfApplicationPolicyStatement" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "ApplicationPolicyStatement"
-      }
-    },
-    "ListOfApplicationSummary" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "ApplicationSummary"
-      }
-    },
-    "ListOfParameterDefinition" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "ParameterDefinition"
-      }
-    },
-    "ListOfParameterValue" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "ParameterValue"
-      }
-    },
-    "ListOfVersionSummary" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "VersionSummary"
-      }
-    },
-    "ListOf__string" : {
-      "type" : "list",
-      "member" : {
-        "shape" : "__string"
       }
     },
     "MaxItems" : {
@@ -958,7 +990,7 @@
           "locationName" : "allowedPattern"
         },
         "AllowedValues" : {
-          "shape" : "ListOf__string",
+          "shape" : "__listOf__string",
           "locationName" : "allowedValues"
         },
         "ConstraintDescription" : {
@@ -998,14 +1030,15 @@
           "locationName" : "noEcho"
         },
         "ReferencedByResources" : {
-          "shape" : "ListOf__string",
+          "shape" : "__listOf__string",
           "locationName" : "referencedByResources"
         },
         "Type" : {
           "shape" : "__string",
           "locationName" : "type"
         }
-      }
+      },
+      "required" : [ "ReferencedByResources", "Name" ]
     },
     "ParameterValue" : {
       "type" : "structure",
@@ -1018,7 +1051,8 @@
           "shape" : "__string",
           "locationName" : "value"
         }
-      }
+      },
+      "required" : [ "Value", "Name" ]
     },
     "PutApplicationPolicyRequest" : {
       "type" : "structure",
@@ -1029,7 +1063,7 @@
           "locationName" : "applicationId"
         },
         "Statements" : {
-          "shape" : "ListOfApplicationPolicyStatement",
+          "shape" : "__listOfApplicationPolicyStatement",
           "locationName" : "statements"
         }
       },
@@ -1039,7 +1073,7 @@
       "type" : "structure",
       "members" : {
         "Statements" : {
-          "shape" : "ListOfApplicationPolicyStatement",
+          "shape" : "__listOfApplicationPolicyStatement",
           "locationName" : "statements"
         }
       }
@@ -1072,8 +1106,12 @@
           "shape" : "__string",
           "locationName" : "description"
         },
+        "HomePageUrl" : {
+          "shape" : "__string",
+          "locationName" : "homePageUrl"
+        },
         "Labels" : {
-          "shape" : "ListOf__string",
+          "shape" : "__listOf__string",
           "locationName" : "labels"
         },
         "ReadmeBody" : {
@@ -1102,8 +1140,12 @@
           "shape" : "__string",
           "locationName" : "description"
         },
+        "HomePageUrl" : {
+          "shape" : "__string",
+          "locationName" : "homePageUrl"
+        },
         "Labels" : {
-          "shape" : "ListOf__string",
+          "shape" : "__listOf__string",
           "locationName" : "labels"
         },
         "ReadmeBody" : {
@@ -1136,8 +1178,12 @@
           "shape" : "__string",
           "locationName" : "description"
         },
+        "HomePageUrl" : {
+          "shape" : "__string",
+          "locationName" : "homePageUrl"
+        },
         "Labels" : {
-          "shape" : "ListOf__string",
+          "shape" : "__listOf__string",
           "locationName" : "labels"
         },
         "LicenseUrl" : {
@@ -1174,7 +1220,7 @@
           "locationName" : "creationTime"
         },
         "ParameterDefinitions" : {
-          "shape" : "ListOfParameterDefinition",
+          "shape" : "__listOfParameterDefinition",
           "locationName" : "parameterDefinitions"
         },
         "SemanticVersion" : {
@@ -1189,7 +1235,8 @@
           "shape" : "__string",
           "locationName" : "templateUrl"
         }
-      }
+      },
+      "required" : [ "TemplateUrl", "ParameterDefinitions", "CreationTime", "ApplicationId", "SemanticVersion" ]
     },
     "VersionSummary" : {
       "type" : "structure",
@@ -1210,7 +1257,8 @@
           "shape" : "__string",
           "locationName" : "sourceCodeUrl"
         }
-      }
+      },
+      "required" : [ "CreationTime", "ApplicationId", "SemanticVersion" ]
     },
     "__boolean" : {
       "type" : "boolean"
@@ -1221,21 +1269,47 @@
     "__integer" : {
       "type" : "integer"
     },
+    "__listOfApplicationPolicyStatement" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "ApplicationPolicyStatement"
+      }
+    },
+    "__listOfApplicationSummary" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "ApplicationSummary"
+      }
+    },
+    "__listOfParameterDefinition" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "ParameterDefinition"
+      }
+    },
+    "__listOfParameterValue" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "ParameterValue"
+      }
+    },
+    "__listOfVersionSummary" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "VersionSummary"
+      }
+    },
+    "__listOf__string" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "__string"
+      }
+    },
+    "__long" : {
+      "type" : "long"
+    },
     "__string" : {
       "type" : "string"
-    },
-    "__timestamp" : {
-      "type" : "timestamp"
-    }
-  },
-  "authorizers" : {
-    "authorization_strategy" : {
-      "name" : "authorization_strategy",
-      "type" : "provided",
-      "placement" : {
-        "location" : "header",
-        "name" : "Authorization"
-      }
     }
   }
 }

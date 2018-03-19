@@ -41,11 +41,11 @@ func NewMarketplaceAgreementsClientWithBaseURI(baseURI string, subscriptionID st
 
 // Create save marketplace terms.
 //
-// offerType is offer Type, currently only virtualmachine type is supported. publisherID is publisher identifier string
-// of image being deployed. offerID is offer identifier string of image being deployed. planID is plan identifier
-// string of image being deployed. parameters is parameters supplied to the Create Marketplace Terms operation.
-func (client MarketplaceAgreementsClient) Create(ctx context.Context, offerType string, publisherID string, offerID string, planID string, parameters AgreementTerms) (result AgreementTerms, err error) {
-	req, err := client.CreatePreparer(ctx, offerType, publisherID, offerID, planID, parameters)
+// publisherID is publisher identifier string of image being deployed. offerID is offer identifier string of image
+// being deployed. planID is plan identifier string of image being deployed. parameters is parameters supplied to
+// the Create Marketplace Terms operation.
+func (client MarketplaceAgreementsClient) Create(ctx context.Context, publisherID string, offerID string, planID string, parameters AgreementTerms) (result AgreementTerms, err error) {
+	req, err := client.CreatePreparer(ctx, publisherID, offerID, planID, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "marketplaceordering.MarketplaceAgreementsClient", "Create", nil, "Failure preparing request")
 		return
@@ -67,10 +67,10 @@ func (client MarketplaceAgreementsClient) Create(ctx context.Context, offerType 
 }
 
 // CreatePreparer prepares the Create request.
-func (client MarketplaceAgreementsClient) CreatePreparer(ctx context.Context, offerType string, publisherID string, offerID string, planID string, parameters AgreementTerms) (*http.Request, error) {
+func (client MarketplaceAgreementsClient) CreatePreparer(ctx context.Context, publisherID string, offerID string, planID string, parameters AgreementTerms) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"offerId":        autorest.Encode("path", offerID),
-		"offerType":      autorest.Encode("path", offerType),
+		"offerType":      autorest.Encode("path", "virtualmachine"),
 		"planId":         autorest.Encode("path", planID),
 		"publisherId":    autorest.Encode("path", publisherID),
 		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
@@ -113,11 +113,10 @@ func (client MarketplaceAgreementsClient) CreateResponder(resp *http.Response) (
 
 // Get get marketplace terms.
 //
-// offerType is offer Type, currently only virtualmachine type is supported. publisherID is publisher identifier string
-// of image being deployed. offerID is offer identifier string of image being deployed. planID is plan identifier
-// string of image being deployed.
-func (client MarketplaceAgreementsClient) Get(ctx context.Context, offerType string, publisherID string, offerID string, planID string) (result AgreementTerms, err error) {
-	req, err := client.GetPreparer(ctx, offerType, publisherID, offerID, planID)
+// publisherID is publisher identifier string of image being deployed. offerID is offer identifier string of image
+// being deployed. planID is plan identifier string of image being deployed.
+func (client MarketplaceAgreementsClient) Get(ctx context.Context, publisherID string, offerID string, planID string) (result AgreementTerms, err error) {
+	req, err := client.GetPreparer(ctx, publisherID, offerID, planID)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "marketplaceordering.MarketplaceAgreementsClient", "Get", nil, "Failure preparing request")
 		return
@@ -139,10 +138,10 @@ func (client MarketplaceAgreementsClient) Get(ctx context.Context, offerType str
 }
 
 // GetPreparer prepares the Get request.
-func (client MarketplaceAgreementsClient) GetPreparer(ctx context.Context, offerType string, publisherID string, offerID string, planID string) (*http.Request, error) {
+func (client MarketplaceAgreementsClient) GetPreparer(ctx context.Context, publisherID string, offerID string, planID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"offerId":        autorest.Encode("path", offerID),
-		"offerType":      autorest.Encode("path", offerType),
+		"offerType":      autorest.Encode("path", "virtualmachine"),
 		"planId":         autorest.Encode("path", planID),
 		"publisherId":    autorest.Encode("path", publisherID),
 		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
