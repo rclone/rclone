@@ -27,6 +27,10 @@ func TestNewAndRemove(t *testing.T) {
 	if err := file.Remove(); err != nil {
 		t.Fatal("Could not delete created test file")
 	}
+
+	if err := os.Remove(dir); err != nil {
+		t.Fatal("Could not delete test dir")
+	}
 }
 
 func TestRemoveInvalidPath(t *testing.T) {

@@ -3,13 +3,13 @@
   "service": "<fullname>Amazon Cloud Directory</fullname> <p>Amazon Cloud Directory is a component of the AWS Directory Service that simplifies the development and management of cloud-scale web, mobile, and IoT applications. This guide describes the Cloud Directory operations that you can call programmatically and includes detailed information on data types and errors. For information about AWS Directory Services features, see <a href=\"https://aws.amazon.com/directoryservice/\">AWS Directory Service</a> and the <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/what_is.html\">AWS Directory Service Administration Guide</a>.</p>",
   "operations": {
     "AddFacetToObject": "<p>Adds a new <a>Facet</a> to an object.</p>",
-    "ApplySchema": "<p>Copies the input published schema into the <a>Directory</a> with the same name and version as that of the published schema .</p>",
+    "ApplySchema": "<p>Copies the input published schema, at the specified version, into the <a>Directory</a> with the same name and version as that of the published schema.</p>",
     "AttachObject": "<p>Attaches an existing object to another object. An object can be accessed in two ways:</p> <ol> <li> <p>Using the path</p> </li> <li> <p>Using <code>ObjectIdentifier</code> </p> </li> </ol>",
     "AttachPolicy": "<p>Attaches a policy object to a regular object. An object can have a limited number of attached policies.</p>",
     "AttachToIndex": "<p>Attaches the specified object to the specified index.</p>",
     "AttachTypedLink": "<p>Attaches a typed link to a specified source and target object. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
     "BatchRead": "<p>Performs all the read operations in a batch. </p>",
-    "BatchWrite": "<p>Performs all the write operations in a batch. Either all the operations succeed or none. Batch writes supports only object-related operations.</p>",
+    "BatchWrite": "<p>Performs all the write operations in a batch. Either all the operations succeed or none.</p>",
     "CreateDirectory": "<p>Creates a <a>Directory</a> by copying the published schema into the directory. A directory cannot be created without a schema.</p>",
     "CreateFacet": "<p>Creates a new <a>Facet</a> in a schema. Facet creation is allowed only in development or applied schemas.</p>",
     "CreateIndex": "<p>Creates an index object. See <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_indexing.html\">Indexing</a> for more information.</p>",
@@ -27,19 +27,20 @@
     "DetachTypedLink": "<p>Detaches a typed link from a specified source and target object. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
     "DisableDirectory": "<p>Disables the specified directory. Disabled directories cannot be read or written to. Only enabled directories can be disabled. Disabled directories may be reenabled.</p>",
     "EnableDirectory": "<p>Enables the specified directory. Only disabled directories can be enabled. Once enabled, the directory can then be read and written to.</p>",
+    "GetAppliedSchemaVersion": "<p>Returns current applied schema version ARN, including the minor version in use.</p>",
     "GetDirectory": "<p>Retrieves metadata about a directory.</p>",
     "GetFacet": "<p>Gets details of the <a>Facet</a>, such as facet name, attributes, <a>Rule</a>s, or <code>ObjectType</code>. You can call this on all kinds of schema facets -- published, development, or applied.</p>",
     "GetObjectInformation": "<p>Retrieves metadata about an object.</p>",
     "GetSchemaAsJson": "<p>Retrieves a JSON representation of the schema. See <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_schemas.html#jsonformat\">JSON Schema Format</a> for more information.</p>",
     "GetTypedLinkFacetInformation": "<p>Returns the identity attribute order for a specific <a>TypedLinkFacet</a>. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
-    "ListAppliedSchemaArns": "<p>Lists schemas applied to a directory.</p>",
-    "ListAttachedIndices": "<p>Lists indices attached to an object.</p>",
+    "ListAppliedSchemaArns": "<p>Lists schema major versions applied to a directory. If <code>SchemaArn</code> is provided, lists the minor version.</p>",
+    "ListAttachedIndices": "<p>Lists indices attached to the specified object.</p>",
     "ListDevelopmentSchemaArns": "<p>Retrieves each Amazon Resource Name (ARN) of schemas in the development state.</p>",
     "ListDirectories": "<p>Lists directories created within an account.</p>",
     "ListFacetAttributes": "<p>Retrieves attributes attached to the facet.</p>",
     "ListFacetNames": "<p>Retrieves the names of facets that exist in a schema.</p>",
     "ListIncomingTypedLinks": "<p>Returns a paginated list of all the incoming <a>TypedLinkSpecifier</a> information for an object. It also supports filtering by typed link facet and identity attributes. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
-    "ListIndex": "<p>Lists objects attached to the specified index.</p>",
+    "ListIndex": "<p>Lists objects and indexed values attached to the index.</p>",
     "ListObjectAttributes": "<p>Lists all attributes that are associated with an object. </p>",
     "ListObjectChildren": "<p>Returns a paginated list of child objects that are associated with a given object.</p>",
     "ListObjectParentPaths": "<p>Retrieves all available parent paths for any object type such as node, leaf node, policy node, and index node objects. For more information about objects, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_key_concepts.html#dirstructure\">Directory Structure</a>.</p> <p>Use this API to evaluate all parents for an object. The call returns all objects from the root of the directory up to the requested object. The API returns the number of paths based on user-defined <code>MaxResults</code>, in case there are multiple paths to the parent. The order of the paths and nodes returned is consistent among multiple API calls unless the objects are deleted or moved. Paths not leading to the directory root are ignored from the target object.</p>",
@@ -47,12 +48,12 @@
     "ListObjectPolicies": "<p>Returns policies attached to an object in pagination fashion.</p>",
     "ListOutgoingTypedLinks": "<p>Returns a paginated list of all the outgoing <a>TypedLinkSpecifier</a> information for an object. It also supports filtering by typed link facet and identity attributes. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
     "ListPolicyAttachments": "<p>Returns all of the <code>ObjectIdentifiers</code> to which a given policy is attached.</p>",
-    "ListPublishedSchemaArns": "<p>Retrieves each published schema Amazon Resource Name (ARN).</p>",
+    "ListPublishedSchemaArns": "<p>Lists schema major versions for a published schema. If <code>SchemaArn</code> is provided, lists the minor version.</p>",
     "ListTagsForResource": "<p>Returns tags for a resource. Tagging is currently supported only for directories with a limit of 50 tags per directory. All 50 tags are returned for a given directory with this API call.</p>",
     "ListTypedLinkFacetAttributes": "<p>Returns a paginated list of all attribute definitions for a particular <a>TypedLinkFacet</a>. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
     "ListTypedLinkFacetNames": "<p>Returns a paginated list of <code>TypedLink</code> facet names for a particular schema. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
     "LookupPolicy": "<p>Lists all policies from the root of the <a>Directory</a> to the object specified. If there are no policies present, an empty list is returned. If policies are present, and if some objects don't have the policies attached, it returns the <code>ObjectIdentifier</code> for such objects. If policies are present, it returns <code>ObjectIdentifier</code>, <code>policyId</code>, and <code>policyType</code>. Paths that don't lead to the root from the target object are ignored. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_key_concepts.html#policies\">Policies</a>.</p>",
-    "PublishSchema": "<p>Publishes a development schema with a version. If description and attributes are specified, <code>PublishSchema</code> overrides the development schema description and attributes. If not, the development schema description and attributes are used.</p>",
+    "PublishSchema": "<p>Publishes a development schema with a major version and a recommended minor version.</p>",
     "PutSchemaFromJson": "<p>Allows a schema to be updated using JSON upload. Only available for development schemas. See <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_schemas.html#jsonformat\">JSON Schema Format</a> for more information.</p>",
     "RemoveFacetFromObject": "<p>Removes the specified facet from the specified object.</p>",
     "TagResource": "<p>An API operation for adding tags to a resource.</p>",
@@ -60,7 +61,9 @@
     "UpdateFacet": "<p>Does the following:</p> <ol> <li> <p>Adds new <code>Attributes</code>, <code>Rules</code>, or <code>ObjectTypes</code>.</p> </li> <li> <p>Updates existing <code>Attributes</code>, <code>Rules</code>, or <code>ObjectTypes</code>.</p> </li> <li> <p>Deletes existing <code>Attributes</code>, <code>Rules</code>, or <code>ObjectTypes</code>.</p> </li> </ol>",
     "UpdateObjectAttributes": "<p>Updates a given object's attributes.</p>",
     "UpdateSchema": "<p>Updates the schema name with a new name. Only development schema names can be updated.</p>",
-    "UpdateTypedLinkFacet": "<p>Updates a <a>TypedLinkFacet</a>. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>"
+    "UpdateTypedLinkFacet": "<p>Updates a <a>TypedLinkFacet</a>. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
+    "UpgradeAppliedSchema": "<p>Upgrades a single directory in-place using the <code>PublishedSchemaArn</code> with schema updates found in <code>MinorVersion</code>. Backwards-compatible minor version upgrades are instantaneously available for readers on all objects in the directory. Note: This is a synchronous API call and upgrades only one schema on a given directory per call. To upgrade multiple directories from one schema, you would need to call this API on each directory.</p>",
+    "UpgradePublishedSchema": "<p>Upgrades a published schema under a new minor version revision using the current contents of <code>DevelopmentSchemaArn</code>.</p>"
   },
   "shapes": {
     "AccessDeniedException": {
@@ -126,11 +129,14 @@
         "DisableDirectoryResponse$DirectoryArn": "<p>The ARN of the directory that has been disabled.</p>",
         "EnableDirectoryRequest$DirectoryArn": "<p>The ARN of the directory to enable.</p>",
         "EnableDirectoryResponse$DirectoryArn": "<p>The ARN of the enabled directory.</p>",
+        "GetAppliedSchemaVersionRequest$SchemaArn": "<p>The ARN of the applied schema.</p>",
+        "GetAppliedSchemaVersionResponse$AppliedSchemaArn": "<p>Current applied schema ARN, including the minor version in use if one was provided.</p>",
         "GetFacetRequest$SchemaArn": "<p>The Amazon Resource Name (ARN) that is associated with the <a>Facet</a>. For more information, see <a>arns</a>.</p>",
         "GetObjectInformationRequest$DirectoryArn": "<p>The ARN of the directory being retrieved.</p>",
         "GetSchemaAsJsonRequest$SchemaArn": "<p>The ARN of the schema to retrieve.</p>",
         "GetTypedLinkFacetInformationRequest$SchemaArn": "<p>The Amazon Resource Name (ARN) that is associated with the schema. For more information, see <a>arns</a>.</p>",
         "ListAppliedSchemaArnsRequest$DirectoryArn": "<p>The ARN of the directory you are listing.</p>",
+        "ListAppliedSchemaArnsRequest$SchemaArn": "<p>The response for <code>ListAppliedSchemaArns</code> when this parameter is used will list all minor version ARNs for a major version.</p>",
         "ListAttachedIndicesRequest$DirectoryArn": "<p>The ARN of the directory.</p>",
         "ListFacetAttributesRequest$SchemaArn": "<p>The ARN of the schema where the facet resides.</p>",
         "ListFacetNamesRequest$SchemaArn": "<p>The Amazon Resource Name (ARN) to retrieve facet names from.</p>",
@@ -143,6 +149,7 @@
         "ListObjectPoliciesRequest$DirectoryArn": "<p>The Amazon Resource Name (ARN) that is associated with the <a>Directory</a> where objects reside. For more information, see <a>arns</a>.</p>",
         "ListOutgoingTypedLinksRequest$DirectoryArn": "<p>The Amazon Resource Name (ARN) of the directory where you want to list the typed links.</p>",
         "ListPolicyAttachmentsRequest$DirectoryArn": "<p>The Amazon Resource Name (ARN) that is associated with the <a>Directory</a> where objects reside. For more information, see <a>arns</a>.</p>",
+        "ListPublishedSchemaArnsRequest$SchemaArn": "<p>The response for <code>ListPublishedSchemaArns</code> when this parameter is used will list all minor version ARNs for a major version.</p>",
         "ListTagsForResourceRequest$ResourceArn": "<p>The Amazon Resource Name (ARN) of the resource. Tagging is only supported for directories.</p>",
         "ListTypedLinkFacetAttributesRequest$SchemaArn": "<p>The Amazon Resource Name (ARN) that is associated with the schema. For more information, see <a>arns</a>.</p>",
         "ListTypedLinkFacetNamesRequest$SchemaArn": "<p>The Amazon Resource Name (ARN) that is associated with the schema. For more information, see <a>arns</a>.</p>",
@@ -152,7 +159,7 @@
         "PutSchemaFromJsonRequest$SchemaArn": "<p>The ARN of the schema to update.</p>",
         "PutSchemaFromJsonResponse$Arn": "<p>The ARN of the schema to update.</p>",
         "RemoveFacetFromObjectRequest$DirectoryArn": "<p>The ARN of the directory in which the object resides.</p>",
-        "SchemaFacet$SchemaArn": "<p>The ARN of the schema that contains the facet.</p>",
+        "SchemaFacet$SchemaArn": "<p>The ARN of the schema that contains the facet with no minor component. See <a>arns</a> and <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/inplaceschemaupgrade.html\">In-Place Schema Upgrade</a> for a description of when to provide minor versions.</p>",
         "TagResourceRequest$ResourceArn": "<p>The Amazon Resource Name (ARN) of the resource. Tagging is only supported for directories.</p>",
         "TypedLinkSchemaAndFacetName$SchemaArn": "<p>The Amazon Resource Name (ARN) that is associated with the schema. For more information, see <a>arns</a>.</p>",
         "UntagResourceRequest$ResourceArn": "<p>The Amazon Resource Name (ARN) of the resource. Tagging is only supported for directories.</p>",
@@ -160,7 +167,14 @@
         "UpdateObjectAttributesRequest$DirectoryArn": "<p>The Amazon Resource Name (ARN) that is associated with the <a>Directory</a> where the object resides. For more information, see <a>arns</a>.</p>",
         "UpdateSchemaRequest$SchemaArn": "<p>The Amazon Resource Name (ARN) of the development schema. For more information, see <a>arns</a>.</p>",
         "UpdateSchemaResponse$SchemaArn": "<p>The ARN that is associated with the updated schema. For more information, see <a>arns</a>.</p>",
-        "UpdateTypedLinkFacetRequest$SchemaArn": "<p>The Amazon Resource Name (ARN) that is associated with the schema. For more information, see <a>arns</a>.</p>"
+        "UpdateTypedLinkFacetRequest$SchemaArn": "<p>The Amazon Resource Name (ARN) that is associated with the schema. For more information, see <a>arns</a>.</p>",
+        "UpgradeAppliedSchemaRequest$PublishedSchemaArn": "<p>The revision of the published schema to upgrade the directory to.</p>",
+        "UpgradeAppliedSchemaRequest$DirectoryArn": "<p>The ARN for the directory to which the upgraded schema will be applied.</p>",
+        "UpgradeAppliedSchemaResponse$UpgradedSchemaArn": "<p>The ARN of the upgraded schema that is returned as part of the response.</p>",
+        "UpgradeAppliedSchemaResponse$DirectoryArn": "<p>The ARN of the directory that is returned as part of the response.</p>",
+        "UpgradePublishedSchemaRequest$DevelopmentSchemaArn": "<p>The ARN of the development schema with the changes used for the upgrade.</p>",
+        "UpgradePublishedSchemaRequest$PublishedSchemaArn": "<p>The ARN of the published schema to be upgraded.</p>",
+        "UpgradePublishedSchemaResponse$UpgradedSchemaArn": "<p>The ARN of the upgraded schema that is returned as part of the response.</p>"
       }
     },
     "Arns": {
@@ -400,7 +414,7 @@
       }
     },
     "BatchDetachPolicy": {
-      "base": "<p>Detaches the specified policy from the specified directory inside a <a>BatchRead</a> operation. For more information, see <a>DetachPolicy</a> and <a>BatchReadRequest$Operations</a>.</p>",
+      "base": "<p>Detaches the specified policy from the specified directory inside a <a>BatchWrite</a> operation. For more information, see <a>DetachPolicy</a> and <a>BatchWriteRequest$Operations</a>.</p>",
       "refs": {
         "BatchWriteOperation$DetachPolicy": "<p>Detaches a policy from a <a>Directory</a>.</p>"
       }
@@ -702,7 +716,9 @@
         "BatchCreateIndex$IsUnique": "<p>Indicates whether the attribute that is being indexed has unique values or not.</p>",
         "CreateIndexRequest$IsUnique": "<p>Indicates whether the attribute that is being indexed has unique values or not.</p>",
         "FacetAttributeDefinition$IsImmutable": "<p>Whether the attribute is mutable or not.</p>",
-        "TypedLinkAttributeDefinition$IsImmutable": "<p>Whether the attribute is mutable or not.</p>"
+        "TypedLinkAttributeDefinition$IsImmutable": "<p>Whether the attribute is mutable or not.</p>",
+        "UpgradeAppliedSchemaRequest$DryRun": "<p>Used for testing whether the major version schemas are backward compatible or not. If schema compatibility fails, an exception would be thrown else the call would succeed but no changes will be saved. This parameter is optional.</p>",
+        "UpgradePublishedSchemaRequest$DryRun": "<p>Used for testing whether the Development schema provided is backwards compatible, or not, with the publish schema provided by the user to be upgraded. If schema compatibility fails, an exception would be thrown else the call would succeed. This parameter is optional and defaults to false.</p>"
       }
     },
     "BooleanAttributeValue": {
@@ -980,6 +996,7 @@
         "FacetInUseException$Message": null,
         "FacetNotFoundException$Message": null,
         "FacetValidationException$Message": null,
+        "IncompatibleSchemaException$Message": null,
         "IndexedAttributeMissingException$Message": null,
         "InternalServiceException$Message": null,
         "InvalidArnException$Message": null,
@@ -1097,6 +1114,16 @@
       "refs": {
       }
     },
+    "GetAppliedSchemaVersionRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetAppliedSchemaVersionResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "GetDirectoryRequest": {
       "base": null,
       "refs": {
@@ -1144,6 +1171,11 @@
     },
     "GetTypedLinkFacetInformationResponse": {
       "base": null,
+      "refs": {
+      }
+    },
+    "IncompatibleSchemaException": {
+      "base": "<p>Indicates a failure occurred while performing a check for backward compatibility between the specified schema and the schema that is currently applied to the directory.</p>",
       "refs": {
       }
     },
@@ -1545,7 +1577,7 @@
         "ListFacetAttributesRequest$MaxResults": "<p>The maximum number of results to retrieve.</p>",
         "ListFacetNamesRequest$MaxResults": "<p>The maximum number of results to retrieve.</p>",
         "ListIncomingTypedLinksRequest$MaxResults": "<p>The maximum number of results to retrieve.</p>",
-        "ListIndexRequest$MaxResults": "<p>The maximum number of results to retrieve from the index.</p>",
+        "ListIndexRequest$MaxResults": "<p>The maximum number of objects in a single page to retrieve from the index during a request. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/limits.html#limits_cd\">AWS Directory Service Limits</a>.</p>",
         "ListObjectAttributesRequest$MaxResults": "<p>The maximum number of items to be retrieved in a single call. This is an approximate number.</p>",
         "ListObjectChildrenRequest$MaxResults": "<p>The maximum number of items to be retrieved in a single call. This is an approximate number.</p>",
         "ListObjectParentPathsRequest$MaxResults": "<p>The maximum number of items to be retrieved in a single call. This is an approximate number.</p>",
@@ -1615,7 +1647,7 @@
         "DetachFromIndexResponse$DetachedObjectIdentifier": "<p>The <code>ObjectIdentifier</code> of the object that was detached from the index.</p>",
         "DetachObjectResponse$DetachedObjectIdentifier": "<p>The <code>ObjectIdentifier</code> that was detached from the object.</p>",
         "GetObjectInformationResponse$ObjectIdentifier": "<p>The <code>ObjectIdentifier</code> of the specified object.</p>",
-        "IndexAttachment$ObjectIdentifier": "<p>The <code>ObjectIdentifier</code> of the object attached to the index.</p>",
+        "IndexAttachment$ObjectIdentifier": "<p>In response to <a>ListIndex</a>, the <code>ObjectIdentifier</code> of the object attached to the index. In response to <a>ListAttachedIndices</a>, the <code>ObjectIdentifier</code> of the index attached to the object. This field will always contain the <code>ObjectIdentifier</code> of the object on the opposite side of the attachment specified in the query.</p>",
         "LinkNameToObjectIdentifierMap$value": null,
         "ObjectIdentifierList$member": null,
         "ObjectIdentifierToLinkNameMap$key": null,
@@ -1882,12 +1914,12 @@
     "SchemaFacet": {
       "base": "<p>A facet.</p>",
       "refs": {
-        "AddFacetToObjectRequest$SchemaFacet": "<p>Identifiers for the facet that you are adding to the object.</p>",
+        "AddFacetToObjectRequest$SchemaFacet": "<p>Identifiers for the facet that you are adding to the object. See <a>SchemaFacet</a> for details.</p>",
         "BatchAddFacetToObject$SchemaFacet": "<p>Represents the facet being added to the object.</p>",
         "BatchListObjectAttributes$FacetFilter": "<p>Used to filter the list of object attributes that are associated with a certain facet.</p>",
         "BatchRemoveFacetFromObject$SchemaFacet": "<p>The facet to remove from the object.</p>",
         "ListObjectAttributesRequest$FacetFilter": "<p>Used to filter the list of object attributes that are associated with a certain facet.</p>",
-        "RemoveFacetFromObjectRequest$SchemaFacet": "<p>The facet to remove.</p>",
+        "RemoveFacetFromObjectRequest$SchemaFacet": "<p>The facet to remove. See <a>SchemaFacet</a> for details.</p>",
         "SchemaFacetList$member": null
       }
     },
@@ -1896,8 +1928,8 @@
       "refs": {
         "BatchCreateObject$SchemaFacet": "<p>A list of <code>FacetArns</code> that will be associated with the object. For more information, see <a>arns</a>.</p>",
         "BatchGetObjectInformationResponse$SchemaFacets": "<p>The facets attached to the specified object.</p>",
-        "CreateObjectRequest$SchemaFacets": "<p>A list of schema facets to be associated with the object that contains <code>SchemaArn</code> and facet name. For more information, see <a>arns</a>.</p>",
-        "GetObjectInformationResponse$SchemaFacets": "<p>The facets attached to the specified object.</p>"
+        "CreateObjectRequest$SchemaFacets": "<p>A list of schema facets to be associated with the object. Do not provide minor version components. See <a>SchemaFacet</a> for details.</p>",
+        "GetObjectInformationResponse$SchemaFacets": "<p>The facets attached to the specified object. Although the response does not include minor version information, the most recently applied minor version of each Facet is in effect. See <a>GetAppliedSchemaVersion</a> for details.</p>"
       }
     },
     "SchemaJsonDocument": {
@@ -2159,6 +2191,26 @@
       "refs": {
       }
     },
+    "UpgradeAppliedSchemaRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpgradeAppliedSchemaResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpgradePublishedSchemaRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpgradePublishedSchemaResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "ValidationException": {
       "base": "<p>Indicates that your request is malformed in some manner. See the exception message.</p>",
       "refs": {
@@ -2167,7 +2219,9 @@
     "Version": {
       "base": null,
       "refs": {
-        "PublishSchemaRequest$Version": "<p>The version under which the schema will be published.</p>"
+        "PublishSchemaRequest$Version": "<p>The major version under which the schema will be published. Schemas have both a major and minor version associated with them.</p>",
+        "PublishSchemaRequest$MinorVersion": "<p>The minor version under which the schema will be published. This parameter is recommended. Schemas have both a major and minor version associated with them.</p>",
+        "UpgradePublishedSchemaRequest$MinorVersion": "<p>Identifies the minor version of the published schema that will be created. This parameter is NOT optional.</p>"
       }
     }
   }

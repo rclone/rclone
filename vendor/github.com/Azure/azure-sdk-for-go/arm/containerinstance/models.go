@@ -86,18 +86,6 @@ type ContainerGroup struct {
 	*ContainerGroupProperties `json:"properties,omitempty"`
 }
 
-// ContainerGroupProperties is
-type ContainerGroupProperties struct {
-	ProvisioningState        *string                    `json:"provisioningState,omitempty"`
-	Containers               *[]Container               `json:"containers,omitempty"`
-	ImageRegistryCredentials *[]ImageRegistryCredential `json:"imageRegistryCredentials,omitempty"`
-	RestartPolicy            ContainerRestartPolicy     `json:"restartPolicy,omitempty"`
-	IPAddress                *IPAddress                 `json:"ipAddress,omitempty"`
-	OsType                   OperatingSystemTypes       `json:"osType,omitempty"`
-	State                    *string                    `json:"state,omitempty"`
-	Volumes                  *[]Volume                  `json:"volumes,omitempty"`
-}
-
 // ContainerGroupListResult is the container group list response that contains the container group properties.
 type ContainerGroupListResult struct {
 	autorest.Response `json:"-"`
@@ -115,6 +103,18 @@ func (client ContainerGroupListResult) ContainerGroupListResultPreparer() (*http
 		autorest.AsJSON(),
 		autorest.AsGet(),
 		autorest.WithBaseURL(to.String(client.NextLink)))
+}
+
+// ContainerGroupProperties is
+type ContainerGroupProperties struct {
+	ProvisioningState        *string                    `json:"provisioningState,omitempty"`
+	Containers               *[]Container               `json:"containers,omitempty"`
+	ImageRegistryCredentials *[]ImageRegistryCredential `json:"imageRegistryCredentials,omitempty"`
+	RestartPolicy            ContainerRestartPolicy     `json:"restartPolicy,omitempty"`
+	IPAddress                *IPAddress                 `json:"ipAddress,omitempty"`
+	OsType                   OperatingSystemTypes       `json:"osType,omitempty"`
+	State                    *string                    `json:"state,omitempty"`
+	Volumes                  *[]Volume                  `json:"volumes,omitempty"`
 }
 
 // ContainerPort is the port exposed on the container instance.

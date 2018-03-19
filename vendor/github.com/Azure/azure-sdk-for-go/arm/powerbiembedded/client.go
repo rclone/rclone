@@ -1,6 +1,8 @@
 // Package powerbiembedded implements the Azure ARM Powerbiembedded service API version 2016-01-29.
 //
 // Client to manage your Power BI Embedded workspace collections and retrieve workspaces.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/powerbiembedded/mgmt/2016-01-29/powerbiembedded
 package powerbiembedded
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
@@ -93,7 +95,9 @@ func (client ManagementClient) GetAvailableOperationsPreparer() (*http.Request, 
 // GetAvailableOperationsSender sends the GetAvailableOperations request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) GetAvailableOperationsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetAvailableOperationsResponder handles the response to the GetAvailableOperations request. The method always

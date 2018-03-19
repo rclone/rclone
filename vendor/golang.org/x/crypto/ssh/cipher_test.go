@@ -21,47 +21,48 @@ func TestDefaultCiphersExist(t *testing.T) {
 }
 
 func TestPacketCiphers(t *testing.T) {
-	// Still test aes128cbc cipher although it's commented out.
-	cipherModes[aes128cbcID] = &streamCipherMode{16, aes.BlockSize, 0, nil}
-	defer delete(cipherModes, aes128cbcID)
-
+	defaultMac := "hmac-sha2-256"
+	defaultCipher := "aes128-ctr"
 	for cipher := range cipherModes {
-		for mac := range macModes {
-			kr := &kexResult{Hash: crypto.SHA1}
-			algs := directionAlgorithms{
-				Cipher:      cipher,
-				MAC:         mac,
-				Compression: "none",
-			}
-			client, err := newPacketCipher(clientKeys, algs, kr)
-			if err != nil {
-				t.Errorf("newPacketCipher(client, %q, %q): %v", cipher, mac, err)
-				continue
-			}
-			server, err := newPacketCipher(clientKeys, algs, kr)
-			if err != nil {
-				t.Errorf("newPacketCipher(client, %q, %q): %v", cipher, mac, err)
-				continue
-			}
+		t.Run("cipher="+cipher,
+			func(t *testing.T) { testPacketCipher(t, cipher, defaultMac) })
+	}
+	for mac := range macModes {
+		t.Run("mac="+mac,
+			func(t *testing.T) { testPacketCipher(t, defaultCipher, mac) })
+	}
+}
 
-			want := "bla bla"
-			input := []byte(want)
-			buf := &bytes.Buffer{}
-			if err := client.writePacket(0, buf, rand.Reader, input); err != nil {
-				t.Errorf("writePacket(%q, %q): %v", cipher, mac, err)
-				continue
-			}
+func testPacketCipher(t *testing.T, cipher, mac string) {
+	kr := &kexResult{Hash: crypto.SHA1}
+	algs := directionAlgorithms{
+		Cipher:      cipher,
+		MAC:         mac,
+		Compression: "none",
+	}
+	client, err := newPacketCipher(clientKeys, algs, kr)
+	if err != nil {
+		t.Fatalf("newPacketCipher(client, %q, %q): %v", cipher, mac, err)
+	}
+	server, err := newPacketCipher(clientKeys, algs, kr)
+	if err != nil {
+		t.Fatalf("newPacketCipher(client, %q, %q): %v", cipher, mac, err)
+	}
 
-			packet, err := server.readPacket(0, buf)
-			if err != nil {
-				t.Errorf("readPacket(%q, %q): %v", cipher, mac, err)
-				continue
-			}
+	want := "bla bla"
+	input := []byte(want)
+	buf := &bytes.Buffer{}
+	if err := client.writePacket(0, buf, rand.Reader, input); err != nil {
+		t.Fatalf("writePacket(%q, %q): %v", cipher, mac, err)
+	}
 
-			if string(packet) != want {
-				t.Errorf("roundtrip(%q, %q): got %q, want %q", cipher, mac, packet, want)
-			}
-		}
+	packet, err := server.readPacket(0, buf)
+	if err != nil {
+		t.Fatalf("readPacket(%q, %q): %v", cipher, mac, err)
+	}
+
+	if string(packet) != want {
+		t.Errorf("roundtrip(%q, %q): got %q, want %q", cipher, mac, packet, want)
 	}
 }
 

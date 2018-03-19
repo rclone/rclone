@@ -54,7 +54,7 @@
       }
     },
     "ConnectorStatus": {
-      "base": "Status of on-premise Connector",
+      "base": "Status of on-premises Connector",
       "refs": {
         "Connector$status": null
       }

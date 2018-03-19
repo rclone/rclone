@@ -17,58 +17,6 @@
 // This package is still experimental and subject to change.
 //
 // See https://cloud.google.com/error-reporting/ for more information.
-//
-// To initialize a client, use the NewClient function.
-//
-//   import "cloud.google.com/go/errorreporting"
-//   ...
-//   errorsClient, err = errorreporting.NewClient(ctx, projectID, "myservice", "v1.0", true)
-//
-// The client can recover panics in your program and report them as errors.
-// To use this functionality, defer its Catch method, as you would any other
-// function for recovering panics.
-//
-//   func foo(ctx context.Context, ...) {
-//     defer errorsClient.Catch(ctx)
-//     ...
-//   }
-//
-// Catch writes an error report containing the recovered value and a stack trace
-// to Stackdriver Error Reporting.
-//
-// There are various options you can add to the call to Catch that modify how
-// panics are handled.
-//
-// WithMessage and WithMessagef add a custom message after the recovered value,
-// using fmt.Sprint and fmt.Sprintf respectively.
-//
-//   defer errorsClient.Catch(ctx, errorreporting.WithMessagef("x=%d", x))
-//
-// WithRequest fills in various fields in the error report with information
-// about an http.Request that's being handled.
-//
-//   defer errorsClient.Catch(ctx, errorreporting.WithRequest(httpReq))
-//
-// By default, after recovering a panic, Catch will panic again with the
-// recovered value.  You can turn off this behavior with the Repanic option.
-//
-//   defer errorsClient.Catch(ctx, errorreporting.Repanic(false))
-//
-// You can also change the default behavior for the client by changing the
-// RepanicDefault field.
-//
-//   errorsClient.RepanicDefault = false
-//
-// It is also possible to write an error report directly without recovering a
-// panic, using Report or Reportf.
-//
-//   if err != nil {
-//     errorsClient.Reportf(ctx, r, "unexpected error %v", err)
-//   }
-//
-// If you try to write an error report with a nil client, or if the client
-// fails to write the report to the server, the error report is logged using
-// log.Println.
 package errorreporting // import "cloud.google.com/go/errorreporting"
 
 import (
@@ -77,16 +25,15 @@ import (
 	"log"
 	"net/http"
 	"runtime"
-	"strings"
 	"time"
 
 	api "cloud.google.com/go/errorreporting/apiv1beta1"
 	"cloud.google.com/go/internal/version"
-	"cloud.google.com/go/logging"
-	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/golang/protobuf/ptypes"
 	gax "github.com/googleapis/gax-go"
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
+	"google.golang.org/api/support/bundler"
 	erpb "google.golang.org/genproto/googleapis/devtools/clouderrorreporting/v1beta1"
 )
 
@@ -94,12 +41,40 @@ const (
 	userAgent = `gcloud-golang-errorreporting/20160701`
 )
 
-type apiInterface interface {
-	ReportErrorEvent(ctx context.Context, req *erpb.ReportErrorEventRequest, opts ...gax.CallOption) (*erpb.ReportErrorEventResponse, error)
-	Close() error
+// Config is additional configuration for Client.
+type Config struct {
+	// ServiceName identifies the running program and is included in the error reports.
+	// Optional.
+	ServiceName string
+
+	// ServiceVersion identifies the version of the running program and is
+	// included in the error reports.
+	// Optional.
+	ServiceVersion string
+
+	// OnError is the function to call if any background
+	// tasks errored. By default, errors are logged.
+	OnError func(err error)
 }
 
-var newApiInterface = func(ctx context.Context, opts ...option.ClientOption) (apiInterface, error) {
+// Entry holds information about the reported error.
+type Entry struct {
+	Error error
+	Req   *http.Request // if error is associated with a request.
+	Stack []byte        // if user does not provide a stack trace, runtime.Stack will be called
+}
+
+// Client represents a Google Cloud Error Reporting client.
+type Client struct {
+	projectID      string
+	apiClient      client
+	serviceContext erpb.ServiceContext
+	bundler        *bundler.Bundler
+
+	onErrorFn func(err error)
+}
+
+var newClient = func(ctx context.Context, opts ...option.ClientOption) (client, error) {
 	client, err := api.NewReportErrorsClient(ctx, opts...)
 	if err != nil {
 		return nil, err
@@ -108,289 +83,99 @@ var newApiInterface = func(ctx context.Context, opts ...option.ClientOption) (ap
 	return client, nil
 }
 
-type loggerInterface interface {
-	LogSync(ctx context.Context, e logging.Entry) error
-	Close() error
-}
-
-type logger struct {
-	*logging.Logger
-	c *logging.Client
-}
-
-func (l logger) Close() error {
-	return l.c.Close()
-}
-
-var newLoggerInterface = func(ctx context.Context, projectID string, opts ...option.ClientOption) (loggerInterface, error) {
-	lc, err := logging.NewClient(ctx, projectID, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("creating Logging client: %v", err)
-	}
-	l := lc.Logger("errorreports")
-	return logger{l, lc}, nil
-}
-
-type sender interface {
-	send(ctx context.Context, r *http.Request, message string)
-	close() error
-}
-
-// errorApiSender sends error reports using the Stackdriver Error Reporting API.
-type errorApiSender struct {
-	apiClient      apiInterface
-	projectID      string
-	serviceContext erpb.ServiceContext
-}
-
-// loggingSender sends error reports using the Stackdriver Logging API.
-type loggingSender struct {
-	logger         loggerInterface
-	projectID      string
-	serviceContext map[string]string
-}
-
-// Client represents a Google Cloud Error Reporting client.
-type Client struct {
-	sender
-	// RepanicDefault determines whether Catch will re-panic after recovering a
-	// panic.  This behavior can be overridden for an individual call to Catch using
-	// the Repanic option.
-	RepanicDefault bool
-}
-
 // NewClient returns a new error reporting client. Generally you will want
 // to create a client on program initialization and use it through the lifetime
 // of the process.
-//
-// The service name and version string identify the running program, and are
-// included in error reports.  The version string can be left empty.
-//
-// Set useLogging to report errors also using Stackdriver Logging,
-// which will result in errors appearing in both the logs and the error
-// dashboard.  This is useful if you are already a user of Stackdriver Logging.
-func NewClient(ctx context.Context, projectID, serviceName, serviceVersion string, useLogging bool, opts ...option.ClientOption) (*Client, error) {
-	if useLogging {
-		l, err := newLoggerInterface(ctx, projectID, opts...)
-		if err != nil {
-			return nil, fmt.Errorf("creating Logging client: %v", err)
-		}
-		sender := &loggingSender{
-			logger:    l,
-			projectID: projectID,
-			serviceContext: map[string]string{
-				"service": serviceName,
-			},
-		}
-		if serviceVersion != "" {
-			sender.serviceContext["version"] = serviceVersion
-		}
-		c := &Client{
-			sender:         sender,
-			RepanicDefault: true,
-		}
-		return c, nil
-	} else {
-		a, err := newApiInterface(ctx, opts...)
-		if err != nil {
-			return nil, fmt.Errorf("creating Error Reporting client: %v", err)
-		}
-		c := &Client{
-			sender: &errorApiSender{
-				apiClient: a,
-				projectID: "projects/" + projectID,
-				serviceContext: erpb.ServiceContext{
-					Service: serviceName,
-					Version: serviceVersion,
-				},
-			},
-			RepanicDefault: true,
-		}
-		return c, nil
+func NewClient(ctx context.Context, projectID string, cfg Config, opts ...option.ClientOption) (*Client, error) {
+	if cfg.ServiceName == "" {
+		cfg.ServiceName = "goapp"
 	}
+	c, err := newClient(ctx, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("creating client: %v", err)
+	}
+
+	client := &Client{
+		apiClient: c,
+		projectID: "projects/" + projectID,
+		serviceContext: erpb.ServiceContext{
+			Service: cfg.ServiceName,
+			Version: cfg.ServiceVersion,
+		},
+	}
+	bundler := bundler.NewBundler((*erpb.ReportErrorEventRequest)(nil), func(bundle interface{}) {
+		reqs := bundle.([]*erpb.ReportErrorEventRequest)
+		for _, req := range reqs {
+			_, err = client.apiClient.ReportErrorEvent(ctx, req)
+			if err != nil {
+				client.onError(fmt.Errorf("failed to upload: %v", err))
+			}
+		}
+	})
+	// TODO(jbd): Optimize bundler limits.
+	bundler.DelayThreshold = 2 * time.Second
+	bundler.BundleCountThreshold = 100
+	bundler.BundleByteThreshold = 1000
+	bundler.BundleByteLimit = 1000
+	bundler.BufferedByteLimit = 10000
+	client.bundler = bundler
+	return client, nil
+}
+
+func (c *Client) onError(err error) {
+	if c.onErrorFn != nil {
+		c.onErrorFn(err)
+		return
+	}
+	log.Println(err)
 }
 
 // Close closes any resources held by the client.
 // Close should be called when the client is no longer needed.
 // It need not be called at program exit.
 func (c *Client) Close() error {
-	err := c.sender.close()
-	c.sender = nil
+	return c.apiClient.Close()
+}
+
+// Report writes an error report. It doesn't block. Errors in
+// writing the error report can be handled via Client.OnError.
+func (c *Client) Report(e Entry) {
+	var stack string
+	if e.Stack != nil {
+		stack = string(e.Stack)
+	}
+	req := c.makeReportErrorEventRequest(e.Req, e.Error.Error(), stack)
+	c.bundler.Add(req, 1)
+}
+
+// ReportSync writes an error report. It blocks until the entry is written.
+func (c *Client) ReportSync(ctx context.Context, e Entry) error {
+	var stack string
+	if e.Stack != nil {
+		stack = string(e.Stack)
+	}
+	req := c.makeReportErrorEventRequest(e.Req, e.Error.Error(), stack)
+	_, err := c.apiClient.ReportErrorEvent(ctx, req)
 	return err
 }
 
-// An Option is an optional argument to Catch.
-type Option interface {
-	isOption()
-}
-
-// PanicFlag returns an Option that can inform Catch that a panic has occurred.
-// If *p is true when Catch is called, an error report is made even if recover
-// returns nil.  This allows Catch to report an error for panic(nil).
-// If p is nil, the option is ignored.
+// Flush blocks until all currently buffered error reports are sent.
 //
-// Here is an example of how to use PanicFlag:
-//
-//   func foo(ctx context.Context, ...) {
-//     hasPanicked := true
-//     defer errorsClient.Catch(ctx, errorreporting.PanicFlag(&hasPanicked))
-//     ...
-//     ...
-//     // We have reached the end of the function, so we're not panicking.
-//     hasPanicked = false
-//   }
-func PanicFlag(p *bool) Option { return panicFlag{p} }
-
-type panicFlag struct {
-	*bool
+// If any errors occurred since the last call to Flush, or the
+// creation of the client if this is the first call, then Flush report the
+// error via the (*Client).OnError handler.
+func (c *Client) Flush() {
+	c.bundler.Flush()
 }
 
-func (h panicFlag) isOption() {}
-
-// Repanic returns an Option that determines whether Catch will re-panic after
-// it reports an error.  This overrides the default in the client.
-func Repanic(r bool) Option { return repanic(r) }
-
-type repanic bool
-
-func (r repanic) isOption() {}
-
-// WithRequest returns an Option that informs Catch or Report of an http.Request
-// that is being handled.  Information from the Request is included in the error
-// report, if one is made.
-func WithRequest(r *http.Request) Option { return withRequest{r} }
-
-type withRequest struct {
-	*http.Request
-}
-
-func (w withRequest) isOption() {}
-
-// WithMessage returns an Option that sets a message to be included in the error
-// report, if one is made.  v is converted to a string with fmt.Sprint.
-func WithMessage(v ...interface{}) Option { return message(v) }
-
-type message []interface{}
-
-func (m message) isOption() {}
-
-// WithMessagef returns an Option that sets a message to be included in the error
-// report, if one is made.  format and v are converted to a string with fmt.Sprintf.
-func WithMessagef(format string, v ...interface{}) Option { return messagef{format, v} }
-
-type messagef struct {
-	format string
-	v      []interface{}
-}
-
-func (m messagef) isOption() {}
-
-// Catch tries to recover a panic; if it succeeds, it writes an error report.
-// It should be called by deferring it, like any other function for recovering
-// panics.
-//
-// Catch can be called concurrently with other calls to Catch, Report or Reportf.
-func (c *Client) Catch(ctx context.Context, opt ...Option) {
-	panicked := false
-	for _, o := range opt {
-		switch o := o.(type) {
-		case panicFlag:
-			panicked = panicked || o.bool != nil && *o.bool
-		}
+func (c *Client) makeReportErrorEventRequest(r *http.Request, msg string, stack string) *erpb.ReportErrorEventRequest {
+	if stack == "" {
+		// limit the stack trace to 16k.
+		var buf [16 * 1024]byte
+		stack = chopStack(buf[0:runtime.Stack(buf[:], false)])
 	}
-	x := recover()
-	if x == nil && !panicked {
-		return
-	}
-	var (
-		r             *http.Request
-		shouldRepanic = true
-		messages      = []string{fmt.Sprint(x)}
-	)
-	if c != nil {
-		shouldRepanic = c.RepanicDefault
-	}
-	for _, o := range opt {
-		switch o := o.(type) {
-		case repanic:
-			shouldRepanic = bool(o)
-		case withRequest:
-			r = o.Request
-		case message:
-			messages = append(messages, fmt.Sprint(o...))
-		case messagef:
-			messages = append(messages, fmt.Sprintf(o.format, o.v...))
-		}
-	}
-	c.logInternal(ctx, r, true, strings.Join(messages, " "))
-	if shouldRepanic {
-		panic(x)
-	}
-}
+	message := msg + "\n" + stack
 
-// Report writes an error report unconditionally, instead of only when a panic
-// occurs.
-// If r is non-nil, information from the Request is included in the error report.
-//
-// Report can be called concurrently with other calls to Catch, Report or Reportf.
-func (c *Client) Report(ctx context.Context, r *http.Request, v ...interface{}) {
-	c.logInternal(ctx, r, false, fmt.Sprint(v...))
-}
-
-// Reportf writes an error report unconditionally, instead of only when a panic
-// occurs.
-// If r is non-nil, information from the Request is included in the error report.
-//
-// Reportf can be called concurrently with other calls to Catch, Report or Reportf.
-func (c *Client) Reportf(ctx context.Context, r *http.Request, format string, v ...interface{}) {
-	c.logInternal(ctx, r, false, fmt.Sprintf(format, v...))
-}
-
-func (c *Client) logInternal(ctx context.Context, r *http.Request, isPanic bool, msg string) {
-	// limit the stack trace to 16k.
-	var buf [16384]byte
-	stack := buf[0:runtime.Stack(buf[:], false)]
-	message := msg + "\n" + chopStack(stack, isPanic)
-	if c == nil {
-		log.Println("Error report used nil client:", message)
-		return
-	}
-	c.send(ctx, r, message)
-}
-
-func (s *loggingSender) send(ctx context.Context, r *http.Request, message string) {
-	payload := map[string]interface{}{
-		"eventTime":      time.Now().In(time.UTC).Format(time.RFC3339Nano),
-		"message":        message,
-		"serviceContext": s.serviceContext,
-	}
-	if r != nil {
-		payload["context"] = map[string]interface{}{
-			"httpRequest": map[string]interface{}{
-				"method":    r.Method,
-				"url":       r.Host + r.RequestURI,
-				"userAgent": r.UserAgent(),
-				"referrer":  r.Referer(),
-				"remoteIp":  r.RemoteAddr,
-			},
-		}
-	}
-	e := logging.Entry{
-		Severity: logging.Error,
-		Payload:  payload,
-	}
-	err := s.logger.LogSync(ctx, e)
-	if err != nil {
-		log.Println("Error writing error report:", err, "report:", payload)
-	}
-}
-
-func (s *loggingSender) close() error {
-	return s.logger.Close()
-}
-
-func (s *errorApiSender) send(ctx context.Context, r *http.Request, message string) {
-	time := time.Now()
 	var errorContext *erpb.ErrorContext
 	if r != nil {
 		errorContext = &erpb.ErrorContext{
@@ -403,37 +188,21 @@ func (s *errorApiSender) send(ctx context.Context, r *http.Request, message stri
 			},
 		}
 	}
-	req := erpb.ReportErrorEventRequest{
-		ProjectName: s.projectID,
+	return &erpb.ReportErrorEventRequest{
+		ProjectName: c.projectID,
 		Event: &erpb.ReportedErrorEvent{
-			EventTime: &timestamp.Timestamp{
-				Seconds: time.Unix(),
-				Nanos:   int32(time.Nanosecond()),
-			},
-			ServiceContext: &s.serviceContext,
+			EventTime:      ptypes.TimestampNow(),
+			ServiceContext: &c.serviceContext,
 			Message:        message,
 			Context:        errorContext,
 		},
 	}
-	_, err := s.apiClient.ReportErrorEvent(ctx, &req)
-	if err != nil {
-		log.Println("Error writing error report:", err, "report:", message)
-	}
-}
-
-func (s *errorApiSender) close() error {
-	return s.apiClient.Close()
 }
 
 // chopStack trims a stack trace so that the function which panics or calls
 // Report is first.
-func chopStack(s []byte, isPanic bool) string {
-	var f []byte
-	if isPanic {
-		f = []byte("panic(")
-	} else {
-		f = []byte("cloud.google.com/go/errorreporting.(*Client).Report")
-	}
+func chopStack(s []byte) string {
+	f := []byte("cloud.google.com/go/errorreporting.(*Client).Report")
 
 	lfFirst := bytes.IndexByte(s, '\n')
 	if lfFirst == -1 {
@@ -453,4 +222,9 @@ func chopStack(s []byte, isPanic bool) string {
 		stack = stack[nextLine+1:]
 	}
 	return string(s[:lfFirst+1]) + string(stack)
+}
+
+type client interface {
+	ReportErrorEvent(ctx context.Context, req *erpb.ReportErrorEventRequest, opts ...gax.CallOption) (*erpb.ReportErrorEventResponse, error)
+	Close() error
 }

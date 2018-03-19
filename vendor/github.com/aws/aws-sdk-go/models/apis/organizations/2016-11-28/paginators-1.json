@@ -1,5 +1,10 @@
 {
   "pagination": {
+    "ListAWSServiceAccessForOrganization": {
+      "input_token": "NextToken",
+      "output_token": "NextToken",
+      "limit_key": "MaxResults"
+    },
     "ListAccounts": {
       "input_token": "NextToken",
       "output_token": "NextToken",

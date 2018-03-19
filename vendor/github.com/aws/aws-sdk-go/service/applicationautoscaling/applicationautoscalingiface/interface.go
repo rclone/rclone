@@ -64,6 +64,10 @@ type ApplicationAutoScalingAPI interface {
 	DeleteScalingPolicyWithContext(aws.Context, *applicationautoscaling.DeleteScalingPolicyInput, ...request.Option) (*applicationautoscaling.DeleteScalingPolicyOutput, error)
 	DeleteScalingPolicyRequest(*applicationautoscaling.DeleteScalingPolicyInput) (*request.Request, *applicationautoscaling.DeleteScalingPolicyOutput)
 
+	DeleteScheduledAction(*applicationautoscaling.DeleteScheduledActionInput) (*applicationautoscaling.DeleteScheduledActionOutput, error)
+	DeleteScheduledActionWithContext(aws.Context, *applicationautoscaling.DeleteScheduledActionInput, ...request.Option) (*applicationautoscaling.DeleteScheduledActionOutput, error)
+	DeleteScheduledActionRequest(*applicationautoscaling.DeleteScheduledActionInput) (*request.Request, *applicationautoscaling.DeleteScheduledActionOutput)
+
 	DeregisterScalableTarget(*applicationautoscaling.DeregisterScalableTargetInput) (*applicationautoscaling.DeregisterScalableTargetOutput, error)
 	DeregisterScalableTargetWithContext(aws.Context, *applicationautoscaling.DeregisterScalableTargetInput, ...request.Option) (*applicationautoscaling.DeregisterScalableTargetOutput, error)
 	DeregisterScalableTargetRequest(*applicationautoscaling.DeregisterScalableTargetInput) (*request.Request, *applicationautoscaling.DeregisterScalableTargetOutput)
@@ -89,9 +93,17 @@ type ApplicationAutoScalingAPI interface {
 	DescribeScalingPoliciesPages(*applicationautoscaling.DescribeScalingPoliciesInput, func(*applicationautoscaling.DescribeScalingPoliciesOutput, bool) bool) error
 	DescribeScalingPoliciesPagesWithContext(aws.Context, *applicationautoscaling.DescribeScalingPoliciesInput, func(*applicationautoscaling.DescribeScalingPoliciesOutput, bool) bool, ...request.Option) error
 
+	DescribeScheduledActions(*applicationautoscaling.DescribeScheduledActionsInput) (*applicationautoscaling.DescribeScheduledActionsOutput, error)
+	DescribeScheduledActionsWithContext(aws.Context, *applicationautoscaling.DescribeScheduledActionsInput, ...request.Option) (*applicationautoscaling.DescribeScheduledActionsOutput, error)
+	DescribeScheduledActionsRequest(*applicationautoscaling.DescribeScheduledActionsInput) (*request.Request, *applicationautoscaling.DescribeScheduledActionsOutput)
+
 	PutScalingPolicy(*applicationautoscaling.PutScalingPolicyInput) (*applicationautoscaling.PutScalingPolicyOutput, error)
 	PutScalingPolicyWithContext(aws.Context, *applicationautoscaling.PutScalingPolicyInput, ...request.Option) (*applicationautoscaling.PutScalingPolicyOutput, error)
 	PutScalingPolicyRequest(*applicationautoscaling.PutScalingPolicyInput) (*request.Request, *applicationautoscaling.PutScalingPolicyOutput)
+
+	PutScheduledAction(*applicationautoscaling.PutScheduledActionInput) (*applicationautoscaling.PutScheduledActionOutput, error)
+	PutScheduledActionWithContext(aws.Context, *applicationautoscaling.PutScheduledActionInput, ...request.Option) (*applicationautoscaling.PutScheduledActionOutput, error)
+	PutScheduledActionRequest(*applicationautoscaling.PutScheduledActionInput) (*request.Request, *applicationautoscaling.PutScheduledActionOutput)
 
 	RegisterScalableTarget(*applicationautoscaling.RegisterScalableTargetInput) (*applicationautoscaling.RegisterScalableTargetOutput, error)
 	RegisterScalableTargetWithContext(aws.Context, *applicationautoscaling.RegisterScalableTargetInput, ...request.Option) (*applicationautoscaling.RegisterScalableTargetOutput, error)

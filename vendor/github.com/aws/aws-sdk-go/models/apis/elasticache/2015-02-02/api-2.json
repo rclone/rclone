@@ -621,6 +621,29 @@
         {"shape":"InvalidParameterCombinationException"}
       ]
     },
+    "ModifyReplicationGroupShardConfiguration":{
+      "name":"ModifyReplicationGroupShardConfiguration",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ModifyReplicationGroupShardConfigurationMessage"},
+      "output":{
+        "shape":"ModifyReplicationGroupShardConfigurationResult",
+        "resultWrapper":"ModifyReplicationGroupShardConfigurationResult"
+      },
+      "errors":[
+        {"shape":"ReplicationGroupNotFoundFault"},
+        {"shape":"InvalidReplicationGroupStateFault"},
+        {"shape":"InvalidCacheClusterStateFault"},
+        {"shape":"InvalidVPCNetworkStateFault"},
+        {"shape":"InsufficientCacheClusterCapacityFault"},
+        {"shape":"NodeGroupsPerReplicationGroupQuotaExceededFault"},
+        {"shape":"NodeQuotaForCustomerExceededFault"},
+        {"shape":"InvalidParameterValueException"},
+        {"shape":"InvalidParameterCombinationException"}
+      ]
+    },
     "PurchaseReservedCacheNodesOffering":{
       "name":"PurchaseReservedCacheNodesOffering",
       "http":{
@@ -861,7 +884,10 @@
         "SecurityGroups":{"shape":"SecurityGroupMembershipList"},
         "ReplicationGroupId":{"shape":"String"},
         "SnapshotRetentionLimit":{"shape":"IntegerOptional"},
-        "SnapshotWindow":{"shape":"String"}
+        "SnapshotWindow":{"shape":"String"},
+        "AuthTokenEnabled":{"shape":"BooleanOptional"},
+        "TransitEncryptionEnabled":{"shape":"BooleanOptional"},
+        "AtRestEncryptionEnabled":{"shape":"BooleanOptional"}
       },
       "wrapper":true
     },
@@ -1386,7 +1412,9 @@
         "AutoMinorVersionUpgrade":{"shape":"BooleanOptional"},
         "SnapshotRetentionLimit":{"shape":"IntegerOptional"},
         "SnapshotWindow":{"shape":"String"},
-        "AuthToken":{"shape":"String"}
+        "AuthToken":{"shape":"String"},
+        "TransitEncryptionEnabled":{"shape":"BooleanOptional"},
+        "AtRestEncryptionEnabled":{"shape":"BooleanOptional"}
       }
     },
     "CreateReplicationGroupResult":{
@@ -1891,6 +1919,27 @@
         "ReplicationGroup":{"shape":"ReplicationGroup"}
       }
     },
+    "ModifyReplicationGroupShardConfigurationMessage":{
+      "type":"structure",
+      "required":[
+        "ReplicationGroupId",
+        "NodeGroupCount",
+        "ApplyImmediately"
+      ],
+      "members":{
+        "ReplicationGroupId":{"shape":"String"},
+        "NodeGroupCount":{"shape":"Integer"},
+        "ApplyImmediately":{"shape":"Boolean"},
+        "ReshardingConfiguration":{"shape":"ReshardingConfigurationList"},
+        "NodeGroupsToRemove":{"shape":"NodeGroupsToRemoveList"}
+      }
+    },
+    "ModifyReplicationGroupShardConfigurationResult":{
+      "type":"structure",
+      "members":{
+        "ReplicationGroup":{"shape":"ReplicationGroup"}
+      }
+    },
     "NodeGroup":{
       "type":"structure",
       "members":{
@@ -1962,6 +2011,13 @@
         "senderFault":true
       },
       "exception":true
+    },
+    "NodeGroupsToRemoveList":{
+      "type":"list",
+      "member":{
+        "shape":"String",
+        "locationName":"NodeGroupToRemove"
+      }
     },
     "NodeQuotaForClusterExceededFault":{
       "type":"structure",
@@ -2147,7 +2203,10 @@
         "SnapshotRetentionLimit":{"shape":"IntegerOptional"},
         "SnapshotWindow":{"shape":"String"},
         "ClusterEnabled":{"shape":"BooleanOptional"},
-        "CacheNodeType":{"shape":"String"}
+        "CacheNodeType":{"shape":"String"},
+        "AuthTokenEnabled":{"shape":"BooleanOptional"},
+        "TransitEncryptionEnabled":{"shape":"BooleanOptional"},
+        "AtRestEncryptionEnabled":{"shape":"BooleanOptional"}
       },
       "wrapper":true
     },
@@ -2191,7 +2250,8 @@
       "type":"structure",
       "members":{
         "PrimaryClusterId":{"shape":"String"},
-        "AutomaticFailoverStatus":{"shape":"PendingAutomaticFailoverStatus"}
+        "AutomaticFailoverStatus":{"shape":"PendingAutomaticFailoverStatus"},
+        "Resharding":{"shape":"ReshardingStatus"}
       }
     },
     "ReservedCacheNode":{
@@ -2307,6 +2367,25 @@
         "ParameterNameValues":{"shape":"ParameterNameValueList"}
       }
     },
+    "ReshardingConfiguration":{
+      "type":"structure",
+      "members":{
+        "PreferredAvailabilityZones":{"shape":"AvailabilityZonesList"}
+      }
+    },
+    "ReshardingConfigurationList":{
+      "type":"list",
+      "member":{
+        "shape":"ReshardingConfiguration",
+        "locationName":"ReshardingConfiguration"
+      }
+    },
+    "ReshardingStatus":{
+      "type":"structure",
+      "members":{
+        "SlotMigration":{"shape":"SlotMigration"}
+      }
+    },
     "RevokeCacheSecurityGroupIngressMessage":{
       "type":"structure",
       "required":[
@@ -2343,6 +2422,12 @@
     "SecurityGroupMembershipList":{
       "type":"list",
       "member":{"shape":"SecurityGroupMembership"}
+    },
+    "SlotMigration":{
+      "type":"structure",
+      "members":{
+        "ProgressPercentage":{"shape":"Double"}
+      }
     },
     "Snapshot":{
       "type":"structure",

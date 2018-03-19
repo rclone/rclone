@@ -39,13 +39,13 @@ type osxCollator struct {
 
 func (c *osxCollator) init(locale string) {
 	l := C.CFStringCreateWithBytes(
-		nil,
+		C.kCFAllocatorDefault,
 		osxUInt8P([]byte(locale)),
 		C.CFIndex(len(locale)),
 		C.kCFStringEncodingUTF8,
 		C.Boolean(0),
 	)
-	c.loc = C.CFLocaleCreate(nil, l)
+	c.loc = C.CFLocaleCreate(C.kCFAllocatorDefault, l)
 }
 
 func newOSX8Collator(locale string) (Collator, error) {
@@ -74,16 +74,16 @@ type osx16Collator struct {
 
 func (c osx16Collator) Compare(a, b Input) int {
 	sa := C.CFStringCreateWithCharactersNoCopy(
-		nil,
+		C.kCFAllocatorDefault,
 		osxCharP(a.UTF16),
 		C.CFIndex(len(a.UTF16)),
-		nil,
+		C.kCFAllocatorDefault,
 	)
 	sb := C.CFStringCreateWithCharactersNoCopy(
-		nil,
+		C.kCFAllocatorDefault,
 		osxCharP(b.UTF16),
 		C.CFIndex(len(b.UTF16)),
-		nil,
+		C.kCFAllocatorDefault,
 	)
 	_range := C.CFRangeMake(0, C.CFStringGetLength(sa))
 	return int(C.CFStringCompareWithOptionsAndLocale(sa, sb, _range, c.opt, c.loc))
@@ -91,20 +91,20 @@ func (c osx16Collator) Compare(a, b Input) int {
 
 func (c osx8Collator) Compare(a, b Input) int {
 	sa := C.CFStringCreateWithBytesNoCopy(
-		nil,
+		C.kCFAllocatorDefault,
 		osxUInt8P(a.UTF8),
 		C.CFIndex(len(a.UTF8)),
 		C.kCFStringEncodingUTF8,
 		C.Boolean(0),
-		nil,
+		C.kCFAllocatorDefault,
 	)
 	sb := C.CFStringCreateWithBytesNoCopy(
-		nil,
+		C.kCFAllocatorDefault,
 		osxUInt8P(b.UTF8),
 		C.CFIndex(len(b.UTF8)),
 		C.kCFStringEncodingUTF8,
 		C.Boolean(0),
-		nil,
+		C.kCFAllocatorDefault,
 	)
 	_range := C.CFRangeMake(0, C.CFStringGetLength(sa))
 	return int(C.CFStringCompareWithOptionsAndLocale(sa, sb, _range, c.opt, c.loc))

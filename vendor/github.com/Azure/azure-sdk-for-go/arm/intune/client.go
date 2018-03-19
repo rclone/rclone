@@ -1,6 +1,8 @@
 // Package intune implements the Azure ARM Intune service API version 2015-01-14-preview.
 //
 // Microsoft.Intune Resource provider Api features in the swagger-2.0 specification
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services
 package intune
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
@@ -107,7 +109,9 @@ func (client ManagementClient) GetAppsPreparer(hostName string, filter string, t
 // GetAppsSender sends the GetApps request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) GetAppsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetAppsResponder handles the response to the GetApps request. The method always
@@ -233,7 +237,9 @@ func (client ManagementClient) GetLocationByHostNamePreparer() (*http.Request, e
 // GetLocationByHostNameSender sends the GetLocationByHostName request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) GetLocationByHostNameSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetLocationByHostNameResponder handles the response to the GetLocationByHostName request. The method always
@@ -290,7 +296,9 @@ func (client ManagementClient) GetLocationsPreparer() (*http.Request, error) {
 // GetLocationsSender sends the GetLocations request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) GetLocationsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetLocationsResponder handles the response to the GetLocations request. The method always
@@ -427,7 +435,9 @@ func (client ManagementClient) GetMAMFlaggedUserByNamePreparer(hostName string, 
 // GetMAMFlaggedUserByNameSender sends the GetMAMFlaggedUserByName request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) GetMAMFlaggedUserByNameSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetMAMFlaggedUserByNameResponder handles the response to the GetMAMFlaggedUserByName request. The method always
@@ -500,7 +510,9 @@ func (client ManagementClient) GetMAMFlaggedUsersPreparer(hostName string, filte
 // GetMAMFlaggedUsersSender sends the GetMAMFlaggedUsers request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) GetMAMFlaggedUsersSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetMAMFlaggedUsersResponder handles the response to the GetMAMFlaggedUsers request. The method always
@@ -632,7 +644,9 @@ func (client ManagementClient) GetMAMStatusesPreparer(hostName string) (*http.Re
 // GetMAMStatusesSender sends the GetMAMStatuses request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) GetMAMStatusesSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetMAMStatusesResponder handles the response to the GetMAMStatuses request. The method always
@@ -725,7 +739,9 @@ func (client ManagementClient) GetMAMUserDeviceByDeviceNamePreparer(hostName str
 // GetMAMUserDeviceByDeviceNameSender sends the GetMAMUserDeviceByDeviceName request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) GetMAMUserDeviceByDeviceNameSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetMAMUserDeviceByDeviceNameResponder handles the response to the GetMAMUserDeviceByDeviceName request. The method always
@@ -799,7 +815,9 @@ func (client ManagementClient) GetMAMUserDevicesPreparer(hostName string, userNa
 // GetMAMUserDevicesSender sends the GetMAMUserDevices request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) GetMAMUserDevicesSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetMAMUserDevicesResponder handles the response to the GetMAMUserDevices request. The method always
@@ -942,7 +960,9 @@ func (client ManagementClient) GetMAMUserFlaggedEnrolledAppsPreparer(hostName st
 // GetMAMUserFlaggedEnrolledAppsSender sends the GetMAMUserFlaggedEnrolledApps request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) GetMAMUserFlaggedEnrolledAppsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetMAMUserFlaggedEnrolledAppsResponder handles the response to the GetMAMUserFlaggedEnrolledApps request. The method always
@@ -1084,7 +1104,9 @@ func (client ManagementClient) GetOperationResultsPreparer(hostName string, filt
 // GetOperationResultsSender sends the GetOperationResults request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) GetOperationResultsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetOperationResultsResponder handles the response to the GetOperationResults request. The method always
@@ -1218,7 +1240,9 @@ func (client ManagementClient) WipeMAMUserDevicePreparer(hostName string, userNa
 // WipeMAMUserDeviceSender sends the WipeMAMUserDevice request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) WipeMAMUserDeviceSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // WipeMAMUserDeviceResponder handles the response to the WipeMAMUserDevice request. The method always

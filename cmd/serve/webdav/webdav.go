@@ -8,7 +8,10 @@ import (
 	"os"
 
 	"github.com/ncw/rclone/cmd"
+	"github.com/ncw/rclone/cmd/serve/httplib"
+	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -16,13 +19,8 @@ import (
 	"golang.org/x/net/webdav"
 )
 
-// Globals
-var (
-	bindAddress = "localhost:8081"
-)
-
 func init() {
-	Command.Flags().StringVarP(&bindAddress, "addr", "", bindAddress, "IPaddress:Port to bind server to.")
+	httpflags.AddFlags(Command.Flags())
 	vfsflags.AddFlags(Command.Flags())
 }
 
@@ -38,35 +36,16 @@ write it.
 
 NB at the moment each directory listing reads the start of each file
 which is undesirable: see https://github.com/golang/go/issues/22577
-
-` + vfs.Help,
+` + httplib.Help + vfs.Help,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
-		fsrc := cmd.NewFsSrc(args)
+		f := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return serveWebDav(fsrc)
+			w := newWebDAV(f, &httpflags.Opt)
+			w.serve()
+			return nil
 		})
 	},
-}
-
-// serve the remote
-func serveWebDav(f fs.Fs) error {
-	fs.Logf(f, "WebDav Server started on %v", bindAddress)
-
-	webdavFS := &WebDAV{
-		f:   f,
-		vfs: vfs.New(f, &vfsflags.Opt),
-	}
-
-	handler := &webdav.Handler{
-		FileSystem: webdavFS,
-		LockSystem: webdav.NewMemLS(),
-		Logger:     webdavFS.logRequest, // FIXME
-	}
-
-	// FIXME use our HTTP transport
-	http.Handle("/", handler)
-	return http.ListenAndServe(bindAddress, nil)
 }
 
 // WebDAV is a webdav.FileSystem interface
@@ -84,10 +63,34 @@ func serveWebDav(f fs.Fs) error {
 type WebDAV struct {
 	f   fs.Fs
 	vfs *vfs.VFS
+	srv *httplib.Server
 }
 
 // check interface
 var _ webdav.FileSystem = (*WebDAV)(nil)
+
+// Make a new WebDAV to serve the remote
+func newWebDAV(f fs.Fs, opt *httplib.Options) *WebDAV {
+	w := &WebDAV{
+		f:   f,
+		vfs: vfs.New(f, &vfsflags.Opt),
+	}
+
+	handler := &webdav.Handler{
+		FileSystem: w,
+		LockSystem: webdav.NewMemLS(),
+		Logger:     w.logRequest, // FIXME
+	}
+
+	w.srv = httplib.NewServer(handler, opt)
+	return w
+}
+
+// serve runs the http server - doesn't return
+func (w *WebDAV) serve() {
+	fs.Logf(w.f, "WebDav Server started on %s", w.srv.URL())
+	w.srv.Serve()
+}
 
 // logRequest is called by the webdav module on every request
 func (w *WebDAV) logRequest(r *http.Request, err error) {
@@ -96,7 +99,7 @@ func (w *WebDAV) logRequest(r *http.Request, err error) {
 
 // Mkdir creates a directory
 func (w *WebDAV) Mkdir(ctx context.Context, name string, perm os.FileMode) (err error) {
-	defer fs.Trace(name, "perm=%v", perm)("err = %v", &err)
+	defer log.Trace(name, "perm=%v", perm)("err = %v", &err)
 	dir, leaf, err := w.vfs.StatParent(name)
 	if err != nil {
 		return err
@@ -107,13 +110,13 @@ func (w *WebDAV) Mkdir(ctx context.Context, name string, perm os.FileMode) (err 
 
 // OpenFile opens a file or a directory
 func (w *WebDAV) OpenFile(ctx context.Context, name string, flags int, perm os.FileMode) (file webdav.File, err error) {
-	defer fs.Trace(name, "flags=%v, perm=%v", flags, perm)("err = %v", &err)
+	defer log.Trace(name, "flags=%v, perm=%v", flags, perm)("err = %v", &err)
 	return w.vfs.OpenFile(name, flags, perm)
 }
 
 // RemoveAll removes a file or a directory and its contents
 func (w *WebDAV) RemoveAll(ctx context.Context, name string) (err error) {
-	defer fs.Trace(name, "")("err = %v", &err)
+	defer log.Trace(name, "")("err = %v", &err)
 	node, err := w.vfs.Stat(name)
 	if err != nil {
 		return err
@@ -127,13 +130,13 @@ func (w *WebDAV) RemoveAll(ctx context.Context, name string) (err error) {
 
 // Rename a file or a directory
 func (w *WebDAV) Rename(ctx context.Context, oldName, newName string) (err error) {
-	defer fs.Trace(oldName, "newName=%q", newName)("err = %v", &err)
+	defer log.Trace(oldName, "newName=%q", newName)("err = %v", &err)
 	return w.vfs.Rename(oldName, newName)
 }
 
 // Stat returns info about the file or directory
 func (w *WebDAV) Stat(ctx context.Context, name string) (fi os.FileInfo, err error) {
-	defer fs.Trace(name, "")("fi=%+v, err = %v", &fi, &err)
+	defer log.Trace(name, "")("fi=%+v, err = %v", &fi, &err)
 	return w.vfs.Stat(name)
 }
 

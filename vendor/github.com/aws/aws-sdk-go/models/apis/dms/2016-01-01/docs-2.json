@@ -26,9 +26,10 @@
     "DescribeRefreshSchemasStatus": "<p>Returns the status of the RefreshSchemas operation.</p>",
     "DescribeReplicationInstances": "<p>Returns information about replication instances for your account in the current region.</p>",
     "DescribeReplicationSubnetGroups": "<p>Returns information about the replication subnet groups.</p>",
+    "DescribeReplicationTaskAssessmentResults": "<p>Returns the task assessment results from Amazon S3. This action always returns the latest results.</p>",
     "DescribeReplicationTasks": "<p>Returns information about replication tasks for your account in the current region.</p>",
     "DescribeSchemas": "<p>Returns information about the schema for the specified endpoint.</p> <p/>",
-    "DescribeTableStatistics": "<p>Returns table statistics on the database migration task, including table name, rows inserted, rows updated, and rows deleted.</p>",
+    "DescribeTableStatistics": "<p>Returns table statistics on the database migration task, including table name, rows inserted, rows updated, and rows deleted.</p> <p>Note that the \"last updated\" column the DMS console only indicates the time that AWS DMS last updated the table statistics record for a table. It does not indicate the time of the last update to the table.</p>",
     "ImportCertificate": "<p>Uploads the specified certificate.</p>",
     "ListTagsForResource": "<p>Lists all tags for an AWS DMS resource.</p>",
     "ModifyEndpoint": "<p>Modifies the specified endpoint.</p>",
@@ -40,6 +41,7 @@
     "ReloadTables": "<p>Reloads the target database table with the source data. </p>",
     "RemoveTagsFromResource": "<p>Removes metadata tags from a DMS resource.</p>",
     "StartReplicationTask": "<p>Starts the replication task.</p> <p>For more information about AWS DMS tasks, see the AWS DMS user guide at <a href=\"http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.html\"> Working with Migration Tasks </a> </p>",
+    "StartReplicationTaskAssessment": "<p> Starts the replication task assessment for unsupported data types in the source database. </p>",
     "StopReplicationTask": "<p>Stops the replication task.</p> <p/>",
     "TestConnection": "<p>Tests the connection between the replication instance and the endpoint.</p>"
   },
@@ -384,6 +386,16 @@
       "refs": {
       }
     },
+    "DescribeReplicationTaskAssessmentResultsMessage": {
+      "base": "<p/>",
+      "refs": {
+      }
+    },
+    "DescribeReplicationTaskAssessmentResultsResponse": {
+      "base": "<p/>",
+      "refs": {
+      }
+    },
     "DescribeReplicationTasksMessage": {
       "base": "<p/>",
       "refs": {
@@ -533,7 +545,8 @@
         "DescribeEventsMessage$Filters": "<p>Filters applied to the action.</p>",
         "DescribeReplicationInstancesMessage$Filters": "<p>Filters applied to the describe action.</p> <p>Valid filter names: replication-instance-arn | replication-instance-id | replication-instance-class | engine-version</p>",
         "DescribeReplicationSubnetGroupsMessage$Filters": "<p>Filters applied to the describe action.</p>",
-        "DescribeReplicationTasksMessage$Filters": "<p>Filters applied to the describe action.</p> <p>Valid filter names: replication-task-arn | replication-task-id | migration-type | endpoint-arn | replication-instance-arn</p>"
+        "DescribeReplicationTasksMessage$Filters": "<p>Filters applied to the describe action.</p> <p>Valid filter names: replication-task-arn | replication-task-id | migration-type | endpoint-arn | replication-instance-arn</p>",
+        "DescribeTableStatisticsMessage$Filters": "<p>Filters applied to the describe table statistics action.</p> <p>Valid filter names: schema-name | table-name | table-state</p> <p>A combination of filters creates an AND condition where each record matches all specified filters.</p>"
       }
     },
     "FilterValueList": {
@@ -588,9 +601,10 @@
         "DescribeOrderableReplicationInstancesMessage$MaxRecords": "<p> The maximum number of records to include in the response. If more records exist than the specified <code>MaxRecords</code> value, a pagination token called a marker is included in the response so that the remaining results can be retrieved. </p> <p>Default: 100</p> <p>Constraints: Minimum 20, maximum 100.</p>",
         "DescribeReplicationInstancesMessage$MaxRecords": "<p> The maximum number of records to include in the response. If more records exist than the specified <code>MaxRecords</code> value, a pagination token called a marker is included in the response so that the remaining results can be retrieved. </p> <p>Default: 100</p> <p>Constraints: Minimum 20, maximum 100.</p>",
         "DescribeReplicationSubnetGroupsMessage$MaxRecords": "<p> The maximum number of records to include in the response. If more records exist than the specified <code>MaxRecords</code> value, a pagination token called a marker is included in the response so that the remaining results can be retrieved. </p> <p>Default: 100</p> <p>Constraints: Minimum 20, maximum 100.</p>",
+        "DescribeReplicationTaskAssessmentResultsMessage$MaxRecords": "<p> The maximum number of records to include in the response. If more records exist than the specified <code>MaxRecords</code> value, a pagination token called a marker is included in the response so that the remaining results can be retrieved. </p> <p>Default: 100</p> <p>Constraints: Minimum 20, maximum 100.</p>",
         "DescribeReplicationTasksMessage$MaxRecords": "<p> The maximum number of records to include in the response. If more records exist than the specified <code>MaxRecords</code> value, a pagination token called a marker is included in the response so that the remaining results can be retrieved. </p> <p>Default: 100</p> <p>Constraints: Minimum 20, maximum 100.</p>",
         "DescribeSchemasMessage$MaxRecords": "<p> The maximum number of records to include in the response. If more records exist than the specified <code>MaxRecords</code> value, a pagination token called a marker is included in the response so that the remaining results can be retrieved. </p> <p>Default: 100</p> <p>Constraints: Minimum 20, maximum 100.</p>",
-        "DescribeTableStatisticsMessage$MaxRecords": "<p> The maximum number of records to include in the response. If more records exist than the specified <code>MaxRecords</code> value, a pagination token called a marker is included in the response so that the remaining results can be retrieved. </p> <p>Default: 100</p> <p>Constraints: Minimum 20, maximum 100.</p>",
+        "DescribeTableStatisticsMessage$MaxRecords": "<p> The maximum number of records to include in the response. If more records exist than the specified <code>MaxRecords</code> value, a pagination token called a marker is included in the response so that the remaining results can be retrieved. </p> <p>Default: 100</p> <p>Constraints: Minimum 20, maximum 500.</p>",
         "Endpoint$Port": "<p>The port value used to access the endpoint.</p>",
         "ModifyEndpointMessage$Port": "<p>The port used by the endpoint database.</p>",
         "ModifyReplicationInstanceMessage$AllocatedStorage": "<p>The amount of storage (in gigabytes) to be allocated for the replication instance.</p>",
@@ -646,7 +660,10 @@
         "TableStatistics$Ddls": "<p>The Data Definition Language (DDL) used to build and modify the structure of your tables.</p>",
         "TableStatistics$FullLoadRows": "<p>The number of rows added during the Full Load operation.</p>",
         "TableStatistics$FullLoadCondtnlChkFailedRows": "<p>The number of rows that failed conditional checks during the Full Load operation (valid only for DynamoDB as a target migrations).</p>",
-        "TableStatistics$FullLoadErrorRows": "<p>The number of rows that failed to load during the Full Load operation (valid only for DynamoDB as a target migrations).</p>"
+        "TableStatistics$FullLoadErrorRows": "<p>The number of rows that failed to load during the Full Load operation (valid only for DynamoDB as a target migrations).</p>",
+        "TableStatistics$ValidationPendingRecords": "<p>The number of records that have yet to be validated.</p>",
+        "TableStatistics$ValidationFailedRecords": "<p>The number of records that failed validation.</p>",
+        "TableStatistics$ValidationSuspendedRecords": "<p>The number of records that could not be validated.</p>"
       }
     },
     "MigrationTypeValue": {
@@ -845,8 +862,21 @@
         "DeleteReplicationTaskResponse$ReplicationTask": "<p>The deleted replication task.</p>",
         "ModifyReplicationTaskResponse$ReplicationTask": "<p>The replication task that was modified.</p>",
         "ReplicationTaskList$member": null,
+        "StartReplicationTaskAssessmentResponse$ReplicationTask": "<p> The assessed replication task. </p>",
         "StartReplicationTaskResponse$ReplicationTask": "<p>The replication task started.</p>",
         "StopReplicationTaskResponse$ReplicationTask": "<p>The replication task stopped.</p>"
+      }
+    },
+    "ReplicationTaskAssessmentResult": {
+      "base": "<p> The task assessment report in JSON format. </p>",
+      "refs": {
+        "ReplicationTaskAssessmentResultList$member": null
+      }
+    },
+    "ReplicationTaskAssessmentResultList": {
+      "base": null,
+      "refs": {
+        "DescribeReplicationTaskAssessmentResultsResponse$ReplicationTaskAssessmentResults": "<p> The task assessment report. </p>"
       }
     },
     "ReplicationTaskList": {
@@ -922,6 +952,16 @@
         "Event$SourceType": "<p> The type of AWS DMS resource that generates events. </p> <p>Valid values: replication-instance | endpoint | migration-task</p>"
       }
     },
+    "StartReplicationTaskAssessmentMessage": {
+      "base": "<p/>",
+      "refs": {
+      }
+    },
+    "StartReplicationTaskAssessmentResponse": {
+      "base": "<p/>",
+      "refs": {
+      }
+    },
     "StartReplicationTaskMessage": {
       "base": "<p/>",
       "refs": {
@@ -977,7 +1017,7 @@
         "CreateEndpointMessage$DatabaseName": "<p>The name of the endpoint database.</p>",
         "CreateEndpointMessage$ExtraConnectionAttributes": "<p>Additional attributes associated with the connection.</p>",
         "CreateEndpointMessage$KmsKeyId": "<p>The KMS key identifier that will be used to encrypt the connection parameters. If you do not specify a value for the KmsKeyId parameter, then AWS DMS will use your default encryption key. AWS KMS creates the default encryption key for your AWS account. Your AWS account has a different default encryption key for each AWS region.</p>",
-        "CreateEndpointMessage$CertificateArn": "<p>The Amazon Resource Number (ARN) for the certificate.</p>",
+        "CreateEndpointMessage$CertificateArn": "<p>The Amazon Resource Name (ARN) for the certificate.</p>",
         "CreateEventSubscriptionMessage$SubscriptionName": "<p>The name of the DMS event notification subscription. </p> <p>Constraints: The name must be less than 255 characters. </p>",
         "CreateEventSubscriptionMessage$SnsTopicArn": "<p> The Amazon Resource Name (ARN) of the Amazon SNS topic created for event notification. The ARN is created by Amazon SNS when you create a topic and subscribe to it. </p>",
         "CreateEventSubscriptionMessage$SourceType": "<p> The type of AWS DMS resource that generates the events. For example, if you want to be notified of events generated by a replication instance, you set this parameter to <code>replication-instance</code>. If this value is not specified, all events are returned. </p> <p>Valid values: replication-instance | migration-task</p>",
@@ -1024,6 +1064,10 @@
         "DescribeReplicationInstancesResponse$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>. </p>",
         "DescribeReplicationSubnetGroupsMessage$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>. </p>",
         "DescribeReplicationSubnetGroupsResponse$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>. </p>",
+        "DescribeReplicationTaskAssessmentResultsMessage$ReplicationTaskArn": "<p>- The Amazon Resource Name (ARN) string that uniquely identifies the task. When this input parameter is specified the API will return only one result and ignore the values of the max-records and marker parameters. </p>",
+        "DescribeReplicationTaskAssessmentResultsMessage$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>. </p>",
+        "DescribeReplicationTaskAssessmentResultsResponse$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>. </p>",
+        "DescribeReplicationTaskAssessmentResultsResponse$BucketName": "<p>- The Amazon S3 bucket where the task assessment report is located. </p>",
         "DescribeReplicationTasksMessage$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>. </p>",
         "DescribeReplicationTasksResponse$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>. </p>",
         "DescribeSchemasMessage$EndpointArn": "<p>The Amazon Resource Name (ARN) string that uniquely identifies the endpoint.</p>",
@@ -1067,7 +1111,7 @@
         "ModifyEndpointMessage$Username": "<p>The user name to be used to login to the endpoint database.</p>",
         "ModifyEndpointMessage$ServerName": "<p>The name of the server where the endpoint database resides.</p>",
         "ModifyEndpointMessage$DatabaseName": "<p>The name of the endpoint database.</p>",
-        "ModifyEndpointMessage$ExtraConnectionAttributes": "<p>Additional attributes associated with the connection.</p>",
+        "ModifyEndpointMessage$ExtraConnectionAttributes": "<p>Additional attributes associated with the connection. To reset this parameter, pass the empty string (\"\") as an argument.</p>",
         "ModifyEndpointMessage$CertificateArn": "<p>The Amazon Resource Name (ARN) of the certificate used for SSL connection.</p>",
         "ModifyEventSubscriptionMessage$SubscriptionName": "<p>The name of the AWS DMS event notification subscription to be modified.</p>",
         "ModifyEventSubscriptionMessage$SnsTopicArn": "<p> The Amazon Resource Name (ARN) of the Amazon SNS topic created for event notification. The ARN is created by Amazon SNS when you create a topic and subscribe to it.</p>",
@@ -1129,6 +1173,12 @@
         "ReplicationTask$LastFailureMessage": "<p>The last error (failure) message generated for the replication instance.</p>",
         "ReplicationTask$StopReason": "<p>The reason the replication task was stopped.</p>",
         "ReplicationTask$ReplicationTaskArn": "<p>The Amazon Resource Name (ARN) of the replication task.</p>",
+        "ReplicationTaskAssessmentResult$ReplicationTaskIdentifier": "<p> The replication task identifier of the task on which the task assessment was run. </p>",
+        "ReplicationTaskAssessmentResult$ReplicationTaskArn": "<p>The Amazon Resource Name (ARN) of the replication task. </p>",
+        "ReplicationTaskAssessmentResult$AssessmentStatus": "<p> The status of the task assessment. </p>",
+        "ReplicationTaskAssessmentResult$AssessmentResultsFile": "<p> The file containing the results of the task assessment. </p>",
+        "ReplicationTaskAssessmentResult$AssessmentResults": "<p> The task assessment results in JSON format. </p>",
+        "ReplicationTaskAssessmentResult$S3ObjectUrl": "<p> The URL of the S3 object containing the task assessment results. </p>",
         "S3Settings$ServiceAccessRoleArn": "<p> The Amazon Resource Name (ARN) used by the service access IAM role. </p>",
         "S3Settings$ExternalTableDefinition": "<p> </p>",
         "S3Settings$CsvRowDelimiter": "<p> The delimiter used to separate rows in the source files. The default is a carriage return (\\n). </p>",
@@ -1137,15 +1187,17 @@
         "S3Settings$BucketName": "<p> The name of the S3 bucket. </p>",
         "SchemaList$member": null,
         "SourceIdsList$member": null,
-        "StartReplicationTaskMessage$ReplicationTaskArn": "<p>The Amazon Resource Number (ARN) of the replication task to be started.</p>",
-        "StopReplicationTaskMessage$ReplicationTaskArn": "<p>The Amazon Resource Number(ARN) of the replication task to be stopped.</p>",
+        "StartReplicationTaskAssessmentMessage$ReplicationTaskArn": "<p> The Amazon Resource Name (ARN) of the replication task. </p>",
+        "StartReplicationTaskMessage$ReplicationTaskArn": "<p>The Amazon Resource Name (ARN) of the replication task to be started.</p>",
+        "StopReplicationTaskMessage$ReplicationTaskArn": "<p>The Amazon Resource Name(ARN) of the replication task to be stopped.</p>",
         "Subnet$SubnetIdentifier": "<p>The subnet identifier.</p>",
         "Subnet$SubnetStatus": "<p>The status of the subnet.</p>",
         "SubnetIdentifierList$member": null,
         "SupportedEndpointType$EngineName": "<p>The database engine name. Valid values, depending on the EndPointType, include MYSQL, ORACLE, POSTGRES, MARIADB, AURORA, REDSHIFT, S3, SYBASE, DYNAMODB, MONGODB, and SQLSERVER.</p>",
         "TableStatistics$SchemaName": "<p>The schema name.</p>",
         "TableStatistics$TableName": "<p>The name of the table.</p>",
-        "TableStatistics$TableState": "<p>The state of the table.</p>",
+        "TableStatistics$TableState": "<p>The state of the tables described.</p> <p>Valid states: Table does not exist | Before load | Full load | Table completed | Table cancelled | Table error | Table all | Table updates | Table is being reloaded</p>",
+        "TableStatistics$ValidationState": "<p>The validation state of the table.</p> <p>The parameter can have the following values</p> <ul> <li> <p>Not enabled—Validation is not enabled for the table in the migration task.</p> </li> <li> <p>Pending records—Some records in the table are waiting for validation.</p> </li> <li> <p>Mismatched records—Some records in the table do not match between the source and target.</p> </li> <li> <p>Suspended records—Some records in the table could not be validated.</p> </li> <li> <p>No primary key—The table could not be validated because it had no primary key.</p> </li> <li> <p>Table error—The table was not validated because it was in an error state and some data was not migrated.</p> </li> <li> <p>Validated—All rows in the table were validated. If the table is updated, the status can change from Validated.</p> </li> <li> <p>Error—The table could not be validated because of an unexpected error.</p> </li> </ul>",
         "TableToReload$SchemaName": "<p>The schema name of the table to be reloaded.</p>",
         "TableToReload$TableName": "<p>The table name of the table to be reloaded.</p>",
         "Tag$Key": "<p>A key is the required name of the tag. The string value can be from 1 to 128 Unicode characters in length and cannot be prefixed with \"aws:\" or \"dms:\". The string can only contain only the set of Unicode letters, digits, white-space, '_', '.', '/', '=', '+', '-' (Java regex: \"^([\\\\p{L}\\\\p{Z}\\\\p{N}_.:/=+\\\\-]*)$\").</p>",
@@ -1208,6 +1260,7 @@
         "ReplicationInstance$InstanceCreateTime": "<p>The time the replication instance was created.</p>",
         "ReplicationTask$ReplicationTaskCreationDate": "<p>The date the replication task was created.</p>",
         "ReplicationTask$ReplicationTaskStartDate": "<p>The date the replication task is scheduled to start.</p>",
+        "ReplicationTaskAssessmentResult$ReplicationTaskLastAssessmentDate": "<p>The date the task assessment was completed. </p>",
         "StartReplicationTaskMessage$CdcStartTime": "<p>The start time for the Change Data Capture (CDC) operation.</p>",
         "TableStatistics$LastUpdateTime": "<p>The last time the table was updated.</p>"
       }

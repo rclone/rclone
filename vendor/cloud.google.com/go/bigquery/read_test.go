@@ -27,69 +27,65 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-type readTabledataArgs struct {
-	conf *readTableConf
-	tok  string
+type pageFetcherArgs struct {
+	table      *Table
+	schema     Schema
+	startIndex uint64
+	pageSize   int64
+	pageToken  string
 }
 
-// readServiceStub services read requests by returning data from an in-memory list of values.
-type readServiceStub struct {
+// pageFetcherReadStub services read requests by returning data from an in-memory list of values.
+type pageFetcherReadStub struct {
 	// values and pageTokens are used as sources of data to return in response to calls to readTabledata or readQuery.
 	values     [][][]Value       // contains pages / rows / columns.
 	pageTokens map[string]string // maps incoming page token to returned page token.
 
 	// arguments are recorded for later inspection.
-	readTabledataCalls []readTabledataArgs
-
-	service
+	calls []pageFetcherArgs
 }
 
-func (s *readServiceStub) readValues(tok string) *readDataResult {
-	result := &readDataResult{
-		pageToken: s.pageTokens[tok],
+func (s *pageFetcherReadStub) fetchPage(ctx context.Context, t *Table, schema Schema, startIndex uint64, pageSize int64, pageToken string) (*fetchPageResult, error) {
+	s.calls = append(s.calls,
+		pageFetcherArgs{t, schema, startIndex, pageSize, pageToken})
+	result := &fetchPageResult{
+		pageToken: s.pageTokens[pageToken],
 		rows:      s.values[0],
 	}
 	s.values = s.values[1:]
-
-	return result
+	return result, nil
 }
 
-func (s *readServiceStub) waitForQuery(ctx context.Context, projectID, jobID string) (Schema, error) {
+func waitForQueryStub(context.Context, string) (Schema, error) {
 	return nil, nil
-}
-
-func (s *readServiceStub) readTabledata(ctx context.Context, conf *readTableConf, token string) (*readDataResult, error) {
-	s.readTabledataCalls = append(s.readTabledataCalls, readTabledataArgs{conf, token})
-	return s.readValues(token), nil
 }
 
 func TestRead(t *testing.T) {
 	// The data for the service stub to return is populated for each test case in the testCases for loop.
 	ctx := context.Background()
-	service := &readServiceStub{}
-	c := &Client{
-		projectID: "project-id",
-		service:   service,
-	}
-
+	c := &Client{projectID: "project-id"}
+	pf := &pageFetcherReadStub{}
 	queryJob := &Job{
 		projectID: "project-id",
 		jobID:     "job-id",
 		c:         c,
-		isQuery:   true,
-		destinationTable: &bq.TableReference{
-			ProjectId: "project-id",
-			DatasetId: "dataset-id",
-			TableId:   "table-id",
+		config: &bq.JobConfiguration{
+			Query: &bq.JobConfigurationQuery{
+				DestinationTable: &bq.TableReference{
+					ProjectId: "project-id",
+					DatasetId: "dataset-id",
+					TableId:   "table-id",
+				},
+			},
 		},
 	}
 
 	for _, readFunc := range []func() *RowIterator{
 		func() *RowIterator {
-			return c.Dataset("dataset-id").Table("table-id").Read(ctx)
+			return c.Dataset("dataset-id").Table("table-id").read(ctx, pf.fetchPage)
 		},
 		func() *RowIterator {
-			it, err := queryJob.Read(ctx)
+			it, err := queryJob.read(ctx, waitForQueryStub, pf.fetchPage)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -113,8 +109,8 @@ func TestRead(t *testing.T) {
 			},
 		}
 		for _, tc := range testCases {
-			service.values = tc.data
-			service.pageTokens = tc.pageTokens
+			pf.values = tc.data
+			pf.pageTokens = tc.pageTokens
 			if got, ok := collectValues(t, readFunc()); ok {
 				if !testutil.Equal(got, tc.want) {
 					t.Errorf("reading: got:\n%v\nwant:\n%v", got, tc.want)
@@ -142,13 +138,11 @@ func collectValues(t *testing.T, it *RowIterator) ([][]Value, bool) {
 }
 
 func TestNoMoreValues(t *testing.T) {
-	c := &Client{
-		projectID: "project-id",
-		service: &readServiceStub{
-			values: [][][]Value{{{1, 2}, {11, 12}}},
-		},
+	c := &Client{projectID: "project-id"}
+	pf := &pageFetcherReadStub{
+		values: [][][]Value{{{1, 2}, {11, 12}}},
 	}
-	it := c.Dataset("dataset-id").Table("table-id").Read(context.Background())
+	it := c.Dataset("dataset-id").Table("table-id").read(context.Background(), pf.fetchPage)
 	var vals []Value
 	// We expect to retrieve two values and then fail on the next attempt.
 	if err := it.Next(&vals); err != nil {
@@ -162,23 +156,16 @@ func TestNoMoreValues(t *testing.T) {
 	}
 }
 
-type errorReadService struct {
-	service
-}
-
 var errBang = errors.New("bang!")
 
-func (s *errorReadService) readTabledata(ctx context.Context, conf *readTableConf, token string) (*readDataResult, error) {
+func errorFetchPage(context.Context, *Table, Schema, uint64, int64, string) (*fetchPageResult, error) {
 	return nil, errBang
 }
 
 func TestReadError(t *testing.T) {
 	// test that service read errors are propagated back to the caller.
-	c := &Client{
-		projectID: "project-id",
-		service:   &errorReadService{},
-	}
-	it := c.Dataset("dataset-id").Table("table-id").Read(context.Background())
+	c := &Client{projectID: "project-id"}
+	it := c.Dataset("dataset-id").Table("table-id").read(context.Background(), errorFetchPage)
 	var vals []Value
 	if err := it.Next(&vals); err != errBang {
 		t.Fatalf("Get: got: %v: want: %v", err, errBang)
@@ -187,54 +174,47 @@ func TestReadError(t *testing.T) {
 
 func TestReadTabledataOptions(t *testing.T) {
 	// test that read options are propagated.
-	s := &readServiceStub{
+	s := &pageFetcherReadStub{
 		values: [][][]Value{{{1, 2}}},
 	}
-	c := &Client{
-		projectID: "project-id",
-		service:   s,
-	}
-	it := c.Dataset("dataset-id").Table("table-id").Read(context.Background())
+	c := &Client{projectID: "project-id"}
+	tr := c.Dataset("dataset-id").Table("table-id")
+	it := tr.read(context.Background(), s.fetchPage)
 	it.PageInfo().MaxSize = 5
 	var vals []Value
 	if err := it.Next(&vals); err != nil {
 		t.Fatal(err)
 	}
-	want := []readTabledataArgs{{
-		conf: &readTableConf{
-			projectID: "project-id",
-			datasetID: "dataset-id",
-			tableID:   "table-id",
-			paging: pagingConf{
-				recordsPerRequest:    5,
-				setRecordsPerRequest: true,
-			},
-		},
-		tok: "",
+	want := []pageFetcherArgs{{
+		table:     tr,
+		pageSize:  5,
+		pageToken: "",
 	}}
-
-	if !testutil.Equal(s.readTabledataCalls, want, cmp.AllowUnexported(readTabledataArgs{}, readTableConf{}, pagingConf{})) {
-		t.Errorf("reading: got:\n%v\nwant:\n%v", s.readTabledataCalls, want)
+	if diff := testutil.Diff(s.calls, want, cmp.AllowUnexported(pageFetcherArgs{}, pageFetcherReadStub{}, Table{}, Client{})); diff != "" {
+		t.Errorf("reading (got=-, want=+):\n%s", diff)
 	}
 }
 
 func TestReadQueryOptions(t *testing.T) {
 	// test that read options are propagated.
-	s := &readServiceStub{
+	c := &Client{projectID: "project-id"}
+	pf := &pageFetcherReadStub{
 		values: [][][]Value{{{1, 2}}},
+	}
+	tr := &bq.TableReference{
+		ProjectId: "project-id",
+		DatasetId: "dataset-id",
+		TableId:   "table-id",
 	}
 	queryJob := &Job{
 		projectID: "project-id",
 		jobID:     "job-id",
-		c:         &Client{service: s},
-		isQuery:   true,
-		destinationTable: &bq.TableReference{
-			ProjectId: "project-id",
-			DatasetId: "dataset-id",
-			TableId:   "table-id",
+		c:         c,
+		config: &bq.JobConfiguration{
+			Query: &bq.JobConfigurationQuery{DestinationTable: tr},
 		},
 	}
-	it, err := queryJob.Read(context.Background())
+	it, err := queryJob.read(context.Background(), waitForQueryStub, pf.fetchPage)
 	if err != nil {
 		t.Fatalf("err calling Read: %v", err)
 	}
@@ -244,20 +224,12 @@ func TestReadQueryOptions(t *testing.T) {
 		t.Fatalf("Next: got: %v: want: nil", err)
 	}
 
-	want := []readTabledataArgs{{
-		conf: &readTableConf{
-			projectID: "project-id",
-			datasetID: "dataset-id",
-			tableID:   "table-id",
-			paging: pagingConf{
-				recordsPerRequest:    5,
-				setRecordsPerRequest: true,
-			},
-		},
-		tok: "",
+	want := []pageFetcherArgs{{
+		table:     bqToTable(tr, c),
+		pageSize:  5,
+		pageToken: "",
 	}}
-
-	if !testutil.Equal(s.readTabledataCalls, want, cmp.AllowUnexported(readTabledataArgs{}, readTableConf{}, pagingConf{})) {
-		t.Errorf("reading: got:\n%v\nwant:\n%v", s.readTabledataCalls, want)
+	if !testutil.Equal(pf.calls, want, cmp.AllowUnexported(pageFetcherArgs{}, Table{}, Client{})) {
+		t.Errorf("reading: got:\n%v\nwant:\n%v", pf.calls, want)
 	}
 }

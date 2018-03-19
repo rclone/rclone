@@ -148,3 +148,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/okzk/sdnotify"
+
+[[constraint]]
+  name = "github.com/sevlyar/go-daemon"
+  version = "0.1.2"

@@ -7,6 +7,7 @@
     "protocol":"json",
     "serviceAbbreviation":"DynamoDB",
     "serviceFullName":"Amazon DynamoDB",
+    "serviceId":"DynamoDB",
     "signatureVersion":"v4",
     "targetPrefix":"DynamoDB_20111205",
     "uid":"dynamodb-2011-12-05"

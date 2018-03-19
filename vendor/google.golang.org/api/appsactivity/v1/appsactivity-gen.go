@@ -125,8 +125,8 @@ type Activity struct {
 }
 
 func (s *Activity) MarshalJSON() ([]byte, error) {
-	type noMethod Activity
-	raw := noMethod(*s)
+	type NoMethod Activity
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -215,8 +215,8 @@ type Event struct {
 }
 
 func (s *Event) MarshalJSON() ([]byte, error) {
-	type noMethod Event
-	raw := noMethod(*s)
+	type NoMethod Event
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -252,8 +252,8 @@ type ListActivitiesResponse struct {
 }
 
 func (s *ListActivitiesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListActivitiesResponse
-	raw := noMethod(*s)
+	type NoMethod ListActivitiesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -284,8 +284,8 @@ type Move struct {
 }
 
 func (s *Move) MarshalJSON() ([]byte, error) {
-	type noMethod Move
-	raw := noMethod(*s)
+	type NoMethod Move
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -319,8 +319,8 @@ type Parent struct {
 }
 
 func (s *Parent) MarshalJSON() ([]byte, error) {
-	type noMethod Parent
-	raw := noMethod(*s)
+	type NoMethod Parent
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -380,8 +380,8 @@ type Permission struct {
 }
 
 func (s *Permission) MarshalJSON() ([]byte, error) {
-	type noMethod Permission
-	raw := noMethod(*s)
+	type NoMethod Permission
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -414,8 +414,8 @@ type PermissionChange struct {
 }
 
 func (s *PermissionChange) MarshalJSON() ([]byte, error) {
-	type noMethod PermissionChange
-	raw := noMethod(*s)
+	type NoMethod PermissionChange
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -442,8 +442,8 @@ type Photo struct {
 }
 
 func (s *Photo) MarshalJSON() ([]byte, error) {
-	type noMethod Photo
-	raw := noMethod(*s)
+	type NoMethod Photo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -473,8 +473,8 @@ type Rename struct {
 }
 
 func (s *Rename) MarshalJSON() ([]byte, error) {
-	type noMethod Rename
-	raw := noMethod(*s)
+	type NoMethod Rename
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -509,8 +509,8 @@ type Target struct {
 }
 
 func (s *Target) MarshalJSON() ([]byte, error) {
-	type noMethod Target
-	raw := noMethod(*s)
+	type NoMethod Target
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -553,8 +553,8 @@ type User struct {
 }
 
 func (s *User) MarshalJSON() ([]byte, error) {
-	type noMethod User
-	raw := noMethod(*s)
+	type NoMethod User
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -723,7 +723,7 @@ func (c *ActivitiesListCall) Do(opts ...googleapi.CallOption) (*ListActivitiesRe
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

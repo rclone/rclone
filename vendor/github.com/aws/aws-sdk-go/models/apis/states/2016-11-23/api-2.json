@@ -7,6 +7,7 @@
     "protocol":"json",
     "serviceAbbreviation":"AWS SFN",
     "serviceFullName":"AWS Step Functions",
+    "serviceId":"SFN",
     "signatureVersion":"v4",
     "targetPrefix":"AWSStepFunctions",
     "uid":"states-2016-11-23"
@@ -105,6 +106,19 @@
       "errors":[
         {"shape":"InvalidArn"},
         {"shape":"StateMachineDoesNotExist"}
+      ]
+    },
+    "DescribeStateMachineForExecution":{
+      "name":"DescribeStateMachineForExecution",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeStateMachineForExecutionInput"},
+      "output":{"shape":"DescribeStateMachineForExecutionOutput"},
+      "errors":[
+        {"shape":"ExecutionDoesNotExist"},
+        {"shape":"InvalidArn"}
       ]
     },
     "GetActivityTask":{
@@ -247,6 +261,23 @@
         {"shape":"ExecutionDoesNotExist"},
         {"shape":"InvalidArn"}
       ]
+    },
+    "UpdateStateMachine":{
+      "name":"UpdateStateMachine",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateStateMachineInput"},
+      "output":{"shape":"UpdateStateMachineOutput"},
+      "errors":[
+        {"shape":"InvalidArn"},
+        {"shape":"InvalidDefinition"},
+        {"shape":"MissingRequiredParameter"},
+        {"shape":"StateMachineDeleting"},
+        {"shape":"StateMachineDoesNotExist"}
+      ],
+      "idempotent":true
     }
   },
   "shapes":{
@@ -469,6 +500,30 @@
         "output":{"shape":"Data"}
       }
     },
+    "DescribeStateMachineForExecutionInput":{
+      "type":"structure",
+      "required":["executionArn"],
+      "members":{
+        "executionArn":{"shape":"Arn"}
+      }
+    },
+    "DescribeStateMachineForExecutionOutput":{
+      "type":"structure",
+      "required":[
+        "stateMachineArn",
+        "name",
+        "definition",
+        "roleArn",
+        "updateDate"
+      ],
+      "members":{
+        "stateMachineArn":{"shape":"Arn"},
+        "name":{"shape":"Name"},
+        "definition":{"shape":"Definition"},
+        "roleArn":{"shape":"Arn"},
+        "updateDate":{"shape":"Timestamp"}
+      }
+    },
     "DescribeStateMachineInput":{
       "type":"structure",
       "required":["stateMachineArn"],
@@ -684,12 +739,18 @@
         "LambdaFunctionTimedOut",
         "SucceedStateEntered",
         "SucceedStateExited",
+        "TaskStateAborted",
         "TaskStateEntered",
         "TaskStateExited",
         "PassStateEntered",
         "PassStateExited",
+        "ParallelStateAborted",
         "ParallelStateEntered",
         "ParallelStateExited",
+        "ParallelStateFailed",
+        "ParallelStateStarted",
+        "ParallelStateSucceeded",
+        "WaitStateAborted",
         "WaitStateEntered",
         "WaitStateExited"
       ]
@@ -833,6 +894,13 @@
         "stateMachines":{"shape":"StateMachineList"},
         "nextToken":{"shape":"PageToken"}
       }
+    },
+    "MissingRequiredParameter":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
     },
     "Name":{
       "type":"string",
@@ -1016,6 +1084,22 @@
       "min":1
     },
     "TimeoutInSeconds":{"type":"long"},
-    "Timestamp":{"type":"timestamp"}
+    "Timestamp":{"type":"timestamp"},
+    "UpdateStateMachineInput":{
+      "type":"structure",
+      "required":["stateMachineArn"],
+      "members":{
+        "stateMachineArn":{"shape":"Arn"},
+        "definition":{"shape":"Definition"},
+        "roleArn":{"shape":"Arn"}
+      }
+    },
+    "UpdateStateMachineOutput":{
+      "type":"structure",
+      "required":["updateDate"],
+      "members":{
+        "updateDate":{"shape":"Timestamp"}
+      }
+    }
   }
 }

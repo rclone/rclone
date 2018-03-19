@@ -160,3 +160,16 @@ func WithAPIKey(apiKey string) ClientOption {
 type withAPIKey string
 
 func (w withAPIKey) Apply(o *internal.DialSettings) { o.APIKey = string(w) }
+
+// WithoutAuthentication returns a ClientOption that specifies that no
+// authentication should be used. It is suitable only for testing and for
+// accessing public resources, like public Google Cloud Storage buckets.
+// It is an error to provide both WithoutAuthentication and any of WithAPIKey,
+// WithTokenSource, WithCredentialsFile or WithServiceAccountFile.
+func WithoutAuthentication() ClientOption {
+	return withoutAuthentication{}
+}
+
+type withoutAuthentication struct{}
+
+func (w withoutAuthentication) Apply(o *internal.DialSettings) { o.NoAuth = true }

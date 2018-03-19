@@ -262,6 +262,10 @@ type StorageGatewayAPI interface {
 	ListVolumesPages(*storagegateway.ListVolumesInput, func(*storagegateway.ListVolumesOutput, bool) bool) error
 	ListVolumesPagesWithContext(aws.Context, *storagegateway.ListVolumesInput, func(*storagegateway.ListVolumesOutput, bool) bool, ...request.Option) error
 
+	NotifyWhenUploaded(*storagegateway.NotifyWhenUploadedInput) (*storagegateway.NotifyWhenUploadedOutput, error)
+	NotifyWhenUploadedWithContext(aws.Context, *storagegateway.NotifyWhenUploadedInput, ...request.Option) (*storagegateway.NotifyWhenUploadedOutput, error)
+	NotifyWhenUploadedRequest(*storagegateway.NotifyWhenUploadedInput) (*request.Request, *storagegateway.NotifyWhenUploadedOutput)
+
 	RefreshCache(*storagegateway.RefreshCacheInput) (*storagegateway.RefreshCacheOutput, error)
 	RefreshCacheWithContext(aws.Context, *storagegateway.RefreshCacheInput, ...request.Option) (*storagegateway.RefreshCacheOutput, error)
 	RefreshCacheRequest(*storagegateway.RefreshCacheInput) (*request.Request, *storagegateway.RefreshCacheOutput)

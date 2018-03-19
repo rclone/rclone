@@ -64,6 +64,10 @@ type WAFAPI interface {
 	CreateByteMatchSetWithContext(aws.Context, *waf.CreateByteMatchSetInput, ...request.Option) (*waf.CreateByteMatchSetOutput, error)
 	CreateByteMatchSetRequest(*waf.CreateByteMatchSetInput) (*request.Request, *waf.CreateByteMatchSetOutput)
 
+	CreateGeoMatchSet(*waf.CreateGeoMatchSetInput) (*waf.CreateGeoMatchSetOutput, error)
+	CreateGeoMatchSetWithContext(aws.Context, *waf.CreateGeoMatchSetInput, ...request.Option) (*waf.CreateGeoMatchSetOutput, error)
+	CreateGeoMatchSetRequest(*waf.CreateGeoMatchSetInput) (*request.Request, *waf.CreateGeoMatchSetOutput)
+
 	CreateIPSet(*waf.CreateIPSetInput) (*waf.CreateIPSetOutput, error)
 	CreateIPSetWithContext(aws.Context, *waf.CreateIPSetInput, ...request.Option) (*waf.CreateIPSetOutput, error)
 	CreateIPSetRequest(*waf.CreateIPSetInput) (*request.Request, *waf.CreateIPSetOutput)
@@ -72,9 +76,21 @@ type WAFAPI interface {
 	CreateRateBasedRuleWithContext(aws.Context, *waf.CreateRateBasedRuleInput, ...request.Option) (*waf.CreateRateBasedRuleOutput, error)
 	CreateRateBasedRuleRequest(*waf.CreateRateBasedRuleInput) (*request.Request, *waf.CreateRateBasedRuleOutput)
 
+	CreateRegexMatchSet(*waf.CreateRegexMatchSetInput) (*waf.CreateRegexMatchSetOutput, error)
+	CreateRegexMatchSetWithContext(aws.Context, *waf.CreateRegexMatchSetInput, ...request.Option) (*waf.CreateRegexMatchSetOutput, error)
+	CreateRegexMatchSetRequest(*waf.CreateRegexMatchSetInput) (*request.Request, *waf.CreateRegexMatchSetOutput)
+
+	CreateRegexPatternSet(*waf.CreateRegexPatternSetInput) (*waf.CreateRegexPatternSetOutput, error)
+	CreateRegexPatternSetWithContext(aws.Context, *waf.CreateRegexPatternSetInput, ...request.Option) (*waf.CreateRegexPatternSetOutput, error)
+	CreateRegexPatternSetRequest(*waf.CreateRegexPatternSetInput) (*request.Request, *waf.CreateRegexPatternSetOutput)
+
 	CreateRule(*waf.CreateRuleInput) (*waf.CreateRuleOutput, error)
 	CreateRuleWithContext(aws.Context, *waf.CreateRuleInput, ...request.Option) (*waf.CreateRuleOutput, error)
 	CreateRuleRequest(*waf.CreateRuleInput) (*request.Request, *waf.CreateRuleOutput)
+
+	CreateRuleGroup(*waf.CreateRuleGroupInput) (*waf.CreateRuleGroupOutput, error)
+	CreateRuleGroupWithContext(aws.Context, *waf.CreateRuleGroupInput, ...request.Option) (*waf.CreateRuleGroupOutput, error)
+	CreateRuleGroupRequest(*waf.CreateRuleGroupInput) (*request.Request, *waf.CreateRuleGroupOutput)
 
 	CreateSizeConstraintSet(*waf.CreateSizeConstraintSetInput) (*waf.CreateSizeConstraintSetOutput, error)
 	CreateSizeConstraintSetWithContext(aws.Context, *waf.CreateSizeConstraintSetInput, ...request.Option) (*waf.CreateSizeConstraintSetOutput, error)
@@ -96,6 +112,10 @@ type WAFAPI interface {
 	DeleteByteMatchSetWithContext(aws.Context, *waf.DeleteByteMatchSetInput, ...request.Option) (*waf.DeleteByteMatchSetOutput, error)
 	DeleteByteMatchSetRequest(*waf.DeleteByteMatchSetInput) (*request.Request, *waf.DeleteByteMatchSetOutput)
 
+	DeleteGeoMatchSet(*waf.DeleteGeoMatchSetInput) (*waf.DeleteGeoMatchSetOutput, error)
+	DeleteGeoMatchSetWithContext(aws.Context, *waf.DeleteGeoMatchSetInput, ...request.Option) (*waf.DeleteGeoMatchSetOutput, error)
+	DeleteGeoMatchSetRequest(*waf.DeleteGeoMatchSetInput) (*request.Request, *waf.DeleteGeoMatchSetOutput)
+
 	DeleteIPSet(*waf.DeleteIPSetInput) (*waf.DeleteIPSetOutput, error)
 	DeleteIPSetWithContext(aws.Context, *waf.DeleteIPSetInput, ...request.Option) (*waf.DeleteIPSetOutput, error)
 	DeleteIPSetRequest(*waf.DeleteIPSetInput) (*request.Request, *waf.DeleteIPSetOutput)
@@ -104,9 +124,21 @@ type WAFAPI interface {
 	DeleteRateBasedRuleWithContext(aws.Context, *waf.DeleteRateBasedRuleInput, ...request.Option) (*waf.DeleteRateBasedRuleOutput, error)
 	DeleteRateBasedRuleRequest(*waf.DeleteRateBasedRuleInput) (*request.Request, *waf.DeleteRateBasedRuleOutput)
 
+	DeleteRegexMatchSet(*waf.DeleteRegexMatchSetInput) (*waf.DeleteRegexMatchSetOutput, error)
+	DeleteRegexMatchSetWithContext(aws.Context, *waf.DeleteRegexMatchSetInput, ...request.Option) (*waf.DeleteRegexMatchSetOutput, error)
+	DeleteRegexMatchSetRequest(*waf.DeleteRegexMatchSetInput) (*request.Request, *waf.DeleteRegexMatchSetOutput)
+
+	DeleteRegexPatternSet(*waf.DeleteRegexPatternSetInput) (*waf.DeleteRegexPatternSetOutput, error)
+	DeleteRegexPatternSetWithContext(aws.Context, *waf.DeleteRegexPatternSetInput, ...request.Option) (*waf.DeleteRegexPatternSetOutput, error)
+	DeleteRegexPatternSetRequest(*waf.DeleteRegexPatternSetInput) (*request.Request, *waf.DeleteRegexPatternSetOutput)
+
 	DeleteRule(*waf.DeleteRuleInput) (*waf.DeleteRuleOutput, error)
 	DeleteRuleWithContext(aws.Context, *waf.DeleteRuleInput, ...request.Option) (*waf.DeleteRuleOutput, error)
 	DeleteRuleRequest(*waf.DeleteRuleInput) (*request.Request, *waf.DeleteRuleOutput)
+
+	DeleteRuleGroup(*waf.DeleteRuleGroupInput) (*waf.DeleteRuleGroupOutput, error)
+	DeleteRuleGroupWithContext(aws.Context, *waf.DeleteRuleGroupInput, ...request.Option) (*waf.DeleteRuleGroupOutput, error)
+	DeleteRuleGroupRequest(*waf.DeleteRuleGroupInput) (*request.Request, *waf.DeleteRuleGroupOutput)
 
 	DeleteSizeConstraintSet(*waf.DeleteSizeConstraintSetInput) (*waf.DeleteSizeConstraintSetOutput, error)
 	DeleteSizeConstraintSetWithContext(aws.Context, *waf.DeleteSizeConstraintSetInput, ...request.Option) (*waf.DeleteSizeConstraintSetOutput, error)
@@ -136,6 +168,10 @@ type WAFAPI interface {
 	GetChangeTokenStatusWithContext(aws.Context, *waf.GetChangeTokenStatusInput, ...request.Option) (*waf.GetChangeTokenStatusOutput, error)
 	GetChangeTokenStatusRequest(*waf.GetChangeTokenStatusInput) (*request.Request, *waf.GetChangeTokenStatusOutput)
 
+	GetGeoMatchSet(*waf.GetGeoMatchSetInput) (*waf.GetGeoMatchSetOutput, error)
+	GetGeoMatchSetWithContext(aws.Context, *waf.GetGeoMatchSetInput, ...request.Option) (*waf.GetGeoMatchSetOutput, error)
+	GetGeoMatchSetRequest(*waf.GetGeoMatchSetInput) (*request.Request, *waf.GetGeoMatchSetOutput)
+
 	GetIPSet(*waf.GetIPSetInput) (*waf.GetIPSetOutput, error)
 	GetIPSetWithContext(aws.Context, *waf.GetIPSetInput, ...request.Option) (*waf.GetIPSetOutput, error)
 	GetIPSetRequest(*waf.GetIPSetInput) (*request.Request, *waf.GetIPSetOutput)
@@ -148,9 +184,21 @@ type WAFAPI interface {
 	GetRateBasedRuleManagedKeysWithContext(aws.Context, *waf.GetRateBasedRuleManagedKeysInput, ...request.Option) (*waf.GetRateBasedRuleManagedKeysOutput, error)
 	GetRateBasedRuleManagedKeysRequest(*waf.GetRateBasedRuleManagedKeysInput) (*request.Request, *waf.GetRateBasedRuleManagedKeysOutput)
 
+	GetRegexMatchSet(*waf.GetRegexMatchSetInput) (*waf.GetRegexMatchSetOutput, error)
+	GetRegexMatchSetWithContext(aws.Context, *waf.GetRegexMatchSetInput, ...request.Option) (*waf.GetRegexMatchSetOutput, error)
+	GetRegexMatchSetRequest(*waf.GetRegexMatchSetInput) (*request.Request, *waf.GetRegexMatchSetOutput)
+
+	GetRegexPatternSet(*waf.GetRegexPatternSetInput) (*waf.GetRegexPatternSetOutput, error)
+	GetRegexPatternSetWithContext(aws.Context, *waf.GetRegexPatternSetInput, ...request.Option) (*waf.GetRegexPatternSetOutput, error)
+	GetRegexPatternSetRequest(*waf.GetRegexPatternSetInput) (*request.Request, *waf.GetRegexPatternSetOutput)
+
 	GetRule(*waf.GetRuleInput) (*waf.GetRuleOutput, error)
 	GetRuleWithContext(aws.Context, *waf.GetRuleInput, ...request.Option) (*waf.GetRuleOutput, error)
 	GetRuleRequest(*waf.GetRuleInput) (*request.Request, *waf.GetRuleOutput)
+
+	GetRuleGroup(*waf.GetRuleGroupInput) (*waf.GetRuleGroupOutput, error)
+	GetRuleGroupWithContext(aws.Context, *waf.GetRuleGroupInput, ...request.Option) (*waf.GetRuleGroupOutput, error)
+	GetRuleGroupRequest(*waf.GetRuleGroupInput) (*request.Request, *waf.GetRuleGroupOutput)
 
 	GetSampledRequests(*waf.GetSampledRequestsInput) (*waf.GetSampledRequestsOutput, error)
 	GetSampledRequestsWithContext(aws.Context, *waf.GetSampledRequestsInput, ...request.Option) (*waf.GetSampledRequestsOutput, error)
@@ -172,9 +220,17 @@ type WAFAPI interface {
 	GetXssMatchSetWithContext(aws.Context, *waf.GetXssMatchSetInput, ...request.Option) (*waf.GetXssMatchSetOutput, error)
 	GetXssMatchSetRequest(*waf.GetXssMatchSetInput) (*request.Request, *waf.GetXssMatchSetOutput)
 
+	ListActivatedRulesInRuleGroup(*waf.ListActivatedRulesInRuleGroupInput) (*waf.ListActivatedRulesInRuleGroupOutput, error)
+	ListActivatedRulesInRuleGroupWithContext(aws.Context, *waf.ListActivatedRulesInRuleGroupInput, ...request.Option) (*waf.ListActivatedRulesInRuleGroupOutput, error)
+	ListActivatedRulesInRuleGroupRequest(*waf.ListActivatedRulesInRuleGroupInput) (*request.Request, *waf.ListActivatedRulesInRuleGroupOutput)
+
 	ListByteMatchSets(*waf.ListByteMatchSetsInput) (*waf.ListByteMatchSetsOutput, error)
 	ListByteMatchSetsWithContext(aws.Context, *waf.ListByteMatchSetsInput, ...request.Option) (*waf.ListByteMatchSetsOutput, error)
 	ListByteMatchSetsRequest(*waf.ListByteMatchSetsInput) (*request.Request, *waf.ListByteMatchSetsOutput)
+
+	ListGeoMatchSets(*waf.ListGeoMatchSetsInput) (*waf.ListGeoMatchSetsOutput, error)
+	ListGeoMatchSetsWithContext(aws.Context, *waf.ListGeoMatchSetsInput, ...request.Option) (*waf.ListGeoMatchSetsOutput, error)
+	ListGeoMatchSetsRequest(*waf.ListGeoMatchSetsInput) (*request.Request, *waf.ListGeoMatchSetsOutput)
 
 	ListIPSets(*waf.ListIPSetsInput) (*waf.ListIPSetsOutput, error)
 	ListIPSetsWithContext(aws.Context, *waf.ListIPSetsInput, ...request.Option) (*waf.ListIPSetsOutput, error)
@@ -183,6 +239,18 @@ type WAFAPI interface {
 	ListRateBasedRules(*waf.ListRateBasedRulesInput) (*waf.ListRateBasedRulesOutput, error)
 	ListRateBasedRulesWithContext(aws.Context, *waf.ListRateBasedRulesInput, ...request.Option) (*waf.ListRateBasedRulesOutput, error)
 	ListRateBasedRulesRequest(*waf.ListRateBasedRulesInput) (*request.Request, *waf.ListRateBasedRulesOutput)
+
+	ListRegexMatchSets(*waf.ListRegexMatchSetsInput) (*waf.ListRegexMatchSetsOutput, error)
+	ListRegexMatchSetsWithContext(aws.Context, *waf.ListRegexMatchSetsInput, ...request.Option) (*waf.ListRegexMatchSetsOutput, error)
+	ListRegexMatchSetsRequest(*waf.ListRegexMatchSetsInput) (*request.Request, *waf.ListRegexMatchSetsOutput)
+
+	ListRegexPatternSets(*waf.ListRegexPatternSetsInput) (*waf.ListRegexPatternSetsOutput, error)
+	ListRegexPatternSetsWithContext(aws.Context, *waf.ListRegexPatternSetsInput, ...request.Option) (*waf.ListRegexPatternSetsOutput, error)
+	ListRegexPatternSetsRequest(*waf.ListRegexPatternSetsInput) (*request.Request, *waf.ListRegexPatternSetsOutput)
+
+	ListRuleGroups(*waf.ListRuleGroupsInput) (*waf.ListRuleGroupsOutput, error)
+	ListRuleGroupsWithContext(aws.Context, *waf.ListRuleGroupsInput, ...request.Option) (*waf.ListRuleGroupsOutput, error)
+	ListRuleGroupsRequest(*waf.ListRuleGroupsInput) (*request.Request, *waf.ListRuleGroupsOutput)
 
 	ListRules(*waf.ListRulesInput) (*waf.ListRulesOutput, error)
 	ListRulesWithContext(aws.Context, *waf.ListRulesInput, ...request.Option) (*waf.ListRulesOutput, error)
@@ -196,6 +264,10 @@ type WAFAPI interface {
 	ListSqlInjectionMatchSetsWithContext(aws.Context, *waf.ListSqlInjectionMatchSetsInput, ...request.Option) (*waf.ListSqlInjectionMatchSetsOutput, error)
 	ListSqlInjectionMatchSetsRequest(*waf.ListSqlInjectionMatchSetsInput) (*request.Request, *waf.ListSqlInjectionMatchSetsOutput)
 
+	ListSubscribedRuleGroups(*waf.ListSubscribedRuleGroupsInput) (*waf.ListSubscribedRuleGroupsOutput, error)
+	ListSubscribedRuleGroupsWithContext(aws.Context, *waf.ListSubscribedRuleGroupsInput, ...request.Option) (*waf.ListSubscribedRuleGroupsOutput, error)
+	ListSubscribedRuleGroupsRequest(*waf.ListSubscribedRuleGroupsInput) (*request.Request, *waf.ListSubscribedRuleGroupsOutput)
+
 	ListWebACLs(*waf.ListWebACLsInput) (*waf.ListWebACLsOutput, error)
 	ListWebACLsWithContext(aws.Context, *waf.ListWebACLsInput, ...request.Option) (*waf.ListWebACLsOutput, error)
 	ListWebACLsRequest(*waf.ListWebACLsInput) (*request.Request, *waf.ListWebACLsOutput)
@@ -208,6 +280,10 @@ type WAFAPI interface {
 	UpdateByteMatchSetWithContext(aws.Context, *waf.UpdateByteMatchSetInput, ...request.Option) (*waf.UpdateByteMatchSetOutput, error)
 	UpdateByteMatchSetRequest(*waf.UpdateByteMatchSetInput) (*request.Request, *waf.UpdateByteMatchSetOutput)
 
+	UpdateGeoMatchSet(*waf.UpdateGeoMatchSetInput) (*waf.UpdateGeoMatchSetOutput, error)
+	UpdateGeoMatchSetWithContext(aws.Context, *waf.UpdateGeoMatchSetInput, ...request.Option) (*waf.UpdateGeoMatchSetOutput, error)
+	UpdateGeoMatchSetRequest(*waf.UpdateGeoMatchSetInput) (*request.Request, *waf.UpdateGeoMatchSetOutput)
+
 	UpdateIPSet(*waf.UpdateIPSetInput) (*waf.UpdateIPSetOutput, error)
 	UpdateIPSetWithContext(aws.Context, *waf.UpdateIPSetInput, ...request.Option) (*waf.UpdateIPSetOutput, error)
 	UpdateIPSetRequest(*waf.UpdateIPSetInput) (*request.Request, *waf.UpdateIPSetOutput)
@@ -216,9 +292,21 @@ type WAFAPI interface {
 	UpdateRateBasedRuleWithContext(aws.Context, *waf.UpdateRateBasedRuleInput, ...request.Option) (*waf.UpdateRateBasedRuleOutput, error)
 	UpdateRateBasedRuleRequest(*waf.UpdateRateBasedRuleInput) (*request.Request, *waf.UpdateRateBasedRuleOutput)
 
+	UpdateRegexMatchSet(*waf.UpdateRegexMatchSetInput) (*waf.UpdateRegexMatchSetOutput, error)
+	UpdateRegexMatchSetWithContext(aws.Context, *waf.UpdateRegexMatchSetInput, ...request.Option) (*waf.UpdateRegexMatchSetOutput, error)
+	UpdateRegexMatchSetRequest(*waf.UpdateRegexMatchSetInput) (*request.Request, *waf.UpdateRegexMatchSetOutput)
+
+	UpdateRegexPatternSet(*waf.UpdateRegexPatternSetInput) (*waf.UpdateRegexPatternSetOutput, error)
+	UpdateRegexPatternSetWithContext(aws.Context, *waf.UpdateRegexPatternSetInput, ...request.Option) (*waf.UpdateRegexPatternSetOutput, error)
+	UpdateRegexPatternSetRequest(*waf.UpdateRegexPatternSetInput) (*request.Request, *waf.UpdateRegexPatternSetOutput)
+
 	UpdateRule(*waf.UpdateRuleInput) (*waf.UpdateRuleOutput, error)
 	UpdateRuleWithContext(aws.Context, *waf.UpdateRuleInput, ...request.Option) (*waf.UpdateRuleOutput, error)
 	UpdateRuleRequest(*waf.UpdateRuleInput) (*request.Request, *waf.UpdateRuleOutput)
+
+	UpdateRuleGroup(*waf.UpdateRuleGroupInput) (*waf.UpdateRuleGroupOutput, error)
+	UpdateRuleGroupWithContext(aws.Context, *waf.UpdateRuleGroupInput, ...request.Option) (*waf.UpdateRuleGroupOutput, error)
+	UpdateRuleGroupRequest(*waf.UpdateRuleGroupInput) (*request.Request, *waf.UpdateRuleGroupOutput)
 
 	UpdateSizeConstraintSet(*waf.UpdateSizeConstraintSetInput) (*waf.UpdateSizeConstraintSetOutput, error)
 	UpdateSizeConstraintSetWithContext(aws.Context, *waf.UpdateSizeConstraintSetInput, ...request.Option) (*waf.UpdateSizeConstraintSetOutput, error)

@@ -104,7 +104,7 @@ type BlobProperties struct {
 	CacheControl          string      `xml:"Cache-Control" header:"x-ms-blob-cache-control"`
 	ContentLanguage       string      `xml:"Cache-Language" header:"x-ms-blob-content-language"`
 	ContentDisposition    string      `xml:"Content-Disposition" header:"x-ms-blob-content-disposition"`
-	BlobType              BlobType    `xml:"x-ms-blob-blob-type"`
+	BlobType              BlobType    `xml:"BlobType"`
 	SequenceNumber        int64       `xml:"x-ms-blob-sequence-number"`
 	CopyID                string      `xml:"CopyId"`
 	CopyStatus            string      `xml:"CopyStatus"`
@@ -549,27 +549,7 @@ func (b *Blob) GetMetadata(options *GetBlobMetadataOptions) error {
 }
 
 func (b *Blob) writeMetadata(h http.Header) {
-	metadata := make(map[string]string)
-	for k, v := range h {
-		// Can't trust CanonicalHeaderKey() to munge case
-		// reliably. "_" is allowed in identifiers:
-		// https://msdn.microsoft.com/en-us/library/azure/dd179414.aspx
-		// https://msdn.microsoft.com/library/aa664670(VS.71).aspx
-		// http://tools.ietf.org/html/rfc7230#section-3.2
-		// ...but "_" is considered invalid by
-		// CanonicalMIMEHeaderKey in
-		// https://golang.org/src/net/textproto/reader.go?s=14615:14659#L542
-		// so k can be "X-Ms-Meta-Lol" or "x-ms-meta-lol_rofl".
-		k = strings.ToLower(k)
-		if len(v) == 0 || !strings.HasPrefix(k, strings.ToLower(userDefinedMetadataHeaderPrefix)) {
-			continue
-		}
-		// metadata["lol"] = content of the last X-Ms-Meta-Lol header
-		k = k[len(userDefinedMetadataHeaderPrefix):]
-		metadata[k] = v[len(v)-1]
-	}
-
-	b.Metadata = BlobMetadata(metadata)
+	b.Metadata = BlobMetadata(writeMetadata(h))
 }
 
 // DeleteBlobOptions includes the options for a delete blob operation

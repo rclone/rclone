@@ -1,6 +1,8 @@
 // Package mediaservices implements the Azure ARM Mediaservices service API version 2015-10-01.
 //
 // Media Services resource management APIs.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/mediaservices/mgmt/2015-10-01/media
 package mediaservices
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

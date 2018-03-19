@@ -19,8 +19,7 @@ import (
 )
 
 func ExampleStart() {
-	err := profiler.Start(profiler.Config{Service: "my-service", ServiceVersion: "v1"})
-	if err != nil {
+	if err := profiler.Start(profiler.Config{Service: "my-service", ServiceVersion: "v1"}); err != nil {
 		//TODO: Handle error.
 	}
 }

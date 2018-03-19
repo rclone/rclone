@@ -64,8 +64,8 @@ func TestFormatter(t *testing.T) {
 		want: "0.12",
 	}, {
 		desc: "max fraction overflow",
-		f:    Decimal(0.123, MaxFractionDigits(1e6)),
-		want: "0.123",
+		f:    Decimal(0.125, MaxFractionDigits(1e6)),
+		want: "0.125",
 	}, {
 		desc: "min integer overflow",
 		f:    Decimal(0, MinIntegerDigits(1e6)),
@@ -172,7 +172,7 @@ func TestFormatter(t *testing.T) {
 		want: "123.45‰",
 	}, {
 		desc: "percent fraction",
-		f:    PerMille(0.12345, Scale(1)),
+		f:    PerMille(0.12344, Scale(1)),
 		want: "123.4‰",
 	}}
 	for _, tc := range testCases {

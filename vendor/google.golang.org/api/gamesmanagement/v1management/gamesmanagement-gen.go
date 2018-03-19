@@ -204,8 +204,8 @@ type AchievementResetAllResponse struct {
 }
 
 func (s *AchievementResetAllResponse) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementResetAllResponse
-	raw := noMethod(*s)
+	type NoMethod AchievementResetAllResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -239,8 +239,8 @@ type AchievementResetMultipleForAllRequest struct {
 }
 
 func (s *AchievementResetMultipleForAllRequest) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementResetMultipleForAllRequest
-	raw := noMethod(*s)
+	type NoMethod AchievementResetMultipleForAllRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -289,8 +289,8 @@ type AchievementResetResponse struct {
 }
 
 func (s *AchievementResetResponse) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementResetResponse
-	raw := noMethod(*s)
+	type NoMethod AchievementResetResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -322,8 +322,8 @@ type EventsResetMultipleForAllRequest struct {
 }
 
 func (s *EventsResetMultipleForAllRequest) MarshalJSON() ([]byte, error) {
-	type noMethod EventsResetMultipleForAllRequest
-	raw := noMethod(*s)
+	type NoMethod EventsResetMultipleForAllRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -356,8 +356,8 @@ type GamesPlayedResource struct {
 }
 
 func (s *GamesPlayedResource) MarshalJSON() ([]byte, error) {
-	type noMethod GamesPlayedResource
-	raw := noMethod(*s)
+	type NoMethod GamesPlayedResource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -399,8 +399,8 @@ type GamesPlayerExperienceInfoResource struct {
 }
 
 func (s *GamesPlayerExperienceInfoResource) MarshalJSON() ([]byte, error) {
-	type noMethod GamesPlayerExperienceInfoResource
-	raw := noMethod(*s)
+	type NoMethod GamesPlayerExperienceInfoResource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -434,8 +434,8 @@ type GamesPlayerLevelResource struct {
 }
 
 func (s *GamesPlayerLevelResource) MarshalJSON() ([]byte, error) {
-	type noMethod GamesPlayerLevelResource
-	raw := noMethod(*s)
+	type NoMethod GamesPlayerLevelResource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -470,8 +470,8 @@ type HiddenPlayer struct {
 }
 
 func (s *HiddenPlayer) MarshalJSON() ([]byte, error) {
-	type noMethod HiddenPlayer
-	raw := noMethod(*s)
+	type NoMethod HiddenPlayer
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -510,8 +510,8 @@ type HiddenPlayerList struct {
 }
 
 func (s *HiddenPlayerList) MarshalJSON() ([]byte, error) {
-	type noMethod HiddenPlayerList
-	raw := noMethod(*s)
+	type NoMethod HiddenPlayerList
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -584,8 +584,8 @@ type Player struct {
 }
 
 func (s *Player) MarshalJSON() ([]byte, error) {
-	type noMethod Player
-	raw := noMethod(*s)
+	type NoMethod Player
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -618,8 +618,8 @@ type PlayerName struct {
 }
 
 func (s *PlayerName) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerName
-	raw := noMethod(*s)
+	type NoMethod PlayerName
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -655,8 +655,8 @@ type PlayerScoreResetAllResponse struct {
 }
 
 func (s *PlayerScoreResetAllResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerScoreResetAllResponse
-	raw := noMethod(*s)
+	type NoMethod PlayerScoreResetAllResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -700,8 +700,8 @@ type PlayerScoreResetResponse struct {
 }
 
 func (s *PlayerScoreResetResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerScoreResetResponse
-	raw := noMethod(*s)
+	type NoMethod PlayerScoreResetResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -733,8 +733,8 @@ type ProfileSettings struct {
 }
 
 func (s *ProfileSettings) MarshalJSON() ([]byte, error) {
-	type noMethod ProfileSettings
-	raw := noMethod(*s)
+	type NoMethod ProfileSettings
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -766,8 +766,8 @@ type QuestsResetMultipleForAllRequest struct {
 }
 
 func (s *QuestsResetMultipleForAllRequest) MarshalJSON() ([]byte, error) {
-	type noMethod QuestsResetMultipleForAllRequest
-	raw := noMethod(*s)
+	type NoMethod QuestsResetMultipleForAllRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -799,8 +799,8 @@ type ScoresResetMultipleForAllRequest struct {
 }
 
 func (s *ScoresResetMultipleForAllRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ScoresResetMultipleForAllRequest
-	raw := noMethod(*s)
+	type NoMethod ScoresResetMultipleForAllRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -899,7 +899,7 @@ func (c *AchievementsResetCall) Do(opts ...googleapi.CallOption) (*AchievementRe
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1020,7 +1020,7 @@ func (c *AchievementsResetAllCall) Do(opts ...googleapi.CallOption) (*Achievemen
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1437,7 +1437,7 @@ func (c *ApplicationsListHiddenCall) Do(opts ...googleapi.CallOption) (*HiddenPl
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2884,7 +2884,7 @@ func (c *ScoresResetCall) Do(opts ...googleapi.CallOption) (*PlayerScoreResetRes
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3005,7 +3005,7 @@ func (c *ScoresResetAllCall) Do(opts ...googleapi.CallOption) (*PlayerScoreReset
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

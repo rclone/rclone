@@ -99,7 +99,9 @@ func (client AlertsClient) ClearPreparer(parameters ClearAlertRequest, resourceG
 // ClearSender sends the Clear request. The method will close the
 // http.Response Body if it receives an error.
 func (client AlertsClient) ClearSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ClearResponder handles the response to the Clear request. The method always
@@ -173,7 +175,9 @@ func (client AlertsClient) ListByManagerPreparer(resourceGroupName string, manag
 // ListByManagerSender sends the ListByManager request. The method will close the
 // http.Response Body if it receives an error.
 func (client AlertsClient) ListByManagerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByManagerResponder handles the response to the ListByManager request. The method always
@@ -320,7 +324,9 @@ func (client AlertsClient) SendTestEmailPreparer(deviceName string, parameters S
 // SendTestEmailSender sends the SendTestEmail request. The method will close the
 // http.Response Body if it receives an error.
 func (client AlertsClient) SendTestEmailSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // SendTestEmailResponder handles the response to the SendTestEmail request. The method always

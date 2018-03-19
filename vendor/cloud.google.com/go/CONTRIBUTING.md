@@ -31,9 +31,12 @@ To run the integrations tests, creating and configuration of a project in the
 Google Developers Console is required.
 
 After creating a project, you must [create a service account](https://developers.google.com/identity/protocols/OAuth2ServiceAccount#creatinganaccount).
-Ensure the project-level **Owner** [IAM role](console.cloud.google.com/iam-admin/iam/project)
-(or **Editor** and **Logs Configuration Writer** roles) are added to the
-service account.
+Ensure the project-level **Owner** 
+[IAM role](console.cloud.google.com/iam-admin/iam/project) role is added to the
+service account. Alternatively, the account can be granted all of the following roles:
+- **Editor** 
+- **Logs Configuration Writer** 
+- **PubSub Admin**
 
 Once you create a project, set the following environment variables to be able to
 run the against the actual APIs.
@@ -41,6 +44,12 @@ run the against the actual APIs.
 - **GCLOUD_TESTS_GOLANG_PROJECT_ID**: Developers Console project's ID (e.g. bamboo-shift-455)
 - **GCLOUD_TESTS_GOLANG_KEY**: The path to the JSON key file.
 - **GCLOUD_TESTS_API_KEY**: Your API key.
+
+Firestore requires a different project and key:
+
+- **GCLOUD_TESTS_GOLANG_FIRESTORE_PROJECT_ID**: Developers Console project's ID
+  supporting Firestore
+- **GCLOUD_TESTS_GOLANG_FIRESTORE_KEY**: The path to the JSON key file.
 
 Install the [gcloud command-line tool][gcloudcli] to your machine and use it
 to create some resources used in integration tests.
@@ -63,10 +72,15 @@ $ gcloud preview datastore create-indexes datastore/testdata/index.yaml
 $ gsutil mb gs://$GCLOUD_TESTS_GOLANG_PROJECT_ID
 $ gsutil acl ch -g cloud-logs@google.com:O gs://$GCLOUD_TESTS_GOLANG_PROJECT_ID
 
+# Create a PubSub topic for integration tests of storage notifications.
+$ gcloud beta pubsub topics create go-storage-notification-test
+
 # Create a Spanner instance for the spanner integration tests.
 $ gcloud beta spanner instances create go-integration-test --config regional-us-central1 --nodes 1 --description 'Instance for go client test'
 # NOTE: Spanner instances are priced by the node-hour, so you may want to delete
 # the instance after testing with 'gcloud beta spanner instances delete'.
+
+
 ```
 
 Once you've set the environment variables, you can run the integration tests by
@@ -82,9 +96,9 @@ Before we can accept your pull requests you'll need to sign a Contributor
 License Agreement (CLA):
 
 - **If you are an individual writing original source code** and **you own the
-- intellectual property**, then you'll need to sign an [individual CLA][indvcla].
-- **If you work for a company that wants to allow you to contribute your work**,
-then you'll need to sign a [corporate CLA][corpcla].
+intellectual property**, then you'll need to sign an [individual CLA][indvcla].
+- **If you work for a company that wants to allow you to contribute your
+work**, then you'll need to sign a [corporate CLA][corpcla].
 
 You can sign these electronically (just scroll to the bottom). After that,
 we'll be able to accept your pull requests.

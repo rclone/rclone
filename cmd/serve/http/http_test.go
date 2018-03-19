@@ -1,3 +1,5 @@
+// +build go1.8
+
 package http
 
 import (
@@ -5,17 +7,24 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"path"
 	"strings"
 	"testing"
 	"time"
 
+	_ "github.com/ncw/rclone/backend/local"
+	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/fs"
-	_ "github.com/ncw/rclone/local"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/filter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var updateGolden = flag.Bool("updategolden", false, "update golden files for regression test")
+var (
+	updateGolden = flag.Bool("updategolden", false, "update golden files for regression test")
+	httpServer   *server
+)
 
 const (
 	testBindAddress = "localhost:51777"
@@ -23,8 +32,10 @@ const (
 )
 
 func startServer(t *testing.T, f fs.Fs) {
-	s := newServer(f, testBindAddress)
-	go s.serve()
+	opt := httplib.DefaultOpt
+	opt.ListenAddr = testBindAddress
+	httpServer = newServer(f, &opt)
+	go httpServer.serve()
 
 	// try to connect to the test server
 	pause := time.Millisecond
@@ -44,14 +55,14 @@ func startServer(t *testing.T, f fs.Fs) {
 
 func TestInit(t *testing.T) {
 	// Configure the remote
-	fs.LoadConfig()
+	config.LoadConfig()
 	// fs.Config.LogLevel = fs.LogLevelDebug
 	// fs.Config.DumpHeaders = true
 	// fs.Config.DumpBodies = true
 
 	// exclude files called hidden.txt and directories called hidden
-	require.NoError(t, fs.Config.Filter.AddRule("- hidden.txt"))
-	require.NoError(t, fs.Config.Filter.AddRule("- hidden/**"))
+	require.NoError(t, filter.Active.AddRule("- hidden.txt"))
+	require.NoError(t, filter.Active.AddRule("- hidden/**"))
 
 	// Create a test Fs
 	f, err := fs.NewFs("testdata/files")
@@ -189,4 +200,38 @@ func TestGET(t *testing.T) {
 
 		checkGolden(t, test.Golden, body)
 	}
+}
+
+type mockNode struct {
+	path  string
+	isdir bool
+}
+
+func (n mockNode) Path() string { return n.path }
+func (n mockNode) Name() string {
+	if n.path == "" {
+		return ""
+	}
+	return path.Base(n.path)
+}
+func (n mockNode) IsDir() bool { return n.isdir }
+
+func TestAddEntry(t *testing.T) {
+	var es entries
+	es.addEntry(mockNode{path: "", isdir: true})
+	es.addEntry(mockNode{path: "dir", isdir: true})
+	es.addEntry(mockNode{path: "a/b/c/d.txt", isdir: false})
+	es.addEntry(mockNode{path: "a/b/c/colon:colon.txt", isdir: false})
+	es.addEntry(mockNode{path: "\"quotes\".txt", isdir: false})
+	assert.Equal(t, entries{
+		{remote: "", URL: "/", Leaf: "/"},
+		{remote: "dir", URL: "dir/", Leaf: "dir/"},
+		{remote: "a/b/c/d.txt", URL: "d.txt", Leaf: "d.txt"},
+		{remote: "a/b/c/colon:colon.txt", URL: "./colon:colon.txt", Leaf: "colon:colon.txt"},
+		{remote: "\"quotes\".txt", URL: "%22quotes%22.txt", Leaf: "\"quotes\".txt"},
+	}, es)
+}
+
+func TestFinalise(t *testing.T) {
+	httpServer.srv.Close()
 }

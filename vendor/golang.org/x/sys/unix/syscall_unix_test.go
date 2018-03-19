@@ -138,6 +138,9 @@ func TestPassFD(t *testing.T) {
 		uc.Close()
 	})
 	_, oobn, _, _, err := uc.ReadMsgUnix(buf, oob)
+	if err != nil {
+		t.Fatalf("ReadMsgUnix: %v", err)
+	}
 	closeUnix.Stop()
 
 	scms, err := unix.ParseSocketControlMessage(oob[:oobn])
@@ -335,11 +338,109 @@ func TestDup(t *testing.T) {
 		t.Fatalf("Write to dup2 fd failed: %v", err)
 	}
 	_, err = unix.Seek(f, 0, 0)
+	if err != nil {
+		t.Fatalf("Seek failed: %v", err)
+	}
 	_, err = unix.Read(f, b2)
 	if err != nil {
 		t.Fatalf("Read back failed: %v", err)
 	}
 	if string(b1) != string(b2) {
 		t.Errorf("Dup: stdout write not in file, expected %v, got %v", string(b1), string(b2))
+	}
+}
+
+func TestPoll(t *testing.T) {
+	f, cleanup := mktmpfifo(t)
+	defer cleanup()
+
+	const timeout = 100
+
+	ok := make(chan bool, 1)
+	go func() {
+		select {
+		case <-time.After(10 * timeout * time.Millisecond):
+			t.Errorf("Poll: failed to timeout after %d milliseconds", 10*timeout)
+		case <-ok:
+		}
+	}()
+
+	fds := []unix.PollFd{{Fd: int32(f.Fd()), Events: unix.POLLIN}}
+	n, err := unix.Poll(fds, timeout)
+	ok <- true
+	if err != nil {
+		t.Errorf("Poll: unexpected error: %v", err)
+		return
+	}
+	if n != 0 {
+		t.Errorf("Poll: wrong number of events: got %v, expected %v", n, 0)
+		return
+	}
+}
+
+func TestGetwd(t *testing.T) {
+	fd, err := os.Open(".")
+	if err != nil {
+		t.Fatalf("Open .: %s", err)
+	}
+	defer fd.Close()
+	// These are chosen carefully not to be symlinks on a Mac
+	// (unlike, say, /var, /etc)
+	dirs := []string{"/", "/usr/bin"}
+	if runtime.GOOS == "darwin" {
+		switch runtime.GOARCH {
+		case "arm", "arm64":
+			d1, err := ioutil.TempDir("", "d1")
+			if err != nil {
+				t.Fatalf("TempDir: %v", err)
+			}
+			d2, err := ioutil.TempDir("", "d2")
+			if err != nil {
+				t.Fatalf("TempDir: %v", err)
+			}
+			dirs = []string{d1, d2}
+		}
+	}
+	oldwd := os.Getenv("PWD")
+	for _, d := range dirs {
+		err = os.Chdir(d)
+		if err != nil {
+			t.Fatalf("Chdir: %v", err)
+		}
+		pwd, err := unix.Getwd()
+		if err != nil {
+			t.Fatalf("Getwd in %s: %s", d, err)
+		}
+		os.Setenv("PWD", oldwd)
+		err = fd.Chdir()
+		if err != nil {
+			// We changed the current directory and cannot go back.
+			// Don't let the tests continue; they'll scribble
+			// all over some other directory.
+			fmt.Fprintf(os.Stderr, "fchdir back to dot failed: %s\n", err)
+			os.Exit(1)
+		}
+		if pwd != d {
+			t.Fatalf("Getwd returned %q want %q", pwd, d)
+		}
+	}
+}
+
+// mktmpfifo creates a temporary FIFO and provides a cleanup function.
+func mktmpfifo(t *testing.T) (*os.File, func()) {
+	err := unix.Mkfifo("fifo", 0666)
+	if err != nil {
+		t.Fatalf("mktmpfifo: failed to create FIFO: %v", err)
+	}
+
+	f, err := os.OpenFile("fifo", os.O_RDWR, 0666)
+	if err != nil {
+		os.Remove("fifo")
+		t.Fatalf("mktmpfifo: failed to open FIFO: %v", err)
+	}
+
+	return f, func() {
+		f.Close()
+		os.Remove("fifo")
 	}
 }

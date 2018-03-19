@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/eOnhI7vohdeU44iGbzR45SHL-EI\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/fAl5BHlYqwU8XIUMb6QGOitbCcM\"",
  "discoveryVersion": "v1",
  "id": "androidenterprise:v1",
  "name": "androidenterprise",
  "canonicalName": "Android Enterprise",
  "version": "v1",
- "revision": "20170911",
+ "revision": "20180111",
  "title": "Google Play EMM API",
  "description": "Manages the deployment of apps to Android for Work users.",
  "ownerDomain": "google.com",
@@ -268,6 +268,10 @@
    "type": "object",
    "description": "This represents a single version of the app.",
    "properties": {
+    "track": {
+     "type": "string",
+     "description": "The track that this app was published in. For example if track is \"alpha\", this is an alpha version of the app."
+    },
     "versionCode": {
      "type": "integer",
      "description": "Unique increasing identifier for the app version.",
@@ -311,10 +315,33 @@
     }
    }
   },
+  "ConfigurationVariables": {
+   "id": "ConfigurationVariables",
+   "type": "object",
+   "description": "A configuration variables resource contains the managed configuration settings ID to be applied to a single user, as well as the variable set that is attributed to the user. The variable set will be used to replace placeholders in the managed configuration settings.",
+   "properties": {
+    "kind": {
+     "type": "string",
+     "description": "Identifies what kind of resource this is. Value: the fixed string \"androidenterprise#configurationVariables\".",
+     "default": "androidenterprise#configurationVariables"
+    },
+    "mcmId": {
+     "type": "string",
+     "description": "The ID of the managed configurations settings."
+    },
+    "variableSet": {
+     "type": "array",
+     "description": "The variable set that is attributed to the user.",
+     "items": {
+      "$ref": "VariableSet"
+     }
+    }
+   }
+  },
   "Device": {
    "id": "Device",
    "type": "object",
-   "description": "A Devices resource represents a mobile device managed by the EMM and belonging to a specific enterprise user.\n\nThis collection cannot be modified via the API. It is automatically populated as devices are set up to be managed.",
+   "description": "A Devices resource represents a mobile device managed by the EMM and belonging to a specific enterprise user.",
    "properties": {
     "androidId": {
      "type": "string",
@@ -328,6 +355,10 @@
     "managementType": {
      "type": "string",
      "description": "Identifies the extent to which the device is controlled by a managed Google Play EMM in various deployment configurations.\n\nPossible values include: \n- \"managedDevice\", a device that has the EMM's device policy controller (DPC) as the device owner. \n- \"managedProfile\", a device that has a profile managed by the DPC (DPC is profile owner) in addition to a separate, personal profile that is unavailable to the DPC. \n- \"containerApp\", no longer used (deprecated). \n- \"unmanagedProfile\", a device that has been allowed (by the domain's admin, using the Admin Console to enable the privilege) to use managed Google Play, but the profile is itself not owned by a DPC."
+    },
+    "policy": {
+     "$ref": "Policy",
+     "description": "The policy enforced on the device."
     }
    }
   },
@@ -493,7 +524,7 @@
   "GroupLicense": {
    "id": "GroupLicense",
    "type": "object",
-   "description": "Group license objects allow you to keep track of licenses (called entitlements) for both free and paid apps. For a free app, a group license is created when an enterprise admin first approves the product in Google Play or when the first entitlement for the product is created for a user via the API. For a paid app, a group license object is only created when an enterprise admin purchases the product in Google Play for the first time.\n\nUse the API to query group licenses. A Grouplicenses resource includes the total number of licenses purchased (paid apps only) and the total number of licenses currently in use. Iyn other words, the total number of Entitlements that exist for the product.\n\nOnly one group license object is created per product and group license objects are never deleted. If a product is unapproved, its group license remains. This allows enterprise admins to keep track of any remaining entitlements for the product.",
+   "description": "Group license objects allow you to keep track of licenses (called entitlements) for both free and paid apps. For a free app, a group license is created when an enterprise admin first approves the product in Google Play or when the first entitlement for the product is created for a user via the API. For a paid app, a group license object is only created when an enterprise admin purchases the product in Google Play for the first time.\n\nUse the API to query group licenses. A Grouplicenses resource includes the total number of licenses purchased (paid apps only) and the total number of licenses currently in use. In other words, the total number of Entitlements that exist for the product.\n\nOnly one group license object is created per product and group license objects are never deleted. If a product is unapproved, its group license remains. This allows enterprise admins to keep track of any remaining entitlements for the product.",
    "properties": {
     "acquisitionKind": {
      "type": "string",
@@ -655,8 +686,12 @@
   "ManagedConfiguration": {
    "id": "ManagedConfiguration",
    "type": "object",
-   "description": "A managed configuration resource contains the set of managed properties that have been configured for an Android app. The app's developer would have defined configurable properties in the managed configurations schema.",
+   "description": "A managed configuration resource contains the set of managed properties defined by the app developer in the app's managed configurations schema, as well as any configuration variables defined for the user.",
    "properties": {
+    "configurationVariables": {
+     "$ref": "ConfigurationVariables",
+     "description": "Contains the ID of the managed configuration profile and the set of configuration variables (if any) defined for the user."
+    },
     "kind": {
      "type": "string",
      "description": "Identifies what kind of resource this is. Value: the fixed string \"androidenterprise#managedConfiguration\".",
@@ -709,6 +744,52 @@
      "description": "A managed configuration for an app for a specific user.",
      "items": {
       "$ref": "ManagedConfiguration"
+     }
+    }
+   }
+  },
+  "ManagedConfigurationsSettings": {
+   "id": "ManagedConfigurationsSettings",
+   "type": "object",
+   "description": "A managed configurations settings resource contains the set of managed properties that have been configured for an Android app to be applied to a set of users. The app's developer would have defined configurable properties in the managed configurations schema.",
+   "properties": {
+    "kind": {
+     "type": "string",
+     "description": "Identifies what kind of resource this is. Value: the fixed string \"androidenterprise#managedConfigurationsSettings\".",
+     "default": "androidenterprise#managedConfigurationsSettings"
+    },
+    "managedProperty": {
+     "type": "array",
+     "description": "The set of managed properties for this configuration.",
+     "items": {
+      "$ref": "ManagedProperty"
+     }
+    },
+    "mcmId": {
+     "type": "string",
+     "description": "The ID of the managed configurations settings."
+    },
+    "name": {
+     "type": "string",
+     "description": "The name of the managed configurations settings."
+    }
+   }
+  },
+  "ManagedConfigurationsSettingsListResponse": {
+   "id": "ManagedConfigurationsSettingsListResponse",
+   "type": "object",
+   "description": "The managed configurations settings for a product.",
+   "properties": {
+    "kind": {
+     "type": "string",
+     "description": "Identifies what kind of resource this is. Value: the fixed string \"androidenterprise#managedConfigurationsSettingsListResponse\".",
+     "default": "androidenterprise#managedConfigurationsSettingsListResponse"
+    },
+    "managedConfigurationsSettings": {
+     "type": "array",
+     "description": "A managed configurations settings for an app that may be assigned to a group of users in an enterprise.",
+     "items": {
+      "$ref": "ManagedConfigurationsSettings"
      }
     }
    }
@@ -777,6 +858,10 @@
     "deviceId": {
      "type": "string",
      "description": "The Android ID of the device. This field will always be present."
+    },
+    "dpcPackageName": {
+     "type": "string",
+     "description": "Policy app on the device."
     },
     "managementType": {
      "type": "string",
@@ -926,6 +1011,24 @@
     }
    }
   },
+  "Policy": {
+   "id": "Policy",
+   "type": "object",
+   "description": "The device policy for a given managed device.",
+   "properties": {
+    "productAvailabilityPolicy": {
+     "type": "string",
+     "description": "The availability granted to the device for the specified products. \"all\" gives the device access to all products, regardless of approval status. \"allApproved\" entitles the device to access all products that are approved for the enterprise. \"allApproved\" and \"all\" do not enable automatic visibility of \"alpha\" or \"beta\" tracks. \"whitelist\" grants the device access the products specified in productPolicy[]. Only products that are approved or products that were previously approved (products with revoked approval) by the enterprise can be whitelisted. If no value is provided, the availability set at the user level is applied by default."
+    },
+    "productPolicy": {
+     "type": "array",
+     "description": "The list of product policies.",
+     "items": {
+      "$ref": "ProductPolicy"
+     }
+    }
+   }
+  },
   "Product": {
    "id": "Product",
    "type": "object",
@@ -941,6 +1044,32 @@
     "authorName": {
      "type": "string",
      "description": "The name of the author of the product (for example, the app developer)."
+    },
+    "availableCountries": {
+     "type": "array",
+     "description": "The countries which this app is available in.",
+     "items": {
+      "type": "string"
+     }
+    },
+    "availableTracks": {
+     "type": "array",
+     "description": "The tracks that are visible to the enterprise.",
+     "items": {
+      "type": "string"
+     }
+    },
+    "category": {
+     "type": "string",
+     "description": "The app category (e.g. RACING, SOCIAL, etc.)"
+    },
+    "contentRating": {
+     "type": "string",
+     "description": "The content rating for this app."
+    },
+    "description": {
+     "type": "string",
+     "description": "The localized promotional description, if available."
     },
     "detailsUrl": {
      "type": "string",
@@ -959,6 +1088,23 @@
      "description": "Identifies what kind of resource this is. Value: the fixed string \"androidenterprise#product\".",
      "default": "androidenterprise#product"
     },
+    "lastUpdatedTimestampMillis": {
+     "type": "string",
+     "description": "The approximate time (within 7 days) the app was last published, expressed in milliseconds since epoch.",
+     "format": "int64"
+    },
+    "minAndroidSdkVersion": {
+     "type": "integer",
+     "description": "The minimum Android SDK necessary to run the app.",
+     "format": "int32"
+    },
+    "permissions": {
+     "type": "array",
+     "description": "A list of permissions required by the app.",
+     "items": {
+      "$ref": "ProductPermission"
+     }
+    },
     "productId": {
      "type": "string",
      "description": "A string of the form app:\u003cpackage name\u003e. For example, app:com.google.android.gm represents the Gmail app."
@@ -967,9 +1113,20 @@
      "type": "string",
      "description": "Whether this product is free, free with in-app purchases, or paid. If the pricing is unknown, this means the product is not generally available anymore (even though it might still be available to people who own it)."
     },
+    "recentChanges": {
+     "type": "string",
+     "description": "A description of the recent changes made to the app."
+    },
     "requiresContainerApp": {
      "type": "boolean",
      "description": "Deprecated."
+    },
+    "screenshotUrls": {
+     "type": "array",
+     "description": "A list of screenshot links representing the app.",
+     "items": {
+      "type": "string"
+     }
     },
     "signingCertificate": {
      "$ref": "ProductSigningCertificate",
@@ -1057,6 +1214,24 @@
     }
    }
   },
+  "ProductPolicy": {
+   "id": "ProductPolicy",
+   "type": "object",
+   "description": "The policy for a product.",
+   "properties": {
+    "productId": {
+     "type": "string",
+     "description": "The ID of the product. For example, \"app:com.google.android.gm\"."
+    },
+    "tracks": {
+     "type": "array",
+     "description": "Grants visibility to the specified track(s) of the product to the device. The track available to the device is based on the following order of preference: alpha, beta, production. For example, if an app has a prod version, a beta version and an alpha version and the enterprise has been granted visibility to both the alpha and beta tracks, if tracks is {\"beta\", \"production\"} then the beta version of the app is made available to the device. If there are no app versions in the specified track adding the \"alpha\" and \"beta\" values to the list of tracks will have no effect. Note that the enterprise requires access to alpha and/or beta tracks before users can be granted visibility to apps in those tracks.\n\nThe allowed sets are: {} (considered equivalent to {\"production\"}) {\"production\"} {\"beta\", \"production\"} {\"alpha\", \"beta\", \"production\"} The order of elements is not relevant. Any other set of tracks will be rejected with an error.",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
   "ProductSet": {
    "id": "ProductSet",
    "type": "object",
@@ -1077,6 +1252,13 @@
     "productSetBehavior": {
      "type": "string",
      "description": "The interpretation of this product set. \"unknown\" should never be sent and is ignored if received. \"whitelist\" means that the user is entitled to access the product set. \"includeAll\" means that all products are accessible, including products that are approved, products with revoked approval, and products that have never been approved. \"allApproved\" means that the user is entitled to access all products that are approved for the enterprise. If the value is \"allApproved\" or \"includeAll\", the productId field is ignored. If no value is provided, it is interpreted as \"whitelist\" for backwards compatibility. Further \"allApproved\" or \"includeAll\" does not enable automatic visibility of \"alpha\" or \"beta\" tracks for Android app. Use ProductVisibility to enable \"alpha\" or \"beta\" tracks per user."
+    },
+    "productVisibility": {
+     "type": "array",
+     "description": "Additional list of product IDs making up the product set. Unlike the productID array, in this list It's possible to specify which tracks (alpha, beta, production) of a product are visible to the user. See ProductVisibility and its fields for more information. Specifying the same product ID both here and in the productId array is not allowed and it will result in an error.",
+     "items": {
+      "$ref": "ProductVisibility"
+     }
     }
    }
   },
@@ -1091,6 +1273,24 @@
     "certificateHashSha256": {
      "type": "string",
      "description": "The base64 urlsafe encoded SHA2-256 hash of the certificate."
+    }
+   }
+  },
+  "ProductVisibility": {
+   "id": "ProductVisibility",
+   "type": "object",
+   "description": "A product to be made visible to a user.",
+   "properties": {
+    "productId": {
+     "type": "string",
+     "description": "The product ID to make visible to the user. Required for each item in the productVisibility list."
+    },
+    "tracks": {
+     "type": "array",
+     "description": "Grants visibility to the specified track(s) of the product to the user. The track available to the user is based on the following order of preference: alpha, beta, production. For example, if an app has a prod version, a beta version and an alpha version and the enterprise has been granted visibility to both the alpha and beta tracks, if tracks is {\"beta\", \"production\"} the user will be able to install the app and they will get the beta version of the app. If there are no app versions in the specified track adding the \"alpha\" and \"beta\" values to the list of tracks will have no effect. Note that the enterprise requires access to alpha and/or beta tracks before users can be granted visibility to apps in those tracks.\n\nThe allowed sets are: {} (considered equivalent to {\"production\"}) {\"production\"} {\"beta\", \"production\"} {\"alpha\", \"beta\", \"production\"} The order of elements is not relevant. Any other set of tracks will be rejected with an error.",
+     "items": {
+      "type": "string"
+     }
     }
    }
   },
@@ -1449,6 +1649,26 @@
      }
     }
    }
+  },
+  "VariableSet": {
+   "id": "VariableSet",
+   "type": "object",
+   "description": "A variable set is a key-value pair of EMM-provided placeholders and its corresponding value, which is attributed to a user. For example, $FIRSTNAME could be a placeholder, and its value could be Alice. Placeholders should start with a '$' sign and should be alphanumeric only.",
+   "properties": {
+    "kind": {
+     "type": "string",
+     "description": "Identifies what kind of resource this is. Value: the fixed string \"androidenterprise#variableSet\".",
+     "default": "androidenterprise#variableSet"
+    },
+    "placeholder": {
+     "type": "string",
+     "description": "The placeholder string; defined by EMM."
+    },
+    "userValue": {
+     "type": "string",
+     "description": "The value of the placeholder, specific to the user."
+    }
+   }
   }
  },
  "resources": {
@@ -1558,6 +1778,51 @@
       "https://www.googleapis.com/auth/androidenterprise"
      ]
     },
+    "patch": {
+     "id": "androidenterprise.devices.patch",
+     "path": "enterprises/{enterpriseId}/users/{userId}/devices/{deviceId}",
+     "httpMethod": "PATCH",
+     "description": "Updates the device policy. This method supports patch semantics.",
+     "parameters": {
+      "deviceId": {
+       "type": "string",
+       "description": "The ID of the device.",
+       "required": true,
+       "location": "path"
+      },
+      "enterpriseId": {
+       "type": "string",
+       "description": "The ID of the enterprise.",
+       "required": true,
+       "location": "path"
+      },
+      "updateMask": {
+       "type": "string",
+       "description": "Mask that identifies which fields to update. If not set, all modifiable fields will be modified.\n\nWhen set in a query parameter, this field should be specified as updateMask=\u003cfield1\u003e,\u003cfield2\u003e,...",
+       "location": "query"
+      },
+      "userId": {
+       "type": "string",
+       "description": "The ID of the user.",
+       "required": true,
+       "location": "path"
+      }
+     },
+     "parameterOrder": [
+      "enterpriseId",
+      "userId",
+      "deviceId"
+     ],
+     "request": {
+      "$ref": "Device"
+     },
+     "response": {
+      "$ref": "Device"
+     },
+     "scopes": [
+      "https://www.googleapis.com/auth/androidenterprise"
+     ]
+    },
     "setState": {
      "id": "androidenterprise.devices.setState",
      "path": "enterprises/{enterpriseId}/users/{userId}/devices/{deviceId}/state",
@@ -1593,6 +1858,51 @@
      },
      "response": {
       "$ref": "DeviceState"
+     },
+     "scopes": [
+      "https://www.googleapis.com/auth/androidenterprise"
+     ]
+    },
+    "update": {
+     "id": "androidenterprise.devices.update",
+     "path": "enterprises/{enterpriseId}/users/{userId}/devices/{deviceId}",
+     "httpMethod": "PUT",
+     "description": "Updates the device policy",
+     "parameters": {
+      "deviceId": {
+       "type": "string",
+       "description": "The ID of the device.",
+       "required": true,
+       "location": "path"
+      },
+      "enterpriseId": {
+       "type": "string",
+       "description": "The ID of the enterprise.",
+       "required": true,
+       "location": "path"
+      },
+      "updateMask": {
+       "type": "string",
+       "description": "Mask that identifies which fields to update. If not set, all modifiable fields will be modified.\n\nWhen set in a query parameter, this field should be specified as updateMask=\u003cfield1\u003e,\u003cfield2\u003e,...",
+       "location": "query"
+      },
+      "userId": {
+       "type": "string",
+       "description": "The ID of the user.",
+       "required": true,
+       "location": "path"
+      }
+     },
+     "parameterOrder": [
+      "enterpriseId",
+      "userId",
+      "deviceId"
+     ],
+     "request": {
+      "$ref": "Device"
+     },
+     "response": {
+      "$ref": "Device"
      },
      "scopes": [
       "https://www.googleapis.com/auth/androidenterprise"
@@ -2870,7 +3180,7 @@
      "id": "androidenterprise.managedconfigurationsforuser.patch",
      "path": "enterprises/{enterpriseId}/users/{userId}/managedConfigurationsForUser/{managedConfigurationForUserId}",
      "httpMethod": "PATCH",
-     "description": "Adds or updates a per-user managed configuration for an app for the specified user. This method supports patch semantics.",
+     "description": "Adds or updates the managed configuration settings for an app for the specified user. If you support the Managed configurations iframe, you can apply managed configurations to a user by specifying an mcmId and its associated configuration variables (if any) in the request. Alternatively, all EMMs can apply managed configurations by passing a list of managed properties. This method supports patch semantics.",
      "parameters": {
       "enterpriseId": {
        "type": "string",
@@ -2910,7 +3220,7 @@
      "id": "androidenterprise.managedconfigurationsforuser.update",
      "path": "enterprises/{enterpriseId}/users/{userId}/managedConfigurationsForUser/{managedConfigurationForUserId}",
      "httpMethod": "PUT",
-     "description": "Adds or updates a per-user managed configuration for an app for the specified user.",
+     "description": "Adds or updates the managed configuration settings for an app for the specified user. If you support the Managed configurations iframe, you can apply managed configurations to a user by specifying an mcmId and its associated configuration variables (if any) in the request. Alternatively, all EMMs can apply managed configurations by passing a list of managed properties.",
      "parameters": {
       "enterpriseId": {
        "type": "string",
@@ -2941,6 +3251,40 @@
      },
      "response": {
       "$ref": "ManagedConfiguration"
+     },
+     "scopes": [
+      "https://www.googleapis.com/auth/androidenterprise"
+     ]
+    }
+   }
+  },
+  "managedconfigurationssettings": {
+   "methods": {
+    "list": {
+     "id": "androidenterprise.managedconfigurationssettings.list",
+     "path": "enterprises/{enterpriseId}/products/{productId}/managedConfigurationsSettings",
+     "httpMethod": "GET",
+     "description": "Lists all the managed configurations settings for the specified app. Only the ID and the name is set.",
+     "parameters": {
+      "enterpriseId": {
+       "type": "string",
+       "description": "The ID of the enterprise.",
+       "required": true,
+       "location": "path"
+      },
+      "productId": {
+       "type": "string",
+       "description": "The ID of the product for which the managed configurations settings applies to.",
+       "required": true,
+       "location": "path"
+      }
+     },
+     "parameterOrder": [
+      "enterpriseId",
+      "productId"
+     ],
+     "response": {
+      "$ref": "ManagedConfigurationsSettingsListResponse"
      },
      "scopes": [
       "https://www.googleapis.com/auth/androidenterprise"
@@ -3933,6 +4277,33 @@
      "response": {
       "$ref": "User"
      },
+     "scopes": [
+      "https://www.googleapis.com/auth/androidenterprise"
+     ]
+    },
+    "revokeDeviceAccess": {
+     "id": "androidenterprise.users.revokeDeviceAccess",
+     "path": "enterprises/{enterpriseId}/users/{userId}/deviceAccess",
+     "httpMethod": "DELETE",
+     "description": "Revokes access to all devices currently provisioned to the user. The user will no longer be able to use the managed Play store on any of their managed devices.\n\nThis call only works with EMM-managed accounts.",
+     "parameters": {
+      "enterpriseId": {
+       "type": "string",
+       "description": "The ID of the enterprise.",
+       "required": true,
+       "location": "path"
+      },
+      "userId": {
+       "type": "string",
+       "description": "The ID of the user.",
+       "required": true,
+       "location": "path"
+      }
+     },
+     "parameterOrder": [
+      "enterpriseId",
+      "userId"
+     ],
      "scopes": [
       "https://www.googleapis.com/auth/androidenterprise"
      ]

@@ -2,6 +2,7 @@
   "version": "2.0",
   "service": "<fullname>Elastic Load Balancing</fullname> <p>A load balancer distributes incoming traffic across targets, such as your EC2 instances. This enables you to increase the availability of your application. The load balancer also monitors the health of its registered targets and ensures that it routes traffic only to healthy targets. You configure your load balancer to accept incoming traffic by specifying one or more listeners, which are configured with a protocol and port number for connections from clients to the load balancer. You configure a target group with a protocol and port number for connections from the load balancer to the targets, and with health check settings to be used when checking the health status of the targets.</p> <p>Elastic Load Balancing supports the following types of load balancers: Application Load Balancers, Network Load Balancers, and Classic Load Balancers.</p> <p>An Application Load Balancer makes routing and load balancing decisions at the application layer (HTTP/HTTPS). A Network Load Balancer makes routing and load balancing decisions at the transport layer (TCP). Both Application Load Balancers and Network Load Balancers can route requests to one or more ports on each EC2 instance or container instance in your virtual private cloud (VPC).</p> <p>A Classic Load Balancer makes routing and load balancing decisions either at the transport layer (TCP/SSL) or the application layer (HTTP/HTTPS), and supports either EC2-Classic or a VPC. For more information, see the <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/\">Elastic Load Balancing User Guide</a>.</p> <p>This reference covers the 2015-12-01 API, which supports Application Load Balancers and Network Load Balancers. The 2012-06-01 API supports Classic Load Balancers.</p> <p>To get started, complete the following tasks:</p> <ol> <li> <p>Create a load balancer using <a>CreateLoadBalancer</a>.</p> </li> <li> <p>Create a target group using <a>CreateTargetGroup</a>.</p> </li> <li> <p>Register targets for the target group using <a>RegisterTargets</a>.</p> </li> <li> <p>Create one or more listeners for your load balancer using <a>CreateListener</a>.</p> </li> </ol> <p>To delete a load balancer and its related resources, complete the following tasks:</p> <ol> <li> <p>Delete the load balancer using <a>DeleteLoadBalancer</a>.</p> </li> <li> <p>Delete the target group using <a>DeleteTargetGroup</a>.</p> </li> </ol> <p>All Elastic Load Balancing operations are idempotent, which means that they complete at most one time. If you repeat an operation, it succeeds.</p>",
   "operations": {
+    "AddListenerCertificates": "<p>Adds the specified certificate to the specified secure listener.</p> <p>If the certificate was already added, the call is successful but the certificate is not added again.</p> <p>To list the certificates for your listener, use <a>DescribeListenerCertificates</a>. To remove certificates from your listener, use <a>RemoveListenerCertificates</a>.</p>",
     "AddTags": "<p>Adds the specified tags to the specified Elastic Load Balancing resource. You can tag your Application Load Balancers, Network Load Balancers, and your target groups.</p> <p>Each tag consists of a key and an optional value. If a resource already has a tag with the same key, <code>AddTags</code> updates its value.</p> <p>To list the current tags for your resources, use <a>DescribeTags</a>. To remove tags from your resources, use <a>RemoveTags</a>.</p>",
     "CreateListener": "<p>Creates a listener for the specified Application Load Balancer or Network Load Balancer.</p> <p>You can create up to 10 listeners per load balancer.</p> <p>To update a listener, use <a>ModifyListener</a>. When you are finished with a listener, you can delete it using <a>DeleteListener</a>. If you are finished with both the listener and the load balancer, you can delete them both using <a>DeleteLoadBalancer</a>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html\">Listeners for Your Application Load Balancers</a> in the <i>Application Load Balancers Guide</i> and <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html\">Listeners for Your Network Load Balancers</a> in the <i>Network Load Balancers Guide</i>.</p>",
     "CreateLoadBalancer": "<p>Creates an Application Load Balancer or a Network Load Balancer.</p> <p>When you create a load balancer, you can specify security groups, subnets, IP address type, and tags. Otherwise, you could do so later using <a>SetSecurityGroups</a>, <a>SetSubnets</a>, <a>SetIpAddressType</a>, and <a>AddTags</a>.</p> <p>To create listeners for your load balancer, use <a>CreateListener</a>. To describe your current load balancers, see <a>DescribeLoadBalancers</a>. When you are finished with a load balancer, you can delete it using <a>DeleteLoadBalancer</a>.</p> <p>You can create up to 20 load balancers per region per account. You can request an increase for the number of load balancers for your account. For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-limits.html\">Limits for Your Application Load Balancer</a> in the <i>Application Load Balancers Guide</i> and <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-limits.html\">Limits for Your Network Load Balancer</a> in the <i>Network Load Balancers Guide</i>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html\">Application Load Balancers</a> in the <i>Application Load Balancers Guide</i> and <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/network/network-load-balancers.html\">Network Load Balancers</a> in the <i>Network Load Balancers Guide</i>.</p>",
@@ -13,6 +14,7 @@
     "DeleteTargetGroup": "<p>Deletes the specified target group.</p> <p>You can delete a target group if it is not referenced by any actions. Deleting a target group also deletes any associated health checks.</p>",
     "DeregisterTargets": "<p>Deregisters the specified targets from the specified target group. After the targets are deregistered, they no longer receive traffic from the load balancer.</p>",
     "DescribeAccountLimits": "<p>Describes the current Elastic Load Balancing resource limits for your AWS account.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-limits.html\">Limits for Your Application Load Balancers</a> in the <i>Application Load Balancer Guide</i> or <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-limits.html\">Limits for Your Network Load Balancers</a> in the <i>Network Load Balancers Guide</i>.</p>",
+    "DescribeListenerCertificates": "<p>Describes the certificates for the specified secure listener.</p>",
     "DescribeListeners": "<p>Describes the specified listeners or the listeners for the specified Application Load Balancer or Network Load Balancer. You must specify either a load balancer or one or more listeners.</p>",
     "DescribeLoadBalancerAttributes": "<p>Describes the attributes for the specified Application Load Balancer or Network Load Balancer.</p>",
     "DescribeLoadBalancers": "<p>Describes the specified load balancers or all of your load balancers.</p> <p>To describe the listeners for a load balancer, use <a>DescribeListeners</a>. To describe the attributes for a load balancer, use <a>DescribeLoadBalancerAttributes</a>.</p>",
@@ -27,7 +29,8 @@
     "ModifyRule": "<p>Modifies the specified rule.</p> <p>Any existing properties that you do not modify retain their current values.</p> <p>To modify the default action, use <a>ModifyListener</a>.</p>",
     "ModifyTargetGroup": "<p>Modifies the health checks used when evaluating the health state of the targets in the specified target group.</p> <p>To monitor the health of the targets, use <a>DescribeTargetHealth</a>.</p>",
     "ModifyTargetGroupAttributes": "<p>Modifies the specified attributes of the specified target group.</p>",
-    "RegisterTargets": "<p>Registers the specified targets with the specified target group.</p> <p>By default, the load balancer routes requests to registered targets using the protocol and port number for the target group. Alternatively, you can override the port for a target when you register it.</p> <p>The target must be in the virtual private cloud (VPC) that you specified for the target group. If the target is an EC2 instance, it must be in the <code>running</code> state when you register it.</p> <p>Network Load Balancers do not support the following instance types as targets: C1, CC1, CC2, CG1, CG2, CR1, CS1, G1, G2, HI1, HS1, M1, M2, M3, and T1.</p> <p>To remove a target from a target group, use <a>DeregisterTargets</a>.</p>",
+    "RegisterTargets": "<p>Registers the specified targets with the specified target group.</p> <p>You can register targets by instance ID or by IP address. If the target is an EC2 instance, it must be in the <code>running</code> state when you register it.</p> <p>By default, the load balancer routes requests to registered targets using the protocol and port for the target group. Alternatively, you can override the port for a target when you register it. You can register each EC2 instance or IP address with the same target group multiple times using different ports.</p> <p>With a Network Load Balancer, you cannot register instances by instance ID if they have the following instance types: C1, CC1, CC2, CG1, CG2, CR1, CS1, G1, G2, HI1, HS1, M1, M2, M3, and T1. You can register instances of these types by IP address.</p> <p>To remove a target from a target group, use <a>DeregisterTargets</a>.</p>",
+    "RemoveListenerCertificates": "<p>Removes the specified certificate from the specified secure listener.</p> <p>You can't remove the default certificate for a listener. To replace the default certificate, call <a>ModifyListener</a>.</p> <p>To list the certificates for your listener, use <a>DescribeListenerCertificates</a>.</p>",
     "RemoveTags": "<p>Removes the specified tags from the specified Elastic Load Balancing resource.</p> <p>To list the current tags for your resources, use <a>DescribeTags</a>.</p>",
     "SetIpAddressType": "<p>Sets the type of IP addresses used by the subnets of the specified Application Load Balancer or Network Load Balancer.</p> <p>Note that Network Load Balancers must use <code>ipv4</code>.</p>",
     "SetRulePriorities": "<p>Sets the priorities of the specified rules.</p> <p>You can reorder the rules as long as there are no priority conflicts in the new order. Any existing rules that you do not specify retain their current priority.</p>",
@@ -56,6 +59,16 @@
         "ModifyListenerInput$DefaultActions": "<p>The default action. For Application Load Balancers, the protocol of the specified target group must be HTTP or HTTPS. For Network Load Balancers, the protocol of the specified target group must be TCP.</p>",
         "ModifyRuleInput$Actions": "<p>The actions. The target group must use the HTTP or HTTPS protocol.</p>",
         "Rule$Actions": "<p>The actions.</p>"
+      }
+    },
+    "AddListenerCertificatesInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AddListenerCertificatesOutput": {
+      "base": null,
+      "refs": {
       }
     },
     "AddTagsInput": {
@@ -105,7 +118,7 @@
       }
     },
     "Certificate": {
-      "base": "<p>Information about an SSL server certificate deployed on a load balancer.</p>",
+      "base": "<p>Information about an SSL server certificate.</p>",
       "refs": {
         "CertificateList$member": null
       }
@@ -119,9 +132,13 @@
     "CertificateList": {
       "base": null,
       "refs": {
+        "AddListenerCertificatesInput$Certificates": "<p>The certificate to add. You can specify one certificate per call.</p>",
+        "AddListenerCertificatesOutput$Certificates": "<p>Information about the certificates.</p>",
         "CreateListenerInput$Certificates": "<p>[HTTPS listeners] The SSL server certificate. You must provide exactly one certificate.</p>",
+        "DescribeListenerCertificatesOutput$Certificates": "<p>Information about the certificates.</p>",
         "Listener$Certificates": "<p>The SSL server certificate. You must provide a certificate if the protocol is HTTPS.</p>",
-        "ModifyListenerInput$Certificates": "<p>The SSL server certificate.</p>"
+        "ModifyListenerInput$Certificates": "<p>The default SSL server certificate.</p>",
+        "RemoveListenerCertificatesInput$Certificates": "<p>The certificate to remove. You can specify one certificate per call.</p>"
       }
     },
     "CertificateNotFoundException": {
@@ -211,6 +228,12 @@
         "LoadBalancer$DNSName": "<p>The public DNS name of the load balancer.</p>"
       }
     },
+    "Default": {
+      "base": null,
+      "refs": {
+        "Certificate$IsDefault": "<p>Indicates whether the certificate is the default certificate.</p>"
+      }
+    },
     "DeleteListenerInput": {
       "base": null,
       "refs": {
@@ -267,6 +290,16 @@
       }
     },
     "DescribeAccountLimitsOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeListenerCertificatesInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeListenerCertificatesOutput": {
       "base": null,
       "refs": {
       }
@@ -512,12 +545,15 @@
     "ListenerArn": {
       "base": null,
       "refs": {
+        "AddListenerCertificatesInput$ListenerArn": "<p>The Amazon Resource Name (ARN) of the listener.</p>",
         "CreateRuleInput$ListenerArn": "<p>The Amazon Resource Name (ARN) of the listener.</p>",
         "DeleteListenerInput$ListenerArn": "<p>The Amazon Resource Name (ARN) of the listener.</p>",
+        "DescribeListenerCertificatesInput$ListenerArn": "<p>The Amazon Resource Names (ARN) of the listener.</p>",
         "DescribeRulesInput$ListenerArn": "<p>The Amazon Resource Name (ARN) of the listener.</p>",
         "Listener$ListenerArn": "<p>The Amazon Resource Name (ARN) of the listener.</p>",
         "ListenerArns$member": null,
-        "ModifyListenerInput$ListenerArn": "<p>The Amazon Resource Name (ARN) of the listener.</p>"
+        "ModifyListenerInput$ListenerArn": "<p>The Amazon Resource Name (ARN) of the listener.</p>",
+        "RemoveListenerCertificatesInput$ListenerArn": "<p>The Amazon Resource Name (ARN) of the listener.</p>"
       }
     },
     "ListenerArns": {
@@ -664,6 +700,8 @@
       "refs": {
         "DescribeAccountLimitsInput$Marker": "<p>The marker for the next set of results. (You received this marker from a previous call.)</p>",
         "DescribeAccountLimitsOutput$NextMarker": "<p>The marker to use when requesting the next set of results. If there are no additional results, the string is empty.</p>",
+        "DescribeListenerCertificatesInput$Marker": "<p>The marker for the next set of results. (You received this marker from a previous call.)</p>",
+        "DescribeListenerCertificatesOutput$NextMarker": "<p>The marker to use when requesting the next set of results. If there are no additional results, the string is empty.</p>",
         "DescribeListenersInput$Marker": "<p>The marker for the next set of results. (You received this marker from a previous call.)</p>",
         "DescribeListenersOutput$NextMarker": "<p>The marker to use when requesting the next set of results. If there are no additional results, the string is empty.</p>",
         "DescribeLoadBalancersInput$Marker": "<p>The marker for the next set of results. (You received this marker from a previous call.)</p>",
@@ -755,6 +793,7 @@
       "base": null,
       "refs": {
         "DescribeAccountLimitsInput$PageSize": "<p>The maximum number of results to return with this call.</p>",
+        "DescribeListenerCertificatesInput$PageSize": "<p>The maximum number of results to return with this call.</p>",
         "DescribeListenersInput$PageSize": "<p>The maximum number of results to return with this call.</p>",
         "DescribeLoadBalancersInput$PageSize": "<p>The maximum number of results to return with this call.</p>",
         "DescribeRulesInput$PageSize": "<p>The maximum number of results to return with this call.</p>",
@@ -805,6 +844,16 @@
       }
     },
     "RegisterTargetsOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "RemoveListenerCertificatesInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "RemoveListenerCertificatesOutput": {
       "base": null,
       "refs": {
       }
@@ -1116,7 +1165,7 @@
       "refs": {
         "DeregisterTargetsInput$Targets": "<p>The targets. If you specified a port override when you registered a target, you must specify both the target ID and the port when you deregister it.</p>",
         "DescribeTargetHealthInput$Targets": "<p>The targets.</p>",
-        "RegisterTargetsInput$Targets": "<p>The targets. The default port for a target is the port for the target group. You can specify a port override. If a target is already registered, you can register it again using a different port.</p>"
+        "RegisterTargetsInput$Targets": "<p>The targets.</p>"
       }
     },
     "TargetGroup": {
@@ -1248,7 +1297,7 @@
       }
     },
     "TooManyCertificatesException": {
-      "base": "<p>You've reached the limit on the number of certificates per listener.</p>",
+      "base": "<p>You've reached the limit on the number of certificates per load balancer.</p>",
       "refs": {
       }
     },
@@ -1304,7 +1353,7 @@
       "base": null,
       "refs": {
         "AvailabilityZone$ZoneName": "<p>The name of the Availability Zone.</p>",
-        "TargetDescription$AvailabilityZone": "<p>The Availability Zone where the IP address is to be registered. Specify <code>all</code> to register an IP address outside the target group VPC with all Availability Zones that are enabled for the load balancer.</p> <p>If the IP address is in a subnet of the VPC for the target group, the Availability Zone is automatically detected and this parameter is optional.</p> <p>This parameter is not supported if the target type of the target group is <code>instance</code>.</p>"
+        "TargetDescription$AvailabilityZone": "<p>An Availability Zone or <code>all</code>. This determines whether the target receives traffic from the load balancer nodes in the specified Availability Zone or from all enabled Availability Zones for the load balancer.</p> <p>This parameter is not supported if the target type of the target group is <code>instance</code>. If the IP address is in a subnet of the VPC for the target group, the Availability Zone is automatically detected and this parameter is optional. If the IP address is outside the VPC, this parameter is required.</p> <p>With an Application Load Balancer, if the IP address is outside the VPC for the target group, the only supported value is <code>all</code>.</p>"
       }
     }
   }

@@ -95,7 +95,9 @@ func (client AdminKeysClient) GetPreparer(resourceGroupName string, searchServic
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client AdminKeysClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -169,7 +171,9 @@ func (client AdminKeysClient) RegeneratePreparer(resourceGroupName string, searc
 // RegenerateSender sends the Regenerate request. The method will close the
 // http.Response Body if it receives an error.
 func (client AdminKeysClient) RegenerateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // RegenerateResponder handles the response to the Regenerate request. The method always

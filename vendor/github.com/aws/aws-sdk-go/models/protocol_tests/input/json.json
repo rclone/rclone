@@ -535,5 +535,75 @@
         }
       }
     ]
+  },
+  {
+    "description": "Enum",
+    "metadata": {
+      "protocol": "json",
+      "apiVersion": "2014-01-01"
+    },
+    "shapes": {
+      "InputShape": {
+        "type": "structure",
+        "members": {
+          "FooEnum": {
+            "shape": "EnumType"
+          },
+          "ListEnums": {
+            "shape": "EnumList"
+          }
+        }
+      },
+      "EnumType":{
+        "type":"string",
+        "enum":[
+          "foo",
+          "bar"
+        ]
+      },
+      "EnumList":{
+        "type":"list",
+        "member": {"shape": "EnumType"}
+      }
+    },
+    "cases": [
+      {
+        "given": {
+          "input": {
+            "shape": "InputShape"
+          },
+          "http": {
+            "method": "POST"
+          },
+          "name": "OperationName"
+        },
+        "params": {
+          "FooEnum": "foo",
+          "ListEnums": ["foo", "", "bar"]
+        },
+        "serialized": {
+          "uri": "/",
+          "headers": {},
+          "body": "{\"FooEnum\": \"foo\", \"ListEnums\": [\"foo\", \"\", \"bar\"]}"
+        }
+      },
+      {
+        "given": {
+          "input": {
+            "shape": "InputShape"
+          },
+          "http": {
+            "method": "POST"
+          },
+          "name": "OperationName"
+        },
+        "params": {
+        },
+        "serialized": {
+          "uri": "/",
+          "headers": {}
+        }
+      }
+    ]
   }
 ]

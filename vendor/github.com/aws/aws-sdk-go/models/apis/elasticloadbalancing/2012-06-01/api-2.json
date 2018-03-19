@@ -135,7 +135,8 @@
         {"shape":"InvalidSchemeException"},
         {"shape":"TooManyTagsException"},
         {"shape":"DuplicateTagKeysException"},
-        {"shape":"UnsupportedProtocolException"}
+        {"shape":"UnsupportedProtocolException"},
+        {"shape":"OperationNotPermittedException"}
       ]
     },
     "CreateLoadBalancerListeners":{
@@ -1280,6 +1281,17 @@
       }
     },
     "Name":{"type":"string"},
+    "OperationNotPermittedException":{
+      "type":"structure",
+      "members":{
+      },
+      "error":{
+        "code":"OperationNotPermitted",
+        "httpStatusCode":400,
+        "senderFault":true
+      },
+      "exception":true
+    },
     "PageSize":{
       "type":"integer",
       "max":400,

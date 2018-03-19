@@ -172,6 +172,15 @@ var jwtTestData = []struct {
 		jwt.ValidationErrorNotValidYet | jwt.ValidationErrorExpired,
 		&jwt.Parser{UseJSONNumber: true},
 	},
+	{
+		"SkipClaimsValidation during token parsing",
+		"", // autogen
+		defaultKeyFunc,
+		jwt.MapClaims{"foo": "bar", "nbf": json.Number(fmt.Sprintf("%v", time.Now().Unix()+100))},
+		true,
+		0,
+		&jwt.Parser{UseJSONNumber: true, SkipClaimsValidation: true},
+	},
 }
 
 func TestParser_Parse(t *testing.T) {
@@ -213,7 +222,7 @@ func TestParser_Parse(t *testing.T) {
 		}
 
 		if (err == nil && !token.Valid) || (err != nil && token.Valid) {
-			t.Errorf("[%v] Inconsistent behavior between returned error and token.Valid")
+			t.Errorf("[%v] Inconsistent behavior between returned error and token.Valid", data.name)
 		}
 
 		if data.errors != 0 {

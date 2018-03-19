@@ -23,7 +23,9 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -52,7 +54,6 @@ const (
 	testSvcVersion      = "test-service-version"
 	testProfileDuration = time.Second * 10
 	testServerTimeout   = time.Second * 15
-	wantFunctionName    = "profilee"
 )
 
 func createTestDeployment() *pb.Deployment {
@@ -72,6 +73,7 @@ func createTestAgent(psc pb.ProfilerServiceClient) *agent {
 		client:        psc,
 		deployment:    createTestDeployment(),
 		profileLabels: map[string]string{instanceLabel: testInstance},
+		profileTypes:  []pb.ProfileType{pb.ProfileType_CPU, pb.ProfileType_HEAP, pb.ProfileType_THREADS},
 	}
 }
 
@@ -93,7 +95,7 @@ func TestCreateProfile(t *testing.T) {
 	p := &pb.Profile{Name: "test_profile"}
 	wantRequest := pb.CreateProfileRequest{
 		Deployment:  a.deployment,
-		ProfileType: []pb.ProfileType{pb.ProfileType_CPU, pb.ProfileType_HEAP},
+		ProfileType: a.profileTypes,
 	}
 
 	mpc.EXPECT().CreateProfile(ctx, gomock.Eq(&wantRequest), gomock.Any()).Times(1).Return(p, nil)
@@ -335,13 +337,14 @@ func TestWithXGoogHeader(t *testing.T) {
 }
 
 func TestInitializeAgent(t *testing.T) {
-	oldConfig := config
+	oldConfig, oldMutexEnabled := config, mutexEnabled
 	defer func() {
-		config = oldConfig
+		config, mutexEnabled = oldConfig, oldMutexEnabled
 	}()
 
 	for _, tt := range []struct {
 		config               Config
+		enableMutex          bool
 		wantDeploymentLabels map[string]string
 		wantProfileLabels    map[string]string
 	}{
@@ -365,11 +368,18 @@ func TestInitializeAgent(t *testing.T) {
 			wantDeploymentLabels: map[string]string{},
 			wantProfileLabels:    map[string]string{instanceLabel: testInstance},
 		},
+		{
+			config:               Config{instance: testInstance},
+			enableMutex:          true,
+			wantDeploymentLabels: map[string]string{},
+			wantProfileLabels:    map[string]string{instanceLabel: testInstance},
+		},
 	} {
 
 		config = tt.config
 		config.ProjectID = testProjectID
 		config.Target = testTarget
+		mutexEnabled = tt.enableMutex
 		a := initializeAgent(nil)
 
 		wantDeployment := &pb.Deployment{
@@ -378,12 +388,21 @@ func TestInitializeAgent(t *testing.T) {
 			Labels:    tt.wantDeploymentLabels,
 		}
 		if !testutil.Equal(a.deployment, wantDeployment) {
-			t.Errorf("initializeResources() got deployment: %v, want %v", a.deployment, wantDeployment)
+			t.Errorf("initializeAgent() got deployment: %v, want %v", a.deployment, wantDeployment)
 		}
 
 		if !testutil.Equal(a.profileLabels, tt.wantProfileLabels) {
-			t.Errorf("initializeResources() got profile labels: %v, want %v", a.profileLabels, tt.wantProfileLabels)
+			t.Errorf("initializeAgent() got profile labels: %v, want %v", a.profileLabels, tt.wantProfileLabels)
 		}
+
+		wantProfileTypes := []pb.ProfileType{pb.ProfileType_CPU, pb.ProfileType_HEAP, pb.ProfileType_THREADS}
+		if tt.enableMutex {
+			wantProfileTypes = append(wantProfileTypes, pb.ProfileType_CONTENTION)
+		}
+		if !testutil.Equal(a.profileTypes, wantProfileTypes) {
+			t.Errorf("initializeAgent() got profile types: %v, want %v", a.profileTypes, wantProfileTypes)
+		}
+
 	}
 }
 
@@ -569,10 +588,9 @@ func TestInitializeConfig(t *testing.T) {
 
 type fakeProfilerServer struct {
 	pb.ProfilerServiceServer
-	count          int
-	gotCPUProfile  []byte
-	gotHeapProfile []byte
-	done           chan bool
+	count       int
+	gotProfiles map[string][]byte
+	done        chan bool
 }
 
 func (fs *fakeProfilerServer) CreateProfile(ctx context.Context, in *pb.CreateProfileRequest) (*pb.Profile, error) {
@@ -590,9 +608,9 @@ func (fs *fakeProfilerServer) CreateProfile(ctx context.Context, in *pb.CreatePr
 func (fs *fakeProfilerServer) UpdateProfile(ctx context.Context, in *pb.UpdateProfileRequest) (*pb.Profile, error) {
 	switch in.Profile.ProfileType {
 	case pb.ProfileType_CPU:
-		fs.gotCPUProfile = in.Profile.ProfileBytes
+		fs.gotProfiles["CPU"] = in.Profile.ProfileBytes
 	case pb.ProfileType_HEAP:
-		fs.gotHeapProfile = in.Profile.ProfileBytes
+		fs.gotProfiles["HEAP"] = in.Profile.ProfileBytes
 		fs.done <- true
 	}
 
@@ -617,28 +635,19 @@ func profileeWork() {
 	var b bytes.Buffer
 	gz := gzip.NewWriter(&b)
 	if _, err := gz.Write(data); err != nil {
-		log.Printf("failed to write to gzip stream", err)
+		log.Println("failed to write to gzip stream", err)
 		return
 	}
 	if err := gz.Flush(); err != nil {
-		log.Printf("failed to flush to gzip stream", err)
+		log.Println("failed to flush to gzip stream", err)
 		return
 	}
 	if err := gz.Close(); err != nil {
-		log.Printf("failed to close gzip stream", err)
+		log.Println("failed to close gzip stream", err)
 	}
 }
 
-func checkSymbolization(p *profile.Profile) error {
-	for _, l := range p.Location {
-		if len(l.Line) > 0 && l.Line[0].Function != nil && strings.Contains(l.Line[0].Function.Name, wantFunctionName) {
-			return nil
-		}
-	}
-	return fmt.Errorf("want function name %v not found in profile", wantFunctionName)
-}
-
-func validateProfile(rawData []byte) error {
+func validateProfile(rawData []byte, wantFunctionName string) error {
 	p, err := profile.ParseData(rawData)
 	if err != nil {
 		return fmt.Errorf("ParseData failed: %v", err)
@@ -656,10 +665,105 @@ func validateProfile(rawData []byte) error {
 		return fmt.Errorf("profile contains zero functions: %v", p)
 	}
 
-	if err := checkSymbolization(p); err != nil {
-		return fmt.Errorf("checkSymbolization failed: %v for %v", err, p)
+	for _, l := range p.Location {
+		if len(l.Line) > 0 && l.Line[0].Function != nil && strings.Contains(l.Line[0].Function.Name, wantFunctionName) {
+			return nil
+		}
 	}
-	return nil
+	return fmt.Errorf("wanted function name %s not found in the profile", wantFunctionName)
+}
+
+func TestDeltaMutexProfile(t *testing.T) {
+	oldMutexEnabled, oldMaxProcs := mutexEnabled, runtime.GOMAXPROCS(10)
+	defer func() {
+		mutexEnabled = oldMutexEnabled
+		runtime.GOMAXPROCS(oldMaxProcs)
+	}()
+	if mutexEnabled = enableMutexProfiling(); !mutexEnabled {
+		t.Skip("Go too old - mutex profiling not supported.")
+	}
+
+	hog(time.Second, mutexHog)
+	go func() {
+		hog(2*time.Second, backgroundHog)
+	}()
+
+	var prof bytes.Buffer
+	if err := deltaMutexProfile(context.Background(), time.Second, &prof); err != nil {
+		t.Fatalf("deltaMutexProfile() got error: %v", err)
+	}
+	p, err := profile.Parse(&prof)
+	if err != nil {
+		t.Fatalf("profile.Parse() got error: %v", err)
+	}
+
+	if s := sum(p, "mutexHog"); s != 0 {
+		t.Errorf("mutexHog found in the delta mutex profile (sum=%d):\n%s", s, p)
+	}
+	if s := sum(p, "backgroundHog"); s <= 0 {
+		t.Errorf("backgroundHog not in the delta mutex profile (sum=%d):\n%s", s, p)
+	}
+}
+
+// sum returns the sum of all mutex counts from the samples whose
+// stacks include the specified function name.
+func sum(p *profile.Profile, fname string) int64 {
+	locIDs := map[*profile.Location]bool{}
+	for _, loc := range p.Location {
+		for _, l := range loc.Line {
+			if strings.Contains(l.Function.Name, fname) {
+				locIDs[loc] = true
+				break
+			}
+		}
+	}
+	var s int64
+	for _, sample := range p.Sample {
+		for _, loc := range sample.Location {
+			if locIDs[loc] {
+				s += sample.Value[0]
+				break
+			}
+		}
+	}
+	return s
+}
+
+func mutexHog(mu1, mu2 *sync.Mutex, start time.Time, dt time.Duration) {
+	for time.Since(start) < dt {
+		mu1.Lock()
+		runtime.Gosched()
+		mu2.Lock()
+		mu1.Unlock()
+		mu2.Unlock()
+	}
+}
+
+// backgroundHog is identical to mutexHog. We keep them separate
+// in order to distinguish them with function names in the stack trace.
+func backgroundHog(mu1, mu2 *sync.Mutex, start time.Time, dt time.Duration) {
+	for time.Since(start) < dt {
+		mu1.Lock()
+		runtime.Gosched()
+		mu2.Lock()
+		mu1.Unlock()
+		mu2.Unlock()
+	}
+}
+
+func hog(dt time.Duration, hogger func(mu1, mu2 *sync.Mutex, start time.Time, dt time.Duration)) {
+	start := time.Now()
+	mu1 := new(sync.Mutex)
+	mu2 := new(sync.Mutex)
+	var wg sync.WaitGroup
+	wg.Add(10)
+	for i := 0; i < 10; i++ {
+		go func() {
+			defer wg.Done()
+			hogger(mu1, mu2, start, dt)
+		}()
+	}
+	wg.Wait()
 }
 
 func TestAgentWithServer(t *testing.T) {
@@ -672,7 +776,7 @@ func TestAgentWithServer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("testutil.NewServer(): %v", err)
 	}
-	fakeServer := &fakeProfilerServer{done: make(chan bool)}
+	fakeServer := &fakeProfilerServer{gotProfiles: map[string][]byte{}, done: make(chan bool)}
 	pb.RegisterProfilerServiceServer(srv.Gsrv, fakeServer)
 
 	srv.Start()
@@ -698,10 +802,11 @@ func TestAgentWithServer(t *testing.T) {
 	}
 	quitProfilee <- true
 
-	if err := validateProfile(fakeServer.gotCPUProfile); err != nil {
-		t.Errorf("validateProfile(gotCPUProfile): %v", err)
-	}
-	if err := validateProfile(fakeServer.gotHeapProfile); err != nil {
-		t.Errorf("validateProfile(gotHeapProfile): %v", err)
+	for _, pType := range []string{"CPU", "HEAP"} {
+		if profile, ok := fakeServer.gotProfiles[pType]; !ok {
+			t.Errorf("fakeServer.gotProfiles[%s] got no profile, want profile", pType)
+		} else if err := validateProfile(profile, "profilee"); err != nil {
+			t.Errorf("validateProfile(%s) got error: %v", pType, err)
+		}
 	}
 }

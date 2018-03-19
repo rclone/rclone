@@ -3,26 +3,25 @@ package http
 import (
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
+	"os"
 	"path"
 	"strconv"
 	"strings"
 
 	"github.com/ncw/rclone/cmd"
+	"github.com/ncw/rclone/cmd/serve/httplib"
+	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/accounting"
+	"github.com/ncw/rclone/lib/rest"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 )
 
-// Globals
-var (
-	bindAddress = "localhost:8080"
-)
-
 func init() {
-	Command.Flags().StringVarP(&bindAddress, "addr", "", bindAddress, "IPaddress:Port to bind server to.")
+	httpflags.AddFlags(Command.Flags())
 	vfsflags.AddFlags(Command.Flags())
 }
 
@@ -34,10 +33,6 @@ var Command = &cobra.Command{
 over HTTP.  This can be viewed in a web browser or you can make a
 remote of type http read from it.
 
-Use --addr to specify which IP address and port the server should
-listen on, eg --addr 1.2.3.4:8000 or --addr :8080 to listen to all
-IPs.  By default it only listens on localhost.
-
 You can use the filter flags (eg --include, --exclude) to control what
 is served.
 
@@ -45,12 +40,12 @@ The server will log errors.  Use -v to see access logs.
 
 --bwlimit will be respected for file transfers.  Use --stats to
 control the stats printing.
-` + vfs.Help,
+` + httplib.Help + vfs.Help,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
 		cmd.Run(false, true, command, func() error {
-			s := newServer(f, bindAddress)
+			s := newServer(f, &httpflags.Opt)
 			s.serve()
 			return nil
 		})
@@ -59,33 +54,26 @@ control the stats printing.
 
 // server contains everything to run the server
 type server struct {
-	f           fs.Fs
-	bindAddress string
-	vfs         *vfs.VFS
+	f   fs.Fs
+	vfs *vfs.VFS
+	srv *httplib.Server
 }
 
-func newServer(f fs.Fs, bindAddress string) *server {
+func newServer(f fs.Fs, opt *httplib.Options) *server {
+	mux := http.NewServeMux()
 	s := &server{
-		f:           f,
-		bindAddress: bindAddress,
-		vfs:         vfs.New(f, &vfsflags.Opt),
+		f:   f,
+		vfs: vfs.New(f, &vfsflags.Opt),
+		srv: httplib.NewServer(mux, opt),
 	}
+	mux.HandleFunc("/", s.handler)
 	return s
 }
 
-// serve creates the http server
+// serve runs the http server - doesn't return
 func (s *server) serve() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", s.handler)
-	// FIXME make a transport?
-	httpServer := &http.Server{
-		Addr:           s.bindAddress,
-		Handler:        mux,
-		MaxHeaderBytes: 1 << 20,
-	}
-	initServer(httpServer)
-	fs.Logf(s.f, "Serving on http://%s/", bindAddress)
-	log.Fatal(httpServer.ListenAndServe())
+	fs.Logf(s.f, "Serving on %s", s.srv.URL())
+	s.srv.Serve()
 }
 
 // handler reads incoming requests and dispatches them
@@ -117,6 +105,22 @@ type entry struct {
 // entries represents a directory
 type entries []entry
 
+// addEntry adds an entry to that directory
+func (es *entries) addEntry(node interface {
+	Path() string
+	Name() string
+	IsDir() bool
+}) {
+	remote := node.Path()
+	leaf := node.Name()
+	urlRemote := leaf
+	if node.IsDir() {
+		leaf += "/"
+		urlRemote += "/"
+	}
+	*es = append(*es, entry{remote: remote, URL: rest.URLPathEscape(urlRemote), Leaf: leaf})
+}
+
 // indexPage is a directory listing template
 var indexPage = `<!DOCTYPE html>
 <html lang="en">
@@ -142,7 +146,7 @@ type indexData struct {
 
 // error returns an http.StatusInternalServerError and logs the error
 func internalError(what interface{}, w http.ResponseWriter, text string, err error) {
-	fs.Stats.Error(err)
+	fs.CountError(err)
 	fs.Errorf(what, "%s: %v", text, err)
 	http.Error(w, text+".", http.StatusInternalServerError)
 }
@@ -171,19 +175,12 @@ func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote stri
 
 	var out entries
 	for _, node := range dirEntries {
-		remote := node.Path()
-		leaf := node.Name()
-		urlRemote := leaf
-		if node.IsDir() {
-			leaf += "/"
-			urlRemote += "/"
-		}
-		out = append(out, entry{remote: remote, URL: urlRemote, Leaf: leaf})
+		out.addEntry(node)
 	}
 
 	// Account the transfer
-	fs.Stats.Transferring(dirRemote)
-	defer fs.Stats.DoneTransferring(dirRemote, true)
+	accounting.Stats.Transferring(dirRemote)
+	defer accounting.Stats.DoneTransferring(dirRemote, true)
 
 	fs.Infof(dirRemote, "%s: Serving directory", r.RemoteAddr)
 	err = indexTemplate.Execute(w, indexData{
@@ -236,7 +233,7 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 	}
 
 	// open the object
-	in, err := file.OpenRead()
+	in, err := file.Open(os.O_RDONLY)
 	if err != nil {
 		internalError(remote, w, "Failed to open file", err)
 		return
@@ -249,8 +246,8 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 	}()
 
 	// Account the transfer
-	fs.Stats.Transferring(remote)
-	defer fs.Stats.DoneTransferring(remote, true)
+	accounting.Stats.Transferring(remote)
+	defer accounting.Stats.DoneTransferring(remote, true)
 	// FIXME in = fs.NewAccount(in, obj).WithBuffer() // account the transfer
 
 	// Serve the file

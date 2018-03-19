@@ -1,14 +1,18 @@
 language: go
-sudo: false
-osx_image: xcode7.3
+sudo: required
+dist: trusty
 os:
 - linux
 go:
 - 1.6.4
 - 1.7.6
-- 1.8.5
-- 1.9.2
+- 1.8.7
+- 1.9.3
+- "1.10"
 - tip
+before_install:
+- if [[ $TRAVIS_OS_NAME == linux ]]; then sudo modprobe fuse ; sudo chmod 666 /dev/fuse ; sudo chown root:$USER /etc/fuse.conf ; fi
+- if [[ $TRAVIS_OS_NAME == osx ]]; then brew update && brew tap caskroom/cask && brew cask install osxfuse ; fi
 install:
 - git fetch --unshallow --tags
 - make vars
@@ -20,24 +24,28 @@ script:
 env:
   global:
     - GOTAGS=cmount
-  matrix:
-    secure: gU8gCV9R8Kv/Gn0SmCP37edpfIbPoSvsub48GK7qxJdTU628H0KOMiZW/T0gtV5d67XJZ4eKnhJYlxwwxgSgfejO32Rh5GlYEKT/FuVoH0BD72dM1GDFLSrUiUYOdoHvf/BKIFA3dJFT4lk2ASy4Zh7SEoXHG6goBlqUpYx8hVA=
+    - secure: gU8gCV9R8Kv/Gn0SmCP37edpfIbPoSvsub48GK7qxJdTU628H0KOMiZW/T0gtV5d67XJZ4eKnhJYlxwwxgSgfejO32Rh5GlYEKT/FuVoH0BD72dM1GDFLSrUiUYOdoHvf/BKIFA3dJFT4lk2ASy4Zh7SEoXHG6goBlqUpYx8hVA=
+    - secure: AMjrMAksDy3QwqGqnvtUg8FL/GNVgNqTqhntLF9HSU0njHhX6YurGGnfKdD9vNHlajPQOewvmBjwNLcDWGn2WObdvmh9Ohep0EmOjZ63kliaRaSSQueSd8y0idfqMQAxep0SObOYbEDVmQh0RCAE9wOVKRaPgw98XvgqWGDq5Tw=
+    - secure: Uaiveq+/rvQjO03GzvQZV2J6pZfedoFuhdXrLVhhHSeP4ZBca0olw7xaqkabUyP3LkVYXMDSX8EbyeuQT1jfEe5wp5sBdfaDtuYW6heFyjiHIIIbVyBfGXon6db4ETBjOaX/Xt8uktrgNge6qFlj+kpnmpFGxf0jmDLw1zgg7tk=
 addons:
   apt:
     packages:
     - fuse
     - libfuse-dev
+    - rpm
+    - pkg-config
 matrix:
   allow_failures:
   - go: tip
   include:
   - os: osx
-    go: 1.9.2
+    go: "1.10"
     env: GOTAGS=""
 deploy:
   provider: script
   script: make travis_beta
+  skip_cleanup: true
   on:
-    branch: master
-    go: 1.9.2
-    condition: "`uname` == 'Linux'"
+    all_branches: true
+    go: "1.10"
+    condition: $TRAVIS_OS_NAME == linux && $TRAVIS_PULL_REQUEST == false

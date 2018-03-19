@@ -64,6 +64,18 @@ type LightsailAPI interface {
 	AllocateStaticIpWithContext(aws.Context, *lightsail.AllocateStaticIpInput, ...request.Option) (*lightsail.AllocateStaticIpOutput, error)
 	AllocateStaticIpRequest(*lightsail.AllocateStaticIpInput) (*request.Request, *lightsail.AllocateStaticIpOutput)
 
+	AttachDisk(*lightsail.AttachDiskInput) (*lightsail.AttachDiskOutput, error)
+	AttachDiskWithContext(aws.Context, *lightsail.AttachDiskInput, ...request.Option) (*lightsail.AttachDiskOutput, error)
+	AttachDiskRequest(*lightsail.AttachDiskInput) (*request.Request, *lightsail.AttachDiskOutput)
+
+	AttachInstancesToLoadBalancer(*lightsail.AttachInstancesToLoadBalancerInput) (*lightsail.AttachInstancesToLoadBalancerOutput, error)
+	AttachInstancesToLoadBalancerWithContext(aws.Context, *lightsail.AttachInstancesToLoadBalancerInput, ...request.Option) (*lightsail.AttachInstancesToLoadBalancerOutput, error)
+	AttachInstancesToLoadBalancerRequest(*lightsail.AttachInstancesToLoadBalancerInput) (*request.Request, *lightsail.AttachInstancesToLoadBalancerOutput)
+
+	AttachLoadBalancerTlsCertificate(*lightsail.AttachLoadBalancerTlsCertificateInput) (*lightsail.AttachLoadBalancerTlsCertificateOutput, error)
+	AttachLoadBalancerTlsCertificateWithContext(aws.Context, *lightsail.AttachLoadBalancerTlsCertificateInput, ...request.Option) (*lightsail.AttachLoadBalancerTlsCertificateOutput, error)
+	AttachLoadBalancerTlsCertificateRequest(*lightsail.AttachLoadBalancerTlsCertificateInput) (*request.Request, *lightsail.AttachLoadBalancerTlsCertificateOutput)
+
 	AttachStaticIp(*lightsail.AttachStaticIpInput) (*lightsail.AttachStaticIpOutput, error)
 	AttachStaticIpWithContext(aws.Context, *lightsail.AttachStaticIpInput, ...request.Option) (*lightsail.AttachStaticIpOutput, error)
 	AttachStaticIpRequest(*lightsail.AttachStaticIpInput) (*request.Request, *lightsail.AttachStaticIpOutput)
@@ -71,6 +83,18 @@ type LightsailAPI interface {
 	CloseInstancePublicPorts(*lightsail.CloseInstancePublicPortsInput) (*lightsail.CloseInstancePublicPortsOutput, error)
 	CloseInstancePublicPortsWithContext(aws.Context, *lightsail.CloseInstancePublicPortsInput, ...request.Option) (*lightsail.CloseInstancePublicPortsOutput, error)
 	CloseInstancePublicPortsRequest(*lightsail.CloseInstancePublicPortsInput) (*request.Request, *lightsail.CloseInstancePublicPortsOutput)
+
+	CreateDisk(*lightsail.CreateDiskInput) (*lightsail.CreateDiskOutput, error)
+	CreateDiskWithContext(aws.Context, *lightsail.CreateDiskInput, ...request.Option) (*lightsail.CreateDiskOutput, error)
+	CreateDiskRequest(*lightsail.CreateDiskInput) (*request.Request, *lightsail.CreateDiskOutput)
+
+	CreateDiskFromSnapshot(*lightsail.CreateDiskFromSnapshotInput) (*lightsail.CreateDiskFromSnapshotOutput, error)
+	CreateDiskFromSnapshotWithContext(aws.Context, *lightsail.CreateDiskFromSnapshotInput, ...request.Option) (*lightsail.CreateDiskFromSnapshotOutput, error)
+	CreateDiskFromSnapshotRequest(*lightsail.CreateDiskFromSnapshotInput) (*request.Request, *lightsail.CreateDiskFromSnapshotOutput)
+
+	CreateDiskSnapshot(*lightsail.CreateDiskSnapshotInput) (*lightsail.CreateDiskSnapshotOutput, error)
+	CreateDiskSnapshotWithContext(aws.Context, *lightsail.CreateDiskSnapshotInput, ...request.Option) (*lightsail.CreateDiskSnapshotOutput, error)
+	CreateDiskSnapshotRequest(*lightsail.CreateDiskSnapshotInput) (*request.Request, *lightsail.CreateDiskSnapshotOutput)
 
 	CreateDomain(*lightsail.CreateDomainInput) (*lightsail.CreateDomainOutput, error)
 	CreateDomainWithContext(aws.Context, *lightsail.CreateDomainInput, ...request.Option) (*lightsail.CreateDomainOutput, error)
@@ -96,6 +120,22 @@ type LightsailAPI interface {
 	CreateKeyPairWithContext(aws.Context, *lightsail.CreateKeyPairInput, ...request.Option) (*lightsail.CreateKeyPairOutput, error)
 	CreateKeyPairRequest(*lightsail.CreateKeyPairInput) (*request.Request, *lightsail.CreateKeyPairOutput)
 
+	CreateLoadBalancer(*lightsail.CreateLoadBalancerInput) (*lightsail.CreateLoadBalancerOutput, error)
+	CreateLoadBalancerWithContext(aws.Context, *lightsail.CreateLoadBalancerInput, ...request.Option) (*lightsail.CreateLoadBalancerOutput, error)
+	CreateLoadBalancerRequest(*lightsail.CreateLoadBalancerInput) (*request.Request, *lightsail.CreateLoadBalancerOutput)
+
+	CreateLoadBalancerTlsCertificate(*lightsail.CreateLoadBalancerTlsCertificateInput) (*lightsail.CreateLoadBalancerTlsCertificateOutput, error)
+	CreateLoadBalancerTlsCertificateWithContext(aws.Context, *lightsail.CreateLoadBalancerTlsCertificateInput, ...request.Option) (*lightsail.CreateLoadBalancerTlsCertificateOutput, error)
+	CreateLoadBalancerTlsCertificateRequest(*lightsail.CreateLoadBalancerTlsCertificateInput) (*request.Request, *lightsail.CreateLoadBalancerTlsCertificateOutput)
+
+	DeleteDisk(*lightsail.DeleteDiskInput) (*lightsail.DeleteDiskOutput, error)
+	DeleteDiskWithContext(aws.Context, *lightsail.DeleteDiskInput, ...request.Option) (*lightsail.DeleteDiskOutput, error)
+	DeleteDiskRequest(*lightsail.DeleteDiskInput) (*request.Request, *lightsail.DeleteDiskOutput)
+
+	DeleteDiskSnapshot(*lightsail.DeleteDiskSnapshotInput) (*lightsail.DeleteDiskSnapshotOutput, error)
+	DeleteDiskSnapshotWithContext(aws.Context, *lightsail.DeleteDiskSnapshotInput, ...request.Option) (*lightsail.DeleteDiskSnapshotOutput, error)
+	DeleteDiskSnapshotRequest(*lightsail.DeleteDiskSnapshotInput) (*request.Request, *lightsail.DeleteDiskSnapshotOutput)
+
 	DeleteDomain(*lightsail.DeleteDomainInput) (*lightsail.DeleteDomainOutput, error)
 	DeleteDomainWithContext(aws.Context, *lightsail.DeleteDomainInput, ...request.Option) (*lightsail.DeleteDomainOutput, error)
 	DeleteDomainRequest(*lightsail.DeleteDomainInput) (*request.Request, *lightsail.DeleteDomainOutput)
@@ -116,6 +156,22 @@ type LightsailAPI interface {
 	DeleteKeyPairWithContext(aws.Context, *lightsail.DeleteKeyPairInput, ...request.Option) (*lightsail.DeleteKeyPairOutput, error)
 	DeleteKeyPairRequest(*lightsail.DeleteKeyPairInput) (*request.Request, *lightsail.DeleteKeyPairOutput)
 
+	DeleteLoadBalancer(*lightsail.DeleteLoadBalancerInput) (*lightsail.DeleteLoadBalancerOutput, error)
+	DeleteLoadBalancerWithContext(aws.Context, *lightsail.DeleteLoadBalancerInput, ...request.Option) (*lightsail.DeleteLoadBalancerOutput, error)
+	DeleteLoadBalancerRequest(*lightsail.DeleteLoadBalancerInput) (*request.Request, *lightsail.DeleteLoadBalancerOutput)
+
+	DeleteLoadBalancerTlsCertificate(*lightsail.DeleteLoadBalancerTlsCertificateInput) (*lightsail.DeleteLoadBalancerTlsCertificateOutput, error)
+	DeleteLoadBalancerTlsCertificateWithContext(aws.Context, *lightsail.DeleteLoadBalancerTlsCertificateInput, ...request.Option) (*lightsail.DeleteLoadBalancerTlsCertificateOutput, error)
+	DeleteLoadBalancerTlsCertificateRequest(*lightsail.DeleteLoadBalancerTlsCertificateInput) (*request.Request, *lightsail.DeleteLoadBalancerTlsCertificateOutput)
+
+	DetachDisk(*lightsail.DetachDiskInput) (*lightsail.DetachDiskOutput, error)
+	DetachDiskWithContext(aws.Context, *lightsail.DetachDiskInput, ...request.Option) (*lightsail.DetachDiskOutput, error)
+	DetachDiskRequest(*lightsail.DetachDiskInput) (*request.Request, *lightsail.DetachDiskOutput)
+
+	DetachInstancesFromLoadBalancer(*lightsail.DetachInstancesFromLoadBalancerInput) (*lightsail.DetachInstancesFromLoadBalancerOutput, error)
+	DetachInstancesFromLoadBalancerWithContext(aws.Context, *lightsail.DetachInstancesFromLoadBalancerInput, ...request.Option) (*lightsail.DetachInstancesFromLoadBalancerOutput, error)
+	DetachInstancesFromLoadBalancerRequest(*lightsail.DetachInstancesFromLoadBalancerInput) (*request.Request, *lightsail.DetachInstancesFromLoadBalancerOutput)
+
 	DetachStaticIp(*lightsail.DetachStaticIpInput) (*lightsail.DetachStaticIpOutput, error)
 	DetachStaticIpWithContext(aws.Context, *lightsail.DetachStaticIpInput, ...request.Option) (*lightsail.DetachStaticIpOutput, error)
 	DetachStaticIpRequest(*lightsail.DetachStaticIpInput) (*request.Request, *lightsail.DetachStaticIpOutput)
@@ -135,6 +191,22 @@ type LightsailAPI interface {
 	GetBundles(*lightsail.GetBundlesInput) (*lightsail.GetBundlesOutput, error)
 	GetBundlesWithContext(aws.Context, *lightsail.GetBundlesInput, ...request.Option) (*lightsail.GetBundlesOutput, error)
 	GetBundlesRequest(*lightsail.GetBundlesInput) (*request.Request, *lightsail.GetBundlesOutput)
+
+	GetDisk(*lightsail.GetDiskInput) (*lightsail.GetDiskOutput, error)
+	GetDiskWithContext(aws.Context, *lightsail.GetDiskInput, ...request.Option) (*lightsail.GetDiskOutput, error)
+	GetDiskRequest(*lightsail.GetDiskInput) (*request.Request, *lightsail.GetDiskOutput)
+
+	GetDiskSnapshot(*lightsail.GetDiskSnapshotInput) (*lightsail.GetDiskSnapshotOutput, error)
+	GetDiskSnapshotWithContext(aws.Context, *lightsail.GetDiskSnapshotInput, ...request.Option) (*lightsail.GetDiskSnapshotOutput, error)
+	GetDiskSnapshotRequest(*lightsail.GetDiskSnapshotInput) (*request.Request, *lightsail.GetDiskSnapshotOutput)
+
+	GetDiskSnapshots(*lightsail.GetDiskSnapshotsInput) (*lightsail.GetDiskSnapshotsOutput, error)
+	GetDiskSnapshotsWithContext(aws.Context, *lightsail.GetDiskSnapshotsInput, ...request.Option) (*lightsail.GetDiskSnapshotsOutput, error)
+	GetDiskSnapshotsRequest(*lightsail.GetDiskSnapshotsInput) (*request.Request, *lightsail.GetDiskSnapshotsOutput)
+
+	GetDisks(*lightsail.GetDisksInput) (*lightsail.GetDisksOutput, error)
+	GetDisksWithContext(aws.Context, *lightsail.GetDisksInput, ...request.Option) (*lightsail.GetDisksOutput, error)
+	GetDisksRequest(*lightsail.GetDisksInput) (*request.Request, *lightsail.GetDisksOutput)
 
 	GetDomain(*lightsail.GetDomainInput) (*lightsail.GetDomainOutput, error)
 	GetDomainWithContext(aws.Context, *lightsail.GetDomainInput, ...request.Option) (*lightsail.GetDomainOutput, error)
@@ -183,6 +255,22 @@ type LightsailAPI interface {
 	GetKeyPairs(*lightsail.GetKeyPairsInput) (*lightsail.GetKeyPairsOutput, error)
 	GetKeyPairsWithContext(aws.Context, *lightsail.GetKeyPairsInput, ...request.Option) (*lightsail.GetKeyPairsOutput, error)
 	GetKeyPairsRequest(*lightsail.GetKeyPairsInput) (*request.Request, *lightsail.GetKeyPairsOutput)
+
+	GetLoadBalancer(*lightsail.GetLoadBalancerInput) (*lightsail.GetLoadBalancerOutput, error)
+	GetLoadBalancerWithContext(aws.Context, *lightsail.GetLoadBalancerInput, ...request.Option) (*lightsail.GetLoadBalancerOutput, error)
+	GetLoadBalancerRequest(*lightsail.GetLoadBalancerInput) (*request.Request, *lightsail.GetLoadBalancerOutput)
+
+	GetLoadBalancerMetricData(*lightsail.GetLoadBalancerMetricDataInput) (*lightsail.GetLoadBalancerMetricDataOutput, error)
+	GetLoadBalancerMetricDataWithContext(aws.Context, *lightsail.GetLoadBalancerMetricDataInput, ...request.Option) (*lightsail.GetLoadBalancerMetricDataOutput, error)
+	GetLoadBalancerMetricDataRequest(*lightsail.GetLoadBalancerMetricDataInput) (*request.Request, *lightsail.GetLoadBalancerMetricDataOutput)
+
+	GetLoadBalancerTlsCertificates(*lightsail.GetLoadBalancerTlsCertificatesInput) (*lightsail.GetLoadBalancerTlsCertificatesOutput, error)
+	GetLoadBalancerTlsCertificatesWithContext(aws.Context, *lightsail.GetLoadBalancerTlsCertificatesInput, ...request.Option) (*lightsail.GetLoadBalancerTlsCertificatesOutput, error)
+	GetLoadBalancerTlsCertificatesRequest(*lightsail.GetLoadBalancerTlsCertificatesInput) (*request.Request, *lightsail.GetLoadBalancerTlsCertificatesOutput)
+
+	GetLoadBalancers(*lightsail.GetLoadBalancersInput) (*lightsail.GetLoadBalancersOutput, error)
+	GetLoadBalancersWithContext(aws.Context, *lightsail.GetLoadBalancersInput, ...request.Option) (*lightsail.GetLoadBalancersOutput, error)
+	GetLoadBalancersRequest(*lightsail.GetLoadBalancersInput) (*request.Request, *lightsail.GetLoadBalancersOutput)
 
 	GetOperation(*lightsail.GetOperationInput) (*lightsail.GetOperationOutput, error)
 	GetOperationWithContext(aws.Context, *lightsail.GetOperationInput, ...request.Option) (*lightsail.GetOperationOutput, error)
@@ -251,6 +339,10 @@ type LightsailAPI interface {
 	UpdateDomainEntry(*lightsail.UpdateDomainEntryInput) (*lightsail.UpdateDomainEntryOutput, error)
 	UpdateDomainEntryWithContext(aws.Context, *lightsail.UpdateDomainEntryInput, ...request.Option) (*lightsail.UpdateDomainEntryOutput, error)
 	UpdateDomainEntryRequest(*lightsail.UpdateDomainEntryInput) (*request.Request, *lightsail.UpdateDomainEntryOutput)
+
+	UpdateLoadBalancerAttribute(*lightsail.UpdateLoadBalancerAttributeInput) (*lightsail.UpdateLoadBalancerAttributeOutput, error)
+	UpdateLoadBalancerAttributeWithContext(aws.Context, *lightsail.UpdateLoadBalancerAttributeInput, ...request.Option) (*lightsail.UpdateLoadBalancerAttributeOutput, error)
+	UpdateLoadBalancerAttributeRequest(*lightsail.UpdateLoadBalancerAttributeInput) (*request.Request, *lightsail.UpdateLoadBalancerAttributeOutput)
 }
 
 var _ LightsailAPI = (*lightsail.Lightsail)(nil)

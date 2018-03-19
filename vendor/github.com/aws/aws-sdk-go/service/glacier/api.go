@@ -3,6 +3,7 @@
 package glacier
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -1139,8 +1140,8 @@ func (c *Glacier) DescribeJobRequest(input *DescribeJobInput) (req *request.Requ
 // For more information, see Access Control Using AWS Identity and Access Management
 // (IAM) (http://docs.aws.amazon.com/amazonglacier/latest/dev/using-iam-with-amazon-glacier.html).
 //
-// For information about the underlying REST API, see Working with Archives
-// in Amazon Glacier (http://docs.aws.amazon.com/amazonglacier/latest/dev/api-describe-job-get.html)
+// For more information about using this operation, see the documentation for
+// the underlying REST API Describe Job (http://docs.aws.amazon.com/amazonglacier/latest/dev/api-describe-job-get.html)
 // in the Amazon Glacier Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -1845,142 +1846,10 @@ func (c *Glacier) InitiateJobRequest(input *InitiateJobInput) (req *request.Requ
 
 // InitiateJob API operation for Amazon Glacier.
 //
-// This operation initiates a job of the specified type. In this release, you
-// can initiate a job to retrieve either an archive or a vault inventory (a
-// list of archives in a vault).
-//
-// Retrieving data from Amazon Glacier is a two-step process:
-//
-// Initiate a retrieval job.
-//
-// A data retrieval policy can cause your initiate retrieval job request to
-// fail with a PolicyEnforcedException exception. For more information about
-// data retrieval policies, see Amazon Glacier Data Retrieval Policies (http://docs.aws.amazon.com/amazonglacier/latest/dev/data-retrieval-policy.html).
-// For more information about the PolicyEnforcedException exception, see Error
-// Responses (http://docs.aws.amazon.com/amazonglacier/latest/dev/api-error-responses.html).
-//
-// After the job completes, download the bytes.
-//
-// The retrieval request is executed asynchronously. When you initiate a retrieval
-// job, Amazon Glacier creates a job and returns a job ID in the response. When
-// Amazon Glacier completes the job, you can get the job output (archive or
-// inventory data). For information about getting job output, see GetJobOutput
-// operation.
-//
-// The job must complete before you can get its output. To determine when a
-// job is complete, you have the following options:
-//
-//    * Use Amazon SNS Notification You can specify an Amazon Simple Notification
-//    Service (Amazon SNS) topic to which Amazon Glacier can post a notification
-//    after the job is completed. You can specify an SNS topic per job request.
-//    The notification is sent only after Amazon Glacier completes the job.
-//    In addition to specifying an SNS topic per job request, you can configure
-//    vault notifications for a vault so that job notifications are always sent.
-//    For more information, see SetVaultNotifications.
-//
-//    * Get job details You can make a DescribeJob request to obtain job status
-//    information while a job is in progress. However, it is more efficient
-//    to use an Amazon SNS notification to determine when a job is complete.
-//
-// The information you get via notification is same that you get by calling
-// DescribeJob.
-//
-// If for a specific event, you add both the notification configuration on the
-// vault and also specify an SNS topic in your initiate job request, Amazon
-// Glacier sends both notifications. For more information, see SetVaultNotifications.
-//
-// An AWS account has full permission to perform all operations (actions). However,
-// AWS Identity and Access Management (IAM) users don't have any permissions
-// by default. You must grant them explicit permission to perform specific actions.
-// For more information, see Access Control Using AWS Identity and Access Management
-// (IAM) (http://docs.aws.amazon.com/amazonglacier/latest/dev/using-iam-with-amazon-glacier.html).
-//
-// About the Vault Inventory
-//
-// Amazon Glacier prepares an inventory for each vault periodically, every 24
-// hours. When you initiate a job for a vault inventory, Amazon Glacier returns
-// the last inventory for the vault. The inventory data you get might be up
-// to a day or two days old. Also, the initiate inventory job might take some
-// time to complete before you can download the vault inventory. So you do not
-// want to retrieve a vault inventory for each vault operation. However, in
-// some scenarios, you might find the vault inventory useful. For example, when
-// you upload an archive, you can provide an archive description but not an
-// archive name. Amazon Glacier provides you a unique archive ID, an opaque
-// string of characters. So, you might maintain your own database that maps
-// archive names to their corresponding Amazon Glacier assigned archive IDs.
-// You might find the vault inventory useful in the event you need to reconcile
-// information in your database with the actual vault inventory.
-//
-// Range Inventory Retrieval
-//
-// You can limit the number of inventory items retrieved by filtering on the
-// archive creation date or by setting a limit.
-//
-// Filtering by Archive Creation Date
-//
-// You can retrieve inventory items for archives created between StartDate and
-// EndDate by specifying values for these parameters in the InitiateJob request.
-// Archives created on or after the StartDate and before the EndDate will be
-// returned. If you only provide the StartDate without the EndDate, you will
-// retrieve the inventory for all archives created on or after the StartDate.
-// If you only provide the EndDate without the StartDate, you will get back
-// the inventory for all archives created before the EndDate.
-//
-// Limiting Inventory Items per Retrieval
-//
-// You can limit the number of inventory items returned by setting the Limit
-// parameter in the InitiateJob request. The inventory job output will contain
-// inventory items up to the specified Limit. If there are more inventory items
-// available, the result is paginated. After a job is complete you can use the
-// DescribeJob operation to get a marker that you use in a subsequent InitiateJob
-// request. The marker will indicate the starting point to retrieve the next
-// set of inventory items. You can page through your entire inventory by repeatedly
-// making InitiateJob requests with the marker from the previous DescribeJob
-// output, until you get a marker from DescribeJob that returns null, indicating
-// that there are no more inventory items available.
-//
-// You can use the Limit parameter together with the date range parameters.
-//
-// About Ranged Archive Retrieval
-//
-// You can initiate an archive retrieval for the whole archive or a range of
-// the archive. In the case of ranged archive retrieval, you specify a byte
-// range to return or the whole archive. The range specified must be megabyte
-// (MB) aligned, that is the range start value must be divisible by 1 MB and
-// range end value plus 1 must be divisible by 1 MB or equal the end of the
-// archive. If the ranged archive retrieval is not megabyte aligned, this operation
-// returns a 400 response. Furthermore, to ensure you get checksum values for
-// data you download using Get Job Output API, the range must be tree hash aligned.
-//
-// An AWS account has full permission to perform all operations (actions). However,
-// AWS Identity and Access Management (IAM) users don't have any permissions
-// by default. You must grant them explicit permission to perform specific actions.
-// For more information, see Access Control Using AWS Identity and Access Management
-// (IAM) (http://docs.aws.amazon.com/amazonglacier/latest/dev/using-iam-with-amazon-glacier.html).
-//
-// For conceptual information and the underlying REST API, see Initiate a Job
-// (http://docs.aws.amazon.com/amazonglacier/latest/dev/api-initiate-job-post.html)
-// and Downloading a Vault Inventory (http://docs.aws.amazon.com/amazonglacier/latest/dev/vault-inventory.html)
-//
-// Expedited and Bulk Archive Retrievals
-//
-// When retrieving an archive, you can specify one of the following options
-// in the Tier field of the request body:
-//
-//    * Standard The default type of retrieval, which allows access to any of
-//    your archives within several hours. Standard retrievals typically complete
-//    within 3–5 hours.
-//
-//    * Bulk Amazon Glacier’s lowest-cost retrieval option, which enables you
-//    to retrieve large amounts of data inexpensively in a day. Bulk retrieval
-//    requests typically complete within 5–12 hours.
-//
-//    * Expedited Amazon Glacier’s option for the fastest retrievals. Archives
-//    requested using the expedited retrievals typically become accessible within
-//    1–5 minutes.
-//
-// For more information about expedited and bulk retrievals, see Retrieving
-// Amazon Glacier Archives (http://docs.aws.amazon.com/amazonglacier/latest/dev/downloading-an-archive-two-steps.html).
+// This operation initiates a job of the specified type, which can be a select,
+// an archival retrieval, or a vault retrieval. For more information about using
+// this operation, see the documentation for the underlying REST API Initiate
+// a Job (http://docs.aws.amazon.com/amazonglacier/latest/dev/api-initiate-job-post.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2316,7 +2185,8 @@ func (c *Glacier) ListJobsRequest(input *ListJobsInput) (req *request.Request, o
 // ListJobs API operation for Amazon Glacier.
 //
 // This operation lists jobs for a vault, including jobs that are in-progress
-// and jobs that have recently finished.
+// and jobs that have recently finished. The List Job operation returns a list
+// of these jobs sorted by job initiation time.
 //
 // Amazon Glacier retains recently completed jobs for a period before deleting
 // them; however, it eventually removes completed jobs. The output of completed
@@ -2327,12 +2197,6 @@ func (c *Glacier) ListJobsRequest(input *ListJobsInput) (req *request.Request, o
 // After the job completes, you start to download the archive but encounter
 // a network error. In this scenario, you can retry and download the archive
 // while the job exists.
-//
-// To retrieve an archive or retrieve a vault inventory from Amazon Glacier,
-// you first initiate a job, and after the job completes, you download the data.
-// For an archive retrieval, the output is the archive data. For an inventory
-// retrieval, it is the inventory list. The List Job operation returns a list
-// of these jobs sorted by job initiation time.
 //
 // The List Jobs operation supports pagination. You should always check the
 // response Marker field. If there are no more jobs to list, the Marker field
@@ -2354,7 +2218,8 @@ func (c *Glacier) ListJobsRequest(input *ListJobsInput) (req *request.Request, o
 // to return only jobs that were completed (true) or jobs that were not completed
 // (false).
 //
-// For the underlying REST API, see List Jobs (http://docs.aws.amazon.com/amazonglacier/latest/dev/api-jobs-get.html).
+// For more information about using this operation, see the documentation for
+// the underlying REST API List Jobs (http://docs.aws.amazon.com/amazonglacier/latest/dev/api-jobs-get.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2826,7 +2691,8 @@ func (c *Glacier) ListProvisionedCapacityRequest(input *ListProvisionedCapacityI
 
 // ListProvisionedCapacity API operation for Amazon Glacier.
 //
-// This operation lists the provisioned capacity for the specified AWS account.
+// This operation lists the provisioned capacity units for the specified AWS
+// account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4143,6 +4009,143 @@ func (s *ArchiveCreationOutput) SetLocation(v string) *ArchiveCreationOutput {
 	return s
 }
 
+// Contains information about the comma-separated value (CSV) file to select
+// from.
+type CSVInput struct {
+	_ struct{} `type:"structure"`
+
+	// A single character used to indicate that a row should be ignored when the
+	// character is present at the start of that row.
+	Comments *string `type:"string"`
+
+	// A value used to separate individual fields from each other within a record.
+	FieldDelimiter *string `type:"string"`
+
+	// Describes the first line of input. Valid values are None, Ignore, and Use.
+	FileHeaderInfo *string `type:"string" enum:"FileHeaderInfo"`
+
+	// A value used as an escape character where the field delimiter is part of
+	// the value.
+	QuoteCharacter *string `type:"string"`
+
+	// A single character used for escaping the quotation-mark character inside
+	// an already escaped value.
+	QuoteEscapeCharacter *string `type:"string"`
+
+	// A value used to separate individual records from each other.
+	RecordDelimiter *string `type:"string"`
+}
+
+// String returns the string representation
+func (s CSVInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CSVInput) GoString() string {
+	return s.String()
+}
+
+// SetComments sets the Comments field's value.
+func (s *CSVInput) SetComments(v string) *CSVInput {
+	s.Comments = &v
+	return s
+}
+
+// SetFieldDelimiter sets the FieldDelimiter field's value.
+func (s *CSVInput) SetFieldDelimiter(v string) *CSVInput {
+	s.FieldDelimiter = &v
+	return s
+}
+
+// SetFileHeaderInfo sets the FileHeaderInfo field's value.
+func (s *CSVInput) SetFileHeaderInfo(v string) *CSVInput {
+	s.FileHeaderInfo = &v
+	return s
+}
+
+// SetQuoteCharacter sets the QuoteCharacter field's value.
+func (s *CSVInput) SetQuoteCharacter(v string) *CSVInput {
+	s.QuoteCharacter = &v
+	return s
+}
+
+// SetQuoteEscapeCharacter sets the QuoteEscapeCharacter field's value.
+func (s *CSVInput) SetQuoteEscapeCharacter(v string) *CSVInput {
+	s.QuoteEscapeCharacter = &v
+	return s
+}
+
+// SetRecordDelimiter sets the RecordDelimiter field's value.
+func (s *CSVInput) SetRecordDelimiter(v string) *CSVInput {
+	s.RecordDelimiter = &v
+	return s
+}
+
+// Contains information about the comma-separated value (CSV) file that the
+// job results are stored in.
+type CSVOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A value used to separate individual fields from each other within a record.
+	FieldDelimiter *string `type:"string"`
+
+	// A value used as an escape character where the field delimiter is part of
+	// the value.
+	QuoteCharacter *string `type:"string"`
+
+	// A single character used for escaping the quotation-mark character inside
+	// an already escaped value.
+	QuoteEscapeCharacter *string `type:"string"`
+
+	// A value that indicates whether all output fields should be contained within
+	// quotation marks.
+	QuoteFields *string `type:"string" enum:"QuoteFields"`
+
+	// A value used to separate individual records from each other.
+	RecordDelimiter *string `type:"string"`
+}
+
+// String returns the string representation
+func (s CSVOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CSVOutput) GoString() string {
+	return s.String()
+}
+
+// SetFieldDelimiter sets the FieldDelimiter field's value.
+func (s *CSVOutput) SetFieldDelimiter(v string) *CSVOutput {
+	s.FieldDelimiter = &v
+	return s
+}
+
+// SetQuoteCharacter sets the QuoteCharacter field's value.
+func (s *CSVOutput) SetQuoteCharacter(v string) *CSVOutput {
+	s.QuoteCharacter = &v
+	return s
+}
+
+// SetQuoteEscapeCharacter sets the QuoteEscapeCharacter field's value.
+func (s *CSVOutput) SetQuoteEscapeCharacter(v string) *CSVOutput {
+	s.QuoteEscapeCharacter = &v
+	return s
+}
+
+// SetQuoteFields sets the QuoteFields field's value.
+func (s *CSVOutput) SetQuoteFields(v string) *CSVOutput {
+	s.QuoteFields = &v
+	return s
+}
+
+// SetRecordDelimiter sets the RecordDelimiter field's value.
+func (s *CSVOutput) SetRecordDelimiter(v string) *CSVOutput {
+	s.RecordDelimiter = &v
+	return s
+}
+
 // Provides options to complete a multipart upload operation. This informs Amazon
 // Glacier that all the archive parts have been uploaded and Amazon Glacier
 // can now assemble the archive from the uploaded parts. After assembling and
@@ -4975,6 +4978,53 @@ func (s *DescribeVaultOutput) SetVaultName(v string) *DescribeVaultOutput {
 	return s
 }
 
+// Contains information about the encryption used to store the job results in
+// Amazon S3.
+type Encryption struct {
+	_ struct{} `type:"structure"`
+
+	// The server-side encryption algorithm used when storing job results in Amazon
+	// S3, for example AES256 or aws:kms.
+	EncryptionType *string `type:"string" enum:"EncryptionType"`
+
+	// Optional. If the encryption type is aws:kms, you can use this value to specify
+	// the encryption context for the restore results.
+	KMSContext *string `type:"string"`
+
+	// The AWS KMS key ID to use for object encryption. All GET and PUT requests
+	// for an object protected by AWS KMS fail if not made by using Secure Sockets
+	// Layer (SSL) or Signature Version 4.
+	KMSKeyId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s Encryption) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Encryption) GoString() string {
+	return s.String()
+}
+
+// SetEncryptionType sets the EncryptionType field's value.
+func (s *Encryption) SetEncryptionType(v string) *Encryption {
+	s.EncryptionType = &v
+	return s
+}
+
+// SetKMSContext sets the KMSContext field's value.
+func (s *Encryption) SetKMSContext(v string) *Encryption {
+	s.KMSContext = &v
+	return s
+}
+
+// SetKMSKeyId sets the KMSKeyId field's value.
+func (s *Encryption) SetKMSKeyId(v string) *Encryption {
+	s.KMSKeyId = &v
+	return s
+}
+
 // Input for GetDataRetrievalPolicy.
 type GetDataRetrievalPolicyInput struct {
 	_ struct{} `type:"structure"`
@@ -5524,6 +5574,129 @@ func (s *GetVaultNotificationsOutput) SetVaultNotificationConfig(v *VaultNotific
 	return s
 }
 
+// Contains information about a grant.
+type Grant struct {
+	_ struct{} `type:"structure"`
+
+	// The grantee.
+	Grantee *Grantee `type:"structure"`
+
+	// Specifies the permission given to the grantee.
+	Permission *string `type:"string" enum:"Permission"`
+}
+
+// String returns the string representation
+func (s Grant) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Grant) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Grant) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Grant"}
+	if s.Grantee != nil {
+		if err := s.Grantee.Validate(); err != nil {
+			invalidParams.AddNested("Grantee", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetGrantee sets the Grantee field's value.
+func (s *Grant) SetGrantee(v *Grantee) *Grant {
+	s.Grantee = v
+	return s
+}
+
+// SetPermission sets the Permission field's value.
+func (s *Grant) SetPermission(v string) *Grant {
+	s.Permission = &v
+	return s
+}
+
+// Contains information about the grantee.
+type Grantee struct {
+	_ struct{} `type:"structure"`
+
+	// Screen name of the grantee.
+	DisplayName *string `type:"string"`
+
+	// Email address of the grantee.
+	EmailAddress *string `type:"string"`
+
+	// The canonical user ID of the grantee.
+	ID *string `type:"string"`
+
+	// Type of grantee
+	//
+	// Type is a required field
+	Type *string `type:"string" required:"true" enum:"Type"`
+
+	// URI of the grantee group.
+	URI *string `type:"string"`
+}
+
+// String returns the string representation
+func (s Grantee) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Grantee) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Grantee) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Grantee"}
+	if s.Type == nil {
+		invalidParams.Add(request.NewErrParamRequired("Type"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDisplayName sets the DisplayName field's value.
+func (s *Grantee) SetDisplayName(v string) *Grantee {
+	s.DisplayName = &v
+	return s
+}
+
+// SetEmailAddress sets the EmailAddress field's value.
+func (s *Grantee) SetEmailAddress(v string) *Grantee {
+	s.EmailAddress = &v
+	return s
+}
+
+// SetID sets the ID field's value.
+func (s *Grantee) SetID(v string) *Grantee {
+	s.ID = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *Grantee) SetType(v string) *Grantee {
+	s.Type = &v
+	return s
+}
+
+// SetURI sets the URI field's value.
+func (s *Grantee) SetURI(v string) *Grantee {
+	s.URI = &v
+	return s
+}
+
 // Provides options for initiating an Amazon Glacier job.
 type InitiateJobInput struct {
 	_ struct{} `type:"structure" payload:"JobParameters"`
@@ -5565,6 +5738,11 @@ func (s *InitiateJobInput) Validate() error {
 	if s.VaultName == nil {
 		invalidParams.Add(request.NewErrParamRequired("VaultName"))
 	}
+	if s.JobParameters != nil {
+		if err := s.JobParameters.Validate(); err != nil {
+			invalidParams.AddNested("JobParameters", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -5597,6 +5775,9 @@ type InitiateJobOutput struct {
 	// The ID of the job.
 	JobId *string `location:"header" locationName:"x-amz-job-id" type:"string"`
 
+	// The path to the location of where the select results are stored.
+	JobOutputPath *string `location:"header" locationName:"x-amz-job-output-path" type:"string"`
+
 	// The relative URI path of the job.
 	Location *string `location:"header" locationName:"Location" type:"string"`
 }
@@ -5614,6 +5795,12 @@ func (s InitiateJobOutput) GoString() string {
 // SetJobId sets the JobId field's value.
 func (s *InitiateJobOutput) SetJobId(v string) *InitiateJobOutput {
 	s.JobId = &v
+	return s
+}
+
+// SetJobOutputPath sets the JobOutputPath field's value.
+func (s *InitiateJobOutput) SetJobOutputPath(v string) *InitiateJobOutput {
+	s.JobOutputPath = &v
 	return s
 }
 
@@ -5829,6 +6016,30 @@ func (s *InitiateVaultLockOutput) SetLockId(v string) *InitiateVaultLockOutput {
 	return s
 }
 
+// Describes how the archive is serialized.
+type InputSerialization struct {
+	_ struct{} `type:"structure"`
+
+	// Describes the serialization of a CSV-encoded object.
+	Csv *CSVInput `locationName:"csv" type:"structure"`
+}
+
+// String returns the string representation
+func (s InputSerialization) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InputSerialization) GoString() string {
+	return s.String()
+}
+
+// SetCsv sets the Csv field's value.
+func (s *InputSerialization) SetCsv(v *CSVInput) *InputSerialization {
+	s.Csv = v
+	return s
+}
+
 // Describes the options for a range inventory retrieval job.
 type InventoryRetrievalJobDescription struct {
 	_ struct{} `type:"structure"`
@@ -5960,77 +6171,93 @@ func (s *InventoryRetrievalJobInput) SetStartDate(v string) *InventoryRetrievalJ
 	return s
 }
 
-// Describes an Amazon Glacier job.
+// Contains the description of an Amazon Glacier job.
 type JobDescription struct {
 	_ struct{} `type:"structure"`
 
-	// The job type. It is either ArchiveRetrieval or InventoryRetrieval.
+	// The job type. This value is either ArchiveRetrieval, InventoryRetrieval,
+	// or Select.
 	Action *string `type:"string" enum:"ActionCode"`
 
-	// For an ArchiveRetrieval job, this is the archive ID requested for download.
-	// Otherwise, this field is null.
+	// The archive ID requested for a select job or archive retrieval. Otherwise,
+	// this field is null.
 	ArchiveId *string `type:"string"`
 
 	// The SHA256 tree hash of the entire archive for an archive retrieval. For
-	// inventory retrieval jobs, this field is null.
+	// inventory retrieval or select jobs, this field is null.
 	ArchiveSHA256TreeHash *string `type:"string"`
 
-	// For an ArchiveRetrieval job, this is the size in bytes of the archive being
-	// requested for download. For the InventoryRetrieval job, the value is null.
+	// For an archive retrieval job, this value is the size in bytes of the archive
+	// being requested for download. For an inventory retrieval or select job, this
+	// value is null.
 	ArchiveSizeInBytes *int64 `type:"long"`
 
-	// The job status. When a job is completed, you get the job's output.
+	// The job status. When a job is completed, you get the job's output using Get
+	// Job Output (GET output).
 	Completed *bool `type:"boolean"`
 
-	// The UTC time that the archive retrieval request completed. While the job
-	// is in progress, the value will be null.
+	// The UTC time that the job request completed. While the job is in progress,
+	// the value is null.
 	CompletionDate *string `type:"string"`
 
-	// The UTC date when the job was created. A string representation of ISO 8601
-	// date format, for example, "2012-03-20T17:03:43.221Z".
+	// The UTC date when the job was created. This value is a string representation
+	// of ISO 8601 date format, for example "2012-03-20T17:03:43.221Z".
 	CreationDate *string `type:"string"`
 
 	// Parameters used for range inventory retrieval.
 	InventoryRetrievalParameters *InventoryRetrievalJobDescription `type:"structure"`
 
-	// For an InventoryRetrieval job, this is the size in bytes of the inventory
-	// requested for download. For the ArchiveRetrieval job, the value is null.
+	// For an inventory retrieval job, this value is the size in bytes of the inventory
+	// requested for download. For an archive retrieval or select job, this value
+	// is null.
 	InventorySizeInBytes *int64 `type:"long"`
 
-	// The job description you provided when you initiated the job.
+	// The job description provided when initiating the job.
 	JobDescription *string `type:"string"`
 
 	// An opaque string that identifies an Amazon Glacier job.
 	JobId *string `type:"string"`
 
-	// The retrieved byte range for archive retrieval jobs in the form "StartByteValue-EndByteValue"
+	// Contains the job output location.
+	JobOutputPath *string `type:"string"`
+
+	// Contains the location where the data from the select job is stored.
+	OutputLocation *OutputLocation `type:"structure"`
+
+	// The retrieved byte range for archive retrieval jobs in the form StartByteValue-EndByteValue.
 	// If no range was specified in the archive retrieval, then the whole archive
-	// is retrieved and StartByteValue equals 0 and EndByteValue equals the size
-	// of the archive minus 1. For inventory retrieval jobs this field is null.
+	// is retrieved. In this case, StartByteValue equals 0 and EndByteValue equals
+	// the size of the archive minus 1. For inventory retrieval or select jobs,
+	// this field is null.
 	RetrievalByteRange *string `type:"string"`
 
-	// For an ArchiveRetrieval job, it is the checksum of the archive. Otherwise,
-	// the value is null.
+	// For an archive retrieval job, this value is the checksum of the archive.
+	// Otherwise, this value is null.
 	//
 	// The SHA256 tree hash value for the requested range of an archive. If the
-	// Initiate a Job request for an archive specified a tree-hash aligned range,
-	// then this field returns a value.
+	// InitiateJob request for an archive specified a tree-hash aligned range, then
+	// this field returns a value.
 	//
-	// For the specific case when the whole archive is retrieved, this value is
-	// the same as the ArchiveSHA256TreeHash value.
+	// If the whole archive is retrieved, this value is the same as the ArchiveSHA256TreeHash
+	// value.
 	//
-	// This field is null in the following situations:
+	// This field is null for the following:
 	//
-	//    * Archive retrieval jobs that specify a range that is not tree-hash aligned.
+	//    * Archive retrieval jobs that specify a range that is not tree-hash aligned
 	//
-	//    * Archival jobs that specify a range that is equal to the whole archive
-	//    and the job status is InProgress.
+	//    * Archival jobs that specify a range that is equal to the whole archive,
+	//    when the job status is InProgress
 	//
-	//    * Inventory jobs.
+	//    * Inventory jobs
+	//
+	//    * Select jobs
 	SHA256TreeHash *string `type:"string"`
 
-	// An Amazon Simple Notification Service (Amazon SNS) topic that receives notification.
+	// An Amazon SNS topic that receives notification.
 	SNSTopic *string `type:"string"`
+
+	// Contains the parameters that define a select job.
+	SelectParameters *SelectParameters `type:"structure"`
 
 	// The status code can be InProgress, Succeeded, or Failed, and indicates the
 	// status of the job.
@@ -6043,7 +6270,7 @@ type JobDescription struct {
 	// Standard, or Bulk. Standard is the default.
 	Tier *string `type:"string"`
 
-	// The Amazon Resource Name (ARN) of the vault from which the archive retrieval
+	// The Amazon Resource Name (ARN) of the vault from which an archive retrieval
 	// was requested.
 	VaultARN *string `type:"string"`
 }
@@ -6124,6 +6351,18 @@ func (s *JobDescription) SetJobId(v string) *JobDescription {
 	return s
 }
 
+// SetJobOutputPath sets the JobOutputPath field's value.
+func (s *JobDescription) SetJobOutputPath(v string) *JobDescription {
+	s.JobOutputPath = &v
+	return s
+}
+
+// SetOutputLocation sets the OutputLocation field's value.
+func (s *JobDescription) SetOutputLocation(v *OutputLocation) *JobDescription {
+	s.OutputLocation = v
+	return s
+}
+
 // SetRetrievalByteRange sets the RetrievalByteRange field's value.
 func (s *JobDescription) SetRetrievalByteRange(v string) *JobDescription {
 	s.RetrievalByteRange = &v
@@ -6139,6 +6378,12 @@ func (s *JobDescription) SetSHA256TreeHash(v string) *JobDescription {
 // SetSNSTopic sets the SNSTopic field's value.
 func (s *JobDescription) SetSNSTopic(v string) *JobDescription {
 	s.SNSTopic = &v
+	return s
+}
+
+// SetSelectParameters sets the SelectParameters field's value.
+func (s *JobDescription) SetSelectParameters(v *SelectParameters) *JobDescription {
+	s.SelectParameters = v
 	return s
 }
 
@@ -6171,8 +6416,8 @@ type JobParameters struct {
 	_ struct{} `type:"structure"`
 
 	// The ID of the archive that you want to retrieve. This field is required only
-	// if Type is set to archive-retrieval. An error occurs if you specify this
-	// request parameter for an inventory retrieval job request.
+	// if Type is set to select or archive-retrievalcode>. An error occurs if you
+	// specify this request parameter for an inventory retrieval job request.
 	ArchiveId *string `type:"string"`
 
 	// The optional description for the job. The description must be less than or
@@ -6188,6 +6433,10 @@ type JobParameters struct {
 
 	// Input parameters used for range inventory retrieval.
 	InventoryRetrievalParameters *InventoryRetrievalJobInput `type:"structure"`
+
+	// Contains information about the location where the select job results are
+	// stored.
+	OutputLocation *OutputLocation `type:"structure"`
 
 	// The byte range to retrieve for an archive retrieval. in the form "StartByteValue-EndByteValue"
 	// If not specified, the whole archive is retrieved. If specified, the byte
@@ -6206,12 +6455,16 @@ type JobParameters struct {
 	// topic publishes the notification to its subscribers. The SNS topic must exist.
 	SNSTopic *string `type:"string"`
 
-	// The retrieval option to use for the archive retrieval. Valid values are Expedited,
-	// Standard, or Bulk. Standard is the default.
+	// Contains the parameters that define a job.
+	SelectParameters *SelectParameters `type:"structure"`
+
+	// The retrieval option to use for a select or archive retrieval job. Valid
+	// values are Expedited, Standard, or Bulk. Standard is the default.
 	Tier *string `type:"string"`
 
-	// The job type. You can initiate a job to retrieve an archive or get an inventory
-	// of a vault. Valid values are "archive-retrieval" and "inventory-retrieval".
+	// The job type. You can initiate a job to perform a select query on an archive,
+	// retrieve an archive, or get an inventory of a vault. Valid values are "select",
+	// "archive-retrieval" and "inventory-retrieval".
 	Type *string `type:"string"`
 }
 
@@ -6223,6 +6476,21 @@ func (s JobParameters) String() string {
 // GoString returns the string representation
 func (s JobParameters) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *JobParameters) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "JobParameters"}
+	if s.OutputLocation != nil {
+		if err := s.OutputLocation.Validate(); err != nil {
+			invalidParams.AddNested("OutputLocation", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetArchiveId sets the ArchiveId field's value.
@@ -6249,6 +6517,12 @@ func (s *JobParameters) SetInventoryRetrievalParameters(v *InventoryRetrievalJob
 	return s
 }
 
+// SetOutputLocation sets the OutputLocation field's value.
+func (s *JobParameters) SetOutputLocation(v *OutputLocation) *JobParameters {
+	s.OutputLocation = v
+	return s
+}
+
 // SetRetrievalByteRange sets the RetrievalByteRange field's value.
 func (s *JobParameters) SetRetrievalByteRange(v string) *JobParameters {
 	s.RetrievalByteRange = &v
@@ -6258,6 +6532,12 @@ func (s *JobParameters) SetRetrievalByteRange(v string) *JobParameters {
 // SetSNSTopic sets the SNSTopic field's value.
 func (s *JobParameters) SetSNSTopic(v string) *JobParameters {
 	s.SNSTopic = &v
+	return s
+}
+
+// SetSelectParameters sets the SelectParameters field's value.
+func (s *JobParameters) SetSelectParameters(v *SelectParameters) *JobParameters {
+	s.SelectParameters = v
 	return s
 }
 
@@ -6707,11 +6987,11 @@ func (s *ListPartsOutput) SetVaultARN(v string) *ListPartsOutput {
 type ListProvisionedCapacityInput struct {
 	_ struct{} `type:"structure"`
 
-	// The AccountId value is the AWS account ID of the account that owns the vault.
-	// You can either specify an AWS account ID or optionally a single '-' (hyphen),
-	// in which case Amazon Glacier uses the AWS account ID associated with the
-	// credentials used to sign the request. If you use an account ID, don't include
-	// any hyphens ('-') in the ID.
+	// The AWS account ID of the account that owns the vault. You can either specify
+	// an AWS account ID or optionally a single '-' (hyphen), in which case Amazon
+	// Glacier uses the AWS account ID associated with the credentials used to sign
+	// the request. If you use an account ID, don't include any hyphens ('-') in
+	// the ID.
 	//
 	// AccountId is a required field
 	AccountId *string `location:"uri" locationName:"accountId" type:"string" required:"true"`
@@ -6950,6 +7230,70 @@ func (s *ListVaultsOutput) SetVaultList(v []*DescribeVaultOutput) *ListVaultsOut
 	return s
 }
 
+// Contains information about the location where the select job results are
+// stored.
+type OutputLocation struct {
+	_ struct{} `type:"structure"`
+
+	// Describes an S3 location that will receive the results of the restore request.
+	S3 *S3Location `type:"structure"`
+}
+
+// String returns the string representation
+func (s OutputLocation) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s OutputLocation) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *OutputLocation) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "OutputLocation"}
+	if s.S3 != nil {
+		if err := s.S3.Validate(); err != nil {
+			invalidParams.AddNested("S3", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetS3 sets the S3 field's value.
+func (s *OutputLocation) SetS3(v *S3Location) *OutputLocation {
+	s.S3 = v
+	return s
+}
+
+// Describes how the select output is serialized.
+type OutputSerialization struct {
+	_ struct{} `type:"structure"`
+
+	// Describes the serialization of CSV-encoded query results.
+	Csv *CSVOutput `locationName:"csv" type:"structure"`
+}
+
+// String returns the string representation
+func (s OutputSerialization) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s OutputSerialization) GoString() string {
+	return s.String()
+}
+
+// SetCsv sets the Csv field's value.
+func (s *OutputSerialization) SetCsv(v *CSVOutput) *OutputSerialization {
+	s.Csv = v
+	return s
+}
+
 // A list of the part sizes of the multipart upload.
 type PartListElement struct {
 	_ struct{} `type:"structure"`
@@ -7171,6 +7515,166 @@ func (s RemoveTagsFromVaultOutput) String() string {
 // GoString returns the string representation
 func (s RemoveTagsFromVaultOutput) GoString() string {
 	return s.String()
+}
+
+// Contains information about the location in Amazon S3 where the select job
+// results are stored.
+type S3Location struct {
+	_ struct{} `type:"structure"`
+
+	// A list of grants that control access to the staged results.
+	AccessControlList []*Grant `type:"list"`
+
+	// The name of the bucket where the restore results are stored.
+	BucketName *string `type:"string"`
+
+	// The canned ACL to apply to the restore results.
+	CannedACL *string `type:"string" enum:"CannedACL"`
+
+	// Contains information about the encryption used to store the job results in
+	// Amazon S3.
+	Encryption *Encryption `type:"structure"`
+
+	// The prefix that is prepended to the restore results for this request.
+	Prefix *string `type:"string"`
+
+	// The storage class used to store the restore results.
+	StorageClass *string `type:"string" enum:"StorageClass"`
+
+	// The tag-set that is applied to the restore results.
+	Tagging map[string]*string `type:"map"`
+
+	// A map of metadata to store with the restore results in Amazon S3.
+	UserMetadata map[string]*string `type:"map"`
+}
+
+// String returns the string representation
+func (s S3Location) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s S3Location) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *S3Location) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "S3Location"}
+	if s.AccessControlList != nil {
+		for i, v := range s.AccessControlList {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "AccessControlList", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAccessControlList sets the AccessControlList field's value.
+func (s *S3Location) SetAccessControlList(v []*Grant) *S3Location {
+	s.AccessControlList = v
+	return s
+}
+
+// SetBucketName sets the BucketName field's value.
+func (s *S3Location) SetBucketName(v string) *S3Location {
+	s.BucketName = &v
+	return s
+}
+
+// SetCannedACL sets the CannedACL field's value.
+func (s *S3Location) SetCannedACL(v string) *S3Location {
+	s.CannedACL = &v
+	return s
+}
+
+// SetEncryption sets the Encryption field's value.
+func (s *S3Location) SetEncryption(v *Encryption) *S3Location {
+	s.Encryption = v
+	return s
+}
+
+// SetPrefix sets the Prefix field's value.
+func (s *S3Location) SetPrefix(v string) *S3Location {
+	s.Prefix = &v
+	return s
+}
+
+// SetStorageClass sets the StorageClass field's value.
+func (s *S3Location) SetStorageClass(v string) *S3Location {
+	s.StorageClass = &v
+	return s
+}
+
+// SetTagging sets the Tagging field's value.
+func (s *S3Location) SetTagging(v map[string]*string) *S3Location {
+	s.Tagging = v
+	return s
+}
+
+// SetUserMetadata sets the UserMetadata field's value.
+func (s *S3Location) SetUserMetadata(v map[string]*string) *S3Location {
+	s.UserMetadata = v
+	return s
+}
+
+// Contains information about the parameters used for a select.
+type SelectParameters struct {
+	_ struct{} `type:"structure"`
+
+	// The expression that is used to select the object.
+	Expression *string `type:"string"`
+
+	// The type of the provided expression, for example SQL.
+	ExpressionType *string `type:"string" enum:"ExpressionType"`
+
+	// Describes the serialization format of the object.
+	InputSerialization *InputSerialization `type:"structure"`
+
+	// Describes how the results of the select job are serialized.
+	OutputSerialization *OutputSerialization `type:"structure"`
+}
+
+// String returns the string representation
+func (s SelectParameters) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SelectParameters) GoString() string {
+	return s.String()
+}
+
+// SetExpression sets the Expression field's value.
+func (s *SelectParameters) SetExpression(v string) *SelectParameters {
+	s.Expression = &v
+	return s
+}
+
+// SetExpressionType sets the ExpressionType field's value.
+func (s *SelectParameters) SetExpressionType(v string) *SelectParameters {
+	s.ExpressionType = &v
+	return s
+}
+
+// SetInputSerialization sets the InputSerialization field's value.
+func (s *SelectParameters) SetInputSerialization(v *InputSerialization) *SelectParameters {
+	s.InputSerialization = v
+	return s
+}
+
+// SetOutputSerialization sets the OutputSerialization field's value.
+func (s *SelectParameters) SetOutputSerialization(v *OutputSerialization) *SelectParameters {
+	s.OutputSerialization = v
+	return s
 }
 
 // SetDataRetrievalPolicy input.
@@ -7762,6 +8266,81 @@ const (
 
 	// ActionCodeInventoryRetrieval is a ActionCode enum value
 	ActionCodeInventoryRetrieval = "InventoryRetrieval"
+
+	// ActionCodeSelect is a ActionCode enum value
+	ActionCodeSelect = "Select"
+)
+
+const (
+	// CannedACLPrivate is a CannedACL enum value
+	CannedACLPrivate = "private"
+
+	// CannedACLPublicRead is a CannedACL enum value
+	CannedACLPublicRead = "public-read"
+
+	// CannedACLPublicReadWrite is a CannedACL enum value
+	CannedACLPublicReadWrite = "public-read-write"
+
+	// CannedACLAwsExecRead is a CannedACL enum value
+	CannedACLAwsExecRead = "aws-exec-read"
+
+	// CannedACLAuthenticatedRead is a CannedACL enum value
+	CannedACLAuthenticatedRead = "authenticated-read"
+
+	// CannedACLBucketOwnerRead is a CannedACL enum value
+	CannedACLBucketOwnerRead = "bucket-owner-read"
+
+	// CannedACLBucketOwnerFullControl is a CannedACL enum value
+	CannedACLBucketOwnerFullControl = "bucket-owner-full-control"
+)
+
+const (
+	// EncryptionTypeAwsKms is a EncryptionType enum value
+	EncryptionTypeAwsKms = "aws:kms"
+
+	// EncryptionTypeAes256 is a EncryptionType enum value
+	EncryptionTypeAes256 = "AES256"
+)
+
+const (
+	// ExpressionTypeSql is a ExpressionType enum value
+	ExpressionTypeSql = "SQL"
+)
+
+const (
+	// FileHeaderInfoUse is a FileHeaderInfo enum value
+	FileHeaderInfoUse = "USE"
+
+	// FileHeaderInfoIgnore is a FileHeaderInfo enum value
+	FileHeaderInfoIgnore = "IGNORE"
+
+	// FileHeaderInfoNone is a FileHeaderInfo enum value
+	FileHeaderInfoNone = "NONE"
+)
+
+const (
+	// PermissionFullControl is a Permission enum value
+	PermissionFullControl = "FULL_CONTROL"
+
+	// PermissionWrite is a Permission enum value
+	PermissionWrite = "WRITE"
+
+	// PermissionWriteAcp is a Permission enum value
+	PermissionWriteAcp = "WRITE_ACP"
+
+	// PermissionRead is a Permission enum value
+	PermissionRead = "READ"
+
+	// PermissionReadAcp is a Permission enum value
+	PermissionReadAcp = "READ_ACP"
+)
+
+const (
+	// QuoteFieldsAlways is a QuoteFields enum value
+	QuoteFieldsAlways = "ALWAYS"
+
+	// QuoteFieldsAsneeded is a QuoteFields enum value
+	QuoteFieldsAsneeded = "ASNEEDED"
 )
 
 const (
@@ -7773,4 +8352,26 @@ const (
 
 	// StatusCodeFailed is a StatusCode enum value
 	StatusCodeFailed = "Failed"
+)
+
+const (
+	// StorageClassStandard is a StorageClass enum value
+	StorageClassStandard = "STANDARD"
+
+	// StorageClassReducedRedundancy is a StorageClass enum value
+	StorageClassReducedRedundancy = "REDUCED_REDUNDANCY"
+
+	// StorageClassStandardIa is a StorageClass enum value
+	StorageClassStandardIa = "STANDARD_IA"
+)
+
+const (
+	// TypeAmazonCustomerByEmail is a Type enum value
+	TypeAmazonCustomerByEmail = "AmazonCustomerByEmail"
+
+	// TypeCanonicalUser is a Type enum value
+	TypeCanonicalUser = "CanonicalUser"
+
+	// TypeGroup is a Type enum value
+	TypeGroup = "Group"
 )

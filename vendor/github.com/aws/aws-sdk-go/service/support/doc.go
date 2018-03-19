@@ -61,7 +61,7 @@
 //
 // Using the Client
 //
-// To AWS Support with the SDK use the New function to create
+// To contact AWS Support with the SDK use the New function to create
 // a new service client. With that client you can make API requests to the service.
 // These clients are safe to use concurrently.
 //

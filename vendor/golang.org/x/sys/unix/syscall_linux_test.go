@@ -9,6 +9,7 @@ package unix_test
 import (
 	"io/ioutil"
 	"os"
+	"runtime"
 	"testing"
 	"time"
 
@@ -19,9 +20,12 @@ func TestFchmodat(t *testing.T) {
 	defer chtmpdir(t)()
 
 	touch(t, "file1")
-	os.Symlink("file1", "symlink1")
+	err := os.Symlink("file1", "symlink1")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	err := unix.Fchmodat(unix.AT_FDCWD, "symlink1", 0444, 0)
+	err = unix.Fchmodat(unix.AT_FDCWD, "symlink1", 0444, 0)
 	if err != nil {
 		t.Fatalf("Fchmodat: unexpected error: %v", err)
 	}
@@ -56,34 +60,6 @@ func TestIoctlGetInt(t *testing.T) {
 	t.Logf("%d bits of entropy available", v)
 }
 
-func TestPoll(t *testing.T) {
-	f, cleanup := mktmpfifo(t)
-	defer cleanup()
-
-	const timeout = 100
-
-	ok := make(chan bool, 1)
-	go func() {
-		select {
-		case <-time.After(10 * timeout * time.Millisecond):
-			t.Errorf("Poll: failed to timeout after %d milliseconds", 10*timeout)
-		case <-ok:
-		}
-	}()
-
-	fds := []unix.PollFd{{Fd: int32(f.Fd()), Events: unix.POLLIN}}
-	n, err := unix.Poll(fds, timeout)
-	ok <- true
-	if err != nil {
-		t.Errorf("Poll: unexpected error: %v", err)
-		return
-	}
-	if n != 0 {
-		t.Errorf("Poll: wrong number of events: got %v, expected %v", n, 0)
-		return
-	}
-}
-
 func TestPpoll(t *testing.T) {
 	f, cleanup := mktmpfifo(t)
 	defer cleanup()
@@ -110,25 +86,6 @@ func TestPpoll(t *testing.T) {
 	if n != 0 {
 		t.Errorf("Ppoll: wrong number of events: got %v, expected %v", n, 0)
 		return
-	}
-}
-
-// mktmpfifo creates a temporary FIFO and provides a cleanup function.
-func mktmpfifo(t *testing.T) (*os.File, func()) {
-	err := unix.Mkfifo("fifo", 0666)
-	if err != nil {
-		t.Fatalf("mktmpfifo: failed to create FIFO: %v", err)
-	}
-
-	f, err := os.OpenFile("fifo", os.O_RDWR, 0666)
-	if err != nil {
-		os.Remove("fifo")
-		t.Fatalf("mktmpfifo: failed to open FIFO: %v", err)
-	}
-
-	return f, func() {
-		f.Close()
-		os.Remove("fifo")
 	}
 }
 
@@ -184,6 +141,38 @@ func TestUtime(t *testing.T) {
 	}
 }
 
+func TestUtimesNanoAt(t *testing.T) {
+	defer chtmpdir(t)()
+
+	symlink := "symlink1"
+	os.Remove(symlink)
+	err := os.Symlink("nonexisting", symlink)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ts := []unix.Timespec{
+		{Sec: 1111, Nsec: 2222},
+		{Sec: 3333, Nsec: 4444},
+	}
+	err = unix.UtimesNanoAt(unix.AT_FDCWD, symlink, ts, unix.AT_SYMLINK_NOFOLLOW)
+	if err != nil {
+		t.Fatalf("UtimesNanoAt: %v", err)
+	}
+
+	var st unix.Stat_t
+	err = unix.Lstat(symlink, &st)
+	if err != nil {
+		t.Fatalf("Lstat: %v", err)
+	}
+	if st.Atim != ts[0] {
+		t.Errorf("UtimesNanoAt: wrong atime: %v", st.Atim)
+	}
+	if st.Mtim != ts[1] {
+		t.Errorf("UtimesNanoAt: wrong mtime: %v", st.Mtim)
+	}
+}
+
 func TestGetrlimit(t *testing.T) {
 	var rlim unix.Rlimit
 	err := unix.Getrlimit(unix.RLIMIT_AS, &rlim)
@@ -193,9 +182,225 @@ func TestGetrlimit(t *testing.T) {
 }
 
 func TestSelect(t *testing.T) {
-	_, err := unix.Select(0, nil, nil, nil, &unix.Timeval{0, 0})
+	_, err := unix.Select(0, nil, nil, nil, &unix.Timeval{Sec: 0, Usec: 0})
 	if err != nil {
 		t.Fatalf("Select: %v", err)
+	}
+
+	dur := 150 * time.Millisecond
+	tv := unix.NsecToTimeval(int64(dur))
+	start := time.Now()
+	_, err = unix.Select(0, nil, nil, nil, &tv)
+	took := time.Since(start)
+	if err != nil {
+		t.Fatalf("Select: %v", err)
+	}
+
+	if took < dur {
+		t.Errorf("Select: timeout should have been at least %v, got %v", dur, took)
+	}
+}
+
+func TestPselect(t *testing.T) {
+	_, err := unix.Pselect(0, nil, nil, nil, &unix.Timespec{Sec: 0, Nsec: 0}, nil)
+	if err != nil {
+		t.Fatalf("Pselect: %v", err)
+	}
+
+	dur := 2500 * time.Microsecond
+	ts := unix.NsecToTimespec(int64(dur))
+	start := time.Now()
+	_, err = unix.Pselect(0, nil, nil, nil, &ts, nil)
+	took := time.Since(start)
+	if err != nil {
+		t.Fatalf("Pselect: %v", err)
+	}
+
+	if took < dur {
+		t.Errorf("Pselect: timeout should have been at least %v, got %v", dur, took)
+	}
+}
+
+func TestFstatat(t *testing.T) {
+	defer chtmpdir(t)()
+
+	touch(t, "file1")
+
+	var st1 unix.Stat_t
+	err := unix.Stat("file1", &st1)
+	if err != nil {
+		t.Fatalf("Stat: %v", err)
+	}
+
+	var st2 unix.Stat_t
+	err = unix.Fstatat(unix.AT_FDCWD, "file1", &st2, 0)
+	if err != nil {
+		t.Fatalf("Fstatat: %v", err)
+	}
+
+	if st1 != st2 {
+		t.Errorf("Fstatat: returned stat does not match Stat")
+	}
+
+	err = os.Symlink("file1", "symlink1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = unix.Lstat("symlink1", &st1)
+	if err != nil {
+		t.Fatalf("Lstat: %v", err)
+	}
+
+	err = unix.Fstatat(unix.AT_FDCWD, "symlink1", &st2, unix.AT_SYMLINK_NOFOLLOW)
+	if err != nil {
+		t.Fatalf("Fstatat: %v", err)
+	}
+
+	if st1 != st2 {
+		t.Errorf("Fstatat: returned stat does not match Lstat")
+	}
+}
+
+func TestSchedSetaffinity(t *testing.T) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	var oldMask unix.CPUSet
+	err := unix.SchedGetaffinity(0, &oldMask)
+	if err != nil {
+		t.Fatalf("SchedGetaffinity: %v", err)
+	}
+
+	var newMask unix.CPUSet
+	newMask.Zero()
+	if newMask.Count() != 0 {
+		t.Errorf("CpuZero: didn't zero CPU set: %v", newMask)
+	}
+	cpu := 1
+	newMask.Set(cpu)
+	if newMask.Count() != 1 || !newMask.IsSet(cpu) {
+		t.Errorf("CpuSet: didn't set CPU %d in set: %v", cpu, newMask)
+	}
+	cpu = 5
+	newMask.Set(cpu)
+	if newMask.Count() != 2 || !newMask.IsSet(cpu) {
+		t.Errorf("CpuSet: didn't set CPU %d in set: %v", cpu, newMask)
+	}
+	newMask.Clear(cpu)
+	if newMask.Count() != 1 || newMask.IsSet(cpu) {
+		t.Errorf("CpuClr: didn't clear CPU %d in set: %v", cpu, newMask)
+	}
+
+	err = unix.SchedSetaffinity(0, &newMask)
+	if err != nil {
+		t.Fatalf("SchedSetaffinity: %v", err)
+	}
+
+	var gotMask unix.CPUSet
+	err = unix.SchedGetaffinity(0, &gotMask)
+	if err != nil {
+		t.Fatalf("SchedGetaffinity: %v", err)
+	}
+
+	if gotMask != newMask {
+		t.Errorf("SchedSetaffinity: returned affinity mask does not match set affinity mask")
+	}
+
+	// Restore old mask so it doesn't affect successive tests
+	err = unix.SchedSetaffinity(0, &oldMask)
+	if err != nil {
+		t.Fatalf("SchedSetaffinity: %v", err)
+	}
+}
+
+func TestStatx(t *testing.T) {
+	var stx unix.Statx_t
+	err := unix.Statx(unix.AT_FDCWD, ".", 0, 0, &stx)
+	if err == unix.ENOSYS {
+		t.Skip("statx syscall is not available, skipping test")
+	} else if err != nil {
+		t.Fatalf("Statx: %v", err)
+	}
+
+	defer chtmpdir(t)()
+	touch(t, "file1")
+
+	var st unix.Stat_t
+	err = unix.Stat("file1", &st)
+	if err != nil {
+		t.Fatalf("Stat: %v", err)
+	}
+
+	flags := unix.AT_STATX_SYNC_AS_STAT
+	err = unix.Statx(unix.AT_FDCWD, "file1", flags, unix.STATX_ALL, &stx)
+	if err != nil {
+		t.Fatalf("Statx: %v", err)
+	}
+
+	if uint32(stx.Mode) != st.Mode {
+		t.Errorf("Statx: returned stat mode does not match Stat")
+	}
+
+	atime := unix.StatxTimestamp{Sec: int64(st.Atim.Sec), Nsec: uint32(st.Atim.Nsec)}
+	ctime := unix.StatxTimestamp{Sec: int64(st.Ctim.Sec), Nsec: uint32(st.Ctim.Nsec)}
+	mtime := unix.StatxTimestamp{Sec: int64(st.Mtim.Sec), Nsec: uint32(st.Mtim.Nsec)}
+
+	if stx.Atime != atime {
+		t.Errorf("Statx: returned stat atime does not match Stat")
+	}
+	if stx.Ctime != ctime {
+		t.Errorf("Statx: returned stat ctime does not match Stat")
+	}
+	if stx.Mtime != mtime {
+		t.Errorf("Statx: returned stat mtime does not match Stat")
+	}
+
+	err = os.Symlink("file1", "symlink1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = unix.Lstat("symlink1", &st)
+	if err != nil {
+		t.Fatalf("Lstat: %v", err)
+	}
+
+	err = unix.Statx(unix.AT_FDCWD, "symlink1", flags, unix.STATX_BASIC_STATS, &stx)
+	if err != nil {
+		t.Fatalf("Statx: %v", err)
+	}
+
+	// follow symlink, expect a regulat file
+	if stx.Mode&unix.S_IFREG == 0 {
+		t.Errorf("Statx: didn't follow symlink")
+	}
+
+	err = unix.Statx(unix.AT_FDCWD, "symlink1", flags|unix.AT_SYMLINK_NOFOLLOW, unix.STATX_ALL, &stx)
+	if err != nil {
+		t.Fatalf("Statx: %v", err)
+	}
+
+	// follow symlink, expect a symlink
+	if stx.Mode&unix.S_IFLNK == 0 {
+		t.Errorf("Statx: unexpectedly followed symlink")
+	}
+	if uint32(stx.Mode) != st.Mode {
+		t.Errorf("Statx: returned stat mode does not match Lstat")
+	}
+
+	atime = unix.StatxTimestamp{Sec: int64(st.Atim.Sec), Nsec: uint32(st.Atim.Nsec)}
+	ctime = unix.StatxTimestamp{Sec: int64(st.Ctim.Sec), Nsec: uint32(st.Ctim.Nsec)}
+	mtime = unix.StatxTimestamp{Sec: int64(st.Mtim.Sec), Nsec: uint32(st.Mtim.Nsec)}
+
+	if stx.Atime != atime {
+		t.Errorf("Statx: returned stat atime does not match Lstat")
+	}
+	if stx.Ctime != ctime {
+		t.Errorf("Statx: returned stat ctime does not match Lstat")
+	}
+	if stx.Mtime != mtime {
+		t.Errorf("Statx: returned stat mtime does not match Lstat")
 	}
 }
 

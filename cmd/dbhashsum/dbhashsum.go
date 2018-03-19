@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +14,7 @@ func init() {
 
 var commandDefintion = &cobra.Command{
 	Use:   "dbhashsum remote:path",
-	Short: `Produces a Dropbbox hash file for all the objects in the path.`,
+	Short: `Produces a Dropbox hash file for all the objects in the path.`,
 	Long: `
 Produces a Dropbox hash file for all the objects in the path.  The
 hashes are calculated according to [Dropbox content hash
@@ -25,7 +25,7 @@ The output is in the same format as md5sum and sha1sum.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return fs.DropboxHashSum(fsrc, os.Stdout)
+			return operations.DropboxHashSum(fsrc, os.Stdout)
 		})
 	},
 }

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -113,11 +114,11 @@ func TestDirForgetPath(t *testing.T) {
 	assert.Equal(t, 1, len(root.items))
 	assert.Equal(t, 1, len(dir.items))
 
-	root.ForgetPath("dir")
+	root.ForgetPath("dir", fs.EntryDirectory)
 	assert.Equal(t, 1, len(root.items))
 	assert.Equal(t, 0, len(dir.items))
 
-	root.ForgetPath("not/in/cache")
+	root.ForgetPath("not/in/cache", fs.EntryDirectory)
 	assert.Equal(t, 1, len(root.items))
 	assert.Equal(t, 0, len(dir.items))
 }
@@ -281,7 +282,7 @@ func TestDirCreate(t *testing.T) {
 	defer r.Finalise()
 	vfs, dir, _ := dirCreate(t, r)
 
-	file, err := dir.Create("potato")
+	file, err := dir.Create("potato", os.O_WRONLY|os.O_CREATE)
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), file.Size())
 
@@ -306,7 +307,7 @@ func TestDirCreate(t *testing.T) {
 	assert.Equal(t, int64(5), file2.Size())
 
 	vfs.Opt.ReadOnly = true
-	_, err = dir.Create("sausage")
+	_, err = dir.Create("sausage", os.O_WRONLY|os.O_CREATE)
 	assert.Equal(t, EROFS, err)
 }
 

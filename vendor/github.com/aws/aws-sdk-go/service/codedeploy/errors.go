@@ -147,6 +147,18 @@ const (
 	// The description is too long.
 	ErrCodeDescriptionTooLongException = "DescriptionTooLongException"
 
+	// ErrCodeGitHubAccountTokenDoesNotExistException for service response error code
+	// "GitHubAccountTokenDoesNotExistException".
+	//
+	// No GitHub account connection exists with the named specified in the call.
+	ErrCodeGitHubAccountTokenDoesNotExistException = "GitHubAccountTokenDoesNotExistException"
+
+	// ErrCodeGitHubAccountTokenNameRequiredException for service response error code
+	// "GitHubAccountTokenNameRequiredException".
+	//
+	// The call is missing a required GitHub account connection name.
+	ErrCodeGitHubAccountTokenNameRequiredException = "GitHubAccountTokenNameRequiredException"
+
 	// ErrCodeIamArnRequiredException for service response error code
 	// "IamArnRequiredException".
 	//
@@ -260,6 +272,12 @@ const (
 	// The bucket name either doesn't exist or was specified in an invalid format.
 	ErrCodeInvalidBucketNameFilterException = "InvalidBucketNameFilterException"
 
+	// ErrCodeInvalidComputePlatformException for service response error code
+	// "InvalidComputePlatformException".
+	//
+	// The computePlatform is invalid. The computePlatform should be Lambda or Server.
+	ErrCodeInvalidComputePlatformException = "InvalidComputePlatformException"
+
 	// ErrCodeInvalidDeployedStateFilterException for service response error code
 	// "InvalidDeployedStateFilterException".
 	//
@@ -327,6 +345,12 @@ const (
 	// "DISALLOW", "OVERWRITE", and "RETAIN".
 	ErrCodeInvalidFileExistsBehaviorException = "InvalidFileExistsBehaviorException"
 
+	// ErrCodeInvalidGitHubAccountTokenNameException for service response error code
+	// "InvalidGitHubAccountTokenNameException".
+	//
+	// The format of the specified GitHub account connection name is invalid.
+	ErrCodeInvalidGitHubAccountTokenNameException = "InvalidGitHubAccountTokenNameException"
+
 	// ErrCodeInvalidIamSessionArnException for service response error code
 	// "InvalidIamSessionArnException".
 	//
@@ -338,6 +362,19 @@ const (
 	//
 	// The IAM user ARN was specified in an invalid format.
 	ErrCodeInvalidIamUserArnException = "InvalidIamUserArnException"
+
+	// ErrCodeInvalidIgnoreApplicationStopFailuresValueException for service response error code
+	// "InvalidIgnoreApplicationStopFailuresValueException".
+	//
+	// The IgnoreApplicationStopFailures value is invalid. For AWS Lambda deployments,
+	// false is expected. For EC2/On-premises deployments, true or false is expected.
+	ErrCodeInvalidIgnoreApplicationStopFailuresValueException = "InvalidIgnoreApplicationStopFailuresValueException"
+
+	// ErrCodeInvalidInputException for service response error code
+	// "InvalidInputException".
+	//
+	// The specified input was specified in an invalid format.
+	ErrCodeInvalidInputException = "InvalidInputException"
 
 	// ErrCodeInvalidInstanceNameException for service response error code
 	// "InvalidInstanceNameException".
@@ -364,6 +401,20 @@ const (
 	//
 	// The specified key prefix filter was specified in an invalid format.
 	ErrCodeInvalidKeyPrefixFilterException = "InvalidKeyPrefixFilterException"
+
+	// ErrCodeInvalidLifecycleEventHookExecutionIdException for service response error code
+	// "InvalidLifecycleEventHookExecutionIdException".
+	//
+	// A lifecycle event hook is invalid. Review the hooks section in your AppSpec
+	// file to ensure the lifecycle events and hooks functions are valid.
+	ErrCodeInvalidLifecycleEventHookExecutionIdException = "InvalidLifecycleEventHookExecutionIdException"
+
+	// ErrCodeInvalidLifecycleEventHookExecutionStatusException for service response error code
+	// "InvalidLifecycleEventHookExecutionStatusException".
+	//
+	// The result of a Lambda validation function that verifies a lifecycle event
+	// is invalid. It should return Succeeded or Failed.
+	ErrCodeInvalidLifecycleEventHookExecutionStatusException = "InvalidLifecycleEventHookExecutionStatusException"
 
 	// ErrCodeInvalidLoadBalancerInfoException for service response error code
 	// "InvalidLoadBalancerInfoException".
@@ -462,11 +513,31 @@ const (
 	// The specified time range was specified in an invalid format.
 	ErrCodeInvalidTimeRangeException = "InvalidTimeRangeException"
 
+	// ErrCodeInvalidTrafficRoutingConfigurationException for service response error code
+	// "InvalidTrafficRoutingConfigurationException".
+	//
+	// The configuration that specifies how traffic is routed during a deployment
+	// is invalid.
+	ErrCodeInvalidTrafficRoutingConfigurationException = "InvalidTrafficRoutingConfigurationException"
+
 	// ErrCodeInvalidTriggerConfigException for service response error code
 	// "InvalidTriggerConfigException".
 	//
 	// The trigger was specified in an invalid format.
 	ErrCodeInvalidTriggerConfigException = "InvalidTriggerConfigException"
+
+	// ErrCodeInvalidUpdateOutdatedInstancesOnlyValueException for service response error code
+	// "InvalidUpdateOutdatedInstancesOnlyValueException".
+	//
+	// The UpdateOutdatedInstancesOnly value is invalid. For AWS Lambda deployments,
+	// false is expected. For EC2/On-premises deployments, true or false is expected.
+	ErrCodeInvalidUpdateOutdatedInstancesOnlyValueException = "InvalidUpdateOutdatedInstancesOnlyValueException"
+
+	// ErrCodeLifecycleEventAlreadyCompletedException for service response error code
+	// "LifecycleEventAlreadyCompletedException".
+	//
+	// An attempt to return the status of an already completed lifecycle event occurred.
+	ErrCodeLifecycleEventAlreadyCompletedException = "LifecycleEventAlreadyCompletedException"
 
 	// ErrCodeLifecycleHookLimitExceededException for service response error code
 	// "LifecycleHookLimitExceededException".
@@ -480,6 +551,12 @@ const (
 	// Both an IAM user ARN and an IAM session ARN were included in the request.
 	// Use only one ARN type.
 	ErrCodeMultipleIamArnsProvidedException = "MultipleIamArnsProvidedException"
+
+	// ErrCodeOperationNotSupportedException for service response error code
+	// "OperationNotSupportedException".
+	//
+	// The API used does not support the deployment.
+	ErrCodeOperationNotSupportedException = "OperationNotSupportedException"
 
 	// ErrCodeResourceValidationException for service response error code
 	// "ResourceValidationException".
@@ -523,6 +600,12 @@ const (
 	// The number of tag groups included in the tag set list exceeded the maximum
 	// allowed limit of 3.
 	ErrCodeTagSetListLimitExceededException = "TagSetListLimitExceededException"
+
+	// ErrCodeThrottlingException for service response error code
+	// "ThrottlingException".
+	//
+	// An API function was called too frequently.
+	ErrCodeThrottlingException = "ThrottlingException"
 
 	// ErrCodeTriggerTargetsLimitExceededException for service response error code
 	// "TriggerTargetsLimitExceededException".

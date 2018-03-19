@@ -2,12 +2,18 @@ package move
 
 import (
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/sync"
 	"github.com/spf13/cobra"
+)
+
+// Globals
+var (
+	deleteEmptySrcDirs = false
 )
 
 func init() {
 	cmd.Root.AddCommand(commandDefintion)
+	commandDefintion.Flags().BoolVarP(&deleteEmptySrcDirs, "delete-empty-src-dirs", "", deleteEmptySrcDirs, "Delete empty source dirs after move")
 }
 
 var commandDefintion = &cobra.Command{
@@ -28,6 +34,8 @@ move will be used, otherwise it will copy it (server side if possible)
 into ` + "`dest:path`" + ` then delete the original (if no errors on copy) in
 ` + "`source:path`" + `.
 
+If you want to delete empty source directories after move, use the --delete-empty-src-dirs flag.
+
 **Important**: Since this can cause data loss, test first with the
 --dry-run flag.
 `,
@@ -35,7 +43,8 @@ into ` + "`dest:path`" + ` then delete the original (if no errors on copy) in
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, fdst := cmd.NewFsSrcDst(args)
 		cmd.Run(true, true, command, func() error {
-			return fs.MoveDir(fdst, fsrc)
+
+			return sync.MoveDir(fdst, fsrc, deleteEmptySrcDirs)
 		})
 	},
 }

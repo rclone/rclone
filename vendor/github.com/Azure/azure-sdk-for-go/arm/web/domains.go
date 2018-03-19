@@ -88,7 +88,9 @@ func (client DomainsClient) CheckAvailabilityPreparer(identifier NameIdentifier)
 // CheckAvailabilitySender sends the CheckAvailability request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) CheckAvailabilitySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CheckAvailabilityResponder handles the response to the CheckAvailability request. The method always
@@ -240,6 +242,7 @@ func (client DomainsClient) CreateOrUpdatePreparer(resourceGroupName string, dom
 func (client DomainsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -318,7 +321,9 @@ func (client DomainsClient) CreateOrUpdateOwnershipIdentifierPreparer(resourceGr
 // CreateOrUpdateOwnershipIdentifierSender sends the CreateOrUpdateOwnershipIdentifier request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) CreateOrUpdateOwnershipIdentifierSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateOwnershipIdentifierResponder handles the response to the CreateOrUpdateOwnershipIdentifier request. The method always
@@ -396,7 +401,9 @@ func (client DomainsClient) DeletePreparer(resourceGroupName string, domainName 
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -470,7 +477,9 @@ func (client DomainsClient) DeleteOwnershipIdentifierPreparer(resourceGroupName 
 // DeleteOwnershipIdentifierSender sends the DeleteOwnershipIdentifier request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) DeleteOwnershipIdentifierSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteOwnershipIdentifierResponder handles the response to the DeleteOwnershipIdentifier request. The method always
@@ -542,7 +551,9 @@ func (client DomainsClient) GetPreparer(resourceGroupName string, domainName str
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -603,7 +614,9 @@ func (client DomainsClient) GetControlCenterSsoRequestPreparer() (*http.Request,
 // GetControlCenterSsoRequestSender sends the GetControlCenterSsoRequest request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) GetControlCenterSsoRequestSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetControlCenterSsoRequestResponder handles the response to the GetControlCenterSsoRequest request. The method always
@@ -678,7 +691,9 @@ func (client DomainsClient) GetOwnershipIdentifierPreparer(resourceGroupName str
 // GetOwnershipIdentifierSender sends the GetOwnershipIdentifier request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) GetOwnershipIdentifierSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetOwnershipIdentifierResponder handles the response to the GetOwnershipIdentifier request. The method always
@@ -739,7 +754,9 @@ func (client DomainsClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -880,7 +897,9 @@ func (client DomainsClient) ListByResourceGroupPreparer(resourceGroupName string
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -1022,7 +1041,9 @@ func (client DomainsClient) ListOwnershipIdentifiersPreparer(resourceGroupName s
 // ListOwnershipIdentifiersSender sends the ListOwnershipIdentifiers request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) ListOwnershipIdentifiersSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListOwnershipIdentifiersResponder handles the response to the ListOwnershipIdentifiers request. The method always
@@ -1156,7 +1177,9 @@ func (client DomainsClient) ListRecommendationsPreparer(parameters DomainRecomme
 // ListRecommendationsSender sends the ListRecommendations request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) ListRecommendationsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListRecommendationsResponder handles the response to the ListRecommendations request. The method always
@@ -1303,7 +1326,9 @@ func (client DomainsClient) UpdateOwnershipIdentifierPreparer(resourceGroupName 
 // UpdateOwnershipIdentifierSender sends the UpdateOwnershipIdentifier request. The method will close the
 // http.Response Body if it receives an error.
 func (client DomainsClient) UpdateOwnershipIdentifierSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateOwnershipIdentifierResponder handles the response to the UpdateOwnershipIdentifier request. The method always

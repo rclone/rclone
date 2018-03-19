@@ -89,7 +89,7 @@ type TestResultSummaryToolGroupTestSuite struct {
 }
 
 func (s *TestResultSummaryToolGroupTestSuite) MarshalJSON() ([]byte, error) {
-	type noMethod TestResultSummaryToolGroupTestSuite
-	raw := noMethod(*s)
+	type NoMethod TestResultSummaryToolGroupTestSuite
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }

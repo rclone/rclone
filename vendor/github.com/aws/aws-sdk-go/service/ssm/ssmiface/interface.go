@@ -159,6 +159,10 @@ type SSMAPI interface {
 	DescribeAutomationExecutionsWithContext(aws.Context, *ssm.DescribeAutomationExecutionsInput, ...request.Option) (*ssm.DescribeAutomationExecutionsOutput, error)
 	DescribeAutomationExecutionsRequest(*ssm.DescribeAutomationExecutionsInput) (*request.Request, *ssm.DescribeAutomationExecutionsOutput)
 
+	DescribeAutomationStepExecutions(*ssm.DescribeAutomationStepExecutionsInput) (*ssm.DescribeAutomationStepExecutionsOutput, error)
+	DescribeAutomationStepExecutionsWithContext(aws.Context, *ssm.DescribeAutomationStepExecutionsInput, ...request.Option) (*ssm.DescribeAutomationStepExecutionsOutput, error)
+	DescribeAutomationStepExecutionsRequest(*ssm.DescribeAutomationStepExecutionsInput) (*request.Request, *ssm.DescribeAutomationStepExecutionsOutput)
+
 	DescribeAvailablePatches(*ssm.DescribeAvailablePatchesInput) (*ssm.DescribeAvailablePatchesOutput, error)
 	DescribeAvailablePatchesWithContext(aws.Context, *ssm.DescribeAvailablePatchesInput, ...request.Option) (*ssm.DescribeAvailablePatchesOutput, error)
 	DescribeAvailablePatchesRequest(*ssm.DescribeAvailablePatchesInput) (*request.Request, *ssm.DescribeAvailablePatchesOutput)

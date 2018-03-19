@@ -94,7 +94,9 @@ func (client PersonGroupClient) CreatePreparer(personGroupID string, body Create
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client PersonGroupClient) CreateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // CreateResponder handles the response to the Create request. The method always
@@ -156,7 +158,9 @@ func (client PersonGroupClient) DeletePreparer(personGroupID string) (*http.Requ
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client PersonGroupClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -217,7 +221,9 @@ func (client PersonGroupClient) GetPreparer(personGroupID string) (*http.Request
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client PersonGroupClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -279,7 +285,9 @@ func (client PersonGroupClient) GetTrainingStatusPreparer(personGroupID string) 
 // GetTrainingStatusSender sends the GetTrainingStatus request. The method will close the
 // http.Response Body if it receives an error.
 func (client PersonGroupClient) GetTrainingStatusSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetTrainingStatusResponder handles the response to the GetTrainingStatus request. The method always
@@ -358,7 +366,9 @@ func (client PersonGroupClient) ListPreparer(start string, top *int32) (*http.Re
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client PersonGroupClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -420,7 +430,9 @@ func (client PersonGroupClient) TrainPreparer(personGroupID string) (*http.Reque
 // TrainSender sends the Train request. The method will close the
 // http.Response Body if it receives an error.
 func (client PersonGroupClient) TrainSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // TrainResponder handles the response to the Train request. The method always
@@ -484,7 +496,9 @@ func (client PersonGroupClient) UpdatePreparer(personGroupID string, body Create
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client PersonGroupClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

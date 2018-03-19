@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/log"
 	"golang.org/x/net/context" // switch to "context" when we stop supporting go1.6
 )
 
@@ -216,10 +217,10 @@ func New(f fs.Fs, opt *Options) *VFS {
 
 	// Start polling if required
 	if vfs.Opt.PollInterval > 0 {
-		if do := vfs.f.Features().DirChangeNotify; do != nil {
+		if do := vfs.f.Features().ChangeNotify; do != nil {
 			do(vfs.root.ForgetPath, vfs.Opt.PollInterval)
 		} else {
-			fs.Logf(f, "poll-interval is not supported by this remote")
+			fs.Infof(f, "poll-interval is not supported by this remote")
 		}
 	}
 
@@ -232,6 +233,9 @@ func New(f fs.Fs, opt *Options) *VFS {
 		panic(fmt.Sprintf("failed to create local cache: %v", err))
 	}
 	vfs.cache = cache
+
+	// add the remote control
+	vfs.addRC()
 	return vfs
 }
 
@@ -256,7 +260,7 @@ func (vfs *VFS) FlushDirCache() {
 // WaitForWriters sleeps until all writers have finished or
 // time.Duration has elapsed
 func (vfs *VFS) WaitForWriters(timeout time.Duration) {
-	defer fs.Trace(nil, "timeout=%v", timeout)("")
+	defer log.Trace(nil, "timeout=%v", timeout)("")
 	const tickTime = 1 * time.Second
 	deadline := time.NewTimer(timeout)
 	defer deadline.Stop()
@@ -391,7 +395,15 @@ func decodeOpenFlags(flags int) string {
 
 // OpenFile a file according to the flags and perm provided
 func (vfs *VFS) OpenFile(name string, flags int, perm os.FileMode) (fd Handle, err error) {
-	defer fs.Trace(name, "flags=%s, perm=%v", decodeOpenFlags(flags), perm)("fd=%v, err=%v", &fd, &err)
+	defer log.Trace(name, "flags=%s, perm=%v", decodeOpenFlags(flags), perm)("fd=%v, err=%v", &fd, &err)
+
+	// http://pubs.opengroup.org/onlinepubs/7908799/xsh/open.html
+	// The result of using O_TRUNC with O_RDONLY is undefined.
+	// Linux seems to truncate the file, but we prefer to return EINVAL
+	if flags&accessModeMask == os.O_RDONLY && flags&os.O_TRUNC != 0 {
+		return nil, EINVAL
+	}
+
 	node, err := vfs.Stat(name)
 	if err != nil {
 		if err != ENOENT || flags&os.O_CREATE == 0 {
@@ -402,7 +414,7 @@ func (vfs *VFS) OpenFile(name string, flags int, perm os.FileMode) (fd Handle, e
 		if err != nil {
 			return nil, err
 		}
-		node, err = dir.Create(leaf)
+		node, err = dir.Create(leaf, flags)
 		if err != nil {
 			return nil, err
 		}

@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -74,7 +74,7 @@ Note that if offset is negative it will count from the end, so
 			w = ioutil.Discard
 		}
 		cmd.Run(false, false, command, func() error {
-			return fs.Cat(fsrc, w, offset, count)
+			return operations.Cat(fsrc, w, offset, count)
 		})
 	},
 }

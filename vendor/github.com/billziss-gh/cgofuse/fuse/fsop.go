@@ -147,6 +147,7 @@ import (
 	"time"
 )
 
+// Error codes reported by FUSE file systems.
 const (
 	E2BIG           = int(C.E2BIG)
 	EACCES          = int(C.EACCES)
@@ -229,6 +230,7 @@ const (
 	EXDEV           = int(C.EXDEV)
 )
 
+// Flags used in FileSystemInterface.Create and FileSystemInterface.Open.
 const (
 	O_RDONLY  = int(C.O_RDONLY)
 	O_WRONLY  = int(C.O_WRONLY)
@@ -240,6 +242,7 @@ const (
 	O_ACCMODE = int(C.O_ACCMODE)
 )
 
+// File type and permission bits.
 const (
 	S_IFMT   = 0170000
 	S_IFBLK  = 0060000
@@ -267,6 +270,15 @@ const (
 	S_ISVTX = 01000
 )
 
+// BSD file flags (Windows file attributes).
+const (
+	UF_HIDDEN   = 0x00008000
+	UF_READONLY = 0x00001000
+	UF_SYSTEM   = 0x00000080
+	UF_ARCHIVE  = 0x00000800
+)
+
+// Options that control Setxattr operation.
 const (
 	XATTR_CREATE  = int(C.XATTR_CREATE)
 	XATTR_REPLACE = int(C.XATTR_REPLACE)
@@ -377,8 +389,11 @@ type Stat_t struct {
 	// Number of blocks allocated for this object.
 	Blocks int64
 
-	// File creation (birth) timestamp. [OSX only]
+	// File creation (birth) timestamp. [OSX and Windows only]
 	Birthtim Timespec
+
+	// BSD flags (UF_*). [OSX and Windows only]
+	Flags uint32
 }
 
 /*
@@ -466,9 +481,11 @@ type FileSystemInterface interface {
 	Access(path string, mask uint32) int
 
 	// Create creates and opens a file.
+	// The flags are a combination of the fuse.O_* constants.
 	Create(path string, flags int, mode uint32) (int, uint64)
 
 	// Open opens a file.
+	// The flags are a combination of the fuse.O_* constants.
 	Open(path string, flags int) (int, uint64)
 
 	// Getattr gets file attributes.
@@ -521,6 +538,27 @@ type FileSystemInterface interface {
 
 	// Listxattr lists extended attributes.
 	Listxattr(path string, fill func(name string) bool) int
+}
+
+// FileSystemChflags is the interface that wraps the Chflags method.
+//
+// Chflags changes the BSD file flags (Windows file attributes). [OSX and Windows only]
+type FileSystemChflags interface {
+	Chflags(path string, flags uint32) int
+}
+
+// FileSystemSetcrtime is the interface that wraps the Setcrtime method.
+//
+// Setcrtime changes the file creation (birth) time. [OSX and Windows only]
+type FileSystemSetcrtime interface {
+	Setcrtime(path string, tmsp Timespec) int
+}
+
+// FileSystemSetchgtime is the interface that wraps the Setchgtime method.
+//
+// Setchgtime changes the file change (ctime) time. [OSX and Windows only]
+type FileSystemSetchgtime interface {
+	Setchgtime(path string, tmsp Timespec) int
 }
 
 // Error encapsulates a FUSE error code. In some rare circumstances it is useful
@@ -630,12 +668,14 @@ func (*FileSystemBase) Access(path string, mask uint32) int {
 }
 
 // Create creates and opens a file.
+// The flags are a combination of the fuse.O_* constants.
 // The FileSystemBase implementation returns -ENOSYS.
 func (*FileSystemBase) Create(path string, flags int, mode uint32) (int, uint64) {
 	return -ENOSYS, ^uint64(0)
 }
 
 // Open opens a file.
+// The flags are a combination of the fuse.O_* constants.
 // The FileSystemBase implementation returns -ENOSYS.
 func (*FileSystemBase) Open(path string, flags int) (int, uint64) {
 	return -ENOSYS, ^uint64(0)

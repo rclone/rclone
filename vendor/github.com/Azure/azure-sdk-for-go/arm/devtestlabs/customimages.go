@@ -118,6 +118,7 @@ func (client CustomImagesClient) CreateOrUpdatePreparer(resourceGroupName string
 func (client CustomImagesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -202,6 +203,7 @@ func (client CustomImagesClient) DeletePreparer(resourceGroupName string, labNam
 func (client CustomImagesClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -271,7 +273,9 @@ func (client CustomImagesClient) GetPreparer(resourceGroupName string, labName s
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client CustomImagesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -350,7 +354,9 @@ func (client CustomImagesClient) ListPreparer(resourceGroupName string, labName 
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client CustomImagesClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always

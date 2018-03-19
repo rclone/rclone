@@ -82,10 +82,10 @@ func TestRequestCache(t *testing.T) {
 	fh := p.svr.nextRequest(foo)
 	bh := p.svr.nextRequest(bar)
 	assert.Len(t, p.svr.openRequests, 2)
-	_foo, ok := p.svr.getRequest(fh)
+	_foo, ok := p.svr.getRequest(fh, "")
 	assert.Equal(t, foo, _foo)
 	assert.True(t, ok)
-	_, ok = p.svr.getRequest("zed")
+	_, ok = p.svr.getRequest("zed", "")
 	assert.False(t, ok)
 	p.svr.closeRequest(fh)
 	p.svr.closeRequest(bh)
@@ -127,16 +127,36 @@ func TestRequestWrite(t *testing.T) {
 	assert.Equal(t, f.content, []byte("hello"))
 }
 
-// needs fail check
+func TestRequestWriteEmpty(t *testing.T) {
+	p := clientRequestServerPair(t)
+	defer p.Close()
+	n, err := putTestFile(p.cli, "/foo", "")
+	assert.NoError(t, err)
+	assert.Equal(t, 0, n)
+	r := p.testHandler()
+	f, err := r.fetch("/foo")
+	if assert.Nil(t, err) {
+		assert.False(t, f.isdir)
+		assert.Equal(t, f.content, []byte(""))
+	}
+	// lets test with an error
+	writeErr = os.ErrInvalid
+	n, err = putTestFile(p.cli, "/bar", "")
+	assert.Error(t, err)
+	writeErr = nil
+}
+
 func TestRequestFilename(t *testing.T) {
 	p := clientRequestServerPair(t)
 	defer p.Close()
 	_, err := putTestFile(p.cli, "/foo", "hello")
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	r := p.testHandler()
 	f, err := r.fetch("/foo")
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, f.Name(), "foo")
+	f, err = r.fetch("/bar")
+	assert.Error(t, err)
 }
 
 func TestRequestRead(t *testing.T) {
@@ -266,11 +286,12 @@ func TestRequestFstat(t *testing.T) {
 	fp, err := p.cli.Open("/foo")
 	assert.Nil(t, err)
 	fi, err := fp.Stat()
-	assert.Nil(t, err)
-	assert.Equal(t, fi.Name(), "foo")
-	assert.Equal(t, fi.Size(), int64(5))
-	assert.Equal(t, fi.Mode(), os.FileMode(0644))
-	assert.NoError(t, testOsSys(fi.Sys()))
+	if assert.NoError(t, err) {
+		assert.Equal(t, fi.Name(), "foo")
+		assert.Equal(t, fi.Size(), int64(5))
+		assert.Equal(t, fi.Mode(), os.FileMode(0644))
+		assert.NoError(t, testOsSys(fi.Sys()))
+	}
 }
 
 func TestRequestStatFail(t *testing.T) {
@@ -331,17 +352,25 @@ func TestRequestReaddir(t *testing.T) {
 
 func TestCleanPath(t *testing.T) {
 	assert.Equal(t, "/", cleanPath("/"))
+	assert.Equal(t, "/", cleanPath("."))
+	assert.Equal(t, "/", cleanPath("/."))
+	assert.Equal(t, "/", cleanPath("/a/.."))
+	assert.Equal(t, "/a/c", cleanPath("/a/b/../c"))
+	assert.Equal(t, "/a/c", cleanPath("/a/b/../c/"))
+	assert.Equal(t, "/a", cleanPath("/a/b/.."))
+	assert.Equal(t, "/a/b/c", cleanPath("/a/b/c"))
 	assert.Equal(t, "/", cleanPath("//"))
 	assert.Equal(t, "/a", cleanPath("/a/"))
 	assert.Equal(t, "/a", cleanPath("a/"))
 	assert.Equal(t, "/a/b/c", cleanPath("/a//b//c/"))
 
-	// filepath.ToSlash does not touch \ as char on unix systems, so os.PathSeparator is used for windows compatible tests
+	// filepath.ToSlash does not touch \ as char on unix systems
+	// so os.PathSeparator is used for windows compatible tests
 	bslash := string(os.PathSeparator)
 	assert.Equal(t, "/", cleanPath(bslash))
 	assert.Equal(t, "/", cleanPath(bslash+bslash))
 	assert.Equal(t, "/a", cleanPath(bslash+"a"+bslash))
 	assert.Equal(t, "/a", cleanPath("a"+bslash))
-	assert.Equal(t, "/a/b/c", cleanPath(bslash+"a"+bslash+bslash+"b"+bslash+bslash+"c"+bslash))
-
+	assert.Equal(t, "/a/b/c",
+		cleanPath(bslash+"a"+bslash+bslash+"b"+bslash+bslash+"c"+bslash))
 }

@@ -38,7 +38,7 @@ const (
 	// ErrCodeInconsistentQuantities for service response error code
 	// "InconsistentQuantities".
 	//
-	// The value of Quantity and the size of Items do not match.
+	// The value of Quantity and the size of Items don't match.
 	ErrCodeInconsistentQuantities = "InconsistentQuantities"
 
 	// ErrCodeInvalidArgument for service response error code
@@ -222,6 +222,10 @@ const (
 	// to false.
 	ErrCodePreconditionFailed = "PreconditionFailed"
 
+	// ErrCodeResourceInUse for service response error code
+	// "ResourceInUse".
+	ErrCodeResourceInUse = "ResourceInUse"
+
 	// ErrCodeStreamingDistributionAlreadyExists for service response error code
 	// "StreamingDistributionAlreadyExists".
 	ErrCodeStreamingDistributionAlreadyExists = "StreamingDistributionAlreadyExists"
@@ -328,6 +332,6 @@ const (
 	// ErrCodeTrustedSignerDoesNotExist for service response error code
 	// "TrustedSignerDoesNotExist".
 	//
-	// One or more of your trusted signers do not exist.
+	// One or more of your trusted signers don't exist.
 	ErrCodeTrustedSignerDoesNotExist = "TrustedSignerDoesNotExist"
 )

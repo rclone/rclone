@@ -110,6 +110,18 @@
         {"shape":"ResourceNotFoundException"}
       ]
     },
+    "GetSubscriptionState":{
+      "name":"GetSubscriptionState",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetSubscriptionStateRequest"},
+      "output":{"shape":"GetSubscriptionStateResponse"},
+      "errors":[
+        {"shape":"InternalErrorException"}
+      ]
+    },
     "ListAttacks":{
       "name":"ListAttacks",
       "http":{
@@ -148,6 +160,7 @@
         "StartTime":{"shape":"AttackTimestamp"},
         "EndTime":{"shape":"AttackTimestamp"},
         "AttackCounters":{"shape":"SummarizedCounterList"},
+        "AttackProperties":{"shape":"AttackProperties"},
         "Mitigations":{"shape":"MitigationList"}
       }
     },
@@ -156,6 +169,38 @@
       "max":128,
       "min":1,
       "pattern":"[a-zA-Z0-9\\\\-]*"
+    },
+    "AttackLayer":{
+      "type":"string",
+      "enum":[
+        "NETWORK",
+        "APPLICATION"
+      ]
+    },
+    "AttackProperties":{
+      "type":"list",
+      "member":{"shape":"AttackProperty"}
+    },
+    "AttackProperty":{
+      "type":"structure",
+      "members":{
+        "AttackLayer":{"shape":"AttackLayer"},
+        "AttackPropertyIdentifier":{"shape":"AttackPropertyIdentifier"},
+        "TopContributors":{"shape":"TopContributors"},
+        "Unit":{"shape":"Unit"},
+        "Total":{"shape":"Long"}
+      }
+    },
+    "AttackPropertyIdentifier":{
+      "type":"string",
+      "enum":[
+        "DESTINATION_URL",
+        "REFERRER",
+        "SOURCE_ASN",
+        "SOURCE_COUNTRY",
+        "SOURCE_IP_ADDRESS",
+        "SOURCE_USER_AGENT"
+      ]
     },
     "AttackSummaries":{
       "type":"list",
@@ -182,6 +227,13 @@
     "AttackVectorDescriptionList":{
       "type":"list",
       "member":{"shape":"AttackVectorDescription"}
+    },
+    "Contributor":{
+      "type":"structure",
+      "members":{
+        "Name":{"shape":"String"},
+        "Value":{"shape":"Long"}
+      }
     },
     "CreateProtectionRequest":{
       "type":"structure",
@@ -274,6 +326,18 @@
       "type":"long",
       "min":0
     },
+    "GetSubscriptionStateRequest":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "GetSubscriptionStateResponse":{
+      "type":"structure",
+      "required":["SubscriptionState"],
+      "members":{
+        "SubscriptionState":{"shape":"SubscriptionState"}
+      }
+    },
     "Integer":{"type":"integer"},
     "InternalErrorException":{
       "type":"structure",
@@ -353,10 +417,11 @@
       },
       "exception":true
     },
+    "Long":{"type":"long"},
     "MaxResults":{
       "type":"integer",
       "box":true,
-      "max":100,
+      "max":10000,
       "min":0
     },
     "Mitigation":{
@@ -450,6 +515,13 @@
         "TimeCommitmentInSeconds":{"shape":"DurationInSeconds"}
       }
     },
+    "SubscriptionState":{
+      "type":"string",
+      "enum":[
+        "ACTIVE",
+        "INACTIVE"
+      ]
+    },
     "SummarizedAttackVector":{
       "type":"structure",
       "required":["VectorType"],
@@ -488,6 +560,19 @@
     "Token":{
       "type":"string",
       "min":1
+    },
+    "TopContributors":{
+      "type":"list",
+      "member":{"shape":"Contributor"}
+    },
+    "Unit":{
+      "type":"string",
+      "enum":[
+        "BITS",
+        "BYTES",
+        "PACKETS",
+        "REQUESTS"
+      ]
     },
     "errorMessage":{"type":"string"}
   }

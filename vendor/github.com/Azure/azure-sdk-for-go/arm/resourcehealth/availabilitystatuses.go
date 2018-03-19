@@ -98,7 +98,9 @@ func (client AvailabilityStatusesClient) GetByResourcePreparer(resourceURI strin
 // GetByResourceSender sends the GetByResource request. The method will close the
 // http.Response Body if it receives an error.
 func (client AvailabilityStatusesClient) GetByResourceSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetByResourceResponder handles the response to the GetByResource request. The method always
@@ -175,7 +177,9 @@ func (client AvailabilityStatusesClient) ListPreparer(resourceURI string, filter
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client AvailabilityStatusesClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -317,7 +321,9 @@ func (client AvailabilityStatusesClient) ListByResourceGroupPreparer(resourceGro
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client AvailabilityStatusesClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -458,7 +464,9 @@ func (client AvailabilityStatusesClient) ListBySubscriptionIDPreparer(filter str
 // ListBySubscriptionIDSender sends the ListBySubscriptionID request. The method will close the
 // http.Response Body if it receives an error.
 func (client AvailabilityStatusesClient) ListBySubscriptionIDSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListBySubscriptionIDResponder handles the response to the ListBySubscriptionID request. The method always

@@ -7,6 +7,7 @@
     "protocol":"json",
     "serviceAbbreviation":"DynamoDB",
     "serviceFullName":"Amazon DynamoDB",
+    "serviceId":"DynamoDB",
     "signatureVersion":"v4",
     "targetPrefix":"DynamoDB_20120810",
     "uid":"dynamodb-2012-08-10"
@@ -41,6 +42,38 @@
         {"shape":"InternalServerError"}
       ]
     },
+    "CreateBackup":{
+      "name":"CreateBackup",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateBackupInput"},
+      "output":{"shape":"CreateBackupOutput"},
+      "errors":[
+        {"shape":"TableNotFoundException"},
+        {"shape":"TableInUseException"},
+        {"shape":"ContinuousBackupsUnavailableException"},
+        {"shape":"BackupInUseException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
+    "CreateGlobalTable":{
+      "name":"CreateGlobalTable",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateGlobalTableInput"},
+      "output":{"shape":"CreateGlobalTableOutput"},
+      "errors":[
+        {"shape":"LimitExceededException"},
+        {"shape":"InternalServerError"},
+        {"shape":"GlobalTableAlreadyExistsException"},
+        {"shape":"TableNotFoundException"}
+      ]
+    },
     "CreateTable":{
       "name":"CreateTable",
       "http":{
@@ -51,6 +84,21 @@
       "output":{"shape":"CreateTableOutput"},
       "errors":[
         {"shape":"ResourceInUseException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
+    "DeleteBackup":{
+      "name":"DeleteBackup",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteBackupInput"},
+      "output":{"shape":"DeleteBackupOutput"},
+      "errors":[
+        {"shape":"BackupNotFoundException"},
+        {"shape":"BackupInUseException"},
         {"shape":"LimitExceededException"},
         {"shape":"InternalServerError"}
       ]
@@ -84,6 +132,45 @@
         {"shape":"ResourceNotFoundException"},
         {"shape":"LimitExceededException"},
         {"shape":"InternalServerError"}
+      ]
+    },
+    "DescribeBackup":{
+      "name":"DescribeBackup",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeBackupInput"},
+      "output":{"shape":"DescribeBackupOutput"},
+      "errors":[
+        {"shape":"BackupNotFoundException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
+    "DescribeContinuousBackups":{
+      "name":"DescribeContinuousBackups",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeContinuousBackupsInput"},
+      "output":{"shape":"DescribeContinuousBackupsOutput"},
+      "errors":[
+        {"shape":"TableNotFoundException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
+    "DescribeGlobalTable":{
+      "name":"DescribeGlobalTable",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeGlobalTableInput"},
+      "output":{"shape":"DescribeGlobalTableOutput"},
+      "errors":[
+        {"shape":"InternalServerError"},
+        {"shape":"GlobalTableNotFoundException"}
       ]
     },
     "DescribeLimits":{
@@ -135,6 +222,30 @@
       "errors":[
         {"shape":"ProvisionedThroughputExceededException"},
         {"shape":"ResourceNotFoundException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
+    "ListBackups":{
+      "name":"ListBackups",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListBackupsInput"},
+      "output":{"shape":"ListBackupsOutput"},
+      "errors":[
+        {"shape":"InternalServerError"}
+      ]
+    },
+    "ListGlobalTables":{
+      "name":"ListGlobalTables",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListGlobalTablesInput"},
+      "output":{"shape":"ListGlobalTablesOutput"},
+      "errors":[
         {"shape":"InternalServerError"}
       ]
     },
@@ -193,6 +304,23 @@
         {"shape":"InternalServerError"}
       ]
     },
+    "RestoreTableFromBackup":{
+      "name":"RestoreTableFromBackup",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"RestoreTableFromBackupInput"},
+      "output":{"shape":"RestoreTableFromBackupOutput"},
+      "errors":[
+        {"shape":"TableAlreadyExistsException"},
+        {"shape":"TableInUseException"},
+        {"shape":"BackupNotFoundException"},
+        {"shape":"BackupInUseException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
     "Scan":{
       "name":"Scan",
       "http":{
@@ -233,6 +361,22 @@
         {"shape":"ResourceNotFoundException"},
         {"shape":"InternalServerError"},
         {"shape":"ResourceInUseException"}
+      ]
+    },
+    "UpdateGlobalTable":{
+      "name":"UpdateGlobalTable",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateGlobalTableInput"},
+      "output":{"shape":"UpdateGlobalTableOutput"},
+      "errors":[
+        {"shape":"InternalServerError"},
+        {"shape":"GlobalTableNotFoundException"},
+        {"shape":"ReplicaAlreadyExistsException"},
+        {"shape":"ReplicaNotFoundException"},
+        {"shape":"TableNotFoundException"}
       ]
     },
     "UpdateItem":{
@@ -352,6 +496,89 @@
       }
     },
     "Backfilling":{"type":"boolean"},
+    "BackupArn":{
+      "type":"string",
+      "max":1024,
+      "min":37
+    },
+    "BackupCreationDateTime":{"type":"timestamp"},
+    "BackupDescription":{
+      "type":"structure",
+      "members":{
+        "BackupDetails":{"shape":"BackupDetails"},
+        "SourceTableDetails":{"shape":"SourceTableDetails"},
+        "SourceTableFeatureDetails":{"shape":"SourceTableFeatureDetails"}
+      }
+    },
+    "BackupDetails":{
+      "type":"structure",
+      "required":[
+        "BackupArn",
+        "BackupName",
+        "BackupStatus",
+        "BackupCreationDateTime"
+      ],
+      "members":{
+        "BackupArn":{"shape":"BackupArn"},
+        "BackupName":{"shape":"BackupName"},
+        "BackupSizeBytes":{"shape":"BackupSizeBytes"},
+        "BackupStatus":{"shape":"BackupStatus"},
+        "BackupCreationDateTime":{"shape":"BackupCreationDateTime"}
+      }
+    },
+    "BackupInUseException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
+    "BackupName":{
+      "type":"string",
+      "max":255,
+      "min":3
+    },
+    "BackupNotFoundException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
+    "BackupSizeBytes":{
+      "type":"long",
+      "min":0
+    },
+    "BackupStatus":{
+      "type":"string",
+      "enum":[
+        "CREATING",
+        "DELETED",
+        "AVAILABLE"
+      ]
+    },
+    "BackupSummaries":{
+      "type":"list",
+      "member":{"shape":"BackupSummary"}
+    },
+    "BackupSummary":{
+      "type":"structure",
+      "members":{
+        "TableName":{"shape":"TableName"},
+        "TableId":{"shape":"TableId"},
+        "TableArn":{"shape":"TableArn"},
+        "BackupArn":{"shape":"BackupArn"},
+        "BackupName":{"shape":"BackupName"},
+        "BackupCreationDateTime":{"shape":"BackupCreationDateTime"},
+        "BackupStatus":{"shape":"BackupStatus"},
+        "BackupSizeBytes":{"shape":"BackupSizeBytes"}
+      }
+    },
+    "BackupsInputLimit":{
+      "type":"integer",
+      "max":100,
+      "min":1
+    },
     "BatchGetItemInput":{
       "type":"structure",
       "required":["RequestItems"],
@@ -474,6 +701,44 @@
       "member":{"shape":"ConsumedCapacity"}
     },
     "ConsumedCapacityUnits":{"type":"double"},
+    "ContinuousBackupsDescription":{
+      "type":"structure",
+      "required":["ContinuousBackupsStatus"],
+      "members":{
+        "ContinuousBackupsStatus":{"shape":"ContinuousBackupsStatus"}
+      }
+    },
+    "ContinuousBackupsStatus":{
+      "type":"string",
+      "enum":[
+        "ENABLED",
+        "DISABLED"
+      ]
+    },
+    "ContinuousBackupsUnavailableException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
+    "CreateBackupInput":{
+      "type":"structure",
+      "required":[
+        "TableName",
+        "BackupName"
+      ],
+      "members":{
+        "TableName":{"shape":"TableName"},
+        "BackupName":{"shape":"BackupName"}
+      }
+    },
+    "CreateBackupOutput":{
+      "type":"structure",
+      "members":{
+        "BackupDetails":{"shape":"BackupDetails"}
+      }
+    },
     "CreateGlobalSecondaryIndexAction":{
       "type":"structure",
       "required":[
@@ -487,6 +752,30 @@
         "KeySchema":{"shape":"KeySchema"},
         "Projection":{"shape":"Projection"},
         "ProvisionedThroughput":{"shape":"ProvisionedThroughput"}
+      }
+    },
+    "CreateGlobalTableInput":{
+      "type":"structure",
+      "required":[
+        "GlobalTableName",
+        "ReplicationGroup"
+      ],
+      "members":{
+        "GlobalTableName":{"shape":"TableName"},
+        "ReplicationGroup":{"shape":"ReplicaList"}
+      }
+    },
+    "CreateGlobalTableOutput":{
+      "type":"structure",
+      "members":{
+        "GlobalTableDescription":{"shape":"GlobalTableDescription"}
+      }
+    },
+    "CreateReplicaAction":{
+      "type":"structure",
+      "required":["RegionName"],
+      "members":{
+        "RegionName":{"shape":"RegionName"}
       }
     },
     "CreateTableInput":{
@@ -514,6 +803,19 @@
       }
     },
     "Date":{"type":"timestamp"},
+    "DeleteBackupInput":{
+      "type":"structure",
+      "required":["BackupArn"],
+      "members":{
+        "BackupArn":{"shape":"BackupArn"}
+      }
+    },
+    "DeleteBackupOutput":{
+      "type":"structure",
+      "members":{
+        "BackupDescription":{"shape":"BackupDescription"}
+      }
+    },
     "DeleteGlobalSecondaryIndexAction":{
       "type":"structure",
       "required":["IndexName"],
@@ -548,6 +850,13 @@
         "ItemCollectionMetrics":{"shape":"ItemCollectionMetrics"}
       }
     },
+    "DeleteReplicaAction":{
+      "type":"structure",
+      "required":["RegionName"],
+      "members":{
+        "RegionName":{"shape":"RegionName"}
+      }
+    },
     "DeleteRequest":{
       "type":"structure",
       "required":["Key"],
@@ -566,6 +875,45 @@
       "type":"structure",
       "members":{
         "TableDescription":{"shape":"TableDescription"}
+      }
+    },
+    "DescribeBackupInput":{
+      "type":"structure",
+      "required":["BackupArn"],
+      "members":{
+        "BackupArn":{"shape":"BackupArn"}
+      }
+    },
+    "DescribeBackupOutput":{
+      "type":"structure",
+      "members":{
+        "BackupDescription":{"shape":"BackupDescription"}
+      }
+    },
+    "DescribeContinuousBackupsInput":{
+      "type":"structure",
+      "required":["TableName"],
+      "members":{
+        "TableName":{"shape":"TableName"}
+      }
+    },
+    "DescribeContinuousBackupsOutput":{
+      "type":"structure",
+      "members":{
+        "ContinuousBackupsDescription":{"shape":"ContinuousBackupsDescription"}
+      }
+    },
+    "DescribeGlobalTableInput":{
+      "type":"structure",
+      "required":["GlobalTableName"],
+      "members":{
+        "GlobalTableName":{"shape":"TableName"}
+      }
+    },
+    "DescribeGlobalTableOutput":{
+      "type":"structure",
+      "members":{
+        "GlobalTableDescription":{"shape":"GlobalTableDescription"}
       }
     },
     "DescribeLimitsInput":{
@@ -696,6 +1044,15 @@
       "type":"list",
       "member":{"shape":"GlobalSecondaryIndexDescription"}
     },
+    "GlobalSecondaryIndexInfo":{
+      "type":"structure",
+      "members":{
+        "IndexName":{"shape":"IndexName"},
+        "KeySchema":{"shape":"KeySchema"},
+        "Projection":{"shape":"Projection"},
+        "ProvisionedThroughput":{"shape":"ProvisionedThroughput"}
+      }
+    },
     "GlobalSecondaryIndexList":{
       "type":"list",
       "member":{"shape":"GlobalSecondaryIndex"}
@@ -711,6 +1068,55 @@
     "GlobalSecondaryIndexUpdateList":{
       "type":"list",
       "member":{"shape":"GlobalSecondaryIndexUpdate"}
+    },
+    "GlobalSecondaryIndexes":{
+      "type":"list",
+      "member":{"shape":"GlobalSecondaryIndexInfo"}
+    },
+    "GlobalTable":{
+      "type":"structure",
+      "members":{
+        "GlobalTableName":{"shape":"TableName"},
+        "ReplicationGroup":{"shape":"ReplicaList"}
+      }
+    },
+    "GlobalTableAlreadyExistsException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
+    "GlobalTableArnString":{"type":"string"},
+    "GlobalTableDescription":{
+      "type":"structure",
+      "members":{
+        "ReplicationGroup":{"shape":"ReplicaDescriptionList"},
+        "GlobalTableArn":{"shape":"GlobalTableArnString"},
+        "CreationDateTime":{"shape":"Date"},
+        "GlobalTableStatus":{"shape":"GlobalTableStatus"},
+        "GlobalTableName":{"shape":"TableName"}
+      }
+    },
+    "GlobalTableList":{
+      "type":"list",
+      "member":{"shape":"GlobalTable"}
+    },
+    "GlobalTableNotFoundException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
+    "GlobalTableStatus":{
+      "type":"string",
+      "enum":[
+        "CREATING",
+        "ACTIVE",
+        "DELETING",
+        "UPDATING"
+      ]
     },
     "IndexName":{
       "type":"string",
@@ -768,6 +1174,10 @@
         "message":{"shape":"ErrorMessage"}
       },
       "exception":true
+    },
+    "ItemCount":{
+      "type":"long",
+      "min":0
     },
     "ItemList":{
       "type":"list",
@@ -841,6 +1251,38 @@
       "type":"list",
       "member":{"shape":"AttributeValue"}
     },
+    "ListBackupsInput":{
+      "type":"structure",
+      "members":{
+        "TableName":{"shape":"TableName"},
+        "Limit":{"shape":"BackupsInputLimit"},
+        "TimeRangeLowerBound":{"shape":"TimeRangeLowerBound"},
+        "TimeRangeUpperBound":{"shape":"TimeRangeUpperBound"},
+        "ExclusiveStartBackupArn":{"shape":"BackupArn"}
+      }
+    },
+    "ListBackupsOutput":{
+      "type":"structure",
+      "members":{
+        "BackupSummaries":{"shape":"BackupSummaries"},
+        "LastEvaluatedBackupArn":{"shape":"BackupArn"}
+      }
+    },
+    "ListGlobalTablesInput":{
+      "type":"structure",
+      "members":{
+        "ExclusiveStartGlobalTableName":{"shape":"TableName"},
+        "Limit":{"shape":"PositiveIntegerObject"},
+        "RegionName":{"shape":"RegionName"}
+      }
+    },
+    "ListGlobalTablesOutput":{
+      "type":"structure",
+      "members":{
+        "GlobalTables":{"shape":"GlobalTableList"},
+        "LastEvaluatedGlobalTableName":{"shape":"TableName"}
+      }
+    },
     "ListTablesInput":{
       "type":"structure",
       "members":{
@@ -903,9 +1345,21 @@
       "type":"list",
       "member":{"shape":"LocalSecondaryIndexDescription"}
     },
+    "LocalSecondaryIndexInfo":{
+      "type":"structure",
+      "members":{
+        "IndexName":{"shape":"IndexName"},
+        "KeySchema":{"shape":"KeySchema"},
+        "Projection":{"shape":"Projection"}
+      }
+    },
     "LocalSecondaryIndexList":{
       "type":"list",
       "member":{"shape":"LocalSecondaryIndex"}
+    },
+    "LocalSecondaryIndexes":{
+      "type":"list",
+      "member":{"shape":"LocalSecondaryIndexInfo"}
     },
     "Long":{"type":"long"},
     "MapAttributeValue":{
@@ -1055,6 +1509,52 @@
         "ConsumedCapacity":{"shape":"ConsumedCapacity"}
       }
     },
+    "RegionName":{"type":"string"},
+    "Replica":{
+      "type":"structure",
+      "members":{
+        "RegionName":{"shape":"RegionName"}
+      }
+    },
+    "ReplicaAlreadyExistsException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
+    "ReplicaDescription":{
+      "type":"structure",
+      "members":{
+        "RegionName":{"shape":"RegionName"}
+      }
+    },
+    "ReplicaDescriptionList":{
+      "type":"list",
+      "member":{"shape":"ReplicaDescription"}
+    },
+    "ReplicaList":{
+      "type":"list",
+      "member":{"shape":"Replica"}
+    },
+    "ReplicaNotFoundException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
+    "ReplicaUpdate":{
+      "type":"structure",
+      "members":{
+        "Create":{"shape":"CreateReplicaAction"},
+        "Delete":{"shape":"DeleteReplicaAction"}
+      }
+    },
+    "ReplicaUpdateList":{
+      "type":"list",
+      "member":{"shape":"ReplicaUpdate"}
+    },
     "ResourceArnString":{
       "type":"string",
       "max":1283,
@@ -1073,6 +1573,38 @@
         "message":{"shape":"ErrorMessage"}
       },
       "exception":true
+    },
+    "RestoreDateTime":{"type":"timestamp"},
+    "RestoreInProgress":{"type":"boolean"},
+    "RestoreSummary":{
+      "type":"structure",
+      "required":[
+        "RestoreDateTime",
+        "RestoreInProgress"
+      ],
+      "members":{
+        "SourceBackupArn":{"shape":"BackupArn"},
+        "SourceTableArn":{"shape":"TableArn"},
+        "RestoreDateTime":{"shape":"RestoreDateTime"},
+        "RestoreInProgress":{"shape":"RestoreInProgress"}
+      }
+    },
+    "RestoreTableFromBackupInput":{
+      "type":"structure",
+      "required":[
+        "TargetTableName",
+        "BackupArn"
+      ],
+      "members":{
+        "TargetTableName":{"shape":"TableName"},
+        "BackupArn":{"shape":"BackupArn"}
+      }
+    },
+    "RestoreTableFromBackupOutput":{
+      "type":"structure",
+      "members":{
+        "TableDescription":{"shape":"TableDescription"}
+      }
     },
     "ReturnConsumedCapacity":{
       "type":"string",
@@ -1163,6 +1695,35 @@
         "COUNT"
       ]
     },
+    "SourceTableDetails":{
+      "type":"structure",
+      "required":[
+        "TableName",
+        "TableId",
+        "KeySchema",
+        "TableCreationDateTime",
+        "ProvisionedThroughput"
+      ],
+      "members":{
+        "TableName":{"shape":"TableName"},
+        "TableId":{"shape":"TableId"},
+        "TableArn":{"shape":"TableArn"},
+        "TableSizeBytes":{"shape":"Long"},
+        "KeySchema":{"shape":"KeySchema"},
+        "TableCreationDateTime":{"shape":"TableCreationDateTime"},
+        "ProvisionedThroughput":{"shape":"ProvisionedThroughput"},
+        "ItemCount":{"shape":"ItemCount"}
+      }
+    },
+    "SourceTableFeatureDetails":{
+      "type":"structure",
+      "members":{
+        "LocalSecondaryIndexes":{"shape":"LocalSecondaryIndexes"},
+        "GlobalSecondaryIndexes":{"shape":"GlobalSecondaryIndexes"},
+        "StreamDescription":{"shape":"StreamSpecification"},
+        "TimeToLiveDescription":{"shape":"TimeToLiveDescription"}
+      }
+    },
     "StreamArn":{
       "type":"string",
       "max":1024,
@@ -1191,6 +1752,15 @@
       "type":"list",
       "member":{"shape":"StringAttributeValue"}
     },
+    "TableAlreadyExistsException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
+    "TableArn":{"type":"string"},
+    "TableCreationDateTime":{"type":"timestamp"},
     "TableDescription":{
       "type":"structure",
       "members":{
@@ -1203,12 +1773,25 @@
         "TableSizeBytes":{"shape":"Long"},
         "ItemCount":{"shape":"Long"},
         "TableArn":{"shape":"String"},
+        "TableId":{"shape":"TableId"},
         "LocalSecondaryIndexes":{"shape":"LocalSecondaryIndexDescriptionList"},
         "GlobalSecondaryIndexes":{"shape":"GlobalSecondaryIndexDescriptionList"},
         "StreamSpecification":{"shape":"StreamSpecification"},
         "LatestStreamLabel":{"shape":"String"},
-        "LatestStreamArn":{"shape":"StreamArn"}
+        "LatestStreamArn":{"shape":"StreamArn"},
+        "RestoreSummary":{"shape":"RestoreSummary"}
       }
+    },
+    "TableId":{
+      "type":"string",
+      "pattern":"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+    },
+    "TableInUseException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
     },
     "TableName":{
       "type":"string",
@@ -1219,6 +1802,13 @@
     "TableNameList":{
       "type":"list",
       "member":{"shape":"TableName"}
+    },
+    "TableNotFoundException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
     },
     "TableStatus":{
       "type":"string",
@@ -1269,6 +1859,8 @@
       "max":256,
       "min":0
     },
+    "TimeRangeLowerBound":{"type":"timestamp"},
+    "TimeRangeUpperBound":{"type":"timestamp"},
     "TimeToLiveAttributeName":{
       "type":"string",
       "max":255,
@@ -1323,6 +1915,23 @@
       "members":{
         "IndexName":{"shape":"IndexName"},
         "ProvisionedThroughput":{"shape":"ProvisionedThroughput"}
+      }
+    },
+    "UpdateGlobalTableInput":{
+      "type":"structure",
+      "required":[
+        "GlobalTableName",
+        "ReplicaUpdates"
+      ],
+      "members":{
+        "GlobalTableName":{"shape":"TableName"},
+        "ReplicaUpdates":{"shape":"ReplicaUpdateList"}
+      }
+    },
+    "UpdateGlobalTableOutput":{
+      "type":"structure",
+      "members":{
+        "GlobalTableDescription":{"shape":"GlobalTableDescription"}
       }
     },
     "UpdateItemInput":{

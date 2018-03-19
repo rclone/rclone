@@ -24,11 +24,24 @@ const (
 	// The certificate is invalid.
 	ErrCodeCertificateValidationException = "CertificateValidationException"
 
+	// ErrCodeConflictingResourceUpdateException for service response error code
+	// "ConflictingResourceUpdateException".
+	//
+	// A conflicting resource update exception. This exception is thrown when two
+	// pending updates cause a conflict.
+	ErrCodeConflictingResourceUpdateException = "ConflictingResourceUpdateException"
+
 	// ErrCodeDeleteConflictException for service response error code
 	// "DeleteConflictException".
 	//
 	// You can't delete the resource because it is attached to one or more resources.
 	ErrCodeDeleteConflictException = "DeleteConflictException"
+
+	// ErrCodeIndexNotReadyException for service response error code
+	// "IndexNotReadyException".
+	//
+	// The index is not ready.
+	ErrCodeIndexNotReadyException = "IndexNotReadyException"
 
 	// ErrCodeInternalException for service response error code
 	// "InternalException".
@@ -42,11 +55,23 @@ const (
 	// An unexpected error has occurred.
 	ErrCodeInternalFailureException = "InternalFailureException"
 
+	// ErrCodeInvalidQueryException for service response error code
+	// "InvalidQueryException".
+	//
+	// The query is invalid.
+	ErrCodeInvalidQueryException = "InvalidQueryException"
+
 	// ErrCodeInvalidRequestException for service response error code
 	// "InvalidRequestException".
 	//
 	// The request is not valid.
 	ErrCodeInvalidRequestException = "InvalidRequestException"
+
+	// ErrCodeInvalidResponseException for service response error code
+	// "InvalidResponseException".
+	//
+	// The response is invalid.
+	ErrCodeInvalidResponseException = "InvalidResponseException"
 
 	// ErrCodeLimitExceededException for service response error code
 	// "LimitExceededException".
@@ -59,6 +84,12 @@ const (
 	//
 	// The policy documentation is not valid.
 	ErrCodeMalformedPolicyException = "MalformedPolicyException"
+
+	// ErrCodeNotConfiguredException for service response error code
+	// "NotConfiguredException".
+	//
+	// The resource is not configured.
+	ErrCodeNotConfiguredException = "NotConfiguredException"
 
 	// ErrCodeRegistrationCodeValidationException for service response error code
 	// "RegistrationCodeValidationException".
@@ -77,6 +108,12 @@ const (
 	//
 	// The specified resource does not exist.
 	ErrCodeResourceNotFoundException = "ResourceNotFoundException"
+
+	// ErrCodeResourceRegistrationFailureException for service response error code
+	// "ResourceRegistrationFailureException".
+	//
+	// The resource registration failed.
+	ErrCodeResourceRegistrationFailureException = "ResourceRegistrationFailureException"
 
 	// ErrCodeServiceUnavailableException for service response error code
 	// "ServiceUnavailableException".

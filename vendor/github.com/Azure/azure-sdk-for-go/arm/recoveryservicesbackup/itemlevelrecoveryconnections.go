@@ -100,7 +100,9 @@ func (client ItemLevelRecoveryConnectionsClient) ProvisionPreparer(vaultName str
 // ProvisionSender sends the Provision request. The method will close the
 // http.Response Body if it receives an error.
 func (client ItemLevelRecoveryConnectionsClient) ProvisionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ProvisionResponder handles the response to the Provision request. The method always
@@ -173,7 +175,9 @@ func (client ItemLevelRecoveryConnectionsClient) RevokePreparer(vaultName string
 // RevokeSender sends the Revoke request. The method will close the
 // http.Response Body if it receives an error.
 func (client ItemLevelRecoveryConnectionsClient) RevokeSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // RevokeResponder handles the response to the Revoke request. The method always

@@ -772,5 +772,54 @@
         }
       }
     ]
+  },
+  {
+    "description": "Enum output",
+    "metadata": {
+      "protocol": "query"
+    },
+    "shapes": {
+      "OutputShape": {
+        "type": "structure",
+        "members": {
+          "FooEnum": {
+            "shape": "EC2EnumType"
+          },
+          "ListEnums": {
+            "shape": "EC2EnumList"
+          }
+        }
+      },
+      "EC2EnumType":{
+        "type":"string",
+        "enum":[
+          "foo",
+          "bar"
+        ]
+      },
+      "EC2EnumList":{
+        "type":"list",
+        "member": {"shape": "EC2EnumType"}
+      }
+    },
+    "cases": [
+      {
+        "given": {
+          "output": {
+            "shape": "OutputShape"
+          },
+          "name": "OperationName"
+        },
+        "result": {
+          "FooEnum": "foo",
+          "ListEnums": ["foo", "bar"]
+        },
+        "response": {
+          "status_code": 200,
+          "headers": {},
+          "body": "<OperationNameResponse><FooEnum>foo</FooEnum><ListEnums><member>foo</member><member>bar</member></ListEnums></OperationNameResponse>"
+        }
+      }
+    ]
   }
 ]

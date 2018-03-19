@@ -15,11 +15,11 @@
 package errorreporting
 
 import (
-	"bytes"
 	"errors"
-	"log"
 	"strings"
 	"testing"
+
+	"cloud.google.com/go/internal/testutil"
 
 	gax "github.com/googleapis/gax-go"
 
@@ -28,14 +28,16 @@ import (
 	erpb "google.golang.org/genproto/googleapis/devtools/clouderrorreporting/v1beta1"
 )
 
-const testProjectID = "testproject"
-
 type fakeReportErrorsClient struct {
-	req  *erpb.ReportErrorEventRequest
-	fail bool
+	req    *erpb.ReportErrorEventRequest
+	fail   bool
+	doneCh chan struct{}
 }
 
 func (c *fakeReportErrorsClient) ReportErrorEvent(ctx context.Context, req *erpb.ReportErrorEventRequest, _ ...gax.CallOption) (*erpb.ReportErrorEventResponse, error) {
+	defer func() {
+		close(c.doneCh)
+	}()
 	if c.fail {
 		return nil, errors.New("request failed")
 	}
@@ -47,166 +49,65 @@ func (c *fakeReportErrorsClient) Close() error {
 	return nil
 }
 
+func newFakeReportErrorsClient() *fakeReportErrorsClient {
+	c := &fakeReportErrorsClient{}
+	c.doneCh = make(chan struct{})
+	return c
+}
+
 func newTestClient(c *fakeReportErrorsClient) *Client {
-	newApiInterface = func(ctx context.Context, opts ...option.ClientOption) (apiInterface, error) {
+	newClient = func(ctx context.Context, opts ...option.ClientOption) (client, error) {
 		return c, nil
 	}
-	t, err := NewClient(context.Background(), testProjectID, "myservice", "v1.000", false)
+	t, err := NewClient(context.Background(), testutil.ProjID(), Config{
+		ServiceName:    "myservice",
+		ServiceVersion: "v1.0",
+	})
 	if err != nil {
 		panic(err)
 	}
-	t.RepanicDefault = false
 	return t
 }
 
-var ctx context.Context
-
-func init() {
-	ctx = context.Background()
-}
-
-func TestCatchNothing(t *testing.T) {
-	fc := &fakeReportErrorsClient{}
-	c := newTestClient(fc)
-	defer func() {
-		r := fc.req
-		if r != nil {
-			t.Errorf("got error report, expected none")
-		}
-	}()
-	defer c.Catch(ctx)
-}
-
-func commonChecks(t *testing.T, req *erpb.ReportErrorEventRequest, panickingFunction string) {
+func commonChecks(t *testing.T, req *erpb.ReportErrorEventRequest, fn string) {
 	if req.Event.ServiceContext.Service != "myservice" {
 		t.Errorf("error report didn't contain service name")
 	}
-	if req.Event.ServiceContext.Version != "v1.000" {
+	if req.Event.ServiceContext.Version != "v1.0" {
 		t.Errorf("error report didn't contain version name")
 	}
-	if !strings.Contains(req.Event.Message, "hello, error") {
+	if !strings.Contains(req.Event.Message, "error") {
 		t.Errorf("error report didn't contain message")
 	}
-	if !strings.Contains(req.Event.Message, panickingFunction) {
+	if !strings.Contains(req.Event.Message, fn) {
 		t.Errorf("error report didn't contain stack trace")
 	}
 }
 
-func TestCatchPanic(t *testing.T) {
-	fc := &fakeReportErrorsClient{}
-	c := newTestClient(fc)
-	defer func() {
-		r := fc.req
-		if r == nil {
-			t.Fatalf("got no error report, expected one")
-		}
-		commonChecks(t, r, "errorreporting.TestCatchPanic")
-		if !strings.Contains(r.Event.Message, "divide by zero") {
-			t.Errorf("error report didn't contain recovered value")
-		}
-	}()
-	defer c.Catch(ctx, WithMessage("hello, error"))
-	var x int
-	x = x / x
-}
-
-func TestCatchPanicNilClient(t *testing.T) {
-	buf := new(bytes.Buffer)
-	log.SetOutput(buf)
-	defer func() {
-		recover()
-		body := buf.String()
-		if !strings.Contains(body, "divide by zero") {
-			t.Errorf("error report didn't contain recovered value")
-		}
-		if !strings.Contains(body, "hello, error") {
-			t.Errorf("error report didn't contain message")
-		}
-		if !strings.Contains(body, "TestCatchPanicNilClient") {
-			t.Errorf("error report didn't contain recovered value")
-		}
-	}()
-	var c *Client
-	defer c.Catch(ctx, WithMessage("hello, error"))
-	var x int
-	x = x / x
-}
-
-func TestLogFailedReports(t *testing.T) {
-	fc := &fakeReportErrorsClient{fail: true}
-	c := newTestClient(fc)
-	buf := new(bytes.Buffer)
-	log.SetOutput(buf)
-	defer func() {
-		recover()
-		body := buf.String()
-		if !strings.Contains(body, "hello, error") {
-			t.Errorf("error report didn't contain message")
-		}
-		if !strings.Contains(body, "errorreporting.TestLogFailedReports") {
-			t.Errorf("error report didn't contain stack trace")
-		}
-		if !strings.Contains(body, "divide by zero") {
-			t.Errorf("error report didn't contain recovered value")
-		}
-	}()
-	defer c.Catch(ctx, WithMessage("hello, error"))
-	var x int
-	x = x / x
-}
-
-func TestCatchNilPanic(t *testing.T) {
-	fc := &fakeReportErrorsClient{}
-	c := newTestClient(fc)
-	defer func() {
-		r := fc.req
-		if r == nil {
-			t.Fatalf("got no error report, expected one")
-		}
-		commonChecks(t, r, "errorreporting.TestCatchNilPanic")
-		if !strings.Contains(r.Event.Message, "nil") {
-			t.Errorf("error report didn't contain recovered value")
-		}
-	}()
-	b := true
-	defer c.Catch(ctx, WithMessage("hello, error"), PanicFlag(&b))
-	panic(nil)
-}
-
-func TestNotCatchNilPanic(t *testing.T) {
-	fc := &fakeReportErrorsClient{}
-	c := newTestClient(fc)
-	defer func() {
-		r := fc.req
-		if r != nil {
-			t.Errorf("got error report, expected none")
-		}
-	}()
-	defer c.Catch(ctx, WithMessage("hello, error"))
-	panic(nil)
-}
-
 func TestReport(t *testing.T) {
-	fc := &fakeReportErrorsClient{}
+	fc := newFakeReportErrorsClient()
 	c := newTestClient(fc)
-	c.Report(ctx, nil, "hello, ", "error")
+	c.Report(Entry{Error: errors.New("error")})
+
+	<-fc.doneCh
 	r := fc.req
 	if r == nil {
 		t.Fatalf("got no error report, expected one")
 	}
 	commonChecks(t, r, "errorreporting.TestReport")
 }
-
-func TestReportf(t *testing.T) {
-	fc := &fakeReportErrorsClient{}
+func TestReportSync(t *testing.T) {
+	ctx := context.Background()
+	fc := newFakeReportErrorsClient()
 	c := newTestClient(fc)
-	c.Reportf(ctx, nil, "hello, error 2+%d=%d", 2, 2+2)
+	if err := c.ReportSync(ctx, Entry{Error: errors.New("error")}); err != nil {
+		t.Fatalf("cannot upload errors: %v", err)
+	}
+
+	<-fc.doneCh
 	r := fc.req
 	if r == nil {
 		t.Fatalf("got no error report, expected one")
 	}
-	commonChecks(t, r, "errorreporting.TestReportf")
-	if !strings.Contains(r.Event.Message, "2+2=4") {
-		t.Errorf("error report didn't contain formatted message")
-	}
+	commonChecks(t, r, "errorreporting.TestReport")
 }

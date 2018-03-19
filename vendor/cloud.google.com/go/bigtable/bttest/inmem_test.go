@@ -17,6 +17,7 @@ package bttest
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -26,7 +27,6 @@ import (
 	btapb "google.golang.org/genproto/googleapis/bigtable/admin/v2"
 	btpb "google.golang.org/genproto/googleapis/bigtable/v2"
 	"google.golang.org/grpc"
-	"strconv"
 )
 
 func TestConcurrentMutationsReadModifyAndGC(t *testing.T) {
@@ -430,7 +430,7 @@ func TestReadRowsOrder(t *testing.T) {
 		t.Fatal("Response count: got 0, want > 0")
 	}
 	if len(mock.responses[0].Chunks) != 27 {
-		t.Fatal("Chunk count: got %d, want 27", len(mock.responses[0].Chunks))
+		t.Fatalf("Chunk count: got %d, want 27", len(mock.responses[0].Chunks))
 	}
 	testOrder := func(ms *MockReadRowsServer) {
 		var prevFam, prevCol string
@@ -480,7 +480,7 @@ func TestReadRowsOrder(t *testing.T) {
 		t.Fatal("Response count: got 0, want > 0")
 	}
 	if len(mock.responses[0].Chunks) != 18 {
-		t.Fatal("Chunk count: got %d, want 18", len(mock.responses[0].Chunks))
+		t.Fatalf("Chunk count: got %d, want 18", len(mock.responses[0].Chunks))
 	}
 	testOrder(mock)
 
@@ -511,7 +511,61 @@ func TestReadRowsOrder(t *testing.T) {
 		t.Fatal("Response count: got 0, want > 0")
 	}
 	if len(mock.responses[0].Chunks) != 30 {
-		t.Fatal("Chunk count: got %d, want 30", len(mock.responses[0].Chunks))
+		t.Fatalf("Chunk count: got %d, want 30", len(mock.responses[0].Chunks))
 	}
 	testOrder(mock)
+}
+
+func TestCheckAndMutateRowWithoutPredicate(t *testing.T) {
+	s := &server{
+		tables: make(map[string]*table),
+	}
+	ctx := context.Background()
+	newTbl := btapb.Table{
+		ColumnFamilies: map[string]*btapb.ColumnFamily{
+			"cf": {GcRule: &btapb.GcRule{Rule: &btapb.GcRule_MaxNumVersions{1}}},
+		},
+	}
+	tbl, err := s.CreateTable(ctx, &btapb.CreateTableRequest{Parent: "cluster", TableId: "t", Table: &newTbl})
+	if err != nil {
+		t.Fatalf("Creating table: %v", err)
+	}
+
+	// Populate the table
+	val := []byte("value")
+	mrreq := &btpb.MutateRowRequest{
+		TableName: tbl.Name,
+		RowKey:    []byte("row-present"),
+		Mutations: []*btpb.Mutation{{
+			Mutation: &btpb.Mutation_SetCell_{&btpb.Mutation_SetCell{
+				FamilyName:      "cf",
+				ColumnQualifier: []byte("col"),
+				TimestampMicros: 0,
+				Value:           val,
+			}},
+		}},
+	}
+	if _, err := s.MutateRow(ctx, mrreq); err != nil {
+		t.Fatalf("Populating table: %v", err)
+	}
+
+	req := &btpb.CheckAndMutateRowRequest{
+		TableName: tbl.Name,
+		RowKey:    []byte("row-not-present"),
+	}
+	if res, err := s.CheckAndMutateRow(ctx, req); err != nil {
+		t.Errorf("CheckAndMutateRow error: %v", err)
+	} else if got, want := res.PredicateMatched, false; got != want {
+		t.Errorf("Invalid PredicateMatched value: got %t, want %t", got, want)
+	}
+
+	req = &btpb.CheckAndMutateRowRequest{
+		TableName: tbl.Name,
+		RowKey:    []byte("row-present"),
+	}
+	if res, err := s.CheckAndMutateRow(ctx, req); err != nil {
+		t.Errorf("CheckAndMutateRow error: %v", err)
+	} else if got, want := res.PredicateMatched, true; got != want {
+		t.Errorf("Invalid PredicateMatched value: got %t, want %t", got, want)
+	}
 }

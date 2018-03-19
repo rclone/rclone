@@ -4,8 +4,8 @@
 
 // Package precis contains types and functions for the preparation,
 // enforcement, and comparison of internationalized strings ("PRECIS") as
-// defined in RFC 7564. It also contains several pre-defined profiles for
-// passwords, nicknames, and usernames as defined in RFC 7613 and RFC 7700.
+// defined in RFC 8264. It also contains several pre-defined profiles for
+// passwords, nicknames, and usernames as defined in RFC 8265 and RFC 8266.
 //
 // BE ADVISED: This package is under construction and the API may change in
 // backwards incompatible ways and without notice.

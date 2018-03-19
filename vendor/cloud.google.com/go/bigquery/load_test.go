@@ -17,8 +17,11 @@ package bigquery
 import (
 	"strings"
 	"testing"
+	"time"
 
-	"golang.org/x/net/context"
+	"cloud.google.com/go/internal/testutil"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 
 	bq "google.golang.org/api/bigquery/v2"
 )
@@ -67,12 +70,13 @@ func bqNestedFieldSchema() *bq.TableFieldSchema {
 }
 
 func TestLoad(t *testing.T) {
-	defer fixRandomJobID("RANDOM")()
+	defer fixRandomID("RANDOM")()
 	c := &Client{projectID: "client-project-id"}
 
 	testCases := []struct {
 		dst    *Table
 		src    LoadSource
+		jobID  string
 		config LoadConfig
 		want   *bq.Job
 	}{
@@ -82,17 +86,24 @@ func TestLoad(t *testing.T) {
 			want: defaultLoadJob(),
 		},
 		{
-			dst: c.Dataset("dataset-id").Table("table-id"),
+			dst:   c.Dataset("dataset-id").Table("table-id"),
+			jobID: "ajob",
 			config: LoadConfig{
 				CreateDisposition: CreateNever,
 				WriteDisposition:  WriteTruncate,
-				JobID:             "ajob",
+				Labels:            map[string]string{"a": "b"},
+				TimePartitioning:  &TimePartitioning{Expiration: 1234 * time.Millisecond},
 			},
 			src: NewGCSReference("uri"),
 			want: func() *bq.Job {
 				j := defaultLoadJob()
+				j.Configuration.Labels = map[string]string{"a": "b"}
 				j.Configuration.Load.CreateDisposition = "CREATE_NEVER"
 				j.Configuration.Load.WriteDisposition = "WRITE_TRUNCATE"
+				j.Configuration.Load.TimePartitioning = &bq.TimePartitioning{
+					Type:         "DAY",
+					ExpirationMs: 1234,
+				}
 				j.JobReference = &bq.JobReference{
 					JobId:     "ajob",
 					ProjectId: "client-project-id",
@@ -211,16 +222,23 @@ func TestLoad(t *testing.T) {
 	}
 
 	for i, tc := range testCases {
-		s := &testService{}
-		c.service = s
 		loader := tc.dst.LoaderFrom(tc.src)
+		loader.JobID = tc.jobID
 		tc.config.Src = tc.src
 		tc.config.Dst = tc.dst
 		loader.LoadConfig = tc.config
-		if _, err := loader.Run(context.Background()); err != nil {
-			t.Errorf("#%d: err calling Loader.Run: %v", i, err)
-			continue
+		got, _ := loader.newJob()
+		checkJob(t, i, got, tc.want)
+
+		jc, err := bqToJobConfig(got.Configuration, c)
+		if err != nil {
+			t.Fatalf("#%d: %v", i, err)
 		}
-		checkJob(t, i, s.Job, tc.want)
+		diff := testutil.Diff(jc.(*LoadConfig), &loader.LoadConfig,
+			cmp.AllowUnexported(Table{}, Client{}),
+			cmpopts.IgnoreUnexported(ReaderSource{}))
+		if diff != "" {
+			t.Errorf("#%d: (got=-, want=+:\n%s", i, diff)
+		}
 	}
 }

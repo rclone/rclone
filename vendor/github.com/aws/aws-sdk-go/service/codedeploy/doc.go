@@ -4,13 +4,15 @@
 // requests to AWS CodeDeploy.
 //
 // AWS CodeDeploy is a deployment service that automates application deployments
-// to Amazon EC2 instances or on-premises instances running in your own facility.
+// to Amazon EC2 instances, on-premises instances running in your own facility,
+// or serverless AWS Lambda functions.
 //
 // You can deploy a nearly unlimited variety of application content, such as
-// code, web and configuration files, executables, packages, scripts, multimedia
-// files, and so on. AWS CodeDeploy can deploy application content stored in
-// Amazon S3 buckets, GitHub repositories, or Bitbucket repositories. You do
-// not need to make changes to your existing code before you can use AWS CodeDeploy.
+// an updated Lambda function, code, web and configuration files, executables,
+// packages, scripts, multimedia files, and so on. AWS CodeDeploy can deploy
+// application content stored in Amazon S3 buckets, GitHub repositories, or
+// Bitbucket repositories. You do not need to make changes to your existing
+// code before you can use AWS CodeDeploy.
 //
 // AWS CodeDeploy makes it easier for you to rapidly release new features, helps
 // you avoid downtime during application deployment, and handles the complexity
@@ -27,26 +29,30 @@
 //    to ensure the correct combination of revision, deployment configuration,
 //    and deployment group are referenced during a deployment.
 //
-//    * Deployment group: A set of individual instances. A deployment group
-//    contains individually tagged instances, Amazon EC2 instances in Auto Scaling
-//    groups, or both.
+//    * Deployment group: A set of individual instances or CodeDeploy Lambda
+//    applications. A Lambda deployment group contains a group of applications.
+//    An EC2/On-premises deployment group contains individually tagged instances,
+//    Amazon EC2 instances in Auto Scaling groups, or both.
 //
 //    * Deployment configuration: A set of deployment rules and deployment success
 //    and failure conditions used by AWS CodeDeploy during a deployment.
 //
-//    * Deployment: The process, and the components involved in the process,
-//    of installing content on one or more instances.
+//    * Deployment: The process and the components used in the process of updating
+//    a Lambda function or of installing content on one or more instances.
 //
-//    * Application revisions: An archive file containing source content—source
-//    code, web pages, executable files, and deployment scripts—along with an
-//    application specification file (AppSpec file). Revisions are stored in
-//    Amazon S3 buckets or GitHub repositories. For Amazon S3, a revision is
-//    uniquely identified by its Amazon S3 object key and its ETag, version,
-//    or both. For GitHub, a revision is uniquely identified by its commit ID.
+//    * Application revisions: For an AWS Lambda deployment, this is an AppSpec
+//    file that specifies the Lambda function to update and one or more functions
+//    to validate deployment lifecycle events. For an EC2/On-premises deployment,
+//    this is an archive file containing source content—source code, web pages,
+//    executable files, and deployment scripts—along with an AppSpec file. Revisions
+//    are stored in Amazon S3 buckets or GitHub repositories. For Amazon S3,
+//    a revision is uniquely identified by its Amazon S3 object key and its
+//    ETag, version, or both. For GitHub, a revision is uniquely identified
+//    by its commit ID.
 //
 // This guide also contains information to help you get details about the instances
-// in your deployments and to make on-premises instances available for AWS CodeDeploy
-// deployments.
+// in your deployments, to make on-premises instances available for AWS CodeDeploy
+// deployments, and to get details about a Lambda function deployment.
 //
 // AWS CodeDeploy Information Resources
 //
@@ -65,7 +71,7 @@
 //
 // Using the Client
 //
-// To AWS CodeDeploy with the SDK use the New function to create
+// To contact AWS CodeDeploy with the SDK use the New function to create
 // a new service client. With that client you can make API requests to the service.
 // These clients are safe to use concurrently.
 //

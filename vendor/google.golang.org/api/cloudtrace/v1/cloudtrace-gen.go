@@ -154,8 +154,8 @@ type ListTracesResponse struct {
 }
 
 func (s *ListTracesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListTracesResponse
-	raw := noMethod(*s)
+	type NoMethod ListTracesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -199,8 +199,8 @@ type Trace struct {
 }
 
 func (s *Trace) MarshalJSON() ([]byte, error) {
-	type noMethod Trace
-	raw := noMethod(*s)
+	type NoMethod Trace
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -313,8 +313,8 @@ type TraceSpan struct {
 }
 
 func (s *TraceSpan) MarshalJSON() ([]byte, error) {
-	type noMethod TraceSpan
-	raw := noMethod(*s)
+	type NoMethod TraceSpan
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -341,8 +341,8 @@ type Traces struct {
 }
 
 func (s *Traces) MarshalJSON() ([]byte, error) {
-	type noMethod Traces
-	raw := noMethod(*s)
+	type NoMethod Traces
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -454,7 +454,7 @@ func (c *ProjectsPatchTracesCall) Do(opts ...googleapi.CallOption) (*Empty, erro
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -599,7 +599,7 @@ func (c *ProjectsTracesGetCall) Do(opts ...googleapi.CallOption) (*Trace, error)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -860,7 +860,7 @@ func (c *ProjectsTracesListCall) Do(opts ...googleapi.CallOption) (*ListTracesRe
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

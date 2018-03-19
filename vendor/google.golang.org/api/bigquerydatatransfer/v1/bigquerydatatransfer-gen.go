@@ -239,8 +239,8 @@ type CheckValidCredsResponse struct {
 }
 
 func (s *CheckValidCredsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod CheckValidCredsResponse
-	raw := noMethod(*s)
+	type NoMethod CheckValidCredsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -317,8 +317,8 @@ type DataSource struct {
 	// for the data source.
 	ManualRunsDisabled bool `json:"manualRunsDisabled,omitempty"`
 
-	// MinimumScheduleInterval: The minimum interval between two consecutive
-	// scheduled runs.
+	// MinimumScheduleInterval: The minimum interval for scheduler to
+	// schedule runs.
 	MinimumScheduleInterval string `json:"minimumScheduleInterval,omitempty"`
 
 	// Name: Data source resource name.
@@ -388,8 +388,8 @@ type DataSource struct {
 }
 
 func (s *DataSource) MarshalJSON() ([]byte, error) {
-	type noMethod DataSource
-	raw := noMethod(*s)
+	type NoMethod DataSource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -485,19 +485,19 @@ type DataSourceParameter struct {
 }
 
 func (s *DataSourceParameter) MarshalJSON() ([]byte, error) {
-	type noMethod DataSourceParameter
-	raw := noMethod(*s)
+	type NoMethod DataSourceParameter
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *DataSourceParameter) UnmarshalJSON(data []byte) error {
-	type noMethod DataSourceParameter
+	type NoMethod DataSourceParameter
 	var s1 struct {
 		MaxValue gensupport.JSONFloat64 `json:"maxValue"`
 		MinValue gensupport.JSONFloat64 `json:"minValue"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -531,12 +531,11 @@ type ListDataSourcesResponse struct {
 	// settings.
 	DataSources []*DataSource `json:"dataSources,omitempty"`
 
-	// NextPageToken: The next-pagination token. For multiple-page list
-	// results,
+	// NextPageToken: Output only. The next-pagination token. For
+	// multiple-page list results,
 	// this token can be used as the
 	// `ListDataSourcesRequest.page_token`
 	// to request the next page of list results.
-	// Output only.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -561,8 +560,8 @@ type ListDataSourcesResponse struct {
 }
 
 func (s *ListDataSourcesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListDataSourcesResponse
-	raw := noMethod(*s)
+	type NoMethod ListDataSourcesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -598,25 +597,24 @@ type ListLocationsResponse struct {
 }
 
 func (s *ListLocationsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListLocationsResponse
-	raw := noMethod(*s)
+	type NoMethod ListLocationsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // ListTransferConfigsResponse: The returned list of pipelines in the
 // project.
 type ListTransferConfigsResponse struct {
-	// NextPageToken: The next-pagination token. For multiple-page list
-	// results,
+	// NextPageToken: Output only. The next-pagination token. For
+	// multiple-page list results,
 	// this token can be used as
 	// the
 	// `ListTransferConfigsRequest.page_token`
 	// to request the next page of list results.
-	// Output only.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
-	// TransferConfigs: The stored pipeline transfer configurations.
-	// Output only.
+	// TransferConfigs: Output only. The stored pipeline transfer
+	// configurations.
 	TransferConfigs []*TransferConfig `json:"transferConfigs,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -641,24 +639,22 @@ type ListTransferConfigsResponse struct {
 }
 
 func (s *ListTransferConfigsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListTransferConfigsResponse
-	raw := noMethod(*s)
+	type NoMethod ListTransferConfigsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // ListTransferLogsResponse: The returned list transfer run messages.
 type ListTransferLogsResponse struct {
-	// NextPageToken: The next-pagination token. For multiple-page list
-	// results,
+	// NextPageToken: Output only. The next-pagination token. For
+	// multiple-page list results,
 	// this token can be used as
 	// the
 	// `GetTransferRunLogRequest.page_token`
 	// to request the next page of list results.
-	// Output only.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
-	// TransferMessages: The stored pipeline transfer messages.
-	// Output only.
+	// TransferMessages: Output only. The stored pipeline transfer messages.
 	TransferMessages []*TransferMessage `json:"transferMessages,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -683,24 +679,22 @@ type ListTransferLogsResponse struct {
 }
 
 func (s *ListTransferLogsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListTransferLogsResponse
-	raw := noMethod(*s)
+	type NoMethod ListTransferLogsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // ListTransferRunsResponse: The returned list of pipelines in the
 // project.
 type ListTransferRunsResponse struct {
-	// NextPageToken: The next-pagination token. For multiple-page list
-	// results,
+	// NextPageToken: Output only. The next-pagination token. For
+	// multiple-page list results,
 	// this token can be used as the
 	// `ListTransferRunsRequest.page_token`
 	// to request the next page of list results.
-	// Output only.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
-	// TransferRuns: The stored pipeline transfer runs.
-	// Output only.
+	// TransferRuns: Output only. The stored pipeline transfer runs.
 	TransferRuns []*TransferRun `json:"transferRuns,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -725,8 +719,8 @@ type ListTransferRunsResponse struct {
 }
 
 func (s *ListTransferRunsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListTransferRunsResponse
-	raw := noMethod(*s)
+	type NoMethod ListTransferRunsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -773,8 +767,8 @@ type Location struct {
 }
 
 func (s *Location) MarshalJSON() ([]byte, error) {
-	type noMethod Location
-	raw := noMethod(*s)
+	type NoMethod Location
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -809,8 +803,8 @@ type ScheduleTransferRunsRequest struct {
 }
 
 func (s *ScheduleTransferRunsRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ScheduleTransferRunsRequest
-	raw := noMethod(*s)
+	type NoMethod ScheduleTransferRunsRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -842,8 +836,127 @@ type ScheduleTransferRunsResponse struct {
 }
 
 func (s *ScheduleTransferRunsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ScheduleTransferRunsResponse
-	raw := noMethod(*s)
+	type NoMethod ScheduleTransferRunsResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Status: The `Status` type defines a logical error model that is
+// suitable for different
+// programming environments, including REST APIs and RPC APIs. It is
+// used by
+// [gRPC](https://github.com/grpc). The error model is designed to
+// be:
+//
+// - Simple to use and understand for most users
+// - Flexible enough to meet unexpected needs
+//
+// # Overview
+//
+// The `Status` message contains three pieces of data: error code, error
+// message,
+// and error details. The error code should be an enum value
+// of
+// google.rpc.Code, but it may accept additional error codes if needed.
+// The
+// error message should be a developer-facing English message that
+// helps
+// developers *understand* and *resolve* the error. If a localized
+// user-facing
+// error message is needed, put the localized message in the error
+// details or
+// localize it in the client. The optional error details may contain
+// arbitrary
+// information about the error. There is a predefined set of error
+// detail types
+// in the package `google.rpc` that can be used for common error
+// conditions.
+//
+// # Language mapping
+//
+// The `Status` message is the logical representation of the error
+// model, but it
+// is not necessarily the actual wire format. When the `Status` message
+// is
+// exposed in different client libraries and different wire protocols,
+// it can be
+// mapped differently. For example, it will likely be mapped to some
+// exceptions
+// in Java, but more likely mapped to some error codes in C.
+//
+// # Other uses
+//
+// The error model and the `Status` message can be used in a variety
+// of
+// environments, either with or without APIs, to provide a
+// consistent developer experience across different
+// environments.
+//
+// Example uses of this error model include:
+//
+// - Partial errors. If a service needs to return partial errors to the
+// client,
+//     it may embed the `Status` in the normal response to indicate the
+// partial
+//     errors.
+//
+// - Workflow errors. A typical workflow has multiple steps. Each step
+// may
+//     have a `Status` message for error reporting.
+//
+// - Batch operations. If a client uses batch request and batch
+// response, the
+//     `Status` message should be used directly inside batch response,
+// one for
+//     each error sub-response.
+//
+// - Asynchronous operations. If an API call embeds asynchronous
+// operation
+//     results in its response, the status of those operations should
+// be
+//     represented directly using the `Status` message.
+//
+// - Logging. If some API errors are stored in logs, the message
+// `Status` could
+//     be used directly after any stripping needed for security/privacy
+// reasons.
+type Status struct {
+	// Code: The status code, which should be an enum value of
+	// google.rpc.Code.
+	Code int64 `json:"code,omitempty"`
+
+	// Details: A list of messages that carry the error details.  There is a
+	// common set of
+	// message types for APIs to use.
+	Details []googleapi.RawMessage `json:"details,omitempty"`
+
+	// Message: A developer-facing error message, which should be in
+	// English. Any
+	// user-facing error message should be localized and sent in
+	// the
+	// google.rpc.Status.details field, or localized by the client.
+	Message string `json:"message,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Code") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Code") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Status) MarshalJSON() ([]byte, error) {
+	type NoMethod Status
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -874,10 +987,8 @@ type TransferConfig struct {
 	// created.
 	DataSourceId string `json:"dataSourceId,omitempty"`
 
-	// DatasetRegion: Region in which BigQuery dataset is located. Currently
-	// possible values are:
-	// "US" and "EU".
-	// Output only.
+	// DatasetRegion: Output only. Region in which BigQuery dataset is
+	// located.
 	DatasetRegion string `json:"datasetRegion,omitempty"`
 
 	// DestinationDatasetId: The BigQuery target dataset id.
@@ -901,8 +1012,7 @@ type TransferConfig struct {
 	// config.
 	Name string `json:"name,omitempty"`
 
-	// NextRunTime: Next time when data transfer will run.
-	// Output only.
+	// NextRunTime: Output only. Next time when data transfer will run.
 	NextRunTime string `json:"nextRunTime,omitempty"`
 
 	// Params: Data transfer specific parameters.
@@ -926,12 +1036,10 @@ type TransferConfig struct {
 	// NOTE: the granularity should be at least 8 hours, or less frequent.
 	Schedule string `json:"schedule,omitempty"`
 
-	// State: State of the most recently updated transfer run.
-	// Output only.
+	// State: Output only. State of the most recently updated transfer run.
 	//
 	// Possible values:
 	//   "TRANSFER_STATE_UNSPECIFIED" - State placeholder.
-	//   "INACTIVE" - Data transfer is inactive.
 	//   "PENDING" - Data transfer is scheduled and is waiting to be picked
 	// up by
 	// data transfer backend.
@@ -941,17 +1049,18 @@ type TransferConfig struct {
 	//   "CANCELLED" - Data transfer is cancelled.
 	State string `json:"state,omitempty"`
 
-	// UpdateTime: Data transfer modification time. Ignored by server on
-	// input.
-	// Output only.
+	// UpdateTime: Output only. Data transfer modification time. Ignored by
+	// server on input.
 	UpdateTime string `json:"updateTime,omitempty"`
 
-	// UserId: Unique ID of the user on whose behalf transfer is done.
-	// Applicable only
-	// to data sources that do not support service accounts. When set to
-	// 0,
-	// the data source service account credentials are used.
-	// Output only.
+	// UserId: Output only. Unique ID of the user on whose behalf transfer
+	// is done.
+	// Applicable only to data sources that do not support service
+	// accounts.
+	// When set to 0, the data source service account credentials are
+	// used.
+	// May be negative. Note, that this identifier is not stable.
+	// It may change over time even for the same user.
 	UserId int64 `json:"userId,omitempty,string"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -978,8 +1087,8 @@ type TransferConfig struct {
 }
 
 func (s *TransferConfig) MarshalJSON() ([]byte, error) {
-	type noMethod TransferConfig
-	raw := noMethod(*s)
+	type NoMethod TransferConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1019,31 +1128,26 @@ type TransferMessage struct {
 }
 
 func (s *TransferMessage) MarshalJSON() ([]byte, error) {
-	type noMethod TransferMessage
-	raw := noMethod(*s)
+	type NoMethod TransferMessage
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // TransferRun: Represents a data transfer run.
+// Next id: 27
 type TransferRun struct {
-	// DataSourceId: Data source id.
-	// Output only.
+	// DataSourceId: Output only. Data source id.
 	DataSourceId string `json:"dataSourceId,omitempty"`
 
-	// DatasetRegion: Region in which BigQuery dataset is located. Currently
-	// possible values are:
-	// "US" and "EU".
-	// Output only.
-	DatasetRegion string `json:"datasetRegion,omitempty"`
-
-	// DestinationDatasetId: The BigQuery target dataset id.
+	// DestinationDatasetId: Output only. The BigQuery target dataset id.
 	DestinationDatasetId string `json:"destinationDatasetId,omitempty"`
 
-	// EndTime: Time when transfer run ended. Parameter ignored by server
-	// for input
-	// requests.
-	// Output only.
+	// EndTime: Output only. Time when transfer run ended.
+	// Parameter ignored by server for input requests.
 	EndTime string `json:"endTime,omitempty"`
+
+	// ErrorStatus: Status of the transfer run.
+	ErrorStatus *Status `json:"errorStatus,omitempty"`
 
 	// Name: The resource name of the transfer run.
 	// Transfer run names have the
@@ -1053,7 +1157,7 @@ type TransferRun struct {
 	// The name is ignored when creating a transfer run.
 	Name string `json:"name,omitempty"`
 
-	// Params: Data transfer specific parameters.
+	// Params: Output only. Data transfer specific parameters.
 	Params googleapi.RawMessage `json:"params,omitempty"`
 
 	// RunTime: For batch transfer runs, specifies the date and time
@@ -1061,32 +1165,27 @@ type TransferRun struct {
 	// data should be ingested.
 	RunTime string `json:"runTime,omitempty"`
 
-	// Schedule: Describes the schedule of this transfer run if it was
-	// created as part of
-	// a regular schedule. For batch transfer runs that are directly
-	// created,
-	// this is empty.
+	// Schedule: Output only. Describes the schedule of this transfer run if
+	// it was
+	// created as part of a regular schedule. For batch transfer runs that
+	// are
+	// scheduled manually, this is empty.
 	// NOTE: the system might choose to delay the schedule depending on
 	// the
 	// current load, so `schedule_time` doesn't always matches this.
-	// Output only.
 	Schedule string `json:"schedule,omitempty"`
 
 	// ScheduleTime: Minimum time after which a transfer run can be started.
 	ScheduleTime string `json:"scheduleTime,omitempty"`
 
-	// StartTime: Time when transfer run was started. Parameter ignored by
-	// server for input
-	// requests.
-	// Output only.
+	// StartTime: Output only. Time when transfer run was started.
+	// Parameter ignored by server for input requests.
 	StartTime string `json:"startTime,omitempty"`
 
 	// State: Data transfer run state. Ignored for input requests.
-	// Output only.
 	//
 	// Possible values:
 	//   "TRANSFER_STATE_UNSPECIFIED" - State placeholder.
-	//   "INACTIVE" - Data transfer is inactive.
 	//   "PENDING" - Data transfer is scheduled and is waiting to be picked
 	// up by
 	// data transfer backend.
@@ -1096,16 +1195,18 @@ type TransferRun struct {
 	//   "CANCELLED" - Data transfer is cancelled.
 	State string `json:"state,omitempty"`
 
-	// UpdateTime: Last time the data transfer run state was updated.
-	// Output only.
+	// UpdateTime: Output only. Last time the data transfer run state was
+	// updated.
 	UpdateTime string `json:"updateTime,omitempty"`
 
-	// UserId: Unique ID of the user on whose behalf transfer is done.
-	// Applicable only
-	// to data sources that do not support service accounts. When set to
-	// 0,
-	// the data source service account credentials are used.
-	// Output only.
+	// UserId: Output only. Unique ID of the user on whose behalf transfer
+	// is done.
+	// Applicable only to data sources that do not support service
+	// accounts.
+	// When set to 0, the data source service account credentials are
+	// used.
+	// May be negative. Note, that this identifier is not stable.
+	// It may change over time even for the same user.
 	UserId int64 `json:"userId,omitempty,string"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1130,8 +1231,8 @@ type TransferRun struct {
 }
 
 func (s *TransferRun) MarshalJSON() ([]byte, error) {
-	type noMethod TransferRun
-	raw := noMethod(*s)
+	type NoMethod TransferRun
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1244,7 +1345,7 @@ func (c *ProjectsDataSourcesCheckValidCredsCall) Do(opts ...googleapi.CallOption
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1390,7 +1491,7 @@ func (c *ProjectsDataSourcesGetCall) Do(opts ...googleapi.CallOption) (*DataSour
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1550,7 +1651,7 @@ func (c *ProjectsDataSourcesListCall) Do(opts ...googleapi.CallOption) (*ListDat
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1723,7 +1824,7 @@ func (c *ProjectsLocationsGetCall) Do(opts ...googleapi.CallOption) (*Location, 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1886,7 +1987,7 @@ func (c *ProjectsLocationsListCall) Do(opts ...googleapi.CallOption) (*ListLocat
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2066,7 +2167,7 @@ func (c *ProjectsLocationsDataSourcesCheckValidCredsCall) Do(opts ...googleapi.C
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2212,7 +2313,7 @@ func (c *ProjectsLocationsDataSourcesGetCall) Do(opts ...googleapi.CallOption) (
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2372,7 +2473,7 @@ func (c *ProjectsLocationsDataSourcesListCall) Do(opts ...googleapi.CallOption) 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2569,7 +2670,7 @@ func (c *ProjectsLocationsTransferConfigsCreateCall) Do(opts ...googleapi.CallOp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2588,7 +2689,7 @@ func (c *ProjectsLocationsTransferConfigsCreateCall) Do(opts ...googleapi.CallOp
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "The BigQuery project id where the transfer configuration should be created.\nMust be in the format /projects/{project_id}/locations/{location_id}\nor\n/projects/{project_id}/locations/-\nIn case when '-' is specified as location_id, location is infered from\nthe destination dataset region.",
+	//       "description": "The BigQuery project id where the transfer configuration should be created.\nMust be in the format /projects/{project_id}/locations/{location_id}\nIf specified location and location of the destination bigquery dataset\ndo not match - the request will fail.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+$",
 	//       "required": true,
@@ -2704,7 +2805,7 @@ func (c *ProjectsLocationsTransferConfigsDeleteCall) Do(opts ...googleapi.CallOp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2844,7 +2945,7 @@ func (c *ProjectsLocationsTransferConfigsGetCall) Do(opts ...googleapi.CallOptio
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3011,7 +3112,7 @@ func (c *ProjectsLocationsTransferConfigsListCall) Do(opts ...googleapi.CallOpti
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3108,7 +3209,7 @@ func (r *ProjectsLocationsTransferConfigsService) Patch(name string, transfercon
 // configuration.
 // If it is provided, the transfer configuration will be associated with
 // the
-// gaia id of the authorizing user.
+// authorizing user.
 // In order to obtain authorization_code, please make a
 // request
 // to
@@ -3222,7 +3323,7 @@ func (c *ProjectsLocationsTransferConfigsPatchCall) Do(opts ...googleapi.CallOpt
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3236,7 +3337,7 @@ func (c *ProjectsLocationsTransferConfigsPatchCall) Do(opts ...googleapi.CallOpt
 	//   ],
 	//   "parameters": {
 	//     "authorizationCode": {
-	//       "description": "Optional OAuth2 authorization code to use with this transfer configuration.\nIf it is provided, the transfer configuration will be associated with the\ngaia id of the authorizing user.\nIn order to obtain authorization_code, please make a\nrequest to\nhttps://www.gstatic.com/bigquerydatatransfer/oauthz/auth?client_id=\u003cdatatransferapiclientid\u003e\u0026scope=\u003cdata_source_scopes\u003e\u0026redirect_uri=\u003credirect_uri\u003e\n\n* client_id should be OAuth client_id of BigQuery DTS API for the given\n  data source returned by ListDataSources method.\n* data_source_scopes are the scopes returned by ListDataSources method.\n* redirect_uri is an optional parameter. If not specified, then\n  authorization code is posted to the opener of authorization flow window.\n  Otherwise it will be sent to the redirect uri. A special value of\n  urn:ietf:wg:oauth:2.0:oob means that authorization code should be\n  returned in the title bar of the browser, with the page text prompting\n  the user to copy the code and paste it in the application.",
+	//       "description": "Optional OAuth2 authorization code to use with this transfer configuration.\nIf it is provided, the transfer configuration will be associated with the\nauthorizing user.\nIn order to obtain authorization_code, please make a\nrequest to\nhttps://www.gstatic.com/bigquerydatatransfer/oauthz/auth?client_id=\u003cdatatransferapiclientid\u003e\u0026scope=\u003cdata_source_scopes\u003e\u0026redirect_uri=\u003credirect_uri\u003e\n\n* client_id should be OAuth client_id of BigQuery DTS API for the given\n  data source returned by ListDataSources method.\n* data_source_scopes are the scopes returned by ListDataSources method.\n* redirect_uri is an optional parameter. If not specified, then\n  authorization code is posted to the opener of authorization flow window.\n  Otherwise it will be sent to the redirect uri. A special value of\n  urn:ietf:wg:oauth:2.0:oob means that authorization code should be\n  returned in the title bar of the browser, with the page text prompting\n  the user to copy the code and paste it in the application.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -3280,8 +3381,8 @@ type ProjectsLocationsTransferConfigsScheduleRunsCall struct {
 	header_                     http.Header
 }
 
-// ScheduleRuns: Creates transfer runs for a time range
-// [range_start_time, range_end_time].
+// ScheduleRuns: Creates transfer runs for a time range [start_time,
+// end_time].
 // For each date - or whatever granularity the data source supports - in
 // the
 // range, one transfer run is created.
@@ -3374,12 +3475,12 @@ func (c *ProjectsLocationsTransferConfigsScheduleRunsCall) Do(opts ...googleapi.
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates transfer runs for a time range [range_start_time, range_end_time].\nFor each date - or whatever granularity the data source supports - in the\nrange, one transfer run is created.\nNote that runs are created per UTC time in the time range.",
+	//   "description": "Creates transfer runs for a time range [start_time, end_time].\nFor each date - or whatever granularity the data source supports - in the\nrange, one transfer run is created.\nNote that runs are created per UTC time in the time range.",
 	//   "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/transferConfigs/{transferConfigsId}:scheduleRuns",
 	//   "httpMethod": "POST",
 	//   "id": "bigquerydatatransfer.projects.locations.transferConfigs.scheduleRuns",
@@ -3503,7 +3604,7 @@ func (c *ProjectsLocationsTransferConfigsRunsDeleteCall) Do(opts ...googleapi.Ca
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3643,7 +3744,7 @@ func (c *ProjectsLocationsTransferConfigsRunsGetCall) Do(opts ...googleapi.CallO
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3729,7 +3830,6 @@ func (c *ProjectsLocationsTransferConfigsRunsListCall) RunAttempt(runAttempt str
 //
 // Possible values:
 //   "TRANSFER_STATE_UNSPECIFIED"
-//   "INACTIVE"
 //   "PENDING"
 //   "RUNNING"
 //   "SUCCEEDED"
@@ -3829,7 +3929,7 @@ func (c *ProjectsLocationsTransferConfigsRunsListCall) Do(opts ...googleapi.Call
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3873,7 +3973,6 @@ func (c *ProjectsLocationsTransferConfigsRunsListCall) Do(opts ...googleapi.Call
 	//       "description": "When specified, only transfer runs with requested states are returned.",
 	//       "enum": [
 	//         "TRANSFER_STATE_UNSPECIFIED",
-	//         "INACTIVE",
 	//         "PENDING",
 	//         "RUNNING",
 	//         "SUCCEEDED",
@@ -4058,7 +4157,7 @@ func (c *ProjectsLocationsTransferConfigsRunsTransferLogsListCall) Do(opts ...go
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4267,7 +4366,7 @@ func (c *ProjectsTransferConfigsCreateCall) Do(opts ...googleapi.CallOption) (*T
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4286,7 +4385,7 @@ func (c *ProjectsTransferConfigsCreateCall) Do(opts ...googleapi.CallOption) (*T
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "The BigQuery project id where the transfer configuration should be created.\nMust be in the format /projects/{project_id}/locations/{location_id}\nor\n/projects/{project_id}/locations/-\nIn case when '-' is specified as location_id, location is infered from\nthe destination dataset region.",
+	//       "description": "The BigQuery project id where the transfer configuration should be created.\nMust be in the format /projects/{project_id}/locations/{location_id}\nIf specified location and location of the destination bigquery dataset\ndo not match - the request will fail.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+$",
 	//       "required": true,
@@ -4402,7 +4501,7 @@ func (c *ProjectsTransferConfigsDeleteCall) Do(opts ...googleapi.CallOption) (*E
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4542,7 +4641,7 @@ func (c *ProjectsTransferConfigsGetCall) Do(opts ...googleapi.CallOption) (*Tran
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4709,7 +4808,7 @@ func (c *ProjectsTransferConfigsListCall) Do(opts ...googleapi.CallOption) (*Lis
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4806,7 +4905,7 @@ func (r *ProjectsTransferConfigsService) Patch(name string, transferconfig *Tran
 // configuration.
 // If it is provided, the transfer configuration will be associated with
 // the
-// gaia id of the authorizing user.
+// authorizing user.
 // In order to obtain authorization_code, please make a
 // request
 // to
@@ -4920,7 +5019,7 @@ func (c *ProjectsTransferConfigsPatchCall) Do(opts ...googleapi.CallOption) (*Tr
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4934,7 +5033,7 @@ func (c *ProjectsTransferConfigsPatchCall) Do(opts ...googleapi.CallOption) (*Tr
 	//   ],
 	//   "parameters": {
 	//     "authorizationCode": {
-	//       "description": "Optional OAuth2 authorization code to use with this transfer configuration.\nIf it is provided, the transfer configuration will be associated with the\ngaia id of the authorizing user.\nIn order to obtain authorization_code, please make a\nrequest to\nhttps://www.gstatic.com/bigquerydatatransfer/oauthz/auth?client_id=\u003cdatatransferapiclientid\u003e\u0026scope=\u003cdata_source_scopes\u003e\u0026redirect_uri=\u003credirect_uri\u003e\n\n* client_id should be OAuth client_id of BigQuery DTS API for the given\n  data source returned by ListDataSources method.\n* data_source_scopes are the scopes returned by ListDataSources method.\n* redirect_uri is an optional parameter. If not specified, then\n  authorization code is posted to the opener of authorization flow window.\n  Otherwise it will be sent to the redirect uri. A special value of\n  urn:ietf:wg:oauth:2.0:oob means that authorization code should be\n  returned in the title bar of the browser, with the page text prompting\n  the user to copy the code and paste it in the application.",
+	//       "description": "Optional OAuth2 authorization code to use with this transfer configuration.\nIf it is provided, the transfer configuration will be associated with the\nauthorizing user.\nIn order to obtain authorization_code, please make a\nrequest to\nhttps://www.gstatic.com/bigquerydatatransfer/oauthz/auth?client_id=\u003cdatatransferapiclientid\u003e\u0026scope=\u003cdata_source_scopes\u003e\u0026redirect_uri=\u003credirect_uri\u003e\n\n* client_id should be OAuth client_id of BigQuery DTS API for the given\n  data source returned by ListDataSources method.\n* data_source_scopes are the scopes returned by ListDataSources method.\n* redirect_uri is an optional parameter. If not specified, then\n  authorization code is posted to the opener of authorization flow window.\n  Otherwise it will be sent to the redirect uri. A special value of\n  urn:ietf:wg:oauth:2.0:oob means that authorization code should be\n  returned in the title bar of the browser, with the page text prompting\n  the user to copy the code and paste it in the application.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -4978,8 +5077,8 @@ type ProjectsTransferConfigsScheduleRunsCall struct {
 	header_                     http.Header
 }
 
-// ScheduleRuns: Creates transfer runs for a time range
-// [range_start_time, range_end_time].
+// ScheduleRuns: Creates transfer runs for a time range [start_time,
+// end_time].
 // For each date - or whatever granularity the data source supports - in
 // the
 // range, one transfer run is created.
@@ -5072,12 +5171,12 @@ func (c *ProjectsTransferConfigsScheduleRunsCall) Do(opts ...googleapi.CallOptio
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates transfer runs for a time range [range_start_time, range_end_time].\nFor each date - or whatever granularity the data source supports - in the\nrange, one transfer run is created.\nNote that runs are created per UTC time in the time range.",
+	//   "description": "Creates transfer runs for a time range [start_time, end_time].\nFor each date - or whatever granularity the data source supports - in the\nrange, one transfer run is created.\nNote that runs are created per UTC time in the time range.",
 	//   "flatPath": "v1/projects/{projectsId}/transferConfigs/{transferConfigsId}:scheduleRuns",
 	//   "httpMethod": "POST",
 	//   "id": "bigquerydatatransfer.projects.transferConfigs.scheduleRuns",
@@ -5201,7 +5300,7 @@ func (c *ProjectsTransferConfigsRunsDeleteCall) Do(opts ...googleapi.CallOption)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5341,7 +5440,7 @@ func (c *ProjectsTransferConfigsRunsGetCall) Do(opts ...googleapi.CallOption) (*
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5427,7 +5526,6 @@ func (c *ProjectsTransferConfigsRunsListCall) RunAttempt(runAttempt string) *Pro
 //
 // Possible values:
 //   "TRANSFER_STATE_UNSPECIFIED"
-//   "INACTIVE"
 //   "PENDING"
 //   "RUNNING"
 //   "SUCCEEDED"
@@ -5527,7 +5625,7 @@ func (c *ProjectsTransferConfigsRunsListCall) Do(opts ...googleapi.CallOption) (
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5571,7 +5669,6 @@ func (c *ProjectsTransferConfigsRunsListCall) Do(opts ...googleapi.CallOption) (
 	//       "description": "When specified, only transfer runs with requested states are returned.",
 	//       "enum": [
 	//         "TRANSFER_STATE_UNSPECIFIED",
-	//         "INACTIVE",
 	//         "PENDING",
 	//         "RUNNING",
 	//         "SUCCEEDED",
@@ -5756,7 +5853,7 @@ func (c *ProjectsTransferConfigsRunsTransferLogsListCall) Do(opts ...googleapi.C
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

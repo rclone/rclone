@@ -103,7 +103,9 @@ func (client GroupClient) DetectPreparer(imageURL ImageURL, returnFaceID *bool, 
 // DetectSender sends the Detect request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) DetectSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // DetectResponder handles the response to the Detect request. The method always
@@ -181,7 +183,9 @@ func (client GroupClient) DetectInStreamPreparer(imageParameter io.ReadCloser, r
 // DetectInStreamSender sends the DetectInStream request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) DetectInStreamSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // DetectInStreamResponder handles the response to the DetectInStream request. The method always
@@ -257,7 +261,9 @@ func (client GroupClient) FindSimilarPreparer(body FindSimilarRequest) (*http.Re
 // FindSimilarSender sends the FindSimilar request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) FindSimilarSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // FindSimilarResponder handles the response to the FindSimilar request. The method always
@@ -323,7 +329,9 @@ func (client GroupClient) GroupPreparer(body GroupRequest) (*http.Request, error
 // GroupSender sends the Group request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) GroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GroupResponder handles the response to the Group request. The method always
@@ -398,7 +406,9 @@ func (client GroupClient) IdentifyPreparer(body IdentifyRequest) (*http.Request,
 // IdentifySender sends the Identify request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) IdentifySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // IdentifyResponder handles the response to the Identify request. The method always
@@ -466,7 +476,9 @@ func (client GroupClient) VerifyPreparer(body VerifyRequest) (*http.Request, err
 // VerifySender sends the Verify request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) VerifySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // VerifyResponder handles the response to the Verify request. The method always

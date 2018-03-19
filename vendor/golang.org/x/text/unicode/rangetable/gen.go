@@ -95,7 +95,7 @@ func main() {
 
 	fmt.Fprintf(w, "// Total size %d bytes (%d KiB)\n", size, size/1024)
 
-	gen.WriteGoFile("tables.go", "rangetable", w.Bytes())
+	gen.WriteVersionedGoFile("tables.go", "rangetable", w.Bytes())
 }
 
 func print(w io.Writer, rt *unicode.RangeTable) {

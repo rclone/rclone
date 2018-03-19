@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/defaults"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/awstesting"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
@@ -89,14 +90,31 @@ func TestSessionCopy(t *testing.T) {
 }
 
 func TestSessionClientConfig(t *testing.T) {
-	s, err := NewSession(&aws.Config{Region: aws.String("orig_region")})
+	s, err := NewSession(&aws.Config{
+		Credentials: credentials.AnonymousCredentials,
+		Region:      aws.String("orig_region"),
+		EndpointResolver: endpoints.ResolverFunc(
+			func(service, region string, opts ...func(*endpoints.Options)) (endpoints.ResolvedEndpoint, error) {
+				if e, a := "mock-service", service; e != a {
+					t.Errorf("expect %q service, got %q", e, a)
+				}
+				if e, a := "other-region", region; e != a {
+					t.Errorf("expect %q region, got %q", e, a)
+				}
+				return endpoints.ResolvedEndpoint{
+					URL:           "https://" + service + "." + region + ".amazonaws.com",
+					SigningRegion: region,
+				}, nil
+			},
+		),
+	})
 	assert.NoError(t, err)
 
-	cfg := s.ClientConfig("s3", &aws.Config{Region: aws.String("us-west-2")})
+	cfg := s.ClientConfig("mock-service", &aws.Config{Region: aws.String("other-region")})
 
-	assert.Equal(t, "https://s3-us-west-2.amazonaws.com", cfg.Endpoint)
-	assert.Equal(t, "us-west-2", cfg.SigningRegion)
-	assert.Equal(t, "us-west-2", *cfg.Config.Region)
+	assert.Equal(t, "https://mock-service.other-region.amazonaws.com", cfg.Endpoint)
+	assert.Equal(t, "other-region", cfg.SigningRegion)
+	assert.Equal(t, "other-region", *cfg.Config.Region)
 }
 
 func TestNewSession_NoCredentials(t *testing.T) {

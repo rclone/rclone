@@ -1,6 +1,8 @@
 // Package logic implements the Azure ARM Logic service API version 2016-06-01.
 //
 // REST API for Azure Logic Apps.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic
 package logic
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
@@ -93,7 +95,9 @@ func (client ManagementClient) ListOperationsPreparer() (*http.Request, error) {
 // ListOperationsSender sends the ListOperations request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) ListOperationsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // ListOperationsResponder handles the response to the ListOperations request. The method always

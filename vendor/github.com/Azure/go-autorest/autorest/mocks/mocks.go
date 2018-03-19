@@ -3,10 +3,25 @@ Package mocks provides mocks and helpers used in testing.
 */
 package mocks
 
+// Copyright 2017 Microsoft Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 // Body implements acceptable body over a string.
@@ -65,10 +80,17 @@ func (body *Body) reset() *Body {
 	return body
 }
 
+type response struct {
+	r *http.Response
+	e error
+	d time.Duration
+}
+
 // Sender implements a simple null sender.
 type Sender struct {
 	attempts       int
-	responses      []*http.Response
+	responses      []response
+	numResponses   int
 	repeatResponse []int
 	err            error
 	repeatError    int
@@ -85,12 +107,15 @@ func (c *Sender) Do(r *http.Request) (resp *http.Response, err error) {
 	c.attempts++
 
 	if len(c.responses) > 0 {
-		resp = c.responses[0]
+		resp = c.responses[0].r
 		if resp != nil {
 			if b, ok := resp.Body.(*Body); ok {
 				b.reset()
 			}
+		} else {
+			err = c.responses[0].e
 		}
+		time.Sleep(c.responses[0].d)
 		c.repeatResponse[0]--
 		if c.repeatResponse[0] == 0 {
 			c.responses = c.responses[1:]
@@ -121,16 +146,43 @@ func (c *Sender) AppendResponse(resp *http.Response) {
 	c.AppendAndRepeatResponse(resp, 1)
 }
 
+// AppendResponseWithDelay adds the passed http.Response to the response stack with the specified delay.
+func (c *Sender) AppendResponseWithDelay(resp *http.Response, delay time.Duration) {
+	c.AppendAndRepeatResponseWithDelay(resp, delay, 1)
+}
+
 // AppendAndRepeatResponse adds the passed http.Response to the response stack along with a
 // repeat count. A negative repeat count will return the response for all remaining calls to Do.
 func (c *Sender) AppendAndRepeatResponse(resp *http.Response, repeat int) {
+	c.appendAndRepeat(response{r: resp}, repeat)
+}
+
+// AppendAndRepeatResponseWithDelay adds the passed http.Response to the response stack with the specified
+// delay along with a repeat count. A negative repeat count will return the response for all remaining calls to Do.
+func (c *Sender) AppendAndRepeatResponseWithDelay(resp *http.Response, delay time.Duration, repeat int) {
+	c.appendAndRepeat(response{r: resp, d: delay}, repeat)
+}
+
+// AppendError adds the passed error to the response stack.
+func (c *Sender) AppendError(err error) {
+	c.AppendAndRepeatError(err, 1)
+}
+
+// AppendAndRepeatError adds the passed error to the response stack along with a repeat
+// count. A negative repeat count will return the response for all remaining calls to Do.
+func (c *Sender) AppendAndRepeatError(err error, repeat int) {
+	c.appendAndRepeat(response{e: err}, repeat)
+}
+
+func (c *Sender) appendAndRepeat(resp response, repeat int) {
 	if c.responses == nil {
-		c.responses = []*http.Response{resp}
+		c.responses = []response{resp}
 		c.repeatResponse = []int{repeat}
 	} else {
 		c.responses = append(c.responses, resp)
 		c.repeatResponse = append(c.repeatResponse, repeat)
 	}
+	c.numResponses++
 }
 
 // Attempts returns the number of times Do was called.
@@ -153,6 +205,11 @@ func (c *Sender) SetAndRepeatError(err error, repeat int) {
 // SetEmitErrorAfter sets the number of attempts to be made before errors are emitted.
 func (c *Sender) SetEmitErrorAfter(ea int) {
 	c.emitErrorAfter = ea
+}
+
+// NumResponses returns the number of responses that have been added to the sender.
+func (c *Sender) NumResponses() int {
+	return c.numResponses
 }
 
 // T is a simple testing struct.

@@ -56,6 +56,8 @@ func NewGroupClient() GroupClient {
 // the file with the same leaseId will be allowed to do so. fileSessionID is optional unique GUID per file indicating
 // all the appends with the same fileSessionId are from the same client and same session. This will give a performance
 // benefit when syncFlag is DATA or METADATA.
+//
+// Deprecated: Please use github.com/Azure/azure-sdk-for-go/services/datalake/store/2016-11-01/filesystem
 func (client GroupClient) Append(accountName string, pathParameter string, streamContents io.ReadCloser, appendParameter string, op string, offset *int64, syncFlag SyncFlag, leaseID *uuid.UUID, fileSessionID *uuid.UUID) (result autorest.Response, err error) {
 	req, err := client.AppendPreparer(accountName, pathParameter, streamContents, appendParameter, op, offset, syncFlag, leaseID, fileSessionID)
 	if err != nil {
@@ -120,7 +122,9 @@ func (client GroupClient) AppendPreparer(accountName string, pathParameter strin
 // AppendSender sends the Append request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) AppendSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // AppendResponder handles the response to the Append request. The method always
@@ -191,7 +195,9 @@ func (client GroupClient) CheckAccessPreparer(accountName string, pathParameter 
 // CheckAccessSender sends the CheckAccess request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) CheckAccessSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // CheckAccessResponder handles the response to the CheckAccess request. The method always
@@ -269,7 +275,9 @@ func (client GroupClient) ConcatPreparer(accountName string, pathParameter strin
 // ConcatSender sends the Concat request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) ConcatSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // ConcatResponder handles the response to the Concat request. The method always
@@ -359,7 +367,9 @@ func (client GroupClient) ConcurrentAppendPreparer(accountName string, pathParam
 // ConcurrentAppendSender sends the ConcurrentAppend request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) ConcurrentAppendSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // ConcurrentAppendResponder handles the response to the ConcurrentAppend request. The method always
@@ -459,7 +469,9 @@ func (client GroupClient) CreatePreparer(accountName string, pathParameter strin
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) CreateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // CreateResponder handles the response to the Create request. The method always
@@ -532,7 +544,9 @@ func (client GroupClient) DeletePreparer(accountName string, pathParameter strin
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -607,7 +621,9 @@ func (client GroupClient) GetACLStatusPreparer(accountName string, pathParameter
 // GetACLStatusSender sends the GetACLStatus request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) GetACLStatusSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetACLStatusResponder handles the response to the GetACLStatus request. The method always
@@ -678,7 +694,9 @@ func (client GroupClient) GetContentSummaryPreparer(accountName string, pathPara
 // GetContentSummarySender sends the GetContentSummary request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) GetContentSummarySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetContentSummaryResponder handles the response to the GetContentSummary request. The method always
@@ -753,7 +771,9 @@ func (client GroupClient) GetFileStatusPreparer(accountName string, pathParamete
 // GetFileStatusSender sends the GetFileStatus request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) GetFileStatusSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetFileStatusResponder handles the response to the GetFileStatus request. The method always
@@ -842,7 +862,9 @@ func (client GroupClient) ListFileStatusPreparer(accountName string, pathParamet
 // ListFileStatusSender sends the ListFileStatus request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) ListFileStatusSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // ListFileStatusResponder handles the response to the ListFileStatus request. The method always
@@ -916,7 +938,9 @@ func (client GroupClient) MkdirsPreparer(accountName string, pathParameter strin
 // MkdirsSender sends the Mkdirs request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) MkdirsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // MkdirsResponder handles the response to the Mkdirs request. The method always
@@ -989,7 +1013,9 @@ func (client GroupClient) ModifyACLEntriesPreparer(accountName string, pathParam
 // ModifyACLEntriesSender sends the ModifyACLEntries request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) ModifyACLEntriesSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // ModifyACLEntriesResponder handles the response to the ModifyACLEntries request. The method always
@@ -1072,7 +1098,9 @@ func (client GroupClient) MsConcatPreparer(accountName string, pathParameter str
 // MsConcatSender sends the MsConcat request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) MsConcatSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // MsConcatResponder handles the response to the MsConcat request. The method always
@@ -1156,7 +1184,9 @@ func (client GroupClient) OpenPreparer(accountName string, pathParameter string,
 // OpenSender sends the Open request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) OpenSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // OpenResponder handles the response to the Open request. The method always
@@ -1226,7 +1256,9 @@ func (client GroupClient) RemoveACLPreparer(accountName string, pathParameter st
 // RemoveACLSender sends the RemoveACL request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) RemoveACLSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // RemoveACLResponder handles the response to the RemoveACL request. The method always
@@ -1297,7 +1329,9 @@ func (client GroupClient) RemoveACLEntriesPreparer(accountName string, pathParam
 // RemoveACLEntriesSender sends the RemoveACLEntries request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) RemoveACLEntriesSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // RemoveACLEntriesResponder handles the response to the RemoveACLEntries request. The method always
@@ -1367,7 +1401,9 @@ func (client GroupClient) RemoveDefaultACLPreparer(accountName string, pathParam
 // RemoveDefaultACLSender sends the RemoveDefaultACL request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) RemoveDefaultACLSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // RemoveDefaultACLResponder handles the response to the RemoveDefaultACL request. The method always
@@ -1438,7 +1474,9 @@ func (client GroupClient) RenamePreparer(accountName string, pathParameter strin
 // RenameSender sends the Rename request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) RenameSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // RenameResponder handles the response to the Rename request. The method always
@@ -1511,7 +1549,9 @@ func (client GroupClient) SetACLPreparer(accountName string, pathParameter strin
 // SetACLSender sends the SetACL request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) SetACLSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // SetACLResponder handles the response to the SetACL request. The method always
@@ -1591,7 +1631,9 @@ func (client GroupClient) SetFileExpiryPreparer(accountName string, pathParamete
 // SetFileExpirySender sends the SetFileExpiry request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) SetFileExpirySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // SetFileExpiryResponder handles the response to the SetFileExpiry request. The method always
@@ -1669,7 +1711,9 @@ func (client GroupClient) SetOwnerPreparer(accountName string, pathParameter str
 // SetOwnerSender sends the SetOwner request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) SetOwnerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // SetOwnerResponder handles the response to the SetOwner request. The method always
@@ -1743,7 +1787,9 @@ func (client GroupClient) SetPermissionPreparer(accountName string, pathParamete
 // SetPermissionSender sends the SetPermission request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) SetPermissionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // SetPermissionResponder handles the response to the SetPermission request. The method always

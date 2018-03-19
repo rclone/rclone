@@ -206,7 +206,7 @@ type BatchDelete struct {
 //		},
 //	}
 //
-//	if err := batcher.Delete(&s3manager.DeleteObjectsIterator{
+//	if err := batcher.Delete(aws.BackgroundContext(), &s3manager.DeleteObjectsIterator{
 //		Objects: objects,
 //	}); err != nil {
 //		return err
@@ -239,7 +239,7 @@ func NewBatchDeleteWithClient(client s3iface.S3API, options ...func(*BatchDelete
 //		},
 //	}
 //
-//	if err := batcher.Delete(&s3manager.DeleteObjectsIterator{
+//	if err := batcher.Delete(aws.BackgroundContext(), &s3manager.DeleteObjectsIterator{
 //		Objects: objects,
 //	}); err != nil {
 //		return err

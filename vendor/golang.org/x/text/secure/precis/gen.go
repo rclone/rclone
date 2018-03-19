@@ -265,7 +265,7 @@ func hasCompat(r rune) bool {
 func writeTables() {
 	propTrie := triegen.NewTrie("derivedProperties")
 	w := gen.NewCodeWriter()
-	defer w.WriteGoFile(*outputFile, "precis")
+	defer w.WriteVersionedGoFile(*outputFile, "precis")
 	gen.WriteUnicodeVersion(w)
 
 	// Iterate over all the runes...

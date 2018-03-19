@@ -103,7 +103,9 @@ func (client MapsClient) GeneratePreparer(resourceGroupName string, workspaceNam
 // GenerateSender sends the Generate request. The method will close the
 // http.Response Body if it receives an error.
 func (client MapsClient) GenerateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GenerateResponder handles the response to the Generate request. The method always

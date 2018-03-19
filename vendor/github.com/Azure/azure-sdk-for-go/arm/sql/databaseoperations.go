@@ -94,7 +94,9 @@ func (client DatabaseOperationsClient) CancelPreparer(resourceGroupName string, 
 // CancelSender sends the Cancel request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabaseOperationsClient) CancelSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CancelResponder handles the response to the Cancel request. The method always
@@ -161,7 +163,9 @@ func (client DatabaseOperationsClient) ListByDatabasePreparer(resourceGroupName 
 // ListByDatabaseSender sends the ListByDatabase request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabaseOperationsClient) ListByDatabaseSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByDatabaseResponder handles the response to the ListByDatabase request. The method always

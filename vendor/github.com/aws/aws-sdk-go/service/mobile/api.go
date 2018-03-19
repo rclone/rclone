@@ -35,7 +35,7 @@ const opCreateProject = "CreateProject"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/CreateProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/CreateProject
 func (c *Mobile) CreateProjectRequest(input *CreateProjectInput) (req *request.Request, output *CreateProjectOutput) {
 	op := &request.Operation{
 		Name:       opCreateProject,
@@ -92,7 +92,7 @@ func (c *Mobile) CreateProjectRequest(input *CreateProjectInput) (req *request.R
 //   create another sub-account using AWS Organizations or remove some resources
 //   and retry your request.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/CreateProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/CreateProject
 func (c *Mobile) CreateProject(input *CreateProjectInput) (*CreateProjectOutput, error) {
 	req, out := c.CreateProjectRequest(input)
 	return out, req.Send()
@@ -139,7 +139,7 @@ const opDeleteProject = "DeleteProject"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DeleteProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DeleteProject
 func (c *Mobile) DeleteProjectRequest(input *DeleteProjectInput) (req *request.Request, output *DeleteProjectOutput) {
 	op := &request.Operation{
 		Name:       opDeleteProject,
@@ -186,7 +186,7 @@ func (c *Mobile) DeleteProjectRequest(input *DeleteProjectInput) (req *request.R
 //   * ErrCodeNotFoundException "NotFoundException"
 //   No entity can be found with the specified identifier.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DeleteProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DeleteProject
 func (c *Mobile) DeleteProject(input *DeleteProjectInput) (*DeleteProjectOutput, error) {
 	req, out := c.DeleteProjectRequest(input)
 	return out, req.Send()
@@ -233,7 +233,7 @@ const opDescribeBundle = "DescribeBundle"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeBundle
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeBundle
 func (c *Mobile) DescribeBundleRequest(input *DescribeBundleInput) (req *request.Request, output *DescribeBundleOutput) {
 	op := &request.Operation{
 		Name:       opDescribeBundle,
@@ -284,7 +284,7 @@ func (c *Mobile) DescribeBundleRequest(input *DescribeBundleInput) (req *request
 //   * ErrCodeNotFoundException "NotFoundException"
 //   No entity can be found with the specified identifier.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeBundle
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeBundle
 func (c *Mobile) DescribeBundle(input *DescribeBundleInput) (*DescribeBundleOutput, error) {
 	req, out := c.DescribeBundleRequest(input)
 	return out, req.Send()
@@ -331,7 +331,7 @@ const opDescribeProject = "DescribeProject"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeProject
 func (c *Mobile) DescribeProjectRequest(input *DescribeProjectInput) (req *request.Request, output *DescribeProjectOutput) {
 	op := &request.Operation{
 		Name:       opDescribeProject,
@@ -382,7 +382,7 @@ func (c *Mobile) DescribeProjectRequest(input *DescribeProjectInput) (req *reque
 //   * ErrCodeNotFoundException "NotFoundException"
 //   No entity can be found with the specified identifier.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeProject
 func (c *Mobile) DescribeProject(input *DescribeProjectInput) (*DescribeProjectOutput, error) {
 	req, out := c.DescribeProjectRequest(input)
 	return out, req.Send()
@@ -429,7 +429,7 @@ const opExportBundle = "ExportBundle"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportBundle
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportBundle
 func (c *Mobile) ExportBundleRequest(input *ExportBundleInput) (req *request.Request, output *ExportBundleOutput) {
 	op := &request.Operation{
 		Name:       opExportBundle,
@@ -481,7 +481,7 @@ func (c *Mobile) ExportBundleRequest(input *ExportBundleInput) (req *request.Req
 //   * ErrCodeNotFoundException "NotFoundException"
 //   No entity can be found with the specified identifier.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportBundle
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportBundle
 func (c *Mobile) ExportBundle(input *ExportBundleInput) (*ExportBundleOutput, error) {
 	req, out := c.ExportBundleRequest(input)
 	return out, req.Send()
@@ -528,7 +528,7 @@ const opExportProject = "ExportProject"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportProject
 func (c *Mobile) ExportProjectRequest(input *ExportProjectInput) (req *request.Request, output *ExportProjectOutput) {
 	op := &request.Operation{
 		Name:       opExportProject,
@@ -581,7 +581,7 @@ func (c *Mobile) ExportProjectRequest(input *ExportProjectInput) (req *request.R
 //   * ErrCodeNotFoundException "NotFoundException"
 //   No entity can be found with the specified identifier.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportProject
 func (c *Mobile) ExportProject(input *ExportProjectInput) (*ExportProjectOutput, error) {
 	req, out := c.ExportProjectRequest(input)
 	return out, req.Send()
@@ -628,7 +628,7 @@ const opListBundles = "ListBundles"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListBundles
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListBundles
 func (c *Mobile) ListBundlesRequest(input *ListBundlesInput) (req *request.Request, output *ListBundlesOutput) {
 	op := &request.Operation{
 		Name:       opListBundles,
@@ -682,7 +682,7 @@ func (c *Mobile) ListBundlesRequest(input *ListBundlesInput) (req *request.Reque
 //   The request cannot be processed because some parameter is not valid or the
 //   project state prevents the operation from being performed.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListBundles
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListBundles
 func (c *Mobile) ListBundles(input *ListBundlesInput) (*ListBundlesOutput, error) {
 	req, out := c.ListBundlesRequest(input)
 	return out, req.Send()
@@ -779,7 +779,7 @@ const opListProjects = "ListProjects"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListProjects
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListProjects
 func (c *Mobile) ListProjectsRequest(input *ListProjectsInput) (req *request.Request, output *ListProjectsOutput) {
 	op := &request.Operation{
 		Name:       opListProjects,
@@ -833,7 +833,7 @@ func (c *Mobile) ListProjectsRequest(input *ListProjectsInput) (req *request.Req
 //   The request cannot be processed because some parameter is not valid or the
 //   project state prevents the operation from being performed.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListProjects
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListProjects
 func (c *Mobile) ListProjects(input *ListProjectsInput) (*ListProjectsOutput, error) {
 	req, out := c.ListProjectsRequest(input)
 	return out, req.Send()
@@ -930,7 +930,7 @@ const opUpdateProject = "UpdateProject"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/UpdateProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/UpdateProject
 func (c *Mobile) UpdateProjectRequest(input *UpdateProjectInput) (req *request.Request, output *UpdateProjectOutput) {
 	op := &request.Operation{
 		Name:       opUpdateProject,
@@ -990,7 +990,7 @@ func (c *Mobile) UpdateProjectRequest(input *UpdateProjectInput) (req *request.R
 //   create another sub-account using AWS Organizations or remove some resources
 //   and retry your request.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/UpdateProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/UpdateProject
 func (c *Mobile) UpdateProject(input *UpdateProjectInput) (*UpdateProjectOutput, error) {
 	req, out := c.UpdateProjectRequest(input)
 	return out, req.Send()
@@ -1013,7 +1013,7 @@ func (c *Mobile) UpdateProjectWithContext(ctx aws.Context, input *UpdateProjectI
 }
 
 // The details of the bundle.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/BundleDetails
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/BundleDetails
 type BundleDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -1083,7 +1083,7 @@ func (s *BundleDetails) SetVersion(v string) *BundleDetails {
 }
 
 // Request structure used to request a project be created.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/CreateProjectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/CreateProjectRequest
 type CreateProjectInput struct {
 	_ struct{} `type:"structure" payload:"Contents"`
 
@@ -1138,7 +1138,7 @@ func (s *CreateProjectInput) SetSnapshotId(v string) *CreateProjectInput {
 }
 
 // Result structure used in response to a request to create a project.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/CreateProjectResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/CreateProjectResult
 type CreateProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1163,7 +1163,7 @@ func (s *CreateProjectOutput) SetDetails(v *ProjectDetails) *CreateProjectOutput
 }
 
 // Request structure used to request a project be deleted.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DeleteProjectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DeleteProjectRequest
 type DeleteProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1203,7 +1203,7 @@ func (s *DeleteProjectInput) SetProjectId(v string) *DeleteProjectInput {
 }
 
 // Result structure used in response to request to delete a project.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DeleteProjectResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DeleteProjectResult
 type DeleteProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1238,7 +1238,7 @@ func (s *DeleteProjectOutput) SetOrphanedResources(v []*Resource) *DeleteProject
 }
 
 // Request structure to request the details of a specific bundle.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeBundleRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeBundleRequest
 type DescribeBundleInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1278,7 +1278,7 @@ func (s *DescribeBundleInput) SetBundleId(v string) *DescribeBundleInput {
 }
 
 // Result structure contains the details of the bundle.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeBundleResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeBundleResult
 type DescribeBundleOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1303,7 +1303,7 @@ func (s *DescribeBundleOutput) SetDetails(v *BundleDetails) *DescribeBundleOutpu
 }
 
 // Request structure used to request details about a project.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeProjectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeProjectRequest
 type DescribeProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1354,7 +1354,7 @@ func (s *DescribeProjectInput) SetSyncFromResources(v bool) *DescribeProjectInpu
 }
 
 // Result structure used for requests of project details.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeProjectResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/DescribeProjectResult
 type DescribeProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1380,7 +1380,7 @@ func (s *DescribeProjectOutput) SetDetails(v *ProjectDetails) *DescribeProjectOu
 
 // Request structure used to request generation of custom SDK and tool packages
 // required to integrate mobile web or app clients with backed AWS resources.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportBundleRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportBundleRequest
 type ExportBundleInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1440,7 +1440,7 @@ func (s *ExportBundleInput) SetProjectId(v string) *ExportBundleInput {
 // Result structure which contains link to download custom-generated SDK and
 // tool packages used to integrate mobile web or app clients with backed AWS
 // resources.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportBundleResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportBundleResult
 type ExportBundleOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1467,7 +1467,7 @@ func (s *ExportBundleOutput) SetDownloadUrl(v string) *ExportBundleOutput {
 }
 
 // Request structure used in requests to export project configuration details.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportProjectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportProjectRequest
 type ExportProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1507,7 +1507,7 @@ func (s *ExportProjectInput) SetProjectId(v string) *ExportProjectInput {
 }
 
 // Result structure used for requests to export project configuration details.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportProjectResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ExportProjectResult
 type ExportProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1556,7 +1556,7 @@ func (s *ExportProjectOutput) SetSnapshotId(v string) *ExportProjectOutput {
 }
 
 // Request structure to request all available bundles.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListBundlesRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListBundlesRequest
 type ListBundlesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1592,7 +1592,7 @@ func (s *ListBundlesInput) SetNextToken(v string) *ListBundlesInput {
 }
 
 // Result structure contains a list of all available bundles with details.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListBundlesResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListBundlesResult
 type ListBundlesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1627,7 +1627,7 @@ func (s *ListBundlesOutput) SetNextToken(v string) *ListBundlesOutput {
 }
 
 // Request structure used to request projects list in AWS Mobile Hub.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListProjectsRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListProjectsRequest
 type ListProjectsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1663,7 +1663,7 @@ func (s *ListProjectsInput) SetNextToken(v string) *ListProjectsInput {
 }
 
 // Result structure used for requests to list projects in AWS Mobile Hub.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListProjectsResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ListProjectsResult
 type ListProjectsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1699,7 +1699,7 @@ func (s *ListProjectsOutput) SetProjects(v []*ProjectSummary) *ListProjectsOutpu
 }
 
 // Detailed information about an AWS Mobile Hub project.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ProjectDetails
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ProjectDetails
 type ProjectDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -1787,7 +1787,7 @@ func (s *ProjectDetails) SetState(v string) *ProjectDetails {
 }
 
 // Summary information about an AWS Mobile Hub project.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ProjectSummary
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/ProjectSummary
 type ProjectSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -1821,7 +1821,7 @@ func (s *ProjectSummary) SetProjectId(v string) *ProjectSummary {
 }
 
 // Information about an instance of an AWS resource associated with a project.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/Resource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/Resource
 type Resource struct {
 	_ struct{} `type:"structure"`
 
@@ -1883,7 +1883,7 @@ func (s *Resource) SetType(v string) *Resource {
 }
 
 // Request structure used for requests to update project configuration.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/UpdateProjectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/UpdateProjectRequest
 type UpdateProjectInput struct {
 	_ struct{} `type:"structure" payload:"Contents"`
 
@@ -1934,7 +1934,7 @@ func (s *UpdateProjectInput) SetProjectId(v string) *UpdateProjectInput {
 }
 
 // Result structure used for requests to updated project configuration.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/UpdateProjectResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/mobile-2017-07-01/UpdateProjectResult
 type UpdateProjectOutput struct {
 	_ struct{} `type:"structure"`
 

@@ -13,29 +13,30 @@ const (
 	// ErrCodeInvalidParametersException for service response error code
 	// "InvalidParametersException".
 	//
-	// One or more parameters provided to the operation are invalid.
+	// One or more parameters provided to the operation are not valid.
 	ErrCodeInvalidParametersException = "InvalidParametersException"
 
 	// ErrCodeInvalidStateException for service response error code
 	// "InvalidStateException".
 	//
-	// An attempt was made to modify a resource that is in an invalid state. Inspect
-	// the resource you are using for this operation to ensure that all resource
-	// states are valid before retrying the operation.
+	// An attempt was made to modify a resource that is in a state that is not valid.
+	// Check your resources to ensure that they are in valid states before retrying
+	// the operation.
 	ErrCodeInvalidStateException = "InvalidStateException"
 
 	// ErrCodeLimitExceededException for service response error code
 	// "LimitExceededException".
 	//
 	// The current limits of the service would have been exceeded by this operation.
-	// Reduce the resource use or increase the service limits and retry the operation.
+	// Decrease your resource use or increase your service limits and retry the
+	// operation.
 	ErrCodeLimitExceededException = "LimitExceededException"
 
 	// ErrCodeResourceInUseException for service response error code
 	// "ResourceInUseException".
 	//
-	// The operation was requested against a resource that is currently in use.
-	// Free the resource from use and retry the operation.
+	// A resource that is currently in use. Ensure the resource is not in use and
+	// retry the operation.
 	ErrCodeResourceInUseException = "ResourceInUseException"
 
 	// ErrCodeResourceNotFoundException for service response error code

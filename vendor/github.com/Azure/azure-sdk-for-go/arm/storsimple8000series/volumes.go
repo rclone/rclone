@@ -126,6 +126,7 @@ func (client VolumesClient) CreateOrUpdatePreparer(deviceName string, volumeCont
 func (client VolumesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -221,6 +222,7 @@ func (client VolumesClient) DeletePreparer(deviceName string, volumeContainerNam
 func (client VolumesClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -296,7 +298,9 @@ func (client VolumesClient) GetPreparer(deviceName string, volumeContainerName s
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client VolumesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -369,7 +373,9 @@ func (client VolumesClient) ListByDevicePreparer(deviceName string, resourceGrou
 // ListByDeviceSender sends the ListByDevice request. The method will close the
 // http.Response Body if it receives an error.
 func (client VolumesClient) ListByDeviceSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByDeviceResponder handles the response to the ListByDevice request. The method always
@@ -444,7 +450,9 @@ func (client VolumesClient) ListByVolumeContainerPreparer(deviceName string, vol
 // ListByVolumeContainerSender sends the ListByVolumeContainer request. The method will close the
 // http.Response Body if it receives an error.
 func (client VolumesClient) ListByVolumeContainerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByVolumeContainerResponder handles the response to the ListByVolumeContainer request. The method always
@@ -520,7 +528,9 @@ func (client VolumesClient) ListMetricDefinitionPreparer(deviceName string, volu
 // ListMetricDefinitionSender sends the ListMetricDefinition request. The method will close the
 // http.Response Body if it receives an error.
 func (client VolumesClient) ListMetricDefinitionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListMetricDefinitionResponder handles the response to the ListMetricDefinition request. The method always
@@ -597,7 +607,9 @@ func (client VolumesClient) ListMetricsPreparer(deviceName string, volumeContain
 // ListMetricsSender sends the ListMetrics request. The method will close the
 // http.Response Body if it receives an error.
 func (client VolumesClient) ListMetricsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListMetricsResponder handles the response to the ListMetrics request. The method always

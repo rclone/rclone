@@ -45,6 +45,11 @@
       "output_token": "Marker",
       "limit_key": "MaxRecords"
     },
+    "DescribeReplicationTaskAssessmentResults": {
+      "input_token": "Marker",
+      "output_token": "Marker",
+      "limit_key": "MaxRecords"
+    },
     "DescribeReplicationTasks": {
       "input_token": "Marker",
       "output_token": "Marker",

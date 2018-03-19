@@ -299,6 +299,79 @@ func Int64ValueMap(src map[string]*int64) map[string]int64 {
 	return dst
 }
 
+// Int64Uint returns a uint pointer to the given int64 value.
+func Int64Uint(src int64) *uint {
+	dst := uint(src)
+	return &dst
+}
+
+// Uint8 return a uint8 pointer to the given uint8 value.
+func Uint8(src uint8) *uint8 {
+	dst := uint8(src)
+	return &dst
+}
+
+// Uint8Value returns the value of the given uint8 pointer or
+// 0 if the pointer is nil.
+func Uint8Value(v *uint8) uint8 {
+	if v != nil {
+		return *v
+	}
+	return 0
+}
+
+// Uint32 return a uint32 pointer to the given uint32 value.
+func Uint32(src uint32) *uint32 {
+	dst := uint32(src)
+	return &dst
+}
+
+// Uint32Value returns the value of the given uint32 pointer or
+// 0 if the pointer is nil.
+func Uint32Value(v *uint32) uint32 {
+	if v != nil {
+		return *v
+	}
+	return 0
+}
+
+// Uint64 return a uint64 pointer to the given uint64 value.
+func Uint64(src uint64) *uint64 {
+	dst := uint64(src)
+	return &dst
+}
+
+// Uint64Value returns the value of the given uint64 pointer or
+// 0 if the pointer is nil.
+func Uint64Value(v *uint64) uint64 {
+	if v != nil {
+		return *v
+	}
+	return 0
+}
+
+// Uint64Slice converts a slice of uint64 values into a slice of
+// uint64 pointers
+func Uint64Slice(src []uint64) []*uint64 {
+	dst := make([]*uint64, len(src))
+	for i := 0; i < len(src); i++ {
+		dst[i] = &(src[i])
+	}
+	return dst
+}
+
+// Uint64ValueSlice converts a slice of uint64 pointers into a slice of
+// uint64 values
+func Uint64ValueSlice(src []*uint64) []uint64 {
+	dst := make([]uint64, len(src))
+	for i := 0; i < len(src); i++ {
+		if src[i] != nil {
+			dst[i] = *(src[i])
+		}
+	}
+	return dst
+}
+
 // Float32 returns a pointer to the given float32 value.
 func Float32(v float32) *float32 {
 	return &v

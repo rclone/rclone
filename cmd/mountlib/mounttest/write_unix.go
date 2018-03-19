@@ -3,6 +3,7 @@
 package mounttest
 
 import (
+	"runtime"
 	"syscall"
 	"testing"
 
@@ -12,6 +13,9 @@ import (
 // TestWriteFileDoubleClose tests double close on write
 func TestWriteFileDoubleClose(t *testing.T) {
 	run.skipIfNoFUSE(t)
+	if runtime.GOOS == "darwin" {
+		t.Skip("Skipping test on OSX")
+	}
 
 	out, err := osCreate(run.path("testdoubleclose"))
 	assert.NoError(t, err)

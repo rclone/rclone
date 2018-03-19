@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/RJ9KKUbfMw7IvtOPKrwn45TxAuo\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/DYaH85wbJKBjNUNmmnGUvwbViMk\"",
  "discoveryVersion": "v1",
  "id": "bigquery:v2",
  "name": "bigquery",
  "version": "v2",
- "revision": "20170910",
+ "revision": "20171224",
  "title": "BigQuery API",
  "description": "A data platform for customers to create, manage, share and query data.",
  "ownerDomain": "google.com",
@@ -413,6 +413,11 @@
    "id": "ExplainQueryStage",
    "type": "object",
    "properties": {
+    "completedParallelInputs": {
+     "type": "string",
+     "description": "Number of parallel input segments completed.",
+     "format": "int64"
+    },
     "computeMsAvg": {
      "type": "string",
      "description": "Milliseconds the average shard spent on CPU-bound tasks.",
@@ -441,6 +446,11 @@
     "name": {
      "type": "string",
      "description": "Human-readable name for stage."
+    },
+    "parallelInputs": {
+     "type": "string",
+     "description": "Number of parallel input segments to be processed.",
+     "format": "int64"
     },
     "readMsAvg": {
      "type": "string",
@@ -897,7 +907,7 @@
     },
     "schemaUpdateOptions": {
      "type": "array",
-     "description": "[Experimental] Allows the schema of the desitination table to be updated as a side effect of the load job if a schema is autodetected or supplied in the job configuration. Schema update options are supported in two cases: when writeDisposition is WRITE_APPEND; when writeDisposition is WRITE_TRUNCATE and the destination table is a partition of a table, specified by partition decorators. For normal tables, WRITE_TRUNCATE will always overwrite the schema. One or more of the following values are specified: ALLOW_FIELD_ADDITION: allow adding a nullable field to the schema. ALLOW_FIELD_RELAXATION: allow relaxing a required field in the original schema to nullable.",
+     "description": "Allows the schema of the destination table to be updated as a side effect of the load job if a schema is autodetected or supplied in the job configuration. Schema update options are supported in two cases: when writeDisposition is WRITE_APPEND; when writeDisposition is WRITE_TRUNCATE and the destination table is a partition of a table, specified by partition decorators. For normal tables, WRITE_TRUNCATE will always overwrite the schema. One or more of the following values are specified: ALLOW_FIELD_ADDITION: allow adding a nullable field to the schema. ALLOW_FIELD_RELAXATION: allow relaxing a required field in the original schema to nullable.",
      "items": {
       "type": "string"
      }
@@ -920,7 +930,7 @@
     },
     "timePartitioning": {
      "$ref": "TimePartitioning",
-     "description": "[Experimental] If specified, configures time-based partitioning for the destination table."
+     "description": "If specified, configures time-based partitioning for the destination table."
     },
     "writeDisposition": {
      "type": "string",
@@ -994,7 +1004,7 @@
     },
     "schemaUpdateOptions": {
      "type": "array",
-     "description": "[Experimental] Allows the schema of the destination table to be updated as a side effect of the query job. Schema update options are supported in two cases: when writeDisposition is WRITE_APPEND; when writeDisposition is WRITE_TRUNCATE and the destination table is a partition of a table, specified by partition decorators. For normal tables, WRITE_TRUNCATE will always overwrite the schema. One or more of the following values are specified: ALLOW_FIELD_ADDITION: allow adding a nullable field to the schema. ALLOW_FIELD_RELAXATION: allow relaxing a required field in the original schema to nullable.",
+     "description": "Allows the schema of the destination table to be updated as a side effect of the query job. Schema update options are supported in two cases: when writeDisposition is WRITE_APPEND; when writeDisposition is WRITE_TRUNCATE and the destination table is a partition of a table, specified by partition decorators. For normal tables, WRITE_TRUNCATE will always overwrite the schema. One or more of the following values are specified: ALLOW_FIELD_ADDITION: allow adding a nullable field to the schema. ALLOW_FIELD_RELAXATION: allow relaxing a required field in the original schema to nullable.",
      "items": {
       "type": "string"
      }
@@ -1008,7 +1018,7 @@
     },
     "timePartitioning": {
      "$ref": "TimePartitioning",
-     "description": "[Experimental] If specified, configures time-based partitioning for the destination table."
+     "description": "If specified, configures time-based partitioning for the destination table."
     },
     "useLegacySql": {
      "type": "boolean",
@@ -1205,6 +1215,19 @@
      "type": "boolean",
      "description": "[Output-only] Whether the query result was fetched from the query cache."
     },
+    "ddlOperationPerformed": {
+     "type": "string",
+     "description": "[Output-only, Experimental] The DDL operation performed, possibly dependent on the pre-existence of the DDL target. Possible values (new values might be added in the future): \"CREATE\": The query created the DDL target. \"SKIP\": No-op. Example cases: the query is CREATE TABLE IF NOT EXISTS while the table already exists, or the query is DROP TABLE IF EXISTS while the table does not exist. \"REPLACE\": The query replaced the DDL target. Example case: the query is CREATE OR REPLACE TABLE, and the table already exists. \"DROP\": The query deleted the DDL target."
+    },
+    "ddlTargetTable": {
+     "$ref": "TableReference",
+     "description": "[Output-only, Experimental] The DDL target table. Present only for CREATE/DROP TABLE/VIEW queries."
+    },
+    "estimatedBytesProcessed": {
+     "type": "string",
+     "description": "[Output-only] The original estimate of bytes processed for the job.",
+     "format": "int64"
+    },
     "numDmlAffectedRows": {
      "type": "string",
      "description": "[Output-only] The number of rows affected by a DML statement. Present only for DML statements INSERT, UPDATE or DELETE.",
@@ -1230,7 +1253,14 @@
     },
     "statementType": {
      "type": "string",
-     "description": "[Output-only, Experimental] The type of query statement, if valid."
+     "description": "[Output-only, Experimental] The type of query statement, if valid. Possible values (new values might be added in the future): \"SELECT\": SELECT query. \"INSERT\": INSERT query; see https://cloud.google.com/bigquery/docs/reference/standard-sql/data-manipulation-language \"UPDATE\": UPDATE query; see https://cloud.google.com/bigquery/docs/reference/standard-sql/data-manipulation-language \"DELETE\": DELETE query; see https://cloud.google.com/bigquery/docs/reference/standard-sql/data-manipulation-language \"CREATE_TABLE\": CREATE [OR REPLACE] TABLE without AS SELECT. \"CREATE_TABLE_AS_SELECT\": CREATE [OR REPLACE] TABLE ... AS SELECT ... \"DROP_TABLE\": DROP TABLE query. \"CREATE_VIEW\": CREATE [OR REPLACE] VIEW ... AS SELECT ... \"DROP_VIEW\": DROP VIEW query."
+    },
+    "timeline": {
+     "type": "array",
+     "description": "[Output-only] Describes a timeline of job execution.",
+     "items": {
+      "$ref": "QueryTimelineSample"
+     }
     },
     "totalBytesBilled": {
      "type": "string",
@@ -1599,6 +1629,42 @@
     }
    }
   },
+  "QueryTimelineSample": {
+   "id": "QueryTimelineSample",
+   "type": "object",
+   "properties": {
+    "activeInputs": {
+     "type": "integer",
+     "description": "Total number of active workers. This does not correspond directly to slot usage. This is the largest value observed since the last sample.",
+     "format": "int32"
+    },
+    "completedInputs": {
+     "type": "integer",
+     "description": "Total parallel units of work completed by this query.",
+     "format": "int32"
+    },
+    "completedInputsForActiveStages": {
+     "type": "integer",
+     "description": "Total parallel units of work completed by the currently active stages.",
+     "format": "int32"
+    },
+    "elapsedMs": {
+     "type": "string",
+     "description": "Milliseconds elapsed since the start of query execution.",
+     "format": "int64"
+    },
+    "pendingInputs": {
+     "type": "string",
+     "description": "Total parallel units of work remaining for the active stages.",
+     "format": "int64"
+    },
+    "totalSlotMs": {
+     "type": "string",
+     "description": "Cumulative slot-ms consumed by the query.",
+     "format": "int64"
+    }
+   }
+  },
   "Streamingbuffer": {
    "id": "Streamingbuffer",
    "type": "object",
@@ -1643,7 +1709,7 @@
     },
     "expirationTime": {
      "type": "string",
-     "description": "[Optional] The time when this table expires, in milliseconds since the epoch. If not present, the table will persist indefinitely. Expired tables will be deleted and their storage reclaimed.",
+     "description": "[Optional] The time when this table expires, in milliseconds since the epoch. If not present, the table will persist indefinitely. Expired tables will be deleted and their storage reclaimed. The defaultTableExpirationMs property of the encapsulating dataset can be used to set a default expirationTime on newly created tables.",
      "format": "int64"
     },
     "externalDataConfiguration": {
@@ -1712,7 +1778,7 @@
     },
     "timePartitioning": {
      "$ref": "TimePartitioning",
-     "description": "[Experimental] If specified, configures time-based partitioning for this table."
+     "description": "If specified, configures time-based partitioning for this table."
     },
     "type": {
      "type": "string",
@@ -1888,6 +1954,16 @@
      "items": {
       "type": "object",
       "properties": {
+       "creationTime": {
+        "type": "string",
+        "description": "The time when this table was created, in milliseconds since the epoch.",
+        "format": "int64"
+       },
+       "expirationTime": {
+        "type": "string",
+        "description": "[Optional] The time when this table expires, in milliseconds since the epoch. If not present, the table will persist indefinitely. Expired tables will be deleted and their storage reclaimed.",
+        "format": "int64"
+       },
        "friendlyName": {
         "type": "string",
         "description": "The user-friendly name for this table."
@@ -1914,7 +1990,7 @@
        },
        "timePartitioning": {
         "$ref": "TimePartitioning",
-        "description": "[Experimental] The time-based partitioning for this table."
+        "description": "The time-based partitioning for this table."
        },
        "type": {
         "type": "string",

@@ -1,6 +1,8 @@
 // Package recoveryservices implements the Azure ARM Recoveryservices service API version .
 //
 // Recovery Services Client
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services
 package recoveryservices
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

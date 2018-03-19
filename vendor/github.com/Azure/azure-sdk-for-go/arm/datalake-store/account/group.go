@@ -128,6 +128,7 @@ func (client GroupClient) CreatePreparer(resourceGroupName string, name string, 
 func (client GroupClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -211,6 +212,7 @@ func (client GroupClient) DeletePreparer(resourceGroupName string, name string, 
 func (client GroupClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -276,7 +278,9 @@ func (client GroupClient) EnableKeyVaultPreparer(resourceGroupName string, accou
 // EnableKeyVaultSender sends the EnableKeyVault request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) EnableKeyVaultSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // EnableKeyVaultResponder handles the response to the EnableKeyVault request. The method always
@@ -341,7 +345,9 @@ func (client GroupClient) GetPreparer(resourceGroupName string, name string) (*h
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -439,7 +445,9 @@ func (client GroupClient) ListPreparer(filter string, top *int32, skip *int32, s
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -608,7 +616,9 @@ func (client GroupClient) ListByResourceGroupPreparer(resourceGroupName string, 
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -763,6 +773,7 @@ func (client GroupClient) UpdatePreparer(resourceGroupName string, name string, 
 func (client GroupClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

@@ -127,6 +127,9 @@ instance `/home/$USER/.ssh/id_rsa`.
 If you don't specify `pass` or `key_file` then rclone will attempt to
 contact an ssh-agent.
 
+If you set the `--sftp-ask-password` option, rclone will prompt for a
+password when needed and no password has been configured.
+
 ### ssh-agent on macOS ###
 
 Note that there seem to be various problems with using an ssh-agent on
@@ -141,18 +144,42 @@ And then at the end of the session
 
 These commands can be used in scripts of course.
 
+### Specific options ###
+
+Here are the command line options specific to this remote.
+
+#### --sftp-ask-password ####
+
+Ask for the SFTP password if needed when no password has been configured.
+
 ### Modified time ###
 
 Modified times are stored on the server to 1 second precision.
 
 Modified times are used in syncing and are fully supported.
 
+Some SFTP servers disable setting/modifying the file modification time after
+upload (for example, certain configurations of ProFTPd with mod_sftp). If you
+are using one of these servers, you can set the option `set_modtime = false` in
+your RClone backend configuration to disable this behaviour.
+
 ### Limitations ###
 
 SFTP supports checksums if the same login has shell access and `md5sum`
 or `sha1sum` as well as `echo` are in the remote's PATH.
+This remote check can be disabled by setting the configuration option
+`disable_hashcheck`. This may be required if you're connecting to SFTP servers
+which are not under your control, and to which the execution of remote commands
+is prohibited.
 
 The only ssh agent supported under Windows is Putty's pageant.
+
+The Go SSH library disables the use of the aes128-cbc cipher by
+default, due to security concerns. This can be re-enabled on a
+per-connection basis by setting the `use_insecure_cipher` setting in
+the configuration file to `true`. Further details on the insecurity of
+this cipher can be found [in this paper]
+(http://www.isg.rhul.ac.uk/~kp/SandPfinal.pdf).
 
 SFTP isn't supported under plan9 until [this
 issue](https://github.com/pkg/sftp/issues/156) is fixed.

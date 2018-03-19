@@ -22,56 +22,36 @@ import (
 	bq "google.golang.org/api/bigquery/v2"
 )
 
-func TestQuote(t *testing.T) {
-	ptr := func(s string) *string { return &s }
-
-	for _, test := range []struct {
-		quote string
-		force bool
-		want  *string
-	}{
-		{"", false, nil},
-		{"", true, ptr("")},
-		{"-", false, ptr("-")},
-		{"-", true, ptr("")},
-	} {
-		fc := FileConfig{
-			Quote:          test.quote,
-			ForceZeroQuote: test.force,
-		}
-		got := fc.quote()
-		if (got == nil) != (test.want == nil) {
-			t.Errorf("%+v\ngot %v\nwant %v", test, pretty.Value(got), pretty.Value(test.want))
-		}
-		if got != nil && test.want != nil && *got != *test.want {
-			t.Errorf("%+v: got %q, want %q", test, *got, *test.want)
-		}
-	}
-}
-
-func TestPopulateLoadConfig(t *testing.T) {
-	hyphen := "-"
-	fc := FileConfig{
+var (
+	hyphen = "-"
+	fc     = FileConfig{
 		SourceFormat:        CSV,
-		FieldDelimiter:      "\t",
-		SkipLeadingRows:     8,
-		AllowJaggedRows:     true,
-		AllowQuotedNewlines: true,
-		Encoding:            UTF_8,
+		AutoDetect:          true,
 		MaxBadRecords:       7,
 		IgnoreUnknownValues: true,
 		Schema: Schema{
 			stringFieldSchema(),
 			nestedFieldSchema(),
 		},
-		Quote: hyphen,
+		CSVOptions: CSVOptions{
+			Quote:               hyphen,
+			FieldDelimiter:      "\t",
+			SkipLeadingRows:     8,
+			AllowJaggedRows:     true,
+			AllowQuotedNewlines: true,
+			Encoding:            UTF_8,
+		},
 	}
+)
+
+func TestFileConfigPopulateLoadConfig(t *testing.T) {
 	want := &bq.JobConfigurationLoad{
 		SourceFormat:        "CSV",
 		FieldDelimiter:      "\t",
 		SkipLeadingRows:     8,
 		AllowJaggedRows:     true,
 		AllowQuotedNewlines: true,
+		Autodetect:          true,
 		Encoding:            "UTF-8",
 		MaxBadRecords:       7,
 		IgnoreUnknownValues: true,
@@ -86,5 +66,33 @@ func TestPopulateLoadConfig(t *testing.T) {
 	fc.populateLoadConfig(got)
 	if !testutil.Equal(got, want) {
 		t.Errorf("got:\n%v\nwant:\n%v", pretty.Value(got), pretty.Value(want))
+	}
+}
+
+func TestFileConfigPopulateExternalDataConfig(t *testing.T) {
+	got := &bq.ExternalDataConfiguration{}
+	fc.populateExternalDataConfig(got)
+
+	want := &bq.ExternalDataConfiguration{
+		SourceFormat:        "CSV",
+		Autodetect:          true,
+		MaxBadRecords:       7,
+		IgnoreUnknownValues: true,
+		Schema: &bq.TableSchema{
+			Fields: []*bq.TableFieldSchema{
+				bqStringFieldSchema(),
+				bqNestedFieldSchema(),
+			}},
+		CsvOptions: &bq.CsvOptions{
+			AllowJaggedRows:     true,
+			AllowQuotedNewlines: true,
+			Encoding:            "UTF-8",
+			FieldDelimiter:      "\t",
+			Quote:               &hyphen,
+			SkipLeadingRows:     8,
+		},
+	}
+	if diff := testutil.Diff(got, want); diff != "" {
+		t.Errorf("got=-, want=+:\n%s", diff)
 	}
 }

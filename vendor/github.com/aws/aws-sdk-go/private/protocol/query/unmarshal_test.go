@@ -2330,6 +2330,165 @@ func (s *OutputService15TestShapeOutputService15TestCaseOperation1Output) SetFoo
 	return s
 }
 
+// OutputService16ProtocolTest provides the API operation methods for making requests to
+// . See this package's package overview docs
+// for details on the service.
+//
+// OutputService16ProtocolTest methods are safe to use concurrently. It is not safe to
+// modify mutate any of the struct's properties though.
+type OutputService16ProtocolTest struct {
+	*client.Client
+}
+
+// New creates a new instance of the OutputService16ProtocolTest client with a session.
+// If additional configuration is needed for the client instance use the optional
+// aws.Config parameter to add your extra config.
+//
+// Example:
+//     // Create a OutputService16ProtocolTest client from just a session.
+//     svc := outputservice16protocoltest.New(mySession)
+//
+//     // Create a OutputService16ProtocolTest client with additional configuration
+//     svc := outputservice16protocoltest.New(mySession, aws.NewConfig().WithRegion("us-west-2"))
+func NewOutputService16ProtocolTest(p client.ConfigProvider, cfgs ...*aws.Config) *OutputService16ProtocolTest {
+	c := p.ClientConfig("outputservice16protocoltest", cfgs...)
+	return newOutputService16ProtocolTestClient(*c.Config, c.Handlers, c.Endpoint, c.SigningRegion, c.SigningName)
+}
+
+// newClient creates, initializes and returns a new service client instance.
+func newOutputService16ProtocolTestClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegion, signingName string) *OutputService16ProtocolTest {
+	svc := &OutputService16ProtocolTest{
+		Client: client.New(
+			cfg,
+			metadata.ClientInfo{
+				ServiceName:   "outputservice16protocoltest",
+				SigningName:   signingName,
+				SigningRegion: signingRegion,
+				Endpoint:      endpoint,
+				APIVersion:    "",
+			},
+			handlers,
+		),
+	}
+
+	// Handlers
+	svc.Handlers.Sign.PushBackNamed(v4.SignRequestHandler)
+	svc.Handlers.Build.PushBackNamed(query.BuildHandler)
+	svc.Handlers.Unmarshal.PushBackNamed(query.UnmarshalHandler)
+	svc.Handlers.UnmarshalMeta.PushBackNamed(query.UnmarshalMetaHandler)
+	svc.Handlers.UnmarshalError.PushBackNamed(query.UnmarshalErrorHandler)
+
+	return svc
+}
+
+// newRequest creates a new request for a OutputService16ProtocolTest operation and runs any
+// custom request initialization.
+func (c *OutputService16ProtocolTest) newRequest(op *request.Operation, params, data interface{}) *request.Request {
+	req := c.NewRequest(op, params, data)
+
+	return req
+}
+
+const opOutputService16TestCaseOperation1 = "OperationName"
+
+// OutputService16TestCaseOperation1Request generates a "aws/request.Request" representing the
+// client's request for the OutputService16TestCaseOperation1 operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See OutputService16TestCaseOperation1 for more information on using the OutputService16TestCaseOperation1
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the OutputService16TestCaseOperation1Request method.
+//    req, resp := client.OutputService16TestCaseOperation1Request(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+func (c *OutputService16ProtocolTest) OutputService16TestCaseOperation1Request(input *OutputService16TestShapeOutputService16TestCaseOperation1Input) (req *request.Request, output *OutputService16TestShapeOutputService16TestCaseOperation1Output) {
+	op := &request.Operation{
+		Name:     opOutputService16TestCaseOperation1,
+		HTTPPath: "/",
+	}
+
+	if input == nil {
+		input = &OutputService16TestShapeOutputService16TestCaseOperation1Input{}
+	}
+
+	output = &OutputService16TestShapeOutputService16TestCaseOperation1Output{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// OutputService16TestCaseOperation1 API operation for .
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for 's
+// API operation OutputService16TestCaseOperation1 for usage and error information.
+func (c *OutputService16ProtocolTest) OutputService16TestCaseOperation1(input *OutputService16TestShapeOutputService16TestCaseOperation1Input) (*OutputService16TestShapeOutputService16TestCaseOperation1Output, error) {
+	req, out := c.OutputService16TestCaseOperation1Request(input)
+	return out, req.Send()
+}
+
+// OutputService16TestCaseOperation1WithContext is the same as OutputService16TestCaseOperation1 with the addition of
+// the ability to pass a context and additional request options.
+//
+// See OutputService16TestCaseOperation1 for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *OutputService16ProtocolTest) OutputService16TestCaseOperation1WithContext(ctx aws.Context, input *OutputService16TestShapeOutputService16TestCaseOperation1Input, opts ...request.Option) (*OutputService16TestShapeOutputService16TestCaseOperation1Output, error) {
+	req, out := c.OutputService16TestCaseOperation1Request(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+type OutputService16TestShapeOutputService16TestCaseOperation1Input struct {
+	_ struct{} `type:"structure"`
+}
+
+type OutputService16TestShapeOutputService16TestCaseOperation1Output struct {
+	_ struct{} `type:"structure"`
+
+	FooEnum *string `type:"string" enum:"OutputService16TestShapeEC2EnumType"`
+
+	ListEnums []*string `type:"list"`
+}
+
+// SetFooEnum sets the FooEnum field's value.
+func (s *OutputService16TestShapeOutputService16TestCaseOperation1Output) SetFooEnum(v string) *OutputService16TestShapeOutputService16TestCaseOperation1Output {
+	s.FooEnum = &v
+	return s
+}
+
+// SetListEnums sets the ListEnums field's value.
+func (s *OutputService16TestShapeOutputService16TestCaseOperation1Output) SetListEnums(v []*string) *OutputService16TestShapeOutputService16TestCaseOperation1Output {
+	s.ListEnums = v
+	return s
+}
+
+const (
+	// EC2EnumTypeFoo is a OutputService16TestShapeEC2EnumType enum value
+	EC2EnumTypeFoo = "foo"
+
+	// EC2EnumTypeBar is a OutputService16TestShapeEC2EnumType enum value
+	EC2EnumTypeBar = "bar"
+)
+
 //
 // Tests begin here
 //
@@ -2794,6 +2953,38 @@ func TestOutputService15ProtocolTestEmptyStringCase1(t *testing.T) {
 		t.Errorf("expect not to be nil")
 	}
 	if e, a := "", *out.Foo; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+
+}
+
+func TestOutputService16ProtocolTestEnumOutputCase1(t *testing.T) {
+	svc := NewOutputService16ProtocolTest(unit.Session, &aws.Config{Endpoint: aws.String("https://test")})
+
+	buf := bytes.NewReader([]byte("<OperationNameResponse><FooEnum>foo</FooEnum><ListEnums><member>foo</member><member>bar</member></ListEnums></OperationNameResponse>"))
+	req, out := svc.OutputService16TestCaseOperation1Request(nil)
+	req.HTTPResponse = &http.Response{StatusCode: 200, Body: ioutil.NopCloser(buf), Header: http.Header{}}
+
+	// set headers
+
+	// unmarshal response
+	query.UnmarshalMeta(req)
+	query.Unmarshal(req)
+	if req.Error != nil {
+		t.Errorf("expect not error, got %v", req.Error)
+	}
+
+	// assert response
+	if out == nil {
+		t.Errorf("expect not to be nil")
+	}
+	if e, a := "foo", *out.FooEnum; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "foo", *out.ListEnums[0]; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "bar", *out.ListEnums[1]; e != a {
 		t.Errorf("expect %v, got %v", e, a)
 	}
 

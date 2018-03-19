@@ -122,6 +122,7 @@ func (client ProfilesClient) CreateOrUpdatePreparer(resourceGroupName string, hu
 func (client ProfilesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -208,6 +209,7 @@ func (client ProfilesClient) DeletePreparer(resourceGroupName string, hubName st
 func (client ProfilesClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -277,7 +279,9 @@ func (client ProfilesClient) GetPreparer(resourceGroupName string, hubName strin
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -345,7 +349,9 @@ func (client ProfilesClient) GetEnrichingKpisPreparer(resourceGroupName string, 
 // GetEnrichingKpisSender sends the GetEnrichingKpis request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) GetEnrichingKpisSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetEnrichingKpisResponder handles the response to the GetEnrichingKpis request. The method always
@@ -414,7 +420,9 @@ func (client ProfilesClient) ListByHubPreparer(resourceGroupName string, hubName
 // ListByHubSender sends the ListByHub request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) ListByHubSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByHubResponder handles the response to the ListByHub request. The method always

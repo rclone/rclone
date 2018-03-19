@@ -8,7 +8,7 @@ _obj
 _test
 
 # Architecture specific extensions/prefixes
-*.[568vq]
+# *.[568vq]
 [568vq].out
 
 *.cgo1.go

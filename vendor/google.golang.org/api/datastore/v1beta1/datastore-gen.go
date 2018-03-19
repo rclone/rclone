@@ -149,8 +149,8 @@ type GoogleDatastoreAdminV1beta1CommonMetadata struct {
 }
 
 func (s *GoogleDatastoreAdminV1beta1CommonMetadata) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleDatastoreAdminV1beta1CommonMetadata
-	raw := noMethod(*s)
+	type NoMethod GoogleDatastoreAdminV1beta1CommonMetadata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -209,8 +209,8 @@ type GoogleDatastoreAdminV1beta1EntityFilter struct {
 }
 
 func (s *GoogleDatastoreAdminV1beta1EntityFilter) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleDatastoreAdminV1beta1EntityFilter
-	raw := noMethod(*s)
+	type NoMethod GoogleDatastoreAdminV1beta1EntityFilter
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -258,8 +258,8 @@ type GoogleDatastoreAdminV1beta1ExportEntitiesMetadata struct {
 }
 
 func (s *GoogleDatastoreAdminV1beta1ExportEntitiesMetadata) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleDatastoreAdminV1beta1ExportEntitiesMetadata
-	raw := noMethod(*s)
+	type NoMethod GoogleDatastoreAdminV1beta1ExportEntitiesMetadata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -325,8 +325,8 @@ type GoogleDatastoreAdminV1beta1ExportEntitiesRequest struct {
 }
 
 func (s *GoogleDatastoreAdminV1beta1ExportEntitiesRequest) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleDatastoreAdminV1beta1ExportEntitiesRequest
-	raw := noMethod(*s)
+	type NoMethod GoogleDatastoreAdminV1beta1ExportEntitiesRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -361,8 +361,8 @@ type GoogleDatastoreAdminV1beta1ExportEntitiesResponse struct {
 }
 
 func (s *GoogleDatastoreAdminV1beta1ExportEntitiesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleDatastoreAdminV1beta1ExportEntitiesResponse
-	raw := noMethod(*s)
+	type NoMethod GoogleDatastoreAdminV1beta1ExportEntitiesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -407,8 +407,8 @@ type GoogleDatastoreAdminV1beta1ImportEntitiesMetadata struct {
 }
 
 func (s *GoogleDatastoreAdminV1beta1ImportEntitiesMetadata) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleDatastoreAdminV1beta1ImportEntitiesMetadata
-	raw := noMethod(*s)
+	type NoMethod GoogleDatastoreAdminV1beta1ImportEntitiesMetadata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -471,8 +471,8 @@ type GoogleDatastoreAdminV1beta1ImportEntitiesRequest struct {
 }
 
 func (s *GoogleDatastoreAdminV1beta1ImportEntitiesRequest) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleDatastoreAdminV1beta1ImportEntitiesRequest
-	raw := noMethod(*s)
+	type NoMethod GoogleDatastoreAdminV1beta1ImportEntitiesRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -507,8 +507,8 @@ type GoogleDatastoreAdminV1beta1Progress struct {
 }
 
 func (s *GoogleDatastoreAdminV1beta1Progress) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleDatastoreAdminV1beta1Progress
-	raw := noMethod(*s)
+	type NoMethod GoogleDatastoreAdminV1beta1Progress
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -582,8 +582,8 @@ type GoogleLongrunningOperation struct {
 }
 
 func (s *GoogleLongrunningOperation) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleLongrunningOperation
-	raw := noMethod(*s)
+	type NoMethod GoogleLongrunningOperation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -701,8 +701,8 @@ type Status struct {
 }
 
 func (s *Status) MarshalJSON() ([]byte, error) {
-	type noMethod Status
-	raw := noMethod(*s)
+	type NoMethod Status
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -820,7 +820,7 @@ func (c *ProjectsExportCall) Do(opts ...googleapi.CallOption) (*GoogleLongrunnin
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -964,7 +964,7 @@ func (c *ProjectsImportCall) Do(opts ...googleapi.CallOption) (*GoogleLongrunnin
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

@@ -123,6 +123,7 @@ func (client FailoverGroupsClient) CreateOrUpdatePreparer(resourceGroupName stri
 func (client FailoverGroupsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -207,6 +208,7 @@ func (client FailoverGroupsClient) DeletePreparer(resourceGroupName string, serv
 func (client FailoverGroupsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -291,6 +293,7 @@ func (client FailoverGroupsClient) FailoverPreparer(resourceGroupName string, se
 func (client FailoverGroupsClient) FailoverSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -376,6 +379,7 @@ func (client FailoverGroupsClient) ForceFailoverAllowDataLossPreparer(resourceGr
 func (client FailoverGroupsClient) ForceFailoverAllowDataLossSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -444,7 +448,9 @@ func (client FailoverGroupsClient) GetPreparer(resourceGroupName string, serverN
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client FailoverGroupsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -510,7 +516,9 @@ func (client FailoverGroupsClient) ListByServerPreparer(resourceGroupName string
 // ListByServerSender sends the ListByServer request. The method will close the
 // http.Response Body if it receives an error.
 func (client FailoverGroupsClient) ListByServerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByServerResponder handles the response to the ListByServer request. The method always
@@ -665,6 +673,7 @@ func (client FailoverGroupsClient) UpdatePreparer(resourceGroupName string, serv
 func (client FailoverGroupsClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

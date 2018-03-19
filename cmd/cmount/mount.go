@@ -40,6 +40,7 @@ func mountOptions(device string, mountpoint string) (options []string) {
 		"-o", "fsname=" + device,
 		"-o", "subtype=rclone",
 		"-o", fmt.Sprintf("max_readahead=%d", mountlib.MaxReadAhead),
+		"-o", fmt.Sprintf("attr_timeout=%g", mountlib.AttrTimeout.Seconds()),
 		// This causes FUSE to supply O_TRUNC with the Open
 		// call which is more efficient for cmount.  However
 		// it does not work with cgofuse on Windows with

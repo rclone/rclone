@@ -59,6 +59,7 @@ func New(client *http.Client) (*Service, error) {
 	s.Bookshelves = NewBookshelvesService(s)
 	s.Cloudloading = NewCloudloadingService(s)
 	s.Dictionary = NewDictionaryService(s)
+	s.Familysharing = NewFamilysharingService(s)
 	s.Layers = NewLayersService(s)
 	s.Myconfig = NewMyconfigService(s)
 	s.Mylibrary = NewMylibraryService(s)
@@ -81,6 +82,8 @@ type Service struct {
 	Cloudloading *CloudloadingService
 
 	Dictionary *DictionaryService
+
+	Familysharing *FamilysharingService
 
 	Layers *LayersService
 
@@ -144,6 +147,15 @@ func NewDictionaryService(s *Service) *DictionaryService {
 }
 
 type DictionaryService struct {
+	s *Service
+}
+
+func NewFamilysharingService(s *Service) *FamilysharingService {
+	rs := &FamilysharingService{s: s}
+	return rs
+}
+
+type FamilysharingService struct {
 	s *Service
 }
 
@@ -439,8 +451,8 @@ type Annotation struct {
 }
 
 func (s *Annotation) MarshalJSON() ([]byte, error) {
-	type noMethod Annotation
-	raw := noMethod(*s)
+	type NoMethod Annotation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -482,8 +494,8 @@ type AnnotationClientVersionRanges struct {
 }
 
 func (s *AnnotationClientVersionRanges) MarshalJSON() ([]byte, error) {
-	type noMethod AnnotationClientVersionRanges
-	raw := noMethod(*s)
+	type NoMethod AnnotationClientVersionRanges
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -526,8 +538,8 @@ type AnnotationCurrentVersionRanges struct {
 }
 
 func (s *AnnotationCurrentVersionRanges) MarshalJSON() ([]byte, error) {
-	type noMethod AnnotationCurrentVersionRanges
-	raw := noMethod(*s)
+	type NoMethod AnnotationCurrentVersionRanges
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -564,8 +576,8 @@ type AnnotationLayerSummary struct {
 }
 
 func (s *AnnotationLayerSummary) MarshalJSON() ([]byte, error) {
-	type noMethod AnnotationLayerSummary
-	raw := noMethod(*s)
+	type NoMethod AnnotationLayerSummary
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -620,8 +632,8 @@ type Annotationdata struct {
 }
 
 func (s *Annotationdata) MarshalJSON() ([]byte, error) {
-	type noMethod Annotationdata
-	raw := noMethod(*s)
+	type NoMethod Annotationdata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -663,8 +675,8 @@ type Annotations struct {
 }
 
 func (s *Annotations) MarshalJSON() ([]byte, error) {
-	type noMethod Annotations
-	raw := noMethod(*s)
+	type NoMethod Annotations
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -695,8 +707,8 @@ type AnnotationsSummary struct {
 }
 
 func (s *AnnotationsSummary) MarshalJSON() ([]byte, error) {
-	type noMethod AnnotationsSummary
-	raw := noMethod(*s)
+	type NoMethod AnnotationsSummary
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -731,8 +743,8 @@ type AnnotationsSummaryLayers struct {
 }
 
 func (s *AnnotationsSummaryLayers) MarshalJSON() ([]byte, error) {
-	type noMethod AnnotationsSummaryLayers
-	raw := noMethod(*s)
+	type NoMethod AnnotationsSummaryLayers
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -772,8 +784,8 @@ type Annotationsdata struct {
 }
 
 func (s *Annotationsdata) MarshalJSON() ([]byte, error) {
-	type noMethod Annotationsdata
-	raw := noMethod(*s)
+	type NoMethod Annotationsdata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -808,8 +820,8 @@ type BooksAnnotationsRange struct {
 }
 
 func (s *BooksAnnotationsRange) MarshalJSON() ([]byte, error) {
-	type noMethod BooksAnnotationsRange
-	raw := noMethod(*s)
+	type NoMethod BooksAnnotationsRange
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -844,8 +856,8 @@ type BooksCloudloadingResource struct {
 }
 
 func (s *BooksCloudloadingResource) MarshalJSON() ([]byte, error) {
-	type noMethod BooksCloudloadingResource
-	raw := noMethod(*s)
+	type NoMethod BooksCloudloadingResource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -875,8 +887,8 @@ type BooksVolumesRecommendedRateResponse struct {
 }
 
 func (s *BooksVolumesRecommendedRateResponse) MarshalJSON() ([]byte, error) {
-	type noMethod BooksVolumesRecommendedRateResponse
-	raw := noMethod(*s)
+	type NoMethod BooksVolumesRecommendedRateResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -936,8 +948,8 @@ type Bookshelf struct {
 }
 
 func (s *Bookshelf) MarshalJSON() ([]byte, error) {
-	type noMethod Bookshelf
-	raw := noMethod(*s)
+	type NoMethod Bookshelf
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -970,8 +982,8 @@ type Bookshelves struct {
 }
 
 func (s *Bookshelves) MarshalJSON() ([]byte, error) {
-	type noMethod Bookshelves
-	raw := noMethod(*s)
+	type NoMethod Bookshelves
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1004,8 +1016,8 @@ type Category struct {
 }
 
 func (s *Category) MarshalJSON() ([]byte, error) {
-	type noMethod Category
-	raw := noMethod(*s)
+	type NoMethod Category
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1034,8 +1046,8 @@ type CategoryItems struct {
 }
 
 func (s *CategoryItems) MarshalJSON() ([]byte, error) {
-	type noMethod CategoryItems
-	raw := noMethod(*s)
+	type NoMethod CategoryItems
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1096,8 +1108,8 @@ type ConcurrentAccessRestriction struct {
 }
 
 func (s *ConcurrentAccessRestriction) MarshalJSON() ([]byte, error) {
-	type noMethod ConcurrentAccessRestriction
-	raw := noMethod(*s)
+	type NoMethod ConcurrentAccessRestriction
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1126,8 +1138,8 @@ type Dictlayerdata struct {
 }
 
 func (s *Dictlayerdata) MarshalJSON() ([]byte, error) {
-	type noMethod Dictlayerdata
-	raw := noMethod(*s)
+	type NoMethod Dictlayerdata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1154,8 +1166,8 @@ type DictlayerdataCommon struct {
 }
 
 func (s *DictlayerdataCommon) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataCommon
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataCommon
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1183,8 +1195,8 @@ type DictlayerdataDict struct {
 }
 
 func (s *DictlayerdataDict) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDict
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDict
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1213,8 +1225,8 @@ type DictlayerdataDictSource struct {
 }
 
 func (s *DictlayerdataDictSource) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictSource
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictSource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1247,8 +1259,8 @@ type DictlayerdataDictWords struct {
 }
 
 func (s *DictlayerdataDictWords) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictWords
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictWords
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1275,8 +1287,8 @@ type DictlayerdataDictWordsDerivatives struct {
 }
 
 func (s *DictlayerdataDictWordsDerivatives) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictWordsDerivatives
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictWordsDerivatives
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1303,8 +1315,8 @@ type DictlayerdataDictWordsDerivativesSource struct {
 }
 
 func (s *DictlayerdataDictWordsDerivativesSource) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictWordsDerivativesSource
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictWordsDerivativesSource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1331,8 +1343,8 @@ type DictlayerdataDictWordsExamples struct {
 }
 
 func (s *DictlayerdataDictWordsExamples) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictWordsExamples
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictWordsExamples
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1359,8 +1371,8 @@ type DictlayerdataDictWordsExamplesSource struct {
 }
 
 func (s *DictlayerdataDictWordsExamplesSource) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictWordsExamplesSource
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictWordsExamplesSource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1399,8 +1411,8 @@ type DictlayerdataDictWordsSenses struct {
 }
 
 func (s *DictlayerdataDictWordsSenses) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictWordsSenses
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictWordsSenses
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1427,8 +1439,8 @@ type DictlayerdataDictWordsSensesConjugations struct {
 }
 
 func (s *DictlayerdataDictWordsSensesConjugations) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictWordsSensesConjugations
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictWordsSensesConjugations
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1455,8 +1467,8 @@ type DictlayerdataDictWordsSensesDefinitions struct {
 }
 
 func (s *DictlayerdataDictWordsSensesDefinitions) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictWordsSensesDefinitions
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictWordsSensesDefinitions
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1483,8 +1495,8 @@ type DictlayerdataDictWordsSensesDefinitionsExamples struct {
 }
 
 func (s *DictlayerdataDictWordsSensesDefinitionsExamples) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictWordsSensesDefinitionsExamples
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictWordsSensesDefinitionsExamples
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1511,8 +1523,8 @@ type DictlayerdataDictWordsSensesDefinitionsExamplesSource struct {
 }
 
 func (s *DictlayerdataDictWordsSensesDefinitionsExamplesSource) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictWordsSensesDefinitionsExamplesSource
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictWordsSensesDefinitionsExamplesSource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1539,8 +1551,8 @@ type DictlayerdataDictWordsSensesSource struct {
 }
 
 func (s *DictlayerdataDictWordsSensesSource) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictWordsSensesSource
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictWordsSensesSource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1567,8 +1579,8 @@ type DictlayerdataDictWordsSensesSynonyms struct {
 }
 
 func (s *DictlayerdataDictWordsSensesSynonyms) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictWordsSensesSynonyms
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictWordsSensesSynonyms
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1595,8 +1607,8 @@ type DictlayerdataDictWordsSensesSynonymsSource struct {
 }
 
 func (s *DictlayerdataDictWordsSensesSynonymsSource) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictWordsSensesSynonymsSource
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictWordsSensesSynonymsSource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1625,8 +1637,8 @@ type DictlayerdataDictWordsSource struct {
 }
 
 func (s *DictlayerdataDictWordsSource) MarshalJSON() ([]byte, error) {
-	type noMethod DictlayerdataDictWordsSource
-	raw := noMethod(*s)
+	type NoMethod DictlayerdataDictWordsSource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1660,8 +1672,8 @@ type Discoveryclusters struct {
 }
 
 func (s *Discoveryclusters) MarshalJSON() ([]byte, error) {
-	type noMethod Discoveryclusters
-	raw := noMethod(*s)
+	type NoMethod Discoveryclusters
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1698,8 +1710,8 @@ type DiscoveryclustersClusters struct {
 }
 
 func (s *DiscoveryclustersClusters) MarshalJSON() ([]byte, error) {
-	type noMethod DiscoveryclustersClusters
-	raw := noMethod(*s)
+	type NoMethod DiscoveryclustersClusters
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1734,8 +1746,8 @@ type DiscoveryclustersClustersBannerWithContentContainer struct {
 }
 
 func (s *DiscoveryclustersClustersBannerWithContentContainer) MarshalJSON() ([]byte, error) {
-	type noMethod DiscoveryclustersClustersBannerWithContentContainer
-	raw := noMethod(*s)
+	type NoMethod DiscoveryclustersClustersBannerWithContentContainer
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1803,8 +1815,8 @@ type DownloadAccessRestriction struct {
 }
 
 func (s *DownloadAccessRestriction) MarshalJSON() ([]byte, error) {
-	type noMethod DownloadAccessRestriction
-	raw := noMethod(*s)
+	type NoMethod DownloadAccessRestriction
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1838,8 +1850,84 @@ type DownloadAccesses struct {
 }
 
 func (s *DownloadAccesses) MarshalJSON() ([]byte, error) {
-	type noMethod DownloadAccesses
-	raw := noMethod(*s)
+	type NoMethod DownloadAccesses
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type FamilyInfo struct {
+	// Kind: Resource type.
+	Kind string `json:"kind,omitempty"`
+
+	// Membership: Family membership info of the user that made the request.
+	Membership *FamilyInfoMembership `json:"membership,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Kind") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Kind") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *FamilyInfo) MarshalJSON() ([]byte, error) {
+	type NoMethod FamilyInfo
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// FamilyInfoMembership: Family membership info of the user that made
+// the request.
+type FamilyInfoMembership struct {
+	// AcquirePermission: Restrictions on user buying and acquiring content.
+	AcquirePermission string `json:"acquirePermission,omitempty"`
+
+	// AgeGroup: The age group of the user.
+	AgeGroup string `json:"ageGroup,omitempty"`
+
+	// AllowedMaturityRating: The maximum allowed maturity rating for the
+	// user.
+	AllowedMaturityRating string `json:"allowedMaturityRating,omitempty"`
+
+	IsInFamily bool `json:"isInFamily,omitempty"`
+
+	// Role: The role of the user in the family.
+	Role string `json:"role,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AcquirePermission")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AcquirePermission") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *FamilyInfoMembership) MarshalJSON() ([]byte, error) {
+	type NoMethod FamilyInfoMembership
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1868,8 +1956,8 @@ type Geolayerdata struct {
 }
 
 func (s *Geolayerdata) MarshalJSON() ([]byte, error) {
-	type noMethod Geolayerdata
-	raw := noMethod(*s)
+	type NoMethod Geolayerdata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1909,8 +1997,8 @@ type GeolayerdataCommon struct {
 }
 
 func (s *GeolayerdataCommon) MarshalJSON() ([]byte, error) {
-	type noMethod GeolayerdataCommon
-	raw := noMethod(*s)
+	type NoMethod GeolayerdataCommon
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1964,19 +2052,19 @@ type GeolayerdataGeo struct {
 }
 
 func (s *GeolayerdataGeo) MarshalJSON() ([]byte, error) {
-	type noMethod GeolayerdataGeo
-	raw := noMethod(*s)
+	type NoMethod GeolayerdataGeo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *GeolayerdataGeo) UnmarshalJSON(data []byte) error {
-	type noMethod GeolayerdataGeo
+	type NoMethod GeolayerdataGeo
 	var s1 struct {
 		Latitude  gensupport.JSONFloat64 `json:"latitude"`
 		Longitude gensupport.JSONFloat64 `json:"longitude"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -2008,8 +2096,8 @@ type GeolayerdataGeoBoundaryItem struct {
 }
 
 func (s *GeolayerdataGeoBoundaryItem) MarshalJSON() ([]byte, error) {
-	type noMethod GeolayerdataGeoBoundaryItem
-	raw := noMethod(*s)
+	type NoMethod GeolayerdataGeoBoundaryItem
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2038,8 +2126,8 @@ type GeolayerdataGeoViewport struct {
 }
 
 func (s *GeolayerdataGeoViewport) MarshalJSON() ([]byte, error) {
-	type noMethod GeolayerdataGeoViewport
-	raw := noMethod(*s)
+	type NoMethod GeolayerdataGeoViewport
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2066,19 +2154,19 @@ type GeolayerdataGeoViewportHi struct {
 }
 
 func (s *GeolayerdataGeoViewportHi) MarshalJSON() ([]byte, error) {
-	type noMethod GeolayerdataGeoViewportHi
-	raw := noMethod(*s)
+	type NoMethod GeolayerdataGeoViewportHi
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *GeolayerdataGeoViewportHi) UnmarshalJSON(data []byte) error {
-	type noMethod GeolayerdataGeoViewportHi
+	type NoMethod GeolayerdataGeoViewportHi
 	var s1 struct {
 		Latitude  gensupport.JSONFloat64 `json:"latitude"`
 		Longitude gensupport.JSONFloat64 `json:"longitude"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -2110,19 +2198,19 @@ type GeolayerdataGeoViewportLo struct {
 }
 
 func (s *GeolayerdataGeoViewportLo) MarshalJSON() ([]byte, error) {
-	type noMethod GeolayerdataGeoViewportLo
-	raw := noMethod(*s)
+	type NoMethod GeolayerdataGeoViewportLo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *GeolayerdataGeoViewportLo) UnmarshalJSON(data []byte) error {
-	type noMethod GeolayerdataGeoViewportLo
+	type NoMethod GeolayerdataGeoViewportLo
 	var s1 struct {
 		Latitude  gensupport.JSONFloat64 `json:"latitude"`
 		Longitude gensupport.JSONFloat64 `json:"longitude"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -2163,8 +2251,8 @@ type Layersummaries struct {
 }
 
 func (s *Layersummaries) MarshalJSON() ([]byte, error) {
-	type noMethod Layersummaries
-	raw := noMethod(*s)
+	type NoMethod Layersummaries
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2236,8 +2324,8 @@ type Layersummary struct {
 }
 
 func (s *Layersummary) MarshalJSON() ([]byte, error) {
-	type noMethod Layersummary
-	raw := noMethod(*s)
+	type NoMethod Layersummary
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2270,8 +2358,8 @@ type Metadata struct {
 }
 
 func (s *Metadata) MarshalJSON() ([]byte, error) {
-	type noMethod Metadata
-	raw := noMethod(*s)
+	type NoMethod Metadata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2304,8 +2392,8 @@ type MetadataItems struct {
 }
 
 func (s *MetadataItems) MarshalJSON() ([]byte, error) {
-	type noMethod MetadataItems
-	raw := noMethod(*s)
+	type NoMethod MetadataItems
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2362,8 +2450,8 @@ type Notification struct {
 }
 
 func (s *Notification) MarshalJSON() ([]byte, error) {
-	type noMethod Notification
-	raw := noMethod(*s)
+	type NoMethod Notification
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2396,8 +2484,8 @@ type Offers struct {
 }
 
 func (s *Offers) MarshalJSON() ([]byte, error) {
-	type noMethod Offers
-	raw := noMethod(*s)
+	type NoMethod Offers
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2428,8 +2516,8 @@ type OffersItems struct {
 }
 
 func (s *OffersItems) MarshalJSON() ([]byte, error) {
-	type noMethod OffersItems
-	raw := noMethod(*s)
+	type NoMethod OffersItems
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2464,8 +2552,8 @@ type OffersItemsItems struct {
 }
 
 func (s *OffersItemsItems) MarshalJSON() ([]byte, error) {
-	type noMethod OffersItemsItems
-	raw := noMethod(*s)
+	type NoMethod OffersItemsItems
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2515,8 +2603,8 @@ type ReadingPosition struct {
 }
 
 func (s *ReadingPosition) MarshalJSON() ([]byte, error) {
-	type noMethod ReadingPosition
-	raw := noMethod(*s)
+	type NoMethod ReadingPosition
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2553,8 +2641,8 @@ type RequestAccess struct {
 }
 
 func (s *RequestAccess) MarshalJSON() ([]byte, error) {
-	type noMethod RequestAccess
-	raw := noMethod(*s)
+	type NoMethod RequestAccess
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2611,8 +2699,8 @@ type Review struct {
 }
 
 func (s *Review) MarshalJSON() ([]byte, error) {
-	type noMethod Review
-	raw := noMethod(*s)
+	type NoMethod Review
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2639,8 +2727,8 @@ type ReviewAuthor struct {
 }
 
 func (s *ReviewAuthor) MarshalJSON() ([]byte, error) {
-	type noMethod ReviewAuthor
-	raw := noMethod(*s)
+	type NoMethod ReviewAuthor
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2674,8 +2762,8 @@ type ReviewSource struct {
 }
 
 func (s *ReviewSource) MarshalJSON() ([]byte, error) {
-	type noMethod ReviewSource
-	raw := noMethod(*s)
+	type NoMethod ReviewSource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2707,8 +2795,8 @@ type Series struct {
 }
 
 func (s *Series) MarshalJSON() ([]byte, error) {
-	type noMethod Series
-	raw := noMethod(*s)
+	type NoMethod Series
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2742,8 +2830,8 @@ type SeriesSeries struct {
 }
 
 func (s *SeriesSeries) MarshalJSON() ([]byte, error) {
-	type noMethod SeriesSeries
-	raw := noMethod(*s)
+	type NoMethod SeriesSeries
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2777,8 +2865,8 @@ type Seriesmembership struct {
 }
 
 func (s *Seriesmembership) MarshalJSON() ([]byte, error) {
-	type noMethod Seriesmembership
-	raw := noMethod(*s)
+	type NoMethod Seriesmembership
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2814,8 +2902,8 @@ type Usersettings struct {
 }
 
 func (s *Usersettings) MarshalJSON() ([]byte, error) {
-	type noMethod Usersettings
-	raw := noMethod(*s)
+	type NoMethod Usersettings
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2844,19 +2932,23 @@ type UsersettingsNotesExport struct {
 }
 
 func (s *UsersettingsNotesExport) MarshalJSON() ([]byte, error) {
-	type noMethod UsersettingsNotesExport
-	raw := noMethod(*s)
+	type NoMethod UsersettingsNotesExport
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 type UsersettingsNotification struct {
+	MatchMyInterests *UsersettingsNotificationMatchMyInterests `json:"matchMyInterests,omitempty"`
+
 	MoreFromAuthors *UsersettingsNotificationMoreFromAuthors `json:"moreFromAuthors,omitempty"`
 
 	MoreFromSeries *UsersettingsNotificationMoreFromSeries `json:"moreFromSeries,omitempty"`
 
+	PriceDrop *UsersettingsNotificationPriceDrop `json:"priceDrop,omitempty"`
+
 	RewardExpirations *UsersettingsNotificationRewardExpirations `json:"rewardExpirations,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "MoreFromAuthors") to
+	// ForceSendFields is a list of field names (e.g. "MatchMyInterests") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -2864,7 +2956,7 @@ type UsersettingsNotification struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "MoreFromAuthors") to
+	// NullFields is a list of field names (e.g. "MatchMyInterests") to
 	// include in API requests with the JSON null value. By default, fields
 	// with empty values are omitted from API requests. However, any field
 	// with an empty value appearing in NullFields will be sent to the
@@ -2875,8 +2967,34 @@ type UsersettingsNotification struct {
 }
 
 func (s *UsersettingsNotification) MarshalJSON() ([]byte, error) {
-	type noMethod UsersettingsNotification
-	raw := noMethod(*s)
+	type NoMethod UsersettingsNotification
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type UsersettingsNotificationMatchMyInterests struct {
+	OptedState string `json:"opted_state,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "OptedState") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "OptedState") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *UsersettingsNotificationMatchMyInterests) MarshalJSON() ([]byte, error) {
+	type NoMethod UsersettingsNotificationMatchMyInterests
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2901,8 +3019,8 @@ type UsersettingsNotificationMoreFromAuthors struct {
 }
 
 func (s *UsersettingsNotificationMoreFromAuthors) MarshalJSON() ([]byte, error) {
-	type noMethod UsersettingsNotificationMoreFromAuthors
-	raw := noMethod(*s)
+	type NoMethod UsersettingsNotificationMoreFromAuthors
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2927,8 +3045,34 @@ type UsersettingsNotificationMoreFromSeries struct {
 }
 
 func (s *UsersettingsNotificationMoreFromSeries) MarshalJSON() ([]byte, error) {
-	type noMethod UsersettingsNotificationMoreFromSeries
-	raw := noMethod(*s)
+	type NoMethod UsersettingsNotificationMoreFromSeries
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type UsersettingsNotificationPriceDrop struct {
+	OptedState string `json:"opted_state,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "OptedState") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "OptedState") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *UsersettingsNotificationPriceDrop) MarshalJSON() ([]byte, error) {
+	type NoMethod UsersettingsNotificationPriceDrop
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2953,8 +3097,8 @@ type UsersettingsNotificationRewardExpirations struct {
 }
 
 func (s *UsersettingsNotificationRewardExpirations) MarshalJSON() ([]byte, error) {
-	type noMethod UsersettingsNotificationRewardExpirations
-	raw := noMethod(*s)
+	type NoMethod UsersettingsNotificationRewardExpirations
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3022,8 +3166,8 @@ type Volume struct {
 }
 
 func (s *Volume) MarshalJSON() ([]byte, error) {
-	type noMethod Volume
-	raw := noMethod(*s)
+	type NoMethod Volume
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3114,8 +3258,8 @@ type VolumeAccessInfo struct {
 }
 
 func (s *VolumeAccessInfo) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeAccessInfo
-	raw := noMethod(*s)
+	type NoMethod VolumeAccessInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3151,8 +3295,8 @@ type VolumeAccessInfoEpub struct {
 }
 
 func (s *VolumeAccessInfoEpub) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeAccessInfoEpub
-	raw := noMethod(*s)
+	type NoMethod VolumeAccessInfoEpub
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3188,8 +3332,8 @@ type VolumeAccessInfoPdf struct {
 }
 
 func (s *VolumeAccessInfoPdf) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeAccessInfoPdf
-	raw := noMethod(*s)
+	type NoMethod VolumeAccessInfoPdf
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3218,8 +3362,8 @@ type VolumeLayerInfo struct {
 }
 
 func (s *VolumeLayerInfo) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeLayerInfo
-	raw := noMethod(*s)
+	type NoMethod VolumeLayerInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3251,8 +3395,8 @@ type VolumeLayerInfoLayers struct {
 }
 
 func (s *VolumeLayerInfoLayers) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeLayerInfoLayers
-	raw := noMethod(*s)
+	type NoMethod VolumeLayerInfoLayers
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3280,8 +3424,8 @@ type VolumeRecommendedInfo struct {
 }
 
 func (s *VolumeRecommendedInfo) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeRecommendedInfo
-	raw := noMethod(*s)
+	type NoMethod VolumeRecommendedInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3340,8 +3484,8 @@ type VolumeSaleInfo struct {
 }
 
 func (s *VolumeSaleInfo) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeSaleInfo
-	raw := noMethod(*s)
+	type NoMethod VolumeSaleInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3373,18 +3517,18 @@ type VolumeSaleInfoListPrice struct {
 }
 
 func (s *VolumeSaleInfoListPrice) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeSaleInfoListPrice
-	raw := noMethod(*s)
+	type NoMethod VolumeSaleInfoListPrice
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *VolumeSaleInfoListPrice) UnmarshalJSON(data []byte) error {
-	type noMethod VolumeSaleInfoListPrice
+	type NoMethod VolumeSaleInfoListPrice
 	var s1 struct {
 		Amount gensupport.JSONFloat64 `json:"amount"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -3427,8 +3571,8 @@ type VolumeSaleInfoOffers struct {
 }
 
 func (s *VolumeSaleInfoOffers) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeSaleInfoOffers
-	raw := noMethod(*s)
+	type NoMethod VolumeSaleInfoOffers
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3458,18 +3602,18 @@ type VolumeSaleInfoOffersListPrice struct {
 }
 
 func (s *VolumeSaleInfoOffersListPrice) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeSaleInfoOffersListPrice
-	raw := noMethod(*s)
+	type NoMethod VolumeSaleInfoOffersListPrice
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *VolumeSaleInfoOffersListPrice) UnmarshalJSON(data []byte) error {
-	type noMethod VolumeSaleInfoOffersListPrice
+	type NoMethod VolumeSaleInfoOffersListPrice
 	var s1 struct {
 		AmountInMicros gensupport.JSONFloat64 `json:"amountInMicros"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -3502,18 +3646,18 @@ type VolumeSaleInfoOffersRentalDuration struct {
 }
 
 func (s *VolumeSaleInfoOffersRentalDuration) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeSaleInfoOffersRentalDuration
-	raw := noMethod(*s)
+	type NoMethod VolumeSaleInfoOffersRentalDuration
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *VolumeSaleInfoOffersRentalDuration) UnmarshalJSON(data []byte) error {
-	type noMethod VolumeSaleInfoOffersRentalDuration
+	type NoMethod VolumeSaleInfoOffersRentalDuration
 	var s1 struct {
 		Count gensupport.JSONFloat64 `json:"count"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -3547,18 +3691,18 @@ type VolumeSaleInfoOffersRetailPrice struct {
 }
 
 func (s *VolumeSaleInfoOffersRetailPrice) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeSaleInfoOffersRetailPrice
-	raw := noMethod(*s)
+	type NoMethod VolumeSaleInfoOffersRetailPrice
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *VolumeSaleInfoOffersRetailPrice) UnmarshalJSON(data []byte) error {
-	type noMethod VolumeSaleInfoOffersRetailPrice
+	type NoMethod VolumeSaleInfoOffersRetailPrice
 	var s1 struct {
 		AmountInMicros gensupport.JSONFloat64 `json:"amountInMicros"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -3595,18 +3739,18 @@ type VolumeSaleInfoRetailPrice struct {
 }
 
 func (s *VolumeSaleInfoRetailPrice) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeSaleInfoRetailPrice
-	raw := noMethod(*s)
+	type NoMethod VolumeSaleInfoRetailPrice
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *VolumeSaleInfoRetailPrice) UnmarshalJSON(data []byte) error {
-	type noMethod VolumeSaleInfoRetailPrice
+	type NoMethod VolumeSaleInfoRetailPrice
 	var s1 struct {
 		Amount gensupport.JSONFloat64 `json:"amount"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -3637,8 +3781,8 @@ type VolumeSearchInfo struct {
 }
 
 func (s *VolumeSearchInfo) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeSearchInfo
-	raw := noMethod(*s)
+	type NoMethod VolumeSearchInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3729,8 +3873,8 @@ type VolumeUserInfo struct {
 }
 
 func (s *VolumeUserInfo) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeUserInfo
-	raw := noMethod(*s)
+	type NoMethod VolumeUserInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3764,8 +3908,8 @@ type VolumeUserInfoCopy struct {
 }
 
 func (s *VolumeUserInfoCopy) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeUserInfoCopy
-	raw := noMethod(*s)
+	type NoMethod VolumeUserInfoCopy
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3803,8 +3947,8 @@ type VolumeUserInfoFamilySharing struct {
 }
 
 func (s *VolumeUserInfoFamilySharing) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeUserInfoFamilySharing
-	raw := noMethod(*s)
+	type NoMethod VolumeUserInfoFamilySharing
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3833,8 +3977,8 @@ type VolumeUserInfoRentalPeriod struct {
 }
 
 func (s *VolumeUserInfoRentalPeriod) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeUserInfoRentalPeriod
-	raw := noMethod(*s)
+	type NoMethod VolumeUserInfoRentalPeriod
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3860,8 +4004,8 @@ type VolumeUserInfoUserUploadedVolumeInfo struct {
 }
 
 func (s *VolumeUserInfoUserUploadedVolumeInfo) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeUserInfoUserUploadedVolumeInfo
-	raw := noMethod(*s)
+	type NoMethod VolumeUserInfoUserUploadedVolumeInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3981,18 +4125,18 @@ type VolumeVolumeInfo struct {
 }
 
 func (s *VolumeVolumeInfo) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeVolumeInfo
-	raw := noMethod(*s)
+	type NoMethod VolumeVolumeInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *VolumeVolumeInfo) UnmarshalJSON(data []byte) error {
-	type noMethod VolumeVolumeInfo
+	type NoMethod VolumeVolumeInfo
 	var s1 struct {
 		AverageRating gensupport.JSONFloat64 `json:"averageRating"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -4029,8 +4173,8 @@ type VolumeVolumeInfoDimensions struct {
 }
 
 func (s *VolumeVolumeInfoDimensions) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeVolumeInfoDimensions
-	raw := noMethod(*s)
+	type NoMethod VolumeVolumeInfoDimensions
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4079,8 +4223,8 @@ type VolumeVolumeInfoImageLinks struct {
 }
 
 func (s *VolumeVolumeInfoImageLinks) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeVolumeInfoImageLinks
-	raw := noMethod(*s)
+	type NoMethod VolumeVolumeInfoImageLinks
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4110,8 +4254,8 @@ type VolumeVolumeInfoIndustryIdentifiers struct {
 }
 
 func (s *VolumeVolumeInfoIndustryIdentifiers) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeVolumeInfoIndustryIdentifiers
-	raw := noMethod(*s)
+	type NoMethod VolumeVolumeInfoIndustryIdentifiers
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4145,8 +4289,8 @@ type VolumeVolumeInfoPanelizationSummary struct {
 }
 
 func (s *VolumeVolumeInfoPanelizationSummary) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeVolumeInfoPanelizationSummary
-	raw := noMethod(*s)
+	type NoMethod VolumeVolumeInfoPanelizationSummary
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4181,8 +4325,8 @@ type Volume2 struct {
 }
 
 func (s *Volume2) MarshalJSON() ([]byte, error) {
-	type noMethod Volume2
-	raw := noMethod(*s)
+	type NoMethod Volume2
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4253,8 +4397,8 @@ type Volumeannotation struct {
 }
 
 func (s *Volumeannotation) MarshalJSON() ([]byte, error) {
-	type noMethod Volumeannotation
-	raw := noMethod(*s)
+	type NoMethod Volumeannotation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4293,8 +4437,8 @@ type VolumeannotationContentRanges struct {
 }
 
 func (s *VolumeannotationContentRanges) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeannotationContentRanges
-	raw := noMethod(*s)
+	type NoMethod VolumeannotationContentRanges
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4340,8 +4484,8 @@ type Volumeannotations struct {
 }
 
 func (s *Volumeannotations) MarshalJSON() ([]byte, error) {
-	type noMethod Volumeannotations
-	raw := noMethod(*s)
+	type NoMethod Volumeannotations
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4379,8 +4523,8 @@ type Volumes struct {
 }
 
 func (s *Volumes) MarshalJSON() ([]byte, error) {
-	type noMethod Volumes
-	raw := noMethod(*s)
+	type NoMethod Volumes
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4417,8 +4561,8 @@ type Volumeseriesinfo struct {
 }
 
 func (s *Volumeseriesinfo) MarshalJSON() ([]byte, error) {
-	type noMethod Volumeseriesinfo
-	raw := noMethod(*s)
+	type NoMethod Volumeseriesinfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4455,8 +4599,8 @@ type VolumeseriesinfoVolumeSeries struct {
 }
 
 func (s *VolumeseriesinfoVolumeSeries) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeseriesinfoVolumeSeries
-	raw := noMethod(*s)
+	type NoMethod VolumeseriesinfoVolumeSeries
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4484,8 +4628,8 @@ type VolumeseriesinfoVolumeSeriesIssue struct {
 }
 
 func (s *VolumeseriesinfoVolumeSeriesIssue) MarshalJSON() ([]byte, error) {
-	type noMethod VolumeseriesinfoVolumeSeriesIssue
-	raw := noMethod(*s)
+	type NoMethod VolumeseriesinfoVolumeSeriesIssue
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4607,7 +4751,7 @@ func (c *BookshelvesGetCall) Do(opts ...googleapi.CallOption) (*Bookshelf, error
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4763,7 +4907,7 @@ func (c *BookshelvesListCall) Do(opts ...googleapi.CallOption) (*Bookshelves, er
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4937,7 +5081,7 @@ func (c *BookshelvesVolumesListCall) Do(opts ...googleapi.CallOption) (*Volumes,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5113,7 +5257,7 @@ func (c *CloudloadingAddBookCall) Do(opts ...googleapi.CallOption) (*BooksCloudl
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5339,7 +5483,7 @@ func (c *CloudloadingUpdateBookCall) Do(opts ...googleapi.CallOption) (*BooksClo
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5465,7 +5609,7 @@ func (c *DictionaryListOfflineMetadataCall) Do(opts ...googleapi.CallOption) (*M
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5488,6 +5632,375 @@ func (c *DictionaryListOfflineMetadataCall) Do(opts ...googleapi.CallOption) (*M
 	//   "response": {
 	//     "$ref": "Metadata"
 	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/books"
+	//   ]
+	// }
+
+}
+
+// method id "books.familysharing.getFamilyInfo":
+
+type FamilysharingGetFamilyInfoCall struct {
+	s            *Service
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// GetFamilyInfo: Gets information regarding the family that the user is
+// part of.
+func (r *FamilysharingService) GetFamilyInfo() *FamilysharingGetFamilyInfoCall {
+	c := &FamilysharingGetFamilyInfoCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	return c
+}
+
+// Source sets the optional parameter "source": String to identify the
+// originator of this request.
+func (c *FamilysharingGetFamilyInfoCall) Source(source string) *FamilysharingGetFamilyInfoCall {
+	c.urlParams_.Set("source", source)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *FamilysharingGetFamilyInfoCall) Fields(s ...googleapi.Field) *FamilysharingGetFamilyInfoCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *FamilysharingGetFamilyInfoCall) IfNoneMatch(entityTag string) *FamilysharingGetFamilyInfoCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *FamilysharingGetFamilyInfoCall) Context(ctx context.Context) *FamilysharingGetFamilyInfoCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *FamilysharingGetFamilyInfoCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *FamilysharingGetFamilyInfoCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "familysharing/getFamilyInfo")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "books.familysharing.getFamilyInfo" call.
+// Exactly one of *FamilyInfo or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *FamilyInfo.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *FamilysharingGetFamilyInfoCall) Do(opts ...googleapi.CallOption) (*FamilyInfo, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &FamilyInfo{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Gets information regarding the family that the user is part of.",
+	//   "httpMethod": "GET",
+	//   "id": "books.familysharing.getFamilyInfo",
+	//   "parameters": {
+	//     "source": {
+	//       "description": "String to identify the originator of this request.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "familysharing/getFamilyInfo",
+	//   "response": {
+	//     "$ref": "FamilyInfo"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/books"
+	//   ]
+	// }
+
+}
+
+// method id "books.familysharing.share":
+
+type FamilysharingShareCall struct {
+	s          *Service
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Share: Initiates sharing of the content with the user's family. Empty
+// response indicates success.
+func (r *FamilysharingService) Share() *FamilysharingShareCall {
+	c := &FamilysharingShareCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	return c
+}
+
+// DocId sets the optional parameter "docId": The docid to share.
+func (c *FamilysharingShareCall) DocId(docId string) *FamilysharingShareCall {
+	c.urlParams_.Set("docId", docId)
+	return c
+}
+
+// Source sets the optional parameter "source": String to identify the
+// originator of this request.
+func (c *FamilysharingShareCall) Source(source string) *FamilysharingShareCall {
+	c.urlParams_.Set("source", source)
+	return c
+}
+
+// VolumeId sets the optional parameter "volumeId": The volume to share.
+func (c *FamilysharingShareCall) VolumeId(volumeId string) *FamilysharingShareCall {
+	c.urlParams_.Set("volumeId", volumeId)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *FamilysharingShareCall) Fields(s ...googleapi.Field) *FamilysharingShareCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *FamilysharingShareCall) Context(ctx context.Context) *FamilysharingShareCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *FamilysharingShareCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *FamilysharingShareCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "familysharing/share")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "books.familysharing.share" call.
+func (c *FamilysharingShareCall) Do(opts ...googleapi.CallOption) error {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if err != nil {
+		return err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return err
+	}
+	return nil
+	// {
+	//   "description": "Initiates sharing of the content with the user's family. Empty response indicates success.",
+	//   "httpMethod": "POST",
+	//   "id": "books.familysharing.share",
+	//   "parameters": {
+	//     "docId": {
+	//       "description": "The docid to share.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "source": {
+	//       "description": "String to identify the originator of this request.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "volumeId": {
+	//       "description": "The volume to share.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "familysharing/share",
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/books"
+	//   ]
+	// }
+
+}
+
+// method id "books.familysharing.unshare":
+
+type FamilysharingUnshareCall struct {
+	s          *Service
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Unshare: Initiates revoking content that has already been shared with
+// the user's family. Empty response indicates success.
+func (r *FamilysharingService) Unshare() *FamilysharingUnshareCall {
+	c := &FamilysharingUnshareCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	return c
+}
+
+// DocId sets the optional parameter "docId": The docid to unshare.
+func (c *FamilysharingUnshareCall) DocId(docId string) *FamilysharingUnshareCall {
+	c.urlParams_.Set("docId", docId)
+	return c
+}
+
+// Source sets the optional parameter "source": String to identify the
+// originator of this request.
+func (c *FamilysharingUnshareCall) Source(source string) *FamilysharingUnshareCall {
+	c.urlParams_.Set("source", source)
+	return c
+}
+
+// VolumeId sets the optional parameter "volumeId": The volume to
+// unshare.
+func (c *FamilysharingUnshareCall) VolumeId(volumeId string) *FamilysharingUnshareCall {
+	c.urlParams_.Set("volumeId", volumeId)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *FamilysharingUnshareCall) Fields(s ...googleapi.Field) *FamilysharingUnshareCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *FamilysharingUnshareCall) Context(ctx context.Context) *FamilysharingUnshareCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *FamilysharingUnshareCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *FamilysharingUnshareCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "familysharing/unshare")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "books.familysharing.unshare" call.
+func (c *FamilysharingUnshareCall) Do(opts ...googleapi.CallOption) error {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if err != nil {
+		return err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return err
+	}
+	return nil
+	// {
+	//   "description": "Initiates revoking content that has already been shared with the user's family. Empty response indicates success.",
+	//   "httpMethod": "POST",
+	//   "id": "books.familysharing.unshare",
+	//   "parameters": {
+	//     "docId": {
+	//       "description": "The docid to unshare.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "source": {
+	//       "description": "String to identify the originator of this request.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "volumeId": {
+	//       "description": "The volume to unshare.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "familysharing/unshare",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/books"
 	//   ]
@@ -5619,7 +6132,7 @@ func (c *LayersGetCall) Do(opts ...googleapi.CallOption) (*Layersummary, error) 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5801,7 +6314,7 @@ func (c *LayersListCall) Do(opts ...googleapi.CallOption) (*Layersummaries, erro
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6012,7 +6525,7 @@ func (c *LayersAnnotationDataGetCall) Do(opts ...googleapi.CallOption) (*Annotat
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6282,7 +6795,7 @@ func (c *LayersAnnotationDataListCall) Do(opts ...googleapi.CallOption) (*Annota
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6533,7 +7046,7 @@ func (c *LayersVolumeAnnotationsGetCall) Do(opts ...googleapi.CallOption) (*Volu
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6787,7 +7300,7 @@ func (c *LayersVolumeAnnotationsListCall) Do(opts ...googleapi.CallOption) (*Vol
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7017,7 +7530,7 @@ func (c *MyconfigGetUserSettingsCall) Do(opts ...googleapi.CallOption) (*Userset
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7140,7 +7653,7 @@ func (c *MyconfigReleaseDownloadAccessCall) Do(opts ...googleapi.CallOption) (*D
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7299,7 +7812,7 @@ func (c *MyconfigRequestAccessCall) Do(opts ...googleapi.CallOption) (*RequestAc
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7501,7 +8014,7 @@ func (c *MyconfigSyncVolumeLicensesCall) Do(opts ...googleapi.CallOption) (*Volu
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7675,7 +8188,7 @@ func (c *MyconfigUpdateUserSettingsCall) Do(opts ...googleapi.CallOption) (*User
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7928,7 +8441,7 @@ func (c *MylibraryAnnotationsInsertCall) Do(opts ...googleapi.CallOption) (*Anno
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8147,7 +8660,7 @@ func (c *MylibraryAnnotationsListCall) Do(opts ...googleapi.CallOption) (*Annota
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8333,7 +8846,7 @@ func (c *MylibraryAnnotationsSummaryCall) Do(opts ...googleapi.CallOption) (*Ann
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8478,7 +8991,7 @@ func (c *MylibraryAnnotationsUpdateCall) Do(opts ...googleapi.CallOption) (*Anno
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8880,7 +9393,7 @@ func (c *MylibraryBookshelvesGetCall) Do(opts ...googleapi.CallOption) (*Bookshe
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9025,7 +9538,7 @@ func (c *MylibraryBookshelvesListCall) Do(opts ...googleapi.CallOption) (*Booksh
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9471,7 +9984,7 @@ func (c *MylibraryBookshelvesVolumesListCall) Do(opts ...googleapi.CallOption) (
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9669,7 +10182,7 @@ func (c *MylibraryReadingpositionsGetCall) Do(opts ...googleapi.CallOption) (*Re
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10010,7 +10523,7 @@ func (c *NotificationGetCall) Do(opts ...googleapi.CallOption) (*Notification, e
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10159,7 +10672,7 @@ func (c *OnboardingListCategoriesCall) Do(opts ...googleapi.CallOption) (*Catego
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10329,7 +10842,7 @@ func (c *OnboardingListCategoryVolumesCall) Do(opts ...googleapi.CallOption) (*V
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10536,7 +11049,7 @@ func (c *PersonalizedstreamGetCall) Do(opts ...googleapi.CallOption) (*Discovery
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -11048,7 +11561,7 @@ func (c *PromoofferGetCall) Do(opts ...googleapi.CallOption) (*Offers, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -11202,7 +11715,7 @@ func (c *SeriesGetCall) Do(opts ...googleapi.CallOption) (*Series, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -11350,7 +11863,7 @@ func (c *SeriesMembershipGetCall) Do(opts ...googleapi.CallOption) (*Seriesmembe
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -11545,7 +12058,7 @@ func (c *VolumesGetCall) Do(opts ...googleapi.CallOption) (*Volume, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -11837,7 +12350,7 @@ func (c *VolumesListCall) Do(opts ...googleapi.CallOption) (*Volumes, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -12146,7 +12659,7 @@ func (c *VolumesAssociatedListCall) Do(opts ...googleapi.CallOption) (*Volumes, 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -12382,7 +12895,7 @@ func (c *VolumesMybooksListCall) Do(opts ...googleapi.CallOption) (*Volumes, err
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -12605,7 +13118,7 @@ func (c *VolumesRecommendedListCall) Do(opts ...googleapi.CallOption) (*Volumes,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -12755,7 +13268,7 @@ func (c *VolumesRecommendedRateCall) Do(opts ...googleapi.CallOption) (*BooksVol
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -12961,7 +13474,7 @@ func (c *VolumesUseruploadedListCall) Do(opts ...googleapi.CallOption) (*Volumes
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

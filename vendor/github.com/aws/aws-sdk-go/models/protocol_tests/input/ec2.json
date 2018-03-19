@@ -147,19 +147,55 @@
       "InputShape": {
         "type": "structure",
         "members": {
-          "ListArg": {
-            "shape": "ListType"
+          "ListStrings": {
+            "shape": "ListStringType"
+          },
+          "ListBools": {
+            "shape": "ListBoolType"
+          },
+          "ListFloats": {
+            "shape": "ListFloatType"
+          },
+          "ListIntegers": {
+            "shape": "ListIntegerType"
           }
         }
       },
-      "ListType": {
+      "ListStringType": {
         "type": "list",
         "member": {
-          "shape": "Strings"
+          "shape": "StringType"
         }
       },
-      "Strings": {
+      "ListBoolType": {
+        "type": "list",
+        "member": {
+          "shape": "BoolType"
+        }
+      },
+      "ListFloatType": {
+        "type": "list",
+        "member": {
+          "shape": "FloatType"
+        }
+      },
+      "ListIntegerType": {
+        "type": "list",
+        "member": {
+          "shape": "IntegerType"
+        }
+      },
+      "StringType": {
         "type": "string"
+      },
+      "BoolType": {
+        "type": "boolean"
+      },
+      "FloatType": {
+        "type": "float"
+      },
+      "IntegerType": {
+        "type": "integer"
       }
     },
     "cases": [
@@ -171,15 +207,30 @@
           "name": "OperationName"
         },
         "params": {
-          "ListArg": [
+          "ListStrings": [
             "foo",
             "bar",
             "baz"
+          ],
+          "ListBools": [
+            true,
+            false,
+            false
+          ],
+          "ListFloats": [
+            1.1,
+            2.718,
+            3.14
+          ],
+          "ListIntegers": [
+            0,
+            1,
+            2
           ]
         },
         "serialized": {
           "uri": "/",
-          "body": "Action=OperationName&Version=2014-01-01&ListArg.1=foo&ListArg.2=bar&ListArg.3=baz"
+          "body": "Action=OperationName&Version=2014-01-01&ListStrings.1=foo&ListStrings.2=bar&ListStrings.3=baz&ListBools.1=true&ListBools.2=false&ListBools.3=false&ListFloats.1=1.1&ListFloats.2=2.718&ListFloats.3=3.14&ListIntegers.1=0&ListIntegers.2=1&ListIntegers.3=2"
         }
       }
     ]
@@ -407,6 +458,70 @@
           "uri": "/",
           "headers": {},
           "body": "Action=OperationName&Version=2014-01-01&Token=00000000-0000-4000-8000-000000000000"
+        }
+      }
+    ]
+  },
+  {
+    "description": "Enum",
+    "metadata": {
+      "protocol": "ec2",
+      "apiVersion": "2014-01-01"
+    },
+    "shapes": {
+      "InputShape": {
+        "type": "structure",
+        "members": {
+          "FooEnum": {
+            "shape": "EnumType"
+          },
+          "ListEnums": {
+            "shape": "EnumList"
+          }
+        }
+      },
+      "EnumType":{
+        "type":"string",
+        "enum":[
+          "foo",
+          "bar"
+        ]
+      },
+      "EnumList":{
+        "type":"list",
+        "member": {"shape": "EnumType"}
+      }
+    },
+    "cases": [
+      {
+        "given": {
+          "input": {
+            "shape": "InputShape"
+          },
+          "name": "OperationName"
+        },
+        "params": {
+          "ListEnums": ["foo", "", "bar"]
+        },
+        "serialized": {
+          "uri": "/",
+          "headers": {},
+          "body": "Action=OperationName&Version=2014-01-01&ListEnums.1=foo&ListEnums.2=&ListEnums.3=bar"
+        }
+      },
+      {
+        "given": {
+          "input": {
+            "shape": "InputShape"
+          },
+          "name": "OperationName"
+        },
+        "params": {
+        },
+        "serialized": {
+          "uri": "/",
+          "headers": {},
+          "body": "Action=OperationName&Version=2014-01-01"
         }
       }
     ]

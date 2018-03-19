@@ -59,7 +59,7 @@ Choose a number from below, or type in your own value
    \ "swift"
 15 / Pcloud
    \ "pcloud"
-16 / QingClound Object Storage
+16 / QingCloud Object Storage
    \ "qingstor"
 17 / SSH/SFTP Connection
    \ "sftp"

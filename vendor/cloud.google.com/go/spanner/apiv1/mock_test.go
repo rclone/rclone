@@ -1,4 +1,4 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017, Google LLC All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -83,6 +83,18 @@ func (s *mockSpannerServer) GetSession(ctx context.Context, req *spannerpb.GetSe
 		return nil, s.err
 	}
 	return s.resps[0].(*spannerpb.Session), nil
+}
+
+func (s *mockSpannerServer) ListSessions(ctx context.Context, req *spannerpb.ListSessionsRequest) (*spannerpb.ListSessionsResponse, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if xg := md["x-goog-api-client"]; len(xg) == 0 || !strings.Contains(xg[0], "gl-go/") {
+		return nil, fmt.Errorf("x-goog-api-client = %v, expected gl-go key", xg)
+	}
+	s.reqs = append(s.reqs, req)
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.resps[0].(*spannerpb.ListSessionsResponse), nil
 }
 
 func (s *mockSpannerServer) DeleteSession(ctx context.Context, req *spannerpb.DeleteSessionRequest) (*emptypb.Empty, error) {
@@ -330,6 +342,78 @@ func TestSpannerGetSessionError(t *testing.T) {
 	}
 
 	resp, err := c.GetSession(context.Background(), request)
+
+	if st, ok := gstatus.FromError(err); !ok {
+		t.Errorf("got error %v, expected grpc error", err)
+	} else if c := st.Code(); c != errCode {
+		t.Errorf("got error code %q, want %q", c, errCode)
+	}
+	_ = resp
+}
+func TestSpannerListSessions(t *testing.T) {
+	var nextPageToken string = ""
+	var sessionsElement *spannerpb.Session = &spannerpb.Session{}
+	var sessions = []*spannerpb.Session{sessionsElement}
+	var expectedResponse = &spannerpb.ListSessionsResponse{
+		NextPageToken: nextPageToken,
+		Sessions:      sessions,
+	}
+
+	mockSpanner.err = nil
+	mockSpanner.reqs = nil
+
+	mockSpanner.resps = append(mockSpanner.resps[:0], expectedResponse)
+
+	var formattedDatabase string = DatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var request = &spannerpb.ListSessionsRequest{
+		Database: formattedDatabase,
+	}
+
+	c, err := NewClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.ListSessions(context.Background(), request).Next()
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want, got := request, mockSpanner.reqs[0]; !proto.Equal(want, got) {
+		t.Errorf("wrong request %q, want %q", got, want)
+	}
+
+	want := (interface{})(expectedResponse.Sessions[0])
+	got := (interface{})(resp)
+	var ok bool
+
+	switch want := (want).(type) {
+	case proto.Message:
+		ok = proto.Equal(want, got.(proto.Message))
+	default:
+		ok = want == got
+	}
+	if !ok {
+		t.Errorf("wrong response %q, want %q)", got, want)
+	}
+}
+
+func TestSpannerListSessionsError(t *testing.T) {
+	errCode := codes.PermissionDenied
+	mockSpanner.err = gstatus.Error(errCode, "test error")
+
+	var formattedDatabase string = DatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var request = &spannerpb.ListSessionsRequest{
+		Database: formattedDatabase,
+	}
+
+	c, err := NewClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.ListSessions(context.Background(), request).Next()
 
 	if st, ok := gstatus.FromError(err); !ok {
 		t.Errorf("got error %v, expected grpc error", err)

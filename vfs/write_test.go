@@ -3,6 +3,7 @@ package vfs
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest"
@@ -168,12 +169,15 @@ func TestWriteFileHandleWriteAt(t *testing.T) {
 func TestWriteFileHandleFlush(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	_, fh := writeHandleCreate(t, r)
+	vfs, fh := writeHandleCreate(t, r)
 
-	// Check Flush does nothing if write not called
+	// Check Flush already creates file for unwritten handles, without closing it
 	err := fh.Flush()
 	assert.NoError(t, err)
 	assert.False(t, fh.closed)
+	root, err := vfs.Root()
+	assert.NoError(t, err)
+	checkListing(t, root, []string{"file1,0,false"})
 
 	// Write some data
 	n, err := fh.Write([]byte("hello"))
@@ -189,6 +193,11 @@ func TestWriteFileHandleFlush(t *testing.T) {
 	err = fh.Flush()
 	assert.NoError(t, err)
 	assert.True(t, fh.closed)
+
+	// Check file was written properly
+	root, err = vfs.Root()
+	assert.NoError(t, err)
+	checkListing(t, root, []string{"file1,5,false"})
 }
 
 func TestWriteFileHandleRelease(t *testing.T) {
@@ -205,4 +214,28 @@ func TestWriteFileHandleRelease(t *testing.T) {
 	err = fh.Release()
 	assert.NoError(t, err)
 	assert.True(t, fh.closed)
+}
+
+// tests mod time on open files
+func TestWriteFileModTimeWithOpenWriters(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	vfs, fh := writeHandleCreate(t, r)
+
+	mtime := time.Date(2012, 11, 18, 17, 32, 31, 0, time.UTC)
+
+	_, err := fh.Write([]byte{104, 105})
+	require.NoError(t, err)
+
+	err = fh.Node().SetModTime(mtime)
+	require.NoError(t, err)
+
+	err = fh.Close()
+	require.NoError(t, err)
+
+	info, err := vfs.Stat("file1")
+	require.NoError(t, err)
+
+	// avoid errors because of timezone differences
+	assert.Equal(t, info.ModTime().Unix(), mtime.Unix())
 }

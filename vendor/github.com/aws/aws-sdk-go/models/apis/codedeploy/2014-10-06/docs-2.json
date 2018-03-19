@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "service": "<fullname>AWS CodeDeploy</fullname> <p>AWS CodeDeploy is a deployment service that automates application deployments to Amazon EC2 instances or on-premises instances running in your own facility.</p> <p>You can deploy a nearly unlimited variety of application content, such as code, web and configuration files, executables, packages, scripts, multimedia files, and so on. AWS CodeDeploy can deploy application content stored in Amazon S3 buckets, GitHub repositories, or Bitbucket repositories. You do not need to make changes to your existing code before you can use AWS CodeDeploy.</p> <p>AWS CodeDeploy makes it easier for you to rapidly release new features, helps you avoid downtime during application deployment, and handles the complexity of updating your applications, without many of the risks associated with error-prone manual deployments.</p> <p> <b>AWS CodeDeploy Components</b> </p> <p>Use the information in this guide to help you work with the following AWS CodeDeploy components:</p> <ul> <li> <p> <b>Application</b>: A name that uniquely identifies the application you want to deploy. AWS CodeDeploy uses this name, which functions as a container, to ensure the correct combination of revision, deployment configuration, and deployment group are referenced during a deployment.</p> </li> <li> <p> <b>Deployment group</b>: A set of individual instances. A deployment group contains individually tagged instances, Amazon EC2 instances in Auto Scaling groups, or both. </p> </li> <li> <p> <b>Deployment configuration</b>: A set of deployment rules and deployment success and failure conditions used by AWS CodeDeploy during a deployment.</p> </li> <li> <p> <b>Deployment</b>: The process, and the components involved in the process, of installing content on one or more instances. </p> </li> <li> <p> <b>Application revisions</b>: An archive file containing source content—source code, web pages, executable files, and deployment scripts—along with an application specification file (AppSpec file). Revisions are stored in Amazon S3 buckets or GitHub repositories. For Amazon S3, a revision is uniquely identified by its Amazon S3 object key and its ETag, version, or both. For GitHub, a revision is uniquely identified by its commit ID.</p> </li> </ul> <p>This guide also contains information to help you get details about the instances in your deployments and to make on-premises instances available for AWS CodeDeploy deployments.</p> <p> <b>AWS CodeDeploy Information Resources</b> </p> <ul> <li> <p> <a href=\"http://docs.aws.amazon.com/codedeploy/latest/userguide\">AWS CodeDeploy User Guide</a> </p> </li> <li> <p> <a href=\"http://docs.aws.amazon.com/codedeploy/latest/APIReference/\">AWS CodeDeploy API Reference Guide</a> </p> </li> <li> <p> <a href=\"http://docs.aws.amazon.com/cli/latest/reference/deploy/index.html\">AWS CLI Reference for AWS CodeDeploy</a> </p> </li> <li> <p> <a href=\"https://forums.aws.amazon.com/forum.jspa?forumID=179\">AWS CodeDeploy Developer Forum</a> </p> </li> </ul>",
+  "service": "<fullname>AWS CodeDeploy</fullname> <p>AWS CodeDeploy is a deployment service that automates application deployments to Amazon EC2 instances, on-premises instances running in your own facility, or serverless AWS Lambda functions.</p> <p>You can deploy a nearly unlimited variety of application content, such as an updated Lambda function, code, web and configuration files, executables, packages, scripts, multimedia files, and so on. AWS CodeDeploy can deploy application content stored in Amazon S3 buckets, GitHub repositories, or Bitbucket repositories. You do not need to make changes to your existing code before you can use AWS CodeDeploy.</p> <p>AWS CodeDeploy makes it easier for you to rapidly release new features, helps you avoid downtime during application deployment, and handles the complexity of updating your applications, without many of the risks associated with error-prone manual deployments.</p> <p> <b>AWS CodeDeploy Components</b> </p> <p>Use the information in this guide to help you work with the following AWS CodeDeploy components:</p> <ul> <li> <p> <b>Application</b>: A name that uniquely identifies the application you want to deploy. AWS CodeDeploy uses this name, which functions as a container, to ensure the correct combination of revision, deployment configuration, and deployment group are referenced during a deployment.</p> </li> <li> <p> <b>Deployment group</b>: A set of individual instances or CodeDeploy Lambda applications. A Lambda deployment group contains a group of applications. An EC2/On-premises deployment group contains individually tagged instances, Amazon EC2 instances in Auto Scaling groups, or both. </p> </li> <li> <p> <b>Deployment configuration</b>: A set of deployment rules and deployment success and failure conditions used by AWS CodeDeploy during a deployment.</p> </li> <li> <p> <b>Deployment</b>: The process and the components used in the process of updating a Lambda function or of installing content on one or more instances. </p> </li> <li> <p> <b>Application revisions</b>: For an AWS Lambda deployment, this is an AppSpec file that specifies the Lambda function to update and one or more functions to validate deployment lifecycle events. For an EC2/On-premises deployment, this is an archive file containing source content—source code, web pages, executable files, and deployment scripts—along with an AppSpec file. Revisions are stored in Amazon S3 buckets or GitHub repositories. For Amazon S3, a revision is uniquely identified by its Amazon S3 object key and its ETag, version, or both. For GitHub, a revision is uniquely identified by its commit ID.</p> </li> </ul> <p>This guide also contains information to help you get details about the instances in your deployments, to make on-premises instances available for AWS CodeDeploy deployments, and to get details about a Lambda function deployment.</p> <p> <b>AWS CodeDeploy Information Resources</b> </p> <ul> <li> <p> <a href=\"http://docs.aws.amazon.com/codedeploy/latest/userguide\">AWS CodeDeploy User Guide</a> </p> </li> <li> <p> <a href=\"http://docs.aws.amazon.com/codedeploy/latest/APIReference/\">AWS CodeDeploy API Reference Guide</a> </p> </li> <li> <p> <a href=\"http://docs.aws.amazon.com/cli/latest/reference/deploy/index.html\">AWS CLI Reference for AWS CodeDeploy</a> </p> </li> <li> <p> <a href=\"https://forums.aws.amazon.com/forum.jspa?forumID=179\">AWS CodeDeploy Developer Forum</a> </p> </li> </ul>",
   "operations": {
     "AddTagsToOnPremisesInstances": "<p>Adds tags to on-premises instances.</p>",
     "BatchGetApplicationRevisions": "<p>Gets information about one or more application revisions.</p>",
@@ -17,6 +17,7 @@
     "DeleteApplication": "<p>Deletes an application.</p>",
     "DeleteDeploymentConfig": "<p>Deletes a deployment configuration.</p> <note> <p>A deployment configuration cannot be deleted if it is currently in use. Predefined configurations cannot be deleted.</p> </note>",
     "DeleteDeploymentGroup": "<p>Deletes a deployment group.</p>",
+    "DeleteGitHubAccountToken": "<p>Deletes a GitHub account connection.</p>",
     "DeregisterOnPremisesInstance": "<p>Deregisters an on-premises instance.</p>",
     "GetApplication": "<p>Gets information about an application.</p>",
     "GetApplicationRevision": "<p>Gets information about an application revision.</p>",
@@ -33,6 +34,7 @@
     "ListDeployments": "<p>Lists the deployments in a deployment group for an application registered with the applicable IAM user or AWS account.</p>",
     "ListGitHubAccountTokenNames": "<p>Lists the names of stored connections to GitHub accounts.</p>",
     "ListOnPremisesInstances": "<p>Gets a list of names for one or more on-premises instances.</p> <p>Unless otherwise specified, both registered and deregistered on-premises instance names will be listed. To list only registered or deregistered on-premises instance names, use the registration status parameter.</p>",
+    "PutLifecycleEventHookExecutionStatus": "<p>Sets the result of a Lambda validation function. The function validates one or both lifecycle events (<code>BeforeAllowTraffic</code> and <code>AfterAllowTraffic</code>) and returns <code>Succeeded</code> or <code>Failed</code>.</p>",
     "RegisterApplicationRevision": "<p>Registers with AWS CodeDeploy a revision for the specified application.</p>",
     "RegisterOnPremisesInstance": "<p>Registers an on-premises instance.</p> <note> <p>Only one IAM ARN (an IAM session ARN or IAM user ARN) is supported in the request. You cannot use both.</p> </note>",
     "RemoveTagsFromOnPremisesInstances": "<p>Removes one or more tags from one or more on-premises instances.</p>",
@@ -334,6 +336,17 @@
         "GitHubLocation$commitId": "<p>The SHA1 commit ID of the GitHub commit that represents the bundled artifacts for the application revision.</p>"
       }
     },
+    "ComputePlatform": {
+      "base": null,
+      "refs": {
+        "ApplicationInfo$computePlatform": "<p>The destination platform type for deployment of the application (<code>Lambda</code> or <code>Server</code>).</p>",
+        "CreateApplicationInput$computePlatform": "<p> The destination platform type for the deployment (<code>Lambda</code> or <code>Server</code>).</p>",
+        "CreateDeploymentConfigInput$computePlatform": "<p>The destination platform type for the deployment (<code>Lambda</code> or <code>Server</code>&gt;).</p>",
+        "DeploymentConfigInfo$computePlatform": "<p>The destination platform type for the deployment (<code>Lambda</code> or <code>Server</code>).</p>",
+        "DeploymentGroupInfo$computePlatform": "<p>The destination platform type for the deployment group (<code>Lambda</code> or <code>Server</code>).</p>",
+        "DeploymentInfo$computePlatform": "<p>The destination platform type for the deployment (<code>Lambda</code> or <code>Server</code>).</p>"
+      }
+    },
     "ContinueDeploymentInput": {
       "base": null,
       "refs": {
@@ -396,6 +409,16 @@
     },
     "DeleteDeploymentGroupOutput": {
       "base": "<p>Represents the output of a DeleteDeploymentGroup operation.</p>",
+      "refs": {
+      }
+    },
+    "DeleteGitHubAccountTokenInput": {
+      "base": "<p>Represents the input of a DeleteGitHubAccount operation.</p>",
+      "refs": {
+      }
+    },
+    "DeleteGitHubAccountTokenOutput": {
+      "base": "<p>Represents the output of a DeleteGitHubAccountToken operation.</p>",
       "refs": {
       }
     },
@@ -550,6 +573,7 @@
         "InstanceSummary$deploymentId": "<p>The deployment ID.</p>",
         "LastDeploymentInfo$deploymentId": "<p>The deployment ID.</p>",
         "ListDeploymentInstancesInput$deploymentId": "<p>The unique ID of a deployment.</p>",
+        "PutLifecycleEventHookExecutionStatusInput$deploymentId": "<p>The ID of the deployment. Pass this ID to a Lambda function that validates a deployment lifecycle event.</p>",
         "RollbackInfo$rollbackDeploymentId": "<p>The ID of the deployment rollback.</p>",
         "RollbackInfo$rollbackTriggeringDeploymentId": "<p>The deployment ID of the deployment that was underway and triggered a rollback deployment because it failed or was stopped.</p>",
         "SkipWaitTimeForInstanceTerminationInput$deploymentId": "<p>The ID of the blue/green deployment for which you want to skip the instance termination wait time.</p>",
@@ -619,6 +643,12 @@
       "base": null,
       "refs": {
         "ListDeploymentsInput$includeOnlyStatuses": "<p>A subset of deployments to list by status:</p> <ul> <li> <p>Created: Include created deployments in the resulting list.</p> </li> <li> <p>Queued: Include queued deployments in the resulting list.</p> </li> <li> <p>In Progress: Include in-progress deployments in the resulting list.</p> </li> <li> <p>Succeeded: Include successful deployments in the resulting list.</p> </li> <li> <p>Failed: Include failed deployments in the resulting list.</p> </li> <li> <p>Stopped: Include stopped deployments in the resulting list.</p> </li> </ul>"
+      }
+    },
+    "DeploymentStatusMessageList": {
+      "base": null,
+      "refs": {
+        "DeploymentInfo$deploymentStatusMessages": "<p>Messages that contain information about the status of a deployment.</p>"
       }
     },
     "DeploymentStyle": {
@@ -734,7 +764,7 @@
     "ELBName": {
       "base": null,
       "refs": {
-        "ELBInfo$name": "<p>For blue/green deployments, the name of the load balancer that will be used to route traffic from original instances to replacement instances in a blue/green deployment. For in-place deployments, the name of the load balancer that instances are deregistered from, so they are not serving traffic during a deployment, and then re-registered with after the deployment completes.</p>"
+        "ELBInfo$name": "<p>For blue/green deployments, the name of the load balancer that will be used to route traffic from original instances to replacement instances in a blue/green deployment. For in-place deployments, the name of the load balancer that instances are deregistered from so they are not serving traffic during a deployment, and then re-registered with after the deployment completes.</p>"
       }
     },
     "ETag": {
@@ -761,6 +791,7 @@
         "BatchGetApplicationRevisionsOutput$errorMessage": "<p>Information about errors that may have occurred during the API call.</p>",
         "BatchGetDeploymentGroupsOutput$errorMessage": "<p>Information about errors that may have occurred during the API call.</p>",
         "BatchGetDeploymentInstancesOutput$errorMessage": "<p>Information about errors that may have occurred during the API call.</p>",
+        "DeploymentStatusMessageList$member": null,
         "ErrorInformation$message": "<p>An accompanying error message.</p>"
       }
     },
@@ -857,6 +888,8 @@
       "base": null,
       "refs": {
         "ApplicationInfo$gitHubAccountName": "<p>The name for a connection to a GitHub account.</p>",
+        "DeleteGitHubAccountTokenInput$tokenName": "<p>The name of the GitHub account connection to delete.</p>",
+        "DeleteGitHubAccountTokenOutput$tokenName": "<p>The name of the GitHub account connection that was deleted.</p>",
         "GitHubAccountTokenNameList$member": null
       }
     },
@@ -864,6 +897,11 @@
       "base": null,
       "refs": {
         "ListGitHubAccountTokenNamesOutput$tokenNameList": "<p>A list of names of connections to GitHub accounts.</p>"
+      }
+    },
+    "GitHubAccountTokenNameRequiredException": {
+      "base": "<p>The call is missing a required GitHub account connection name.</p>",
+      "refs": {
       }
     },
     "GitHubLocation": {
@@ -1087,6 +1125,11 @@
       "refs": {
       }
     },
+    "InvalidComputePlatformException": {
+      "base": "<p>The computePlatform is invalid. The computePlatform should be <code>Lambda</code> or <code>Server</code>.</p>",
+      "refs": {
+      }
+    },
     "InvalidDeployedStateFilterException": {
       "base": "<p>The deployed state filter was specified in an invalid format.</p>",
       "refs": {
@@ -1137,6 +1180,11 @@
       "refs": {
       }
     },
+    "InvalidGitHubAccountTokenNameException": {
+      "base": "<p>The format of the specified GitHub account connection name is invalid.</p>",
+      "refs": {
+      }
+    },
     "InvalidIamSessionArnException": {
       "base": "<p>The IAM session ARN was specified in an invalid format.</p>",
       "refs": {
@@ -1144,6 +1192,21 @@
     },
     "InvalidIamUserArnException": {
       "base": "<p>The IAM user ARN was specified in an invalid format.</p>",
+      "refs": {
+      }
+    },
+    "InvalidIgnoreApplicationStopFailuresValueException": {
+      "base": "<p>The IgnoreApplicationStopFailures value is invalid. For AWS Lambda deployments, <code>false</code> is expected. For EC2/On-premises deployments, <code>true</code> or <code>false</code> is expected.</p>",
+      "refs": {
+      }
+    },
+    "InvalidInputException": {
+      "base": "<p>The specified input was specified in an invalid format.</p>",
+      "refs": {
+      }
+    },
+    "InvalidInstanceIdException": {
+      "base": "<p> </p>",
       "refs": {
       }
     },
@@ -1164,6 +1227,16 @@
     },
     "InvalidKeyPrefixFilterException": {
       "base": "<p>The specified key prefix filter was specified in an invalid format.</p>",
+      "refs": {
+      }
+    },
+    "InvalidLifecycleEventHookExecutionIdException": {
+      "base": "<p>A lifecycle event hook is invalid. Review the <code>hooks</code> section in your AppSpec file to ensure the lifecycle events and <code>hooks</code> functions are valid.</p>",
+      "refs": {
+      }
+    },
+    "InvalidLifecycleEventHookExecutionStatusException": {
+      "base": "<p>The result of a Lambda validation function that verifies a lifecycle event is invalid. It should return <code>Succeeded</code> or <code>Failed</code>.</p>",
       "refs": {
       }
     },
@@ -1237,8 +1310,18 @@
       "refs": {
       }
     },
+    "InvalidTrafficRoutingConfigurationException": {
+      "base": "<p> The configuration that specifies how traffic is routed during a deployment is invalid.</p>",
+      "refs": {
+      }
+    },
     "InvalidTriggerConfigException": {
       "base": "<p>The trigger was specified in an invalid format.</p>",
+      "refs": {
+      }
+    },
+    "InvalidUpdateOutdatedInstancesOnlyValueException": {
+      "base": "<p>The UpdateOutdatedInstancesOnly value is invalid. For AWS Lambda deployments, <code>false</code> is expected. For EC2/On-premises deployments, <code>true</code> or <code>false</code> is expected.</p>",
       "refs": {
       }
     },
@@ -1269,6 +1352,18 @@
         "LifecycleEventList$member": null
       }
     },
+    "LifecycleEventAlreadyCompletedException": {
+      "base": "<p>An attempt to return the status of an already completed lifecycle event occurred.</p>",
+      "refs": {
+      }
+    },
+    "LifecycleEventHookExecutionId": {
+      "base": null,
+      "refs": {
+        "PutLifecycleEventHookExecutionStatusInput$lifecycleEventHookExecutionId": "<p>The execution ID of a deployment's lifecycle hook. A deployment lifecycle hook is specified in the <code>hooks</code> section of the AppSpec file.</p>",
+        "PutLifecycleEventHookExecutionStatusOutput$lifecycleEventHookExecutionId": "<p>The execution ID of the lifecycle event hook. A hook is specified in the <code>hooks</code> section of the deployment's AppSpec file.</p>"
+      }
+    },
     "LifecycleEventList": {
       "base": null,
       "refs": {
@@ -1284,7 +1379,8 @@
     "LifecycleEventStatus": {
       "base": null,
       "refs": {
-        "LifecycleEvent$status": "<p>The deployment lifecycle event status:</p> <ul> <li> <p>Pending: The deployment lifecycle event is pending.</p> </li> <li> <p>InProgress: The deployment lifecycle event is in progress.</p> </li> <li> <p>Succeeded: The deployment lifecycle event ran successfully.</p> </li> <li> <p>Failed: The deployment lifecycle event has failed.</p> </li> <li> <p>Skipped: The deployment lifecycle event has been skipped.</p> </li> <li> <p>Unknown: The deployment lifecycle event is unknown.</p> </li> </ul>"
+        "LifecycleEvent$status": "<p>The deployment lifecycle event status:</p> <ul> <li> <p>Pending: The deployment lifecycle event is pending.</p> </li> <li> <p>InProgress: The deployment lifecycle event is in progress.</p> </li> <li> <p>Succeeded: The deployment lifecycle event ran successfully.</p> </li> <li> <p>Failed: The deployment lifecycle event has failed.</p> </li> <li> <p>Skipped: The deployment lifecycle event has been skipped.</p> </li> <li> <p>Unknown: The deployment lifecycle event is unknown.</p> </li> </ul>",
+        "PutLifecycleEventHookExecutionStatusInput$status": "<p>The result of a Lambda function that validates a deployment lifecycle event (<code>Succeeded</code> or <code>Failed</code>).</p>"
       }
     },
     "LifecycleHookLimitExceededException": {
@@ -1470,6 +1566,46 @@
         "OnPremisesTagSet$onPremisesTagSetList": "<p>A list containing other lists of on-premises instance tag groups. In order for an instance to be included in the deployment group, it must be identified by all the tag groups in the list.</p>"
       }
     },
+    "OperationNotSupportedException": {
+      "base": "<p>The API used does not support the deployment.</p>",
+      "refs": {
+      }
+    },
+    "Percentage": {
+      "base": null,
+      "refs": {
+        "TimeBasedCanary$canaryPercentage": "<p>The percentage of traffic to shift in the first increment of a <code>TimeBasedCanary</code> deployment.</p>",
+        "TimeBasedLinear$linearPercentage": "<p>The percentage of traffic that is shifted at the start of each increment of a <code>TimeBasedLinear</code> deployment.</p>"
+      }
+    },
+    "PutLifecycleEventHookExecutionStatusInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "PutLifecycleEventHookExecutionStatusOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "RawString": {
+      "base": "<p>A revision for an AWS Lambda deployment that is a YAML-formatted or JSON-formatted string. For AWS Lambda deployments, the revision is the same as the AppSpec file.</p>",
+      "refs": {
+        "RevisionLocation$string": "<p>Information about the location of an AWS Lambda deployment revision stored as a RawString.</p>"
+      }
+    },
+    "RawStringContent": {
+      "base": null,
+      "refs": {
+        "RawString$content": "<p>The YAML-formatted or JSON-formatted revision string. It includes information about which Lambda function to update and optional Lambda functions that validate deployment lifecycle events.</p>"
+      }
+    },
+    "RawStringSha256": {
+      "base": null,
+      "refs": {
+        "RawString$sha256": "<p>The SHA256 hash value of the revision that is specified as a RawString.</p>"
+      }
+    },
     "RegisterApplicationRevisionInput": {
       "base": "<p>Represents the input of a RegisterApplicationRevision operation.</p>",
       "refs": {
@@ -1543,7 +1679,7 @@
     "RevisionLocationType": {
       "base": null,
       "refs": {
-        "RevisionLocation$revisionType": "<p>The type of application revision:</p> <ul> <li> <p>S3: An application revision stored in Amazon S3.</p> </li> <li> <p>GitHub: An application revision stored in GitHub.</p> </li> </ul>"
+        "RevisionLocation$revisionType": "<p>The type of application revision:</p> <ul> <li> <p>S3: An application revision stored in Amazon S3.</p> </li> <li> <p>GitHub: An application revision stored in GitHub (EC2/On-premises deployments only)</p> </li> <li> <p>String: A YAML-formatted or JSON-formatted string (AWS Lambda deployments only)</p> </li> </ul>"
       }
     },
     "RevisionRequiredException": {
@@ -1587,7 +1723,7 @@
     "S3Location": {
       "base": "<p>Information about the location of application artifacts stored in Amazon S3.</p>",
       "refs": {
-        "RevisionLocation$s3Location": "<p>Information about the location of application artifacts stored in Amazon S3. </p>"
+        "RevisionLocation$s3Location": "<p>Information about the location of a revision stored in Amazon S3. </p>"
       }
     },
     "ScriptName": {
@@ -1699,6 +1835,23 @@
         "DeploymentInfo$targetInstances": "<p>Information about the instances that belong to the replacement environment in a blue/green deployment.</p>"
       }
     },
+    "ThrottlingException": {
+      "base": "<p>An API function was called too frequently.</p>",
+      "refs": {
+      }
+    },
+    "TimeBasedCanary": {
+      "base": "<p>A configuration that shifts traffic from one version of a Lambda function to another in two increments. The original and target Lambda function versions are specified in the deployment's AppSpec file.</p>",
+      "refs": {
+        "TrafficRoutingConfig$timeBasedCanary": "<p>A configuration that shifts traffic from one version of a Lambda function to another in two increments. The original and target Lambda function versions are specified in the deployment's AppSpec file.</p>"
+      }
+    },
+    "TimeBasedLinear": {
+      "base": "<p>A configuration that shifts traffic from one version of a Lambda function to another in equal increments, with an equal number of minutes between each increment. The original and target Lambda function versions are specified in the deployment's AppSpec file.</p>",
+      "refs": {
+        "TrafficRoutingConfig$timeBasedLinear": "<p>A configuration that shifts traffic from one version of a Lambda function to another in equal increments, with an equal number of minutes between each increment. The original and target Lambda function versions are specified in the deployment's AppSpec file.</p>"
+      }
+    },
     "TimeRange": {
       "base": "<p>Information about a time range.</p>",
       "refs": {
@@ -1725,6 +1878,19 @@
         "LifecycleEvent$endTime": "<p>A timestamp indicating when the deployment lifecycle event ended.</p>",
         "TimeRange$start": "<p>The start time of the time range.</p> <note> <p>Specify null to leave the start time open-ended.</p> </note>",
         "TimeRange$end": "<p>The end time of the time range.</p> <note> <p>Specify null to leave the end time open-ended.</p> </note>"
+      }
+    },
+    "TrafficRoutingConfig": {
+      "base": "<p>The configuration that specifies how traffic is shifted from one version of a Lambda function to another version during an AWS Lambda deployment.</p>",
+      "refs": {
+        "CreateDeploymentConfigInput$trafficRoutingConfig": "<p>The configuration that specifies how the deployment traffic will be routed.</p>",
+        "DeploymentConfigInfo$trafficRoutingConfig": "<p>The configuration specifying how the deployment traffic will be routed. Only deployments with a Lambda compute platform can specify this.</p>"
+      }
+    },
+    "TrafficRoutingType": {
+      "base": null,
+      "refs": {
+        "TrafficRoutingConfig$type": "<p>The type of traffic shifting (<code>TimeBasedCanary</code> or <code>TimeBasedLinear</code>) used by a deployment configuration .</p>"
       }
     },
     "TriggerConfig": {
@@ -1802,6 +1968,13 @@
       "base": null,
       "refs": {
         "S3Location$version": "<p>A specific version of the Amazon S3 object that represents the bundled artifacts for the application revision.</p> <p>If the version is not specified, the system will use the most recent version by default.</p>"
+      }
+    },
+    "WaitTimeInMins": {
+      "base": null,
+      "refs": {
+        "TimeBasedCanary$canaryInterval": "<p>The number of minutes between the first and second traffic shifts of a <code>TimeBasedCanary</code> deployment.</p>",
+        "TimeBasedLinear$linearInterval": "<p>The number of minutes between each incremental traffic shift of a <code>TimeBasedLinear</code> deployment.</p>"
       }
     }
   }

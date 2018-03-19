@@ -31,6 +31,10 @@ func TestInfo(t *testing.T) {
 		{"de-CH-oxendict", SymGroup, "’", '9'},       // inherits from de-CH (no compact index)
 		{"de-CH-u-nu-deva", SymGroup, "’", '\u096f'}, // miss -> latn -> de-CH
 
+		{"bn-u-nu-beng", SymGroup, ",", '\u09ef'},
+		{"bn-u-nu-deva", SymGroup, ",", '\u096f'},
+		{"bn-u-nu-latn", SymGroup, ",", '9'},
+
 		{"pa", SymExponential, "E", '9'},
 
 		// "×۱۰^" -> U+00d7 U+06f1 U+06f0^"

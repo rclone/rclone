@@ -6,6 +6,7 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +22,7 @@ var commandDefintion = &cobra.Command{
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			objects, _, err := fs.Count(fsrc)
+			objects, _, err := operations.Count(fsrc)
 			if err != nil {
 				return err
 			}
@@ -30,7 +31,7 @@ var commandDefintion = &cobra.Command{
 			runtime.GC()
 			runtime.ReadMemStats(&before)
 			var mu sync.Mutex
-			err = fs.ListFn(fsrc, func(o fs.Object) {
+			err = operations.ListFn(fsrc, func(o fs.Object) {
 				mu.Lock()
 				objs = append(objs, o)
 				mu.Unlock()

@@ -1,60 +1,60 @@
 {
   "version": "2.0",
-  "service": "<fullname>AWS Service Catalog</fullname> <p> <b>Overview</b> </p> <p> <a href=\"https://aws.amazon.com/servicecatalog/\">AWS Service Catalog</a> allows organizations to create and manage catalogs of IT services that are approved for use on AWS. This documentation provides reference material for the AWS Service Catalog end user API. To get the most out of this documentation, be familiar with the terminology discussed in <a href=\"http://docs.aws.amazon.com/servicecatalog/latest/adminguide/what-is_concepts.html\">AWS Service Catalog Concepts</a>.</p> <p> <i>Additional Resources</i> </p> <ul> <li> <p> <a href=\"http://docs.aws.amazon.com/servicecatalog/latest/adminguide/introduction.html\">AWS Service Catalog Administrator Guide</a> </p> </li> <li> <p> <a href=\"http://docs.aws.amazon.com/servicecatalog/latest/userguide/introduction.html\">AWS Service Catalog User Guide</a> </p> </li> </ul>",
+  "service": "<fullname>AWS Service Catalog</fullname> <p> <a href=\"https://aws.amazon.com/servicecatalog/\">AWS Service Catalog</a> enables organizations to create and manage catalogs of IT services that are approved for use on AWS. To get the most out of this documentation, you should be familiar with the terminology discussed in <a href=\"http://docs.aws.amazon.com/servicecatalog/latest/adminguide/what-is_concepts.html\">AWS Service Catalog Concepts</a>.</p>",
   "operations": {
-    "AcceptPortfolioShare": "<p>Accepts an offer to share a portfolio.</p>",
+    "AcceptPortfolioShare": "<p>Accepts an offer to share the specified portfolio.</p>",
     "AssociatePrincipalWithPortfolio": "<p>Associates the specified principal ARN with the specified portfolio.</p>",
-    "AssociateProductWithPortfolio": "<p>Associates a product with a portfolio.</p>",
-    "AssociateTagOptionWithResource": "<p>Associate a TagOption identifier with a resource identifier.</p>",
-    "CopyProduct": "<p>Copies the specified source product to the specified target product or a new product.</p> <p>You can copy the product to the same account or another account. You can copy the product to the same region or another region.</p> <p>This operation is performed asynchronously. To track the progress of the operation, use <a>DescribeCopyProductStatus</a>.</p>",
-    "CreateConstraint": "<p>Creates a new constraint. For more information, see <a href=\"http://docs.aws.amazon.com/servicecatalog/latest/adminguide/constraints.html\">Using Constraints</a>.</p>",
-    "CreatePortfolio": "<p>Creates a new portfolio.</p>",
-    "CreatePortfolioShare": "<p>Creates a new portfolio share.</p>",
-    "CreateProduct": "<p>Creates a new product.</p>",
-    "CreateProvisioningArtifact": "<p>Create a new provisioning artifact for the specified product. This operation does not work with a product that has been shared with you.</p>",
-    "CreateTagOption": "<p>Create a new TagOption.</p>",
+    "AssociateProductWithPortfolio": "<p>Associates the specified product with the specified portfolio.</p>",
+    "AssociateTagOptionWithResource": "<p>Associate the specified TagOption with the specified portfolio or product.</p>",
+    "CopyProduct": "<p>Copies the specified source product to the specified target product or a new product.</p> <p>You can copy a product to the same account or another account. You can copy a product to the same region or another region.</p> <p>This operation is performed asynchronously. To track the progress of the operation, use <a>DescribeCopyProductStatus</a>.</p>",
+    "CreateConstraint": "<p>Creates a constraint.</p>",
+    "CreatePortfolio": "<p>Creates a portfolio.</p>",
+    "CreatePortfolioShare": "<p>Shares the specified portfolio with the specified account.</p>",
+    "CreateProduct": "<p>Creates a product.</p>",
+    "CreateProvisioningArtifact": "<p>Creates a provisioning artifact (also known as a version) for the specified product.</p> <p>You cannot create a provisioning artifact for a product that was shared with you.</p>",
+    "CreateTagOption": "<p>Creates a TagOption.</p>",
     "DeleteConstraint": "<p>Deletes the specified constraint.</p>",
-    "DeletePortfolio": "<p>Deletes the specified portfolio. This operation does not work with a portfolio that has been shared with you or if it has products, users, constraints, or shared accounts associated with it.</p>",
-    "DeletePortfolioShare": "<p>Deletes the specified portfolio share.</p>",
-    "DeleteProduct": "<p>Deletes the specified product. This operation does not work with a product that has been shared with you or is associated with a portfolio. </p>",
-    "DeleteProvisioningArtifact": "<p>Deletes the specified provisioning artifact. This operation does not work on a provisioning artifact associated with a product that has been shared with you, or on the last provisioning artifact associated with a product (a product must have at least one provisioning artifact).</p>",
-    "DescribeConstraint": "<p>Retrieves detailed information for a specified constraint.</p>",
-    "DescribeCopyProductStatus": "<p>Describes the status of the specified copy product operation.</p>",
-    "DescribePortfolio": "<p>Retrieves detailed information and any tags associated with the specified portfolio.</p>",
-    "DescribeProduct": "<p>Retrieves information about a specified product.</p> <p>This operation is functionally identical to <a>DescribeProductView</a> except that it takes as input <code>ProductId</code> instead of <code>ProductViewId</code>.</p>",
-    "DescribeProductAsAdmin": "<p>Retrieves information about a specified product, run with administrator access.</p>",
-    "DescribeProductView": "<p>Retrieves information about a specified product.</p> <p>This operation is functionally identical to <a>DescribeProduct</a> except that it takes as input <code>ProductViewId</code> instead of <code>ProductId</code>.</p>",
-    "DescribeProvisionedProduct": "<p>Retrieve detailed information about the provisioned product.</p>",
-    "DescribeProvisioningArtifact": "<p>Retrieves detailed information about the specified provisioning artifact.</p>",
-    "DescribeProvisioningParameters": "<p>Provides information about parameters required to provision a specified product in a specified manner. Use this operation to obtain the list of <code>ProvisioningArtifactParameters</code> parameters available to call the <a>ProvisionProduct</a> operation for the specified product.</p> <p>If the output contains a TagOption key with an empty list of values, there is a TagOption conflict for that key. The end user cannot take action to fix the conflict, and launch is not blocked. In subsequent calls to the <code>ProvisionProduct</code> operation, do not include conflicted TagOption keys as tags. Calls to <code>ProvisionProduct</code> with empty TagOption values cause the error \"Parameter validation failed: Missing required parameter in Tags[<i>N</i>]:<i>Value</i> \". Calls to <code>ProvisionProduct</code> with conflicted TagOption keys automatically tag the provisioned product with the conflicted keys with the value \"<code>sc-tagoption-conflict-portfolioId-productId</code>\".</p>",
-    "DescribeRecord": "<p>Retrieves a paginated list of the full details of a specific request. Use this operation after calling a request operation (<a>ProvisionProduct</a>, <a>TerminateProvisionedProduct</a>, or <a>UpdateProvisionedProduct</a>). </p>",
-    "DescribeTagOption": "<p>Describes a TagOption.</p>",
+    "DeletePortfolio": "<p>Deletes the specified portfolio.</p> <p>You cannot delete a portfolio if it was shared with you or if it has associated products, users, constraints, or shared accounts.</p>",
+    "DeletePortfolioShare": "<p>Stops sharing the specified portfolio with the specified account.</p>",
+    "DeleteProduct": "<p>Deletes the specified product.</p> <p>You cannot delete a product if it was shared with you or is associated with a portfolio.</p>",
+    "DeleteProvisioningArtifact": "<p>Deletes the specified provisioning artifact (also known as a version) for the specified product.</p> <p>You cannot delete a provisioning artifact associated with a product that was shared with you. You cannot delete the last provisioning artifact for a product, because a product must have at least one provisioning artifact.</p>",
+    "DescribeConstraint": "<p>Gets information about the specified constraint.</p>",
+    "DescribeCopyProductStatus": "<p>Gets the status of the specified copy product operation.</p>",
+    "DescribePortfolio": "<p>Gets information about the specified portfolio.</p>",
+    "DescribeProduct": "<p>Gets information about the specified product.</p>",
+    "DescribeProductAsAdmin": "<p>Gets information about the specified product. This operation is run with administrator access.</p>",
+    "DescribeProductView": "<p>Gets information about the specified product.</p>",
+    "DescribeProvisionedProduct": "<p>Gets information about the specified provisioned product.</p>",
+    "DescribeProvisioningArtifact": "<p>Gets information about the specified provisioning artifact (also known as a version) for the specified product.</p>",
+    "DescribeProvisioningParameters": "<p>Gets information about the configuration required to provision the specified product using the specified provisioning artifact.</p> <p>If the output contains a TagOption key with an empty list of values, there is a TagOption conflict for that key. The end user cannot take action to fix the conflict, and launch is not blocked. In subsequent calls to <a>ProvisionProduct</a>, do not include conflicted TagOption keys as tags, or this will cause the error \"Parameter validation failed: Missing required parameter in Tags[<i>N</i>]:<i>Value</i>\" and tag the provisioned product with the value <code>sc-tagoption-conflict-portfolioId-productId</code>.</p>",
+    "DescribeRecord": "<p>Gets information about the specified request operation.</p> <p>Use this operation after calling a request operation (for example, <a>ProvisionProduct</a>, <a>TerminateProvisionedProduct</a>, or <a>UpdateProvisionedProduct</a>). </p>",
+    "DescribeTagOption": "<p>Gets information about the specified TagOption.</p>",
     "DisassociatePrincipalFromPortfolio": "<p>Disassociates a previously associated principal ARN from a specified portfolio.</p>",
     "DisassociateProductFromPortfolio": "<p>Disassociates the specified product from the specified portfolio. </p>",
-    "DisassociateTagOptionFromResource": "<p>Disassociates a TagOption from a resource.</p>",
-    "ListAcceptedPortfolioShares": "<p>Lists details of all portfolios for which sharing was accepted by this account.</p>",
-    "ListConstraintsForPortfolio": "<p>Retrieves detailed constraint information for the specified portfolio and product.</p>",
-    "ListLaunchPaths": "<p>Returns a paginated list of all paths to a specified product. A path is how the user has access to a specified product, and is necessary when provisioning a product. A path also determines the constraints put on the product.</p>",
-    "ListPortfolioAccess": "<p>Lists the account IDs that have been authorized sharing of the specified portfolio.</p>",
+    "DisassociateTagOptionFromResource": "<p>Disassociates the specified TagOption from the specified resource.</p>",
+    "ListAcceptedPortfolioShares": "<p>Lists all portfolios for which sharing was accepted by this account.</p>",
+    "ListConstraintsForPortfolio": "<p>Lists the constraints for the specified portfolio and product.</p>",
+    "ListLaunchPaths": "<p>Lists the paths to the specified product. A path is how the user has access to a specified product, and is necessary when provisioning a product. A path also determines the constraints put on the product.</p>",
+    "ListPortfolioAccess": "<p>Lists the account IDs that have access to the specified portfolio.</p>",
     "ListPortfolios": "<p>Lists all portfolios in the catalog.</p>",
     "ListPortfoliosForProduct": "<p>Lists all portfolios that the specified product is associated with.</p>",
     "ListPrincipalsForPortfolio": "<p>Lists all principal ARNs associated with the specified portfolio.</p>",
-    "ListProvisioningArtifacts": "<p>Lists all provisioning artifacts associated with the specified product.</p>",
-    "ListRecordHistory": "<p>Returns a paginated list of all performed requests, in the form of RecordDetails objects that are filtered as specified.</p>",
-    "ListResourcesForTagOption": "<p>Lists resources associated with a TagOption.</p>",
-    "ListTagOptions": "<p>Lists detailed TagOptions information.</p>",
-    "ProvisionProduct": "<p>Requests a <i>provision</i> of a specified product. A <i>provisioned product</i> is a resourced instance for a product. For example, provisioning a CloudFormation-template-backed product results in launching a CloudFormation stack and all the underlying resources that come with it. </p> <p>You can check the status of this request using the <a>DescribeRecord</a> operation. The error \"Parameter validation failed: Missing required parameter in Tags[<i>N</i>]:<i>Value</i>\" indicates that your request contains a tag which has a tag key but no corresponding tag value (value is empty or null). Your call may have included values returned from a <code>DescribeProvisioningParameters</code> call that resulted in a TagOption key with an empty list. This happens when TagOption keys are in conflict. For more information, see <a>DescribeProvisioningParameters</a>.</p>",
-    "RejectPortfolioShare": "<p>Rejects an offer to share a portfolio.</p>",
-    "ScanProvisionedProducts": "<p>Returns a paginated list of all the ProvisionedProduct objects that are currently available (not terminated). </p>",
-    "SearchProducts": "<p>Returns a paginated list all of the <code>Products</code> objects to which the caller has access. </p> <p>The output of this operation can be used as input for other operations, such as <a>DescribeProductView</a>.</p>",
-    "SearchProductsAsAdmin": "<p>Retrieves summary and status information about all products created within the caller's account. If a portfolio ID is provided, this operation retrieves information for only those products that are associated with the specified portfolio.</p>",
-    "TerminateProvisionedProduct": "<p>Requests termination of an existing ProvisionedProduct object. If there are <code>Tags</code> associated with the object, they are terminated when the ProvisionedProduct object is terminated. </p> <p>This operation does not delete any records associated with the ProvisionedProduct object.</p> <p>You can check the status of this request using the <a>DescribeRecord</a> operation.</p>",
-    "UpdateConstraint": "<p>Updates an existing constraint.</p>",
-    "UpdatePortfolio": "<p>Updates the specified portfolio's details. This operation does not work with a product that has been shared with you.</p>",
-    "UpdateProduct": "<p>Updates an existing product.</p>",
-    "UpdateProvisionedProduct": "<p>Requests updates to the configuration of an existing ProvisionedProduct object. If there are tags associated with the object, they cannot be updated or added with this operation. Depending on the specific updates requested, this operation may update with no interruption, with some interruption, or replace the ProvisionedProduct object entirely. </p> <p>You can check the status of this request using the <a>DescribeRecord</a> operation.</p>",
-    "UpdateProvisioningArtifact": "<p>Updates an existing provisioning artifact's information. This operation does not work on a provisioning artifact associated with a product that has been shared with you.</p>",
-    "UpdateTagOption": "<p>Updates an existing TagOption.</p>"
+    "ListProvisioningArtifacts": "<p>Lists all provisioning artifacts (also known as versions) for the specified product.</p>",
+    "ListRecordHistory": "<p>Lists the specified requests or all performed requests.</p>",
+    "ListResourcesForTagOption": "<p>Lists the resources associated with the specified TagOption.</p>",
+    "ListTagOptions": "<p>Lists the specified TagOptions or all TagOptions.</p>",
+    "ProvisionProduct": "<p>Provisions the specified product.</p> <p>A provisioned product is a resourced instance of a product. For example, provisioning a product based on a CloudFormation template launches a CloudFormation stack and its underlying resources. You can check the status of this request using <a>DescribeRecord</a>.</p> <p>If the request contains a tag key with an empty list of values, there is a tag conflict for that key. Do not include conflicted keys as tags, or this will cause the error \"Parameter validation failed: Missing required parameter in Tags[<i>N</i>]:<i>Value</i>\".</p>",
+    "RejectPortfolioShare": "<p>Rejects an offer to share the specified portfolio.</p>",
+    "ScanProvisionedProducts": "<p>Lists the provisioned products that are available (not terminated).</p>",
+    "SearchProducts": "<p>Gets information about the products to which the caller has access.</p>",
+    "SearchProductsAsAdmin": "<p>Gets information about the products for the specified portfolio or all products.</p>",
+    "TerminateProvisionedProduct": "<p>Terminates the specified provisioned product.</p> <p>This operation does not delete any records associated with the provisioned product.</p> <p>You can check the status of this request using <a>DescribeRecord</a>.</p>",
+    "UpdateConstraint": "<p>Updates the specified constraint.</p>",
+    "UpdatePortfolio": "<p>Updates the specified portfolio.</p> <p>You cannot update a product that was shared with you.</p>",
+    "UpdateProduct": "<p>Updates the specified product.</p>",
+    "UpdateProvisionedProduct": "<p>Requests updates to the configuration of the specified provisioned product.</p> <p>If there are tags associated with the object, they cannot be updated or added. Depending on the specific updates requested, this operation can update with no interruption, with some interruption, or replace the provisioned product entirely.</p> <p>You can check the status of this request using <a>DescribeRecord</a>.</p>",
+    "UpdateProvisioningArtifact": "<p>Updates the specified provisioning artifact (also known as a version) for the specified product.</p> <p>You cannot update a provisioning artifact for a product that was shared with you.</p>",
+    "UpdateTagOption": "<p>Updates the specified TagOption.</p>"
   },
   "shapes": {
     "AcceptLanguage": {
@@ -119,22 +119,22 @@
       }
     },
     "AccessLevelFilter": {
-      "base": "<p>The access level to limit results.</p>",
+      "base": "<p>The access level to use to filter results.</p>",
       "refs": {
-        "ListRecordHistoryInput$AccessLevelFilter": "<p>The access level for obtaining results. If left unspecified, <code>User</code> level access is used.</p>",
-        "ScanProvisionedProductsInput$AccessLevelFilter": "<p>The access level for obtaining results. If left unspecified, <code>User</code> level access is used.</p>"
+        "ListRecordHistoryInput$AccessLevelFilter": "<p>The access level to use to obtain results. The default is <code>User</code>.</p>",
+        "ScanProvisionedProductsInput$AccessLevelFilter": "<p>The access level to use to obtain results. The default is <code>User</code>.</p>"
       }
     },
     "AccessLevelFilterKey": {
       "base": null,
       "refs": {
-        "AccessLevelFilter$Key": "<p>Specifies the access level.</p> <p> <code>Account</code> allows results at the account level. </p> <p> <code>Role</code> allows results based on the federated role of the specified user.</p> <p> <code>User</code> allows results limited to the specified user. </p>"
+        "AccessLevelFilter$Key": "<p>The access level.</p> <ul> <li> <p> <code>Account</code> - Filter results based on the account.</p> </li> <li> <p> <code>Role</code> - Filter results based on the federated role of the specified user.</p> </li> <li> <p> <code>User</code> - Filter results based on the specified user.</p> </li> </ul>"
       }
     },
     "AccessLevelFilterValue": {
       "base": null,
       "refs": {
-        "AccessLevelFilter$Value": "<p>Specifies the user to which the access level applies. A value of <code>Self</code> is currently supported.</p>"
+        "AccessLevelFilter$Value": "<p>The user to which the access level applies. The only supported value is <code>Self</code>.</p>"
       }
     },
     "AccountId": {
@@ -142,23 +142,23 @@
       "refs": {
         "AccountIds$member": null,
         "ConstraintDetail$Owner": "<p>The owner of the constraint.</p>",
-        "CreatePortfolioShareInput$AccountId": "<p>The account ID with which to share the portfolio.</p>",
-        "DeletePortfolioShareInput$AccountId": "<p>The account ID associated with the share to delete.</p>"
+        "CreatePortfolioShareInput$AccountId": "<p>The AWS account ID.</p>",
+        "DeletePortfolioShareInput$AccountId": "<p>The AWS account ID.</p>"
       }
     },
     "AccountIds": {
       "base": null,
       "refs": {
-        "ListPortfolioAccessOutput$AccountIds": "<p>List of account IDs associated with access to the portfolio.</p>"
+        "ListPortfolioAccessOutput$AccountIds": "<p>Information about the AWS accounts with access to the portfolio.</p>"
       }
     },
     "AddTags": {
       "base": null,
       "refs": {
-        "CreatePortfolioInput$Tags": "<p>Tags to associate with the new portfolio.</p>",
-        "CreateProductInput$Tags": "<p>Tags to associate with the new product.</p>",
-        "UpdatePortfolioInput$AddTags": "<p>Tags to add to the existing list of tags associated with the portfolio.</p>",
-        "UpdateProductInput$AddTags": "<p>Tags to add to the existing list of tags associated with the product.</p>"
+        "CreatePortfolioInput$Tags": "<p>The tags to associate with the portfolio.</p>",
+        "CreateProductInput$Tags": "<p>The tags to associate with the product.</p>",
+        "UpdatePortfolioInput$AddTags": "<p>The tags to add.</p>",
+        "UpdateProductInput$AddTags": "<p>The tags to add to the product.</p>"
       }
     },
     "AllowedValue": {
@@ -218,45 +218,45 @@
     "ConstraintDescription": {
       "base": null,
       "refs": {
-        "ConstraintDetail$Description": "<p>The text description of the constraint.</p>",
-        "ConstraintSummary$Description": "<p>The text description of the constraint.</p>",
-        "CreateConstraintInput$Description": "<p>The text description of the constraint.</p>",
-        "UpdateConstraintInput$Description": "<p>The updated text description of the constraint.</p>"
+        "ConstraintDetail$Description": "<p>The description of the constraint.</p>",
+        "ConstraintSummary$Description": "<p>The description of the constraint.</p>",
+        "CreateConstraintInput$Description": "<p>The description of the constraint.</p>",
+        "UpdateConstraintInput$Description": "<p>The updated description of the constraint.</p>"
       }
     },
     "ConstraintDetail": {
-      "base": "<p>Detailed constraint information.</p>",
+      "base": "<p>Information about a constraint.</p>",
       "refs": {
         "ConstraintDetails$member": null,
-        "CreateConstraintOutput$ConstraintDetail": "<p>The resulting detailed constraint information.</p>",
-        "DescribeConstraintOutput$ConstraintDetail": "<p>Detailed constraint information.</p>",
-        "UpdateConstraintOutput$ConstraintDetail": "<p>The resulting detailed constraint information.</p>"
+        "CreateConstraintOutput$ConstraintDetail": "<p>Information about the constraint.</p>",
+        "DescribeConstraintOutput$ConstraintDetail": "<p>Information about the constraint.</p>",
+        "UpdateConstraintOutput$ConstraintDetail": "<p>Information about the constraint.</p>"
       }
     },
     "ConstraintDetails": {
       "base": null,
       "refs": {
-        "ListConstraintsForPortfolioOutput$ConstraintDetails": "<p>List of detailed constraint information objects.</p>"
+        "ListConstraintsForPortfolioOutput$ConstraintDetails": "<p>Information about the constraints.</p>"
       }
     },
     "ConstraintParameters": {
       "base": null,
       "refs": {
-        "CreateConstraintInput$Parameters": "<p>The constraint parameters. Expected values vary depending on which <b>Type</b> is specified. For more information, see the Examples section.</p> <p>For Type <code>LAUNCH</code>, the <code>RoleArn</code> property is required. </p> <p>For Type <code>NOTIFICATION</code>, the <code>NotificationArns</code> property is required.</p> <p>For Type <code>TEMPLATE</code>, the <code>Rules</code> property is required.</p>",
-        "CreateConstraintOutput$ConstraintParameters": "<p>The resulting constraint parameters.</p>",
-        "DescribeConstraintOutput$ConstraintParameters": "<p>The current parameters associated with the specified constraint.</p>",
-        "UpdateConstraintOutput$ConstraintParameters": "<p>The resulting updated constraint parameters.</p>"
+        "CreateConstraintInput$Parameters": "<p>The constraint parameters, in JSON format. The syntax depends on the constraint type as follows:</p> <dl> <dt>LAUNCH</dt> <dd> <p>Specify the <code>RoleArn</code> property as follows:</p> <p>\\\"RoleArn\\\" : \\\"arn:aws:iam::123456789012:role/LaunchRole\\\"</p> </dd> <dt>NOTIFICATION</dt> <dd> <p>Specify the <code>NotificationArns</code> property as follows:</p> <p>\\\"NotificationArns\\\" : [\\\"arn:aws:sns:us-east-1:123456789012:Topic\\\"]</p> </dd> <dt>TEMPLATE</dt> <dd> <p>Specify the <code>Rules</code> property. For more information, see <a href=\"http://docs.aws.amazon.com/servicecatalog/latest/adminguide/reference-template_constraint_rules.html\">Template Constraint Rules</a>.</p> </dd> </dl>",
+        "CreateConstraintOutput$ConstraintParameters": "<p>The constraint parameters.</p>",
+        "DescribeConstraintOutput$ConstraintParameters": "<p>The constraint parameters.</p>",
+        "UpdateConstraintOutput$ConstraintParameters": "<p>The constraint parameters.</p>"
       }
     },
     "ConstraintSummaries": {
       "base": null,
       "refs": {
-        "DescribeProvisioningParametersOutput$ConstraintSummaries": "<p>The list of constraint summaries that apply to provisioning this product.</p>",
-        "LaunchPathSummary$ConstraintSummaries": "<p>List of constraints on the portfolio-product relationship.</p>"
+        "DescribeProvisioningParametersOutput$ConstraintSummaries": "<p>Information about the constraints used to provision the product.</p>",
+        "LaunchPathSummary$ConstraintSummaries": "<p>The constraints on the portfolio-product relationship.</p>"
       }
     },
     "ConstraintSummary": {
-      "base": "<p>An administrator-specified constraint to apply when provisioning a product.</p>",
+      "base": "<p>Summary information about a constraint.</p>",
       "refs": {
         "ConstraintSummaries$member": null
       }
@@ -264,9 +264,9 @@
     "ConstraintType": {
       "base": null,
       "refs": {
-        "ConstraintDetail$Type": "<p>The type of the constraint.</p>",
-        "ConstraintSummary$Type": "<p>The type of the constraint. </p>",
-        "CreateConstraintInput$Type": "<p>The type of the constraint. Case-sensitive valid values are: <code>LAUNCH</code>, <code>NOTIFICATION</code>, or <code>TEMPLATE</code>. </p>"
+        "ConstraintDetail$Type": "<p>The type of constraint.</p> <ul> <li> <p> <code>LAUNCH</code> </p> </li> <li> <p> <code>NOTIFICATION</code> </p> </li> <li> <p> <code>TEMPLATE</code> </p> </li> </ul>",
+        "ConstraintSummary$Type": "<p>The type of constraint.</p> <ul> <li> <p> <code>LAUNCH</code> </p> </li> <li> <p> <code>NOTIFICATION</code> </p> </li> <li> <p> <code>TEMPLATE</code> </p> </li> </ul>",
+        "CreateConstraintInput$Type": "<p>The type of constraint.</p> <ul> <li> <p> <code>LAUNCH</code> </p> </li> <li> <p> <code>NOTIFICATION</code> </p> </li> <li> <p> <code>TEMPLATE</code> </p> </li> </ul>"
       }
     },
     "CopyOption": {
@@ -375,7 +375,7 @@
     "DefaultValue": {
       "base": null,
       "refs": {
-        "ProvisioningArtifactParameter$DefaultValue": "<p>The default value for this parameter.</p>"
+        "ProvisioningArtifactParameter$DefaultValue": "<p>The default value.</p>"
       }
     },
     "DeleteConstraintInput": {
@@ -541,8 +541,8 @@
     "Description": {
       "base": null,
       "refs": {
-        "ProvisioningArtifactParameter$Description": "<p>The text description of the parameter.</p>",
-        "RecordOutput$Description": "<p>The text description of the output.</p>"
+        "ProvisioningArtifactParameter$Description": "<p>The description of the parameter.</p>",
+        "RecordOutput$Description": "<p>The description of the output.</p>"
       }
     },
     "DisassociatePrincipalFromPortfolioInput": {
@@ -589,13 +589,13 @@
     "ErrorDescription": {
       "base": null,
       "refs": {
-        "RecordError$Description": "<p>The text description of the error.</p>"
+        "RecordError$Description": "<p>The description of the error.</p>"
       }
     },
     "HasDefaultPath": {
       "base": null,
       "refs": {
-        "ProductViewSummary$HasDefaultPath": "<p>A value of <code>false</code> indicates that the product does not have a default path, while a value of <code>true</code> indicates that it does. If it's false, call <a>ListLaunchPaths</a> to disambiguate between paths. If true, <a>ListLaunchPaths</a> is not required, and the output of the <a>ProductViewSummary</a> operation can be used directly with <a>DescribeProvisioningParameters</a>.</p>"
+        "ProductViewSummary$HasDefaultPath": "<p>Indicates whether the product has a default path. If the product does not have a default path, call <a>ListLaunchPaths</a> to disambiguate between paths. Otherwise, <a>ListLaunchPaths</a> is not required, and the output of <a>ProductViewSummary</a> can be used directly with <a>DescribeProvisioningParameters</a>.</p>"
       }
     },
     "Id": {
@@ -605,91 +605,91 @@
         "AssociatePrincipalWithPortfolioInput$PortfolioId": "<p>The portfolio identifier.</p>",
         "AssociateProductWithPortfolioInput$ProductId": "<p>The product identifier.</p>",
         "AssociateProductWithPortfolioInput$PortfolioId": "<p>The portfolio identifier.</p>",
-        "AssociateProductWithPortfolioInput$SourcePortfolioId": "<p>The identifier of the source portfolio to use with this association.</p>",
+        "AssociateProductWithPortfolioInput$SourcePortfolioId": "<p>The identifier of the source portfolio.</p>",
         "ConstraintDetail$ConstraintId": "<p>The identifier of the constraint.</p>",
-        "CopyProductInput$TargetProductId": "<p>The ID of the target product. By default, a new product is created.</p>",
-        "CopyProductOutput$CopyProductToken": "<p>A unique token to pass to <code>DescribeCopyProductStatus</code> to track the progress of the operation.</p>",
+        "CopyProductInput$TargetProductId": "<p>The identifier of the target product. By default, a new product is created.</p>",
+        "CopyProductOutput$CopyProductToken": "<p>The token to use to track the progress of the operation.</p>",
         "CreateConstraintInput$PortfolioId": "<p>The portfolio identifier.</p>",
         "CreateConstraintInput$ProductId": "<p>The product identifier.</p>",
         "CreatePortfolioShareInput$PortfolioId": "<p>The portfolio identifier.</p>",
         "CreateProvisioningArtifactInput$ProductId": "<p>The product identifier.</p>",
-        "DeleteConstraintInput$Id": "<p>The identifier of the constraint to delete.</p>",
-        "DeletePortfolioInput$Id": "<p>The identifier of the portfolio for the delete request.</p>",
+        "DeleteConstraintInput$Id": "<p>The identifier of the constraint.</p>",
+        "DeletePortfolioInput$Id": "<p>The portfolio identifier.</p>",
         "DeletePortfolioShareInput$PortfolioId": "<p>The portfolio identifier.</p>",
-        "DeleteProductInput$Id": "<p>The identifier of the product for the delete request.</p>",
+        "DeleteProductInput$Id": "<p>The product identifier.</p>",
         "DeleteProvisioningArtifactInput$ProductId": "<p>The product identifier.</p>",
-        "DeleteProvisioningArtifactInput$ProvisioningArtifactId": "<p>The identifier of the provisioning artifact for the delete request. This is sometimes referred to as the product version.</p>",
+        "DeleteProvisioningArtifactInput$ProvisioningArtifactId": "<p>The identifier of the provisioning artifact.</p>",
         "DescribeConstraintInput$Id": "<p>The identifier of the constraint.</p>",
-        "DescribeCopyProductStatusInput$CopyProductToken": "<p>The token returned from the call to <code>CopyProduct</code> that initiated the operation.</p>",
-        "DescribeCopyProductStatusOutput$TargetProductId": "<p>The ID of the copied product.</p>",
-        "DescribePortfolioInput$Id": "<p>The identifier of the portfolio for which to retrieve information.</p>",
-        "DescribeProductAsAdminInput$Id": "<p>The identifier of the product for which to retrieve information.</p>",
-        "DescribeProductInput$Id": "<p>The <code>ProductId</code> of the product to describe.</p>",
-        "DescribeProductViewInput$Id": "<p>The <code>ProductViewId</code> of the product to describe.</p>",
+        "DescribeCopyProductStatusInput$CopyProductToken": "<p>The token for the copy product operation. This token is returned by <a>CopyProduct</a>.</p>",
+        "DescribeCopyProductStatusOutput$TargetProductId": "<p>The identifier of the copied product.</p>",
+        "DescribePortfolioInput$Id": "<p>The portfolio identifier.</p>",
+        "DescribeProductAsAdminInput$Id": "<p>The product identifier.</p>",
+        "DescribeProductInput$Id": "<p>The product identifier.</p>",
+        "DescribeProductViewInput$Id": "<p>The product view identifier.</p>",
         "DescribeProvisionedProductInput$Id": "<p>The provisioned product identifier.</p>",
-        "DescribeProvisioningArtifactInput$ProvisioningArtifactId": "<p>The identifier of the provisioning artifact. This is sometimes referred to as the product version.</p>",
+        "DescribeProvisioningArtifactInput$ProvisioningArtifactId": "<p>The identifier of the provisioning artifact.</p>",
         "DescribeProvisioningArtifactInput$ProductId": "<p>The product identifier.</p>",
         "DescribeProvisioningParametersInput$ProductId": "<p>The product identifier.</p>",
-        "DescribeProvisioningParametersInput$ProvisioningArtifactId": "<p>The provisioning artifact identifier for this product. This is sometimes referred to as the product version.</p>",
-        "DescribeProvisioningParametersInput$PathId": "<p>The identifier of the path for this product's provisioning. This value is optional if the product has a default path, and is required if there is more than one path for the specified product.</p>",
-        "DescribeRecordInput$Id": "<p>The record identifier of the ProvisionedProduct object for which to retrieve output information. This is the <code>RecordDetail.RecordId</code> obtained from the request operation's response.</p>",
+        "DescribeProvisioningParametersInput$ProvisioningArtifactId": "<p>The identifier of the provisioning artifact.</p>",
+        "DescribeProvisioningParametersInput$PathId": "<p>The path identifier of the product. This value is optional if the product has a default path, and required if the product has more than one path. To list the paths for a product, use <a>ListLaunchPaths</a>.</p>",
+        "DescribeRecordInput$Id": "<p>The record identifier of the provisioned product. This identifier is returned by the request operation.</p>",
         "DisassociatePrincipalFromPortfolioInput$PortfolioId": "<p>The portfolio identifier.</p>",
         "DisassociateProductFromPortfolioInput$ProductId": "<p>The product identifier.</p>",
         "DisassociateProductFromPortfolioInput$PortfolioId": "<p>The portfolio identifier.</p>",
-        "LaunchPathSummary$Id": "<p>The unique identifier of the product path.</p>",
+        "LaunchPathSummary$Id": "<p>The identifier of the product path.</p>",
         "ListConstraintsForPortfolioInput$PortfolioId": "<p>The portfolio identifier.</p>",
         "ListConstraintsForPortfolioInput$ProductId": "<p>The product identifier.</p>",
-        "ListLaunchPathsInput$ProductId": "<p>The product identifier. Identifies the product for which to retrieve <code>LaunchPathSummaries</code> information.</p>",
+        "ListLaunchPathsInput$ProductId": "<p>The product identifier.</p>",
         "ListPortfolioAccessInput$PortfolioId": "<p>The portfolio identifier.</p>",
         "ListPortfoliosForProductInput$ProductId": "<p>The product identifier.</p>",
         "ListPrincipalsForPortfolioInput$PortfolioId": "<p>The portfolio identifier.</p>",
         "ListProvisioningArtifactsInput$ProductId": "<p>The product identifier.</p>",
-        "PortfolioDetail$Id": "<p>The identifier for the portfolio.</p>",
+        "PortfolioDetail$Id": "<p>The portfolio identifier.</p>",
         "ProductViewSummary$Id": "<p>The product view identifier.</p>",
         "ProductViewSummary$ProductId": "<p>The product identifier.</p>",
         "ProvisionProductInput$ProductId": "<p>The product identifier.</p>",
-        "ProvisionProductInput$ProvisioningArtifactId": "<p>The provisioning artifact identifier for this product. This is sometimes referred to as the product version.</p>",
-        "ProvisionProductInput$PathId": "<p>The identifier of the path for this product's provisioning. This value is optional if the product has a default path, and is required if there is more than one path for the specified product.</p>",
-        "ProvisioningArtifact$Id": "<p>The identifier for the artifact. This is sometimes referred to as the product version.</p>",
-        "ProvisioningArtifactDetail$Id": "<p>The identifier of the provisioning artifact. This is sometimes referred to as the product version.</p>",
+        "ProvisionProductInput$ProvisioningArtifactId": "<p>The identifier of the provisioning artifact.</p>",
+        "ProvisionProductInput$PathId": "<p>The path identifier of the product. This value is optional if the product has a default path, and required if the product has more than one path. To list the paths for a product, use <a>ListLaunchPaths</a>.</p>",
+        "ProvisioningArtifact$Id": "<p>The identifier of the provisioning artifact.</p>",
+        "ProvisioningArtifactDetail$Id": "<p>The identifier of the provisioning artifact.</p>",
         "ProvisioningArtifactSummary$Id": "<p>The identifier of the provisioning artifact.</p>",
-        "RecordDetail$RecordId": "<p>The identifier of the ProvisionedProduct object record.</p>",
-        "RecordDetail$ProvisionedProductId": "<p>The identifier of the ProvisionedProduct object.</p>",
+        "RecordDetail$RecordId": "<p>The identifier of the record.</p>",
+        "RecordDetail$ProvisionedProductId": "<p>The identifier of the provisioned product.</p>",
         "RecordDetail$ProductId": "<p>The product identifier.</p>",
-        "RecordDetail$ProvisioningArtifactId": "<p>The provisioning artifact identifier for this product. This is sometimes referred to as the product version.</p>",
-        "RecordDetail$PathId": "<p>The identifier of the path for this product's provisioning.</p>",
+        "RecordDetail$ProvisioningArtifactId": "<p>The identifier of the provisioning artifact.</p>",
+        "RecordDetail$PathId": "<p>The path identifier.</p>",
         "RejectPortfolioShareInput$PortfolioId": "<p>The portfolio identifier.</p>",
         "SearchProductsAsAdminInput$PortfolioId": "<p>The portfolio identifier.</p>",
-        "TerminateProvisionedProductInput$ProvisionedProductId": "<p>The identifier of the ProvisionedProduct object to terminate. Specify either <code>ProvisionedProductName</code> or <code>ProvisionedProductId</code>, but not both.</p>",
-        "UpdateConstraintInput$Id": "<p>The identifier of the constraint to update.</p>",
-        "UpdatePortfolioInput$Id": "<p>The identifier of the portfolio for the update request.</p>",
-        "UpdateProductInput$Id": "<p>The identifier of the product for the update request.</p>",
-        "UpdateProvisionedProductInput$ProvisionedProductId": "<p>The identifier of the ProvisionedProduct object to update. Specify either <code>ProvisionedProductName</code> or <code>ProvisionedProductId</code>, but not both.</p>",
-        "UpdateProvisionedProductInput$ProductId": "<p>The identifier of the ProvisionedProduct object.</p>",
-        "UpdateProvisionedProductInput$ProvisioningArtifactId": "<p>The provisioning artifact identifier for this product. This is sometimes referred to as the product version.</p>",
-        "UpdateProvisionedProductInput$PathId": "<p>The identifier of the path to use in the updated ProvisionedProduct object. This value is optional if the product has a default path, and is required if there is more than one path for the specified product.</p>",
+        "TerminateProvisionedProductInput$ProvisionedProductId": "<p>The identifier of the provisioned product. You cannot specify both <code>ProvisionedProductName</code> and <code>ProvisionedProductId</code>.</p>",
+        "UpdateConstraintInput$Id": "<p>The identifier of the constraint.</p>",
+        "UpdatePortfolioInput$Id": "<p>The portfolio identifier.</p>",
+        "UpdateProductInput$Id": "<p>The product identifier.</p>",
+        "UpdateProvisionedProductInput$ProvisionedProductId": "<p>The identifier of the provisioned product. You cannot specify both <code>ProvisionedProductName</code> and <code>ProvisionedProductId</code>.</p>",
+        "UpdateProvisionedProductInput$ProductId": "<p>The identifier of the provisioned product.</p>",
+        "UpdateProvisionedProductInput$ProvisioningArtifactId": "<p>The identifier of the provisioning artifact.</p>",
+        "UpdateProvisionedProductInput$PathId": "<p>The new path identifier. This value is optional if the product has a default path, and required if the product has more than one path.</p>",
         "UpdateProvisioningArtifactInput$ProductId": "<p>The product identifier.</p>",
-        "UpdateProvisioningArtifactInput$ProvisioningArtifactId": "<p>The identifier of the provisioning artifact for the update request. This is sometimes referred to as the product version.</p>"
+        "UpdateProvisioningArtifactInput$ProvisioningArtifactId": "<p>The identifier of the provisioning artifact.</p>"
       }
     },
     "IdempotencyToken": {
       "base": null,
       "refs": {
-        "CopyProductInput$IdempotencyToken": "<p> A token to disambiguate duplicate requests. You can use the same input in multiple requests, provided that you also specify a different idempotency token for each request. </p>",
-        "CreateConstraintInput$IdempotencyToken": "<p>A token to disambiguate duplicate requests. You can use the same input in multiple requests, provided that you also specify a different idempotency token for each request.</p>",
-        "CreatePortfolioInput$IdempotencyToken": "<p>A token to disambiguate duplicate requests. You can use the same input in multiple requests, provided that you also specify a different idempotency token for each request.</p>",
-        "CreateProductInput$IdempotencyToken": "<p>A token to disambiguate duplicate requests. You can use the same input in multiple requests, provided that you also specify a different idempotency token for each request.</p>",
-        "CreateProvisioningArtifactInput$IdempotencyToken": "<p>A token to disambiguate duplicate requests. You can use the same input in multiple requests, provided that you also specify a different idempotency token for each request.</p>",
-        "ProvisionProductInput$ProvisionToken": "<p>An idempotency token that uniquely identifies the provisioning request. </p>",
-        "ProvisionedProductDetail$IdempotencyToken": "<p>A token to disambiguate duplicate requests. You can use the same input in multiple requests, provided that you also specify a different idempotency token for each request.</p>",
-        "TerminateProvisionedProductInput$TerminateToken": "<p>An idempotency token that uniquely identifies the termination request. This token is only valid during the termination process. After the ProvisionedProduct object is terminated, further requests to terminate the same ProvisionedProduct object always return <b>ResourceNotFound</b> regardless of the value of <code>TerminateToken</code>.</p>",
-        "UpdateProvisionedProductInput$UpdateToken": "<p>The idempotency token that uniquely identifies the provisioning update request.</p>"
+        "CopyProductInput$IdempotencyToken": "<p> A unique identifier that you provide to ensure idempotency. If multiple requests differ only by the idempotency token, the same response is returned for each repeated request. </p>",
+        "CreateConstraintInput$IdempotencyToken": "<p>A unique identifier that you provide to ensure idempotency. If multiple requests differ only by the idempotency token, the same response is returned for each repeated request.</p>",
+        "CreatePortfolioInput$IdempotencyToken": "<p>A unique identifier that you provide to ensure idempotency. If multiple requests differ only by the idempotency token, the same response is returned for each repeated request.</p>",
+        "CreateProductInput$IdempotencyToken": "<p>A unique identifier that you provide to ensure idempotency. If multiple requests differ only by the idempotency token, the same response is returned for each repeated request.</p>",
+        "CreateProvisioningArtifactInput$IdempotencyToken": "<p>A unique identifier that you provide to ensure idempotency. If multiple requests differ only by the idempotency token, the same response is returned for each repeated request.</p>",
+        "ProvisionProductInput$ProvisionToken": "<p>An idempotency token that uniquely identifies the provisioning request.</p>",
+        "ProvisionedProductDetail$IdempotencyToken": "<p>A unique identifier that you provide to ensure idempotency. If multiple requests differ only by the idempotency token, the same response is returned for each repeated request.</p>",
+        "TerminateProvisionedProductInput$TerminateToken": "<p>An idempotency token that uniquely identifies the termination request. This token is only valid during the termination process. After the provisioned product is terminated, subsequent requests to terminate the same provisioned product always return <b>ResourceNotFound</b>.</p>",
+        "UpdateProvisionedProductInput$UpdateToken": "<p>The idempotency token that uniquely identifies the provisioning update rquest.</p>"
       }
     },
     "IgnoreErrors": {
       "base": null,
       "refs": {
-        "TerminateProvisionedProductInput$IgnoreErrors": "<p>If set to true, AWS Service Catalog stops managing the specified ProvisionedProduct object even if it cannot delete the underlying resources.</p>"
+        "TerminateProvisionedProductInput$IgnoreErrors": "<p>If set to true, AWS Service Catalog stops managing the specified provisioned product even if it cannot delete the underlying resources.</p>"
       }
     },
     "InstructionType": {
@@ -705,35 +705,35 @@
       }
     },
     "InvalidParametersException": {
-      "base": "<p>One or more parameters provided to the operation are invalid.</p>",
+      "base": "<p>One or more parameters provided to the operation are not valid.</p>",
       "refs": {
       }
     },
     "InvalidStateException": {
-      "base": "<p>An attempt was made to modify a resource that is in an invalid state. Inspect the resource you are using for this operation to ensure that all resource states are valid before retrying the operation.</p>",
+      "base": "<p>An attempt was made to modify a resource that is in a state that is not valid. Check your resources to ensure that they are in valid states before retrying the operation.</p>",
       "refs": {
       }
     },
     "LastRequestId": {
       "base": null,
       "refs": {
-        "ProvisionedProductDetail$LastRecordId": "<p>The record identifier of the last request performed on this ProvisionedProduct object.</p>"
+        "ProvisionedProductDetail$LastRecordId": "<p>The record identifier of the last request performed on this provisioned product.</p>"
       }
     },
     "LaunchPathSummaries": {
       "base": null,
       "refs": {
-        "ListLaunchPathsOutput$LaunchPathSummaries": "<p>List of launch path information summaries for the specified <code>PageToken</code>.</p>"
+        "ListLaunchPathsOutput$LaunchPathSummaries": "<p>Information about the launch path.</p>"
       }
     },
     "LaunchPathSummary": {
-      "base": "<p>Summary information about a path for a user to have access to a specified product.</p>",
+      "base": "<p>Summary information about a product path for a user.</p>",
       "refs": {
         "LaunchPathSummaries$member": null
       }
     },
     "LimitExceededException": {
-      "base": "<p>The current limits of the service would have been exceeded by this operation. Reduce the resource use or increase the service limits and retry the operation.</p>",
+      "base": "<p>The current limits of the service would have been exceeded by this operation. Decrease your resource use or increase your service limits and retry the operation.</p>",
       "refs": {
       }
     },
@@ -828,9 +828,9 @@
       }
     },
     "ListRecordHistorySearchFilter": {
-      "base": "<p>The search filter to limit results when listing request history records.</p>",
+      "base": "<p>The search filter to use when listing history records.</p>",
       "refs": {
-        "ListRecordHistoryInput$SearchFilter": "<p>The filter to limit search results. </p>"
+        "ListRecordHistoryInput$SearchFilter": "<p>The search filter to scope the results.</p>"
       }
     },
     "ListResourcesForTagOptionInput": {
@@ -844,9 +844,9 @@
       }
     },
     "ListTagOptionsFilters": {
-      "base": "<p>The ListTagOptions filters.</p>",
+      "base": "<p>Filters to use when listing TagOptions.</p>",
       "refs": {
-        "ListTagOptionsInput$Filters": "<p>The list of filters with which to limit search results. If no search filters are specified, the output is all TagOptions. </p>"
+        "ListTagOptionsInput$Filters": "<p>The search filters. If no search filters are specified, the output includes all TagOptions.</p>"
       }
     },
     "ListTagOptionsInput": {
@@ -892,66 +892,66 @@
     "PageSize": {
       "base": null,
       "refs": {
-        "DescribeRecordInput$PageSize": "<p>The maximum number of items to return in the results. If more results exist than fit in the specified <code>PageSize</code>, the value of <code>NextPageToken</code> in the response is non-null.</p>",
-        "ListAcceptedPortfolioSharesInput$PageSize": "<p>The maximum number of items to return in the results. If more results exist than fit in the specified <code>PageSize</code>, the value of <code>NextPageToken</code> in the response is non-null.</p>",
-        "ListConstraintsForPortfolioInput$PageSize": "<p>The maximum number of items to return in the results. If more results exist than fit in the specified <code>PageSize</code>, the value of <code>NextPageToken</code> in the response is non-null.</p>",
-        "ListLaunchPathsInput$PageSize": "<p>The maximum number of items to return in the results. If more results exist than fit in the specified <code>PageSize</code>, the value of <code>NextPageToken</code> in the response is non-null.</p>",
-        "ListPortfoliosForProductInput$PageSize": "<p>The maximum number of items to return in the results. If more results exist than fit in the specified <code>PageSize</code>, the value of <code>NextPageToken</code> in the response is non-null.</p>",
-        "ListPortfoliosInput$PageSize": "<p>The maximum number of items to return in the results. If more results exist than fit in the specified <code>PageSize</code>, the value of <code>NextPageToken</code> in the response is non-null.</p>",
-        "ListPrincipalsForPortfolioInput$PageSize": "<p>The maximum number of items to return in the results. If more results exist than fit in the specified <code>PageSize</code>, the value of <code>NextPageToken</code> in the response is non-null.</p>",
-        "ListRecordHistoryInput$PageSize": "<p>The maximum number of items to return in the results. If more results exist than fit in the specified <code>PageSize</code>, the value of <code>NextPageToken</code> in the response is non-null.</p>",
-        "ListResourcesForTagOptionInput$PageSize": "<p>The maximum number of items to return in the results. If more results exist than fit in the specified <code>PageSize</code>, the value of <code>NextPageToken</code> in the response is non-null.</p>",
-        "ListTagOptionsInput$PageSize": "<p>The maximum number of items to return in the results. If more results exist than fit in the specified <code>PageSize</code>, the value of <code>NextPageToken</code> in the response is non-null.</p>",
-        "ScanProvisionedProductsInput$PageSize": "<p>The maximum number of items to return in the results. If more results exist than fit in the specified <code>PageSize</code>, the value of <code>NextPageToken</code> in the response is non-null.</p>",
-        "SearchProductsAsAdminInput$PageSize": "<p>The maximum number of items to return in the results. If more results exist than fit in the specified <code>PageSize</code>, the value of <code>NextPageToken</code> in the response is non-null.</p>",
-        "SearchProductsInput$PageSize": "<p>The maximum number of items to return in the results. If more results exist than fit in the specified <code>PageSize</code>, the value of <code>NextPageToken</code> in the response is non-null.</p>"
+        "DescribeRecordInput$PageSize": "<p>The maximum number of items to return with this call.</p>",
+        "ListAcceptedPortfolioSharesInput$PageSize": "<p>The maximum number of items to return with this call.</p>",
+        "ListConstraintsForPortfolioInput$PageSize": "<p>The maximum number of items to return with this call.</p>",
+        "ListLaunchPathsInput$PageSize": "<p>The maximum number of items to return with this call.</p>",
+        "ListPortfoliosForProductInput$PageSize": "<p>The maximum number of items to return with this call.</p>",
+        "ListPortfoliosInput$PageSize": "<p>The maximum number of items to return with this call.</p>",
+        "ListPrincipalsForPortfolioInput$PageSize": "<p>The maximum number of items to return with this call.</p>",
+        "ListRecordHistoryInput$PageSize": "<p>The maximum number of items to return with this call.</p>",
+        "ListResourcesForTagOptionInput$PageSize": "<p>The maximum number of items to return with this call.</p>",
+        "ListTagOptionsInput$PageSize": "<p>The maximum number of items to return with this call.</p>",
+        "ScanProvisionedProductsInput$PageSize": "<p>The maximum number of items to return with this call.</p>",
+        "SearchProductsAsAdminInput$PageSize": "<p>The maximum number of items to return with this call.</p>",
+        "SearchProductsInput$PageSize": "<p>The maximum number of items to return with this call.</p>"
       }
     },
     "PageToken": {
       "base": null,
       "refs": {
-        "DescribeRecordInput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "DescribeRecordOutput$NextPageToken": "<p>The page token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "ListAcceptedPortfolioSharesInput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "ListAcceptedPortfolioSharesOutput$NextPageToken": "<p>The page token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "ListConstraintsForPortfolioInput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "ListConstraintsForPortfolioOutput$NextPageToken": "<p>The page token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "ListLaunchPathsInput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "ListLaunchPathsOutput$NextPageToken": "<p>The page token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "ListPortfolioAccessOutput$NextPageToken": "<p>The page token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "ListPortfoliosForProductInput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "ListPortfoliosForProductOutput$NextPageToken": "<p>The page token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "ListPortfoliosInput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "ListPortfoliosOutput$NextPageToken": "<p>The page token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "ListPrincipalsForPortfolioInput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "ListPrincipalsForPortfolioOutput$NextPageToken": "<p>The page token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "ListProvisioningArtifactsOutput$NextPageToken": "<p>The page token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "ListRecordHistoryInput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "ListRecordHistoryOutput$NextPageToken": "<p>The page token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "ListResourcesForTagOptionInput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "ListResourcesForTagOptionOutput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "ListTagOptionsInput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "ListTagOptionsOutput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "ScanProvisionedProductsInput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "ScanProvisionedProductsOutput$NextPageToken": "<p>The page token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "SearchProductsAsAdminInput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "SearchProductsAsAdminOutput$NextPageToken": "<p>The page token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "SearchProductsInput$PageToken": "<p>The page token of the first page retrieved. If null, this retrieves the first page of size <code>PageSize</code>.</p>",
-        "SearchProductsOutput$NextPageToken": "<p>The page token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>"
+        "DescribeRecordInput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "DescribeRecordOutput$NextPageToken": "<p>The page token to use to retrieve the next set of results. If there are no additional results, this value is null.</p>",
+        "ListAcceptedPortfolioSharesInput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "ListAcceptedPortfolioSharesOutput$NextPageToken": "<p>The page token to use to retrieve the next set of results. If there are no additional results, this value is null.</p>",
+        "ListConstraintsForPortfolioInput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "ListConstraintsForPortfolioOutput$NextPageToken": "<p>The page token to use to retrieve the next set of results. If there are no additional results, this value is null.</p>",
+        "ListLaunchPathsInput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "ListLaunchPathsOutput$NextPageToken": "<p>The page token to use to retrieve the next set of results. If there are no additional results, this value is null.</p>",
+        "ListPortfolioAccessOutput$NextPageToken": "<p>The page token to use to retrieve the next set of results. If there are no additional results, this value is null.</p>",
+        "ListPortfoliosForProductInput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "ListPortfoliosForProductOutput$NextPageToken": "<p>The page token to use to retrieve the next set of results. If there are no additional results, this value is null.</p>",
+        "ListPortfoliosInput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "ListPortfoliosOutput$NextPageToken": "<p>The page token to use to retrieve the next set of results. If there are no additional results, this value is null.</p>",
+        "ListPrincipalsForPortfolioInput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "ListPrincipalsForPortfolioOutput$NextPageToken": "<p>The page token to use to retrieve the next set of results. If there are no additional results, this value is null.</p>",
+        "ListProvisioningArtifactsOutput$NextPageToken": "<p>The page token to use to retrieve the next set of results. If there are no additional results, this value is null.</p>",
+        "ListRecordHistoryInput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "ListRecordHistoryOutput$NextPageToken": "<p>The page token to use to retrieve the next set of results. If there are no additional results, this value is null.</p>",
+        "ListResourcesForTagOptionInput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "ListResourcesForTagOptionOutput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "ListTagOptionsInput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "ListTagOptionsOutput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "ScanProvisionedProductsInput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "ScanProvisionedProductsOutput$NextPageToken": "<p>The page token to use to retrieve the next set of results. If there are no additional results, this value is null.</p>",
+        "SearchProductsAsAdminInput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "SearchProductsAsAdminOutput$NextPageToken": "<p>The page token to use to retrieve the next set of results. If there are no additional results, this value is null.</p>",
+        "SearchProductsInput$PageToken": "<p>The page token for the next set of results. To retrieve the first set of results, use null.</p>",
+        "SearchProductsOutput$NextPageToken": "<p>The page token to use to retrieve the next set of results. If there are no additional results, this value is null.</p>"
       }
     },
     "ParameterConstraints": {
       "base": "<p>The constraints that the administrator has put on the parameter.</p>",
       "refs": {
-        "ProvisioningArtifactParameter$ParameterConstraints": "<p>The list of constraints that the administrator has put on the parameter.</p>"
+        "ProvisioningArtifactParameter$ParameterConstraints": "<p>Constraints that the administrator has put on a parameter.</p>"
       }
     },
     "ParameterKey": {
       "base": null,
       "refs": {
-        "ProvisioningArtifactParameter$ParameterKey": "<p>The parameter key. </p>",
-        "ProvisioningParameter$Key": "<p>The <code>ProvisioningArtifactParameter.ParameterKey</code> parameter from <a>DescribeProvisioningParameters</a>.</p>",
-        "UpdateProvisioningParameter$Key": "<p>The <code>ProvisioningArtifactParameter.ParameterKey</code> parameter from <a>DescribeProvisioningParameters</a>.</p>"
+        "ProvisioningArtifactParameter$ParameterKey": "<p>The parameter key.</p>",
+        "ProvisioningParameter$Key": "<p>The parameter key.</p>",
+        "UpdateProvisioningParameter$Key": "<p>The parameter key.</p>"
       }
     },
     "ParameterType": {
@@ -963,33 +963,33 @@
     "ParameterValue": {
       "base": null,
       "refs": {
-        "ProvisioningParameter$Value": "<p>The value to use for provisioning. Any constraints on this value can be found in <code>ProvisioningArtifactParameter</code> for <code>Key</code>.</p>",
-        "UpdateProvisioningParameter$Value": "<p>The value to use for updating the product provisioning. Any constraints on this value can be found in the <code>ProvisioningArtifactParameter</code> parameter for <code>Key</code>.</p>"
+        "ProvisioningParameter$Value": "<p>The parameter value.</p>",
+        "UpdateProvisioningParameter$Value": "<p>The parameter value.</p>"
       }
     },
     "PortfolioDescription": {
       "base": null,
       "refs": {
-        "CreatePortfolioInput$Description": "<p>The text description of the portfolio.</p>",
-        "PortfolioDetail$Description": "<p>The text description of the portfolio.</p>",
-        "UpdatePortfolioInput$Description": "<p>The updated text description of the portfolio.</p>"
+        "CreatePortfolioInput$Description": "<p>The description of the portfolio.</p>",
+        "PortfolioDetail$Description": "<p>The description of the portfolio.</p>",
+        "UpdatePortfolioInput$Description": "<p>The updated description of the portfolio.</p>"
       }
     },
     "PortfolioDetail": {
-      "base": "<p>Detailed portfolio information.</p>",
+      "base": "<p>Information about a portfolio.</p>",
       "refs": {
-        "CreatePortfolioOutput$PortfolioDetail": "<p>The resulting detailed portfolio information.</p>",
-        "DescribePortfolioOutput$PortfolioDetail": "<p>Detailed portfolio information.</p>",
+        "CreatePortfolioOutput$PortfolioDetail": "<p>Information about the portfolio.</p>",
+        "DescribePortfolioOutput$PortfolioDetail": "<p>Information about the portfolio.</p>",
         "PortfolioDetails$member": null,
-        "UpdatePortfolioOutput$PortfolioDetail": "<p>The resulting detailed portfolio information.</p>"
+        "UpdatePortfolioOutput$PortfolioDetail": "<p>Information about the portfolio.</p>"
       }
     },
     "PortfolioDetails": {
       "base": null,
       "refs": {
-        "ListAcceptedPortfolioSharesOutput$PortfolioDetails": "<p>List of detailed portfolio information objects.</p>",
-        "ListPortfoliosForProductOutput$PortfolioDetails": "<p>List of detailed portfolio information objects.</p>",
-        "ListPortfoliosOutput$PortfolioDetails": "<p>List of detailed portfolio information objects.</p>"
+        "ListAcceptedPortfolioSharesOutput$PortfolioDetails": "<p>Information about the portfolios.</p>",
+        "ListPortfoliosForProductOutput$PortfolioDetails": "<p>Information about the portfolios.</p>",
+        "ListPortfoliosOutput$PortfolioDetails": "<p>Information about the portfolios.</p>"
       }
     },
     "PortfolioDisplayName": {
@@ -1003,11 +1003,11 @@
     "PortfolioName": {
       "base": null,
       "refs": {
-        "LaunchPathSummary$Name": "<p>Corresponds to the name of the portfolio to which the user was assigned.</p>"
+        "LaunchPathSummary$Name": "<p>The name of the portfolio to which the user was assigned.</p>"
       }
     },
     "Principal": {
-      "base": "<p>A principal's ARN and type.</p>",
+      "base": "<p>Information about a principal.</p>",
       "refs": {
         "Principals$member": null
       }
@@ -1015,16 +1015,16 @@
     "PrincipalARN": {
       "base": null,
       "refs": {
-        "AssociatePrincipalWithPortfolioInput$PrincipalARN": "<p>The ARN representing the principal (IAM user, role, or group).</p>",
-        "DisassociatePrincipalFromPortfolioInput$PrincipalARN": "<p>The ARN representing the principal (IAM user, role, or group).</p>",
-        "Principal$PrincipalARN": "<p>The ARN representing the principal (IAM user, role, or group).</p>"
+        "AssociatePrincipalWithPortfolioInput$PrincipalARN": "<p>The ARN of the principal (IAM user, role, or group).</p>",
+        "DisassociatePrincipalFromPortfolioInput$PrincipalARN": "<p>The ARN of the principal (IAM user, role, or group).</p>",
+        "Principal$PrincipalARN": "<p>The ARN of the principal (IAM user, role, or group).</p>"
       }
     },
     "PrincipalType": {
       "base": null,
       "refs": {
-        "AssociatePrincipalWithPortfolioInput$PrincipalType": "<p>The principal type. Must be <code>IAM</code> </p>",
-        "Principal$PrincipalType": "<p>The principal type. Must be <code>IAM</code> </p>"
+        "AssociatePrincipalWithPortfolioInput$PrincipalType": "<p>The principal type. The supported value is <code>IAM</code>.</p>",
+        "Principal$PrincipalType": "<p>The principal type. The supported value is <code>IAM</code>.</p>"
       }
     },
     "Principals": {
@@ -1048,7 +1048,7 @@
     "ProductType": {
       "base": null,
       "refs": {
-        "CreateProductInput$ProductType": "<p>The type of the product to create.</p>",
+        "CreateProductInput$ProductType": "<p>The type of product.</p>",
         "ProductViewSummary$Type": "<p>The product type. Contact the product administrator for the significance of this value. If this value is <code>MARKETPLACE</code>, the product was created by AWS Marketplace.</p>"
       }
     },
@@ -1073,22 +1073,22 @@
     "ProductViewAggregations": {
       "base": null,
       "refs": {
-        "SearchProductsOutput$ProductViewAggregations": "<p>A list of the product view aggregation value objects.</p>"
+        "SearchProductsOutput$ProductViewAggregations": "<p>The product view aggregations.</p>"
       }
     },
     "ProductViewDetail": {
-      "base": "<p>Detailed product view information.</p>",
+      "base": "<p>Information about a product view.</p>",
       "refs": {
-        "CreateProductOutput$ProductViewDetail": "<p>The resulting detailed product view information.</p>",
-        "DescribeProductAsAdminOutput$ProductViewDetail": "<p>Detailed product view information.</p>",
+        "CreateProductOutput$ProductViewDetail": "<p>Information about the product view.</p>",
+        "DescribeProductAsAdminOutput$ProductViewDetail": "<p>Information about the product view.</p>",
         "ProductViewDetails$member": null,
-        "UpdateProductOutput$ProductViewDetail": "<p>The resulting detailed product view information.</p>"
+        "UpdateProductOutput$ProductViewDetail": "<p>Information about the product view.</p>"
       }
     },
     "ProductViewDetails": {
       "base": null,
       "refs": {
-        "SearchProductsAsAdminOutput$ProductViewDetails": "<p>List of detailed product view information objects.</p>"
+        "SearchProductsAsAdminOutput$ProductViewDetails": "<p>Information about the product views.</p>"
       }
     },
     "ProductViewDistributor": {
@@ -1118,8 +1118,8 @@
     "ProductViewFilters": {
       "base": null,
       "refs": {
-        "SearchProductsAsAdminInput$Filters": "<p>The list of filters with which to limit search results. If no search filters are specified, the output is all the products to which the administrator has access.</p>",
-        "SearchProductsInput$Filters": "<p>The list of filters with which to limit search results. If no search filters are specified, the output is all the products to which the calling user has access. </p>"
+        "SearchProductsAsAdminInput$Filters": "<p>The search filters. If no search filters are specified, the output includes all products to which the administrator has access.</p>",
+        "SearchProductsInput$Filters": "<p>The search filters. If no search filters are specified, the output includes all products to which the caller has access.</p>"
       }
     },
     "ProductViewName": {
@@ -1144,30 +1144,30 @@
     "ProductViewShortDescription": {
       "base": null,
       "refs": {
-        "CreateProductInput$Description": "<p>The text description of the product.</p>",
+        "CreateProductInput$Description": "<p>The description of the product.</p>",
         "ProductViewSummary$ShortDescription": "<p>Short description of the product.</p>",
-        "UpdateProductInput$Description": "<p>The updated text description of the product.</p>"
+        "UpdateProductInput$Description": "<p>The updated description of the product.</p>"
       }
     },
     "ProductViewSortBy": {
       "base": null,
       "refs": {
-        "SearchProductsAsAdminInput$SortBy": "<p>The sort field specifier. If no value is specified, results are not sorted.</p>",
-        "SearchProductsInput$SortBy": "<p>The sort field specifier. If no value is specified, results are not sorted.</p>"
+        "SearchProductsAsAdminInput$SortBy": "<p>The sort field. If no value is specified, the results are not sorted.</p>",
+        "SearchProductsInput$SortBy": "<p>The sort field. If no value is specified, the results are not sorted.</p>"
       }
     },
     "ProductViewSummaries": {
       "base": null,
       "refs": {
-        "SearchProductsOutput$ProductViewSummaries": "<p>A list of the product view summary objects.</p>"
+        "SearchProductsOutput$ProductViewSummaries": "<p>Information about the product views.</p>"
       }
     },
     "ProductViewSummary": {
-      "base": "<p>The summary metadata about the specified product.</p>",
+      "base": "<p>Summary information about a product view.</p>",
       "refs": {
-        "DescribeProductOutput$ProductViewSummary": "<p>The summary metadata about the specified product.</p>",
-        "DescribeProductViewOutput$ProductViewSummary": "<p>The summary metadata about the specified product.</p>",
-        "ProductViewDetail$ProductViewSummary": "<p>The summary metadata about the specified product view.</p>",
+        "DescribeProductOutput$ProductViewSummary": "<p>Summary information about the product view.</p>",
+        "DescribeProductViewOutput$ProductViewSummary": "<p>Summary information about the product.</p>",
+        "ProductViewDetail$ProductViewSummary": "<p>Summary information about the product view.</p>",
         "ProductViewSummaries$member": null
       }
     },
@@ -1190,63 +1190,70 @@
       }
     },
     "ProvisionedProductDetail": {
-      "base": "<p>Detailed information about a ProvisionedProduct object.</p>",
+      "base": "<p>Information about a provisioned product.</p>",
       "refs": {
-        "DescribeProvisionedProductOutput$ProvisionedProductDetail": "<p>Detailed provisioned product information.</p>",
+        "DescribeProvisionedProductOutput$ProvisionedProductDetail": "<p>Information about the provisioned product.</p>",
         "ProvisionedProductDetails$member": null
       }
     },
     "ProvisionedProductDetails": {
       "base": null,
       "refs": {
-        "ScanProvisionedProductsOutput$ProvisionedProducts": "<p>A list of ProvisionedProduct detail objects.</p>"
+        "ScanProvisionedProductsOutput$ProvisionedProducts": "<p>Information about the provisioned products.</p>"
       }
     },
     "ProvisionedProductId": {
       "base": null,
       "refs": {
-        "ProvisionedProductDetail$Id": "<p>The identifier of the ProvisionedProduct object.</p>"
+        "ProvisionedProductDetail$Id": "<p>The identifier of the provisioned product.</p>"
       }
     },
     "ProvisionedProductName": {
       "base": null,
       "refs": {
-        "ProvisionProductInput$ProvisionedProductName": "<p>A user-friendly name to identify the ProvisionedProduct object. This value must be unique for the AWS account and cannot be updated after the product is provisioned.</p>",
-        "RecordDetail$ProvisionedProductName": "<p>The user-friendly name of the ProvisionedProduct object.</p>"
+        "ProvisionProductInput$ProvisionedProductName": "<p>A user-friendly name for the provisioned product. This value must be unique for the AWS account and cannot be updated after the product is provisioned.</p>",
+        "RecordDetail$ProvisionedProductName": "<p>The user-friendly name of the provisioned product.</p>"
       }
     },
     "ProvisionedProductNameOrArn": {
       "base": null,
       "refs": {
-        "ProvisionedProductDetail$Name": "<p>The user-friendly name of the ProvisionedProduct object.</p>",
-        "ProvisionedProductDetail$Arn": "<p>The ARN associated with the ProvisionedProduct object.</p>",
-        "TerminateProvisionedProductInput$ProvisionedProductName": "<p>The name of the ProvisionedProduct object to terminate. Specify either <code>ProvisionedProductName</code> or <code>ProvisionedProductId</code>, but not both.</p>",
-        "UpdateProvisionedProductInput$ProvisionedProductName": "<p>The updated name of the ProvisionedProduct object. Specify either <code>ProvisionedProductName</code> or <code>ProvisionedProductId</code>, but not both.</p>"
+        "ProvisionedProductDetail$Name": "<p>The user-friendly name of the provisioned product.</p>",
+        "ProvisionedProductDetail$Arn": "<p>The ARN of the provisioned product.</p>",
+        "TerminateProvisionedProductInput$ProvisionedProductName": "<p>The name of the provisioned product. You cannot specify both <code>ProvisionedProductName</code> and <code>ProvisionedProductId</code>.</p>",
+        "UpdateProvisionedProductInput$ProvisionedProductName": "<p>The updated name of the provisioned product. You cannot specify both <code>ProvisionedProductName</code> and <code>ProvisionedProductId</code>.</p>"
       }
     },
     "ProvisionedProductStatus": {
       "base": null,
       "refs": {
-        "ProvisionedProductDetail$Status": "<p>The current status of the ProvisionedProduct.</p> <p> <code>AVAILABLE</code> - Stable state, ready to perform any operation. The most recent action request succeeded and completed.</p> <p> <code>UNDER_CHANGE</code> - Transitive state, operations performed may or may not have valid results. Wait for an <code>AVAILABLE</code> status before performing operations.</p> <p> <code>TAINTED</code> - Stable state, ready to perform any operation. The stack has completed the requested operation but is not exactly what was requested. For example, a request to update to a new version failed and the stack rolled back to the current version. </p> <p> <code>ERROR</code> - Something unexpected happened such that the provisioned product exists but the stack is not running. For example, CloudFormation received an invalid parameter value and could not launch the stack.</p>"
+        "ProvisionedProductDetail$Status": "<p>The current status of the provisioned product.</p> <ul> <li> <p> <code>AVAILABLE</code> - Stable state, ready to perform any operation. The most recent operation succeeded and completed.</p> </li> <li> <p> <code>UNDER_CHANGE</code> - Transitive state, operations performed might not have valid results. Wait for an <code>AVAILABLE</code> status before performing operations.</p> </li> <li> <p> <code>TAINTED</code> - Stable state, ready to perform any operation. The stack has completed the requested operation but is not exactly what was requested. For example, a request to update to a new version failed and the stack rolled back to the current version.</p> </li> <li> <p> <code>ERROR</code> - An unexpected error occurred, the provisioned product exists but the stack is not running. For example, CloudFormation received a parameter value that was not valid and could not launch the stack.</p> </li> </ul>"
       }
     },
     "ProvisionedProductStatusMessage": {
       "base": null,
       "refs": {
-        "ProvisionedProductDetail$StatusMessage": "<p>The current status message of the ProvisionedProduct.</p>"
+        "ProvisionedProductDetail$StatusMessage": "<p>The current status message of the provisioned product.</p>"
       }
     },
     "ProvisionedProductType": {
       "base": null,
       "refs": {
-        "ProvisionedProductDetail$Type": "<p>The type of the ProvisionedProduct object.</p>",
-        "RecordDetail$ProvisionedProductType": "<p>The type of the ProvisionedProduct object.</p>"
+        "ProvisionedProductDetail$Type": "<p>The type of provisioned product. The supported value is <code>CFN_STACK</code>.</p>",
+        "RecordDetail$ProvisionedProductType": "<p>The type of provisioned product. The supported value is <code>CFN_STACK</code>.</p>"
       }
     },
     "ProvisioningArtifact": {
-      "base": "<p>Contains information indicating the ways in which a product can be provisioned.</p>",
+      "base": "<p>Information about a provisioning artifact. A provisioning artifact is also known as a product version.</p>",
       "refs": {
         "ProvisioningArtifacts$member": null
+      }
+    },
+    "ProvisioningArtifactActive": {
+      "base": null,
+      "refs": {
+        "ProvisioningArtifactDetail$Active": "<p>Indicates whether the product version is active.</p>",
+        "UpdateProvisioningArtifactInput$Active": "<p>Indicates whether the product version is active.</p>"
       }
     },
     "ProvisioningArtifactCreatedTime": {
@@ -1259,36 +1266,36 @@
     "ProvisioningArtifactDescription": {
       "base": null,
       "refs": {
-        "ProvisioningArtifact$Description": "<p>The text description of the artifact.</p>",
-        "ProvisioningArtifactProperties$Description": "<p>The text description of the provisioning artifact properties.</p>",
+        "ProvisioningArtifact$Description": "<p>The description of the provisioning artifact.</p>",
+        "ProvisioningArtifactProperties$Description": "<p>The description of the provisioning artifact, including how it differs from the previous provisioning artifact.</p>",
         "ProvisioningArtifactSummary$Description": "<p>The description of the provisioning artifact.</p>",
-        "UpdateProvisioningArtifactInput$Description": "<p>The updated text description of the provisioning artifact.</p>"
+        "UpdateProvisioningArtifactInput$Description": "<p>The updated description of the provisioning artifact.</p>"
       }
     },
     "ProvisioningArtifactDetail": {
-      "base": "<p>Detailed provisioning artifact information.</p>",
+      "base": "<p>Information about a provisioning artifact (also known as a version) for a product.</p>",
       "refs": {
-        "CreateProductOutput$ProvisioningArtifactDetail": "<p>The resulting detailed provisioning artifact information.</p>",
-        "CreateProvisioningArtifactOutput$ProvisioningArtifactDetail": "<p>The resulting detailed provisioning artifact information.</p>",
-        "DescribeProvisioningArtifactOutput$ProvisioningArtifactDetail": "<p>Detailed provisioning artifact information.</p>",
+        "CreateProductOutput$ProvisioningArtifactDetail": "<p>Information about the provisioning artifact.</p>",
+        "CreateProvisioningArtifactOutput$ProvisioningArtifactDetail": "<p>Information about the provisioning artifact.</p>",
+        "DescribeProvisioningArtifactOutput$ProvisioningArtifactDetail": "<p>Information about the provisioning artifact.</p>",
         "ProvisioningArtifactDetails$member": null,
-        "UpdateProvisioningArtifactOutput$ProvisioningArtifactDetail": "<p>The resulting detailed provisioning artifact information.</p>"
+        "UpdateProvisioningArtifactOutput$ProvisioningArtifactDetail": "<p>Information about the provisioning artifact.</p>"
       }
     },
     "ProvisioningArtifactDetails": {
       "base": null,
       "refs": {
-        "ListProvisioningArtifactsOutput$ProvisioningArtifactDetails": "<p>List of detailed provisioning artifact information objects.</p>"
+        "ListProvisioningArtifactsOutput$ProvisioningArtifactDetails": "<p>Information about the provisioning artifacts.</p>"
       }
     },
     "ProvisioningArtifactInfo": {
       "base": null,
       "refs": {
-        "CreateProvisioningArtifactOutput$Info": "<p>Additional information about the creation request for the provisioning artifact.</p>",
-        "DescribeProvisioningArtifactOutput$Info": "<p>Additional information about the provisioning artifact.</p>",
-        "ProvisioningArtifactProperties$Info": "<p>Additional information about the provisioning artifact properties. When using this element in a request, you must specify <code>LoadTemplateFromURL</code>. For more information, see <a>CreateProvisioningArtifact</a>.</p>",
-        "ProvisioningArtifactSummary$ProvisioningArtifactMetadata": "<p>The provisioning artifact metadata. This data is used with products created by AWS Marketplace.</p>",
-        "UpdateProvisioningArtifactOutput$Info": "<p>Additional information about the provisioning artifact update request.</p>"
+        "CreateProvisioningArtifactOutput$Info": "<p>The URL of the CloudFormation template in Amazon S3, in JSON format.</p>",
+        "DescribeProvisioningArtifactOutput$Info": "<p>The URL of the CloudFormation template in Amazon S3.</p>",
+        "ProvisioningArtifactProperties$Info": "<p>The URL of the CloudFormation template in Amazon S3. Specify the URL in JSON format as follows:</p> <p> <code>\"LoadTemplateFromURL\": \"https://s3.amazonaws.com/cf-templates-ozkq9d3hgiq2-us-east-1/...\"</code> </p>",
+        "ProvisioningArtifactSummary$ProvisioningArtifactMetadata": "<p>The metadata for the provisioning artifact. This is used with AWS Marketplace products.</p>",
+        "UpdateProvisioningArtifactOutput$Info": "<p>The URL of the CloudFormation template in Amazon S3.</p>"
       }
     },
     "ProvisioningArtifactInfoKey": {
@@ -1306,16 +1313,16 @@
     "ProvisioningArtifactName": {
       "base": null,
       "refs": {
-        "ProvisioningArtifact$Name": "<p>The name of the artifact.</p>",
-        "ProvisioningArtifactDetail$Name": "<p>The name assigned to the provisioning artifact.</p>",
-        "ProvisioningArtifactDetail$Description": "<p>The text description of the provisioning artifact.</p>",
-        "ProvisioningArtifactProperties$Name": "<p>The name assigned to the provisioning artifact properties.</p>",
+        "ProvisioningArtifact$Name": "<p>The name of the provisioning artifact.</p>",
+        "ProvisioningArtifactDetail$Name": "<p>The name of the provisioning artifact.</p>",
+        "ProvisioningArtifactDetail$Description": "<p>The description of the provisioning artifact.</p>",
+        "ProvisioningArtifactProperties$Name": "<p>The name of the provisioning artifact (for example, v1 v2beta). No spaces are allowed.</p>",
         "ProvisioningArtifactSummary$Name": "<p>The name of the provisioning artifact.</p>",
         "UpdateProvisioningArtifactInput$Name": "<p>The updated name of the provisioning artifact.</p>"
       }
     },
     "ProvisioningArtifactParameter": {
-      "base": "<p>A parameter used to successfully provision the product. This value includes a list of allowable values and additional metadata. </p>",
+      "base": "<p>Information about a parameter used to provision a product.</p>",
       "refs": {
         "ProvisioningArtifactParameters$member": null
       }
@@ -1323,14 +1330,14 @@
     "ProvisioningArtifactParameters": {
       "base": null,
       "refs": {
-        "DescribeProvisioningParametersOutput$ProvisioningArtifactParameters": "<p>The list of parameters used to successfully provision the product. Each parameter includes a list of allowable values and additional metadata about each parameter.</p>"
+        "DescribeProvisioningParametersOutput$ProvisioningArtifactParameters": "<p>Information about the parameters used to provision the product.</p>"
       }
     },
     "ProvisioningArtifactProperties": {
-      "base": "<p>Provisioning artifact properties. For example request JSON, see <a>CreateProvisioningArtifact</a>.</p>",
+      "base": "<p>Information about a provisioning artifact (also known as a version) for a product.</p>",
       "refs": {
-        "CreateProductInput$ProvisioningArtifactParameters": "<p>Parameters for the provisioning artifact.</p>",
-        "CreateProvisioningArtifactInput$Parameters": "<p>The parameters to use when creating the new provisioning artifact.</p>"
+        "CreateProductInput$ProvisioningArtifactParameters": "<p>The configuration of the provisioning artifact.</p>",
+        "CreateProvisioningArtifactInput$Parameters": "<p>The configuration for the provisioning artifact.</p>"
       }
     },
     "ProvisioningArtifactPropertyName": {
@@ -1348,11 +1355,11 @@
     "ProvisioningArtifactSummaries": {
       "base": null,
       "refs": {
-        "DescribeProductAsAdminOutput$ProvisioningArtifactSummaries": "<p>A list of provisioning artifact summaries for the product.</p>"
+        "DescribeProductAsAdminOutput$ProvisioningArtifactSummaries": "<p>Information about the provisioning artifacts (also known as versions) for the specified product.</p>"
       }
     },
     "ProvisioningArtifactSummary": {
-      "base": "<p>Stores summary information about a provisioning artifact.</p>",
+      "base": "<p>Summary information about a provisioning artifact (also known as a version) for a product.</p>",
       "refs": {
         "ProvisioningArtifactSummaries$member": null
       }
@@ -1360,19 +1367,19 @@
     "ProvisioningArtifactType": {
       "base": null,
       "refs": {
-        "ProvisioningArtifactDetail$Type": "<p>The type of the provisioning artifact. The following provisioning artifact types are used by AWS Marketplace products:</p> <p> <code>MARKETPLACE_AMI</code> - AMI products.</p> <p> <code>MARKETPLACE_CAR</code> - CAR (Cluster and AWS Resources) products.</p>",
-        "ProvisioningArtifactProperties$Type": "<p>The type of the provisioning artifact properties. The following provisioning artifact property types are used by AWS Marketplace products:</p> <p> <code>MARKETPLACE_AMI</code> - AMI products.</p> <p> <code>MARKETPLACE_CAR</code> - CAR (Cluster and AWS Resources) products.</p>"
+        "ProvisioningArtifactDetail$Type": "<p>The type of provisioning artifact.</p> <ul> <li> <p> <code>CLOUD_FORMATION_TEMPLATE</code> - AWS CloudFormation template</p> </li> <li> <p> <code>MARKETPLACE_AMI</code> - AWS Marketplace AMI</p> </li> <li> <p> <code>MARKETPLACE_CAR</code> - AWS Marketplace Clusters and AWS Resources</p> </li> </ul>",
+        "ProvisioningArtifactProperties$Type": "<p>The type of provisioning artifact.</p> <ul> <li> <p> <code>CLOUD_FORMATION_TEMPLATE</code> - AWS CloudFormation template</p> </li> <li> <p> <code>MARKETPLACE_AMI</code> - AWS Marketplace AMI</p> </li> <li> <p> <code>MARKETPLACE_CAR</code> - AWS Marketplace Clusters and AWS Resources</p> </li> </ul>"
       }
     },
     "ProvisioningArtifacts": {
       "base": null,
       "refs": {
-        "DescribeProductOutput$ProvisioningArtifacts": "<p>A list of provisioning artifact objects for the specified product. The <code>ProvisioningArtifacts</code> parameter represent the ways the specified product can be provisioned.</p>",
-        "DescribeProductViewOutput$ProvisioningArtifacts": "<p>A list of provisioning artifact objects for the specified product. The <code>ProvisioningArtifacts</code> represent the ways in which the specified product can be provisioned.</p>"
+        "DescribeProductOutput$ProvisioningArtifacts": "<p>Information about the provisioning artifacts for the specified product.</p>",
+        "DescribeProductViewOutput$ProvisioningArtifacts": "<p>Information about the provisioning artifacts for the product.</p>"
       }
     },
     "ProvisioningParameter": {
-      "base": "<p>The parameter key-value pairs used to provision a product.</p>",
+      "base": "<p>Information about a parameter used to provision a product.</p>",
       "refs": {
         "ProvisioningParameters$member": null
       }
@@ -1384,19 +1391,19 @@
       }
     },
     "RecordDetail": {
-      "base": "<p>The full details of a specific ProvisionedProduct object.</p>",
+      "base": "<p>Information about a request operation.</p>",
       "refs": {
-        "DescribeRecordOutput$RecordDetail": "<p>Detailed record information for the specified product. </p>",
-        "ProvisionProductOutput$RecordDetail": "<p>The detailed result of the <a>ProvisionProduct</a> request, containing the inputs made to that request, the current state of the request, a pointer to the ProvisionedProduct object of the request, and a list of any errors that the request encountered. </p>",
+        "DescribeRecordOutput$RecordDetail": "<p>Information about the product.</p>",
+        "ProvisionProductOutput$RecordDetail": "<p>Information about the result of <a>ProvisionProduct</a>.</p>",
         "RecordDetails$member": null,
-        "TerminateProvisionedProductOutput$RecordDetail": "<p>The detailed result of the <a>TerminateProvisionedProduct</a> request, containing the inputs made to that request, the current state of the request, a pointer to the ProvisionedProduct object that the request is modifying, and a list of any errors that the request encountered.</p>",
-        "UpdateProvisionedProductOutput$RecordDetail": "<p>The detailed result of the <a>UpdateProvisionedProduct</a> request, containing the inputs made to that request, the current state of the request, a pointer to the ProvisionedProduct object that the request is modifying, and a list of any errors that the request encountered.</p>"
+        "TerminateProvisionedProductOutput$RecordDetail": "<p>Information about the result of this request.</p>",
+        "UpdateProvisionedProductOutput$RecordDetail": "<p>Information about the result of the request.</p>"
       }
     },
     "RecordDetails": {
       "base": null,
       "refs": {
-        "ListRecordHistoryOutput$RecordDetails": "<p>A list of record detail objects, listed in reverse chronological order.</p>"
+        "ListRecordHistoryOutput$RecordDetails": "<p>The records, in reverse chronological order.</p>"
       }
     },
     "RecordError": {
@@ -1408,11 +1415,11 @@
     "RecordErrors": {
       "base": null,
       "refs": {
-        "RecordDetail$RecordErrors": "<p>A list of errors that occurred while processing the request.</p>"
+        "RecordDetail$RecordErrors": "<p>The errors that occurred while processing the request.</p>"
       }
     },
     "RecordOutput": {
-      "base": "<p>An output for the specified Product object created as the result of a request. For example, a CloudFormation-backed product that creates an S3 bucket would have an output for the S3 bucket URL.</p>",
+      "base": "<p>The output for the product created as the result of a request. For example, the output for a CloudFormation-backed product that creates an S3 bucket would include the S3 bucket URL.</p>",
       "refs": {
         "RecordOutputs$member": null
       }
@@ -1420,13 +1427,13 @@
     "RecordOutputs": {
       "base": null,
       "refs": {
-        "DescribeRecordOutput$RecordOutputs": "<p>A list of outputs for the specified Product object created as the result of a request. For example, a CloudFormation-backed product that creates an S3 bucket would have an output for the S3 bucket URL.</p>"
+        "DescribeRecordOutput$RecordOutputs": "<p>Information about the product created as the result of a request. For example, the output for a CloudFormation-backed product that creates an S3 bucket would include the S3 bucket URL.</p>"
       }
     },
     "RecordStatus": {
       "base": null,
       "refs": {
-        "RecordDetail$Status": "<p>The status of the ProvisionedProduct object.</p> <p> <code>CREATED</code> - Request created but the operation has not yet started.</p> <p> <code>IN_PROGRESS</code> - The requested operation is in-progress.</p> <p> <code>IN_PROGRESS_IN_ERROR</code> - The provisioned product is under change but the requested operation failed and some remediation is occurring. For example, a rollback.</p> <p> <code>SUCCEEDED</code> - The requested operation has successfully completed.</p> <p> <code>FAILED</code> - The requested operation has completed but has failed. Investigate using the error messages returned.</p>"
+        "RecordDetail$Status": "<p>The status of the provisioned product.</p> <ul> <li> <p> <code>CREATED</code> - The request was created but the operation has not started.</p> </li> <li> <p> <code>IN_PROGRESS</code> - The requested operation is in progress.</p> </li> <li> <p> <code>IN_PROGRESS_IN_ERROR</code> - The provisioned product is under change but the requested operation failed and some remediation is occurring. For example, a rollback.</p> </li> <li> <p> <code>SUCCEEDED</code> - The requested operation has successfully completed.</p> </li> <li> <p> <code>FAILED</code> - The requested operation has unsuccessfully completed. Investigate using the error messages returned.</p> </li> </ul>"
       }
     },
     "RecordTag": {
@@ -1450,13 +1457,13 @@
     "RecordTags": {
       "base": null,
       "refs": {
-        "RecordDetail$RecordTags": "<p>List of tags associated with this record.</p>"
+        "RecordDetail$RecordTags": "<p>The tags associated with this record.</p>"
       }
     },
     "RecordType": {
       "base": null,
       "refs": {
-        "RecordDetail$RecordType": "<p>The record type for this record.</p>"
+        "RecordDetail$RecordType": "<p>The record type for this record.</p> <ul> <li> <p> <code>PROVISION_PRODUCT</code> </p> </li> <li> <p> <code>UPDATE_PROVISIONED_PRODUCT</code> </p> </li> <li> <p> <code>TERMINATE_PROVISIONED_PRODUCT</code> </p> </li> </ul>"
       }
     },
     "RejectPortfolioShareInput": {
@@ -1473,11 +1480,11 @@
       "base": null,
       "refs": {
         "PortfolioDetail$ARN": "<p>The ARN assigned to the portfolio.</p>",
-        "ProductViewDetail$ProductARN": "<p>The ARN associated with the product.</p>"
+        "ProductViewDetail$ProductARN": "<p>The ARN of the product.</p>"
       }
     },
     "ResourceDetail": {
-      "base": "<p>Detailed resource information.</p>",
+      "base": "<p>Information about a resource.</p>",
       "refs": {
         "ResourceDetails$member": null
       }
@@ -1485,48 +1492,48 @@
     "ResourceDetailARN": {
       "base": null,
       "refs": {
-        "ResourceDetail$ARN": "<p>ARN of the resource.</p>"
+        "ResourceDetail$ARN": "<p>The ARN of the resource.</p>"
       }
     },
     "ResourceDetailCreatedTime": {
       "base": null,
       "refs": {
-        "ResourceDetail$CreatedTime": "<p>Creation time of the resource.</p>"
+        "ResourceDetail$CreatedTime": "<p>The creation time of the resource.</p>"
       }
     },
     "ResourceDetailDescription": {
       "base": null,
       "refs": {
-        "ResourceDetail$Description": "<p>Description of the resource.</p>"
+        "ResourceDetail$Description": "<p>The description of the resource.</p>"
       }
     },
     "ResourceDetailId": {
       "base": null,
       "refs": {
-        "ResourceDetail$Id": "<p>Identifier of the resource.</p>"
+        "ResourceDetail$Id": "<p>The identifier of the resource.</p>"
       }
     },
     "ResourceDetailName": {
       "base": null,
       "refs": {
-        "ResourceDetail$Name": "<p>Name of the resource.</p>"
+        "ResourceDetail$Name": "<p>The name of the resource.</p>"
       }
     },
     "ResourceDetails": {
       "base": null,
       "refs": {
-        "ListResourcesForTagOptionOutput$ResourceDetails": "<p>The resulting detailed resource information.</p>"
+        "ListResourcesForTagOptionOutput$ResourceDetails": "<p>Information about the resources.</p>"
       }
     },
     "ResourceId": {
       "base": null,
       "refs": {
         "AssociateTagOptionWithResourceInput$ResourceId": "<p>The resource identifier.</p>",
-        "DisassociateTagOptionFromResourceInput$ResourceId": "<p>Identifier of the resource from which to disassociate the TagOption.</p>"
+        "DisassociateTagOptionFromResourceInput$ResourceId": "<p>The resource identifier.</p>"
       }
     },
     "ResourceInUseException": {
-      "base": "<p>The operation was requested against a resource that is currently in use. Free the resource from use and retry the operation.</p>",
+      "base": "<p>A resource that is currently in use. Ensure the resource is not in use and retry the operation.</p>",
       "refs": {
       }
     },
@@ -1538,7 +1545,7 @@
     "ResourceType": {
       "base": null,
       "refs": {
-        "ListResourcesForTagOptionInput$ResourceType": "<p>Resource type.</p>"
+        "ListResourcesForTagOptionInput$ResourceType": "<p>The resource type.</p> <ul> <li> <p> <code>Portfolio</code> </p> </li> <li> <p> <code>Product</code> </p> </li> </ul>"
       }
     },
     "ScanProvisionedProductsInput": {
@@ -1554,13 +1561,13 @@
     "SearchFilterKey": {
       "base": null,
       "refs": {
-        "ListRecordHistorySearchFilter$Key": "<p>The filter key.</p>"
+        "ListRecordHistorySearchFilter$Key": "<p>The filter key.</p> <ul> <li> <p> <code>product</code> - Filter results based on the specified product identifier.</p> </li> <li> <p> <code>provisionedproduct</code> - Filter results based on the provisioned product identifier.</p> </li> </ul>"
       }
     },
     "SearchFilterValue": {
       "base": null,
       "refs": {
-        "ListRecordHistorySearchFilter$Value": "<p>The filter value for <code>Key</code>.</p>"
+        "ListRecordHistorySearchFilter$Value": "<p>The filter value.</p>"
       }
     },
     "SearchProductsAsAdminInput": {
@@ -1586,14 +1593,14 @@
     "SortOrder": {
       "base": null,
       "refs": {
-        "SearchProductsAsAdminInput$SortOrder": "<p>The sort order specifier. If no value is specified, results are not sorted.</p>",
-        "SearchProductsInput$SortOrder": "<p>The sort order specifier. If no value is specified, results are not sorted.</p>"
+        "SearchProductsAsAdminInput$SortOrder": "<p>The sort order. If no value is specified, the results are not sorted.</p>",
+        "SearchProductsInput$SortOrder": "<p>The sort order. If no value is specified, the results are not sorted.</p>"
       }
     },
     "SourceProvisioningArtifactProperties": {
       "base": null,
       "refs": {
-        "CopyProductInput$SourceProvisioningArtifactIdentifiers": "<p>The IDs of the product versions to copy. By default, all provisioning artifacts are copied.</p>"
+        "CopyProductInput$SourceProvisioningArtifactIdentifiers": "<p>The identifiers of the provisioning artifacts (also known as versions) of the product to copy. By default, all provisioning artifacts are copied.</p>"
       }
     },
     "SourceProvisioningArtifactPropertiesMap": {
@@ -1609,7 +1616,7 @@
         "CreateProvisioningArtifactOutput$Status": "<p>The status of the current request.</p>",
         "DescribeConstraintOutput$Status": "<p>The status of the current request.</p>",
         "DescribeProvisioningArtifactOutput$Status": "<p>The status of the current request.</p>",
-        "ProductViewDetail$Status": "<p>Current status of the product.</p> <p> <code>AVAILABLE</code> - Product is available for use.</p> <p> <code>CREATING</code> - Creation of product started, not ready for use.</p> <p> <code>FAILED</code> - Action on product failed.</p>",
+        "ProductViewDetail$Status": "<p>The status of the product.</p> <ul> <li> <p> <code>AVAILABLE</code> - The product is ready for use.</p> </li> <li> <p> <code>CREATING</code> - Product creation has started; the product is not ready for use.</p> </li> <li> <p> <code>FAILED</code> - An action failed.</p> </li> </ul>",
         "UpdateConstraintOutput$Status": "<p>The status of the current request.</p>",
         "UpdateProvisioningArtifactOutput$Status": "<p>The status of the current request.</p>"
       }
@@ -1623,7 +1630,7 @@
     "SupportDescription": {
       "base": null,
       "refs": {
-        "CreateProductInput$SupportDescription": "<p>Support information about the product.</p>",
+        "CreateProductInput$SupportDescription": "<p>The support information about the product.</p>",
         "ProductViewSummary$SupportDescription": "<p>The description of the support for this Product.</p>",
         "UpdateProductInput$SupportDescription": "<p>The updated support description for the product.</p>"
       }
@@ -1631,7 +1638,7 @@
     "SupportEmail": {
       "base": null,
       "refs": {
-        "CreateProductInput$SupportEmail": "<p>Contact email for product support.</p>",
+        "CreateProductInput$SupportEmail": "<p>The contact email for product support.</p>",
         "ProductViewSummary$SupportEmail": "<p>The email contact information to obtain support for this Product.</p>",
         "UpdateProductInput$SupportEmail": "<p>The updated support email for the product.</p>"
       }
@@ -1639,13 +1646,13 @@
     "SupportUrl": {
       "base": null,
       "refs": {
-        "CreateProductInput$SupportUrl": "<p>Contact URL for product support.</p>",
+        "CreateProductInput$SupportUrl": "<p>The contact URL for product support.</p>",
         "ProductViewSummary$SupportUrl": "<p>The URL information to obtain support for this Product.</p>",
         "UpdateProductInput$SupportUrl": "<p>The updated support URL for the product.</p>"
       }
     },
     "Tag": {
-      "base": "<p>Key-value pairs to associate with this provisioning. These tags are entirely discretionary and are propagated to the resources created in the provisioning.</p>",
+      "base": "<p>Information about a tag. A tag is a key-value pair. Tags are entirely discretionary and are propagated to the resources created when provisioning a product.</p>",
       "refs": {
         "AddTags$member": null,
         "Tags$member": null
@@ -1654,60 +1661,60 @@
     "TagKey": {
       "base": null,
       "refs": {
-        "Tag$Key": "<p>The <code>ProvisioningArtifactParameter.TagKey</code> parameter from <a>DescribeProvisioningParameters</a>.</p>",
+        "Tag$Key": "<p>The tag key.</p>",
         "TagKeys$member": null
       }
     },
     "TagKeys": {
       "base": null,
       "refs": {
-        "UpdatePortfolioInput$RemoveTags": "<p>Tags to remove from the existing list of tags associated with the portfolio.</p>",
-        "UpdateProductInput$RemoveTags": "<p>Tags to remove from the existing list of tags associated with the product.</p>"
+        "UpdatePortfolioInput$RemoveTags": "<p>The tags to remove.</p>",
+        "UpdateProductInput$RemoveTags": "<p>The tags to remove from the product.</p>"
       }
     },
     "TagOptionActive": {
       "base": null,
       "refs": {
-        "ListTagOptionsFilters$Active": "<p>The ListTagOptionsFilters active state.</p>",
-        "TagOptionDetail$Active": "<p>The TagOptionDetail active state.</p>",
+        "ListTagOptionsFilters$Active": "<p>The active state.</p>",
+        "TagOptionDetail$Active": "<p>The TagOption active state.</p>",
         "UpdateTagOptionInput$Active": "<p>The updated active state.</p>"
       }
     },
     "TagOptionDetail": {
-      "base": "<p>The TagOption details.</p>",
+      "base": "<p>Information about a TagOption.</p>",
       "refs": {
-        "CreateTagOptionOutput$TagOptionDetail": "<p>The resulting detailed TagOption information.</p>",
-        "DescribeTagOptionOutput$TagOptionDetail": "<p>The resulting detailed TagOption information.</p>",
+        "CreateTagOptionOutput$TagOptionDetail": "<p>Information about the TagOption.</p>",
+        "DescribeTagOptionOutput$TagOptionDetail": "<p>Information about the TagOption.</p>",
         "TagOptionDetails$member": null,
-        "UpdateTagOptionOutput$TagOptionDetail": "<p>The resulting detailed TagOption information.</p>"
+        "UpdateTagOptionOutput$TagOptionDetail": "<p>Information about the TagOption.</p>"
       }
     },
     "TagOptionDetails": {
       "base": null,
       "refs": {
-        "DescribePortfolioOutput$TagOptions": "<p>TagOptions associated with the portfolio.</p>",
-        "DescribeProductAsAdminOutput$TagOptions": "<p>List of TagOptions associated with the product.</p>",
-        "ListTagOptionsOutput$TagOptionDetails": "<p>The resulting detailed TagOption information.</p>"
+        "DescribePortfolioOutput$TagOptions": "<p>Information about the TagOptions associated with the portfolio.</p>",
+        "DescribeProductAsAdminOutput$TagOptions": "<p>Information about the TagOptions associated with the product.</p>",
+        "ListTagOptionsOutput$TagOptionDetails": "<p>Information about the TagOptions.</p>"
       }
     },
     "TagOptionId": {
       "base": null,
       "refs": {
         "AssociateTagOptionWithResourceInput$TagOptionId": "<p>The TagOption identifier.</p>",
-        "DescribeTagOptionInput$Id": "<p>The identifier of the TagOption.</p>",
-        "DisassociateTagOptionFromResourceInput$TagOptionId": "<p>Identifier of the TagOption to disassociate from the resource.</p>",
-        "ListResourcesForTagOptionInput$TagOptionId": "<p>Identifier of the TagOption.</p>",
-        "TagOptionDetail$Id": "<p>The TagOptionDetail identifier.</p>",
-        "UpdateTagOptionInput$Id": "<p>The identifier of the constraint to update.</p>"
+        "DescribeTagOptionInput$Id": "<p>The TagOption identifier.</p>",
+        "DisassociateTagOptionFromResourceInput$TagOptionId": "<p>The TagOption identifier.</p>",
+        "ListResourcesForTagOptionInput$TagOptionId": "<p>The TagOption identifier.</p>",
+        "TagOptionDetail$Id": "<p>The TagOption identifier.</p>",
+        "UpdateTagOptionInput$Id": "<p>The TagOption identifier.</p>"
       }
     },
     "TagOptionKey": {
       "base": null,
       "refs": {
         "CreateTagOptionInput$Key": "<p>The TagOption key.</p>",
-        "ListTagOptionsFilters$Key": "<p>The ListTagOptionsFilters key.</p>",
-        "TagOptionDetail$Key": "<p>The TagOptionDetail key.</p>",
-        "TagOptionSummary$Key": "<p>The TagOptionSummary key.</p>"
+        "ListTagOptionsFilters$Key": "<p>The TagOption key.</p>",
+        "TagOptionDetail$Key": "<p>The TagOption key.</p>",
+        "TagOptionSummary$Key": "<p>The TagOption key.</p>"
       }
     },
     "TagOptionNotMigratedException": {
@@ -1718,11 +1725,11 @@
     "TagOptionSummaries": {
       "base": null,
       "refs": {
-        "DescribeProvisioningParametersOutput$TagOptions": "<p>List of TagOptions associated with the provisioned provisioning parameters.</p>"
+        "DescribeProvisioningParametersOutput$TagOptions": "<p>Information about the TagOptions associated with the resource.</p>"
       }
     },
     "TagOptionSummary": {
-      "base": "<p>The TagOption summary key-value pair.</p>",
+      "base": "<p>Summary information about a TagOption.</p>",
       "refs": {
         "TagOptionSummaries$member": null
       }
@@ -1731,8 +1738,8 @@
       "base": null,
       "refs": {
         "CreateTagOptionInput$Value": "<p>The TagOption value.</p>",
-        "ListTagOptionsFilters$Value": "<p>The ListTagOptionsFilters value.</p>",
-        "TagOptionDetail$Value": "<p>The TagOptionDetail value.</p>",
+        "ListTagOptionsFilters$Value": "<p>The TagOption value.</p>",
+        "TagOptionDetail$Value": "<p>The TagOption value.</p>",
         "TagOptionValues$member": null,
         "UpdateTagOptionInput$Value": "<p>The updated value.</p>"
       }
@@ -1740,26 +1747,26 @@
     "TagOptionValues": {
       "base": null,
       "refs": {
-        "TagOptionSummary$Values": "<p>The TagOptionSummary value.</p>"
+        "TagOptionSummary$Values": "<p>The TagOption value.</p>"
       }
     },
     "TagValue": {
       "base": null,
       "refs": {
-        "Tag$Value": "<p>The desired value for this key.</p>"
+        "Tag$Value": "<p>The value for this key.</p>"
       }
     },
     "Tags": {
       "base": null,
       "refs": {
-        "CreatePortfolioOutput$Tags": "<p>Tags successfully associated with the new portfolio.</p>",
-        "CreateProductOutput$Tags": "<p>Tags successfully associated with the new product.</p>",
-        "DescribePortfolioOutput$Tags": "<p>Tags associated with the portfolio.</p>",
-        "DescribeProductAsAdminOutput$Tags": "<p>Tags associated with the product.</p>",
-        "LaunchPathSummary$Tags": "<p>List of tags used by this launch path.</p>",
-        "ProvisionProductInput$Tags": "<p>A list of tags to use as provisioning options.</p>",
-        "UpdatePortfolioOutput$Tags": "<p>Tags associated with the portfolio.</p>",
-        "UpdateProductOutput$Tags": "<p>Tags associated with the product.</p>"
+        "CreatePortfolioOutput$Tags": "<p>Information about the tags associated with the portfolio.</p>",
+        "CreateProductOutput$Tags": "<p>Information about the tags associated with the product.</p>",
+        "DescribePortfolioOutput$Tags": "<p>Information about the tags associated with the portfolio.</p>",
+        "DescribeProductAsAdminOutput$Tags": "<p>Information about the tags associated with the product.</p>",
+        "LaunchPathSummary$Tags": "<p>The tags associated with this product path.</p>",
+        "ProvisionProductInput$Tags": "<p>The tags to use as provisioning options.</p>",
+        "UpdatePortfolioOutput$Tags": "<p>Information about the tags associated with the portfolio.</p>",
+        "UpdateProductOutput$Tags": "<p>Information about the tags associated with the product.</p>"
       }
     },
     "TerminateProvisionedProductInput": {
@@ -1823,7 +1830,7 @@
       }
     },
     "UpdateProvisioningParameter": {
-      "base": "<p>The parameter key-value pair used to update a ProvisionedProduct object. If <code>UsePreviousValue</code> is set to true, <code>Value</code> is ignored and the value for <code>Key</code> is kept as previously set (current value).</p>",
+      "base": "<p>The parameter key-value pair used to update a provisioned product.</p>",
       "refs": {
         "UpdateProvisioningParameters$member": null
       }
@@ -1831,7 +1838,7 @@
     "UpdateProvisioningParameters": {
       "base": null,
       "refs": {
-        "UpdateProvisionedProductInput$ProvisioningParameters": "<p>A list of <code>ProvisioningParameter</code> objects used to update the ProvisionedProduct object.</p>"
+        "UpdateProvisionedProductInput$ProvisioningParameters": "<p>The new parameters.</p>"
       }
     },
     "UpdateTagOptionInput": {
@@ -1847,7 +1854,7 @@
     "UpdatedTime": {
       "base": null,
       "refs": {
-        "RecordDetail$UpdatedTime": "<p>The time when the record for the ProvisionedProduct object was last updated.</p>"
+        "RecordDetail$UpdatedTime": "<p>The time when the record was last updated.</p>"
       }
     },
     "UsageInstruction": {
@@ -1865,13 +1872,13 @@
     "UsePreviousValue": {
       "base": null,
       "refs": {
-        "UpdateProvisioningParameter$UsePreviousValue": "<p>If true, uses the currently set value for <code>Key</code>, ignoring <code>UpdateProvisioningParameter.Value</code>.</p>"
+        "UpdateProvisioningParameter$UsePreviousValue": "<p>If set to true, <code>Value</code> is ignored and the previous parameter value is kept.</p>"
       }
     },
     "Verbose": {
       "base": null,
       "refs": {
-        "DescribeProvisioningArtifactInput$Verbose": "<p>Enable a verbose level of details for the provisioning artifact.</p>"
+        "DescribeProvisioningArtifactInput$Verbose": "<p>Indicates whether a verbose level of detail is enabled.</p>"
       }
     }
   }

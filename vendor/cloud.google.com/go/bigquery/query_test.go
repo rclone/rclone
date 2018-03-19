@@ -17,9 +17,9 @@ package bigquery
 import (
 	"testing"
 
-	"cloud.google.com/go/internal/testutil"
+	"github.com/google/go-cmp/cmp"
 
-	"golang.org/x/net/context"
+	"cloud.google.com/go/internal/testutil"
 
 	bq "google.golang.org/api/bigquery/v2"
 )
@@ -46,15 +46,22 @@ func defaultQueryJob() *bq.Job {
 	}
 }
 
+var defaultQuery = &QueryConfig{
+	Q:                "query string",
+	DefaultProjectID: "def-project-id",
+	DefaultDatasetID: "def-dataset-id",
+}
+
 func TestQuery(t *testing.T) {
-	defer fixRandomJobID("RANDOM")()
+	defer fixRandomID("RANDOM")()
 	c := &Client{
 		projectID: "client-project-id",
 	}
 	testCases := []struct {
-		dst  *Table
-		src  *QueryConfig
-		want *bq.Job
+		dst         *Table
+		src         *QueryConfig
+		jobIDConfig JobIDConfig
+		want        *bq.Job
 	}{
 		{
 			dst:  c.Dataset("dataset-id").Table("table-id"),
@@ -64,21 +71,22 @@ func TestQuery(t *testing.T) {
 		{
 			dst: c.Dataset("dataset-id").Table("table-id"),
 			src: &QueryConfig{
-				Q: "query string",
+				Q:      "query string",
+				Labels: map[string]string{"a": "b"},
+				DryRun: true,
 			},
 			want: func() *bq.Job {
 				j := defaultQueryJob()
+				j.Configuration.Labels = map[string]string{"a": "b"}
+				j.Configuration.DryRun = true
 				j.Configuration.Query.DefaultDataset = nil
 				return j
 			}(),
 		},
 		{
-			dst: c.Dataset("dataset-id").Table("table-id"),
-			src: &QueryConfig{
-				Q:              "query string",
-				JobID:          "jobID",
-				AddJobIDSuffix: true,
-			},
+			dst:         c.Dataset("dataset-id").Table("table-id"),
+			jobIDConfig: JobIDConfig{JobID: "jobID", AddJobIDSuffix: true},
+			src:         &QueryConfig{Q: "query string"},
 			want: func() *bq.Job {
 				j := defaultQueryJob()
 				j.Configuration.Query.DefaultDataset = nil
@@ -250,16 +258,6 @@ func TestQuery(t *testing.T) {
 				Q:                "query string",
 				DefaultProjectID: "def-project-id",
 				DefaultDatasetID: "def-dataset-id",
-				MaxBytesBilled:   -1,
-			},
-			want: defaultQueryJob(),
-		},
-		{
-			dst: c.Dataset("dataset-id").Table("table-id"),
-			src: &QueryConfig{
-				Q:                "query string",
-				DefaultProjectID: "def-project-id",
-				DefaultDatasetID: "def-dataset-id",
 				UseStandardSQL:   true,
 			},
 			want: defaultQueryJob(),
@@ -281,24 +279,71 @@ func TestQuery(t *testing.T) {
 		},
 	}
 	for i, tc := range testCases {
-		s := &testService{}
-		c.service = s
 		query := c.Query("")
+		query.JobIDConfig = tc.jobIDConfig
 		query.QueryConfig = *tc.src
 		query.Dst = tc.dst
-		if _, err := query.Run(context.Background()); err != nil {
+		got, err := query.newJob()
+		if err != nil {
 			t.Errorf("#%d: err calling query: %v", i, err)
 			continue
 		}
-		checkJob(t, i, s.Job, tc.want)
+		checkJob(t, i, got, tc.want)
+
+		// Round-trip.
+		jc, err := bqToJobConfig(got.Configuration, c)
+		if err != nil {
+			t.Fatalf("#%d: %v", i, err)
+		}
+		wantConfig := query.QueryConfig
+		// We set AllowLargeResults to true when DisableFlattenedResults is true.
+		if wantConfig.DisableFlattenedResults {
+			wantConfig.AllowLargeResults = true
+		}
+		// A QueryConfig with neither UseXXXSQL field set is equivalent
+		// to one where UseStandardSQL = true.
+		if !wantConfig.UseLegacySQL && !wantConfig.UseStandardSQL {
+			wantConfig.UseStandardSQL = true
+		}
+		// Treat nil and empty tables the same, and ignore the client.
+		tableEqual := func(t1, t2 *Table) bool {
+			if t1 == nil {
+				t1 = &Table{}
+			}
+			if t2 == nil {
+				t2 = &Table{}
+			}
+			return t1.ProjectID == t2.ProjectID && t1.DatasetID == t2.DatasetID && t1.TableID == t2.TableID
+		}
+		// A table definition that is a GCSReference round-trips as an ExternalDataConfig.
+		// TODO(jba): see if there is a way to express this with a transformer.
+		gcsRefToEDC := func(g *GCSReference) *ExternalDataConfig {
+			q := g.toBQ()
+			e, _ := bqToExternalDataConfig(&q)
+			return e
+		}
+		externalDataEqual := func(e1, e2 ExternalData) bool {
+			if r, ok := e1.(*GCSReference); ok {
+				e1 = gcsRefToEDC(r)
+			}
+			if r, ok := e2.(*GCSReference); ok {
+				e2 = gcsRefToEDC(r)
+			}
+			return cmp.Equal(e1, e2)
+		}
+		diff := testutil.Diff(jc.(*QueryConfig), &wantConfig,
+			cmp.Comparer(tableEqual),
+			cmp.Comparer(externalDataEqual),
+		)
+		if diff != "" {
+			t.Errorf("#%d: (got=-, want=+:\n%s", i, diff)
+		}
 	}
 }
 
 func TestConfiguringQuery(t *testing.T) {
-	s := &testService{}
 	c := &Client{
 		projectID: "project-id",
-		service:   s,
 	}
 
 	query := c.Query("q")
@@ -326,30 +371,28 @@ func TestConfiguringQuery(t *testing.T) {
 		},
 	}
 
-	if _, err := query.Run(context.Background()); err != nil {
-		t.Fatalf("err calling Query.Run: %v", err)
+	got, err := query.newJob()
+	if err != nil {
+		t.Fatalf("err calling Query.newJob: %v", err)
 	}
-	if diff := testutil.Diff(s.Job, want); diff != "" {
+	if diff := testutil.Diff(got, want); diff != "" {
 		t.Errorf("querying: -got +want:\n%s", diff)
 	}
 }
 
 func TestQueryLegacySQL(t *testing.T) {
-	c := &Client{
-		projectID: "project-id",
-		service:   &testService{},
-	}
+	c := &Client{projectID: "project-id"}
 	q := c.Query("q")
 	q.UseStandardSQL = true
 	q.UseLegacySQL = true
-	_, err := q.Run(context.Background())
+	_, err := q.newJob()
 	if err == nil {
 		t.Error("UseStandardSQL and UseLegacySQL: got nil, want error")
 	}
 	q = c.Query("q")
 	q.Parameters = []QueryParameter{{Name: "p", Value: 3}}
 	q.UseLegacySQL = true
-	_, err = q.Run(context.Background())
+	_, err = q.newJob()
 	if err == nil {
 		t.Error("Parameters and UseLegacySQL: got nil, want error")
 	}

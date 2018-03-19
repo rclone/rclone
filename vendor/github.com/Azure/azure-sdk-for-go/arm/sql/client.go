@@ -2,6 +2,8 @@
 //
 // The Azure SQL Database management API provides a RESTful set of web services that interact with Azure SQL Database
 // services to manage your databases. The API enables you to create, retrieve, update, and delete databases.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/sql/mgmt/2017-03-01-preview/sql
 package sql
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

@@ -448,31 +448,33 @@
           "SnapshotName": "snapshot-2"
         },
         "output": {
-          "AutoMinorVersionUpgrade": true,
-          "CacheClusterCreateTime": "2017-02-03T15:43:36.278Z",
-          "CacheClusterId": "threenoderedis-001",
-          "CacheNodeType": "cache.m3.medium",
-          "CacheParameterGroupName": "default.redis3.2",
-          "CacheSubnetGroupName": "default",
-          "Engine": "redis",
-          "EngineVersion": "3.2.4",
-          "NodeSnapshots": [
-            {
-              "CacheNodeCreateTime": "2017-02-03T15:43:36.278Z",
-              "CacheNodeId": "0001",
-              "CacheSize": ""
-            }
-          ],
-          "NumCacheNodes": 1,
-          "Port": 6379,
-          "PreferredAvailabilityZone": "us-west-2c",
-          "PreferredMaintenanceWindow": "sat:08:00-sat:09:00",
-          "SnapshotName": "snapshot-2",
-          "SnapshotRetentionLimit": 1,
-          "SnapshotSource": "manual",
-          "SnapshotStatus": "creating",
-          "SnapshotWindow": "00:00-01:00",
-          "VpcId": "vpc-73c3cd17"
+          "Snapshot": {
+            "AutoMinorVersionUpgrade": true,
+            "CacheClusterCreateTime": "2017-02-03T15:43:36.278Z",
+            "CacheClusterId": "threenoderedis-001",
+            "CacheNodeType": "cache.m3.medium",
+            "CacheParameterGroupName": "default.redis3.2",
+            "CacheSubnetGroupName": "default",
+            "Engine": "redis",
+            "EngineVersion": "3.2.4",
+            "NodeSnapshots": [
+              {
+                "CacheNodeCreateTime": "2017-02-03T15:43:36.278Z",
+                "CacheNodeId": "0001",
+                "CacheSize": ""
+              }
+            ],
+            "NumCacheNodes": 1,
+            "Port": 6379,
+            "PreferredAvailabilityZone": "us-west-2c",
+            "PreferredMaintenanceWindow": "sat:08:00-sat:09:00",
+            "SnapshotName": "snapshot-2",
+            "SnapshotRetentionLimit": 1,
+            "SnapshotSource": "manual",
+            "SnapshotStatus": "creating",
+            "SnapshotWindow": "00:00-01:00",
+            "VpcId": "vpc-73c3cd17"
+          }
         },
         "comments": {
           "input": {
@@ -490,34 +492,36 @@
           "SnapshotName": "snapshot-2x5"
         },
         "output": {
-          "AutoMinorVersionUpgrade": true,
-          "AutomaticFailover": "enabled",
-          "CacheNodeType": "cache.m3.medium",
-          "CacheParameterGroupName": "default.redis3.2.cluster.on",
-          "CacheSubnetGroupName": "default",
-          "Engine": "redis",
-          "EngineVersion": "3.2.4",
-          "NodeSnapshots": [
-            {
-              "CacheSize": "",
-              "NodeGroupId": "0001"
-            },
-            {
-              "CacheSize": "",
-              "NodeGroupId": "0002"
-            }
-          ],
-          "NumNodeGroups": 2,
-          "Port": 6379,
-          "PreferredMaintenanceWindow": "mon:09:30-mon:10:30",
-          "ReplicationGroupDescription": "Redis cluster with 2 shards.",
-          "ReplicationGroupId": "clusteredredis",
-          "SnapshotName": "snapshot-2x5",
-          "SnapshotRetentionLimit": 1,
-          "SnapshotSource": "manual",
-          "SnapshotStatus": "creating",
-          "SnapshotWindow": "12:00-13:00",
-          "VpcId": "vpc-73c3cd17"
+          "Snapshot": {
+            "AutoMinorVersionUpgrade": true,
+            "AutomaticFailover": "enabled",
+            "CacheNodeType": "cache.m3.medium",
+            "CacheParameterGroupName": "default.redis3.2.cluster.on",
+            "CacheSubnetGroupName": "default",
+            "Engine": "redis",
+            "EngineVersion": "3.2.4",
+            "NodeSnapshots": [
+              {
+                "CacheSize": "",
+                "NodeGroupId": "0001"
+              },
+              {
+                "CacheSize": "",
+                "NodeGroupId": "0002"
+              }
+            ],
+            "NumNodeGroups": 2,
+            "Port": 6379,
+            "PreferredMaintenanceWindow": "mon:09:30-mon:10:30",
+            "ReplicationGroupDescription": "Redis cluster with 2 shards.",
+            "ReplicationGroupId": "clusteredredis",
+            "SnapshotName": "snapshot-2x5",
+            "SnapshotRetentionLimit": 1,
+            "SnapshotSource": "manual",
+            "SnapshotStatus": "creating",
+            "SnapshotWindow": "12:00-13:00",
+            "VpcId": "vpc-73c3cd17"
+          }
         },
         "comments": {
           "input": {

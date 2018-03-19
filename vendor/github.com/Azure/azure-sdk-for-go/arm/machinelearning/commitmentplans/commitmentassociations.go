@@ -92,7 +92,9 @@ func (client CommitmentAssociationsClient) GetPreparer(resourceGroupName string,
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client CommitmentAssociationsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -161,7 +163,9 @@ func (client CommitmentAssociationsClient) ListPreparer(resourceGroupName string
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client CommitmentAssociationsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -299,7 +303,9 @@ func (client CommitmentAssociationsClient) MovePreparer(resourceGroupName string
 // MoveSender sends the Move request. The method will close the
 // http.Response Body if it receives an error.
 func (client CommitmentAssociationsClient) MoveSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // MoveResponder handles the response to the Move request. The method always

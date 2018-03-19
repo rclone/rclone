@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/AIWw-yWxHTNchYNbx8LfngbqcZ8\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/IPcVNse7nmUQLqz58rbBGkdlX1c\"",
  "discoveryVersion": "v1",
  "id": "youtube:v3",
  "name": "youtube",
  "canonicalName": "YouTube",
  "version": "v3",
- "revision": "20170918",
+ "revision": "20171215",
  "title": "YouTube Data API",
  "description": "Supports core YouTube features, such as uploading videos, creating and managing playlists, searching for content, and much more.",
  "ownerDomain": "google.com",
@@ -727,9 +727,11 @@
      "description": "The frame rate of the inbound video data.",
      "enum": [
       "30fps",
-      "60fps"
+      "60fps",
+      "variable"
      ],
      "enumDescriptions": [
+      "",
       "",
       ""
      ]
@@ -766,9 +768,11 @@
       "240p",
       "360p",
       "480p",
-      "720p"
+      "720p",
+      "variable"
      ],
      "enumDescriptions": [
+      "",
       "",
       "",
       "",
@@ -3066,9 +3070,11 @@
       "oflcR18",
       "oflcRp13",
       "oflcRp16",
+      "oflcRp18",
       "oflcUnrated"
      ],
      "enumDescriptions": [
+      "",
       "",
       "",
       "",
@@ -3938,6 +3944,10 @@
       "",
       ""
      ]
+    },
+    "enableAutoStart": {
+     "type": "boolean",
+     "description": "This setting indicates whether auto start is enabled for this broadcast."
     },
     "enableClosedCaptions": {
      "type": "boolean",
@@ -4868,6 +4878,7 @@
       "videoBitrateMismatch",
       "videoCodec",
       "videoCodecMismatch",
+      "videoIngestionFasterThanRealtime",
       "videoIngestionStarved",
       "videoInterlaceMismatch",
       "videoProfileMismatch",
@@ -4875,6 +4886,7 @@
       "videoResolutionUnsupported"
      ],
      "enumDescriptions": [
+      "",
       "",
       "",
       "",

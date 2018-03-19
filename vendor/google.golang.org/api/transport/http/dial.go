@@ -36,6 +36,9 @@ func NewClient(ctx context.Context, opts ...option.ClientOption) (*http.Client, 
 	for _, opt := range opts {
 		opt.Apply(&o)
 	}
+	if err := o.Validate(); err != nil {
+		return nil, "", err
+	}
 	if o.GRPCConn != nil {
 		return nil, "", errors.New("unsupported gRPC connection specified")
 	}
@@ -43,30 +46,32 @@ func NewClient(ctx context.Context, opts ...option.ClientOption) (*http.Client, 
 	if o.HTTPClient != nil {
 		return o.HTTPClient, o.Endpoint, nil
 	}
-	if o.APIKey != "" {
-		hc := &http.Client{
+	uat := userAgentTransport{
+		base:      baseTransport(ctx),
+		userAgent: o.UserAgent,
+	}
+	var hc *http.Client
+	switch {
+	case o.NoAuth:
+		hc = &http.Client{Transport: uat}
+	case o.APIKey != "":
+		hc = &http.Client{
 			Transport: &transport.APIKey{
-				Key: o.APIKey,
-				Transport: userAgentTransport{
-					base:      baseTransport(ctx),
-					userAgent: o.UserAgent,
-				},
+				Key:       o.APIKey,
+				Transport: uat,
 			},
 		}
-		return hc, o.Endpoint, nil
-	}
-	creds, err := internal.Creds(ctx, &o)
-	if err != nil {
-		return nil, "", err
-	}
-	hc := &http.Client{
-		Transport: &oauth2.Transport{
-			Source: creds.TokenSource,
-			Base: userAgentTransport{
-				base:      baseTransport(ctx),
-				userAgent: o.UserAgent,
+	default:
+		creds, err := internal.Creds(ctx, &o)
+		if err != nil {
+			return nil, "", err
+		}
+		hc = &http.Client{
+			Transport: &oauth2.Transport{
+				Source: creds.TokenSource,
+				Base:   uat,
 			},
-		},
+		}
 	}
 	return hc, o.Endpoint, nil
 }

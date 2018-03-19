@@ -17,6 +17,7 @@
 package builder
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -29,7 +30,6 @@ import (
 	"unicode"
 
 	"github.com/pengsrc/go-shared/convert"
-	"github.com/pengsrc/go-shared/json"
 
 	"github.com/yunify/qingstor-sdk-go/request/data"
 	"github.com/yunify/qingstor-sdk-go/utils"
@@ -100,7 +100,7 @@ func (b *BaseBuilder) parseRequestQueryAndHeaders() error {
 	requestQuery := map[string]string{}
 	requestHeaders := map[string]string{}
 	maps := map[string](map[string]string){
-		"query":  requestQuery,
+		"query":   requestQuery,
 		"headers": requestHeaders,
 	}
 
@@ -177,7 +177,7 @@ func (b *BaseBuilder) parseRequestBody() error {
 	}
 
 	if len(requestData) != 0 {
-		dataValue, err := json.Encode(requestData, true)
+		dataValue, err := json.Marshal(requestData)
 		if err != nil {
 			return err
 		}

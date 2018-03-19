@@ -135,8 +135,8 @@ type FieldMask struct {
 }
 
 func (s *FieldMask) MarshalJSON() ([]byte, error) {
-	type noMethod FieldMask
-	raw := noMethod(*s)
+	type NoMethod FieldMask
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -175,8 +175,8 @@ type MobileAppPanel struct {
 }
 
 func (s *MobileAppPanel) MarshalJSON() ([]byte, error) {
-	type noMethod MobileAppPanel
-	raw := noMethod(*s)
+	type NoMethod MobileAppPanel
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -215,8 +215,8 @@ type MobileAppPanelsListResponse struct {
 }
 
 func (s *MobileAppPanelsListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod MobileAppPanelsListResponse
-	raw := noMethod(*s)
+	type NoMethod MobileAppPanelsListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -245,8 +245,8 @@ type PageInfo struct {
 }
 
 func (s *PageInfo) MarshalJSON() ([]byte, error) {
-	type noMethod PageInfo
-	raw := noMethod(*s)
+	type NoMethod PageInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -271,8 +271,8 @@ type ResultsGetRequest struct {
 }
 
 func (s *ResultsGetRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ResultsGetRequest
-	raw := noMethod(*s)
+	type NoMethod ResultsGetRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -299,8 +299,8 @@ type ResultsMask struct {
 }
 
 func (s *ResultsMask) MarshalJSON() ([]byte, error) {
-	type noMethod ResultsMask
-	raw := noMethod(*s)
+	type NoMethod ResultsMask
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -349,8 +349,8 @@ type Survey struct {
 }
 
 func (s *Survey) MarshalJSON() ([]byte, error) {
-	type noMethod Survey
-	raw := noMethod(*s)
+	type NoMethod Survey
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -387,8 +387,8 @@ type SurveyAudience struct {
 }
 
 func (s *SurveyAudience) MarshalJSON() ([]byte, error) {
-	type noMethod SurveyAudience
-	raw := noMethod(*s)
+	type NoMethod SurveyAudience
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -421,8 +421,8 @@ type SurveyCost struct {
 }
 
 func (s *SurveyCost) MarshalJSON() ([]byte, error) {
-	type noMethod SurveyCost
-	raw := noMethod(*s)
+	type NoMethod SurveyCost
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -481,8 +481,8 @@ type SurveyQuestion struct {
 }
 
 func (s *SurveyQuestion) MarshalJSON() ([]byte, error) {
-	type noMethod SurveyQuestion
-	raw := noMethod(*s)
+	type NoMethod SurveyQuestion
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -511,8 +511,8 @@ type SurveyQuestionImage struct {
 }
 
 func (s *SurveyQuestionImage) MarshalJSON() ([]byte, error) {
-	type noMethod SurveyQuestionImage
-	raw := noMethod(*s)
+	type NoMethod SurveyQuestionImage
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -539,8 +539,8 @@ type SurveyRejection struct {
 }
 
 func (s *SurveyRejection) MarshalJSON() ([]byte, error) {
-	type noMethod SurveyRejection
-	raw := noMethod(*s)
+	type NoMethod SurveyRejection
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -571,8 +571,8 @@ type SurveyResults struct {
 }
 
 func (s *SurveyResults) MarshalJSON() ([]byte, error) {
-	type noMethod SurveyResults
-	raw := noMethod(*s)
+	type NoMethod SurveyResults
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -603,8 +603,8 @@ type SurveysDeleteResponse struct {
 }
 
 func (s *SurveysDeleteResponse) MarshalJSON() ([]byte, error) {
-	type noMethod SurveysDeleteResponse
-	raw := noMethod(*s)
+	type NoMethod SurveysDeleteResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -642,8 +642,8 @@ type SurveysListResponse struct {
 }
 
 func (s *SurveysListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod SurveysListResponse
-	raw := noMethod(*s)
+	type NoMethod SurveysListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -673,8 +673,8 @@ type SurveysStartRequest struct {
 }
 
 func (s *SurveysStartRequest) MarshalJSON() ([]byte, error) {
-	type noMethod SurveysStartRequest
-	raw := noMethod(*s)
+	type NoMethod SurveysStartRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -705,8 +705,8 @@ type SurveysStartResponse struct {
 }
 
 func (s *SurveysStartResponse) MarshalJSON() ([]byte, error) {
-	type noMethod SurveysStartResponse
-	raw := noMethod(*s)
+	type NoMethod SurveysStartResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -737,8 +737,8 @@ type SurveysStopResponse struct {
 }
 
 func (s *SurveysStopResponse) MarshalJSON() ([]byte, error) {
-	type noMethod SurveysStopResponse
-	raw := noMethod(*s)
+	type NoMethod SurveysStopResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -765,8 +765,8 @@ type TokenPagination struct {
 }
 
 func (s *TokenPagination) MarshalJSON() ([]byte, error) {
-	type noMethod TokenPagination
-	raw := noMethod(*s)
+	type NoMethod TokenPagination
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -878,7 +878,7 @@ func (c *MobileapppanelsGetCall) Do(opts ...googleapi.CallOption) (*MobileAppPan
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1030,7 +1030,7 @@ func (c *MobileapppanelsListCall) Do(opts ...googleapi.CallOption) (*MobileAppPa
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1168,7 +1168,7 @@ func (c *MobileapppanelsUpdateCall) Do(opts ...googleapi.CallOption) (*MobileApp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1329,7 +1329,7 @@ func (c *ResultsGetCall) Do(opts ...googleapi.CallOption) (*SurveyResults, error
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1458,7 +1458,7 @@ func (c *SurveysDeleteCall) Do(opts ...googleapi.CallOption) (*SurveysDeleteResp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1596,7 +1596,7 @@ func (c *SurveysGetCall) Do(opts ...googleapi.CallOption) (*Survey, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1723,7 +1723,7 @@ func (c *SurveysInsertCall) Do(opts ...googleapi.CallOption) (*Survey, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1866,7 +1866,7 @@ func (c *SurveysListCall) Do(opts ...googleapi.CallOption) (*SurveysListResponse
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2003,7 +2003,7 @@ func (c *SurveysStartCall) Do(opts ...googleapi.CallOption) (*SurveysStartRespon
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2129,7 +2129,7 @@ func (c *SurveysStopCall) Do(opts ...googleapi.CallOption) (*SurveysStopResponse
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2260,7 +2260,7 @@ func (c *SurveysUpdateCall) Do(opts ...googleapi.CallOption) (*Survey, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

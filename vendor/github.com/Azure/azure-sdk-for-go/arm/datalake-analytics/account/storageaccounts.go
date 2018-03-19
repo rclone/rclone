@@ -101,7 +101,9 @@ func (client StorageAccountsClient) AddPreparer(resourceGroupName string, accoun
 // AddSender sends the Add request. The method will close the
 // http.Response Body if it receives an error.
 func (client StorageAccountsClient) AddSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // AddResponder handles the response to the Add request. The method always
@@ -168,7 +170,9 @@ func (client StorageAccountsClient) DeletePreparer(resourceGroupName string, acc
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client StorageAccountsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -235,7 +239,9 @@ func (client StorageAccountsClient) GetPreparer(resourceGroupName string, accoun
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client StorageAccountsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -306,7 +312,9 @@ func (client StorageAccountsClient) GetStorageContainerPreparer(resourceGroupNam
 // GetStorageContainerSender sends the GetStorageContainer request. The method will close the
 // http.Response Body if it receives an error.
 func (client StorageAccountsClient) GetStorageContainerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetStorageContainerResponder handles the response to the GetStorageContainer request. The method always
@@ -408,7 +416,9 @@ func (client StorageAccountsClient) ListByAccountPreparer(resourceGroupName stri
 // ListByAccountSender sends the ListByAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client StorageAccountsClient) ListByAccountSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByAccountResponder handles the response to the ListByAccount request. The method always
@@ -548,7 +558,9 @@ func (client StorageAccountsClient) ListSasTokensPreparer(resourceGroupName stri
 // ListSasTokensSender sends the ListSasTokens request. The method will close the
 // http.Response Body if it receives an error.
 func (client StorageAccountsClient) ListSasTokensSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListSasTokensResponder handles the response to the ListSasTokens request. The method always
@@ -686,7 +698,9 @@ func (client StorageAccountsClient) ListStorageContainersPreparer(resourceGroupN
 // ListStorageContainersSender sends the ListStorageContainers request. The method will close the
 // http.Response Body if it receives an error.
 func (client StorageAccountsClient) ListStorageContainersSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListStorageContainersResponder handles the response to the ListStorageContainers request. The method always
@@ -830,7 +844,9 @@ func (client StorageAccountsClient) UpdatePreparer(resourceGroupName string, acc
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client StorageAccountsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

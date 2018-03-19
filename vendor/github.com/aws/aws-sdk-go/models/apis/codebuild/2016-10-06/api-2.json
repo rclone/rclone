@@ -102,6 +102,19 @@
         {"shape":"OAuthProviderException"}
       ]
     },
+    "InvalidateProjectCache":{
+      "name":"InvalidateProjectCache",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"InvalidateProjectCacheInput"},
+      "output":{"shape":"InvalidateProjectCacheOutput"},
+      "errors":[
+        {"shape":"InvalidInputException"},
+        {"shape":"ResourceNotFoundException"}
+      ]
+    },
     "ListBuilds":{
       "name":"ListBuilds",
       "http":{
@@ -275,11 +288,14 @@
         "phases":{"shape":"BuildPhases"},
         "source":{"shape":"ProjectSource"},
         "artifacts":{"shape":"BuildArtifacts"},
+        "cache":{"shape":"ProjectCache"},
         "environment":{"shape":"ProjectEnvironment"},
         "logs":{"shape":"LogsLocation"},
         "timeoutInMinutes":{"shape":"WrapperInt"},
         "buildComplete":{"shape":"Boolean"},
-        "initiator":{"shape":"String"}
+        "initiator":{"shape":"String"},
+        "vpcConfig":{"shape":"VpcConfig"},
+        "networkInterface":{"shape":"NetworkInterface"}
       }
     },
     "BuildArtifacts":{
@@ -341,6 +357,13 @@
       "type":"list",
       "member":{"shape":"BuildNotDeleted"}
     },
+    "CacheType":{
+      "type":"string",
+      "enum":[
+        "NO_CACHE",
+        "S3"
+      ]
+    },
     "ComputeType":{
       "type":"string",
       "enum":[
@@ -362,11 +385,14 @@
         "description":{"shape":"ProjectDescription"},
         "source":{"shape":"ProjectSource"},
         "artifacts":{"shape":"ProjectArtifacts"},
+        "cache":{"shape":"ProjectCache"},
         "environment":{"shape":"ProjectEnvironment"},
         "serviceRole":{"shape":"NonEmptyString"},
         "timeoutInMinutes":{"shape":"TimeOut"},
         "encryptionKey":{"shape":"NonEmptyString"},
-        "tags":{"shape":"TagList"}
+        "tags":{"shape":"TagList"},
+        "vpcConfig":{"shape":"VpcConfig"},
+        "badgeEnabled":{"shape":"WrapperBoolean"}
       }
     },
     "CreateProjectOutput":{
@@ -416,7 +442,8 @@
       "type":"structure",
       "members":{
         "name":{"shape":"String"},
-        "description":{"shape":"String"}
+        "description":{"shape":"String"},
+        "versions":{"shape":"ImageVersions"}
       }
     },
     "EnvironmentImages":{
@@ -472,11 +499,27 @@
       "type":"list",
       "member":{"shape":"EnvironmentVariable"}
     },
+    "ImageVersions":{
+      "type":"list",
+      "member":{"shape":"String"}
+    },
     "InvalidInputException":{
       "type":"structure",
       "members":{
       },
       "exception":true
+    },
+    "InvalidateProjectCacheInput":{
+      "type":"structure",
+      "required":["projectName"],
+      "members":{
+        "projectName":{"shape":"NonEmptyString"}
+      }
+    },
+    "InvalidateProjectCacheOutput":{
+      "type":"structure",
+      "members":{
+      }
     },
     "KeyInput":{
       "type":"string",
@@ -562,6 +605,13 @@
         "deepLink":{"shape":"String"}
       }
     },
+    "NetworkInterface":{
+      "type":"structure",
+      "members":{
+        "subnetId":{"shape":"NonEmptyString"},
+        "networkInterfaceId":{"shape":"NonEmptyString"}
+      }
+    },
     "NonEmptyString":{
       "type":"string",
       "min":1
@@ -599,6 +649,7 @@
         "description":{"shape":"ProjectDescription"},
         "source":{"shape":"ProjectSource"},
         "artifacts":{"shape":"ProjectArtifacts"},
+        "cache":{"shape":"ProjectCache"},
         "environment":{"shape":"ProjectEnvironment"},
         "serviceRole":{"shape":"NonEmptyString"},
         "timeoutInMinutes":{"shape":"TimeOut"},
@@ -606,7 +657,9 @@
         "tags":{"shape":"TagList"},
         "created":{"shape":"Timestamp"},
         "lastModified":{"shape":"Timestamp"},
-        "webhook":{"shape":"Webhook"}
+        "webhook":{"shape":"Webhook"},
+        "vpcConfig":{"shape":"VpcConfig"},
+        "badge":{"shape":"ProjectBadge"}
       }
     },
     "ProjectArtifacts":{
@@ -619,6 +672,21 @@
         "namespaceType":{"shape":"ArtifactNamespace"},
         "name":{"shape":"String"},
         "packaging":{"shape":"ArtifactPackaging"}
+      }
+    },
+    "ProjectBadge":{
+      "type":"structure",
+      "members":{
+        "badgeEnabled":{"shape":"Boolean"},
+        "badgeRequestUrl":{"shape":"String"}
+      }
+    },
+    "ProjectCache":{
+      "type":"structure",
+      "required":["type"],
+      "members":{
+        "type":{"shape":"CacheType"},
+        "location":{"shape":"String"}
       }
     },
     "ProjectDescription":{
@@ -686,6 +754,11 @@
       "members":{
       },
       "exception":true
+    },
+    "SecurityGroupIds":{
+      "type":"list",
+      "member":{"shape":"NonEmptyString"},
+      "max":5
     },
     "SortOrderType":{
       "type":"string",
@@ -759,6 +832,11 @@
       }
     },
     "String":{"type":"string"},
+    "Subnets":{
+      "type":"list",
+      "member":{"shape":"NonEmptyString"},
+      "max":16
+    },
     "Tag":{
       "type":"structure",
       "members":{
@@ -786,11 +864,14 @@
         "description":{"shape":"ProjectDescription"},
         "source":{"shape":"ProjectSource"},
         "artifacts":{"shape":"ProjectArtifacts"},
+        "cache":{"shape":"ProjectCache"},
         "environment":{"shape":"ProjectEnvironment"},
         "serviceRole":{"shape":"NonEmptyString"},
         "timeoutInMinutes":{"shape":"TimeOut"},
         "encryptionKey":{"shape":"NonEmptyString"},
-        "tags":{"shape":"TagList"}
+        "tags":{"shape":"TagList"},
+        "vpcConfig":{"shape":"VpcConfig"},
+        "badgeEnabled":{"shape":"WrapperBoolean"}
       }
     },
     "UpdateProjectOutput":{
@@ -804,6 +885,14 @@
       "max":255,
       "min":1,
       "pattern":"^([\\\\p{L}\\\\p{Z}\\\\p{N}_.:/=@+\\\\-]*)$"
+    },
+    "VpcConfig":{
+      "type":"structure",
+      "members":{
+        "vpcId":{"shape":"NonEmptyString"},
+        "subnets":{"shape":"Subnets"},
+        "securityGroupIds":{"shape":"SecurityGroupIds"}
+      }
     },
     "Webhook":{
       "type":"structure",

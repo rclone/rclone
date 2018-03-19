@@ -114,6 +114,8 @@ func (m *Main) Run(args ...string) error {
 		return newCompactCommand(m).Run(args[1:]...)
 	case "dump":
 		return newDumpCommand(m).Run(args[1:]...)
+	case "page-item":
+		return newPageItemCommand(m).Run(args[1:]...)
 	case "get":
 		return newGetCommand(m).Run(args[1:]...)
 	case "info":
@@ -153,6 +155,7 @@ The commands are:
     help        print this screen
     page        print one or more pages in human readable format
     pages       print list of pages with their types
+    page-item   print the key and value of a page item.
     stats       iterate over all pages and generate usage stats
 
 Use "bolt [command] -h" for more information about a command.
@@ -416,9 +419,173 @@ func (cmd *DumpCommand) PrintPage(w io.Writer, r io.ReaderAt, pageID int, pageSi
 // Usage returns the help message.
 func (cmd *DumpCommand) Usage() string {
 	return strings.TrimLeft(`
-usage: bolt dump -page PAGEID PATH
+usage: bolt dump PATH pageid [pageid...]
 
-Dump prints a hexadecimal dump of a single page.
+Dump prints a hexadecimal dump of one or more pages.
+`, "\n")
+}
+
+// PageItemCommand represents the "page-item" command execution.
+type PageItemCommand struct {
+	Stdin  io.Reader
+	Stdout io.Writer
+	Stderr io.Writer
+}
+
+// newPageItemCommand returns a PageItemCommand.
+func newPageItemCommand(m *Main) *PageItemCommand {
+	return &PageItemCommand{
+		Stdin:  m.Stdin,
+		Stdout: m.Stdout,
+		Stderr: m.Stderr,
+	}
+}
+
+type pageItemOptions struct {
+	help      bool
+	keyOnly   bool
+	valueOnly bool
+	format    string
+}
+
+// Run executes the command.
+func (cmd *PageItemCommand) Run(args ...string) error {
+	// Parse flags.
+	options := &pageItemOptions{}
+	fs := flag.NewFlagSet("", flag.ContinueOnError)
+	fs.BoolVar(&options.keyOnly, "key-only", false, "Print only the key")
+	fs.BoolVar(&options.valueOnly, "value-only", false, "Print only the value")
+	fs.StringVar(&options.format, "format", "ascii-encoded", "Output format. One of: ascii-encoded|hex|bytes")
+	fs.BoolVar(&options.help, "h", false, "")
+	if err := fs.Parse(args); err != nil {
+		return err
+	} else if options.help {
+		fmt.Fprintln(cmd.Stderr, cmd.Usage())
+		return ErrUsage
+	}
+
+	if options.keyOnly && options.valueOnly {
+		return fmt.Errorf("The --key-only or --value-only flag may be set, but not both.")
+	}
+
+	// Require database path and page id.
+	path := fs.Arg(0)
+	if path == "" {
+		return ErrPathRequired
+	} else if _, err := os.Stat(path); os.IsNotExist(err) {
+		return ErrFileNotFound
+	}
+
+	// Read page id.
+	pageID, err := strconv.Atoi(fs.Arg(1))
+	if err != nil {
+		return err
+	}
+
+	// Read item id.
+	itemID, err := strconv.Atoi(fs.Arg(2))
+	if err != nil {
+		return err
+	}
+
+	// Open database file handler.
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = f.Close() }()
+
+	// Retrieve page info and page size.
+	_, buf, err := ReadPage(path, pageID)
+	if err != nil {
+		return err
+	}
+
+	if !options.valueOnly {
+		err := cmd.PrintLeafItemKey(cmd.Stdout, buf, uint16(itemID), options.format)
+		if err != nil {
+			return err
+		}
+	}
+	if !options.keyOnly {
+		err := cmd.PrintLeafItemValue(cmd.Stdout, buf, uint16(itemID), options.format)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// leafPageElement retrieves a leaf page element.
+func (cmd *PageItemCommand) leafPageElement(pageBytes []byte, index uint16) (*leafPageElement, error) {
+	p := (*page)(unsafe.Pointer(&pageBytes[0]))
+	if index >= p.count {
+		return nil, fmt.Errorf("leafPageElement: expected item index less than %d, but got %d.", p.count, index)
+	}
+	if p.Type() != "leaf" {
+		return nil, fmt.Errorf("leafPageElement: expected page type of 'leaf', but got '%s'", p.Type())
+	}
+	return p.leafPageElement(index), nil
+}
+
+// writeBytes writes the byte to the writer. Supported formats: ascii-encoded, hex, bytes.
+func (cmd *PageItemCommand) writeBytes(w io.Writer, b []byte, format string) error {
+	switch format {
+	case "ascii-encoded":
+		_, err := fmt.Fprintf(w, "%q", b)
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprintf(w, "\n")
+		return err
+	case "hex":
+		_, err := fmt.Fprintf(w, "%x", b)
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprintf(w, "\n")
+		return err
+	case "bytes":
+		_, err := w.Write(b)
+		return err
+	default:
+		return fmt.Errorf("writeBytes: unsupported format: %s", format)
+	}
+}
+
+// PrintLeafItemKey writes the bytes of a leaf element's key.
+func (cmd *PageItemCommand) PrintLeafItemKey(w io.Writer, pageBytes []byte, index uint16, format string) error {
+	e, err := cmd.leafPageElement(pageBytes, index)
+	if err != nil {
+		return err
+	}
+	return cmd.writeBytes(w, e.key(), format)
+}
+
+// PrintLeafItemKey writes the bytes of a leaf element's value.
+func (cmd *PageItemCommand) PrintLeafItemValue(w io.Writer, pageBytes []byte, index uint16, format string) error {
+	e, err := cmd.leafPageElement(pageBytes, index)
+	if err != nil {
+		return err
+	}
+	return cmd.writeBytes(w, e.value(), format)
+}
+
+// Usage returns the help message.
+func (cmd *PageItemCommand) Usage() string {
+	return strings.TrimLeft(`
+usage: bolt page-item [options] PATH pageid itemid
+
+Additional options include:
+
+	--key-only
+		Print only the key
+	--value-only
+		Print only the value
+	--format
+		Output format. One of: ascii-encoded|hex|bytes (default=ascii-encoded)
+
+page-item prints a page item key and value.
 `, "\n")
 }
 
@@ -592,13 +759,22 @@ func (cmd *PageCommand) PrintBranch(w io.Writer, buf []byte) error {
 func (cmd *PageCommand) PrintFreelist(w io.Writer, buf []byte) error {
 	p := (*page)(unsafe.Pointer(&buf[0]))
 
+	// Check for overflow and, if present, adjust starting index and actual element count.
+	idx, count := 0, int(p.count)
+	if p.count == 0xFFFF {
+		idx = 1
+		count = int(((*[maxAllocSize]pgid)(unsafe.Pointer(&p.ptr)))[0])
+	}
+
 	// Print number of items.
-	fmt.Fprintf(w, "Item Count: %d\n", p.count)
+	fmt.Fprintf(w, "Item Count: %d\n", count)
+	fmt.Fprintf(w, "Overflow: %d\n", p.overflow)
+
 	fmt.Fprintf(w, "\n")
 
 	// Print each page in the freelist.
 	ids := (*[maxAllocSize]pgid)(unsafe.Pointer(&p.ptr))
-	for i := uint16(0); i < p.count; i++ {
+	for i := int(idx); i < count; i++ {
 		fmt.Fprintf(w, "%d\n", ids[i])
 	}
 	fmt.Fprintf(w, "\n")
@@ -653,7 +829,7 @@ func (cmd *PageCommand) PrintPage(w io.Writer, r io.ReaderAt, pageID int, pageSi
 // Usage returns the help message.
 func (cmd *PageCommand) Usage() string {
 	return strings.TrimLeft(`
-usage: bolt page -page PATH pageid [pageid...]
+usage: bolt page PATH pageid [pageid...]
 
 Page prints one or more pages in human readable format.
 `, "\n")

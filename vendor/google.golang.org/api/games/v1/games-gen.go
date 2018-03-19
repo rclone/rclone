@@ -332,8 +332,8 @@ type AchievementDefinition struct {
 }
 
 func (s *AchievementDefinition) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementDefinition
-	raw := noMethod(*s)
+	type NoMethod AchievementDefinition
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -372,8 +372,8 @@ type AchievementDefinitionsListResponse struct {
 }
 
 func (s *AchievementDefinitionsListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementDefinitionsListResponse
-	raw := noMethod(*s)
+	type NoMethod AchievementDefinitionsListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -414,8 +414,8 @@ type AchievementIncrementResponse struct {
 }
 
 func (s *AchievementIncrementResponse) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementIncrementResponse
-	raw := noMethod(*s)
+	type NoMethod AchievementIncrementResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -456,8 +456,8 @@ type AchievementRevealResponse struct {
 }
 
 func (s *AchievementRevealResponse) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementRevealResponse
-	raw := noMethod(*s)
+	type NoMethod AchievementRevealResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -498,8 +498,8 @@ type AchievementSetStepsAtLeastResponse struct {
 }
 
 func (s *AchievementSetStepsAtLeastResponse) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementSetStepsAtLeastResponse
-	raw := noMethod(*s)
+	type NoMethod AchievementSetStepsAtLeastResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -537,8 +537,8 @@ type AchievementUnlockResponse struct {
 }
 
 func (s *AchievementUnlockResponse) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementUnlockResponse
-	raw := noMethod(*s)
+	type NoMethod AchievementUnlockResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -570,8 +570,8 @@ type AchievementUpdateMultipleRequest struct {
 }
 
 func (s *AchievementUpdateMultipleRequest) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementUpdateMultipleRequest
-	raw := noMethod(*s)
+	type NoMethod AchievementUpdateMultipleRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -607,8 +607,8 @@ type AchievementUpdateMultipleResponse struct {
 }
 
 func (s *AchievementUpdateMultipleResponse) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementUpdateMultipleResponse
-	raw := noMethod(*s)
+	type NoMethod AchievementUpdateMultipleResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -657,8 +657,8 @@ type AchievementUpdateRequest struct {
 }
 
 func (s *AchievementUpdateRequest) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementUpdateRequest
-	raw := noMethod(*s)
+	type NoMethod AchievementUpdateRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -710,8 +710,8 @@ type AchievementUpdateResponse struct {
 }
 
 func (s *AchievementUpdateResponse) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementUpdateResponse
-	raw := noMethod(*s)
+	type NoMethod AchievementUpdateResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -752,8 +752,8 @@ type AggregateStats struct {
 }
 
 func (s *AggregateStats) MarshalJSON() ([]byte, error) {
-	type noMethod AggregateStats
-	raw := noMethod(*s)
+	type NoMethod AggregateStats
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -789,8 +789,8 @@ type AnonymousPlayer struct {
 }
 
 func (s *AnonymousPlayer) MarshalJSON() ([]byte, error) {
-	type noMethod AnonymousPlayer
-	raw := noMethod(*s)
+	type NoMethod AnonymousPlayer
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -866,8 +866,8 @@ type Application struct {
 }
 
 func (s *Application) MarshalJSON() ([]byte, error) {
-	type noMethod Application
-	raw := noMethod(*s)
+	type NoMethod Application
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -902,8 +902,8 @@ type ApplicationCategory struct {
 }
 
 func (s *ApplicationCategory) MarshalJSON() ([]byte, error) {
-	type noMethod ApplicationCategory
-	raw := noMethod(*s)
+	type NoMethod ApplicationCategory
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -946,8 +946,8 @@ type ApplicationVerifyResponse struct {
 }
 
 func (s *ApplicationVerifyResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ApplicationVerifyResponse
-	raw := noMethod(*s)
+	type NoMethod ApplicationVerifyResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -982,8 +982,8 @@ type Category struct {
 }
 
 func (s *Category) MarshalJSON() ([]byte, error) {
-	type noMethod Category
-	raw := noMethod(*s)
+	type NoMethod Category
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1022,8 +1022,8 @@ type CategoryListResponse struct {
 }
 
 func (s *CategoryListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod CategoryListResponse
-	raw := noMethod(*s)
+	type NoMethod CategoryListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1072,8 +1072,8 @@ type EventBatchRecordFailure struct {
 }
 
 func (s *EventBatchRecordFailure) MarshalJSON() ([]byte, error) {
-	type noMethod EventBatchRecordFailure
-	raw := noMethod(*s)
+	type NoMethod EventBatchRecordFailure
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1105,8 +1105,8 @@ type EventChild struct {
 }
 
 func (s *EventChild) MarshalJSON() ([]byte, error) {
-	type noMethod EventChild
-	raw := noMethod(*s)
+	type NoMethod EventChild
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1162,8 +1162,8 @@ type EventDefinition struct {
 }
 
 func (s *EventDefinition) MarshalJSON() ([]byte, error) {
-	type noMethod EventDefinition
-	raw := noMethod(*s)
+	type NoMethod EventDefinition
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1202,8 +1202,8 @@ type EventDefinitionListResponse struct {
 }
 
 func (s *EventDefinitionListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod EventDefinitionListResponse
-	raw := noMethod(*s)
+	type NoMethod EventDefinitionListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1240,8 +1240,8 @@ type EventPeriodRange struct {
 }
 
 func (s *EventPeriodRange) MarshalJSON() ([]byte, error) {
-	type noMethod EventPeriodRange
-	raw := noMethod(*s)
+	type NoMethod EventPeriodRange
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1276,8 +1276,8 @@ type EventPeriodUpdate struct {
 }
 
 func (s *EventPeriodUpdate) MarshalJSON() ([]byte, error) {
-	type noMethod EventPeriodUpdate
-	raw := noMethod(*s)
+	type NoMethod EventPeriodUpdate
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1317,8 +1317,8 @@ type EventRecordFailure struct {
 }
 
 func (s *EventRecordFailure) MarshalJSON() ([]byte, error) {
-	type noMethod EventRecordFailure
-	raw := noMethod(*s)
+	type NoMethod EventRecordFailure
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1360,8 +1360,8 @@ type EventRecordRequest struct {
 }
 
 func (s *EventRecordRequest) MarshalJSON() ([]byte, error) {
-	type noMethod EventRecordRequest
-	raw := noMethod(*s)
+	type NoMethod EventRecordRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1397,8 +1397,8 @@ type EventUpdateRequest struct {
 }
 
 func (s *EventUpdateRequest) MarshalJSON() ([]byte, error) {
-	type noMethod EventUpdateRequest
-	raw := noMethod(*s)
+	type NoMethod EventUpdateRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1441,8 +1441,8 @@ type EventUpdateResponse struct {
 }
 
 func (s *EventUpdateResponse) MarshalJSON() ([]byte, error) {
-	type noMethod EventUpdateResponse
-	raw := noMethod(*s)
+	type NoMethod EventUpdateResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1478,8 +1478,8 @@ type GamesAchievementIncrement struct {
 }
 
 func (s *GamesAchievementIncrement) MarshalJSON() ([]byte, error) {
-	type noMethod GamesAchievementIncrement
-	raw := noMethod(*s)
+	type NoMethod GamesAchievementIncrement
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1511,8 +1511,8 @@ type GamesAchievementSetStepsAtLeast struct {
 }
 
 func (s *GamesAchievementSetStepsAtLeast) MarshalJSON() ([]byte, error) {
-	type noMethod GamesAchievementSetStepsAtLeast
-	raw := noMethod(*s)
+	type NoMethod GamesAchievementSetStepsAtLeast
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1552,8 +1552,8 @@ type ImageAsset struct {
 }
 
 func (s *ImageAsset) MarshalJSON() ([]byte, error) {
-	type noMethod ImageAsset
-	raw := noMethod(*s)
+	type NoMethod ImageAsset
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1613,8 +1613,8 @@ type Instance struct {
 }
 
 func (s *Instance) MarshalJSON() ([]byte, error) {
-	type noMethod Instance
-	raw := noMethod(*s)
+	type NoMethod Instance
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1655,8 +1655,8 @@ type InstanceAndroidDetails struct {
 }
 
 func (s *InstanceAndroidDetails) MarshalJSON() ([]byte, error) {
-	type noMethod InstanceAndroidDetails
-	raw := noMethod(*s)
+	type NoMethod InstanceAndroidDetails
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1706,8 +1706,8 @@ type InstanceIosDetails struct {
 }
 
 func (s *InstanceIosDetails) MarshalJSON() ([]byte, error) {
-	type noMethod InstanceIosDetails
-	raw := noMethod(*s)
+	type NoMethod InstanceIosDetails
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1743,8 +1743,8 @@ type InstanceWebDetails struct {
 }
 
 func (s *InstanceWebDetails) MarshalJSON() ([]byte, error) {
-	type noMethod InstanceWebDetails
-	raw := noMethod(*s)
+	type NoMethod InstanceWebDetails
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1797,8 +1797,8 @@ type Leaderboard struct {
 }
 
 func (s *Leaderboard) MarshalJSON() ([]byte, error) {
-	type noMethod Leaderboard
-	raw := noMethod(*s)
+	type NoMethod Leaderboard
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1861,8 +1861,8 @@ type LeaderboardEntry struct {
 }
 
 func (s *LeaderboardEntry) MarshalJSON() ([]byte, error) {
-	type noMethod LeaderboardEntry
-	raw := noMethod(*s)
+	type NoMethod LeaderboardEntry
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1901,8 +1901,8 @@ type LeaderboardListResponse struct {
 }
 
 func (s *LeaderboardListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod LeaderboardListResponse
-	raw := noMethod(*s)
+	type NoMethod LeaderboardListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1945,8 +1945,8 @@ type LeaderboardScoreRank struct {
 }
 
 func (s *LeaderboardScoreRank) MarshalJSON() ([]byte, error) {
-	type noMethod LeaderboardScoreRank
-	raw := noMethod(*s)
+	type NoMethod LeaderboardScoreRank
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1997,8 +1997,8 @@ type LeaderboardScores struct {
 }
 
 func (s *LeaderboardScores) MarshalJSON() ([]byte, error) {
-	type noMethod LeaderboardScores
-	raw := noMethod(*s)
+	type NoMethod LeaderboardScores
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2040,8 +2040,8 @@ type MetagameConfig struct {
 }
 
 func (s *MetagameConfig) MarshalJSON() ([]byte, error) {
-	type noMethod MetagameConfig
-	raw := noMethod(*s)
+	type NoMethod MetagameConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2097,8 +2097,8 @@ type NetworkDiagnostics struct {
 }
 
 func (s *NetworkDiagnostics) MarshalJSON() ([]byte, error) {
-	type noMethod NetworkDiagnostics
-	raw := noMethod(*s)
+	type NoMethod NetworkDiagnostics
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2149,8 +2149,8 @@ type ParticipantResult struct {
 }
 
 func (s *ParticipantResult) MarshalJSON() ([]byte, error) {
-	type noMethod ParticipantResult
-	raw := noMethod(*s)
+	type NoMethod ParticipantResult
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2200,8 +2200,8 @@ type PeerChannelDiagnostics struct {
 }
 
 func (s *PeerChannelDiagnostics) MarshalJSON() ([]byte, error) {
-	type noMethod PeerChannelDiagnostics
-	raw := noMethod(*s)
+	type NoMethod PeerChannelDiagnostics
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2244,8 +2244,8 @@ type PeerSessionDiagnostics struct {
 }
 
 func (s *PeerSessionDiagnostics) MarshalJSON() ([]byte, error) {
-	type noMethod PeerSessionDiagnostics
-	raw := noMethod(*s)
+	type NoMethod PeerSessionDiagnostics
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2282,8 +2282,8 @@ type Played struct {
 }
 
 func (s *Played) MarshalJSON() ([]byte, error) {
-	type noMethod Played
-	raw := noMethod(*s)
+	type NoMethod Played
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2360,8 +2360,8 @@ type Player struct {
 }
 
 func (s *Player) MarshalJSON() ([]byte, error) {
-	type noMethod Player
-	raw := noMethod(*s)
+	type NoMethod Player
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2394,8 +2394,8 @@ type PlayerName struct {
 }
 
 func (s *PlayerName) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerName
-	raw := noMethod(*s)
+	type NoMethod PlayerName
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2451,8 +2451,8 @@ type PlayerAchievement struct {
 }
 
 func (s *PlayerAchievement) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerAchievement
-	raw := noMethod(*s)
+	type NoMethod PlayerAchievement
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2491,8 +2491,8 @@ type PlayerAchievementListResponse struct {
 }
 
 func (s *PlayerAchievementListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerAchievementListResponse
-	raw := noMethod(*s)
+	type NoMethod PlayerAchievementListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2534,8 +2534,8 @@ type PlayerEvent struct {
 }
 
 func (s *PlayerEvent) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerEvent
-	raw := noMethod(*s)
+	type NoMethod PlayerEvent
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2574,8 +2574,8 @@ type PlayerEventListResponse struct {
 }
 
 func (s *PlayerEventListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerEventListResponse
-	raw := noMethod(*s)
+	type NoMethod PlayerEventListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2621,8 +2621,8 @@ type PlayerExperienceInfo struct {
 }
 
 func (s *PlayerExperienceInfo) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerExperienceInfo
-	raw := noMethod(*s)
+	type NoMethod PlayerExperienceInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2684,8 +2684,8 @@ type PlayerLeaderboardScore struct {
 }
 
 func (s *PlayerLeaderboardScore) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerLeaderboardScore
-	raw := noMethod(*s)
+	type NoMethod PlayerLeaderboardScore
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2727,8 +2727,8 @@ type PlayerLeaderboardScoreListResponse struct {
 }
 
 func (s *PlayerLeaderboardScoreListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerLeaderboardScoreListResponse
-	raw := noMethod(*s)
+	type NoMethod PlayerLeaderboardScoreListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2766,8 +2766,8 @@ type PlayerLevel struct {
 }
 
 func (s *PlayerLevel) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerLevel
-	raw := noMethod(*s)
+	type NoMethod PlayerLevel
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2806,8 +2806,8 @@ type PlayerListResponse struct {
 }
 
 func (s *PlayerListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerListResponse
-	raw := noMethod(*s)
+	type NoMethod PlayerListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2854,8 +2854,8 @@ type PlayerScore struct {
 }
 
 func (s *PlayerScore) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerScore
-	raw := noMethod(*s)
+	type NoMethod PlayerScore
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2891,8 +2891,8 @@ type PlayerScoreListResponse struct {
 }
 
 func (s *PlayerScoreListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerScoreListResponse
-	raw := noMethod(*s)
+	type NoMethod PlayerScoreListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2952,8 +2952,8 @@ type PlayerScoreResponse struct {
 }
 
 func (s *PlayerScoreResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerScoreResponse
-	raw := noMethod(*s)
+	type NoMethod PlayerScoreResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2985,8 +2985,8 @@ type PlayerScoreSubmissionList struct {
 }
 
 func (s *PlayerScoreSubmissionList) MarshalJSON() ([]byte, error) {
-	type noMethod PlayerScoreSubmissionList
-	raw := noMethod(*s)
+	type NoMethod PlayerScoreSubmissionList
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3018,8 +3018,8 @@ type ProfileSettings struct {
 }
 
 func (s *ProfileSettings) MarshalJSON() ([]byte, error) {
-	type noMethod ProfileSettings
-	raw := noMethod(*s)
+	type NoMethod ProfileSettings
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3063,8 +3063,8 @@ type PushToken struct {
 }
 
 func (s *PushToken) MarshalJSON() ([]byte, error) {
-	type noMethod PushToken
-	raw := noMethod(*s)
+	type NoMethod PushToken
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3095,8 +3095,8 @@ type PushTokenId struct {
 }
 
 func (s *PushTokenId) MarshalJSON() ([]byte, error) {
-	type noMethod PushTokenId
-	raw := noMethod(*s)
+	type NoMethod PushTokenId
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3130,8 +3130,8 @@ type PushTokenIdIos struct {
 }
 
 func (s *PushTokenIdIos) MarshalJSON() ([]byte, error) {
-	type noMethod PushTokenIdIos
-	raw := noMethod(*s)
+	type NoMethod PushTokenIdIos
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3231,8 +3231,8 @@ type Quest struct {
 }
 
 func (s *Quest) MarshalJSON() ([]byte, error) {
-	type noMethod Quest
-	raw := noMethod(*s)
+	type NoMethod Quest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3270,8 +3270,8 @@ type QuestContribution struct {
 }
 
 func (s *QuestContribution) MarshalJSON() ([]byte, error) {
-	type noMethod QuestContribution
-	raw := noMethod(*s)
+	type NoMethod QuestContribution
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3324,8 +3324,8 @@ type QuestCriterion struct {
 }
 
 func (s *QuestCriterion) MarshalJSON() ([]byte, error) {
-	type noMethod QuestCriterion
-	raw := noMethod(*s)
+	type NoMethod QuestCriterion
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3364,8 +3364,8 @@ type QuestListResponse struct {
 }
 
 func (s *QuestListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod QuestListResponse
-	raw := noMethod(*s)
+	type NoMethod QuestListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3417,8 +3417,8 @@ type QuestMilestone struct {
 }
 
 func (s *QuestMilestone) MarshalJSON() ([]byte, error) {
-	type noMethod QuestMilestone
-	raw := noMethod(*s)
+	type NoMethod QuestMilestone
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3464,8 +3464,8 @@ type RevisionCheckResponse struct {
 }
 
 func (s *RevisionCheckResponse) MarshalJSON() ([]byte, error) {
-	type noMethod RevisionCheckResponse
-	raw := noMethod(*s)
+	type NoMethod RevisionCheckResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3556,8 +3556,8 @@ type Room struct {
 }
 
 func (s *Room) MarshalJSON() ([]byte, error) {
-	type noMethod Room
-	raw := noMethod(*s)
+	type NoMethod Room
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3590,8 +3590,8 @@ type RoomAutoMatchStatus struct {
 }
 
 func (s *RoomAutoMatchStatus) MarshalJSON() ([]byte, error) {
-	type noMethod RoomAutoMatchStatus
-	raw := noMethod(*s)
+	type NoMethod RoomAutoMatchStatus
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3634,8 +3634,8 @@ type RoomAutoMatchingCriteria struct {
 }
 
 func (s *RoomAutoMatchingCriteria) MarshalJSON() ([]byte, error) {
-	type noMethod RoomAutoMatchingCriteria
-	raw := noMethod(*s)
+	type NoMethod RoomAutoMatchingCriteria
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3668,8 +3668,8 @@ type RoomClientAddress struct {
 }
 
 func (s *RoomClientAddress) MarshalJSON() ([]byte, error) {
-	type noMethod RoomClientAddress
-	raw := noMethod(*s)
+	type NoMethod RoomClientAddress
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3728,8 +3728,8 @@ type RoomCreateRequest struct {
 }
 
 func (s *RoomCreateRequest) MarshalJSON() ([]byte, error) {
-	type noMethod RoomCreateRequest
-	raw := noMethod(*s)
+	type NoMethod RoomCreateRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3768,8 +3768,8 @@ type RoomJoinRequest struct {
 }
 
 func (s *RoomJoinRequest) MarshalJSON() ([]byte, error) {
-	type noMethod RoomJoinRequest
-	raw := noMethod(*s)
+	type NoMethod RoomJoinRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3829,8 +3829,8 @@ type RoomLeaveDiagnostics struct {
 }
 
 func (s *RoomLeaveDiagnostics) MarshalJSON() ([]byte, error) {
-	type noMethod RoomLeaveDiagnostics
-	raw := noMethod(*s)
+	type NoMethod RoomLeaveDiagnostics
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3887,8 +3887,8 @@ type RoomLeaveRequest struct {
 }
 
 func (s *RoomLeaveRequest) MarshalJSON() ([]byte, error) {
-	type noMethod RoomLeaveRequest
-	raw := noMethod(*s)
+	type NoMethod RoomLeaveRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3926,8 +3926,8 @@ type RoomList struct {
 }
 
 func (s *RoomList) MarshalJSON() ([]byte, error) {
-	type noMethod RoomList
-	raw := noMethod(*s)
+	type NoMethod RoomList
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3963,8 +3963,8 @@ type RoomModification struct {
 }
 
 func (s *RoomModification) MarshalJSON() ([]byte, error) {
-	type noMethod RoomModification
-	raw := noMethod(*s)
+	type NoMethod RoomModification
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4029,8 +4029,8 @@ type RoomP2PStatus struct {
 }
 
 func (s *RoomP2PStatus) MarshalJSON() ([]byte, error) {
-	type noMethod RoomP2PStatus
-	raw := noMethod(*s)
+	type NoMethod RoomP2PStatus
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4062,8 +4062,8 @@ type RoomP2PStatuses struct {
 }
 
 func (s *RoomP2PStatuses) MarshalJSON() ([]byte, error) {
-	type noMethod RoomP2PStatuses
-	raw := noMethod(*s)
+	type NoMethod RoomP2PStatuses
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4150,8 +4150,8 @@ type RoomParticipant struct {
 }
 
 func (s *RoomParticipant) MarshalJSON() ([]byte, error) {
-	type noMethod RoomParticipant
-	raw := noMethod(*s)
+	type NoMethod RoomParticipant
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4215,8 +4215,8 @@ type RoomStatus struct {
 }
 
 func (s *RoomStatus) MarshalJSON() ([]byte, error) {
-	type noMethod RoomStatus
-	raw := noMethod(*s)
+	type NoMethod RoomStatus
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4260,8 +4260,8 @@ type ScoreSubmission struct {
 }
 
 func (s *ScoreSubmission) MarshalJSON() ([]byte, error) {
-	type noMethod ScoreSubmission
-	raw := noMethod(*s)
+	type NoMethod ScoreSubmission
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4331,8 +4331,8 @@ type Snapshot struct {
 }
 
 func (s *Snapshot) MarshalJSON() ([]byte, error) {
-	type noMethod Snapshot
-	raw := noMethod(*s)
+	type NoMethod Snapshot
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4373,8 +4373,8 @@ type SnapshotImage struct {
 }
 
 func (s *SnapshotImage) MarshalJSON() ([]byte, error) {
-	type noMethod SnapshotImage
-	raw := noMethod(*s)
+	type NoMethod SnapshotImage
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4414,8 +4414,8 @@ type SnapshotListResponse struct {
 }
 
 func (s *SnapshotListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod SnapshotListResponse
-	raw := noMethod(*s)
+	type NoMethod SnapshotListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4458,8 +4458,8 @@ type TurnBasedAutoMatchingCriteria struct {
 }
 
 func (s *TurnBasedAutoMatchingCriteria) MarshalJSON() ([]byte, error) {
-	type noMethod TurnBasedAutoMatchingCriteria
-	raw := noMethod(*s)
+	type NoMethod TurnBasedAutoMatchingCriteria
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4583,8 +4583,8 @@ type TurnBasedMatch struct {
 }
 
 func (s *TurnBasedMatch) MarshalJSON() ([]byte, error) {
-	type noMethod TurnBasedMatch
-	raw := noMethod(*s)
+	type NoMethod TurnBasedMatch
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4632,8 +4632,8 @@ type TurnBasedMatchCreateRequest struct {
 }
 
 func (s *TurnBasedMatchCreateRequest) MarshalJSON() ([]byte, error) {
-	type noMethod TurnBasedMatchCreateRequest
-	raw := noMethod(*s)
+	type NoMethod TurnBasedMatchCreateRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4671,8 +4671,8 @@ type TurnBasedMatchData struct {
 }
 
 func (s *TurnBasedMatchData) MarshalJSON() ([]byte, error) {
-	type noMethod TurnBasedMatchData
-	raw := noMethod(*s)
+	type NoMethod TurnBasedMatchData
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4705,8 +4705,8 @@ type TurnBasedMatchDataRequest struct {
 }
 
 func (s *TurnBasedMatchDataRequest) MarshalJSON() ([]byte, error) {
-	type noMethod TurnBasedMatchDataRequest
-	raw := noMethod(*s)
+	type NoMethod TurnBasedMatchDataRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4745,8 +4745,8 @@ type TurnBasedMatchList struct {
 }
 
 func (s *TurnBasedMatchList) MarshalJSON() ([]byte, error) {
-	type noMethod TurnBasedMatchList
-	raw := noMethod(*s)
+	type NoMethod TurnBasedMatchList
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4782,8 +4782,8 @@ type TurnBasedMatchModification struct {
 }
 
 func (s *TurnBasedMatchModification) MarshalJSON() ([]byte, error) {
-	type noMethod TurnBasedMatchModification
-	raw := noMethod(*s)
+	type NoMethod TurnBasedMatchModification
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4851,8 +4851,8 @@ type TurnBasedMatchParticipant struct {
 }
 
 func (s *TurnBasedMatchParticipant) MarshalJSON() ([]byte, error) {
-	type noMethod TurnBasedMatchParticipant
-	raw := noMethod(*s)
+	type NoMethod TurnBasedMatchParticipant
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4893,8 +4893,8 @@ type TurnBasedMatchRematch struct {
 }
 
 func (s *TurnBasedMatchRematch) MarshalJSON() ([]byte, error) {
-	type noMethod TurnBasedMatchRematch
-	raw := noMethod(*s)
+	type NoMethod TurnBasedMatchRematch
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4932,8 +4932,8 @@ type TurnBasedMatchResults struct {
 }
 
 func (s *TurnBasedMatchResults) MarshalJSON() ([]byte, error) {
-	type noMethod TurnBasedMatchResults
-	raw := noMethod(*s)
+	type NoMethod TurnBasedMatchResults
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -4977,8 +4977,8 @@ type TurnBasedMatchSync struct {
 }
 
 func (s *TurnBasedMatchSync) MarshalJSON() ([]byte, error) {
-	type noMethod TurnBasedMatchSync
-	raw := noMethod(*s)
+	type NoMethod TurnBasedMatchSync
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -5025,8 +5025,8 @@ type TurnBasedMatchTurn struct {
 }
 
 func (s *TurnBasedMatchTurn) MarshalJSON() ([]byte, error) {
-	type noMethod TurnBasedMatchTurn
-	raw := noMethod(*s)
+	type NoMethod TurnBasedMatchTurn
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -5043,13 +5043,6 @@ type AchievementDefinitionsListCall struct {
 // List: Lists all the achievement definitions for your application.
 func (r *AchievementDefinitionsService) List() *AchievementDefinitionsListCall {
 	c := &AchievementDefinitionsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *AchievementDefinitionsListCall) ConsistencyToken(consistencyToken int64) *AchievementDefinitionsListCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -5163,7 +5156,7 @@ func (c *AchievementDefinitionsListCall) Do(opts ...googleapi.CallOption) (*Achi
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5172,12 +5165,6 @@ func (c *AchievementDefinitionsListCall) Do(opts ...googleapi.CallOption) (*Achi
 	//   "httpMethod": "GET",
 	//   "id": "games.achievementDefinitions.list",
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -5246,13 +5233,6 @@ func (r *AchievementsService) Increment(achievementId string, stepsToIncrement i
 	c := &AchievementsIncrementCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.achievementId = achievementId
 	c.urlParams_.Set("stepsToIncrement", fmt.Sprint(stepsToIncrement))
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *AchievementsIncrementCall) ConsistencyToken(consistencyToken int64) *AchievementsIncrementCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -5341,7 +5321,7 @@ func (c *AchievementsIncrementCall) Do(opts ...googleapi.CallOption) (*Achieveme
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5358,12 +5338,6 @@ func (c *AchievementsIncrementCall) Do(opts ...googleapi.CallOption) (*Achieveme
 	//       "description": "The ID of the achievement used by this method.",
 	//       "location": "path",
 	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "requestId": {
@@ -5409,13 +5383,6 @@ type AchievementsListCall struct {
 func (r *AchievementsService) List(playerId string) *AchievementsListCall {
 	c := &AchievementsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.playerId = playerId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *AchievementsListCall) ConsistencyToken(consistencyToken int64) *AchievementsListCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -5545,7 +5512,7 @@ func (c *AchievementsListCall) Do(opts ...googleapi.CallOption) (*PlayerAchievem
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5557,12 +5524,6 @@ func (c *AchievementsListCall) Do(opts ...googleapi.CallOption) (*PlayerAchievem
 	//     "playerId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -5656,13 +5617,6 @@ func (r *AchievementsService) Reveal(achievementId string) *AchievementsRevealCa
 	return c
 }
 
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *AchievementsRevealCall) ConsistencyToken(consistencyToken int64) *AchievementsRevealCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
-	return c
-}
-
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -5739,7 +5693,7 @@ func (c *AchievementsRevealCall) Do(opts ...googleapi.CallOption) (*AchievementR
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5755,12 +5709,6 @@ func (c *AchievementsRevealCall) Do(opts ...googleapi.CallOption) (*AchievementR
 	//       "description": "The ID of the achievement used by this method.",
 	//       "location": "path",
 	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
 	//       "type": "string"
 	//     }
 	//   },
@@ -5794,13 +5742,6 @@ func (r *AchievementsService) SetStepsAtLeast(achievementId string, steps int64)
 	c := &AchievementsSetStepsAtLeastCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.achievementId = achievementId
 	c.urlParams_.Set("steps", fmt.Sprint(steps))
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *AchievementsSetStepsAtLeastCall) ConsistencyToken(consistencyToken int64) *AchievementsSetStepsAtLeastCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -5881,7 +5822,7 @@ func (c *AchievementsSetStepsAtLeastCall) Do(opts ...googleapi.CallOption) (*Ach
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5898,12 +5839,6 @@ func (c *AchievementsSetStepsAtLeastCall) Do(opts ...googleapi.CallOption) (*Ach
 	//       "description": "The ID of the achievement used by this method.",
 	//       "location": "path",
 	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "steps": {
@@ -5942,13 +5877,6 @@ type AchievementsUnlockCall struct {
 func (r *AchievementsService) Unlock(achievementId string) *AchievementsUnlockCall {
 	c := &AchievementsUnlockCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.achievementId = achievementId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *AchievementsUnlockCall) ConsistencyToken(consistencyToken int64) *AchievementsUnlockCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -6028,7 +5956,7 @@ func (c *AchievementsUnlockCall) Do(opts ...googleapi.CallOption) (*AchievementU
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6044,12 +5972,6 @@ func (c *AchievementsUnlockCall) Do(opts ...googleapi.CallOption) (*AchievementU
 	//       "description": "The ID of the achievement used by this method.",
 	//       "location": "path",
 	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
 	//       "type": "string"
 	//     }
 	//   },
@@ -6080,13 +6002,6 @@ type AchievementsUpdateMultipleCall struct {
 func (r *AchievementsService) UpdateMultiple(achievementupdatemultiplerequest *AchievementUpdateMultipleRequest) *AchievementsUpdateMultipleCall {
 	c := &AchievementsUpdateMultipleCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.achievementupdatemultiplerequest = achievementupdatemultiplerequest
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *AchievementsUpdateMultipleCall) ConsistencyToken(consistencyToken int64) *AchievementsUpdateMultipleCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -6169,7 +6084,7 @@ func (c *AchievementsUpdateMultipleCall) Do(opts ...googleapi.CallOption) (*Achi
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6177,14 +6092,6 @@ func (c *AchievementsUpdateMultipleCall) Do(opts ...googleapi.CallOption) (*Achi
 	//   "description": "Updates multiple achievements for the currently authenticated player.",
 	//   "httpMethod": "POST",
 	//   "id": "games.achievements.updateMultiple",
-	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     }
-	//   },
 	//   "path": "achievements/updateMultiple",
 	//   "request": {
 	//     "$ref": "AchievementUpdateMultipleRequest"
@@ -6218,13 +6125,6 @@ type ApplicationsGetCall struct {
 func (r *ApplicationsService) Get(applicationId string) *ApplicationsGetCall {
 	c := &ApplicationsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.applicationId = applicationId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *ApplicationsGetCall) ConsistencyToken(consistencyToken int64) *ApplicationsGetCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -6337,7 +6237,7 @@ func (c *ApplicationsGetCall) Do(opts ...googleapi.CallOption) (*Application, er
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6353,12 +6253,6 @@ func (c *ApplicationsGetCall) Do(opts ...googleapi.CallOption) (*Application, er
 	//       "description": "The application ID from the Google Play developer console.",
 	//       "location": "path",
 	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "language": {
@@ -6407,13 +6301,6 @@ type ApplicationsPlayedCall struct {
 // your application.
 func (r *ApplicationsService) Played() *ApplicationsPlayedCall {
 	c := &ApplicationsPlayedCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *ApplicationsPlayedCall) ConsistencyToken(consistencyToken int64) *ApplicationsPlayedCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -6473,14 +6360,6 @@ func (c *ApplicationsPlayedCall) Do(opts ...googleapi.CallOption) error {
 	//   "description": "Indicate that the the currently authenticated user is playing your application.",
 	//   "httpMethod": "POST",
 	//   "id": "games.applications.played",
-	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     }
-	//   },
 	//   "path": "applications/played",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/games",
@@ -6507,13 +6386,6 @@ type ApplicationsVerifyCall struct {
 func (r *ApplicationsService) Verify(applicationId string) *ApplicationsVerifyCall {
 	c := &ApplicationsVerifyCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.applicationId = applicationId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *ApplicationsVerifyCall) ConsistencyToken(consistencyToken int64) *ApplicationsVerifyCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -6606,7 +6478,7 @@ func (c *ApplicationsVerifyCall) Do(opts ...googleapi.CallOption) (*ApplicationV
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6622,12 +6494,6 @@ func (c *ApplicationsVerifyCall) Do(opts ...googleapi.CallOption) (*ApplicationV
 	//       "description": "The application ID from the Google Play developer console.",
 	//       "location": "path",
 	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
 	//       "type": "string"
 	//     }
 	//   },
@@ -6657,13 +6523,6 @@ type EventsListByPlayerCall struct {
 // in this application for the currently authenticated user.
 func (r *EventsService) ListByPlayer() *EventsListByPlayerCall {
 	c := &EventsListByPlayerCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *EventsListByPlayerCall) ConsistencyToken(consistencyToken int64) *EventsListByPlayerCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -6776,7 +6635,7 @@ func (c *EventsListByPlayerCall) Do(opts ...googleapi.CallOption) (*PlayerEventL
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6785,12 +6644,6 @@ func (c *EventsListByPlayerCall) Do(opts ...googleapi.CallOption) (*PlayerEventL
 	//   "httpMethod": "GET",
 	//   "id": "games.events.listByPlayer",
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -6857,13 +6710,6 @@ type EventsListDefinitionsCall struct {
 // application.
 func (r *EventsService) ListDefinitions() *EventsListDefinitionsCall {
 	c := &EventsListDefinitionsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *EventsListDefinitionsCall) ConsistencyToken(consistencyToken int64) *EventsListDefinitionsCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -6976,7 +6822,7 @@ func (c *EventsListDefinitionsCall) Do(opts ...googleapi.CallOption) (*EventDefi
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6985,12 +6831,6 @@ func (c *EventsListDefinitionsCall) Do(opts ...googleapi.CallOption) (*EventDefi
 	//   "httpMethod": "GET",
 	//   "id": "games.events.listDefinitions",
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -7058,13 +6898,6 @@ type EventsRecordCall struct {
 func (r *EventsService) Record(eventrecordrequest *EventRecordRequest) *EventsRecordCall {
 	c := &EventsRecordCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.eventrecordrequest = eventrecordrequest
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *EventsRecordCall) ConsistencyToken(consistencyToken int64) *EventsRecordCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -7153,7 +6986,7 @@ func (c *EventsRecordCall) Do(opts ...googleapi.CallOption) (*EventUpdateRespons
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7162,12 +6995,6 @@ func (c *EventsRecordCall) Do(opts ...googleapi.CallOption) (*EventUpdateRespons
 	//   "httpMethod": "POST",
 	//   "id": "games.events.record",
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -7204,13 +7031,6 @@ type LeaderboardsGetCall struct {
 func (r *LeaderboardsService) Get(leaderboardId string) *LeaderboardsGetCall {
 	c := &LeaderboardsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.leaderboardId = leaderboardId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *LeaderboardsGetCall) ConsistencyToken(consistencyToken int64) *LeaderboardsGetCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -7310,7 +7130,7 @@ func (c *LeaderboardsGetCall) Do(opts ...googleapi.CallOption) (*Leaderboard, er
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7322,12 +7142,6 @@ func (c *LeaderboardsGetCall) Do(opts ...googleapi.CallOption) (*Leaderboard, er
 	//     "leaderboardId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -7365,13 +7179,6 @@ type LeaderboardsListCall struct {
 // List: Lists all the leaderboard metadata for your application.
 func (r *LeaderboardsService) List() *LeaderboardsListCall {
 	c := &LeaderboardsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *LeaderboardsListCall) ConsistencyToken(consistencyToken int64) *LeaderboardsListCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -7484,7 +7291,7 @@ func (c *LeaderboardsListCall) Do(opts ...googleapi.CallOption) (*LeaderboardLis
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7493,12 +7300,6 @@ func (c *LeaderboardsListCall) Do(opts ...googleapi.CallOption) (*LeaderboardLis
 	//   "httpMethod": "GET",
 	//   "id": "games.leaderboards.list",
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -7565,13 +7366,6 @@ type MetagameGetMetagameConfigCall struct {
 // calling application.
 func (r *MetagameService) GetMetagameConfig() *MetagameGetMetagameConfigCall {
 	c := &MetagameGetMetagameConfigCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *MetagameGetMetagameConfigCall) ConsistencyToken(consistencyToken int64) *MetagameGetMetagameConfigCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -7661,7 +7455,7 @@ func (c *MetagameGetMetagameConfigCall) Do(opts ...googleapi.CallOption) (*Metag
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7669,14 +7463,6 @@ func (c *MetagameGetMetagameConfigCall) Do(opts ...googleapi.CallOption) (*Metag
 	//   "description": "Return the metagame configuration data for the calling application.",
 	//   "httpMethod": "GET",
 	//   "id": "games.metagame.getMetagameConfig",
-	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     }
-	//   },
 	//   "path": "metagameConfig",
 	//   "response": {
 	//     "$ref": "MetagameConfig"
@@ -7707,13 +7493,6 @@ func (r *MetagameService) ListCategoriesByPlayer(playerId string, collection str
 	c := &MetagameListCategoriesByPlayerCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.playerId = playerId
 	c.collection = collection
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *MetagameListCategoriesByPlayerCall) ConsistencyToken(consistencyToken int64) *MetagameListCategoriesByPlayerCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -7830,7 +7609,7 @@ func (c *MetagameListCategoriesByPlayerCall) Do(opts ...googleapi.CallOption) (*
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7853,12 +7632,6 @@ func (c *MetagameListCategoriesByPlayerCall) Do(opts ...googleapi.CallOption) (*
 	//       ],
 	//       "location": "path",
 	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "language": {
@@ -7935,13 +7708,6 @@ type PlayersGetCall struct {
 func (r *PlayersService) Get(playerId string) *PlayersGetCall {
 	c := &PlayersGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.playerId = playerId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *PlayersGetCall) ConsistencyToken(consistencyToken int64) *PlayersGetCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -8041,7 +7807,7 @@ func (c *PlayersGetCall) Do(opts ...googleapi.CallOption) (*Player, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8053,12 +7819,6 @@ func (c *PlayersGetCall) Do(opts ...googleapi.CallOption) (*Player, error) {
 	//     "playerId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -8099,13 +7859,6 @@ type PlayersListCall struct {
 func (r *PlayersService) List(collection string) *PlayersListCall {
 	c := &PlayersListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.collection = collection
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *PlayersListCall) ConsistencyToken(consistencyToken int64) *PlayersListCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -8221,7 +7974,7 @@ func (c *PlayersListCall) Do(opts ...googleapi.CallOption) (*PlayerListResponse,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8249,12 +8002,6 @@ func (c *PlayersListCall) Do(opts ...googleapi.CallOption) (*PlayerListResponse,
 	//       ],
 	//       "location": "path",
 	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "language": {
@@ -8327,13 +8074,6 @@ func (r *PushtokensService) Remove(pushtokenid *PushTokenId) *PushtokensRemoveCa
 	return c
 }
 
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *PushtokensRemoveCall) ConsistencyToken(consistencyToken int64) *PushtokensRemoveCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
-	return c
-}
-
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -8395,14 +8135,6 @@ func (c *PushtokensRemoveCall) Do(opts ...googleapi.CallOption) error {
 	//   "description": "Removes a push token for the current user and application. Removing a non-existent push token will report success.",
 	//   "httpMethod": "POST",
 	//   "id": "games.pushtokens.remove",
-	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     }
-	//   },
 	//   "path": "pushtokens/remove",
 	//   "request": {
 	//     "$ref": "PushTokenId"
@@ -8429,13 +8161,6 @@ type PushtokensUpdateCall struct {
 func (r *PushtokensService) Update(pushtoken *PushToken) *PushtokensUpdateCall {
 	c := &PushtokensUpdateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.pushtoken = pushtoken
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *PushtokensUpdateCall) ConsistencyToken(consistencyToken int64) *PushtokensUpdateCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -8500,14 +8225,6 @@ func (c *PushtokensUpdateCall) Do(opts ...googleapi.CallOption) error {
 	//   "description": "Registers a push token for the current user and application.",
 	//   "httpMethod": "PUT",
 	//   "id": "games.pushtokens.update",
-	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     }
-	//   },
 	//   "path": "pushtokens",
 	//   "request": {
 	//     "$ref": "PushToken"
@@ -8539,13 +8256,6 @@ func (r *QuestMilestonesService) Claim(questId string, milestoneId string, reque
 	c.questId = questId
 	c.milestoneId = milestoneId
 	c.urlParams_.Set("requestId", fmt.Sprint(requestId))
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *QuestMilestonesClaimCall) ConsistencyToken(consistencyToken int64) *QuestMilestonesClaimCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -8615,12 +8325,6 @@ func (c *QuestMilestonesClaimCall) Do(opts ...googleapi.CallOption) error {
 	//     "requestId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "milestoneId": {
 	//       "description": "The ID of the milestone.",
 	//       "location": "path",
@@ -8665,13 +8369,6 @@ type QuestsAcceptCall struct {
 func (r *QuestsService) Accept(questId string) *QuestsAcceptCall {
 	c := &QuestsAcceptCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.questId = questId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *QuestsAcceptCall) ConsistencyToken(consistencyToken int64) *QuestsAcceptCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -8758,7 +8455,7 @@ func (c *QuestsAcceptCall) Do(opts ...googleapi.CallOption) (*Quest, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8770,12 +8467,6 @@ func (c *QuestsAcceptCall) Do(opts ...googleapi.CallOption) (*Quest, error) {
 	//     "questId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -8816,13 +8507,6 @@ type QuestsListCall struct {
 func (r *QuestsService) List(playerId string) *QuestsListCall {
 	c := &QuestsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.playerId = playerId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *QuestsListCall) ConsistencyToken(consistencyToken int64) *QuestsListCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -8939,7 +8623,7 @@ func (c *QuestsListCall) Do(opts ...googleapi.CallOption) (*QuestListResponse, e
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8951,12 +8635,6 @@ func (c *QuestsListCall) Do(opts ...googleapi.CallOption) (*QuestListResponse, e
 	//     "playerId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -9029,13 +8707,6 @@ type RevisionsCheckCall struct {
 func (r *RevisionsService) Check(clientRevision string) *RevisionsCheckCall {
 	c := &RevisionsCheckCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.urlParams_.Set("clientRevision", clientRevision)
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *RevisionsCheckCall) ConsistencyToken(consistencyToken int64) *RevisionsCheckCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -9125,7 +8796,7 @@ func (c *RevisionsCheckCall) Do(opts ...googleapi.CallOption) (*RevisionCheckRes
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9141,12 +8812,6 @@ func (c *RevisionsCheckCall) Do(opts ...googleapi.CallOption) (*RevisionCheckRes
 	//       "description": "The revision of the client SDK used by your application. Format:\n[PLATFORM_TYPE]:[VERSION_NUMBER]. Possible values of PLATFORM_TYPE are:\n \n- \"ANDROID\" - Client is running the Android SDK. \n- \"IOS\" - Client is running the iOS SDK. \n- \"WEB_APP\" - Client is running as a Web App.",
 	//       "location": "query",
 	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
 	//       "type": "string"
 	//     }
 	//   },
@@ -9177,13 +8842,6 @@ type RoomsCreateCall struct {
 func (r *RoomsService) Create(roomcreaterequest *RoomCreateRequest) *RoomsCreateCall {
 	c := &RoomsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.roomcreaterequest = roomcreaterequest
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *RoomsCreateCall) ConsistencyToken(consistencyToken int64) *RoomsCreateCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -9272,7 +8930,7 @@ func (c *RoomsCreateCall) Do(opts ...googleapi.CallOption) (*Room, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9281,12 +8939,6 @@ func (c *RoomsCreateCall) Do(opts ...googleapi.CallOption) (*Room, error) {
 	//   "httpMethod": "POST",
 	//   "id": "games.rooms.create",
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -9323,13 +8975,6 @@ type RoomsDeclineCall struct {
 func (r *RoomsService) Decline(roomId string) *RoomsDeclineCall {
 	c := &RoomsDeclineCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.roomId = roomId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *RoomsDeclineCall) ConsistencyToken(consistencyToken int64) *RoomsDeclineCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -9416,7 +9061,7 @@ func (c *RoomsDeclineCall) Do(opts ...googleapi.CallOption) (*Room, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9428,12 +9073,6 @@ func (c *RoomsDeclineCall) Do(opts ...googleapi.CallOption) (*Room, error) {
 	//     "roomId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -9473,13 +9112,6 @@ type RoomsDismissCall struct {
 func (r *RoomsService) Dismiss(roomId string) *RoomsDismissCall {
 	c := &RoomsDismissCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.roomId = roomId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *RoomsDismissCall) ConsistencyToken(consistencyToken int64) *RoomsDismissCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -9546,12 +9178,6 @@ func (c *RoomsDismissCall) Do(opts ...googleapi.CallOption) error {
 	//     "roomId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "roomId": {
 	//       "description": "The ID of the room.",
 	//       "location": "path",
@@ -9583,13 +9209,6 @@ type RoomsGetCall struct {
 func (r *RoomsService) Get(roomId string) *RoomsGetCall {
 	c := &RoomsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.roomId = roomId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *RoomsGetCall) ConsistencyToken(consistencyToken int64) *RoomsGetCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -9689,7 +9308,7 @@ func (c *RoomsGetCall) Do(opts ...googleapi.CallOption) (*Room, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9701,12 +9320,6 @@ func (c *RoomsGetCall) Do(opts ...googleapi.CallOption) (*Room, error) {
 	//     "roomId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -9748,13 +9361,6 @@ func (r *RoomsService) Join(roomId string, roomjoinrequest *RoomJoinRequest) *Ro
 	c := &RoomsJoinCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.roomId = roomId
 	c.roomjoinrequest = roomjoinrequest
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *RoomsJoinCall) ConsistencyToken(consistencyToken int64) *RoomsJoinCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -9846,7 +9452,7 @@ func (c *RoomsJoinCall) Do(opts ...googleapi.CallOption) (*Room, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9858,12 +9464,6 @@ func (c *RoomsJoinCall) Do(opts ...googleapi.CallOption) (*Room, error) {
 	//     "roomId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -9908,13 +9508,6 @@ func (r *RoomsService) Leave(roomId string, roomleaverequest *RoomLeaveRequest) 
 	c := &RoomsLeaveCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.roomId = roomId
 	c.roomleaverequest = roomleaverequest
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *RoomsLeaveCall) ConsistencyToken(consistencyToken int64) *RoomsLeaveCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -10006,7 +9599,7 @@ func (c *RoomsLeaveCall) Do(opts ...googleapi.CallOption) (*Room, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10018,12 +9611,6 @@ func (c *RoomsLeaveCall) Do(opts ...googleapi.CallOption) (*Room, error) {
 	//     "roomId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -10064,13 +9651,6 @@ type RoomsListCall struct {
 // List: Returns invitations to join rooms.
 func (r *RoomsService) List() *RoomsListCall {
 	c := &RoomsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *RoomsListCall) ConsistencyToken(consistencyToken int64) *RoomsListCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -10183,7 +9763,7 @@ func (c *RoomsListCall) Do(opts ...googleapi.CallOption) (*RoomList, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10192,12 +9772,6 @@ func (c *RoomsListCall) Do(opts ...googleapi.CallOption) (*RoomList, error) {
 	//   "httpMethod": "GET",
 	//   "id": "games.rooms.list",
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -10268,13 +9842,6 @@ func (r *RoomsService) ReportStatus(roomId string, roomp2pstatuses *RoomP2PStatu
 	c := &RoomsReportStatusCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.roomId = roomId
 	c.roomp2pstatuses = roomp2pstatuses
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *RoomsReportStatusCall) ConsistencyToken(consistencyToken int64) *RoomsReportStatusCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -10366,7 +9933,7 @@ func (c *RoomsReportStatusCall) Do(opts ...googleapi.CallOption) (*RoomStatus, e
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10378,12 +9945,6 @@ func (c *RoomsReportStatusCall) Do(opts ...googleapi.CallOption) (*RoomStatus, e
 	//     "roomId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -10435,13 +9996,6 @@ func (r *ScoresService) Get(playerId string, leaderboardId string, timeSpan stri
 	c.playerId = playerId
 	c.leaderboardId = leaderboardId
 	c.timeSpan = timeSpan
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *ScoresGetCall) ConsistencyToken(consistencyToken int64) *ScoresGetCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -10574,7 +10128,7 @@ func (c *ScoresGetCall) Do(opts ...googleapi.CallOption) (*PlayerLeaderboardScor
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10588,12 +10142,6 @@ func (c *ScoresGetCall) Do(opts ...googleapi.CallOption) (*PlayerLeaderboardScor
 	//     "timeSpan"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "includeRankType": {
 	//       "description": "The types of ranks to return. If the parameter is omitted, no ranks will be returned.",
 	//       "enum": [
@@ -10712,13 +10260,6 @@ func (r *ScoresService) List(leaderboardId string, collection string, timeSpan s
 	return c
 }
 
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *ScoresListCall) ConsistencyToken(consistencyToken int64) *ScoresListCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
-	return c
-}
-
 // Language sets the optional parameter "language": The preferred
 // language to use for strings returned by this method.
 func (c *ScoresListCall) Language(language string) *ScoresListCall {
@@ -10832,7 +10373,7 @@ func (c *ScoresListCall) Do(opts ...googleapi.CallOption) (*LeaderboardScores, e
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10860,12 +10401,6 @@ func (c *ScoresListCall) Do(opts ...googleapi.CallOption) (*LeaderboardScores, e
 	//       ],
 	//       "location": "path",
 	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "language": {
@@ -10961,13 +10496,6 @@ func (r *ScoresService) ListWindow(leaderboardId string, collection string, time
 	c.leaderboardId = leaderboardId
 	c.collection = collection
 	c.urlParams_.Set("timeSpan", timeSpan)
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *ScoresListWindowCall) ConsistencyToken(consistencyToken int64) *ScoresListWindowCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -11102,7 +10630,7 @@ func (c *ScoresListWindowCall) Do(opts ...googleapi.CallOption) (*LeaderboardSco
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -11130,12 +10658,6 @@ func (c *ScoresListWindowCall) Do(opts ...googleapi.CallOption) (*LeaderboardSco
 	//       ],
 	//       "location": "path",
 	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "language": {
@@ -11241,13 +10763,6 @@ func (r *ScoresService) Submit(leaderboardId string, score int64) *ScoresSubmitC
 	return c
 }
 
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *ScoresSubmitCall) ConsistencyToken(consistencyToken int64) *ScoresSubmitCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
-	return c
-}
-
 // Language sets the optional parameter "language": The preferred
 // language to use for strings returned by this method.
 func (c *ScoresSubmitCall) Language(language string) *ScoresSubmitCall {
@@ -11340,7 +10855,7 @@ func (c *ScoresSubmitCall) Do(opts ...googleapi.CallOption) (*PlayerScoreRespons
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -11353,12 +10868,6 @@ func (c *ScoresSubmitCall) Do(opts ...googleapi.CallOption) (*PlayerScoreRespons
 	//     "score"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -11410,13 +10919,6 @@ type ScoresSubmitMultipleCall struct {
 func (r *ScoresService) SubmitMultiple(playerscoresubmissionlist *PlayerScoreSubmissionList) *ScoresSubmitMultipleCall {
 	c := &ScoresSubmitMultipleCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.playerscoresubmissionlist = playerscoresubmissionlist
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *ScoresSubmitMultipleCall) ConsistencyToken(consistencyToken int64) *ScoresSubmitMultipleCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -11505,7 +11007,7 @@ func (c *ScoresSubmitMultipleCall) Do(opts ...googleapi.CallOption) (*PlayerScor
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -11514,12 +11016,6 @@ func (c *ScoresSubmitMultipleCall) Do(opts ...googleapi.CallOption) (*PlayerScor
 	//   "httpMethod": "POST",
 	//   "id": "games.scores.submitMultiple",
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -11556,13 +11052,6 @@ type SnapshotsGetCall struct {
 func (r *SnapshotsService) Get(snapshotId string) *SnapshotsGetCall {
 	c := &SnapshotsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.snapshotId = snapshotId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *SnapshotsGetCall) ConsistencyToken(consistencyToken int64) *SnapshotsGetCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -11662,7 +11151,7 @@ func (c *SnapshotsGetCall) Do(opts ...googleapi.CallOption) (*Snapshot, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -11674,12 +11163,6 @@ func (c *SnapshotsGetCall) Do(opts ...googleapi.CallOption) (*Snapshot, error) {
 	//     "snapshotId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -11721,13 +11204,6 @@ type SnapshotsListCall struct {
 func (r *SnapshotsService) List(playerId string) *SnapshotsListCall {
 	c := &SnapshotsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.playerId = playerId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *SnapshotsListCall) ConsistencyToken(consistencyToken int64) *SnapshotsListCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -11843,7 +11319,7 @@ func (c *SnapshotsListCall) Do(opts ...googleapi.CallOption) (*SnapshotListRespo
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -11855,12 +11331,6 @@ func (c *SnapshotsListCall) Do(opts ...googleapi.CallOption) (*SnapshotListRespo
 	//     "playerId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -11937,13 +11407,6 @@ func (r *TurnBasedMatchesService) Cancel(matchId string) *TurnBasedMatchesCancel
 	return c
 }
 
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *TurnBasedMatchesCancelCall) ConsistencyToken(consistencyToken int64) *TurnBasedMatchesCancelCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
-	return c
-}
-
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -12007,12 +11470,6 @@ func (c *TurnBasedMatchesCancelCall) Do(opts ...googleapi.CallOption) error {
 	//     "matchId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "matchId": {
 	//       "description": "The ID of the match.",
 	//       "location": "path",
@@ -12043,13 +11500,6 @@ type TurnBasedMatchesCreateCall struct {
 func (r *TurnBasedMatchesService) Create(turnbasedmatchcreaterequest *TurnBasedMatchCreateRequest) *TurnBasedMatchesCreateCall {
 	c := &TurnBasedMatchesCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.turnbasedmatchcreaterequest = turnbasedmatchcreaterequest
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *TurnBasedMatchesCreateCall) ConsistencyToken(consistencyToken int64) *TurnBasedMatchesCreateCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -12138,7 +11588,7 @@ func (c *TurnBasedMatchesCreateCall) Do(opts ...googleapi.CallOption) (*TurnBase
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -12147,12 +11597,6 @@ func (c *TurnBasedMatchesCreateCall) Do(opts ...googleapi.CallOption) (*TurnBase
 	//   "httpMethod": "POST",
 	//   "id": "games.turnBasedMatches.create",
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -12188,13 +11632,6 @@ type TurnBasedMatchesDeclineCall struct {
 func (r *TurnBasedMatchesService) Decline(matchId string) *TurnBasedMatchesDeclineCall {
 	c := &TurnBasedMatchesDeclineCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.matchId = matchId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *TurnBasedMatchesDeclineCall) ConsistencyToken(consistencyToken int64) *TurnBasedMatchesDeclineCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -12281,7 +11718,7 @@ func (c *TurnBasedMatchesDeclineCall) Do(opts ...googleapi.CallOption) (*TurnBas
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -12293,12 +11730,6 @@ func (c *TurnBasedMatchesDeclineCall) Do(opts ...googleapi.CallOption) (*TurnBas
 	//     "matchId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -12339,13 +11770,6 @@ type TurnBasedMatchesDismissCall struct {
 func (r *TurnBasedMatchesService) Dismiss(matchId string) *TurnBasedMatchesDismissCall {
 	c := &TurnBasedMatchesDismissCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.matchId = matchId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *TurnBasedMatchesDismissCall) ConsistencyToken(consistencyToken int64) *TurnBasedMatchesDismissCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -12412,12 +11836,6 @@ func (c *TurnBasedMatchesDismissCall) Do(opts ...googleapi.CallOption) error {
 	//     "matchId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "matchId": {
 	//       "description": "The ID of the match.",
 	//       "location": "path",
@@ -12452,13 +11870,6 @@ func (r *TurnBasedMatchesService) Finish(matchId string, turnbasedmatchresults *
 	c := &TurnBasedMatchesFinishCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.matchId = matchId
 	c.turnbasedmatchresults = turnbasedmatchresults
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *TurnBasedMatchesFinishCall) ConsistencyToken(consistencyToken int64) *TurnBasedMatchesFinishCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -12550,7 +11961,7 @@ func (c *TurnBasedMatchesFinishCall) Do(opts ...googleapi.CallOption) (*TurnBase
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -12562,12 +11973,6 @@ func (c *TurnBasedMatchesFinishCall) Do(opts ...googleapi.CallOption) (*TurnBase
 	//     "matchId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -12610,13 +12015,6 @@ type TurnBasedMatchesGetCall struct {
 func (r *TurnBasedMatchesService) Get(matchId string) *TurnBasedMatchesGetCall {
 	c := &TurnBasedMatchesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.matchId = matchId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *TurnBasedMatchesGetCall) ConsistencyToken(consistencyToken int64) *TurnBasedMatchesGetCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -12723,7 +12121,7 @@ func (c *TurnBasedMatchesGetCall) Do(opts ...googleapi.CallOption) (*TurnBasedMa
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -12735,12 +12133,6 @@ func (c *TurnBasedMatchesGetCall) Do(opts ...googleapi.CallOption) (*TurnBasedMa
 	//     "matchId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "includeMatchData": {
 	//       "description": "Get match data along with metadata.",
 	//       "location": "query",
@@ -12784,13 +12176,6 @@ type TurnBasedMatchesJoinCall struct {
 func (r *TurnBasedMatchesService) Join(matchId string) *TurnBasedMatchesJoinCall {
 	c := &TurnBasedMatchesJoinCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.matchId = matchId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *TurnBasedMatchesJoinCall) ConsistencyToken(consistencyToken int64) *TurnBasedMatchesJoinCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -12877,7 +12262,7 @@ func (c *TurnBasedMatchesJoinCall) Do(opts ...googleapi.CallOption) (*TurnBasedM
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -12889,12 +12274,6 @@ func (c *TurnBasedMatchesJoinCall) Do(opts ...googleapi.CallOption) (*TurnBasedM
 	//     "matchId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -12934,13 +12313,6 @@ type TurnBasedMatchesLeaveCall struct {
 func (r *TurnBasedMatchesService) Leave(matchId string) *TurnBasedMatchesLeaveCall {
 	c := &TurnBasedMatchesLeaveCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.matchId = matchId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *TurnBasedMatchesLeaveCall) ConsistencyToken(consistencyToken int64) *TurnBasedMatchesLeaveCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -13027,7 +12399,7 @@ func (c *TurnBasedMatchesLeaveCall) Do(opts ...googleapi.CallOption) (*TurnBased
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -13039,12 +12411,6 @@ func (c *TurnBasedMatchesLeaveCall) Do(opts ...googleapi.CallOption) (*TurnBased
 	//     "matchId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -13085,13 +12451,6 @@ func (r *TurnBasedMatchesService) LeaveTurn(matchId string, matchVersion int64) 
 	c := &TurnBasedMatchesLeaveTurnCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.matchId = matchId
 	c.urlParams_.Set("matchVersion", fmt.Sprint(matchVersion))
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *TurnBasedMatchesLeaveTurnCall) ConsistencyToken(consistencyToken int64) *TurnBasedMatchesLeaveTurnCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -13188,7 +12547,7 @@ func (c *TurnBasedMatchesLeaveTurnCall) Do(opts ...googleapi.CallOption) (*TurnB
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -13201,12 +12560,6 @@ func (c *TurnBasedMatchesLeaveTurnCall) Do(opts ...googleapi.CallOption) (*TurnB
 	//     "matchVersion"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -13256,13 +12609,6 @@ type TurnBasedMatchesListCall struct {
 // List: Returns turn-based matches the player is or was involved in.
 func (r *TurnBasedMatchesService) List() *TurnBasedMatchesListCall {
 	c := &TurnBasedMatchesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *TurnBasedMatchesListCall) ConsistencyToken(consistencyToken int64) *TurnBasedMatchesListCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -13395,7 +12741,7 @@ func (c *TurnBasedMatchesListCall) Do(opts ...googleapi.CallOption) (*TurnBasedM
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -13404,12 +12750,6 @@ func (c *TurnBasedMatchesListCall) Do(opts ...googleapi.CallOption) (*TurnBasedM
 	//   "httpMethod": "GET",
 	//   "id": "games.turnBasedMatches.list",
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "includeMatchData": {
 	//       "description": "True if match data should be returned in the response. Note that not all data will necessarily be returned if include_match_data is true; the server may decide to only return data for some of the matches to limit download size for the client. The remainder of the data for these matches will be retrievable on request.",
 	//       "location": "query",
@@ -13492,13 +12832,6 @@ type TurnBasedMatchesRematchCall struct {
 func (r *TurnBasedMatchesService) Rematch(matchId string) *TurnBasedMatchesRematchCall {
 	c := &TurnBasedMatchesRematchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.matchId = matchId
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *TurnBasedMatchesRematchCall) ConsistencyToken(consistencyToken int64) *TurnBasedMatchesRematchCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -13594,7 +12927,7 @@ func (c *TurnBasedMatchesRematchCall) Do(opts ...googleapi.CallOption) (*TurnBas
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -13606,12 +12939,6 @@ func (c *TurnBasedMatchesRematchCall) Do(opts ...googleapi.CallOption) (*TurnBas
 	//     "matchId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",
@@ -13658,13 +12985,6 @@ type TurnBasedMatchesSyncCall struct {
 // will have a status of MATCH_DELETED.
 func (r *TurnBasedMatchesService) Sync() *TurnBasedMatchesSyncCall {
 	c := &TurnBasedMatchesSyncCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *TurnBasedMatchesSyncCall) ConsistencyToken(consistencyToken int64) *TurnBasedMatchesSyncCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -13797,7 +13117,7 @@ func (c *TurnBasedMatchesSyncCall) Do(opts ...googleapi.CallOption) (*TurnBasedM
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -13806,12 +13126,6 @@ func (c *TurnBasedMatchesSyncCall) Do(opts ...googleapi.CallOption) (*TurnBasedM
 	//   "httpMethod": "GET",
 	//   "id": "games.turnBasedMatches.sync",
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "includeMatchData": {
 	//       "description": "True if match data should be returned in the response. Note that not all data will necessarily be returned if include_match_data is true; the server may decide to only return data for some of the matches to limit download size for the client. The remainder of the data for these matches will be retrievable on request.",
 	//       "location": "query",
@@ -13893,13 +13207,6 @@ func (r *TurnBasedMatchesService) TakeTurn(matchId string, turnbasedmatchturn *T
 	c := &TurnBasedMatchesTakeTurnCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.matchId = matchId
 	c.turnbasedmatchturn = turnbasedmatchturn
-	return c
-}
-
-// ConsistencyToken sets the optional parameter "consistencyToken": The
-// last-seen mutation timestamp.
-func (c *TurnBasedMatchesTakeTurnCall) ConsistencyToken(consistencyToken int64) *TurnBasedMatchesTakeTurnCall {
-	c.urlParams_.Set("consistencyToken", fmt.Sprint(consistencyToken))
 	return c
 }
 
@@ -13991,7 +13298,7 @@ func (c *TurnBasedMatchesTakeTurnCall) Do(opts ...googleapi.CallOption) (*TurnBa
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -14003,12 +13310,6 @@ func (c *TurnBasedMatchesTakeTurnCall) Do(opts ...googleapi.CallOption) (*TurnBa
 	//     "matchId"
 	//   ],
 	//   "parameters": {
-	//     "consistencyToken": {
-	//       "description": "The last-seen mutation timestamp.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
 	//     "language": {
 	//       "description": "The preferred language to use for strings returned by this method.",
 	//       "location": "query",

@@ -374,13 +374,12 @@ func (c *ConfigFile) GetKeyList(section string) []string {
 	}
 
 	// Non-default section has a blank key as section keeper.
-	offset := 1
-	if section == DEFAULT_SECTION {
-		offset = 0
+	list := make([]string, 0, len(c.keyList[section]))
+	for _, key := range c.keyList[section] {
+		if key != " " {
+			list = append(list, key)
+		}
 	}
-
-	list := make([]string, len(c.keyList[section])-offset)
-	copy(list, c.keyList[section][offset:])
 	return list
 }
 
@@ -420,7 +419,7 @@ func (c *ConfigFile) DeleteSection(section string) bool {
 }
 
 // GetSection returns key-value pairs in given section.
-// It section does not exist, returns nil and error.
+// If section does not exist, returns nil and error.
 func (c *ConfigFile) GetSection(section string) (map[string]string, error) {
 	// Blank section name represents DEFAULT section.
 	if len(section) == 0 {

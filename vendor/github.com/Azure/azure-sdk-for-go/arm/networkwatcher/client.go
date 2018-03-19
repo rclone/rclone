@@ -5,6 +5,8 @@
 // services that interact with Microsoft Azure Networks service to manage your
 // network resources. The API has entities that capture the relationship
 // between an end user and the Microsoft Azure Networks service.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services
 package networkwatcher
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

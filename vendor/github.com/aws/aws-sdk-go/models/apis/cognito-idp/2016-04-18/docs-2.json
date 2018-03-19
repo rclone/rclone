@@ -5,26 +5,30 @@
     "AddCustomAttributes": "<p>Adds additional user attributes to the user pool schema.</p>",
     "AdminAddUserToGroup": "<p>Adds the specified user to the specified group.</p> <p>Requires developer credentials.</p>",
     "AdminConfirmSignUp": "<p>Confirms user registration as an admin without using a confirmation code. Works on any user.</p> <p>Requires developer credentials.</p>",
-    "AdminCreateUser": "<p>Creates a new user in the specified user pool and sends a welcome message via email or phone (SMS). This message is based on a template that you configured in your call to <a href=\"API_CreateUserPool.html\">CreateUserPool</a> or <a href=\"API_UpdateUserPool.html\">UpdateUserPool</a>. This template includes your custom sign-up instructions and placeholders for user name and temporary password.</p> <p>Requires developer credentials.</p>",
+    "AdminCreateUser": "<p>Creates a new user in the specified user pool.</p> <p>If <code>MessageAction</code> is not set, the default is to send a welcome message via email or phone (SMS).</p> <note> <p>This message is based on a template that you configured in your call to or . This template includes your custom sign-up instructions and placeholders for user name and temporary password.</p> </note> <p>Alternatively, you can call AdminCreateUser with “SUPPRESS” for the <code>MessageAction</code> parameter, and Amazon Cognito will not send any email. </p> <p>In either case, the user will be in the <code>FORCE_CHANGE_PASSWORD</code> state until they sign in and change their password.</p> <p>AdminCreateUser requires developer credentials.</p>",
     "AdminDeleteUser": "<p>Deletes a user as an administrator. Works on any user.</p> <p>Requires developer credentials.</p>",
     "AdminDeleteUserAttributes": "<p>Deletes the user attributes in a user pool as an administrator. Works on any user.</p> <p>Requires developer credentials.</p>",
-    "AdminDisableProviderForUser": "<p>Disables the user from signing in with the specified external (SAML or social) identity provider. If the user to disable is a Cognito User Pools native username + password user, they are not permitted to use their password to sign-in. If the user to disable is a linked external IdP user, any link between that user and an existing user is removed. The next time the external user (no longer attached to the previously linked <code>DestinationUser</code>) signs in, they must create a new user account. See <a href=\"API_AdminLinkProviderForUser.html\">AdminLinkProviderForUser</a>.</p> <p>This action is enabled only for admin access and requires developer credentials.</p> <p>The <code>ProviderName</code> must match the value specified when creating an IdP for the pool. </p> <p>To disable a native username + password user, the <code>ProviderName</code> value must be <code>Cognito</code> and the <code>ProviderAttributeName</code> must be <code>Cognito_Subject</code>, with the <code>ProviderAttributeValue</code> being the name that is used in the user pool for the user.</p> <p>The <code>ProviderAttributeName</code> must always be <code>Cognito_Subject</code> for social identity providers. The <code>ProviderAttributeValue</code> must always be the exact subject that was used when the user was originally linked as a source user.</p> <p>For de-linking a SAML identity, there are two scenarios. If the linked identity has not yet been used to sign-in, the <code>ProviderAttributeName</code> and <code>ProviderAttributeValue</code> must be the same values that were used for the <code>SourceUser</code> when the identities were originally linked in the <a href=\"API_AdminLinkProviderForUser.html\">AdminLinkProviderForUser</a> call. (If the linking was done with <code>ProviderAttributeName</code> set to <code>Cognito_Subject</code>, the same applies here). However, if the user has already signed in, the <code>ProviderAttributeName</code> must be <code>Cognito_Subject</code> and <code>ProviderAttributeValue</code> must be the subject of the SAML assertion.</p>",
+    "AdminDisableProviderForUser": "<p>Disables the user from signing in with the specified external (SAML or social) identity provider. If the user to disable is a Cognito User Pools native username + password user, they are not permitted to use their password to sign-in. If the user to disable is a linked external IdP user, any link between that user and an existing user is removed. The next time the external user (no longer attached to the previously linked <code>DestinationUser</code>) signs in, they must create a new user account. See .</p> <p>This action is enabled only for admin access and requires developer credentials.</p> <p>The <code>ProviderName</code> must match the value specified when creating an IdP for the pool. </p> <p>To disable a native username + password user, the <code>ProviderName</code> value must be <code>Cognito</code> and the <code>ProviderAttributeName</code> must be <code>Cognito_Subject</code>, with the <code>ProviderAttributeValue</code> being the name that is used in the user pool for the user.</p> <p>The <code>ProviderAttributeName</code> must always be <code>Cognito_Subject</code> for social identity providers. The <code>ProviderAttributeValue</code> must always be the exact subject that was used when the user was originally linked as a source user.</p> <p>For de-linking a SAML identity, there are two scenarios. If the linked identity has not yet been used to sign-in, the <code>ProviderAttributeName</code> and <code>ProviderAttributeValue</code> must be the same values that were used for the <code>SourceUser</code> when the identities were originally linked in the call. (If the linking was done with <code>ProviderAttributeName</code> set to <code>Cognito_Subject</code>, the same applies here). However, if the user has already signed in, the <code>ProviderAttributeName</code> must be <code>Cognito_Subject</code> and <code>ProviderAttributeValue</code> must be the subject of the SAML assertion.</p>",
     "AdminDisableUser": "<p>Disables the specified user as an administrator. Works on any user.</p> <p>Requires developer credentials.</p>",
     "AdminEnableUser": "<p>Enables the specified user as an administrator. Works on any user.</p> <p>Requires developer credentials.</p>",
     "AdminForgetDevice": "<p>Forgets the device, as an administrator.</p> <p>Requires developer credentials.</p>",
     "AdminGetDevice": "<p>Gets the device, as an administrator.</p> <p>Requires developer credentials.</p>",
     "AdminGetUser": "<p>Gets the specified user by user name in a user pool as an administrator. Works on any user.</p> <p>Requires developer credentials.</p>",
     "AdminInitiateAuth": "<p>Initiates the authentication flow, as an administrator.</p> <p>Requires developer credentials.</p>",
-    "AdminLinkProviderForUser": "<p>Links an existing user account in a user pool (<code>DestinationUser</code>) to an identity from an external identity provider (<code>SourceUser</code>) based on a specified attribute name and value from the external identity provider. This allows you to create a link from the existing user account to an external federated user identity that has not yet been used to sign in, so that the federated user identity can be used to sign in as the existing user account. </p> <p> For example, if there is an existing user with a username and password, this API links that user to a federated user identity, so that when the federated user identity is used, the user signs in as the existing user account. </p> <important> <p>Because this API allows a user with an external federated identity to sign in as an existing user in the user pool, it is critical that it only be used with external identity providers and provider attributes that have been trusted by the application owner.</p> </important> <p>See also <a href=\"API_AdminDisableProviderForUser.html\">AdminDisableProviderForUser</a>.</p> <p>This action is enabled only for admin access and requires developer credentials.</p>",
+    "AdminLinkProviderForUser": "<p>Links an existing user account in a user pool (<code>DestinationUser</code>) to an identity from an external identity provider (<code>SourceUser</code>) based on a specified attribute name and value from the external identity provider. This allows you to create a link from the existing user account to an external federated user identity that has not yet been used to sign in, so that the federated user identity can be used to sign in as the existing user account. </p> <p> For example, if there is an existing user with a username and password, this API links that user to a federated user identity, so that when the federated user identity is used, the user signs in as the existing user account. </p> <important> <p>Because this API allows a user with an external federated identity to sign in as an existing user in the user pool, it is critical that it only be used with external identity providers and provider attributes that have been trusted by the application owner.</p> </important> <p>See also .</p> <p>This action is enabled only for admin access and requires developer credentials.</p>",
     "AdminListDevices": "<p>Lists devices, as an administrator.</p> <p>Requires developer credentials.</p>",
     "AdminListGroupsForUser": "<p>Lists the groups that the user belongs to.</p> <p>Requires developer credentials.</p>",
+    "AdminListUserAuthEvents": "<p>Lists a history of user activity and any risks detected as part of Amazon Cognito advanced security.</p>",
     "AdminRemoveUserFromGroup": "<p>Removes the specified user from the specified group.</p> <p>Requires developer credentials.</p>",
     "AdminResetUserPassword": "<p>Resets the specified user's password in a user pool as an administrator. Works on any user.</p> <p>When a developer calls this API, the current password is invalidated, so it must be changed. If a user tries to sign in after the API is called, the app will get a PasswordResetRequiredException exception back and should direct the user down the flow to reset the password, which is the same as the forgot password flow. In addition, if the user pool has phone verification selected and a verified phone number exists for the user, or if email verification is selected and a verified email exists for the user, calling this API will also result in sending a message to the end user with the code to change their password.</p> <p>Requires developer credentials.</p>",
     "AdminRespondToAuthChallenge": "<p>Responds to an authentication challenge, as an administrator.</p> <p>Requires developer credentials.</p>",
+    "AdminSetUserMFAPreference": "<p>Sets the user's multi-factor authentication (MFA) preference.</p>",
     "AdminSetUserSettings": "<p>Sets all the user settings for a specified user name. Works on any user.</p> <p>Requires developer credentials.</p>",
+    "AdminUpdateAuthEventFeedback": "<p>Provides feedback for an authentication event as to whether it was from a valid user. This feedback is used for improving the risk evaluation decision for the user pool as part of Amazon Cognito advanced security.</p>",
     "AdminUpdateDeviceStatus": "<p>Updates the device status as an administrator.</p> <p>Requires developer credentials.</p>",
     "AdminUpdateUserAttributes": "<p>Updates the specified user's attributes, including developer attributes, as an administrator. Works on any user.</p> <p>For custom attributes, you must prepend the <code>custom:</code> prefix to the attribute name.</p> <p>In addition to updating user attributes, this API can also be used to mark phone and email as verified.</p> <p>Requires developer credentials.</p>",
     "AdminUserGlobalSignOut": "<p>Signs out users from all devices, as an administrator.</p> <p>Requires developer credentials.</p>",
+    "AssociateSoftwareToken": "<p>Returns a unique generated shared secret key code for the user account. The request takes an access token or a session string, but not both.</p>",
     "ChangePassword": "<p>Changes the password for a specified user in a user pool.</p>",
     "ConfirmDevice": "<p>Confirms tracking of the device. This API call is the call that begins device tracking.</p>",
     "ConfirmForgotPassword": "<p>Allows a user to enter a confirmation code to reset a forgotten password.</p>",
@@ -46,12 +50,13 @@
     "DeleteUserPoolDomain": "<p>Deletes a domain for a user pool.</p>",
     "DescribeIdentityProvider": "<p>Gets information about a specific identity provider.</p>",
     "DescribeResourceServer": "<p>Describes a resource server.</p>",
+    "DescribeRiskConfiguration": "<p>Describes the risk configuration.</p>",
     "DescribeUserImportJob": "<p>Describes the user import job.</p>",
     "DescribeUserPool": "<p>Returns the configuration information and metadata of the specified user pool.</p>",
     "DescribeUserPoolClient": "<p>Client method for returning the configuration information and metadata of the specified user pool client.</p>",
     "DescribeUserPoolDomain": "<p>Gets information about a domain.</p>",
     "ForgetDevice": "<p>Forgets the specified device.</p>",
-    "ForgotPassword": "<p>Calling this API causes a message to be sent to the end user with a confirmation code that is required to change the user's password. For the <code>Username</code> parameter, you can use the username or user alias. If a verified phone number exists for the user, the confirmation code is sent to the phone number. Otherwise, if a verified email exists, the confirmation code is sent to the email. If neither a verified phone number nor a verified email exists, <code>InvalidParameterException</code> is thrown. To use the confirmation code for resetting the password, call <a href=\"API_ConfirmForgotPassword.html\">ConfirmForgotPassword</a>.</p>",
+    "ForgotPassword": "<p>Calling this API causes a message to be sent to the end user with a confirmation code that is required to change the user's password. For the <code>Username</code> parameter, you can use the username or user alias. If a verified phone number exists for the user, the confirmation code is sent to the phone number. Otherwise, if a verified email exists, the confirmation code is sent to the email. If neither a verified phone number nor a verified email exists, <code>InvalidParameterException</code> is thrown. To use the confirmation code for resetting the password, call .</p>",
     "GetCSVHeader": "<p>Gets the header information for the .csv file to be used as input for the user import job.</p>",
     "GetDevice": "<p>Gets the device.</p>",
     "GetGroup": "<p>Gets a group.</p> <p>Requires developer credentials.</p>",
@@ -59,6 +64,7 @@
     "GetUICustomization": "<p>Gets the UI Customization information for a particular app client's app UI, if there is something set. If nothing is set for the particular client, but there is an existing pool level customization (app <code>clientId</code> will be <code>ALL</code>), then that is returned. If nothing is present, then an empty shape is returned.</p>",
     "GetUser": "<p>Gets the user attributes and metadata for a user.</p>",
     "GetUserAttributeVerificationCode": "<p>Gets the user attribute verification code for the specified attribute name.</p>",
+    "GetUserPoolMfaConfig": "<p>Gets the user pool multi-factor authentication (MFA) configuration.</p>",
     "GlobalSignOut": "<p>Signs out users from all devices.</p>",
     "InitiateAuth": "<p>Initiates the authentication flow.</p>",
     "ListDevices": "<p>Lists the devices.</p>",
@@ -72,11 +78,15 @@
     "ListUsersInGroup": "<p>Lists the users in the specified group.</p> <p>Requires developer credentials.</p>",
     "ResendConfirmationCode": "<p>Resends the confirmation (for confirmation of registration) to a specific user in the user pool.</p>",
     "RespondToAuthChallenge": "<p>Responds to the authentication challenge.</p>",
+    "SetRiskConfiguration": "<p>Configures actions on detected risks. To delete the risk configuration for <code>UserPoolId</code> or <code>ClientId</code>, pass null values for all four configuration types.</p> <p>To enable Amazon Cognito advanced security features, update the user pool to include the <code>UserPoolAddOns</code> key<code>AdvancedSecurityMode</code>.</p> <p>See .</p>",
     "SetUICustomization": "<p>Sets the UI customization information for a user pool's built-in app UI.</p> <p>You can specify app UI customization settings for a single client (with a specific <code>clientId</code>) or for all clients (by setting the <code>clientId</code> to <code>ALL</code>). If you specify <code>ALL</code>, the default configuration will be used for every client that has no UI customization set previously. If you specify UI customization settings for a particular client, it will no longer fall back to the <code>ALL</code> configuration. </p> <note> <p>To use this API, your user pool must have a domain associated with it. Otherwise, there is no place to host the app's pages, and the service will throw an error.</p> </note>",
+    "SetUserMFAPreference": "<p>Set the user's multi-factor authentication (MFA) method preference.</p>",
+    "SetUserPoolMfaConfig": "<p>Set the user pool MFA configuration.</p>",
     "SetUserSettings": "<p>Sets the user settings like multi-factor authentication (MFA). If MFA is to be removed for a particular attribute pass the attribute with code delivery as null. If null list is passed, all MFA options are removed.</p>",
     "SignUp": "<p>Registers the user in the specified user pool and creates a user name, password, and user attributes.</p>",
     "StartUserImportJob": "<p>Starts the user import.</p>",
     "StopUserImportJob": "<p>Stops the user import job.</p>",
+    "UpdateAuthEventFeedback": "<p>Provides the feedback for an authentication event whether it was from a valid user or not. This feedback is used for improving the risk evaluation decision for the user pool as part of Amazon Cognito advanced security.</p>",
     "UpdateDeviceStatus": "<p>Updates the device status.</p>",
     "UpdateGroup": "<p>Updates the specified group with the specified attributes.</p> <p>Requires developer credentials.</p>",
     "UpdateIdentityProvider": "<p>Updates identity provider information for a user pool.</p>",
@@ -84,6 +94,7 @@
     "UpdateUserAttributes": "<p>Allows a user to update a specific attribute (one at a time).</p>",
     "UpdateUserPool": "<p>Updates the specified user pool with the specified attributes.</p>",
     "UpdateUserPoolClient": "<p>Allows the developer to update the specified user pool client and password policy.</p>",
+    "VerifySoftwareToken": "<p>Use this API to register a user's entered TOTP code and mark the user's software token MFA status as \"verified\" if successful,</p>",
     "VerifyUserAttribute": "<p>Verifies the specified user attributes in the user pool.</p>"
   },
   "shapes": {
@@ -91,6 +102,39 @@
       "base": null,
       "refs": {
         "DomainDescriptionType$AWSAccountId": "<p>The AWS account ID for the user pool owner.</p>"
+      }
+    },
+    "AccountTakeoverActionNotifyType": {
+      "base": null,
+      "refs": {
+        "AccountTakeoverActionType$Notify": "<p>Flag specifying whether to send a notification.</p>"
+      }
+    },
+    "AccountTakeoverActionType": {
+      "base": "<p>Account takeover action type.</p>",
+      "refs": {
+        "AccountTakeoverActionsType$LowAction": "<p>Action to take for a low risk.</p>",
+        "AccountTakeoverActionsType$MediumAction": "<p>Action to take for a medium risk.</p>",
+        "AccountTakeoverActionsType$HighAction": "<p>Action to take for a high risk.</p>"
+      }
+    },
+    "AccountTakeoverActionsType": {
+      "base": "<p>Account takeover actions type.</p>",
+      "refs": {
+        "AccountTakeoverRiskConfigurationType$Actions": "<p>Account takeover risk configuration actions</p>"
+      }
+    },
+    "AccountTakeoverEventActionType": {
+      "base": null,
+      "refs": {
+        "AccountTakeoverActionType$EventAction": "<p>The event action.</p> <ul> <li> <p> <code>BLOCK</code> Choosing this action will block the request.</p> </li> <li> <p> <code>MFA_IF_CONFIGURED</code> Throw MFA challenge if user has configured it, else allow the request.</p> </li> <li> <p> <code>MFA_REQUIRED</code> Throw MFA challenge if user has configured it, else block the request.</p> </li> <li> <p> <code>NO_ACTION</code> Allow the user sign-in.</p> </li> </ul>"
+      }
+    },
+    "AccountTakeoverRiskConfigurationType": {
+      "base": "<p>Configuration for mitigation actions and notification for different levels of risk detected for a potential account takeover.</p>",
+      "refs": {
+        "RiskConfigurationType$AccountTakeoverRiskConfiguration": "<p>The account takeover risk configuration object including the <code>NotifyConfiguration</code> object and <code>Actions</code> to take in the case of an account takeover.</p>",
+        "SetRiskConfigurationRequest$AccountTakeoverRiskConfiguration": "<p>The account takeover risk configuration.</p>"
       }
     },
     "AddCustomAttributesRequest": {
@@ -119,7 +163,7 @@
       }
     },
     "AdminCreateUserConfigType": {
-      "base": "<p>The type of configuration for creating a new user profile.</p>",
+      "base": "<p>The configuration for creating a new user profile.</p>",
       "refs": {
         "CreateUserPoolRequest$AdminCreateUserConfig": "<p>The configuration for <code>AdminCreateUser</code> requests.</p>",
         "UpdateUserPoolRequest$AdminCreateUserConfig": "<p>The configuration for <code>AdminCreateUser</code> requests.</p>",
@@ -252,6 +296,16 @@
       "refs": {
       }
     },
+    "AdminListUserAuthEventsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AdminListUserAuthEventsResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "AdminRemoveUserFromGroupRequest": {
       "base": null,
       "refs": {
@@ -277,6 +331,16 @@
       "refs": {
       }
     },
+    "AdminSetUserMFAPreferenceRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AdminSetUserMFAPreferenceResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "AdminSetUserSettingsRequest": {
       "base": "<p>Represents the request to set user settings as an administrator.</p>",
       "refs": {
@@ -284,6 +348,16 @@
     },
     "AdminSetUserSettingsResponse": {
       "base": "<p>Represents the response from the server to set user settings as an administrator.</p>",
+      "refs": {
+      }
+    },
+    "AdminUpdateAuthEventFeedbackRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AdminUpdateAuthEventFeedbackResponse": {
+      "base": null,
       "refs": {
       }
     },
@@ -317,6 +391,12 @@
       "refs": {
       }
     },
+    "AdvancedSecurityModeType": {
+      "base": null,
+      "refs": {
+        "UserPoolAddOnsType$AdvancedSecurityMode": "<p>The advanced security mode.</p>"
+      }
+    },
     "AliasAttributeType": {
       "base": null,
       "refs": {
@@ -335,9 +415,32 @@
       "refs": {
       }
     },
+    "AnalyticsConfigurationType": {
+      "base": "<p>The Amazon Pinpoint analytics configuration for collecting metrics for a user pool.</p>",
+      "refs": {
+        "CreateUserPoolClientRequest$AnalyticsConfiguration": "<p>The Amazon Pinpoint analytics configuration for collecting metrics for this user pool.</p>",
+        "UpdateUserPoolClientRequest$AnalyticsConfiguration": "<p>The Amazon Pinpoint analytics configuration for collecting metrics for this user pool.</p>",
+        "UserPoolClientType$AnalyticsConfiguration": "<p>The Amazon Pinpoint analytics configuration for the user pool client.</p>"
+      }
+    },
+    "AnalyticsMetadataType": {
+      "base": "<p>An Amazon Pinpoint analytics endpoint.</p> <p>An endpoint uniquely identifies a mobile device, email address, or phone number that can receive messages from Amazon Pinpoint analytics.</p>",
+      "refs": {
+        "AdminInitiateAuthRequest$AnalyticsMetadata": "<p>The analytics metadata for collecting Amazon Pinpoint metrics for <code>AdminInitiateAuth</code> calls.</p>",
+        "AdminRespondToAuthChallengeRequest$AnalyticsMetadata": "<p>The analytics metadata for collecting Amazon Pinpoint metrics for <code>AdminRespondToAuthChallenge</code> calls.</p>",
+        "ConfirmForgotPasswordRequest$AnalyticsMetadata": "<p>The Amazon Pinpoint analytics metadata for collecting metrics for <code>ConfirmForgotPassword</code> calls.</p>",
+        "ConfirmSignUpRequest$AnalyticsMetadata": "<p>The Amazon Pinpoint analytics metadata for collecting metrics for <code>ConfirmSignUp</code> calls.</p>",
+        "ForgotPasswordRequest$AnalyticsMetadata": "<p>The Amazon Pinpoint analytics metadata for collecting metrics for <code>ForgotPassword</code> calls.</p>",
+        "InitiateAuthRequest$AnalyticsMetadata": "<p>The Amazon Pinpoint analytics metadata for collecting metrics for <code>InitiateAuth</code> calls.</p>",
+        "ResendConfirmationCodeRequest$AnalyticsMetadata": "<p>The Amazon Pinpoint analytics metadata for collecting metrics for <code>ResendConfirmationCode</code> calls.</p>",
+        "RespondToAuthChallengeRequest$AnalyticsMetadata": "<p>The Amazon Pinpoint analytics metadata for collecting metrics for <code>RespondToAuthChallenge</code> calls.</p>",
+        "SignUpRequest$AnalyticsMetadata": "<p>The Amazon Pinpoint analytics metadata for collecting metrics for <code>SignUp</code> calls.</p>"
+      }
+    },
     "ArnType": {
       "base": null,
       "refs": {
+        "AnalyticsConfigurationType$RoleArn": "<p>The ARN of an IAM role that authorizes Amazon Cognito to publish events to Amazon Pinpoint analytics.</p>",
         "CreateGroupRequest$RoleArn": "<p>The role ARN for the group.</p>",
         "CreateUserImportJobRequest$CloudWatchLogsRoleArn": "<p>The role ARN for the Amazon CloudWatch Logging role for the user import job.</p>",
         "DomainDescriptionType$CloudFrontDistribution": "<p>The ARN of the CloudFront distribution.</p>",
@@ -351,9 +454,21 @@
         "LambdaConfigType$DefineAuthChallenge": "<p>Defines the authentication challenge.</p>",
         "LambdaConfigType$CreateAuthChallenge": "<p>Creates an authentication challenge.</p>",
         "LambdaConfigType$VerifyAuthChallengeResponse": "<p>Verifies the authentication challenge response.</p>",
+        "LambdaConfigType$PreTokenGeneration": "<p>A Lambda trigger that is invoked before token generation.</p>",
+        "NotifyConfigurationType$SourceArn": "<p>The Amazon Resource Name (ARN) of the identity that is associated with the sending authorization policy. It permits Amazon Cognito to send for the email address specified in the <code>From</code> parameter.</p>",
         "SmsConfigurationType$SnsCallerArn": "<p>The Amazon Resource Name (ARN) of the Amazon Simple Notification Service (SNS) caller.</p>",
         "UpdateGroupRequest$RoleArn": "<p>The new role ARN for the group. This is used for setting the <code>cognito:roles</code> and <code>cognito:preferred_role</code> claims in the token.</p>",
         "UserImportJobType$CloudWatchLogsRoleArn": "<p>The role ARN for the Amazon CloudWatch Logging role for the user import job. For more information, see \"Creating the CloudWatch Logs IAM Role\" in the Amazon Cognito Developer Guide.</p>"
+      }
+    },
+    "AssociateSoftwareTokenRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AssociateSoftwareTokenResponse": {
+      "base": null,
+      "refs": {
       }
     },
     "AttributeDataType": {
@@ -365,7 +480,7 @@
     "AttributeListType": {
       "base": null,
       "refs": {
-        "AdminCreateUserRequest$UserAttributes": "<p>An array of name-value pairs that contain user attributes and attribute values to be set for the user to be created. You can create a user without specifying any attributes other than <code>Username</code>. However, any attributes that you specify as required (in <a href=\"API_CreateUserPool.html\">CreateUserPool</a> or in the <b>Attributes</b> tab of the console) must be supplied either by you (in your call to <code>AdminCreateUser</code>) or by the user (when he or she signs up in response to your welcome message).</p> <p>For custom attributes, you must prepend the <code>custom:</code> prefix to the attribute name.</p> <p>To send a message inviting the user to sign up, you must specify the user's email address or phone number. This can be done in your call to AdminCreateUser or in the <b>Users</b> tab of the Amazon Cognito console for managing your user pools.</p> <p>In your call to <code>AdminCreateUser</code>, you can set the <code>email_verified</code> attribute to <code>True</code>, and you can set the <code>phone_number_verified</code> attribute to <code>True</code>. (You can also do this by calling <a href=\"API_AdminUpdateUserAttributes.html\">AdminUpdateUserAttributes</a>.)</p> <ul> <li> <p> <b>email</b>: The email address of the user to whom the message that contains the code and username will be sent. Required if the <code>email_verified</code> attribute is set to <code>True</code>, or if <code>\"EMAIL\"</code> is specified in the <code>DesiredDeliveryMediums</code> parameter.</p> </li> <li> <p> <b>phone_number</b>: The phone number of the user to whom the message that contains the code and username will be sent. Required if the <code>phone_number_verified</code> attribute is set to <code>True</code>, or if <code>\"SMS\"</code> is specified in the <code>DesiredDeliveryMediums</code> parameter.</p> </li> </ul>",
+        "AdminCreateUserRequest$UserAttributes": "<p>An array of name-value pairs that contain user attributes and attribute values to be set for the user to be created. You can create a user without specifying any attributes other than <code>Username</code>. However, any attributes that you specify as required (in or in the <b>Attributes</b> tab of the console) must be supplied either by you (in your call to <code>AdminCreateUser</code>) or by the user (when he or she signs up in response to your welcome message).</p> <p>For custom attributes, you must prepend the <code>custom:</code> prefix to the attribute name.</p> <p>To send a message inviting the user to sign up, you must specify the user's email address or phone number. This can be done in your call to AdminCreateUser or in the <b>Users</b> tab of the Amazon Cognito console for managing your user pools.</p> <p>In your call to <code>AdminCreateUser</code>, you can set the <code>email_verified</code> attribute to <code>True</code>, and you can set the <code>phone_number_verified</code> attribute to <code>True</code>. (You can also do this by calling .)</p> <ul> <li> <p> <b>email</b>: The email address of the user to whom the message that contains the code and username will be sent. Required if the <code>email_verified</code> attribute is set to <code>True</code>, or if <code>\"EMAIL\"</code> is specified in the <code>DesiredDeliveryMediums</code> parameter.</p> </li> <li> <p> <b>phone_number</b>: The phone number of the user to whom the message that contains the code and username will be sent. Required if the <code>phone_number_verified</code> attribute is set to <code>True</code>, or if <code>\"SMS\"</code> is specified in the <code>DesiredDeliveryMediums</code> parameter.</p> </li> </ul>",
         "AdminCreateUserRequest$ValidationData": "<p>The user's validation data. This is an array of name-value pairs that contain user attributes and attribute values that you can use for custom validation, such as restricting the types of user accounts that can be registered. For example, you might choose to allow or disallow user sign-up based on the user's domain.</p> <p>To configure custom validation, you must create a Pre Sign-up Lambda trigger for the user pool as described in the Amazon Cognito Developer Guide. The Lambda trigger receives the validation data and uses it in the validation process.</p> <p>The user's validation data is not persisted.</p>",
         "AdminGetUserResponse$UserAttributes": "<p>An array of name-value pairs representing user attributes.</p>",
         "AdminUpdateUserAttributesRequest$UserAttributes": "<p>An array of name-value pairs representing user attributes.</p> <p>For custom attributes, you must prepend the <code>custom:</code> prefix to the attribute name.</p>",
@@ -403,7 +518,7 @@
       "refs": {
         "AttributeNameListType$member": null,
         "AttributeType$Name": "<p>The name of the attribute.</p>",
-        "CodeDeliveryDetailsType$AttributeName": "<p>The name of the attribute in the code delivery details type.</p>",
+        "CodeDeliveryDetailsType$AttributeName": "<p>The attribute name.</p>",
         "GetUserAttributeVerificationCodeRequest$AttributeName": "<p>The attribute name returned by the server response to get the user attribute verification code.</p>",
         "MFAOptionType$AttributeName": "<p>The attribute name of the MFA option type.</p>",
         "SearchedAttributeNamesListType$member": null,
@@ -422,6 +537,18 @@
         "AttributeType$Value": "<p>The value of the attribute.</p>"
       }
     },
+    "AuthEventType": {
+      "base": "<p>The authentication event type.</p>",
+      "refs": {
+        "AuthEventsType$member": null
+      }
+    },
+    "AuthEventsType": {
+      "base": null,
+      "refs": {
+        "AdminListUserAuthEventsResponse$AuthEvents": "<p>The response object. It includes the <code>EventID</code>, <code>EventType</code>, <code>CreationDate</code>, <code>EventRisk</code>, and <code>EventResponse</code>.</p>"
+      }
+    },
     "AuthFlowType": {
       "base": null,
       "refs": {
@@ -437,7 +564,7 @@
       }
     },
     "AuthenticationResultType": {
-      "base": "<p>The result type of the authentication result.</p>",
+      "base": "<p>The authentication result.</p>",
       "refs": {
         "AdminInitiateAuthResponse$AuthenticationResult": "<p>The result of the authentication response. This is only returned if the caller does not need to pass another challenge. If the caller does need to pass another challenge before it gets tokens, <code>ChallengeName</code>, <code>ChallengeParameters</code>, and <code>Session</code> are returned.</p>",
         "AdminRespondToAuthChallengeResponse$AuthenticationResult": "<p>The result returned by the server in response to the authentication request.</p>",
@@ -445,11 +572,18 @@
         "RespondToAuthChallengeResponse$AuthenticationResult": "<p>The result returned by the server in response to the request to respond to the authentication challenge.</p>"
       }
     },
+    "BlockedIPRangeListType": {
+      "base": null,
+      "refs": {
+        "RiskExceptionConfigurationType$BlockedIPRangeList": "<p>Overrides the risk decision to always block the pre-authentication requests. The IP range is in CIDR notation: a compact representation of an IP address and its associated routing prefix.</p>"
+      }
+    },
     "BooleanType": {
       "base": null,
       "refs": {
         "AdminCreateUserConfigType$AllowAdminCreateUserOnly": "<p>Set to <code>True</code> if only the administrator is allowed to create user profiles. Set to <code>False</code> if users can sign themselves up via an app.</p>",
         "AdminGetUserResponse$Enabled": "<p>Indicates that the status is enabled.</p>",
+        "AnalyticsConfigurationType$UserDataShared": "<p>If <code>UserDataShared</code> is <code>true</code>, Amazon Cognito will include user data in the events it publishes to Amazon Pinpoint analytics.</p>",
         "ConfirmDeviceResponse$UserConfirmationNecessary": "<p>Indicates whether the user confirmation is necessary to confirm the device response.</p>",
         "CreateUserPoolClientRequest$AllowedOAuthFlowsUserPoolClient": "<p>Set to <code>True</code> if the client is allowed to follow the OAuth protocol when interacting with Cognito user pools.</p>",
         "DeviceConfigurationType$ChallengeRequiredOnNewDevice": "<p>Indicates whether a challenge is required on a new device. Only applicable to a new device.</p>",
@@ -458,10 +592,15 @@
         "PasswordPolicyType$RequireLowercase": "<p>In the password policy that you have set, refers to whether you have required users to use at least one lowercase letter in their password.</p>",
         "PasswordPolicyType$RequireNumbers": "<p>In the password policy that you have set, refers to whether you have required users to use at least one number in their password.</p>",
         "PasswordPolicyType$RequireSymbols": "<p>In the password policy that you have set, refers to whether you have required users to use at least one symbol in their password.</p>",
+        "SMSMfaSettingsType$Enabled": "<p>Specifies whether SMS text message MFA is enabled.</p>",
+        "SMSMfaSettingsType$PreferredMfa": "<p>The preferred MFA method.</p>",
         "SchemaAttributeType$DeveloperOnlyAttribute": "<p>Specifies whether the attribute type is developer only.</p>",
         "SchemaAttributeType$Mutable": "<p>Specifies whether the attribute can be changed once it has been created.</p>",
         "SchemaAttributeType$Required": "<p>Specifies whether a user pool attribute is required. If the attribute is required and the user does not provide a value, registration or sign-in will fail.</p>",
         "SignUpResponse$UserConfirmed": "<p>A response from the server indicating that a user registration has been confirmed.</p>",
+        "SoftwareTokenMfaConfigType$Enabled": "<p>Specifies whether software token MFA is enabled.</p>",
+        "SoftwareTokenMfaSettingsType$Enabled": "<p>Specifies whether software token MFA is enabled.</p>",
+        "SoftwareTokenMfaSettingsType$PreferredMfa": "<p>The preferred MFA method.</p>",
         "UpdateUserPoolClientRequest$AllowedOAuthFlowsUserPoolClient": "<p>Set to TRUE if the client is allowed to follow the OAuth protocol when interacting with Cognito user pools.</p>",
         "UserPoolClientType$AllowedOAuthFlowsUserPoolClient": "<p>Set to TRUE if the client is allowed to follow the OAuth protocol when interacting with Cognito user pools.</p>",
         "UserType$Enabled": "<p>Specifies whether the user is enabled.</p>"
@@ -488,24 +627,48 @@
         "UserPoolClientType$CallbackURLs": "<p>A list of allowed callback URLs for the identity providers.</p>"
       }
     },
+    "ChallengeName": {
+      "base": null,
+      "refs": {
+        "ChallengeResponseType$ChallengeName": "<p>The challenge name</p>"
+      }
+    },
     "ChallengeNameType": {
       "base": null,
       "refs": {
         "AdminInitiateAuthResponse$ChallengeName": "<p>The name of the challenge which you are responding to with this call. This is returned to you in the <code>AdminInitiateAuth</code> response if you need to pass another challenge.</p> <ul> <li> <p> <code>SMS_MFA</code>: Next challenge is to supply an <code>SMS_MFA_CODE</code>, delivered via SMS.</p> </li> <li> <p> <code>PASSWORD_VERIFIER</code>: Next challenge is to supply <code>PASSWORD_CLAIM_SIGNATURE</code>, <code>PASSWORD_CLAIM_SECRET_BLOCK</code>, and <code>TIMESTAMP</code> after the client-side SRP calculations.</p> </li> <li> <p> <code>CUSTOM_CHALLENGE</code>: This is returned if your custom authentication flow determines that the user should pass another challenge before tokens are issued.</p> </li> <li> <p> <code>DEVICE_SRP_AUTH</code>: If device tracking was enabled on your user pool and the previous challenges were passed, this challenge is returned so that Amazon Cognito can start tracking this device.</p> </li> <li> <p> <code>DEVICE_PASSWORD_VERIFIER</code>: Similar to <code>PASSWORD_VERIFIER</code>, but for devices only.</p> </li> <li> <p> <code>ADMIN_NO_SRP_AUTH</code>: This is returned if you need to authenticate with <code>USERNAME</code> and <code>PASSWORD</code> directly. An app client must be enabled to use this flow.</p> </li> <li> <p> <code>NEW_PASSWORD_REQUIRED</code>: For users which are required to change their passwords after successful first login. This challenge should be passed with <code>NEW_PASSWORD</code> and any other required attributes.</p> </li> </ul>",
-        "AdminRespondToAuthChallengeRequest$ChallengeName": "<p>The challenge name. For more information, see <a href=\"API_AdminInitiateAuth.html\">AdminInitiateAuth</a>.</p>",
-        "AdminRespondToAuthChallengeResponse$ChallengeName": "<p>The name of the challenge. For more information, see <a href=\"API_AdminInitiateAuth.html\">AdminInitiateAuth</a>.</p>",
+        "AdminRespondToAuthChallengeRequest$ChallengeName": "<p>The challenge name. For more information, see .</p>",
+        "AdminRespondToAuthChallengeResponse$ChallengeName": "<p>The name of the challenge. For more information, see .</p>",
         "InitiateAuthResponse$ChallengeName": "<p>The name of the challenge which you are responding to with this call. This is returned to you in the <code>AdminInitiateAuth</code> response if you need to pass another challenge.</p> <p>Valid values include the following. Note that all of these challenges require <code>USERNAME</code> and <code>SECRET_HASH</code> (if applicable) in the parameters.</p> <ul> <li> <p> <code>SMS_MFA</code>: Next challenge is to supply an <code>SMS_MFA_CODE</code>, delivered via SMS.</p> </li> <li> <p> <code>PASSWORD_VERIFIER</code>: Next challenge is to supply <code>PASSWORD_CLAIM_SIGNATURE</code>, <code>PASSWORD_CLAIM_SECRET_BLOCK</code>, and <code>TIMESTAMP</code> after the client-side SRP calculations.</p> </li> <li> <p> <code>CUSTOM_CHALLENGE</code>: This is returned if your custom authentication flow determines that the user should pass another challenge before tokens are issued.</p> </li> <li> <p> <code>DEVICE_SRP_AUTH</code>: If device tracking was enabled on your user pool and the previous challenges were passed, this challenge is returned so that Amazon Cognito can start tracking this device.</p> </li> <li> <p> <code>DEVICE_PASSWORD_VERIFIER</code>: Similar to <code>PASSWORD_VERIFIER</code>, but for devices only.</p> </li> <li> <p> <code>NEW_PASSWORD_REQUIRED</code>: For users which are required to change their passwords after successful first login. This challenge should be passed with <code>NEW_PASSWORD</code> and any other required attributes.</p> </li> </ul>",
-        "RespondToAuthChallengeRequest$ChallengeName": "<p>The challenge name. For more information, see <a href=\"API_InitiateAuth.html\">InitiateAuth</a>.</p> <p> <code>ADMIN_NO_SRP_AUTH</code> is not a valid value.</p>",
-        "RespondToAuthChallengeResponse$ChallengeName": "<p>The challenge name. For more information, see <a href=\"API_InitiateAuth.html\">InitiateAuth</a>.</p>"
+        "RespondToAuthChallengeRequest$ChallengeName": "<p>The challenge name. For more information, see .</p> <p> <code>ADMIN_NO_SRP_AUTH</code> is not a valid value.</p>",
+        "RespondToAuthChallengeResponse$ChallengeName": "<p>The challenge name. For more information, see .</p>"
       }
     },
     "ChallengeParametersType": {
       "base": null,
       "refs": {
         "AdminInitiateAuthResponse$ChallengeParameters": "<p>The challenge parameters. These are returned to you in the <code>AdminInitiateAuth</code> response if you need to pass another challenge. The responses in this parameter should be used to compute inputs to the next call (<code>AdminRespondToAuthChallenge</code>).</p> <p>All challenges require <code>USERNAME</code> and <code>SECRET_HASH</code> (if applicable).</p> <p>The value of the <code>USER_IF_FOR_SRP</code> attribute will be the user's actual username, not an alias (such as email address or phone number), even if you specified an alias in your call to <code>AdminInitiateAuth</code>. This is because, in the <code>AdminRespondToAuthChallenge</code> API <code>ChallengeResponses</code>, the <code>USERNAME</code> attribute cannot be an alias.</p>",
-        "AdminRespondToAuthChallengeResponse$ChallengeParameters": "<p>The challenge parameters. For more information, see <a href=\"API_AdminInitiateAuth.html\">AdminInitiateAuth</a>.</p>",
+        "AdminRespondToAuthChallengeResponse$ChallengeParameters": "<p>The challenge parameters. For more information, see .</p>",
         "InitiateAuthResponse$ChallengeParameters": "<p>The challenge parameters. These are returned to you in the <code>InitiateAuth</code> response if you need to pass another challenge. The responses in this parameter should be used to compute inputs to the next call (<code>RespondToAuthChallenge</code>). </p> <p>All challenges require <code>USERNAME</code> and <code>SECRET_HASH</code> (if applicable).</p>",
-        "RespondToAuthChallengeResponse$ChallengeParameters": "<p>The challenge parameters. For more information, see <a href=\"API_InitiateAuth.html\">InitiateAuth</a>.</p>"
+        "RespondToAuthChallengeResponse$ChallengeParameters": "<p>The challenge parameters. For more information, see .</p>"
+      }
+    },
+    "ChallengeResponse": {
+      "base": null,
+      "refs": {
+        "ChallengeResponseType$ChallengeResponse": "<p>The challenge response.</p>"
+      }
+    },
+    "ChallengeResponseListType": {
+      "base": null,
+      "refs": {
+        "AuthEventType$ChallengeResponses": "<p>The challenge responses.</p>"
+      }
+    },
+    "ChallengeResponseType": {
+      "base": "<p>The challenge response type.</p>",
+      "refs": {
+        "ChallengeResponseListType$member": null
       }
     },
     "ChallengeResponsesType": {
@@ -533,12 +696,15 @@
         "ConfirmForgotPasswordRequest$ClientId": "<p>The app client ID of the app associated with the user pool.</p>",
         "ConfirmSignUpRequest$ClientId": "<p>The ID of the app client associated with the user pool.</p>",
         "DeleteUserPoolClientRequest$ClientId": "<p>The app client ID of the app associated with the user pool.</p>",
+        "DescribeRiskConfigurationRequest$ClientId": "<p>The app client ID.</p>",
         "DescribeUserPoolClientRequest$ClientId": "<p>The app client ID of the app associated with the user pool.</p>",
         "ForgotPasswordRequest$ClientId": "<p>The ID of the client associated with the user pool.</p>",
         "GetUICustomizationRequest$ClientId": "<p>The client ID for the client app.</p>",
         "InitiateAuthRequest$ClientId": "<p>The app client ID.</p>",
         "ResendConfirmationCodeRequest$ClientId": "<p>The ID of the client associated with the user pool.</p>",
         "RespondToAuthChallengeRequest$ClientId": "<p>The app client ID.</p>",
+        "RiskConfigurationType$ClientId": "<p>The app client ID.</p>",
+        "SetRiskConfigurationRequest$ClientId": "<p>The app client ID. If <code>ClientId</code> is null, then the risk configuration is mapped to <code>userPoolId</code>. When the client ID is null, the same risk configuration is applied to all the clients in the userPool.</p> <p>Otherwise, <code>ClientId</code> is mapped to the client. When the client ID is not null, the user pool configuration is overridden and the risk configuration for the client is used instead.</p>",
         "SetUICustomizationRequest$ClientId": "<p>The client ID for the client app.</p>",
         "SignUpRequest$ClientId": "<p>The ID of the client associated with the user pool.</p>",
         "UICustomizationType$ClientId": "<p>The client ID for the client app.</p>",
@@ -593,7 +759,7 @@
       }
     },
     "CodeDeliveryDetailsType": {
-      "base": "<p>The type of code delivery details being returned from the server.</p>",
+      "base": "<p>The code delivery details being returned from the server.</p>",
       "refs": {
         "CodeDeliveryDetailsListType$member": null,
         "ForgotPasswordResponse$CodeDeliveryDetails": "<p>The code delivery details returned by the server in response to the request to reset a password.</p>",
@@ -616,6 +782,25 @@
       "base": null,
       "refs": {
         "UserImportJobType$CompletionMessage": "<p>The message returned when the user import job is completed.</p>"
+      }
+    },
+    "CompromisedCredentialsActionsType": {
+      "base": "<p>The compromised credentials actions type</p>",
+      "refs": {
+        "CompromisedCredentialsRiskConfigurationType$Actions": "<p>The compromised credentials risk configuration actions.</p>"
+      }
+    },
+    "CompromisedCredentialsEventActionType": {
+      "base": null,
+      "refs": {
+        "CompromisedCredentialsActionsType$EventAction": "<p>The event action.</p>"
+      }
+    },
+    "CompromisedCredentialsRiskConfigurationType": {
+      "base": "<p>The compromised credentials risk configuration type.</p>",
+      "refs": {
+        "RiskConfigurationType$CompromisedCredentialsRiskConfiguration": "<p>The compromised credentials risk configuration object including the <code>EventFilter</code> and the <code>EventAction</code> </p>",
+        "SetRiskConfigurationRequest$CompromisedCredentialsRiskConfiguration": "<p>The compromised credentials risk configuration.</p>"
       }
     },
     "ConcurrentModificationException": {
@@ -656,9 +841,16 @@
     "ConfirmationCodeType": {
       "base": null,
       "refs": {
-        "ConfirmForgotPasswordRequest$ConfirmationCode": "<p>The confirmation code sent by a user's request to retrieve a forgotten password. For more information, see <a href=\"API_ForgotPassword.html\">ForgotPassword</a> </p>",
+        "ConfirmForgotPasswordRequest$ConfirmationCode": "<p>The confirmation code sent by a user's request to retrieve a forgotten password. For more information, see </p>",
         "ConfirmSignUpRequest$ConfirmationCode": "<p>The confirmation code sent by a user's request to confirm registration.</p>",
         "VerifyUserAttributeRequest$Code": "<p>The verification code in the request to verify user attributes.</p>"
+      }
+    },
+    "ContextDataType": {
+      "base": "<p>Contextual user data type used for evaluating the risk of an unexpected event by Amazon Cognito advanced security.</p>",
+      "refs": {
+        "AdminInitiateAuthRequest$ContextData": "<p>Contextual data such as the user's device fingerprint, IP address, or location used for evaluating the risk of an unexpected event by Amazon Cognito advanced security.</p>",
+        "AdminRespondToAuthChallengeRequest$ContextData": "<p>Contextual data such as the user's device fingerprint, IP address, or location used for evaluating the risk of an unexpected event by Amazon Cognito advanced security.</p>"
       }
     },
     "CreateGroupRequest": {
@@ -748,15 +940,18 @@
       "refs": {
         "AdminGetUserResponse$UserCreateDate": "<p>The date the user was created.</p>",
         "AdminGetUserResponse$UserLastModifiedDate": "<p>The date the user was last modified.</p>",
+        "AuthEventType$CreationDate": "<p>The creation date</p>",
         "DeviceType$DeviceCreateDate": "<p>The creation date of the device.</p>",
         "DeviceType$DeviceLastModifiedDate": "<p>The last modified date of the device.</p>",
         "DeviceType$DeviceLastAuthenticatedDate": "<p>The date in which the device was last authenticated.</p>",
+        "EventFeedbackType$FeedbackDate": "<p>The event feedback date.</p>",
         "GroupType$LastModifiedDate": "<p>The date the group was last modified.</p>",
         "GroupType$CreationDate": "<p>The date the group was created.</p>",
         "IdentityProviderType$LastModifiedDate": "<p>The date the identity provider was last modified.</p>",
         "IdentityProviderType$CreationDate": "<p>The date the identity provider was created.</p>",
         "ProviderDescription$LastModifiedDate": "<p>The date the provider was last modified.</p>",
         "ProviderDescription$CreationDate": "<p>The date the provider was added to the user pool.</p>",
+        "RiskConfigurationType$LastModifiedDate": "<p>The last modified date.</p>",
         "UICustomizationType$LastModifiedDate": "<p>The last-modified date for the UI customization.</p>",
         "UICustomizationType$CreationDate": "<p>The creation date for the UI customization.</p>",
         "UserImportJobType$CreationDate": "<p>The date the user import job was created.</p>",
@@ -862,6 +1057,16 @@
       "refs": {
       }
     },
+    "DescribeRiskConfigurationRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeRiskConfigurationResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "DescribeUserImportJobRequest": {
       "base": "<p>Represents the request to describe the user import job.</p>",
       "refs": {
@@ -911,7 +1116,7 @@
       }
     },
     "DeviceConfigurationType": {
-      "base": "<p>The type of configuration for the user pool's device tracking.</p>",
+      "base": "<p>The configuration for the user pool's device tracking.</p>",
       "refs": {
         "CreateUserPoolRequest$DeviceConfiguration": "<p>The device configuration.</p>",
         "UpdateUserPoolRequest$DeviceConfiguration": "<p>Device configuration.</p>",
@@ -984,7 +1189,8 @@
         "CreateUserPoolDomainRequest$Domain": "<p>The domain string.</p>",
         "DeleteUserPoolDomainRequest$Domain": "<p>The domain string.</p>",
         "DescribeUserPoolDomainRequest$Domain": "<p>The domain string.</p>",
-        "DomainDescriptionType$Domain": "<p>The domain string.</p>"
+        "DomainDescriptionType$Domain": "<p>The domain string.</p>",
+        "UserPoolType$Domain": "<p>Holds the domain prefix if the user pool has a domain associated with it.</p>"
       }
     },
     "DomainVersionType": {
@@ -1001,7 +1207,7 @@
     "EmailAddressType": {
       "base": null,
       "refs": {
-        "EmailConfigurationType$ReplyToEmailAddress": "<p>The REPLY-TO email address.</p>"
+        "EmailConfigurationType$ReplyToEmailAddress": "<p>The destination to which the receiver of the email should reply to.</p>"
       }
     },
     "EmailConfigurationType": {
@@ -1010,6 +1216,19 @@
         "CreateUserPoolRequest$EmailConfiguration": "<p>The email configuration.</p>",
         "UpdateUserPoolRequest$EmailConfiguration": "<p>Email configuration.</p>",
         "UserPoolType$EmailConfiguration": "<p>The email configuration.</p>"
+      }
+    },
+    "EmailNotificationBodyType": {
+      "base": null,
+      "refs": {
+        "NotifyEmailType$HtmlBody": "<p>The HTML body.</p>",
+        "NotifyEmailType$TextBody": "<p>The text body.</p>"
+      }
+    },
+    "EmailNotificationSubjectType": {
+      "base": null,
+      "refs": {
+        "NotifyEmailType$Subject": "<p>The subject.</p>"
       }
     },
     "EmailVerificationMessageByLinkType": {
@@ -1044,6 +1263,60 @@
         "VerificationMessageTemplateType$EmailSubject": "<p>The subject line for the email message template.</p>"
       }
     },
+    "EnableSoftwareTokenMFAException": {
+      "base": "<p>This exception is thrown when there is a code mismatch and the service fails to configure the software token TOTP multi-factor authentication (MFA).</p>",
+      "refs": {
+      }
+    },
+    "EventContextDataType": {
+      "base": "<p>Specifies the user context data captured at the time of an event request.</p>",
+      "refs": {
+        "AuthEventType$EventContextData": "<p>The user context data captured at the time of an event request. It provides additional information about the client from which event the request is received.</p>"
+      }
+    },
+    "EventFeedbackType": {
+      "base": "<p>Specifies the event feedback type.</p>",
+      "refs": {
+        "AuthEventType$EventFeedback": "<p>A flag specifying the user feedback captured at the time of an event request is good or bad. </p>"
+      }
+    },
+    "EventFilterType": {
+      "base": null,
+      "refs": {
+        "EventFiltersType$member": null
+      }
+    },
+    "EventFiltersType": {
+      "base": null,
+      "refs": {
+        "CompromisedCredentialsRiskConfigurationType$EventFilter": "<p>Perform the action for these events. The default is to perform all events if no event filter is specified.</p>"
+      }
+    },
+    "EventIdType": {
+      "base": null,
+      "refs": {
+        "AdminUpdateAuthEventFeedbackRequest$EventId": "<p>The authentication event ID.</p>",
+        "UpdateAuthEventFeedbackRequest$EventId": "<p>The event ID.</p>"
+      }
+    },
+    "EventResponseType": {
+      "base": null,
+      "refs": {
+        "AuthEventType$EventResponse": "<p>The event response.</p>"
+      }
+    },
+    "EventRiskType": {
+      "base": "<p>The event risk type.</p>",
+      "refs": {
+        "AuthEventType$EventRisk": "<p>The event risk.</p>"
+      }
+    },
+    "EventType": {
+      "base": null,
+      "refs": {
+        "AuthEventType$EventType": "<p>The event type.</p>"
+      }
+    },
     "ExpiredCodeException": {
       "base": "<p>This exception is thrown if a code has expired.</p>",
       "refs": {
@@ -1061,6 +1334,14 @@
       "base": null,
       "refs": {
         "ExplicitAuthFlowsListType$member": null
+      }
+    },
+    "FeedbackValueType": {
+      "base": null,
+      "refs": {
+        "AdminUpdateAuthEventFeedbackRequest$FeedbackValue": "<p>The authentication event feedback value.</p>",
+        "EventFeedbackType$FeedbackValue": "<p>The event feedback value.</p>",
+        "UpdateAuthEventFeedbackRequest$FeedbackValue": "<p>The authentication event feedback value.</p>"
       }
     },
     "ForceAliasCreation": {
@@ -1151,6 +1432,16 @@
       "refs": {
       }
     },
+    "GetUserPoolMfaConfigRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetUserPoolMfaConfigResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "GetUserRequest": {
       "base": "<p>Represents the request to get information about the user.</p>",
       "refs": {
@@ -1203,6 +1494,24 @@
         "GetGroupResponse$Group": "<p>The group object for the group.</p>",
         "GroupListType$member": null,
         "UpdateGroupResponse$Group": "<p>The group object for the group.</p>"
+      }
+    },
+    "HexStringType": {
+      "base": null,
+      "refs": {
+        "AnalyticsConfigurationType$ApplicationId": "<p>The application ID for an Amazon Pinpoint application.</p>"
+      }
+    },
+    "HttpHeader": {
+      "base": "<p>The HTTP header.</p>",
+      "refs": {
+        "HttpHeaderList$member": null
+      }
+    },
+    "HttpHeaderList": {
+      "base": null,
+      "refs": {
+        "ContextDataType$HttpHeaders": "<p>HttpHeaders received on your server in same order.</p>"
       }
     },
     "IdentityProviderType": {
@@ -1312,12 +1621,12 @@
       }
     },
     "LambdaConfigType": {
-      "base": "<p>Specifies the type of configuration for AWS Lambda triggers.</p>",
+      "base": "<p>Specifies the configuration for AWS Lambda triggers.</p>",
       "refs": {
         "CreateUserPoolRequest$LambdaConfig": "<p>The Lambda trigger configuration information for the new user pool.</p>",
         "UpdateUserPoolRequest$LambdaConfig": "<p>The AWS Lambda configuration information from the request to update the user pool.</p>",
         "UserPoolDescriptionType$LambdaConfig": "<p>The AWS Lambda configuration information in a user pool description.</p>",
-        "UserPoolType$LambdaConfig": "<p>A container for the AWS Lambda triggers associated with a user pool.</p>"
+        "UserPoolType$LambdaConfig": "<p>The AWS Lambda triggers associated with tue user pool.</p>"
       }
     },
     "LimitExceededException": {
@@ -1479,7 +1788,7 @@
     "MessageTemplateType": {
       "base": "<p>The message template structure.</p>",
       "refs": {
-        "AdminCreateUserConfigType$InviteMessageTemplate": "<p>The message template to be used for the welcome message to new users.</p>"
+        "AdminCreateUserConfigType$InviteMessageTemplate": "<p>The message template to be used for the welcome message to new users.</p> <p>See also <a href=\"http://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-message-customizations.html#cognito-user-pool-settings-user-invitation-message-customization\">Customizing User Invitation Messages</a>.</p>"
       }
     },
     "MessageType": {
@@ -1490,6 +1799,7 @@
         "CodeMismatchException$message": "<p>The message provided when the code mismatch exception is thrown.</p>",
         "ConcurrentModificationException$message": "<p>The message provided when the concurrent exception is thrown.</p>",
         "DuplicateProviderException$message": null,
+        "EnableSoftwareTokenMFAException$message": null,
         "ExpiredCodeException$message": "<p>The message returned when the expired code exception is thrown.</p>",
         "GroupExistsException$message": null,
         "InternalErrorException$message": "<p>The message returned when Amazon Cognito throws an internal error exception.</p>",
@@ -1508,6 +1818,7 @@
         "PreconditionNotMetException$message": "<p>The message returned when a precondition is not met.</p>",
         "ResourceNotFoundException$message": "<p>The message returned when the Amazon Cognito service returns a resource not found exception.</p>",
         "ScopeDoesNotExistException$message": null,
+        "SoftwareTokenMFANotFoundException$message": null,
         "TooManyFailedAttemptsException$message": "<p>The message returned when the Amazon Cognito service returns a too many failed attempts exception.</p>",
         "TooManyRequestsException$message": "<p>The message returned when the Amazon Cognito service returns a too many requests exception.</p>",
         "UnexpectedLambdaException$message": "<p>The message returned when the Amazon Cognito service returns an unexpected AWS Lambda exception.</p>",
@@ -1517,6 +1828,7 @@
         "UserLambdaValidationException$message": "<p>The message returned when the Amazon Cognito service returns a user validation exception with the AWS Lambda service.</p>",
         "UserNotConfirmedException$message": "<p>The message returned when a user is not confirmed successfully.</p>",
         "UserNotFoundException$message": "<p>The message returned when a user is not found.</p>",
+        "UserPoolAddOnNotEnabledException$message": null,
         "UserPoolTaggingException$message": null,
         "UsernameExistsException$message": "<p>The message returned when Amazon Cognito throws a user name exists exception.</p>"
       }
@@ -1530,6 +1842,20 @@
     "NotAuthorizedException": {
       "base": "<p>This exception is thrown when a user is not authorized.</p>",
       "refs": {
+      }
+    },
+    "NotifyConfigurationType": {
+      "base": "<p>The notify configuration type.</p>",
+      "refs": {
+        "AccountTakeoverRiskConfigurationType$NotifyConfiguration": "<p>The notify configuration used to construct email notifications.</p>"
+      }
+    },
+    "NotifyEmailType": {
+      "base": "<p>The notify email type.</p>",
+      "refs": {
+        "NotifyConfigurationType$BlockEmail": "<p>Email template used when a detected risk event is blocked.</p>",
+        "NotifyConfigurationType$NoActionEmail": "<p>The email template used when a detected risk event is allowed.</p>",
+        "NotifyConfigurationType$MfaEmail": "<p>The MFA email template used when MFA is challenged as part of a detected risk.</p>"
       }
     },
     "NumberAttributeConstraintsType": {
@@ -1557,6 +1883,8 @@
       "refs": {
         "AdminListGroupsForUserRequest$NextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
         "AdminListGroupsForUserResponse$NextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
+        "AdminListUserAuthEventsRequest$NextToken": "<p>A pagination token.</p>",
+        "AdminListUserAuthEventsResponse$NextToken": "<p>A pagination token.</p>",
         "ListGroupsRequest$NextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
         "ListGroupsResponse$NextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
         "ListUserPoolClientsRequest$NextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
@@ -1587,7 +1915,7 @@
     "PasswordPolicyType": {
       "base": "<p>The password policy type.</p>",
       "refs": {
-        "UserPoolPolicyType$PasswordPolicy": "<p>A container for information about the user pool password policy.</p>"
+        "UserPoolPolicyType$PasswordPolicy": "<p>The password policy.</p>"
       }
     },
     "PasswordResetRequiredException": {
@@ -1599,8 +1927,8 @@
       "base": null,
       "refs": {
         "AdminCreateUserRequest$TemporaryPassword": "<p>The user's temporary password. This password must conform to the password policy that you specified when you created the user pool.</p> <p>The temporary password is valid only once. To complete the Admin Create User flow, the user must enter the temporary password in the sign-in page along with a new password to be used in all future sign-ins.</p> <p>This parameter is not required. If you do not specify a value, Amazon Cognito generates one for you.</p> <p>The temporary password can only be used until the user account expiration limit that you specified when you created the user pool. To reset the account after that time limit, you must call <code>AdminCreateUser</code> again, specifying <code>\"RESEND\"</code> for the <code>MessageAction</code> parameter.</p>",
-        "ChangePasswordRequest$PreviousPassword": "<p>The old password in the change password request.</p>",
-        "ChangePasswordRequest$ProposedPassword": "<p>The new password in the change password request.</p>",
+        "ChangePasswordRequest$PreviousPassword": "<p>The old password.</p>",
+        "ChangePasswordRequest$ProposedPassword": "<p>The new password.</p>",
         "ConfirmForgotPasswordRequest$Password": "<p>The password sent by a user's request to retrieve a forgotten password.</p>",
         "SignUpRequest$Password": "<p>The password of the user you wish to register.</p>"
       }
@@ -1623,7 +1951,7 @@
       "refs": {
         "CreateGroupRequest$Precedence": "<p>A nonnegative integer value that specifies the precedence of this group relative to the other groups that a user can belong to in the user pool. Zero is the highest precedence value. Groups with lower <code>Precedence</code> values take precedence over groups with higher or null <code>Precedence</code> values. If a user belongs to two or more groups, it is the group with the lowest precedence value whose role ARN will be used in the <code>cognito:roles</code> and <code>cognito:preferred_role</code> claims in the user's tokens.</p> <p>Two groups can have the same <code>Precedence</code> value. If this happens, neither group takes precedence over the other. If two groups with the same <code>Precedence</code> have the same role ARN, that role is used in the <code>cognito:preferred_role</code> claim in tokens for users in each group. If the two groups have different role ARNs, the <code>cognito:preferred_role</code> claim is not set in users' tokens.</p> <p>The default <code>Precedence</code> value is null.</p>",
         "GroupType$Precedence": "<p>A nonnegative integer value that specifies the precedence of this group relative to the other groups that a user can belong to in the user pool. If a user belongs to two or more groups, it is the group with the highest precedence whose role ARN will be used in the <code>cognito:roles</code> and <code>cognito:preferred_role</code> claims in the user's tokens. Groups with higher <code>Precedence</code> values take precedence over groups with lower <code>Precedence</code> values or with null <code>Precedence</code> values.</p> <p>Two groups can have the same <code>Precedence</code> value. If this happens, neither group takes precedence over the other. If two groups with the same <code>Precedence</code> have the same role ARN, that role is used in the <code>cognito:preferred_role</code> claim in tokens for users in each group. If the two groups have different role ARNs, the <code>cognito:preferred_role</code> claim is not set in users' tokens.</p> <p>The default <code>Precedence</code> value is null.</p>",
-        "UpdateGroupRequest$Precedence": "<p>The new precedence value for the group. For more information about this parameter, see <a href=\"API_CreateGroup.html\">CreateGroup</a>.</p>"
+        "UpdateGroupRequest$Precedence": "<p>The new precedence value for the group. For more information about this parameter, see .</p>"
       }
     },
     "PreconditionNotMetException": {
@@ -1667,7 +1995,7 @@
       "base": "<p>A container for information about an identity provider for a user pool.</p>",
       "refs": {
         "AdminDisableProviderForUserRequest$User": "<p>The user to be disabled.</p>",
-        "AdminLinkProviderForUserRequest$DestinationUser": "<p>The existing user in the user pool to be linked to the external identity provider user account. Can be a native (Username + Password) Cognito User Pools user or a federated user (for example, a SAML or Facebook user). If the user doesn't exist, an exception is thrown. This is the user that is returned when the new user (with the linked identity provider attribute) signs in.</p> <p>The <code>ProviderAttributeValue</code> for the <code>DestinationUser</code> must match the username for the user in the user pool. The <code>ProviderAttributeName</code> will always be ignored.</p>",
+        "AdminLinkProviderForUserRequest$DestinationUser": "<p>The existing user in the user pool to be linked to the external identity provider user account. Can be a native (Username + Password) Cognito User Pools user or a federated user (for example, a SAML or Facebook user). If the user doesn't exist, an exception is thrown. This is the user that is returned when the new user (with the linked identity provider attribute) signs in.</p> <p>For a native username + password user, the <code>ProviderAttributeValue</code> for the <code>DestinationUser</code> should be the username in the user pool. For a federated user, it should be the provider-specific <code>user_id</code>.</p> <p>The <code>ProviderAttributeName</code> of the <code>DestinationUser</code> is ignored.</p> <p>The <code>ProviderName</code> should be set to <code>Cognito</code> for users in Cognito user pools.</p>",
         "AdminLinkProviderForUserRequest$SourceUser": "<p>An external identity provider account for a user who does not currently exist yet in the user pool. This user must be a federated user (for example, a SAML or Facebook user), not another native user.</p> <p>If the <code>SourceUser</code> is a federated social identity provider user (Facebook, Google, or Login with Amazon), you must set the <code>ProviderAttributeName</code> to <code>Cognito_Subject</code>. For social identity providers, the <code>ProviderName</code> will be <code>Facebook</code>, <code>Google</code>, or <code>LoginWithAmazon</code>, and Cognito will automatically parse the Facebook, Google, and Login with Amazon tokens for <code>id</code>, <code>sub</code>, and <code>user_id</code>, respectively. The <code>ProviderAttributeValue</code> for the user must be the same value as the <code>id</code>, <code>sub</code>, or <code>user_id</code> value found in the social identity provider token.</p> <p/> <p>For SAML, the <code>ProviderAttributeName</code> can be any value that matches a claim in the SAML assertion. If you wish to link SAML users based on the subject of the SAML assertion, you should map the subject to a claim through the SAML identity provider and submit that claim name as the <code>ProviderAttributeName</code>. If you set <code>ProviderAttributeName</code> to <code>Cognito_Subject</code>, Cognito will automatically parse the default unique identifier found in the subject from the SAML token.</p>"
       }
     },
@@ -1688,6 +2016,7 @@
       "refs": {
         "AdminListDevicesRequest$Limit": "<p>The limit of the devices request.</p>",
         "AdminListGroupsForUserRequest$Limit": "<p>The limit of the request to list groups.</p>",
+        "AdminListUserAuthEventsRequest$MaxResults": "<p>The maximum number of authentication events to return.</p>",
         "ListDevicesRequest$Limit": "<p>The limit of the device request.</p>",
         "ListGroupsRequest$Limit": "<p>The limit of the request to list groups.</p>",
         "ListUsersInGroupRequest$Limit": "<p>The limit of the request to list users.</p>",
@@ -1796,10 +2125,43 @@
       "refs": {
       }
     },
+    "RiskConfigurationType": {
+      "base": "<p>The risk configuration type.</p>",
+      "refs": {
+        "DescribeRiskConfigurationResponse$RiskConfiguration": "<p>The risk configuration.</p>",
+        "SetRiskConfigurationResponse$RiskConfiguration": "<p>The risk configuration.</p>"
+      }
+    },
+    "RiskDecisionType": {
+      "base": null,
+      "refs": {
+        "EventRiskType$RiskDecision": "<p>The risk decision.</p>"
+      }
+    },
+    "RiskExceptionConfigurationType": {
+      "base": "<p>The type of the configuration to override the risk decision.</p>",
+      "refs": {
+        "RiskConfigurationType$RiskExceptionConfiguration": "<p>The configuration to override the risk decision.</p>",
+        "SetRiskConfigurationRequest$RiskExceptionConfiguration": "<p>The configuration to override the risk decision.</p>"
+      }
+    },
+    "RiskLevelType": {
+      "base": null,
+      "refs": {
+        "EventRiskType$RiskLevel": "<p>The risk level.</p>"
+      }
+    },
     "S3BucketType": {
       "base": null,
       "refs": {
         "DomainDescriptionType$S3Bucket": "<p>The S3 bucket where the static files for this domain are stored.</p>"
+      }
+    },
+    "SMSMfaSettingsType": {
+      "base": "<p>The SMS multi-factor authentication (MFA) settings type.</p>",
+      "refs": {
+        "AdminSetUserMFAPreferenceRequest$SMSMfaSettings": "<p>The SMS text message MFA settings.</p>",
+        "SetUserMFAPreferenceRequest$SMSMfaSettings": "<p>The SMS text message multi-factor authentication (MFA) settings.</p>"
       }
     },
     "SchemaAttributeType": {
@@ -1849,7 +2211,13 @@
     "SearchedAttributeNamesListType": {
       "base": null,
       "refs": {
-        "ListUsersRequest$AttributesToGet": "<p>An array of strings, where each string is the name of a user attribute to be returned for each user in the search results. If the array is empty, all attributes are returned.</p>"
+        "ListUsersRequest$AttributesToGet": "<p>An array of strings, where each string is the name of a user attribute to be returned for each user in the search results. If the array is null, all attributes are returned.</p>"
+      }
+    },
+    "SecretCodeType": {
+      "base": null,
+      "refs": {
+        "AssociateSoftwareTokenResponse$SecretCode": "<p>A unique generated shared secret code that is used in the TOTP algorithm to generate a one time code.</p>"
       }
     },
     "SecretHashType": {
@@ -1867,10 +2235,24 @@
       "refs": {
         "AdminInitiateAuthResponse$Session": "<p>The session which should be passed both ways in challenge-response calls to the service. If <code>AdminInitiateAuth</code> or <code>AdminRespondToAuthChallenge</code> API call determines that the caller needs to go through another challenge, they return a session with other challenge parameters. This session should be passed as it is to the next <code>AdminRespondToAuthChallenge</code> API call.</p>",
         "AdminRespondToAuthChallengeRequest$Session": "<p>The session which should be passed both ways in challenge-response calls to the service. If <code>InitiateAuth</code> or <code>RespondToAuthChallenge</code> API call determines that the caller needs to go through another challenge, they return a session with other challenge parameters. This session should be passed as it is to the next <code>RespondToAuthChallenge</code> API call.</p>",
-        "AdminRespondToAuthChallengeResponse$Session": "<p>The session which should be passed both ways in challenge-response calls to the service. If the <a href=\"API_InitiateAuth.html\">InitiateAuth</a> or <a href=\"API_RespondToAuthChallenge.html\">RespondToAuthChallenge</a> API call determines that the caller needs to go through another challenge, they return a session with other challenge parameters. This session should be passed as it is to the next <code>RespondToAuthChallenge</code> API call.</p>",
-        "InitiateAuthResponse$Session": "<p>The session which should be passed both ways in challenge-response calls to the service. If the <a href=\"API_InitiateAuth.html\">InitiateAuth</a> or <a href=\"API_RespondToAuthChallenge.html\">RespondToAuthChallenge</a> API call determines that the caller needs to go through another challenge, they return a session with other challenge parameters. This session should be passed as it is to the next <code>RespondToAuthChallenge</code> API call.</p>",
+        "AdminRespondToAuthChallengeResponse$Session": "<p>The session which should be passed both ways in challenge-response calls to the service. If the or API call determines that the caller needs to go through another challenge, they return a session with other challenge parameters. This session should be passed as it is to the next <code>RespondToAuthChallenge</code> API call.</p>",
+        "AssociateSoftwareTokenRequest$Session": "<p>The session which should be passed both ways in challenge-response calls to the service. This allows authentication of the user as part of the MFA setup process.</p>",
+        "AssociateSoftwareTokenResponse$Session": "<p>The session which should be passed both ways in challenge-response calls to the service. This allows authentication of the user as part of the MFA setup process.</p>",
+        "InitiateAuthResponse$Session": "<p>The session which should be passed both ways in challenge-response calls to the service. If the or API call determines that the caller needs to go through another challenge, they return a session with other challenge parameters. This session should be passed as it is to the next <code>RespondToAuthChallenge</code> API call.</p>",
         "RespondToAuthChallengeRequest$Session": "<p>The session which should be passed both ways in challenge-response calls to the service. If <code>InitiateAuth</code> or <code>RespondToAuthChallenge</code> API call determines that the caller needs to go through another challenge, they return a session with other challenge parameters. This session should be passed as it is to the next <code>RespondToAuthChallenge</code> API call.</p>",
-        "RespondToAuthChallengeResponse$Session": "<p>The session which should be passed both ways in challenge-response calls to the service. If the <a href=\"API_InitiateAuth.html\">InitiateAuth</a> or <a href=\"API_RespondToAuthChallenge.html\">RespondToAuthChallenge</a> API call determines that the caller needs to go through another challenge, they return a session with other challenge parameters. This session should be passed as it is to the next <code>RespondToAuthChallenge</code> API call.</p>"
+        "RespondToAuthChallengeResponse$Session": "<p>The session which should be passed both ways in challenge-response calls to the service. If the or API call determines that the caller needs to go through another challenge, they return a session with other challenge parameters. This session should be passed as it is to the next <code>RespondToAuthChallenge</code> API call.</p>",
+        "VerifySoftwareTokenRequest$Session": "<p>The session which should be passed both ways in challenge-response calls to the service.</p>",
+        "VerifySoftwareTokenResponse$Session": "<p>The session which should be passed both ways in challenge-response calls to the service.</p>"
+      }
+    },
+    "SetRiskConfigurationRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "SetRiskConfigurationResponse": {
+      "base": null,
+      "refs": {
       }
     },
     "SetUICustomizationRequest": {
@@ -1879,6 +2261,26 @@
       }
     },
     "SetUICustomizationResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "SetUserMFAPreferenceRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "SetUserMFAPreferenceResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "SetUserPoolMfaConfigRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "SetUserPoolMfaConfigResponse": {
       "base": null,
       "refs": {
       }
@@ -1903,12 +2305,27 @@
       "refs": {
       }
     },
+    "SkippedIPRangeListType": {
+      "base": null,
+      "refs": {
+        "RiskExceptionConfigurationType$SkippedIPRangeList": "<p>Risk detection is not performed on the IP addresses in the range list. The IP range is in CIDR notation.</p>"
+      }
+    },
     "SmsConfigurationType": {
       "base": "<p>The SMS configuration type.</p>",
       "refs": {
         "CreateUserPoolRequest$SmsConfiguration": "<p>The SMS configuration.</p>",
+        "SmsMfaConfigType$SmsConfiguration": "<p>The SMS configuration.</p>",
         "UpdateUserPoolRequest$SmsConfiguration": "<p>SMS configuration.</p>",
         "UserPoolType$SmsConfiguration": "<p>The SMS configuration.</p>"
+      }
+    },
+    "SmsMfaConfigType": {
+      "base": "<p>The SMS text message multi-factor authentication (MFA) configuration type.</p>",
+      "refs": {
+        "GetUserPoolMfaConfigResponse$SmsMfaConfiguration": "<p>The SMS text message multi-factor (MFA) configuration.</p>",
+        "SetUserPoolMfaConfigRequest$SmsMfaConfiguration": "<p>The SMS text message MFA configuration.</p>",
+        "SetUserPoolMfaConfigResponse$SmsMfaConfiguration": "<p>The SMS text message MFA configuration.</p>"
       }
     },
     "SmsVerificationMessageType": {
@@ -1917,11 +2334,38 @@
         "CreateUserPoolRequest$SmsVerificationMessage": "<p>A string representing the SMS verification message.</p>",
         "CreateUserPoolRequest$SmsAuthenticationMessage": "<p>A string representing the SMS authentication message.</p>",
         "MessageTemplateType$SMSMessage": "<p>The message template for SMS messages.</p>",
+        "SmsMfaConfigType$SmsAuthenticationMessage": "<p>The SMS authentication message.</p>",
         "UpdateUserPoolRequest$SmsVerificationMessage": "<p>A container with information about the SMS verification message.</p>",
         "UpdateUserPoolRequest$SmsAuthenticationMessage": "<p>The contents of the SMS authentication message.</p>",
         "UserPoolType$SmsVerificationMessage": "<p>The contents of the SMS verification message.</p>",
         "UserPoolType$SmsAuthenticationMessage": "<p>The contents of the SMS authentication message.</p>",
         "VerificationMessageTemplateType$SmsMessage": "<p>The SMS message template.</p>"
+      }
+    },
+    "SoftwareTokenMFANotFoundException": {
+      "base": "<p>This exception is thrown when the software token TOTP multi-factor authentication (MFA) is not enabled for the user pool.</p>",
+      "refs": {
+      }
+    },
+    "SoftwareTokenMFAUserCodeType": {
+      "base": null,
+      "refs": {
+        "VerifySoftwareTokenRequest$UserCode": "<p>The one time password computed using the secret code returned by </p>"
+      }
+    },
+    "SoftwareTokenMfaConfigType": {
+      "base": "<p>The type used for enabling software token MFA at the user pool level.</p>",
+      "refs": {
+        "GetUserPoolMfaConfigResponse$SoftwareTokenMfaConfiguration": "<p>The software token multi-factor (MFA) configuration.</p>",
+        "SetUserPoolMfaConfigRequest$SoftwareTokenMfaConfiguration": "<p>The software token MFA configuration.</p>",
+        "SetUserPoolMfaConfigResponse$SoftwareTokenMfaConfiguration": "<p>The software token MFA configuration.</p>"
+      }
+    },
+    "SoftwareTokenMfaSettingsType": {
+      "base": "<p>The type used for enabling software token MFA at the user level.</p>",
+      "refs": {
+        "AdminSetUserMFAPreferenceRequest$SoftwareTokenMfaSettings": "<p>The time-based one-time password software token MFA settings.</p>",
+        "SetUserMFAPreferenceRequest$SoftwareTokenMfaSettings": "<p>The time-based one-time password software token MFA settings.</p>"
       }
     },
     "StartUserImportJobRequest": {
@@ -1952,7 +2396,7 @@
       }
     },
     "StringAttributeConstraintsType": {
-      "base": "<p>The type of constraints associated with an attribute of the string type.</p>",
+      "base": "<p>The constraints associated with a string attribute.</p>",
       "refs": {
         "SchemaAttributeType$StringAttributeConstraints": "<p>Specifies the constraints for an attribute of the string type.</p>"
       }
@@ -1961,11 +2405,16 @@
       "base": null,
       "refs": {
         "AdminDisableProviderForUserRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
+        "AdminGetUserResponse$PreferredMfaSetting": "<p>The user's preferred MFA setting.</p>",
         "AdminLinkProviderForUserRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
+        "AnalyticsConfigurationType$ExternalId": "<p>The external ID.</p>",
+        "AnalyticsMetadataType$AnalyticsEndpointId": "<p>The endpoint ID.</p>",
         "AttributeMappingType$value": null,
+        "AuthEventType$EventId": "<p>The event ID.</p>",
         "AuthParametersType$key": null,
         "AuthParametersType$value": null,
-        "AuthenticationResultType$TokenType": "<p>The token type of the authentication result.</p>",
+        "AuthenticationResultType$TokenType": "<p>The token type.</p>",
+        "BlockedIPRangeListType$member": null,
         "ChallengeParametersType$key": null,
         "ChallengeParametersType$value": null,
         "ChallengeResponsesType$key": null,
@@ -1973,10 +2422,25 @@
         "ClientMetadataType$key": null,
         "ClientMetadataType$value": null,
         "CodeDeliveryDetailsType$Destination": "<p>The destination for the code delivery details.</p>",
+        "ContextDataType$IpAddress": "<p>Source IP address of your user.</p>",
+        "ContextDataType$ServerName": "<p>Your server endpoint where this API is invoked.</p>",
+        "ContextDataType$ServerPath": "<p>Your server path where this API is invoked. </p>",
+        "ContextDataType$EncodedData": "<p>Encoded data containing device fingerprinting details, collected using the Amazon Cognito context data collection library.</p>",
         "DeviceSecretVerifierConfigType$PasswordVerifier": "<p>The password verifier.</p>",
         "DeviceSecretVerifierConfigType$Salt": "<p>The salt.</p>",
+        "EventContextDataType$IpAddress": "<p>The user's IP address.</p>",
+        "EventContextDataType$DeviceName": "<p>The user's device name.</p>",
+        "EventContextDataType$Timezone": "<p>The user's time zone.</p>",
+        "EventContextDataType$City": "<p>The user's city.</p>",
+        "EventContextDataType$Country": "<p>The user's country.</p>",
+        "EventFeedbackType$Provider": "<p>The provider.</p>",
+        "GetUserResponse$PreferredMfaSetting": "<p>The user's preferred MFA setting.</p>",
+        "HttpHeader$headerName": "<p>The header name</p>",
+        "HttpHeader$headerValue": "<p>The header value.</p>",
         "ListOfStringTypes$member": null,
         "NewDeviceMetadataType$DeviceGroupKey": "<p>The device group key.</p>",
+        "NotifyConfigurationType$From": "<p>The email address that is sending the email. It must be either individually verified with Amazon SES, or from a domain that has been verified with Amazon SES.</p>",
+        "NotifyConfigurationType$ReplyTo": "<p>The destination to which the receiver of an email should reply to.</p>",
         "NumberAttributeConstraintsType$MinValue": "<p>The minimum value of an attribute that is of the number data type.</p>",
         "NumberAttributeConstraintsType$MaxValue": "<p>The maximum value of an attribute that is of the number data type.</p>",
         "ProviderDetailsType$key": null,
@@ -1984,13 +2448,17 @@
         "ProviderUserIdentifierType$ProviderAttributeName": "<p>The name of the provider attribute to link to, for example, <code>NameID</code>.</p>",
         "ProviderUserIdentifierType$ProviderAttributeValue": "<p>The value of the provider attribute to link to, for example, <code>xxxxx_account</code>.</p>",
         "SignUpResponse$UserSub": "<p>The UUID of the authenticated user. This is not the same as <code>username</code>.</p>",
+        "SkippedIPRangeListType$member": null,
         "SmsConfigurationType$ExternalId": "<p>The external ID.</p>",
-        "StringAttributeConstraintsType$MinLength": "<p>The minimum length of an attribute value of the string type.</p>",
-        "StringAttributeConstraintsType$MaxLength": "<p>The maximum length of an attribute value of the string type.</p>",
+        "StringAttributeConstraintsType$MinLength": "<p>The minimum length.</p>",
+        "StringAttributeConstraintsType$MaxLength": "<p>The maximum length.</p>",
+        "UserContextDataType$EncodedData": "<p>Contextual data such as the user's device fingerprint, IP address, or location used for evaluating the risk of an unexpected event by Amazon Cognito advanced security.</p>",
+        "UserMFASettingListType$member": null,
         "UserPoolTagsType$key": null,
         "UserPoolTagsType$value": null,
         "UserPoolType$SmsConfigurationFailure": "<p>The reason why the SMS configuration cannot send the messages to your users.</p>",
-        "UserPoolType$EmailConfigurationFailure": "<p>The reason why the email configuration cannot send the messages to your users.</p>"
+        "UserPoolType$EmailConfigurationFailure": "<p>The reason why the email configuration cannot send the messages to your users.</p>",
+        "VerifySoftwareTokenRequest$FriendlyDeviceName": "<p>The friendly device name.</p>"
       }
     },
     "SupportedIdentityProvidersListType": {
@@ -2004,10 +2472,11 @@
     "TokenModelType": {
       "base": null,
       "refs": {
-        "AuthenticationResultType$AccessToken": "<p>The access token of the authentication result.</p>",
-        "AuthenticationResultType$RefreshToken": "<p>The refresh token of the authentication result.</p>",
-        "AuthenticationResultType$IdToken": "<p>The ID token of the authentication result.</p>",
-        "ChangePasswordRequest$AccessToken": "<p>The access token in the change password request.</p>",
+        "AssociateSoftwareTokenRequest$AccessToken": "<p>The access token.</p>",
+        "AuthenticationResultType$AccessToken": "<p>The access token.</p>",
+        "AuthenticationResultType$RefreshToken": "<p>The refresh token.</p>",
+        "AuthenticationResultType$IdToken": "<p>The ID token.</p>",
+        "ChangePasswordRequest$AccessToken": "<p>The access token.</p>",
         "ConfirmDeviceRequest$AccessToken": "<p>The access token.</p>",
         "DeleteUserAttributesRequest$AccessToken": "<p>The access token used in the request to delete user attributes.</p>",
         "DeleteUserRequest$AccessToken": "<p>The access token from a request to delete a user.</p>",
@@ -2017,9 +2486,12 @@
         "GetUserRequest$AccessToken": "<p>The access token returned by the server response to get information about the user.</p>",
         "GlobalSignOutRequest$AccessToken": "<p>The access token.</p>",
         "ListDevicesRequest$AccessToken": "<p>The access tokens for the request to list devices.</p>",
+        "SetUserMFAPreferenceRequest$AccessToken": "<p>The access token.</p>",
         "SetUserSettingsRequest$AccessToken": "<p>The access token for the set user settings request.</p>",
+        "UpdateAuthEventFeedbackRequest$FeedbackToken": "<p>The feedback token.</p>",
         "UpdateDeviceStatusRequest$AccessToken": "<p>The access token.</p>",
         "UpdateUserAttributesRequest$AccessToken": "<p>The access token for the request to update user attributes.</p>",
+        "VerifySoftwareTokenRequest$AccessToken": "<p>The access token.</p>",
         "VerifyUserAttributeRequest$AccessToken": "<p>Represents the access token of the request to verify user attributes.</p>"
       }
     },
@@ -2052,6 +2524,16 @@
     },
     "UnsupportedUserStateException": {
       "base": "<p>The request failed because the user is in an unsupported state.</p>",
+      "refs": {
+      }
+    },
+    "UpdateAuthEventFeedbackRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateAuthEventFeedbackResponse": {
+      "base": null,
       "refs": {
       }
     },
@@ -2125,10 +2607,22 @@
       "refs": {
       }
     },
+    "UserContextDataType": {
+      "base": "<p>Contextual data such as the user's device fingerprint, IP address, or location used for evaluating the risk of an unexpected event by Amazon Cognito advanced security.</p>",
+      "refs": {
+        "ConfirmForgotPasswordRequest$UserContextData": "<p>Contextual data such as the user's device fingerprint, IP address, or location used for evaluating the risk of an unexpected event by Amazon Cognito advanced security.</p>",
+        "ConfirmSignUpRequest$UserContextData": "<p>Contextual data such as the user's device fingerprint, IP address, or location used for evaluating the risk of an unexpected event by Amazon Cognito advanced security.</p>",
+        "ForgotPasswordRequest$UserContextData": "<p>Contextual data such as the user's device fingerprint, IP address, or location used for evaluating the risk of an unexpected event by Amazon Cognito advanced security.</p>",
+        "InitiateAuthRequest$UserContextData": "<p>Contextual data such as the user's device fingerprint, IP address, or location used for evaluating the risk of an unexpected event by Amazon Cognito advanced security.</p>",
+        "ResendConfirmationCodeRequest$UserContextData": "<p>Contextual data such as the user's device fingerprint, IP address, or location used for evaluating the risk of an unexpected event by Amazon Cognito advanced security.</p>",
+        "RespondToAuthChallengeRequest$UserContextData": "<p>Contextual data such as the user's device fingerprint, IP address, or location used for evaluating the risk of an unexpected event by Amazon Cognito advanced security.</p>",
+        "SignUpRequest$UserContextData": "<p>Contextual data such as the user's device fingerprint, IP address, or location used for evaluating the risk of an unexpected event by Amazon Cognito advanced security.</p>"
+      }
+    },
     "UserFilterType": {
       "base": null,
       "refs": {
-        "ListUsersRequest$Filter": "<p>A filter string of the form \"<i>AttributeName</i> <i>Filter-Type</i> \"<i>AttributeValue</i>\"\". Quotation marks within the filter string must be escaped using the backslash (\\) character. For example, \"<code>family_name</code> = \\\"Reddy\\\"\".</p> <ul> <li> <p> <i>AttributeName</i>: The name of the attribute to search for. You can only search for one attribute at a time.</p> </li> <li> <p> <i>Filter-Type</i>: For an exact match, use =, for example, \"<code>given_name</code> = \\\"Jon\\\"\". For a prefix (\"starts with\") match, use ^=, for example, \"<code>given_name</code> ^= \\\"Jon\\\"\". </p> </li> <li> <p> <i>AttributeValue</i>: The attribute value that must be matched for each user.</p> </li> </ul> <p>If the filter string is empty, <code>ListUsers</code> returns all users in the user pool.</p> <p>You can only search for the following standard attributes:</p> <ul> <li> <p> <code>username</code> (case-sensitive)</p> </li> <li> <p> <code>email</code> </p> </li> <li> <p> <code>phone_number</code> </p> </li> <li> <p> <code>name</code> </p> </li> <li> <p> <code>given_name</code> </p> </li> <li> <p> <code>family_name</code> </p> </li> <li> <p> <code>preferred_username</code> </p> </li> <li> <p> <code>cognito:user_status</code> (called <b>Enabled</b> in the Console) (case-sensitive)</p> </li> <li> <p> <code>status</code> (case-insensitive)</p> </li> </ul> <p>Custom attributes are not searchable.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/cognito/latest/developerguide/how-to-manage-user-accounts.html#cognito-user-pools-searching-for-users-using-listusers-api\">Searching for Users Using the ListUsers API</a> and <a href=\"http://docs.aws.amazon.com/cognito/latest/developerguide/how-to-manage-user-accounts.html#cognito-user-pools-searching-for-users-listusers-api-examples\">Examples of Using the ListUsers API</a> in the <i>Amazon Cognito Developer Guide</i>.</p>"
+        "ListUsersRequest$Filter": "<p>A filter string of the form \"<i>AttributeName</i> <i>Filter-Type</i> \"<i>AttributeValue</i>\"\". Quotation marks within the filter string must be escaped using the backslash (\\) character. For example, \"<code>family_name</code> = \\\"Reddy\\\"\".</p> <ul> <li> <p> <i>AttributeName</i>: The name of the attribute to search for. You can only search for one attribute at a time.</p> </li> <li> <p> <i>Filter-Type</i>: For an exact match, use =, for example, \"<code>given_name</code> = \\\"Jon\\\"\". For a prefix (\"starts with\") match, use ^=, for example, \"<code>given_name</code> ^= \\\"Jon\\\"\". </p> </li> <li> <p> <i>AttributeValue</i>: The attribute value that must be matched for each user.</p> </li> </ul> <p>If the filter string is empty, <code>ListUsers</code> returns all users in the user pool.</p> <p>You can only search for the following standard attributes:</p> <ul> <li> <p> <code>username</code> (case-sensitive)</p> </li> <li> <p> <code>email</code> </p> </li> <li> <p> <code>phone_number</code> </p> </li> <li> <p> <code>name</code> </p> </li> <li> <p> <code>given_name</code> </p> </li> <li> <p> <code>family_name</code> </p> </li> <li> <p> <code>preferred_username</code> </p> </li> <li> <p> <code>cognito:user_status</code> (called <b>Enabled</b> in the Console) (case-sensitive)</p> </li> <li> <p> <code>status</code> (case-insensitive)</p> </li> <li> <p> <code>sub</code> </p> </li> </ul> <p>Custom attributes are not searchable.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/cognito/latest/developerguide/how-to-manage-user-accounts.html#cognito-user-pools-searching-for-users-using-listusers-api\">Searching for Users Using the ListUsers API</a> and <a href=\"http://docs.aws.amazon.com/cognito/latest/developerguide/how-to-manage-user-accounts.html#cognito-user-pools-searching-for-users-listusers-api-examples\">Examples of Using the ListUsers API</a> in the <i>Amazon Cognito Developer Guide</i>.</p>"
       }
     },
     "UserImportInProgressException": {
@@ -2179,6 +2673,13 @@
       "refs": {
       }
     },
+    "UserMFASettingListType": {
+      "base": null,
+      "refs": {
+        "AdminGetUserResponse$UserMFASettingList": "<p>The list of the user's MFA settings.</p>",
+        "GetUserResponse$UserMFASettingList": "<p>The list of the user's MFA settings.</p>"
+      }
+    },
     "UserNotConfirmedException": {
       "base": "<p>This exception is thrown when a user is not confirmed successfully.</p>",
       "refs": {
@@ -2187,6 +2688,19 @@
     "UserNotFoundException": {
       "base": "<p>This exception is thrown when a user is not found.</p>",
       "refs": {
+      }
+    },
+    "UserPoolAddOnNotEnabledException": {
+      "base": "<p>This exception is thrown when user pool add-ons are not enabled.</p>",
+      "refs": {
+      }
+    },
+    "UserPoolAddOnsType": {
+      "base": "<p>The user pool add-ons type.</p>",
+      "refs": {
+        "CreateUserPoolRequest$UserPoolAddOns": "<p>Used to enable advanced security risk detection. Set the key <code>AdvancedSecurityMode</code> to the value \"AUDIT\".</p>",
+        "UpdateUserPoolRequest$UserPoolAddOns": "<p>Used to enable advanced security risk detection. Set the key <code>AdvancedSecurityMode</code> to the value \"AUDIT\".</p>",
+        "UserPoolType$UserPoolAddOns": "<p>The user pool add-ons.</p>"
       }
     },
     "UserPoolClientDescription": {
@@ -2232,10 +2746,13 @@
         "AdminInitiateAuthRequest$UserPoolId": "<p>The ID of the Amazon Cognito user pool.</p>",
         "AdminListDevicesRequest$UserPoolId": "<p>The user pool ID.</p>",
         "AdminListGroupsForUserRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
+        "AdminListUserAuthEventsRequest$UserPoolId": "<p>The user pool ID.</p>",
         "AdminRemoveUserFromGroupRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "AdminResetUserPasswordRequest$UserPoolId": "<p>The user pool ID for the user pool where you want to reset the user's password.</p>",
         "AdminRespondToAuthChallengeRequest$UserPoolId": "<p>The ID of the Amazon Cognito user pool.</p>",
+        "AdminSetUserMFAPreferenceRequest$UserPoolId": "<p>The user pool ID.</p>",
         "AdminSetUserSettingsRequest$UserPoolId": "<p>The user pool ID for the user pool where you want to set the user's settings, such as MFA options.</p>",
+        "AdminUpdateAuthEventFeedbackRequest$UserPoolId": "<p>The user pool ID.</p>",
         "AdminUpdateDeviceStatusRequest$UserPoolId": "<p>The user pool ID.</p>",
         "AdminUpdateUserAttributesRequest$UserPoolId": "<p>The user pool ID for the user pool where you want to update user attributes.</p>",
         "AdminUserGlobalSignOutRequest$UserPoolId": "<p>The user pool ID.</p>",
@@ -2253,6 +2770,7 @@
         "DeleteUserPoolRequest$UserPoolId": "<p>The user pool ID for the user pool you want to delete.</p>",
         "DescribeIdentityProviderRequest$UserPoolId": "<p>The user pool ID.</p>",
         "DescribeResourceServerRequest$UserPoolId": "<p>The user pool ID for the user pool that hosts the resource server.</p>",
+        "DescribeRiskConfigurationRequest$UserPoolId": "<p>The user pool ID.</p>",
         "DescribeUserImportJobRequest$UserPoolId": "<p>The user pool ID for the user pool that the users are being imported into.</p>",
         "DescribeUserPoolClientRequest$UserPoolId": "<p>The user pool ID for the user pool you want to describe.</p>",
         "DescribeUserPoolRequest$UserPoolId": "<p>The user pool ID for the user pool you want to describe.</p>",
@@ -2262,6 +2780,7 @@
         "GetGroupRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "GetIdentityProviderByIdentifierRequest$UserPoolId": "<p>The user pool ID.</p>",
         "GetUICustomizationRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
+        "GetUserPoolMfaConfigRequest$UserPoolId": "<p>The user pool ID.</p>",
         "GroupType$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "IdentityProviderType$UserPoolId": "<p>The user pool ID.</p>",
         "ListGroupsRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
@@ -2272,10 +2791,14 @@
         "ListUsersInGroupRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "ListUsersRequest$UserPoolId": "<p>The user pool ID for the user pool on which the search should be performed.</p>",
         "ResourceServerType$UserPoolId": "<p>The user pool ID for the user pool that hosts the resource server.</p>",
+        "RiskConfigurationType$UserPoolId": "<p>The user pool ID.</p>",
+        "SetRiskConfigurationRequest$UserPoolId": "<p>The user pool ID. </p>",
         "SetUICustomizationRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
+        "SetUserPoolMfaConfigRequest$UserPoolId": "<p>The user pool ID.</p>",
         "StartUserImportJobRequest$UserPoolId": "<p>The user pool ID for the user pool that the users are being imported into.</p>",
         "StopUserImportJobRequest$UserPoolId": "<p>The user pool ID for the user pool that the users are being imported into.</p>",
         "UICustomizationType$UserPoolId": "<p>The user pool ID for the user pool.</p>",
+        "UpdateAuthEventFeedbackRequest$UserPoolId": "<p>The user pool ID.</p>",
         "UpdateGroupRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "UpdateIdentityProviderRequest$UserPoolId": "<p>The user pool ID.</p>",
         "UpdateResourceServerRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
@@ -2298,6 +2821,9 @@
       "base": null,
       "refs": {
         "CreateUserPoolRequest$MfaConfiguration": "<p>Specifies MFA configuration details.</p>",
+        "GetUserPoolMfaConfigResponse$MfaConfiguration": "<p>The multi-factor (MFA) configuration.</p>",
+        "SetUserPoolMfaConfigRequest$MfaConfiguration": "<p>The MFA configuration.</p>",
+        "SetUserPoolMfaConfigResponse$MfaConfiguration": "<p>The MFA configuration.</p>",
         "UpdateUserPoolRequest$MfaConfiguration": "<p>Can be one of the following values:</p> <ul> <li> <p> <code>OFF</code> - MFA tokens are not required and cannot be specified during user registration.</p> </li> <li> <p> <code>ON</code> - MFA tokens are required for all user registrations. You can only specify required when you are initially creating a user pool.</p> </li> <li> <p> <code>OPTIONAL</code> - Users have the option when registering to create an MFA token.</p> </li> </ul>",
         "UserPoolType$MfaConfiguration": "<p>Can be one of the following values:</p> <ul> <li> <p> <code>OFF</code> - MFA tokens are not required and cannot be specified during user registration.</p> </li> <li> <p> <code>ON</code> - MFA tokens are required for all user registrations. You can only specify required when you are initially creating a user pool.</p> </li> <li> <p> <code>OPTIONAL</code> - Users have the option when registering to create an MFA token.</p> </li> </ul>"
       }
@@ -2311,11 +2837,11 @@
       }
     },
     "UserPoolPolicyType": {
-      "base": "<p>The type of policy in a user pool.</p>",
+      "base": "<p>The policy associated with a user pool.</p>",
       "refs": {
         "CreateUserPoolRequest$Policies": "<p>The policies associated with the new user pool.</p>",
         "UpdateUserPoolRequest$Policies": "<p>A container with the policies you wish to update in a user pool.</p>",
-        "UserPoolType$Policies": "<p>A container for the policies associated with a user pool.</p>"
+        "UserPoolType$Policies": "<p>The policies associated with the user pool.</p>"
       }
     },
     "UserPoolTaggingException": {
@@ -2332,7 +2858,7 @@
       }
     },
     "UserPoolType": {
-      "base": "<p>A container for information about the user pool type.</p>",
+      "base": "<p>A container for information about the user pool.</p>",
       "refs": {
         "CreateUserPoolResponse$UserPool": "<p>A container for the user pool details.</p>",
         "DescribeUserPoolResponse$UserPool": "<p>The container of metadata returned by the server to describe the pool.</p>"
@@ -2386,9 +2912,12 @@
         "AdminGetUserResponse$Username": "<p>The user name of the user about whom you are receiving information.</p>",
         "AdminListDevicesRequest$Username": "<p>The user name.</p>",
         "AdminListGroupsForUserRequest$Username": "<p>The username for the user.</p>",
+        "AdminListUserAuthEventsRequest$Username": "<p>The user pool username.</p>",
         "AdminRemoveUserFromGroupRequest$Username": "<p>The username for the user.</p>",
         "AdminResetUserPasswordRequest$Username": "<p>The user name of the user whose password you wish to reset.</p>",
+        "AdminSetUserMFAPreferenceRequest$Username": "<p>The user pool username.</p>",
         "AdminSetUserSettingsRequest$Username": "<p>The user name of the user for whom you wish to set user settings.</p>",
+        "AdminUpdateAuthEventFeedbackRequest$Username": "<p>The user pool username.</p>",
         "AdminUpdateDeviceStatusRequest$Username": "<p>The user name.</p>",
         "AdminUpdateUserAttributesRequest$Username": "<p>The user name of the user for whom you want to update user attributes.</p>",
         "AdminUserGlobalSignOutRequest$Username": "<p>The user name.</p>",
@@ -2398,6 +2927,7 @@
         "GetUserResponse$Username": "<p>The user name of the user you wish to retrieve from the get user request.</p>",
         "ResendConfirmationCodeRequest$Username": "<p>The user name of the user to whom you wish to resend a confirmation code.</p>",
         "SignUpRequest$Username": "<p>The user name of the user you wish to register.</p>",
+        "UpdateAuthEventFeedbackRequest$Username": "<p>The user pool username.</p>",
         "UserType$Username": "<p>The user name of the user you wish to describe.</p>"
       }
     },
@@ -2428,6 +2958,22 @@
         "CreateUserPoolRequest$AutoVerifiedAttributes": "<p>The attributes to be auto-verified. Possible values: <b>email</b>, <b>phone_number</b>.</p>",
         "UpdateUserPoolRequest$AutoVerifiedAttributes": "<p>The attributes that are automatically verified when the Amazon Cognito service makes a request to update user pools.</p>",
         "UserPoolType$AutoVerifiedAttributes": "<p>Specifies the attributes that are auto-verified in a user pool.</p>"
+      }
+    },
+    "VerifySoftwareTokenRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "VerifySoftwareTokenResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "VerifySoftwareTokenResponseType": {
+      "base": null,
+      "refs": {
+        "VerifySoftwareTokenResponse$Status": "<p>The status of the verify software token.</p>"
       }
     },
     "VerifyUserAttributeRequest": {

@@ -148,7 +148,7 @@ func (s *server) processRequest(data []byte) (interface{}, error) {
 		}
 		return rep, nil
 
-	case agentAddIdConstrained, agentAddIdentity:
+	case agentAddIDConstrained, agentAddIdentity:
 		return nil, s.insertIdentity(data)
 	}
 

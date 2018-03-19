@@ -136,7 +136,7 @@ func (e *EmulatedEnv) Config() IntegrationTestConfig {
 func (e *EmulatedEnv) NewAdminClient() (*AdminClient, error) {
 	timeout := 20 * time.Second
 	ctx, _ := context.WithTimeout(context.Background(), timeout)
-	conn, err := grpc.Dial(e.server.Addr, grpc.WithInsecure())
+	conn, err := grpc.Dial(e.server.Addr, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,8 @@ func (e *EmulatedEnv) NewInstanceAdminClient() (*InstanceAdminClient, error) {
 func (e *EmulatedEnv) NewClient() (*Client, error) {
 	timeout := 20 * time.Second
 	ctx, _ := context.WithTimeout(context.Background(), timeout)
-	conn, err := grpc.Dial(e.server.Addr, grpc.WithInsecure(), grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(100<<20), grpc.MaxCallRecvMsgSize(100<<20)))
+	conn, err := grpc.Dial(e.server.Addr, grpc.WithInsecure(), grpc.WithBlock(),
+		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(100<<20), grpc.MaxCallRecvMsgSize(100<<20)))
 	if err != nil {
 		return nil, err
 	}

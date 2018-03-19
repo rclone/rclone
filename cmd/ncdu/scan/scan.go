@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/pkg/errors"
 )
 
@@ -129,7 +130,7 @@ func Scan(f fs.Fs) (chan *Dir, chan error, chan struct{}) {
 	updated := make(chan struct{}, 1)
 	go func() {
 		parents := map[string]*Dir{}
-		err := fs.Walk(f, "", false, fs.Config.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
+		err := walk.Walk(f, "", false, fs.Config.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
 			if err != nil {
 				return err // FIXME mark directory as errored instead of aborting
 			}

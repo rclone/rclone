@@ -72,10 +72,6 @@ type FirehoseAPI interface {
 	DescribeDeliveryStreamWithContext(aws.Context, *firehose.DescribeDeliveryStreamInput, ...request.Option) (*firehose.DescribeDeliveryStreamOutput, error)
 	DescribeDeliveryStreamRequest(*firehose.DescribeDeliveryStreamInput) (*request.Request, *firehose.DescribeDeliveryStreamOutput)
 
-	GetKinesisStream(*firehose.GetKinesisStreamInput) (*firehose.GetKinesisStreamOutput, error)
-	GetKinesisStreamWithContext(aws.Context, *firehose.GetKinesisStreamInput, ...request.Option) (*firehose.GetKinesisStreamOutput, error)
-	GetKinesisStreamRequest(*firehose.GetKinesisStreamInput) (*request.Request, *firehose.GetKinesisStreamOutput)
-
 	ListDeliveryStreams(*firehose.ListDeliveryStreamsInput) (*firehose.ListDeliveryStreamsOutput, error)
 	ListDeliveryStreamsWithContext(aws.Context, *firehose.ListDeliveryStreamsInput, ...request.Option) (*firehose.ListDeliveryStreamsOutput, error)
 	ListDeliveryStreamsRequest(*firehose.ListDeliveryStreamsInput) (*request.Request, *firehose.ListDeliveryStreamsOutput)

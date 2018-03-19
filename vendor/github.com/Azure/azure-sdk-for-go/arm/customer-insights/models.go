@@ -946,27 +946,6 @@ type Prediction struct {
 	SystemGeneratedEntities   *PredictionSystemGeneratedEntities `json:"systemGeneratedEntities,omitempty"`
 }
 
-// PredictionGradesItem is the definition of a prediction grade.
-type PredictionGradesItem struct {
-	GradeName         *string `json:"gradeName,omitempty"`
-	MinScoreThreshold *int32  `json:"minScoreThreshold,omitempty"`
-	MaxScoreThreshold *int32  `json:"maxScoreThreshold,omitempty"`
-}
-
-// PredictionMappings is definition of the link mapping of prediction.
-type PredictionMappings struct {
-	Score  *string `json:"score,omitempty"`
-	Grade  *string `json:"grade,omitempty"`
-	Reason *string `json:"reason,omitempty"`
-}
-
-// PredictionSystemGeneratedEntities is system generated entities.
-type PredictionSystemGeneratedEntities struct {
-	GeneratedInteractionTypes *[]string           `json:"generatedInteractionTypes,omitempty"`
-	GeneratedLinks            *[]string           `json:"generatedLinks,omitempty"`
-	GeneratedKpis             *map[string]*string `json:"generatedKpis,omitempty"`
-}
-
 // PredictionDistributionDefinition is the definition of the prediction distribution.
 type PredictionDistributionDefinition struct {
 	TotalPositives *int64                                               `json:"totalPositives,omitempty"`
@@ -981,6 +960,13 @@ type PredictionDistributionDefinitionDistributionsItem struct {
 	Negatives               *int64 `json:"negatives,omitempty"`
 	PositivesAboveThreshold *int64 `json:"positivesAboveThreshold,omitempty"`
 	NegativesAboveThreshold *int64 `json:"negativesAboveThreshold,omitempty"`
+}
+
+// PredictionGradesItem is the definition of a prediction grade.
+type PredictionGradesItem struct {
+	GradeName         *string `json:"gradeName,omitempty"`
+	MinScoreThreshold *int32  `json:"minScoreThreshold,omitempty"`
+	MaxScoreThreshold *int32  `json:"maxScoreThreshold,omitempty"`
 }
 
 // PredictionListResult is the response of list predictions operation.
@@ -1000,6 +986,13 @@ func (client PredictionListResult) PredictionListResultPreparer() (*http.Request
 		autorest.AsJSON(),
 		autorest.AsGet(),
 		autorest.WithBaseURL(to.String(client.NextLink)))
+}
+
+// PredictionMappings is definition of the link mapping of prediction.
+type PredictionMappings struct {
+	Score  *string `json:"score,omitempty"`
+	Grade  *string `json:"grade,omitempty"`
+	Reason *string `json:"reason,omitempty"`
 }
 
 // PredictionModelStatus is the prediction model status.
@@ -1025,6 +1018,13 @@ type PredictionResourceFormat struct {
 	Name              *string `json:"name,omitempty"`
 	Type              *string `json:"type,omitempty"`
 	*Prediction       `json:"properties,omitempty"`
+}
+
+// PredictionSystemGeneratedEntities is system generated entities.
+type PredictionSystemGeneratedEntities struct {
+	GeneratedInteractionTypes *[]string           `json:"generatedInteractionTypes,omitempty"`
+	GeneratedLinks            *[]string           `json:"generatedLinks,omitempty"`
+	GeneratedKpis             *map[string]*string `json:"generatedKpis,omitempty"`
 }
 
 // PredictionTrainingResults is the training results of the prediction.

@@ -5,6 +5,7 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +20,7 @@ var commandDefintion = &cobra.Command{
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			objects, size, err := fs.Count(fsrc)
+			objects, size, err := operations.Count(fsrc)
 			if err != nil {
 				return err
 			}

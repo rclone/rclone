@@ -113,6 +113,7 @@ func (client SyncMembersClient) CreateOrUpdatePreparer(resourceGroupName string,
 func (client SyncMembersClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -200,6 +201,7 @@ func (client SyncMembersClient) DeletePreparer(resourceGroupName string, serverN
 func (client SyncMembersClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -270,7 +272,9 @@ func (client SyncMembersClient) GetPreparer(resourceGroupName string, serverName
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client SyncMembersClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -339,7 +343,9 @@ func (client SyncMembersClient) ListBySyncGroupPreparer(resourceGroupName string
 // ListBySyncGroupSender sends the ListBySyncGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client SyncMembersClient) ListBySyncGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListBySyncGroupResponder handles the response to the ListBySyncGroup request. The method always
@@ -479,7 +485,9 @@ func (client SyncMembersClient) ListMemberSchemasPreparer(resourceGroupName stri
 // ListMemberSchemasSender sends the ListMemberSchemas request. The method will close the
 // http.Response Body if it receives an error.
 func (client SyncMembersClient) ListMemberSchemasSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListMemberSchemasResponder handles the response to the ListMemberSchemas request. The method always
@@ -636,6 +644,7 @@ func (client SyncMembersClient) RefreshMemberSchemaPreparer(resourceGroupName st
 func (client SyncMembersClient) RefreshMemberSchemaSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -724,6 +733,7 @@ func (client SyncMembersClient) UpdatePreparer(resourceGroupName string, serverN
 func (client SyncMembersClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

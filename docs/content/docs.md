@@ -19,6 +19,7 @@ option:
 
 See the following for detailed instructions for
 
+  * [Alias](/alias/)
   * [Amazon Drive](/amazonclouddrive/)
   * [Amazon S3](/s3/)
   * [Backblaze B2](/b2/)
@@ -69,7 +70,7 @@ rclone uses a system of subcommands.  For example
 The main rclone commands with most used first
 
 * [rclone config](/commands/rclone_config/)	- Enter an interactive configuration session.
-* [rclone copy](/commands/rclone_copy/)		- Copy files from source to dest, skipping already copied
+* [rclone copy](/commands/rclone_copy/)		- Copy files from source to dest, skipping already copied.
 * [rclone sync](/commands/rclone_sync/)		- Make source and dest identical, modifying destination only.
 * [rclone move](/commands/rclone_move/)		- Move files from source to dest.
 * [rclone delete](/commands/rclone_delete/)	- Remove the contents of path.
@@ -77,26 +78,26 @@ The main rclone commands with most used first
 * [rclone mkdir](/commands/rclone_mkdir/)	- Make the path if it doesn't already exist.
 * [rclone rmdir](/commands/rclone_rmdir/)	- Remove the path.
 * [rclone rmdirs](/commands/rclone_rmdirs/)	- Remove any empty directories under the path.
-* [rclone check](/commands/rclone_check/)	- Checks the files in the source and destination match.
+* [rclone check](/commands/rclone_check/)	- Check if the files in the source and destination match.
 * [rclone ls](/commands/rclone_ls/)		- List all the objects in the path with size and path.
 * [rclone lsd](/commands/rclone_lsd/)		- List all directories/containers/buckets in the path.
-* [rclone lsl](/commands/rclone_lsl/)		- List all the objects path with modification time, size and path.
-* [rclone md5sum](/commands/rclone_md5sum/)	- Produces an md5sum file for all the objects in the path.
-* [rclone sha1sum](/commands/rclone_sha1sum/)	- Produces an sha1sum file for all the objects in the path.
-* [rclone size](/commands/rclone_size/)		- Returns the total size and number of objects in remote:path.
+* [rclone lsl](/commands/rclone_lsl/)		- List all the objects in the path with size, modification time and path.
+* [rclone md5sum](/commands/rclone_md5sum/)	- Produce an md5sum file for all the objects in the path.
+* [rclone sha1sum](/commands/rclone_sha1sum/)	- Produce a sha1sum file for all the objects in the path.
+* [rclone size](/commands/rclone_size/)		- Return the total size and number of objects in remote:path.
 * [rclone version](/commands/rclone_version/)	- Show the version number.
-* [rclone cleanup](/commands/rclone_cleanup/)	- Clean up the remote if possible
-* [rclone dedupe](/commands/rclone_dedupe/)	- Interactively find duplicate files delete/rename them.
+* [rclone cleanup](/commands/rclone_cleanup/)	- Clean up the remote if possible.
+* [rclone dedupe](/commands/rclone_dedupe/)	- Interactively find duplicate files and delete/rename them.
 * [rclone authorize](/commands/rclone_authorize/)	- Remote authorization.
-* [rclone cat](/commands/rclone_cat/)		- Concatenates any files and sends them to stdout.
-* [rclone copyto](/commands/rclone_copyto/)	- Copy files from source to dest, skipping already copied
+* [rclone cat](/commands/rclone_cat/)		- Concatenate any files and send them to stdout.
+* [rclone copyto](/commands/rclone_copyto/)	- Copy files from source to dest, skipping already copied.
 * [rclone genautocomplete](/commands/rclone_genautocomplete/)	- Output shell completion scripts for rclone.
 * [rclone gendocs](/commands/rclone_gendocs/)	- Output markdown docs for rclone to the directory supplied.
 * [rclone listremotes](/commands/rclone_listremotes/)	- List all the remotes in the config file.
 * [rclone mount](/commands/rclone_mount/)	- Mount the remote as a mountpoint. **EXPERIMENTAL**
 * [rclone moveto](/commands/rclone_moveto/)	- Move file or directory from source to dest.
 * [rclone obscure](/commands/rclone_obscure/)	- Obscure password for use in the rclone.conf
-* [rclone cryptcheck](/commands/rclone_cryptcheck/)	- Checks the integrity of a crypted remote.
+* [rclone cryptcheck](/commands/rclone_cryptcheck/)	- Check the integrity of a crypted remote.
 
 See the [commands index](/commands/) for the full list.
 
@@ -118,7 +119,7 @@ The file `test.jpg` will be placed inside `/tmp/download`.
 
 This is equivalent to specifying
 
-    rclone copy --no-traverse --files-from /tmp/files remote: /tmp/download
+    rclone copy --files-from /tmp/files remote: /tmp/download
 
 Where `/tmp/files` contains the single line
 
@@ -305,6 +306,11 @@ running, you can toggle the limiter like this:
 
     kill -SIGUSR2 $(pidof rclone)
 
+If you configure rclone with a [remote control](/rc) then you can use
+change the bwlimit dynamically:
+
+    rclone rc core/bwlimit rate=1M
+
 ### --buffer-size=SIZE ###
 
 Use this sized buffer to speed up file transfers.  Each `--transfer`
@@ -457,6 +463,10 @@ This can be useful as an additional layer of protection for immutable
 or append-only data sets (notably backup archives), where modification
 implies corruption and should not be propagated.
 
+## --leave-root ###
+
+During rmdirs it will not remove root directory, even if it's empty.
+
 ### --log-file=FILE ###
 
 Log all of rclone's output to FILE.  This is not active by default.
@@ -495,6 +505,12 @@ to reduce the value so rclone moves on to a high level retry (see the
 `--retries` flag) quicker.
 
 Disable low level retries with `--low-level-retries 1`.
+
+### --max-delete=N ###
+
+This tells rclone not to delete more than N files.  If that limit is
+exceeded then a fatal error will be generated and rclone will stop the
+operation in progress.
 
 ### --max-depth=N ###
 
@@ -588,12 +604,18 @@ show at default log level `NOTICE`.  Use `--stats-log-level NOTICE` or
 `-v` to make them show.  See the [Logging section](#logging) for more
 info on log levels.
 
+### --stats-file-name-length integer ###
+By default, the `--stats` output will truncate file names and paths longer 
+than 40 characters.  This is equivalent to providing 
+`--stats-file-name-length 40`. Use `--stats-file-name-length 0` to disable 
+any truncation of file names printed by stats.
+
 ### --stats-log-level string ###
 
 Log level to show `--stats` output at.  This can be `DEBUG`, `INFO`,
 `NOTICE`, or `ERROR`.  The default is `INFO`.  This means at the
 default level of logging which is `NOTICE` the stats won't show - if
-you want them to then use `-stats-log-level NOTICE`.  See the [Logging
+you want them to then use `--stats-log-level NOTICE`.  See the [Logging
 section](#logging) for more info on log levels.
 
 ### --stats-unit=bits|bytes ###
@@ -681,8 +703,8 @@ If the destination does not support server-side copy or move, rclone
 will fall back to the default behaviour and log an error level message
 to the console.
 
-Note that `--track-renames` is incompatible with `--no-traverse` and
-that it uses extra memory to keep track of all the rename candidates.
+Note that `--track-renames` uses extra memory to keep track of all
+the rename candidates.
 
 Note also that `--track-renames` is incompatible with
 `--delete-before` and will select `--delete-after` instead of
@@ -947,26 +969,6 @@ This option defaults to `false`.
 
 **This should be used only for testing.**
 
-### --no-traverse ###
-
-The `--no-traverse` flag controls whether the destination file system
-is traversed when using the `copy` or `move` commands.
-`--no-traverse` is not compatible with `sync` and will be ignored if
-you supply it with `sync`.
-
-If you are only copying a small number of files and/or have a large
-number of files on the destination then `--no-traverse` will stop
-rclone listing the destination and save time.
-
-However, if you are copying a large number of files, especially if you
-are doing a copy where lots of the files haven't changed and won't
-need copying then you shouldn't use `--no-traverse`.
-
-It can also be used to reduce the memory usage of rclone when copying
-- `rclone --no-traverse copy src dst` won't load either the source or
-destination listings into memory so will use the minimum amount of
-memory.
-
 Filtering
 ---------
 
@@ -988,10 +990,20 @@ For the filtering options
 
 See the [filtering section](/filtering/).
 
+Remote control
+--------------
+
+For the remote control options and for instructions on how to remote control rclone
+
+  * `--rc`
+  * and anything starting with `--rc-`
+
+See [the remote control section](/rc/).
+
 Logging
 -------
 
-rclone has 4 levels of logging, `Error`, `Notice`, `Info` and `Debug`.
+rclone has 4 levels of logging, `ERROR`, `NOTICE`, `INFO` and `DEBUG`.
 
 By default, rclone logs to standard error.  This means you can redirect
 standard error and still see the normal output of rclone commands (eg

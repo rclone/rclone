@@ -131,6 +131,7 @@ func (client PredictionsClient) CreateOrUpdatePreparer(resourceGroupName string,
 func (client PredictionsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -214,6 +215,7 @@ func (client PredictionsClient) DeletePreparer(resourceGroupName string, hubName
 func (client PredictionsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -280,7 +282,9 @@ func (client PredictionsClient) GetPreparer(resourceGroupName string, hubName st
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client PredictionsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -347,7 +351,9 @@ func (client PredictionsClient) GetModelStatusPreparer(resourceGroupName string,
 // GetModelStatusSender sends the GetModelStatus request. The method will close the
 // http.Response Body if it receives an error.
 func (client PredictionsClient) GetModelStatusSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetModelStatusResponder handles the response to the GetModelStatus request. The method always
@@ -414,7 +420,9 @@ func (client PredictionsClient) GetTrainingResultsPreparer(resourceGroupName str
 // GetTrainingResultsSender sends the GetTrainingResults request. The method will close the
 // http.Response Body if it receives an error.
 func (client PredictionsClient) GetTrainingResultsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetTrainingResultsResponder handles the response to the GetTrainingResults request. The method always
@@ -479,7 +487,9 @@ func (client PredictionsClient) ListByHubPreparer(resourceGroupName string, hubN
 // ListByHubSender sends the ListByHub request. The method will close the
 // http.Response Body if it receives an error.
 func (client PredictionsClient) ListByHubSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByHubResponder handles the response to the ListByHub request. The method always
@@ -617,7 +627,9 @@ func (client PredictionsClient) ModelStatusPreparer(resourceGroupName string, hu
 // ModelStatusSender sends the ModelStatus request. The method will close the
 // http.Response Body if it receives an error.
 func (client PredictionsClient) ModelStatusSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ModelStatusResponder handles the response to the ModelStatus request. The method always

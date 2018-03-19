@@ -21,43 +21,43 @@
 package service
 
 import (
-	"fmt"
-	"time"
+    "fmt"
+    "time"
 
-	"github.com/yunify/qingstor-sdk-go/request/errors"
+    "github.com/yunify/qingstor-sdk-go/request/errors"
 )
 
 // Properties presents the service properties.
 type Properties struct {
-	{{- template "RenderProperties" passThrough $service.Properties "" "" -}}
-	{{if $objectSubService -}}
-		{{range $_, $p := $objectSubService.Properties.Properties -}}
-			{{- if $p.Description -}}
-				// {{$p.Description}}
-			{{end -}}
-			{{if $p.Enum -}}
-				// {{camelCase $p.ID}}'s available values: {{commaConnected $p.Enum}}
-			{{end -}}
-			{{$p.ID | camelCase | upperFirst}}{{" " -}}
-			{{template "PropertyType" passThrough $p false}}{{" " -}}
-			`{{template "PropertyTagsDashConnected" $p}}`{{" " -}}
-			{{if $p.IsRequired -}}
-				// Required
-			{{- end}}
-		{{end}}
-	{{end}}
+    {{- template "RenderProperties" passThrough $service.Properties "" "" -}}
+    {{if $objectSubService -}}
+        {{range $_, $p := $objectSubService.Properties.Properties -}}
+            {{- if $p.Description -}}
+                // {{$p.Description}}
+            {{end -}}
+            {{if $p.Enum -}}
+                // {{camelCase $p.ID}}'s available values: {{commaConnected $p.Enum}}
+            {{end -}}
+            {{$p.ID | camelCase | upperFirst}}{{" " -}}
+            {{template "PropertyType" passThrough $p false}}{{" " -}}
+            `{{template "PropertyTagsDashConnected" $p}}`{{" " -}}
+            {{if $p.IsRequired -}}
+                // Required
+            {{- end}}
+        {{end}}
+    {{end}}
 }
 
 {{range $_, $customizedType := $customizedTypes}}
-	// {{$customizedType.ID | camelCase}}Type presents {{$customizedType.ID | camelCase}}.
-	type {{$customizedType.ID | camelCase}}Type struct {
-		{{template "RenderProperties" passThrough $customizedType "" ""}}
-	}
+    // {{$customizedType.ID | camelCase}}Type presents {{$customizedType.ID | camelCase}}.
+    type {{$customizedType.ID | camelCase}}Type struct {
+        {{template "RenderProperties" passThrough $customizedType "" ""}}
+    }
 
-	// Validate validates the {{$customizedType.ID | camelCase}}.
-	func (v *{{$customizedType.ID | camelCase}}Type) Validate() error {
-		{{template "ValidateCustomizedType" passThrough $customizedType ""}}
+    // Validate validates the {{$customizedType.ID | camelCase}}.
+    func (v *{{$customizedType.ID | camelCase}}Type) Validate() error {
+        {{template "ValidateCustomizedType" passThrough $customizedType ""}}
 
-		return nil
-	}
+        return nil
+    }
 {{end}}

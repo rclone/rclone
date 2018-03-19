@@ -10,6 +10,7 @@ import (
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/pkg/errors"
@@ -36,7 +37,7 @@ func NewFS(f fs.Fs) *FS {
 
 // Root returns the root node
 func (f *FS) Root() (node fusefs.Node, err error) {
-	defer fs.Trace("", "")("node=%+v, err=%v", &node, &err)
+	defer log.Trace("", "")("node=%+v, err=%v", &node, &err)
 	root, err := f.VFS.Root()
 	if err != nil {
 		return nil, translateError(err)
@@ -50,7 +51,7 @@ var _ fusefs.FSStatfser = (*FS)(nil)
 // Statfs is called to obtain file system metadata.
 // It should write that data to resp.
 func (f *FS) Statfs(ctx context.Context, req *fuse.StatfsRequest, resp *fuse.StatfsResponse) (err error) {
-	defer fs.Trace("", "")("stat=%+v, err=%v", resp, &err)
+	defer log.Trace("", "")("stat=%+v, err=%v", resp, &err)
 	const blockSize = 4096
 	const fsBlocks = (1 << 50) / blockSize
 	resp.Blocks = fsBlocks  // Total data blocks in file system.
@@ -90,6 +91,8 @@ func translateError(err error) error {
 		return fuse.Errno(syscall.EROFS)
 	case vfs.ENOSYS:
 		return fuse.ENOSYS
+	case vfs.EINVAL:
+		return fuse.Errno(syscall.EINVAL)
 	}
 	return err
 }

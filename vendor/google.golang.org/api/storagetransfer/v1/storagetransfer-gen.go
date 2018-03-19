@@ -140,8 +140,8 @@ type AwsAccessKey struct {
 }
 
 func (s *AwsAccessKey) MarshalJSON() ([]byte, error) {
-	type noMethod AwsAccessKey
-	raw := noMethod(*s)
+	type NoMethod AwsAccessKey
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -180,8 +180,8 @@ type AwsS3Data struct {
 }
 
 func (s *AwsS3Data) MarshalJSON() ([]byte, error) {
-	type noMethod AwsS3Data
-	raw := noMethod(*s)
+	type NoMethod AwsS3Data
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -230,8 +230,8 @@ type Date struct {
 }
 
 func (s *Date) MarshalJSON() ([]byte, error) {
-	type noMethod Date
-	raw := noMethod(*s)
+	type NoMethod Date
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -281,8 +281,8 @@ type ErrorLogEntry struct {
 }
 
 func (s *ErrorLogEntry) MarshalJSON() ([]byte, error) {
-	type noMethod ErrorLogEntry
-	raw := noMethod(*s)
+	type NoMethod ErrorLogEntry
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -473,8 +473,8 @@ type ErrorSummary struct {
 }
 
 func (s *ErrorSummary) MarshalJSON() ([]byte, error) {
-	type noMethod ErrorSummary
-	raw := noMethod(*s)
+	type NoMethod ErrorSummary
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -509,8 +509,8 @@ type GcsData struct {
 }
 
 func (s *GcsData) MarshalJSON() ([]byte, error) {
-	type noMethod GcsData
-	raw := noMethod(*s)
+	type NoMethod GcsData
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -541,8 +541,8 @@ type GoogleServiceAccount struct {
 }
 
 func (s *GoogleServiceAccount) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleServiceAccount
-	raw := noMethod(*s)
+	type NoMethod GoogleServiceAccount
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -634,8 +634,8 @@ type HttpData struct {
 }
 
 func (s *HttpData) MarshalJSON() ([]byte, error) {
-	type noMethod HttpData
-	raw := noMethod(*s)
+	type NoMethod HttpData
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -671,8 +671,8 @@ type ListOperationsResponse struct {
 }
 
 func (s *ListOperationsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListOperationsResponse
-	raw := noMethod(*s)
+	type NoMethod ListOperationsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -706,8 +706,8 @@ type ListTransferJobsResponse struct {
 }
 
 func (s *ListTransferJobsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListTransferJobsResponse
-	raw := noMethod(*s)
+	type NoMethod ListTransferJobsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -809,8 +809,8 @@ type ObjectConditions struct {
 }
 
 func (s *ObjectConditions) MarshalJSON() ([]byte, error) {
-	type noMethod ObjectConditions
-	raw := noMethod(*s)
+	type NoMethod ObjectConditions
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -877,8 +877,8 @@ type Operation struct {
 }
 
 func (s *Operation) MarshalJSON() ([]byte, error) {
-	type noMethod Operation
-	raw := noMethod(*s)
+	type NoMethod Operation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -943,8 +943,8 @@ type Schedule struct {
 }
 
 func (s *Schedule) MarshalJSON() ([]byte, error) {
-	type noMethod Schedule
-	raw := noMethod(*s)
+	type NoMethod Schedule
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1062,8 +1062,8 @@ type Status struct {
 }
 
 func (s *Status) MarshalJSON() ([]byte, error) {
-	type noMethod Status
-	raw := noMethod(*s)
+	type NoMethod Status
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1109,8 +1109,8 @@ type TimeOfDay struct {
 }
 
 func (s *TimeOfDay) MarshalJSON() ([]byte, error) {
-	type noMethod TimeOfDay
-	raw := noMethod(*s)
+	type NoMethod TimeOfDay
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1132,17 +1132,18 @@ type TransferCounters struct {
 
 	// BytesFoundFromSource: Bytes found in the data source that are
 	// scheduled to be transferred,
-	// which will be copied, excluded based on conditions, or skipped due
-	// to
-	// failures.
+	// excluding any that are filtered based on object conditions or skipped
+	// due
+	// to sync.
 	BytesFoundFromSource int64 `json:"bytesFoundFromSource,omitempty,string"`
 
 	// BytesFoundOnlyFromSink: Bytes found only in the data sink that are
 	// scheduled to be deleted.
 	BytesFoundOnlyFromSink int64 `json:"bytesFoundOnlyFromSink,omitempty,string"`
 
-	// BytesFromSourceFailed: Bytes in the data source that failed during
-	// the transfer.
+	// BytesFromSourceFailed: Bytes in the data source that failed to be
+	// transferred or that failed to
+	// be deleted after being transferred.
 	BytesFromSourceFailed int64 `json:"bytesFromSourceFailed,omitempty,string"`
 
 	// BytesFromSourceSkippedBySync: Bytes in the data source that are not
@@ -1166,17 +1167,18 @@ type TransferCounters struct {
 
 	// ObjectsFoundFromSource: Objects found in the data source that are
 	// scheduled to be transferred,
-	// which will be copied, excluded based on conditions, or skipped due
-	// to
-	// failures.
+	// excluding any that are filtered based on object conditions or skipped
+	// due
+	// to sync.
 	ObjectsFoundFromSource int64 `json:"objectsFoundFromSource,omitempty,string"`
 
 	// ObjectsFoundOnlyFromSink: Objects found only in the data sink that
 	// are scheduled to be deleted.
 	ObjectsFoundOnlyFromSink int64 `json:"objectsFoundOnlyFromSink,omitempty,string"`
 
-	// ObjectsFromSourceFailed: Objects in the data source that failed
-	// during the transfer.
+	// ObjectsFromSourceFailed: Objects in the data source that failed to be
+	// transferred or that failed
+	// to be deleted after being transferred.
 	ObjectsFromSourceFailed int64 `json:"objectsFromSourceFailed,omitempty,string"`
 
 	// ObjectsFromSourceSkippedBySync: Objects in the data source that are
@@ -1203,8 +1205,8 @@ type TransferCounters struct {
 }
 
 func (s *TransferCounters) MarshalJSON() ([]byte, error) {
-	type noMethod TransferCounters
-	raw := noMethod(*s)
+	type NoMethod TransferCounters
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1289,8 +1291,8 @@ type TransferJob struct {
 }
 
 func (s *TransferJob) MarshalJSON() ([]byte, error) {
-	type noMethod TransferJob
-	raw := noMethod(*s)
+	type NoMethod TransferJob
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1354,8 +1356,8 @@ type TransferOperation struct {
 }
 
 func (s *TransferOperation) MarshalJSON() ([]byte, error) {
-	type noMethod TransferOperation
-	raw := noMethod(*s)
+	type NoMethod TransferOperation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1401,8 +1403,8 @@ type TransferOptions struct {
 }
 
 func (s *TransferOptions) MarshalJSON() ([]byte, error) {
-	type noMethod TransferOptions
-	raw := noMethod(*s)
+	type NoMethod TransferOptions
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1454,8 +1456,8 @@ type TransferSpec struct {
 }
 
 func (s *TransferSpec) MarshalJSON() ([]byte, error) {
-	type noMethod TransferSpec
-	raw := noMethod(*s)
+	type NoMethod TransferSpec
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1507,8 +1509,8 @@ type UpdateTransferJobRequest struct {
 }
 
 func (s *UpdateTransferJobRequest) MarshalJSON() ([]byte, error) {
-	type noMethod UpdateTransferJobRequest
-	raw := noMethod(*s)
+	type NoMethod UpdateTransferJobRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1630,7 +1632,7 @@ func (c *GoogleServiceAccountsGetCall) Do(opts ...googleapi.CallOption) (*Google
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1756,7 +1758,7 @@ func (c *TransferJobsCreateCall) Do(opts ...googleapi.CallOption) (*TransferJob,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1896,7 +1898,7 @@ func (c *TransferJobsGetCall) Do(opts ...googleapi.CallOption) (*TransferJob, er
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2068,7 +2070,7 @@ func (c *TransferJobsListCall) Do(opts ...googleapi.CallOption) (*ListTransferJo
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2232,7 +2234,7 @@ func (c *TransferJobsPatchCall) Do(opts ...googleapi.CallOption) (*TransferJob, 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2362,7 +2364,7 @@ func (c *TransferOperationsCancelCall) Do(opts ...googleapi.CallOption) (*Empty,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2488,7 +2490,7 @@ func (c *TransferOperationsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2631,7 +2633,7 @@ func (c *TransferOperationsGetCall) Do(opts ...googleapi.CallOption) (*Operation
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2813,7 +2815,7 @@ func (c *TransferOperationsListCall) Do(opts ...googleapi.CallOption) (*ListOper
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2982,7 +2984,7 @@ func (c *TransferOperationsPauseCall) Do(opts ...googleapi.CallOption) (*Empty, 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3117,7 +3119,7 @@ func (c *TransferOperationsResumeCall) Do(opts ...googleapi.CallOption) (*Empty,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

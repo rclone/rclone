@@ -93,7 +93,9 @@ func (client RegionsClient) ListBySkuPreparer(sku string) (*http.Request, error)
 // ListBySkuSender sends the ListBySku request. The method will close the
 // http.Response Body if it receives an error.
 func (client RegionsClient) ListBySkuSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListBySkuResponder handles the response to the ListBySku request. The method always

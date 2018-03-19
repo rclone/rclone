@@ -5,7 +5,7 @@ bbolt
 [![Coverage](https://codecov.io/gh/coreos/bbolt/branch/master/graph/badge.svg)](https://codecov.io/gh/coreos/bbolt)
 [![Godoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/github.com/coreos/bbolt)
 
-bbolt is a fork of [Ben Johnson's][gh_ben] moribund [Bolt][bolt] key/value
+bbolt is a fork of [Ben Johnson's][gh_ben] [Bolt][bolt] key/value
 store. The purpose of this fork is to provide the Go community with an active
 maintenance and development target for Bolt; the goal is improved reliability
 and stability. bbolt includes bug fixes, performance enhancements, and features
@@ -919,6 +919,7 @@ Below is a list of public, open source projects that use Bolt:
 * [torrent](https://github.com/anacrolix/torrent) - Full-featured BitTorrent client package and utilities in Go. BoltDB is a storage backend in development.
 * [gopherpit](https://github.com/gopherpit/gopherpit) - A web service to manage Go remote import paths with custom domains
 * [bolter](https://github.com/hasit/bolter) - Command-line app for viewing BoltDB file in your terminal.
+* [boltcli](https://github.com/spacewander/boltcli) - the redis-cli for boltdb with Lua script support.
 * [btcwallet](https://github.com/btcsuite/btcwallet) - A bitcoin wallet.
 * [dcrwallet](https://github.com/decred/dcrwallet) - A wallet for the Decred cryptocurrency.
 * [Ironsmith](https://github.com/timshannon/ironsmith) - A simple, script-driven continuous integration (build - > test -> release) tool, with no external dependencies

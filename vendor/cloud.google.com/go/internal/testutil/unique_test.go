@@ -27,6 +27,13 @@ func TestNew(t *testing.T) {
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
+
+	s2 := NewUIDSpaceSep("prefix2", '_')
+	got = s2.newID(tm)
+	want = "prefix2_20170106_21_0000"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
 }
 
 func TestTimestamp(t *testing.T) {

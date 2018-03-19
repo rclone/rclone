@@ -97,7 +97,9 @@ func (client FieldsClient) ListByTypePreparer(resourceGroupName string, automati
 // ListByTypeSender sends the ListByType request. The method will close the
 // http.Response Body if it receives an error.
 func (client FieldsClient) ListByTypeSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByTypeResponder handles the response to the ListByType request. The method always

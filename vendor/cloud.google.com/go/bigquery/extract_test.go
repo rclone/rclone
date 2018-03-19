@@ -17,7 +17,9 @@ package bigquery
 import (
 	"testing"
 
-	"golang.org/x/net/context"
+	"github.com/google/go-cmp/cmp"
+
+	"cloud.google.com/go/internal/testutil"
 
 	bq "google.golang.org/api/bigquery/v2"
 )
@@ -38,11 +40,15 @@ func defaultExtractJob() *bq.Job {
 	}
 }
 
+func defaultGCS() *GCSReference {
+	return &GCSReference{
+		URIs: []string{"uri"},
+	}
+}
+
 func TestExtract(t *testing.T) {
-	defer fixRandomJobID("RANDOM")()
-	s := &testService{}
+	defer fixRandomID("RANDOM")()
 	c := &Client{
-		service:   s,
 		projectID: "client-project-id",
 	}
 
@@ -58,11 +64,15 @@ func TestExtract(t *testing.T) {
 			want: defaultExtractJob(),
 		},
 		{
-			dst:    defaultGCS(),
-			src:    c.Dataset("dataset-id").Table("table-id"),
-			config: ExtractConfig{DisableHeader: true},
+			dst: defaultGCS(),
+			src: c.Dataset("dataset-id").Table("table-id"),
+			config: ExtractConfig{
+				DisableHeader: true,
+				Labels:        map[string]string{"a": "b"},
+			},
 			want: func() *bq.Job {
 				j := defaultExtractJob()
+				j.Configuration.Labels = map[string]string{"a": "b"}
 				f := false
 				j.Configuration.Extract.PrintHeader = &f
 				return j
@@ -92,10 +102,17 @@ func TestExtract(t *testing.T) {
 		tc.config.Src = ext.Src
 		tc.config.Dst = ext.Dst
 		ext.ExtractConfig = tc.config
-		if _, err := ext.Run(context.Background()); err != nil {
-			t.Errorf("#%d: err calling extract: %v", i, err)
-			continue
+		got := ext.newJob()
+		checkJob(t, i, got, tc.want)
+
+		jc, err := bqToJobConfig(got.Configuration, c)
+		if err != nil {
+			t.Fatalf("#%d: %v", i, err)
 		}
-		checkJob(t, i, s.Job, tc.want)
+		diff := testutil.Diff(jc, &ext.ExtractConfig,
+			cmp.AllowUnexported(Table{}, Client{}))
+		if diff != "" {
+			t.Errorf("#%d: (got=-, want=+:\n%s", i, diff)
+		}
 	}
 }

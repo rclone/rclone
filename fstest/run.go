@@ -27,6 +27,7 @@ package fstest
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -37,6 +38,9 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/object"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -127,7 +131,7 @@ func NewRun(t *testing.T) *Run {
 		*r = *oneRun
 		r.cleanRemote = func() {
 			var toDelete dirsToRemove
-			require.NoError(t, fs.Walk(r.Fremote, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
+			err := walk.Walk(r.Fremote, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
 				if err != nil {
 					if err == fs.ErrorDirNotFound {
 						return nil
@@ -146,7 +150,11 @@ func NewRun(t *testing.T) *Run {
 					}
 				}
 				return nil
-			}))
+			})
+			if err == fs.ErrorDirNotFound {
+				return
+			}
+			require.NoError(t, err)
 			sort.Sort(toDelete)
 			for _, dir := range toDelete {
 				err := r.Fremote.Rmdir(dir)
@@ -227,13 +235,13 @@ func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time, 
 	const maxTries = 10
 	for tries := 1; ; tries++ {
 		in := bytes.NewBufferString(content)
-		objinfo := fs.NewStaticObjectInfo(remote, modTime, int64(len(content)), true, nil, nil)
+		objinfo := object.NewStaticObjectInfo(remote, modTime, int64(len(content)), true, nil, nil)
 		_, err := put(in, objinfo)
 		if err == nil {
 			break
 		}
 		// Retry if err returned a retry error
-		if fs.IsRetryError(err) && tries < maxTries {
+		if fserrors.IsRetryError(err) && tries < maxTries {
 			r.Logf("Retry Put of %q to %v: %d/%d (%v)", remote, f, tries, maxTries, err)
 			time.Sleep(2 * time.Second)
 			continue
@@ -261,14 +269,27 @@ func (r *Run) WriteBoth(remote, content string, modTime time.Time) Item {
 
 // CheckWithDuplicates does a test but allows duplicates
 func (r *Run) CheckWithDuplicates(t *testing.T, items ...Item) {
-	objects, size, err := fs.Count(r.Fremote)
-	require.NoError(t, err)
-	assert.Equal(t, int64(len(items)), objects)
-	wantSize := int64(0)
+	var want, got []string
+
+	// construct a []string of desired items
 	for _, item := range items {
-		wantSize += item.Size
+		want = append(want, fmt.Sprintf("%q %d", item.Path, item.Size))
 	}
-	assert.Equal(t, wantSize, size)
+	sort.Strings(want)
+
+	// do the listing
+	objs, _, err := walk.GetAll(r.Fremote, "", true, -1)
+	if err != nil && err != fs.ErrorDirNotFound {
+		t.Fatalf("Error listing: %v", err)
+	}
+
+	// construct a []string of actual items
+	for _, o := range objs {
+		got = append(got, fmt.Sprintf("%q %d", o.Remote(), o.Size()))
+	}
+	sort.Strings(got)
+
+	assert.Equal(t, want, got)
 }
 
 // Clean the temporary directory

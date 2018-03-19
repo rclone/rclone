@@ -81,7 +81,7 @@ Contributors
   * Steven Lu <tacticalazn@gmail.com>
   * Sjur Fredriksen <sjurtf@ifi.uio.no>
   * Ruwbin <hubus12345@gmail.com>
-  * Fabian Möller <fabianm88@gmail.com>
+  * Fabian Möller <fabianm88@gmail.com> <f.moeller@nynex.de>
   * Edward Q. Bridges <github@eqbridges.com>
   * Vasiliy Tolstov <v.tolstov@selfip.ru>
   * Harshavardhana <harsha@minio.io>
@@ -91,7 +91,7 @@ Contributors
   * John Papandriopoulos <jpap@users.noreply.github.com>
   * Zhiming Wang <zmwangx@gmail.com>
   * Andy Pilate <cubox@cubox.me>
-  * Oliver Heyme <olihey@googlemail.com>
+  * Oliver Heyme <olihey@googlemail.com> <olihey@users.noreply.github.com>
   * wuyu <wuyu@yunify.com>
   * Andrei Dragomir <adragomi@adobe.com>
   * Christian Brüggemann <mail@cbruegg.com>
@@ -115,7 +115,31 @@ Contributors
   * Pierre Carlson <mpcarl@us.ibm.com>
   * Ernest Borowski <er.borowski@gmail.com>
   * Remus Bunduc <remus.bunduc@gmail.com>
-  * Iakov Davydov <iakov.davydov@unil.ch>
-  * Fabian Möller <f.moeller@nynex.de>
+  * Iakov Davydov <iakov.davydov@unil.ch> <dav05.gith@myths.ru>
   * Jakub Tasiemski <tasiemski@gmail.com>
   * David Minor <dminor@saymedia.com>
+  * Tim Cooijmans <cooijmans.tim@gmail.com>
+  * Laurence <liuxy6@gmail.com>
+  * Giovanni Pizzi <gio.piz@gmail.com>
+  * Filip Bartodziej <filipbartodziej@gmail.com>
+  * Jon Fautley <jon@dead.li>
+  * lewapm <32110057+lewapm@users.noreply.github.com>
+  * Yassine Imounachen <yassine256@gmail.com>
+  * Chris Redekop <chris-redekop@users.noreply.github.com>
+  * Jon Fautley <jon@adenoid.appstal.co.uk>
+  * Will Gunn <WillGunn@users.noreply.github.com>
+  * Lucas Bremgartner <lucas@bremis.ch>
+  * Jody Frankowski <jody.frankowski@gmail.com>
+  * Andreas Roussos <arouss1980@gmail.com>
+  * nbuchanan <nbuchanan@utah.gov>
+  * Durval Menezes <rclone@durval.com>
+  * Victor <vb-github@viblo.se>
+  * Mateusz <pabian.mateusz@gmail.com>
+  * Daniel Loader <spicypixel@gmail.com>
+  * David0rk <davidork@gmail.com>
+  * Alexander Neumann <alexander@bumpern.de>
+  * Giri Badanahatti <gbadanahatti@us.ibm.com@Giris-MacBook-Pro.local>
+  * Leo R. Lundgren <leo@finalresort.org>
+  * wolfv <wolfv6@users.noreply.github.com>
+  * Dave Pedu <dave@davepedu.com>
+  * Stefan Lindblom <lindblom@spotify.com>

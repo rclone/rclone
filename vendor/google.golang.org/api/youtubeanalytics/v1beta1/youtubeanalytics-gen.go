@@ -155,8 +155,8 @@ type Group struct {
 }
 
 func (s *Group) MarshalJSON() ([]byte, error) {
-	type noMethod Group
-	raw := noMethod(*s)
+	type NoMethod Group
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -183,8 +183,8 @@ type GroupContentDetails struct {
 }
 
 func (s *GroupContentDetails) MarshalJSON() ([]byte, error) {
-	type noMethod GroupContentDetails
-	raw := noMethod(*s)
+	type NoMethod GroupContentDetails
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -211,8 +211,8 @@ type GroupSnippet struct {
 }
 
 func (s *GroupSnippet) MarshalJSON() ([]byte, error) {
-	type noMethod GroupSnippet
-	raw := noMethod(*s)
+	type NoMethod GroupSnippet
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -249,8 +249,8 @@ type GroupItem struct {
 }
 
 func (s *GroupItem) MarshalJSON() ([]byte, error) {
-	type noMethod GroupItem
-	raw := noMethod(*s)
+	type NoMethod GroupItem
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -277,8 +277,8 @@ type GroupItemResource struct {
 }
 
 func (s *GroupItemResource) MarshalJSON() ([]byte, error) {
-	type noMethod GroupItemResource
-	raw := noMethod(*s)
+	type NoMethod GroupItemResource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -313,8 +313,8 @@ type GroupItemListResponse struct {
 }
 
 func (s *GroupItemListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod GroupItemListResponse
-	raw := noMethod(*s)
+	type NoMethod GroupItemListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -351,8 +351,8 @@ type GroupListResponse struct {
 }
 
 func (s *GroupListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod GroupListResponse
-	raw := noMethod(*s)
+	type NoMethod GroupListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -410,8 +410,8 @@ type ResultTable struct {
 }
 
 func (s *ResultTable) MarshalJSON() ([]byte, error) {
-	type noMethod ResultTable
-	raw := noMethod(*s)
+	type NoMethod ResultTable
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -444,8 +444,8 @@ type ResultTableColumnHeaders struct {
 }
 
 func (s *ResultTableColumnHeaders) MarshalJSON() ([]byte, error) {
-	type noMethod ResultTableColumnHeaders
-	raw := noMethod(*s)
+	type NoMethod ResultTableColumnHeaders
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -677,7 +677,7 @@ func (c *GroupItemsInsertCall) Do(opts ...googleapi.CallOption) (*GroupItem, err
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -829,7 +829,7 @@ func (c *GroupItemsListCall) Do(opts ...googleapi.CallOption) (*GroupItemListRes
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1095,7 +1095,7 @@ func (c *GroupsInsertCall) Do(opts ...googleapi.CallOption) (*Group, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1274,7 +1274,7 @@ func (c *GroupsListCall) Do(opts ...googleapi.CallOption) (*GroupListResponse, e
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1453,7 +1453,7 @@ func (c *GroupsUpdateCall) Do(opts ...googleapi.CallOption) (*Group, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1658,7 +1658,7 @@ func (c *ReportsQueryCall) Do(opts ...googleapi.CallOption) (*ResultTable, error
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

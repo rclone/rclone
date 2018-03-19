@@ -24,7 +24,6 @@ import (
 	"text/template"
 )
 
-var cmdDirs = [...]string{"cmd", "cmds", "command", "commands"}
 var srcPaths []string
 
 func init() {
@@ -128,8 +127,6 @@ func writeStringToFile(path string, s string) error {
 
 // writeToFile writes r to file with path only
 // if file/directory on given path doesn't exist.
-// If file/directory exists on given path, then
-// it terminates app and prints an appropriate error.
 func writeToFile(path string, r io.Reader) error {
 	if exists(path) {
 		return fmt.Errorf("%v already exists", path)

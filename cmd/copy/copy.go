@@ -2,7 +2,7 @@ package copy
 
 import (
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/sync"
 	"github.com/spf13/cobra"
 )
 
@@ -49,15 +49,12 @@ If you are familiar with ` + "`rsync`" + `, rclone always works as if you had
 written a trailing / - meaning "copy the contents of this directory".
 This applies to all commands and whether you are talking about the
 source or destination.
-
-See the ` + "`--no-traverse`" + ` option for controlling whether rclone lists
-the destination directory or not.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, fdst := cmd.NewFsSrcDst(args)
 		cmd.Run(true, true, command, func() error {
-			return fs.CopyDir(fdst, fsrc)
+			return sync.CopyDir(fdst, fsrc)
 		})
 	},
 }

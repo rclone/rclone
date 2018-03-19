@@ -5,6 +5,7 @@
     "endpointPrefix":"cloudformation",
     "protocol":"query",
     "serviceFullName":"AWS CloudFormation",
+    "serviceId":"CloudFormation",
     "signatureVersion":"v4",
     "uid":"cloudformation-2010-05-15",
     "xmlNamespace":"http://cloudformation.amazonaws.com/doc/2010-05-15/"
@@ -530,6 +531,26 @@
         {"shape":"TokenAlreadyExistsException"}
       ]
     },
+    "UpdateStackInstances":{
+      "name":"UpdateStackInstances",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateStackInstancesInput"},
+      "output":{
+        "shape":"UpdateStackInstancesOutput",
+        "resultWrapper":"UpdateStackInstancesResult"
+      },
+      "errors":[
+        {"shape":"StackSetNotFoundException"},
+        {"shape":"StackInstanceNotFoundException"},
+        {"shape":"OperationInProgressException"},
+        {"shape":"OperationIdAlreadyExistsException"},
+        {"shape":"StaleRequestException"},
+        {"shape":"InvalidOperationException"}
+      ]
+    },
     "UpdateStackSet":{
       "name":"UpdateStackSet",
       "http":{
@@ -836,6 +857,7 @@
         "StackSetName":{"shape":"StackSetName"},
         "Accounts":{"shape":"AccountList"},
         "Regions":{"shape":"RegionList"},
+        "ParameterOverrides":{"shape":"Parameters"},
         "OperationPreferences":{"shape":"StackSetOperationPreferences"},
         "OperationId":{
           "shape":"ClientRequestToken",
@@ -1527,7 +1549,8 @@
       "members":{
         "ParameterKey":{"shape":"ParameterKey"},
         "ParameterValue":{"shape":"ParameterValue"},
-        "UsePreviousValue":{"shape":"UsePreviousValue"}
+        "UsePreviousValue":{"shape":"UsePreviousValue"},
+        "ResolvedValue":{"shape":"ParameterValue"}
       }
     },
     "ParameterConstraints":{
@@ -1799,6 +1822,7 @@
         "Region":{"shape":"Region"},
         "Account":{"shape":"Account"},
         "StackId":{"shape":"StackId"},
+        "ParameterOverrides":{"shape":"Parameters"},
         "Status":{"shape":"StackInstanceStatus"},
         "StatusReason":{"shape":"Reason"}
       }
@@ -1946,8 +1970,7 @@
     "StackSetName":{"type":"string"},
     "StackSetNameOrId":{
       "type":"string",
-      "min":1,
-      "pattern":"[a-zA-Z][-a-zA-Z0-9]*"
+      "pattern":"[a-zA-Z][-a-zA-Z0-9]*(?::[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12})?"
     },
     "StackSetNotEmptyException":{
       "type":"structure",
@@ -2254,6 +2277,31 @@
         "NotificationARNs":{"shape":"NotificationARNs"},
         "Tags":{"shape":"Tags"},
         "ClientRequestToken":{"shape":"ClientRequestToken"}
+      }
+    },
+    "UpdateStackInstancesInput":{
+      "type":"structure",
+      "required":[
+        "StackSetName",
+        "Accounts",
+        "Regions"
+      ],
+      "members":{
+        "StackSetName":{"shape":"StackSetName"},
+        "Accounts":{"shape":"AccountList"},
+        "Regions":{"shape":"RegionList"},
+        "ParameterOverrides":{"shape":"Parameters"},
+        "OperationPreferences":{"shape":"StackSetOperationPreferences"},
+        "OperationId":{
+          "shape":"ClientRequestToken",
+          "idempotencyToken":true
+        }
+      }
+    },
+    "UpdateStackInstancesOutput":{
+      "type":"structure",
+      "members":{
+        "OperationId":{"shape":"ClientRequestToken"}
       }
     },
     "UpdateStackOutput":{

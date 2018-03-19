@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 Make single page versions of the documentation for release and
 conversion into man pages etc.
@@ -18,9 +18,11 @@ docs = [
     "docs.md",
     "remote_setup.md",
     "filtering.md",
+    "rc.md",
     "overview.md",
 
     # Keep these alphabetical by full name
+    "alias.md",
     "amazonclouddrive.md",
     "s3.md",
     "b2.md",

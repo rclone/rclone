@@ -202,8 +202,8 @@
     "AutoScalingGroupNames": {
       "base": null,
       "refs": {
-        "AutoScalingGroupNamesType$AutoScalingGroupNames": "<p>The group names. If you omit this parameter, all Auto Scaling groups are described.</p>",
-        "DescribeNotificationConfigurationsType$AutoScalingGroupNames": "<p>The name of the group.</p>"
+        "AutoScalingGroupNamesType$AutoScalingGroupNames": "<p>The names of the Auto Scaling groups. If you omit this parameter, all Auto Scaling groups are described.</p>",
+        "DescribeNotificationConfigurationsType$AutoScalingGroupNames": "<p>The name of the Auto Scaling group.</p>"
       }
     },
     "AutoScalingGroupNamesType": {
@@ -704,12 +704,28 @@
       "refs": {
       }
     },
+    "LaunchTemplateName": {
+      "base": null,
+      "refs": {
+        "LaunchTemplateSpecification$LaunchTemplateName": "<p>The name of the launch template. You must specify either a template name or a template ID.</p>"
+      }
+    },
+    "LaunchTemplateSpecification": {
+      "base": "<p>Describes a launch template.</p>",
+      "refs": {
+        "AutoScalingGroup$LaunchTemplate": "<p>The launch template for the group.</p>",
+        "AutoScalingInstanceDetails$LaunchTemplate": "<p>The launch template for the instance.</p>",
+        "CreateAutoScalingGroupType$LaunchTemplate": "<p>The launch template to use to launch instances. You must specify one of the following: a launch template, a launch configuration, or an EC2 instance.</p>",
+        "Instance$LaunchTemplate": "<p>The launch template for the instance.</p>",
+        "UpdateAutoScalingGroupType$LaunchTemplate": "<p>The launch template to use to specify the updates. You must specify a launch configuration or a launch template.</p>"
+      }
+    },
     "LifecycleActionResult": {
       "base": null,
       "refs": {
         "CompleteLifecycleActionType$LifecycleActionResult": "<p>The action for the group to take. This parameter can be either <code>CONTINUE</code> or <code>ABANDON</code>.</p>",
         "LifecycleHook$DefaultResult": "<p>Defines the action the Auto Scaling group should take when the lifecycle hook timeout elapses or if an unexpected failure occurs. The valid values are <code>CONTINUE</code> and <code>ABANDON</code>. The default value is <code>CONTINUE</code>.</p>",
-        "LifecycleHookSpecification$DefaultResult": "<p>Defines the action the Auto Scaling group should take when the lifecycle hook timeout elapses or if an unexpected failure occurs. The valid values are <code>CONTINUE</code> and <code>ABANDON</code>. The default value is <code>CONTINUE</code>.</p>",
+        "LifecycleHookSpecification$DefaultResult": "<p>Defines the action the Auto Scaling group should take when the lifecycle hook timeout elapses or if an unexpected failure occurs. The valid values are <code>CONTINUE</code> and <code>ABANDON</code>.</p>",
         "PutLifecycleHookType$DefaultResult": "<p>Defines the action the Auto Scaling group should take when the lifecycle hook timeout elapses or if an unexpected failure occurs. This parameter can be either <code>CONTINUE</code> or <code>ABANDON</code>. The default value is <code>ABANDON</code>.</p>"
       }
     },
@@ -1002,7 +1018,7 @@
     "PolicyNames": {
       "base": null,
       "refs": {
-        "DescribePoliciesType$PolicyNames": "<p>One or more policy names or policy ARNs to be described. If you omit this parameter, all policy names are described. If an group name is provided, the results are limited to that group. This list is limited to 50 items. If you specify an unknown policy name, it is ignored with no error.</p>"
+        "DescribePoliciesType$PolicyNames": "<p>The names of one or more policies. If you omit this parameter, all policies are described. If an group name is provided, the results are limited to that group. This list is limited to 50 items. If you specify an unknown policy name, it is ignored with no error.</p>"
       }
     },
     "PolicyTypes": {
@@ -1108,34 +1124,34 @@
       "base": null,
       "refs": {
         "Alarm$AlarmARN": "<p>The Amazon Resource Name (ARN) of the alarm.</p>",
-        "AttachInstancesQuery$AutoScalingGroupName": "<p>The name of the group.</p>",
+        "AttachInstancesQuery$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "AttachLoadBalancerTargetGroupsType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
-        "AttachLoadBalancersType$AutoScalingGroupName": "<p>The name of the group.</p>",
-        "AutoScalingGroup$AutoScalingGroupARN": "<p>The Amazon Resource Name (ARN) of the group.</p>",
+        "AttachLoadBalancersType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
+        "AutoScalingGroup$AutoScalingGroupARN": "<p>The Amazon Resource Name (ARN) of the Auto Scaling group.</p>",
         "AutoScalingGroupNames$member": null,
-        "CompleteLifecycleActionType$AutoScalingGroupName": "<p>The name of the group for the lifecycle hook.</p>",
-        "CreateAutoScalingGroupType$LaunchConfigurationName": "<p>The name of the launch configuration. Alternatively, specify an EC2 instance instead of a launch configuration.</p>",
-        "DeleteAutoScalingGroupType$AutoScalingGroupName": "<p>The name of the group to delete.</p>",
-        "DeleteLifecycleHookType$AutoScalingGroupName": "<p>The name of the Auto Scaling group for the lifecycle hook.</p>",
+        "CompleteLifecycleActionType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
+        "CreateAutoScalingGroupType$LaunchConfigurationName": "<p>The name of the launch configuration. You must specify one of the following: a launch configuration, a launch template, or an EC2 instance.</p>",
+        "DeleteAutoScalingGroupType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
+        "DeleteLifecycleHookType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "DeleteNotificationConfigurationType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "DeleteNotificationConfigurationType$TopicARN": "<p>The Amazon Resource Name (ARN) of the Amazon Simple Notification Service (SNS) topic.</p>",
         "DeletePolicyType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "DeletePolicyType$PolicyName": "<p>The name or Amazon Resource Name (ARN) of the policy.</p>",
         "DeleteScheduledActionType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "DeleteScheduledActionType$ScheduledActionName": "<p>The name of the action to delete.</p>",
-        "DescribeLifecycleHooksType$AutoScalingGroupName": "<p>The name of the group.</p>",
+        "DescribeLifecycleHooksType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "DescribeLoadBalancerTargetGroupsRequest$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
-        "DescribeLoadBalancersRequest$AutoScalingGroupName": "<p>The name of the group.</p>",
-        "DescribePoliciesType$AutoScalingGroupName": "<p>The name of the group.</p>",
-        "DescribeScalingActivitiesType$AutoScalingGroupName": "<p>The name of the group.</p>",
-        "DescribeScheduledActionsType$AutoScalingGroupName": "<p>The name of the group.</p>",
-        "DetachInstancesQuery$AutoScalingGroupName": "<p>The name of the group.</p>",
+        "DescribeLoadBalancersRequest$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
+        "DescribePoliciesType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
+        "DescribeScalingActivitiesType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
+        "DescribeScheduledActionsType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
+        "DetachInstancesQuery$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "DetachLoadBalancerTargetGroupsType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "DetachLoadBalancersType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
-        "DisableMetricsCollectionQuery$AutoScalingGroupName": "<p>The name or Amazon Resource Name (ARN) of the group.</p>",
-        "EnableMetricsCollectionQuery$AutoScalingGroupName": "<p>The name or ARN of the Auto Scaling group.</p>",
+        "DisableMetricsCollectionQuery$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
+        "EnableMetricsCollectionQuery$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "EnterStandbyQuery$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
-        "ExecutePolicyType$AutoScalingGroupName": "<p>The name or Amazon Resource Name (ARN) of the Auto Scaling group.</p>",
+        "ExecutePolicyType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "ExecutePolicyType$PolicyName": "<p>The name or ARN of the policy.</p>",
         "ExitStandbyQuery$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "LaunchConfiguration$LaunchConfigurationARN": "<p>The Amazon Resource Name (ARN) of the launch configuration.</p>",
@@ -1145,25 +1161,25 @@
         "LifecycleHook$NotificationTargetARN": "<p>The ARN of the target that Auto Scaling sends notifications to when an instance is in the transition state for the lifecycle hook. The notification target can be either an SQS queue or an SNS topic.</p>",
         "LifecycleHook$RoleARN": "<p>The ARN of the IAM role that allows the Auto Scaling group to publish to the specified notification target.</p>",
         "LifecycleHookSpecification$RoleARN": "<p>The ARN of the IAM role that allows the Auto Scaling group to publish to the specified notification target.</p>",
-        "NotificationConfiguration$AutoScalingGroupName": "<p>The name of the group.</p>",
+        "NotificationConfiguration$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "NotificationConfiguration$TopicARN": "<p>The Amazon Resource Name (ARN) of the Amazon Simple Notification Service (SNS) topic.</p>",
         "PolicyARNType$PolicyARN": "<p>The Amazon Resource Name (ARN) of the policy.</p>",
         "PolicyNames$member": null,
-        "PutLifecycleHookType$AutoScalingGroupName": "<p>The name of the Auto Scaling group to which you want to assign the lifecycle hook.</p>",
+        "PutLifecycleHookType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "PutLifecycleHookType$RoleARN": "<p>The ARN of the IAM role that allows the Auto Scaling group to publish to the specified notification target.</p> <p>This parameter is required for new lifecycle hooks, but optional when updating existing hooks.</p>",
         "PutNotificationConfigurationType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "PutNotificationConfigurationType$TopicARN": "<p>The Amazon Resource Name (ARN) of the Amazon Simple Notification Service (SNS) topic.</p>",
-        "PutScalingPolicyType$AutoScalingGroupName": "<p>The name or ARN of the group.</p>",
-        "PutScheduledUpdateGroupActionType$AutoScalingGroupName": "<p>The name or Amazon Resource Name (ARN) of the Auto Scaling group.</p>",
-        "RecordLifecycleActionHeartbeatType$AutoScalingGroupName": "<p>The name of the Auto Scaling group for the hook.</p>",
+        "PutScalingPolicyType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
+        "PutScheduledUpdateGroupActionType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
+        "RecordLifecycleActionHeartbeatType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "ScalingPolicy$PolicyARN": "<p>The Amazon Resource Name (ARN) of the policy.</p>",
-        "ScalingProcessQuery$AutoScalingGroupName": "<p>The name or Amazon Resource Name (ARN) of the Auto Scaling group.</p>",
+        "ScalingProcessQuery$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "ScheduledActionNames$member": null,
         "ScheduledUpdateGroupAction$ScheduledActionARN": "<p>The Amazon Resource Name (ARN) of the scheduled action.</p>",
         "SetDesiredCapacityType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
-        "SetInstanceProtectionQuery$AutoScalingGroupName": "<p>The name of the group.</p>",
+        "SetInstanceProtectionQuery$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "UpdateAutoScalingGroupType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
-        "UpdateAutoScalingGroupType$LaunchConfigurationName": "<p>The name of the launch configuration.</p>"
+        "UpdateAutoScalingGroupType$LaunchConfigurationName": "<p>The name of the launch configuration. You must specify either a launch configuration or a launch template.</p>"
       }
     },
     "ScalingActivityInProgressFault": {
@@ -1436,7 +1452,7 @@
         "Activity$Cause": "<p>The reason the activity began.</p>",
         "LifecycleHook$NotificationMetadata": "<p>Additional information that you want to include any time Auto Scaling sends a message to the notification target.</p>",
         "LifecycleHookSpecification$NotificationMetadata": "<p>Additional information that you want to include any time Auto Scaling sends a message to the notification target.</p>",
-        "PredefinedMetricSpecification$ResourceLabel": "<p>Identifies the resource associated with the metric type. The following predefined metrics are available:</p> <ul> <li> <p> <code>ASGAverageCPUUtilization</code> - average CPU utilization of the Auto Scaling group</p> </li> <li> <p> <code>ASGAverageNetworkIn</code> - average number of bytes received on all network interfaces by the Auto Scaling group</p> </li> <li> <p> <code>ASGAverageNetworkOut</code> - average number of bytes sent out on all network interfaces by the Auto Scaling group</p> </li> <li> <p> <code>ALBRequestCountPerTarget</code> - number of requests completed per target in an Application Load Balancer target group</p> </li> </ul> <p>For predefined metric types <code>ASGAverageCPUUtilization</code>, <code>ASGAverageNetworkIn</code> and <code>ASGAverageNetworkOut</code>, the parameter must not be specified as the resource associated with the metric type is the Auto Scaling group. For predefined metric type <code>ALBRequestCountPerTarget</code>, the parameter must be specified in the format: <code>app/<i>load-balancer-name</i>/<i>load-balancer-id</i>/targetgroup/<i>target-group-name</i>/<i>target-group-id</i> </code>, where <code>app/<i>load-balancer-name</i>/<i>load-balancer-id</i> </code> is the final portion of the load balancer ARN, and <code>targetgroup/<i>target-group-name</i>/<i>target-group-id</i> </code> is the final portion of the target group ARN. The target group must be attached to the Auto Scaling group.</p>",
+        "PredefinedMetricSpecification$ResourceLabel": "<p>Identifies the resource associated with the metric type. The following predefined metrics are available:</p> <ul> <li> <p> <code>ASGAverageCPUUtilization</code> - average CPU utilization of the Auto Scaling group</p> </li> <li> <p> <code>ASGAverageNetworkIn</code> - average number of bytes received on all network interfaces by the Auto Scaling group</p> </li> <li> <p> <code>ASGAverageNetworkOut</code> - average number of bytes sent out on all network interfaces by the Auto Scaling group</p> </li> <li> <p> <code>ALBRequestCountPerTarget</code> - number of requests completed per target in an Application Load Balancer target group</p> </li> </ul> <p>For predefined metric types <code>ASGAverageCPUUtilization</code>, <code>ASGAverageNetworkIn</code>, and <code>ASGAverageNetworkOut</code>, the parameter must not be specified as the resource associated with the metric type is the Auto Scaling group. For predefined metric type <code>ALBRequestCountPerTarget</code>, the parameter must be specified in the format: <code>app/<i>load-balancer-name</i>/<i>load-balancer-id</i>/targetgroup/<i>target-group-name</i>/<i>target-group-id</i> </code>, where <code>app/<i>load-balancer-name</i>/<i>load-balancer-id</i> </code> is the final portion of the load balancer ARN, and <code>targetgroup/<i>target-group-name</i>/<i>target-group-id</i> </code> is the final portion of the target group ARN. The target group must be attached to the Auto Scaling group.</p>",
         "PutLifecycleHookType$NotificationMetadata": "<p>Contains additional information that you want to include any time Auto Scaling sends a message to the notification target.</p>"
       }
     },
@@ -1453,7 +1469,7 @@
       "refs": {
         "AutoScalingInstanceDetails$InstanceId": "<p>The ID of the instance.</p>",
         "CompleteLifecycleActionType$InstanceId": "<p>The ID of the instance.</p>",
-        "CreateAutoScalingGroupType$InstanceId": "<p>The ID of the instance used to create a launch configuration for the group. Alternatively, specify a launch configuration instead of an EC2 instance.</p> <p>When you specify an ID of an instance, Auto Scaling creates a new launch configuration and associates it with the group. This launch configuration derives its attributes from the specified instance, with the exception of the block device mapping.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/create-asg-from-instance.html\">Create an Auto Scaling Group Using an EC2 Instance</a> in the <i>Auto Scaling User Guide</i>.</p>",
+        "CreateAutoScalingGroupType$InstanceId": "<p>The ID of the instance used to create a launch configuration for the group. You must specify one of the following: an EC2 instance, a launch configuration, or a launch template.</p> <p>When you specify an ID of an instance, Auto Scaling creates a new launch configuration and associates it with the group. This launch configuration derives its attributes from the specified instance, with the exception of the block device mapping.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/create-asg-from-instance.html\">Create an Auto Scaling Group Using an EC2 Instance</a> in the <i>Auto Scaling User Guide</i>.</p>",
         "CreateLaunchConfigurationType$InstanceId": "<p>The ID of the instance to use to create the launch configuration. The new launch configuration derives attributes from the instance, with the exception of the block device mapping.</p> <p>If you do not specify <code>InstanceId</code>, you must specify both <code>ImageId</code> and <code>InstanceType</code>.</p> <p>To create a launch configuration with a block device mapping or override any other instance attributes, specify them as part of the same request.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/create-lc-with-instanceID.html\">Create a Launch Configuration Using an EC2 Instance</a> in the <i>Auto Scaling User Guide</i>.</p>",
         "Instance$InstanceId": "<p>The ID of the instance.</p>",
         "InstanceIds$member": null,
@@ -1478,11 +1494,11 @@
         "AdjustmentType$AdjustmentType": "<p>The policy adjustment type. The valid values are <code>ChangeInCapacity</code>, <code>ExactCapacity</code>, and <code>PercentChangeInCapacity</code>.</p>",
         "Alarm$AlarmName": "<p>The name of the alarm.</p>",
         "AlreadyExistsFault$message": "<p/>",
-        "AutoScalingGroup$AutoScalingGroupName": "<p>The name of the group.</p>",
+        "AutoScalingGroup$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "AutoScalingGroup$LaunchConfigurationName": "<p>The name of the associated launch configuration.</p>",
         "AutoScalingGroup$PlacementGroup": "<p>The name of the placement group into which you'll launch your instances, if any. For more information, see <a href=\"http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html\">Placement Groups</a> in the <i>Amazon Elastic Compute Cloud User Guide</i>.</p>",
         "AutoScalingGroup$Status": "<p>The current state of the group when <a>DeleteAutoScalingGroup</a> is in progress.</p>",
-        "AutoScalingInstanceDetails$AutoScalingGroupName": "<p>The name of the Auto Scaling group associated with the instance.</p>",
+        "AutoScalingInstanceDetails$AutoScalingGroupName": "<p>The name of the Auto Scaling group for the instance.</p>",
         "AutoScalingInstanceDetails$AvailabilityZone": "<p>The Availability Zone for the instance.</p>",
         "AutoScalingInstanceDetails$LaunchConfigurationName": "<p>The launch configuration used to launch the instance. This value is not available if you attached the instance to the Auto Scaling group.</p>",
         "AutoScalingNotificationTypes$member": null,
@@ -1490,7 +1506,7 @@
         "BlockDeviceMapping$VirtualName": "<p>The name of the virtual device (for example, <code>ephemeral0</code>).</p>",
         "BlockDeviceMapping$DeviceName": "<p>The device name exposed to the EC2 instance (for example, <code>/dev/sdh</code> or <code>xvdh</code>).</p>",
         "ClassicLinkVPCSecurityGroups$member": null,
-        "CreateAutoScalingGroupType$AutoScalingGroupName": "<p>The name of the group. This name must be unique within the scope of your AWS account.</p>",
+        "CreateAutoScalingGroupType$AutoScalingGroupName": "<p>The name of the Auto Scaling group. This name must be unique within the scope of your AWS account.</p>",
         "CreateAutoScalingGroupType$PlacementGroup": "<p>The name of the placement group into which you'll launch your instances, if any. For more information, see <a href=\"http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html\">Placement Groups</a> in the <i>Amazon Elastic Compute Cloud User Guide</i>.</p>",
         "CreateLaunchConfigurationType$LaunchConfigurationName": "<p>The name of the launch configuration. This name must be unique within the scope of your AWS account.</p>",
         "CreateLaunchConfigurationType$ImageId": "<p>The ID of the Amazon Machine Image (AMI) to use to launch your EC2 instances.</p> <p>If you do not specify <code>InstanceId</code>, you must specify <code>ImageId</code>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html\">Finding an AMI</a> in the <i>Amazon Elastic Compute Cloud User Guide</i>.</p>",
@@ -1513,6 +1529,8 @@
         "LaunchConfiguration$InstanceType": "<p>The instance type for the instances.</p>",
         "LaunchConfiguration$KernelId": "<p>The ID of the kernel associated with the AMI.</p>",
         "LaunchConfiguration$RamdiskId": "<p>The ID of the RAM disk associated with the AMI.</p>",
+        "LaunchTemplateSpecification$LaunchTemplateId": "<p>The ID of the launch template. You must specify either a template ID or a template name.</p>",
+        "LaunchTemplateSpecification$Version": "<p>The version number. By default, the default version of the launch template is used.</p>",
         "LimitExceededFault$message": "<p/>",
         "LoadBalancerNames$member": null,
         "LoadBalancerState$LoadBalancerName": "<p>The name of the load balancer.</p>",
@@ -1531,10 +1549,10 @@
         "ResourceContentionFault$message": "<p/>",
         "ResourceInUseFault$message": "<p/>",
         "ScalingActivityInProgressFault$message": "<p/>",
-        "ScalingPolicy$AutoScalingGroupName": "<p>The name of the Auto Scaling group associated with this scaling policy.</p>",
+        "ScalingPolicy$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "ScalingPolicy$PolicyName": "<p>The name of the scaling policy.</p>",
         "ScalingPolicy$AdjustmentType": "<p>The adjustment type, which specifies how <code>ScalingAdjustment</code> is interpreted. Valid values are <code>ChangeInCapacity</code>, <code>ExactCapacity</code>, and <code>PercentChangeInCapacity</code>.</p>",
-        "ScheduledUpdateGroupAction$AutoScalingGroupName": "<p>The name of the group.</p>",
+        "ScheduledUpdateGroupAction$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "ScheduledUpdateGroupAction$ScheduledActionName": "<p>The name of the scheduled action.</p>",
         "ScheduledUpdateGroupAction$Recurrence": "<p>The recurring schedule for the action.</p>",
         "SuspendedProcess$ProcessName": "<p>The name of the suspended process.</p>",

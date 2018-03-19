@@ -2,7 +2,7 @@ package authorize
 
 import (
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
 	"github.com/spf13/cobra"
 )
 
@@ -19,6 +19,6 @@ rclone from a machine with a browser - use as instructed by
 rclone config.`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 3, command, args)
-		fs.Authorize(args)
+		config.Authorize(args)
 	},
 }

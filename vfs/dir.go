@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/list"
 	"github.com/pkg/errors"
 )
 
@@ -23,7 +24,7 @@ type Dir struct {
 	entry   fs.Directory
 	mu      sync.Mutex      // protects the following
 	read    time.Time       // time directory entry last read
-	items   map[string]Node // NB can be nil when directory not read yet
+	items   map[string]Node // directory entries - can be empty but not nil
 }
 
 func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
@@ -35,6 +36,7 @@ func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 		path:    fsDir.Remote(),
 		modTime: fsDir.ModTime(),
 		inode:   newInode(),
+		items:   make(map[string]Node),
 	}
 }
 
@@ -93,7 +95,7 @@ func (d *Dir) Node() Node {
 // ForgetAll ensures the directory and all its children are purged
 // from the cache.
 func (d *Dir) ForgetAll() {
-	d.ForgetPath("")
+	d.ForgetPath("", fs.EntryDirectory)
 }
 
 // ForgetPath clears the cache for itself and all subdirectories if
@@ -101,16 +103,20 @@ func (d *Dir) ForgetAll() {
 // directory it is called from.
 // It is not possible to traverse the directory tree upwards, i.e.
 // you cannot clear the cache for the Dir's ancestors or siblings.
-func (d *Dir) ForgetPath(relativePath string) {
+func (d *Dir) ForgetPath(relativePath string, entryType fs.EntryType) {
+	// if we are requested to forget a file, we use its parent
 	absPath := path.Join(d.path, relativePath)
-	if absPath == "." {
+	if entryType != fs.EntryDirectory {
+		absPath = path.Dir(absPath)
+	}
+	if absPath == "." || absPath == "/" {
 		absPath = ""
 	}
 
 	d.walk(absPath, func(dir *Dir) {
 		fs.Debugf(dir.path, "forgetting directory cache")
 		dir.read = time.Time{}
-		dir.items = nil
+		dir.items = make(map[string]Node)
 	})
 }
 
@@ -121,11 +127,9 @@ func (d *Dir) ForgetPath(relativePath string) {
 func (d *Dir) walk(absPath string, fun func(*Dir)) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	if d.items != nil {
-		for _, node := range d.items {
-			if dir, ok := node.(*Dir); ok {
-				dir.walk(absPath, fun)
-			}
+	for _, node := range d.items {
+		if dir, ok := node.(*Dir); ok {
+			dir.walk(absPath, fun)
 		}
 	}
 
@@ -152,25 +156,21 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 // note that we add new objects rather than updating old ones
 func (d *Dir) addObject(node Node) {
 	d.mu.Lock()
-	if d.items != nil {
-		d.items[node.Name()] = node
-	}
+	d.items[node.Name()] = node
 	d.mu.Unlock()
 }
 
 // delObject removes an object from the directory
 func (d *Dir) delObject(leaf string) {
 	d.mu.Lock()
-	if d.items != nil {
-		delete(d.items, leaf)
-	}
+	delete(d.items, leaf)
 	d.mu.Unlock()
 }
 
 // read the directory and sets d.items - must be called with the lock held
 func (d *Dir) _readDir() error {
 	when := time.Now()
-	if d.read.IsZero() || d.items == nil {
+	if d.read.IsZero() {
 		// fs.Debugf(d.path, "Reading directory")
 	} else {
 		age := when.Sub(d.read)
@@ -179,45 +179,46 @@ func (d *Dir) _readDir() error {
 		}
 		fs.Debugf(d.path, "Re-reading directory (%v old)", age)
 	}
-	entries, err := fs.ListDirSorted(d.f, false, d.path)
+	entries, err := list.DirSorted(d.f, false, d.path)
 	if err == fs.ErrorDirNotFound {
 		// We treat directory not found as empty because we
 		// create directories on the fly
 	} else if err != nil {
 		return err
 	}
-	// NB when we re-read a directory after its cache has expired
-	// we drop the old files which should lead to correct
-	// behaviour but may not be very efficient.
-
-	// Keep a note of the previous contents of the directory
-	oldItems := d.items
 
 	// Cache the items by name
-	d.items = make(map[string]Node, len(entries))
+	found := make(map[string]struct{})
 	for _, entry := range entries {
+		name := path.Base(entry.Remote())
+		node := d.items[name]
+		found[name] = struct{}{}
 		switch item := entry.(type) {
 		case fs.Object:
 			obj := item
-			name := path.Base(obj.Remote())
-			d.items[name] = newFile(d, obj, name)
+			// Reuse old file value if it exists
+			if file, ok := node.(*File); node != nil && ok {
+				file.setObjectNoUpdate(obj)
+			} else {
+				node = newFile(d, obj, name)
+			}
 		case fs.Directory:
 			dir := item
-			name := path.Base(dir.Remote())
-			// Use old dir value if it exists
-			if oldItems != nil {
-				if oldNode, ok := oldItems[name]; ok {
-					if oldNode.IsDir() {
-						d.items[name] = oldNode
-						continue
-					}
-				}
+			// Reuse old dir value if it exists
+			if node == nil || !node.IsDir() {
+				node = newDir(d.vfs, d.f, d, dir)
 			}
-			d.items[name] = newDir(d.vfs, d.f, d, dir)
 		default:
 			err = errors.Errorf("unknown type %T", item)
 			fs.Errorf(d, "readDir error: %v", err)
 			return err
+		}
+		d.items[name] = node
+	}
+	// delete unused entries
+	for name := range d.items {
+		if _, ok := found[name]; !ok {
+			delete(d.items, name)
 		}
 	}
 	d.read = when
@@ -325,7 +326,7 @@ func (d *Dir) Open(flags int) (fd Handle, err error) {
 }
 
 // Create makes a new file node
-func (d *Dir) Create(name string) (*File, error) {
+func (d *Dir) Create(name string, flags int) (*File, error) {
 	// fs.Debugf(path, "Dir.Create")
 	if d.vfs.Opt.ReadOnly {
 		return nil, EROFS

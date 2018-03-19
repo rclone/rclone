@@ -109,8 +109,8 @@ type AmpUrl struct {
 }
 
 func (s *AmpUrl) MarshalJSON() ([]byte, error) {
-	type noMethod AmpUrl
-	raw := noMethod(*s)
+	type NoMethod AmpUrl
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -166,8 +166,8 @@ type AmpUrlError struct {
 }
 
 func (s *AmpUrlError) MarshalJSON() ([]byte, error) {
-	type noMethod AmpUrlError
-	raw := noMethod(*s)
+	type NoMethod AmpUrlError
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -218,8 +218,8 @@ type BatchGetAmpUrlsRequest struct {
 }
 
 func (s *BatchGetAmpUrlsRequest) MarshalJSON() ([]byte, error) {
-	type noMethod BatchGetAmpUrlsRequest
-	raw := noMethod(*s)
+	type NoMethod BatchGetAmpUrlsRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -258,8 +258,8 @@ type BatchGetAmpUrlsResponse struct {
 }
 
 func (s *BatchGetAmpUrlsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod BatchGetAmpUrlsResponse
-	raw := noMethod(*s)
+	type NoMethod BatchGetAmpUrlsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -359,7 +359,7 @@ func (c *AmpUrlsBatchGetCall) Do(opts ...googleapi.CallOption) (*BatchGetAmpUrls
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

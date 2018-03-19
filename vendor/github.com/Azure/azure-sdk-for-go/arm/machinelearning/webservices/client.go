@@ -4,6 +4,8 @@
 // operations:<ul><li>Create or update a web service</li><li>Get a web service</li><li>Patch a web
 // service</li><li>Delete a web service</li><li>Get All Web Services in a Resource Group </li><li>Get All Web Services
 // in a Subscription</li><li>Get Web Services Keys</li></ul>
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/machinelearning/mgmt/2017-01-01/webservices
 package webservices
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

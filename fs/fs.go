@@ -14,8 +14,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ncw/rclone/fs/driveletter"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
 )
+
+// EntryType can be associated with remote paths to identify their type
+type EntryType int
 
 // Constants
 const (
@@ -24,12 +29,16 @@ const (
 	ModTimeNotSupported = 100 * 365 * 24 * time.Hour
 	// MaxLevel is a sentinel representing an infinite depth for listings
 	MaxLevel = math.MaxInt32
+	// EntryDirectory should be used to classify remote paths in directories
+	EntryDirectory EntryType = iota // 0
+	// EntryObject should be used to classify remote paths in objects
+	EntryObject // 1
 )
 
 // Globals
 var (
 	// Filesystem registry
-	fsRegistry []*RegInfo
+	Registry []*RegInfo
 	// ErrorNotFoundInConfigFile is returned by NewFs if not found in config file
 	ErrorNotFoundInConfigFile        = errors.New("didn't find section in config file")
 	ErrorCantPurge                   = errors.New("can't purge directory")
@@ -51,6 +60,7 @@ var (
 	ErrorCantMoveOverlapping         = errors.New("can't move files on overlapping remotes")
 	ErrorDirectoryNotEmpty           = errors.New("directory not empty")
 	ErrorImmutableModified           = errors.New("immutable file modified")
+	ErrorPermissionDenied            = errors.New("permission denied")
 )
 
 // RegInfo provides information about a filesystem
@@ -103,7 +113,7 @@ type OptionExample struct {
 //
 // Fs modules  should use this in an init() function
 func Register(info *RegInfo) {
-	fsRegistry = append(fsRegistry, info)
+	Registry = append(Registry, info)
 }
 
 // Fs is the interface a cloud storage system must provide
@@ -158,7 +168,7 @@ type Info interface {
 	Precision() time.Duration
 
 	// Returns the supported hash types of the filesystem
-	Hashes() HashSet
+	Hashes() hash.Set
 
 	// Features returns the optional features of this Fs
 	Features() *Features
@@ -190,7 +200,7 @@ type ObjectInfo interface {
 
 	// Hash returns the selected checksum of the file
 	// If no checksum is available it returns ""
-	Hash(HashType) (string, error)
+	Hash(hash.Type) (string, error)
 
 	// Storable says whether this object can be stored
 	Storable() bool
@@ -232,6 +242,13 @@ type MimeTyper interface {
 	// MimeType returns the content type of the Object if
 	// known, or "" if not
 	MimeType() string
+}
+
+// ObjectUnWrapper is an optional interface for Object
+type ObjectUnWrapper interface {
+	// UnWrap returns the Object that this Object is wrapping or
+	// nil if it isn't wrapping anything
+	UnWrap() Object
 }
 
 // ListRCallback defines a callback function for ListR to use
@@ -293,13 +310,19 @@ type Features struct {
 	// If destination exists then return fs.ErrorDirExists
 	DirMove func(src Fs, srcRemote, dstRemote string) error
 
-	// DirChangeNotify calls the passed function with a path
-	// of a directory that has had changes. If the implementation
+	// ChangeNotify calls the passed function with a path
+	// that has had changes. If the implementation
 	// uses polling, it should adhere to the given interval.
-	DirChangeNotify func(func(string), time.Duration) chan bool
+	ChangeNotify func(func(string, EntryType), time.Duration) chan bool
 
 	// UnWrap returns the Fs that this Fs is wrapping
 	UnWrap func() Fs
+
+	// WrapFs returns the Fs that is wrapping this Fs
+	WrapFs func() Fs
+
+	// SetWrapper sets the Fs that is wrapping this Fs
+	SetWrapper func(f Fs)
 
 	// DirCacheFlush resets the directory cache - used in testing
 	// as an optional interface
@@ -407,11 +430,15 @@ func (ft *Features) Fill(f Fs) *Features {
 	if do, ok := f.(DirMover); ok {
 		ft.DirMove = do.DirMove
 	}
-	if do, ok := f.(DirChangeNotifier); ok {
-		ft.DirChangeNotify = do.DirChangeNotify
+	if do, ok := f.(ChangeNotifier); ok {
+		ft.ChangeNotify = do.ChangeNotify
 	}
 	if do, ok := f.(UnWrapper); ok {
 		ft.UnWrap = do.UnWrap
+	}
+	if do, ok := f.(Wrapper); ok {
+		ft.WrapFs = do.WrapFs
+		ft.SetWrapper = do.SetWrapper
 	}
 	if do, ok := f.(DirCacheFlusher); ok {
 		ft.DirCacheFlush = do.DirCacheFlush
@@ -438,7 +465,7 @@ func (ft *Features) Fill(f Fs) *Features {
 //
 // Only optional features which are implemented in both the original
 // Fs AND the one passed in will be advertised.  Any features which
-// aren't in both will be set to false/nil, except for UnWrap which
+// aren't in both will be set to false/nil, except for UnWrap/Wrap which
 // will be left untouched.
 func (ft *Features) Mask(f Fs) *Features {
 	mask := f.Features()
@@ -460,8 +487,8 @@ func (ft *Features) Mask(f Fs) *Features {
 	if mask.DirMove == nil {
 		ft.DirMove = nil
 	}
-	if mask.DirChangeNotify == nil {
-		ft.DirChangeNotify = nil
+	if mask.ChangeNotify == nil {
+		ft.ChangeNotify = nil
 	}
 	// if mask.UnWrap == nil {
 	// 	ft.UnWrap = nil
@@ -487,7 +514,7 @@ func (ft *Features) Mask(f Fs) *Features {
 	return ft.DisableList(Config.DisableFeatures)
 }
 
-// Wrap makes a Copy of the features passed in, overriding the UnWrap
+// Wrap makes a Copy of the features passed in, overriding the UnWrap/Wrap
 // method only if available in f.
 func (ft *Features) Wrap(f Fs) *Features {
 	copy := new(Features)
@@ -495,7 +522,20 @@ func (ft *Features) Wrap(f Fs) *Features {
 	if do, ok := f.(UnWrapper); ok {
 		copy.UnWrap = do.UnWrap
 	}
+	if do, ok := f.(Wrapper); ok {
+		copy.WrapFs = do.WrapFs
+		copy.SetWrapper = do.SetWrapper
+	}
 	return copy
+}
+
+// WrapsFs adds extra information between `f` which wraps `w`
+func (ft *Features) WrapsFs(f Fs, w Fs) *Features {
+	wFeatures := w.Features()
+	if wFeatures.WrapFs != nil && wFeatures.SetWrapper != nil {
+		wFeatures.SetWrapper(f)
+	}
+	return ft
 }
 
 // Purger is an optional interfaces for Fs
@@ -550,18 +590,26 @@ type DirMover interface {
 	DirMove(src Fs, srcRemote, dstRemote string) error
 }
 
-// DirChangeNotifier is an optional interface for Fs
-type DirChangeNotifier interface {
-	// DirChangeNotify calls the passed function with a path
-	// of a directory that has had changes. If the implementation
+// ChangeNotifier is an optional interface for Fs
+type ChangeNotifier interface {
+	// ChangeNotify calls the passed function with a path
+	// that has had changes. If the implementation
 	// uses polling, it should adhere to the given interval.
-	DirChangeNotify(func(string), time.Duration) chan bool
+	ChangeNotify(func(string, EntryType), time.Duration) chan bool
 }
 
 // UnWrapper is an optional interfaces for Fs
 type UnWrapper interface {
 	// UnWrap returns the Fs that this Fs is wrapping
 	UnWrap() Fs
+}
+
+// Wrapper is an optional interfaces for Fs
+type Wrapper interface {
+	// Wrap returns the Fs that is wrapping this Fs
+	WrapFs() Fs
+	// SetWrapper sets the Fs that is wrapping this Fs
+	SetWrapper(f Fs)
 }
 
 // DirCacheFlusher is an optional interface for Fs
@@ -631,6 +679,19 @@ type ListRer interface {
 	ListR(dir string, callback ListRCallback) error
 }
 
+// RangeSeeker is the interface that wraps the RangeSeek method.
+//
+// Some of the returns from Object.Open() may optionally implement
+// this method for efficiency purposes.
+type RangeSeeker interface {
+	// RangeSeek behaves like a call to Seek(offset int64, whence
+	// int) with the output wrapped in an io.LimitedReader
+	// limiting the total length to limit.
+	//
+	// RangeSeek with a limit of < 0 is equivalent to a regular Seek.
+	RangeSeek(offset int64, whence int, length int64) (int64, error)
+}
+
 // ObjectsChan is a channel of Objects
 type ObjectsChan chan Object
 
@@ -640,7 +701,7 @@ type Objects []Object
 // ObjectPair is a pair of Objects used to describe a potential copy
 // operation.
 type ObjectPair struct {
-	src, dst Object
+	Src, Dst Object
 }
 
 // ObjectPairChan is a channel of ObjectPair
@@ -650,7 +711,7 @@ type ObjectPairChan chan ObjectPair
 //
 // Services are looked up in the config file
 func Find(name string) (*RegInfo, error) {
-	for _, item := range fsRegistry {
+	for _, item := range Registry {
 		if item.Name == name {
 			return item, nil
 		}
@@ -671,16 +732,16 @@ func MustFind(name string) *RegInfo {
 	return fs
 }
 
-// Pattern to match an rclone url
-var matcher = regexp.MustCompile(`^([\w_ -]+):(.*)$`)
+// Matcher is a pattern to match an rclone URL
+var Matcher = regexp.MustCompile(`^([\w_ -]+):(.*)$`)
 
 // ParseRemote deconstructs a path into configName, fsPath, looking up
 // the fsName in the config file (returning NotFoundInConfigFile if not found)
 func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, err error) {
-	parts := matcher.FindStringSubmatch(path)
+	parts := Matcher.FindStringSubmatch(path)
 	var fsName string
 	fsName, configName, fsPath = "local", "local", path
-	if parts != nil && !isDriveLetter(parts[1]) {
+	if parts != nil && !driveletter.IsDriveLetter(parts[1]) {
 		configName, fsPath = parts[1], parts[2]
 		fsName = ConfigFileGet(configName, "type")
 		if fsName == "" {
@@ -710,10 +771,10 @@ func NewFs(path string) (Fs, error) {
 	return fsInfo.NewFs(configName, fsPath)
 }
 
-// temporaryLocalFs creates a local FS in the OS's temporary directory.
+// TemporaryLocalFs creates a local FS in the OS's temporary directory.
 //
 // No cleanup is performed, the caller must call Purge on the Fs themselves.
-func temporaryLocalFs() (Fs, error) {
+func TemporaryLocalFs() (Fs, error) {
 	path, err := ioutil.TempDir("", "rclone-spool")
 	if err == nil {
 		err = os.Remove(path)
@@ -739,10 +800,31 @@ func CheckClose(c io.Closer, err *error) {
 func FileExists(fs Fs, remote string) (bool, error) {
 	_, err := fs.NewObject(remote)
 	if err != nil {
-		if err == ErrorObjectNotFound || err == ErrorNotAFile {
+		if err == ErrorObjectNotFound || err == ErrorNotAFile || err == ErrorPermissionDenied {
 			return false, nil
 		}
 		return false, err
 	}
 	return true, nil
+}
+
+// CalculateModifyWindow works out modify window for Fses passed in -
+// sets Config.ModifyWindow
+//
+// This is the largest modify window of all the fses in use, and the
+// user configured value
+func CalculateModifyWindow(fss ...Fs) {
+	for _, f := range fss {
+		if f != nil {
+			precision := f.Precision()
+			if precision > Config.ModifyWindow {
+				Config.ModifyWindow = precision
+			}
+			if precision == ModTimeNotSupported {
+				Infof(f, "Modify window not supported")
+				return
+			}
+		}
+	}
+	Infof(fss[0], "Modify window is %s", Config.ModifyWindow)
 }

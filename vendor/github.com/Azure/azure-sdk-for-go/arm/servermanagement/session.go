@@ -123,6 +123,7 @@ func (client SessionClient) CreatePreparer(resourceGroupName string, nodeName st
 func (client SessionClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -201,7 +202,9 @@ func (client SessionClient) DeletePreparer(resourceGroupName string, nodeName st
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client SessionClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -278,7 +281,9 @@ func (client SessionClient) GetPreparer(resourceGroupName string, nodeName strin
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client SessionClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always

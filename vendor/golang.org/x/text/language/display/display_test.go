@@ -371,9 +371,6 @@ func TestTag(t *testing.T) {
 		{"sr-Latn", "sr-Latn-ME", "srpskohrvatski (Crna Gora)"},
 		// Double script and region
 		{"nl", "en-Cyrl-BE", "Engels (Cyrillisch, België)"},
-		// Canonical equivalents.
-		{"ro", "ro-MD", "moldovenească"},
-		{"ro", "mo", "moldovenească"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.dict+"/"+tt.tag, func(t *testing.T) {
@@ -445,9 +442,6 @@ func TestLanguage(t *testing.T) {
 		{"en", "af-NA", "Afrikaans"},
 		{"en", "zu-BR", "Zulu"},
 		{"agq", "zh-Hant", "|[language: zh-Hant]"},
-		// Canonical equivalents.
-		{"ro", "ro-MD", "moldovenească"},
-		{"ro", "mo", "moldovenească"},
 		{"en", "sh", "Serbo-Croatian"},
 		{"en", "sr-Latn", "Serbo-Croatian"},
 		{"en", "sr", "Serbian"},
@@ -540,8 +534,6 @@ func TestRegion(t *testing.T) {
 		{"nl", "NL", "Nederland"},
 		{"en", "US", "United States"},
 		{"en", "ZZ", "Unknown Region"},
-		{"en", "UM", "U.S. Outlying Islands"},
-		{"en-GB", "UM", "U.S. Outlying Islands"},
 		{"en-GB", "NL", "Netherlands"},
 		// Canonical equivalents
 		{"en", "UK", "United Kingdom"},
@@ -628,9 +620,6 @@ func TestSelf(t *testing.T) {
 		{"sr-Latn-ME", "srpskohrvatski"},
 		{"sr-Cyrl-ME", "српски"},
 		{"sr-NL", "српски"},
-		// Canonical equivalents.
-		{"ro-MD", "moldovenească"},
-		{"mo", "moldovenească"},
 		// NOTE: kk is defined, but in Cyrillic script. For China, Arab is the
 		// dominant script. We do not have data for kk-Arab and we chose to not
 		// fall back in such cases.
@@ -641,6 +630,27 @@ func TestSelf(t *testing.T) {
 		if n := d.Name(language.Raw.MustParse(tt.tag)); n != tt.name {
 			t.Errorf("%d:%s: was %q; want %q", i, tt.tag, n, tt.name)
 		}
+	}
+}
+
+func TestEquivalence(t *testing.T) {
+	testCases := []struct {
+		desc  string
+		namer Namer
+	}{
+		{"Self", Self},
+		{"Tags", Tags(language.Romanian)},
+		{"Languages", Languages(language.Romanian)},
+		{"Scripts", Scripts(language.Romanian)},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			ro := tc.namer.Name(language.Raw.MustParse("ro-MD"))
+			mo := tc.namer.Name(language.Raw.MustParse("mo"))
+			if ro != mo {
+				t.Errorf("%q != %q", ro, mo)
+			}
+		})
 	}
 }
 
@@ -693,7 +703,6 @@ func TestDictionaryScript(t *testing.T) {
 		name   string
 	}{
 		{English, "Cyrl", "Cyrillic"},
-		{Portuguese, "Gujr", "gujerati"},
 		{EuropeanPortuguese, "Gujr", "guzerate"},
 	}
 	for i, test := range tests {

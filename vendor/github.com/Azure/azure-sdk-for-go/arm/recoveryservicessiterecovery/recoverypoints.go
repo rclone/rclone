@@ -92,7 +92,9 @@ func (client RecoveryPointsClient) GetPreparer(fabricName string, protectionCont
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecoveryPointsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -161,7 +163,9 @@ func (client RecoveryPointsClient) ListByReplicationProtectedItemsPreparer(fabri
 // ListByReplicationProtectedItemsSender sends the ListByReplicationProtectedItems request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecoveryPointsClient) ListByReplicationProtectedItemsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByReplicationProtectedItemsResponder handles the response to the ListByReplicationProtectedItems request. The method always

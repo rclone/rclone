@@ -167,8 +167,8 @@ type AchievementConfiguration struct {
 }
 
 func (s *AchievementConfiguration) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementConfiguration
-	raw := noMethod(*s)
+	type NoMethod AchievementConfiguration
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -214,8 +214,8 @@ type AchievementConfigurationDetail struct {
 }
 
 func (s *AchievementConfigurationDetail) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementConfigurationDetail
-	raw := noMethod(*s)
+	type NoMethod AchievementConfigurationDetail
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -254,8 +254,8 @@ type AchievementConfigurationListResponse struct {
 }
 
 func (s *AchievementConfigurationListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod AchievementConfigurationListResponse
-	raw := noMethod(*s)
+	type NoMethod AchievementConfigurationListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -307,8 +307,8 @@ type GamesNumberAffixConfiguration struct {
 }
 
 func (s *GamesNumberAffixConfiguration) MarshalJSON() ([]byte, error) {
-	type noMethod GamesNumberAffixConfiguration
-	raw := noMethod(*s)
+	type NoMethod GamesNumberAffixConfiguration
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -355,8 +355,8 @@ type GamesNumberFormatConfiguration struct {
 }
 
 func (s *GamesNumberFormatConfiguration) MarshalJSON() ([]byte, error) {
-	type noMethod GamesNumberFormatConfiguration
-	raw := noMethod(*s)
+	type NoMethod GamesNumberFormatConfiguration
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -398,8 +398,8 @@ type ImageConfiguration struct {
 }
 
 func (s *ImageConfiguration) MarshalJSON() ([]byte, error) {
-	type noMethod ImageConfiguration
-	raw := noMethod(*s)
+	type NoMethod ImageConfiguration
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -456,8 +456,8 @@ type LeaderboardConfiguration struct {
 }
 
 func (s *LeaderboardConfiguration) MarshalJSON() ([]byte, error) {
-	type noMethod LeaderboardConfiguration
-	raw := noMethod(*s)
+	type NoMethod LeaderboardConfiguration
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -500,8 +500,8 @@ type LeaderboardConfigurationDetail struct {
 }
 
 func (s *LeaderboardConfigurationDetail) MarshalJSON() ([]byte, error) {
-	type noMethod LeaderboardConfigurationDetail
-	raw := noMethod(*s)
+	type NoMethod LeaderboardConfigurationDetail
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -540,8 +540,8 @@ type LeaderboardConfigurationListResponse struct {
 }
 
 func (s *LeaderboardConfigurationListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod LeaderboardConfigurationListResponse
-	raw := noMethod(*s)
+	type NoMethod LeaderboardConfigurationListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -576,8 +576,8 @@ type LocalizedString struct {
 }
 
 func (s *LocalizedString) MarshalJSON() ([]byte, error) {
-	type noMethod LocalizedString
-	raw := noMethod(*s)
+	type NoMethod LocalizedString
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -609,8 +609,8 @@ type LocalizedStringBundle struct {
 }
 
 func (s *LocalizedStringBundle) MarshalJSON() ([]byte, error) {
-	type noMethod LocalizedStringBundle
-	raw := noMethod(*s)
+	type NoMethod LocalizedStringBundle
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -817,7 +817,7 @@ func (c *AchievementConfigurationsGetCall) Do(opts ...googleapi.CallOption) (*Ac
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -947,7 +947,7 @@ func (c *AchievementConfigurationsInsertCall) Do(opts ...googleapi.CallOption) (
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1105,7 +1105,7 @@ func (c *AchievementConfigurationsListCall) Do(opts ...googleapi.CallOption) (*A
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1270,7 +1270,7 @@ func (c *AchievementConfigurationsPatchCall) Do(opts ...googleapi.CallOption) (*
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1404,7 +1404,7 @@ func (c *AchievementConfigurationsUpdateCall) Do(opts ...googleapi.CallOption) (
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1601,7 +1601,7 @@ func (c *ImageConfigurationsUploadCall) Do(opts ...googleapi.CallOption) (*Image
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1866,7 +1866,7 @@ func (c *LeaderboardConfigurationsGetCall) Do(opts ...googleapi.CallOption) (*Le
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1996,7 +1996,7 @@ func (c *LeaderboardConfigurationsInsertCall) Do(opts ...googleapi.CallOption) (
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2154,7 +2154,7 @@ func (c *LeaderboardConfigurationsListCall) Do(opts ...googleapi.CallOption) (*L
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2319,7 +2319,7 @@ func (c *LeaderboardConfigurationsPatchCall) Do(opts ...googleapi.CallOption) (*
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2453,7 +2453,7 @@ func (c *LeaderboardConfigurationsUpdateCall) Do(opts ...googleapi.CallOption) (
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

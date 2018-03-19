@@ -1,30 +1,35 @@
 {
   "version": "2.0",
-  "service": "<p>Amazon EC2 Container Registry (Amazon ECR) is a managed AWS Docker registry service. Customers can use the familiar Docker CLI to push, pull, and manage images. Amazon ECR provides a secure, scalable, and reliable registry. Amazon ECR supports private Docker repositories with resource-based permissions using AWS IAM so that specific users or Amazon EC2 instances can access repositories and images. Developers can use the Docker CLI to author and manage images.</p>",
+  "service": "<p>Amazon EC2 Container Registry (Amazon ECR) is a managed Docker registry service. Customers can use the familiar Docker CLI to push, pull, and manage images. Amazon ECR provides a secure, scalable, and reliable registry. Amazon ECR supports private Docker repositories with resource-based permissions using IAM so that specific users or Amazon EC2 instances can access repositories and images. Developers can use the Docker CLI to author and manage images.</p>",
   "operations": {
     "BatchCheckLayerAvailability": "<p>Check the availability of multiple image layers in a specified registry and repository.</p> <note> <p>This operation is used by the Amazon ECR proxy, and it is not intended for general use by customers for pulling and pushing images. In most cases, you should use the <code>docker</code> CLI to pull, tag, and push images.</p> </note>",
     "BatchDeleteImage": "<p>Deletes a list of specified images within a specified repository. Images are specified with either <code>imageTag</code> or <code>imageDigest</code>.</p> <p>You can remove a tag from an image by specifying the image's tag in your request. When you remove the last tag from an image, the image is deleted from your repository.</p> <p>You can completely delete an image (and all of its tags) by specifying the image's digest in your request.</p>",
     "BatchGetImage": "<p>Gets detailed information for specified images within a specified repository. Images are specified with either <code>imageTag</code> or <code>imageDigest</code>.</p>",
-    "CompleteLayerUpload": "<p>Inform Amazon ECR that the image layer upload for a specified registry, repository name, and upload ID, has completed. You can optionally provide a <code>sha256</code> digest of the image layer for data validation purposes.</p> <note> <p>This operation is used by the Amazon ECR proxy, and it is not intended for general use by customers for pulling and pushing images. In most cases, you should use the <code>docker</code> CLI to pull, tag, and push images.</p> </note>",
+    "CompleteLayerUpload": "<p>Informs Amazon ECR that the image layer upload has completed for a specified registry, repository name, and upload ID. You can optionally provide a <code>sha256</code> digest of the image layer for data validation purposes.</p> <note> <p>This operation is used by the Amazon ECR proxy, and it is not intended for general use by customers for pulling and pushing images. In most cases, you should use the <code>docker</code> CLI to pull, tag, and push images.</p> </note>",
     "CreateRepository": "<p>Creates an image repository.</p>",
+    "DeleteLifecyclePolicy": "<p>Deletes the specified lifecycle policy.</p>",
     "DeleteRepository": "<p>Deletes an existing image repository. If a repository contains images, you must use the <code>force</code> option to delete it.</p>",
     "DeleteRepositoryPolicy": "<p>Deletes the repository policy from a specified repository.</p>",
     "DescribeImages": "<p>Returns metadata about the images in a repository, including image size, image tags, and creation date.</p> <note> <p>Beginning with Docker version 1.9, the Docker client compresses image layers before pushing them to a V2 Docker registry. The output of the <code>docker images</code> command shows the uncompressed image size, so it may return a larger image size than the image sizes returned by <a>DescribeImages</a>.</p> </note>",
     "DescribeRepositories": "<p>Describes image repositories in a registry.</p>",
     "GetAuthorizationToken": "<p>Retrieves a token that is valid for a specified registry for 12 hours. This command allows you to use the <code>docker</code> CLI to push and pull images with Amazon ECR. If you do not specify a registry, the default registry is assumed.</p> <p>The <code>authorizationToken</code> returned for each registry specified is a base64 encoded string that can be decoded and used in a <code>docker login</code> command to authenticate to a registry. The AWS CLI offers an <code>aws ecr get-login</code> command that simplifies the login process.</p>",
     "GetDownloadUrlForLayer": "<p>Retrieves the pre-signed Amazon S3 download URL corresponding to an image layer. You can only get URLs for image layers that are referenced in an image.</p> <note> <p>This operation is used by the Amazon ECR proxy, and it is not intended for general use by customers for pulling and pushing images. In most cases, you should use the <code>docker</code> CLI to pull, tag, and push images.</p> </note>",
+    "GetLifecyclePolicy": "<p>Retrieves the specified lifecycle policy.</p>",
+    "GetLifecyclePolicyPreview": "<p>Retrieves the results of the specified lifecycle policy preview request.</p>",
     "GetRepositoryPolicy": "<p>Retrieves the repository policy for a specified repository.</p>",
     "InitiateLayerUpload": "<p>Notify Amazon ECR that you intend to upload an image layer.</p> <note> <p>This operation is used by the Amazon ECR proxy, and it is not intended for general use by customers for pulling and pushing images. In most cases, you should use the <code>docker</code> CLI to pull, tag, and push images.</p> </note>",
     "ListImages": "<p>Lists all the image IDs for a given repository.</p> <p>You can filter images based on whether or not they are tagged by setting the <code>tagStatus</code> parameter to <code>TAGGED</code> or <code>UNTAGGED</code>. For example, you can filter your results to return only <code>UNTAGGED</code> images and then pipe that result to a <a>BatchDeleteImage</a> operation to delete them. Or, you can filter your results to return only <code>TAGGED</code> images to list all of the tags in your repository.</p>",
     "PutImage": "<p>Creates or updates the image manifest and tags associated with an image.</p> <note> <p>This operation is used by the Amazon ECR proxy, and it is not intended for general use by customers for pulling and pushing images. In most cases, you should use the <code>docker</code> CLI to pull, tag, and push images.</p> </note>",
+    "PutLifecyclePolicy": "<p>Creates or updates a lifecycle policy.</p>",
     "SetRepositoryPolicy": "<p>Applies a repository policy on a specified repository to control access permissions.</p>",
+    "StartLifecyclePolicyPreview": "<p>Starts a preview of the specified lifecycle policy. This allows you to see the results before creating the lifecycle policy.</p>",
     "UploadLayerPart": "<p>Uploads an image layer part to Amazon ECR.</p> <note> <p>This operation is used by the Amazon ECR proxy, and it is not intended for general use by customers for pulling and pushing images. In most cases, you should use the <code>docker</code> CLI to pull, tag, and push images.</p> </note>"
   },
   "shapes": {
     "Arn": {
       "base": null,
       "refs": {
-        "Repository$repositoryArn": "<p>The Amazon Resource Name (ARN) that identifies the repository. The ARN contains the <code>arn:aws:ecr</code> namespace, followed by the region of the repository, the AWS account ID of the repository owner, the repository namespace, and then the repository name. For example, <code>arn:aws:ecr:region:012345678910:repository/test</code>.</p>"
+        "Repository$repositoryArn": "<p>The Amazon Resource Name (ARN) that identifies the repository. The ARN contains the <code>arn:aws:ecr</code> namespace, followed by the region of the repository, AWS account ID of the repository owner, repository namespace, and repository name. For example, <code>arn:aws:ecr:region:012345678910:repository/test</code>.</p>"
       }
     },
     "AuthorizationData": {
@@ -111,7 +116,17 @@
     "CreationTimestamp": {
       "base": null,
       "refs": {
-        "Repository$createdAt": "<p>The date and time, in JavaScript date/time format, when the repository was created.</p>"
+        "Repository$createdAt": "<p>The date and time, in JavaScript date format, when the repository was created.</p>"
+      }
+    },
+    "DeleteLifecyclePolicyRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteLifecyclePolicyResponse": {
+      "base": null,
+      "refs": {
       }
     },
     "DeleteRepositoryPolicyRequest": {
@@ -165,6 +180,13 @@
       "refs": {
       }
     },
+    "EvaluationTimestamp": {
+      "base": null,
+      "refs": {
+        "DeleteLifecyclePolicyResponse$lastEvaluatedAt": "<p>The time stamp of the last time that the lifecycle policy was run.</p>",
+        "GetLifecyclePolicyResponse$lastEvaluatedAt": "<p>The time stamp of the last time that the lifecycle policy was run.</p>"
+      }
+    },
     "ExceptionMessage": {
       "base": null,
       "refs": {
@@ -178,6 +200,9 @@
         "LayerInaccessibleException$message": "<p>The error message associated with the exception.</p>",
         "LayerPartTooSmallException$message": "<p>The error message associated with the exception.</p>",
         "LayersNotFoundException$message": "<p>The error message associated with the exception.</p>",
+        "LifecyclePolicyNotFoundException$message": null,
+        "LifecyclePolicyPreviewInProgressException$message": null,
+        "LifecyclePolicyPreviewNotFoundException$message": null,
         "LimitExceededException$message": "<p>The error message associated with the exception.</p>",
         "RepositoryAlreadyExistsException$message": "<p>The error message associated with the exception.</p>",
         "RepositoryNotEmptyException$message": "<p>The error message associated with the exception.</p>",
@@ -196,7 +221,7 @@
     "ForceFlag": {
       "base": null,
       "refs": {
-        "DeleteRepositoryRequest$force": "<p>Force the deletion of the repository if it contains images.</p>",
+        "DeleteRepositoryRequest$force": "<p> If a repository contains images, forces the deletion.</p>",
         "SetRepositoryPolicyRequest$force": "<p>If the policy you are attempting to set on a repository policy would prevent you from setting another policy in the future, you must force the <a>SetRepositoryPolicy</a> operation. This is intended to prevent accidental repository lock outs.</p>"
       }
     },
@@ -226,6 +251,26 @@
       "refs": {
       }
     },
+    "GetLifecyclePolicyPreviewRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetLifecyclePolicyPreviewResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetLifecyclePolicyRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetLifecyclePolicyResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "GetRepositoryPolicyRequest": {
       "base": null,
       "refs": {
@@ -243,9 +288,21 @@
         "PutImageResponse$image": "<p>Details of the image uploaded.</p>"
       }
     },
-    "ImageAlreadyExistsException": {
-      "base": "<p>The specified image has already been pushed, and there are no changes to the manifest or image tag since the last push.</p>",
+    "ImageActionType": {
+      "base": null,
       "refs": {
+        "LifecyclePolicyRuleAction$type": "<p>The type of action to be taken.</p>"
+      }
+    },
+    "ImageAlreadyExistsException": {
+      "base": "<p>The specified image has already been pushed, and there were no changes to the manifest or image tag after the last push.</p>",
+      "refs": {
+      }
+    },
+    "ImageCount": {
+      "base": null,
+      "refs": {
+        "LifecyclePolicyPreviewSummary$expiringImageTotalCount": "<p>The number of expiring images.</p>"
       }
     },
     "ImageDetail": {
@@ -264,7 +321,8 @@
       "base": null,
       "refs": {
         "ImageDetail$imageDigest": "<p>The <code>sha256</code> digest of the image manifest.</p>",
-        "ImageIdentifier$imageDigest": "<p>The <code>sha256</code> digest of the image manifest.</p>"
+        "ImageIdentifier$imageDigest": "<p>The <code>sha256</code> digest of the image manifest.</p>",
+        "LifecyclePolicyPreviewResult$imageDigest": "<p>The <code>sha256</code> digest of the image manifest.</p>"
       }
     },
     "ImageFailure": {
@@ -307,6 +365,7 @@
         "BatchDeleteImageResponse$imageIds": "<p>The image IDs of the deleted images.</p>",
         "BatchGetImageRequest$imageIds": "<p>A list of image ID references that correspond to images to describe. The format of the <code>imageIds</code> reference is <code>imageTag=tag</code> or <code>imageDigest=digest</code>.</p>",
         "DescribeImagesRequest$imageIds": "<p>The list of image IDs for the requested repository.</p>",
+        "GetLifecyclePolicyPreviewRequest$imageIds": "<p>The list of imageIDs to be included.</p>",
         "ListImagesResponse$imageIds": "<p>The list of image IDs for the requested repository.</p>"
       }
     },
@@ -345,7 +404,8 @@
     "ImageTagList": {
       "base": null,
       "refs": {
-        "ImageDetail$imageTags": "<p>The list of tags associated with this image.</p>"
+        "ImageDetail$imageTags": "<p>The list of tags associated with this image.</p>",
+        "LifecyclePolicyPreviewResult$imageTags": "<p>The list of tags associated with this image.</p>"
       }
     },
     "InitiateLayerUploadRequest": {
@@ -463,6 +523,76 @@
       "refs": {
       }
     },
+    "LifecyclePolicyNotFoundException": {
+      "base": "<p>The lifecycle policy could not be found, and no policy is set to the repository.</p>",
+      "refs": {
+      }
+    },
+    "LifecyclePolicyPreviewFilter": {
+      "base": "<p>The filter for the lifecycle policy preview.</p>",
+      "refs": {
+        "GetLifecyclePolicyPreviewRequest$filter": "<p>An optional parameter that filters results based on image tag status and all tags, if tagged.</p>"
+      }
+    },
+    "LifecyclePolicyPreviewInProgressException": {
+      "base": "<p>The previous lifecycle policy preview request has not completed. Please try again later.</p>",
+      "refs": {
+      }
+    },
+    "LifecyclePolicyPreviewNotFoundException": {
+      "base": "<p>There is no dry run for this repository.</p>",
+      "refs": {
+      }
+    },
+    "LifecyclePolicyPreviewResult": {
+      "base": "<p>The result of the lifecycle policy preview.</p>",
+      "refs": {
+        "LifecyclePolicyPreviewResultList$member": null
+      }
+    },
+    "LifecyclePolicyPreviewResultList": {
+      "base": null,
+      "refs": {
+        "GetLifecyclePolicyPreviewResponse$previewResults": "<p>The results of the lifecycle policy preview request.</p>"
+      }
+    },
+    "LifecyclePolicyPreviewStatus": {
+      "base": null,
+      "refs": {
+        "GetLifecyclePolicyPreviewResponse$status": "<p>The status of the lifecycle policy preview request.</p>",
+        "StartLifecyclePolicyPreviewResponse$status": "<p>The status of the lifecycle policy preview request.</p>"
+      }
+    },
+    "LifecyclePolicyPreviewSummary": {
+      "base": "<p>The summary of the lifecycle policy preview request.</p>",
+      "refs": {
+        "GetLifecyclePolicyPreviewResponse$summary": "<p>The list of images that is returned as a result of the action.</p>"
+      }
+    },
+    "LifecyclePolicyRuleAction": {
+      "base": "<p>The type of action to be taken.</p>",
+      "refs": {
+        "LifecyclePolicyPreviewResult$action": "<p>The type of action to be taken.</p>"
+      }
+    },
+    "LifecyclePolicyRulePriority": {
+      "base": null,
+      "refs": {
+        "LifecyclePolicyPreviewResult$appliedRulePriority": "<p>The priority of the applied rule.</p>"
+      }
+    },
+    "LifecyclePolicyText": {
+      "base": null,
+      "refs": {
+        "DeleteLifecyclePolicyResponse$lifecyclePolicyText": "<p>The JSON repository policy text.</p>",
+        "GetLifecyclePolicyPreviewResponse$lifecyclePolicyText": "<p>The JSON repository policy text.</p>",
+        "GetLifecyclePolicyResponse$lifecyclePolicyText": "<p>The JSON repository policy text.</p>",
+        "PutLifecyclePolicyRequest$lifecyclePolicyText": "<p>The JSON repository policy text to apply to the repository.</p>",
+        "PutLifecyclePolicyResponse$lifecyclePolicyText": "<p>The JSON repository policy text.</p>",
+        "StartLifecyclePolicyPreviewRequest$lifecyclePolicyText": "<p>The policy to be evaluated against. If you do not specify a policy, the current policy for the repository is used.</p>",
+        "StartLifecyclePolicyPreviewResponse$lifecyclePolicyText": "<p>The JSON repository policy text.</p>"
+      }
+    },
     "LimitExceededException": {
       "base": "<p>The operation did not succeed because it would have exceeded a service limit for your account. For more information, see <a href=\"http://docs.aws.amazon.com/AmazonECR/latest/userguide/service_limits.html\">Amazon ECR Default Service Limits</a> in the Amazon EC2 Container Registry User Guide.</p>",
       "refs": {
@@ -489,6 +619,7 @@
       "refs": {
         "DescribeImagesRequest$maxResults": "<p>The maximum number of repository results returned by <code>DescribeImages</code> in paginated output. When this parameter is used, <code>DescribeImages</code> only returns <code>maxResults</code> results in a single page along with a <code>nextToken</code> response element. The remaining results of the initial request can be seen by sending another <code>DescribeImages</code> request with the returned <code>nextToken</code> value. This value can be between 1 and 100. If this parameter is not used, then <code>DescribeImages</code> returns up to 100 results and a <code>nextToken</code> value, if applicable.</p>",
         "DescribeRepositoriesRequest$maxResults": "<p>The maximum number of repository results returned by <code>DescribeRepositories</code> in paginated output. When this parameter is used, <code>DescribeRepositories</code> only returns <code>maxResults</code> results in a single page along with a <code>nextToken</code> response element. The remaining results of the initial request can be seen by sending another <code>DescribeRepositories</code> request with the returned <code>nextToken</code> value. This value can be between 1 and 100. If this parameter is not used, then <code>DescribeRepositories</code> returns up to 100 results and a <code>nextToken</code> value, if applicable.</p>",
+        "GetLifecyclePolicyPreviewRequest$maxResults": "<p>The maximum number of repository results returned by <code>GetLifecyclePolicyPreviewRequest</code> in&#8232; paginated output. When this parameter is used, <code>GetLifecyclePolicyPreviewRequest</code> only returns&#8232; <code>maxResults</code> results in a single page along with a <code>nextToken</code>&#8232; response element. The remaining results of the initial request can be seen by sending&#8232; another <code>GetLifecyclePolicyPreviewRequest</code> request with the returned <code>nextToken</code>&#8232; value. This value can be between 1 and 100. If this&#8232; parameter is not used, then <code>GetLifecyclePolicyPreviewRequest</code> returns up to&#8232; 100 results and a <code>nextToken</code> value, if&#8232; applicable.</p>",
         "ListImagesRequest$maxResults": "<p>The maximum number of image results returned by <code>ListImages</code> in paginated output. When this parameter is used, <code>ListImages</code> only returns <code>maxResults</code> results in a single page along with a <code>nextToken</code> response element. The remaining results of the initial request can be seen by sending another <code>ListImages</code> request with the returned <code>nextToken</code> value. This value can be between 1 and 100. If this parameter is not used, then <code>ListImages</code> returns up to 100 results and a <code>nextToken</code> value, if applicable.</p>"
       }
     },
@@ -512,6 +643,8 @@
         "DescribeImagesResponse$nextToken": "<p>The <code>nextToken</code> value to include in a future <code>DescribeImages</code> request. When the results of a <code>DescribeImages</code> request exceed <code>maxResults</code>, this value can be used to retrieve the next page of results. This value is <code>null</code> when there are no more results to return.</p>",
         "DescribeRepositoriesRequest$nextToken": "<p>The <code>nextToken</code> value returned from a previous paginated <code>DescribeRepositories</code> request where <code>maxResults</code> was used and the results exceeded the value of that parameter. Pagination continues from the end of the previous results that returned the <code>nextToken</code> value. This value is <code>null</code> when there are no more results to return.</p> <note> <p>This token should be treated as an opaque identifier that is only used to retrieve the next items in a list and not for other programmatic purposes.</p> </note>",
         "DescribeRepositoriesResponse$nextToken": "<p>The <code>nextToken</code> value to include in a future <code>DescribeRepositories</code> request. When the results of a <code>DescribeRepositories</code> request exceed <code>maxResults</code>, this value can be used to retrieve the next page of results. This value is <code>null</code> when there are no more results to return.</p>",
+        "GetLifecyclePolicyPreviewRequest$nextToken": "<p>The <code>nextToken</code> value returned from a previous paginated&#8232; <code>GetLifecyclePolicyPreviewRequest</code> request where <code>maxResults</code> was used and the&#8232; results exceeded the value of that parameter. Pagination continues from the end of the&#8232; previous results that returned the <code>nextToken</code> value. This value is&#8232; <code>null</code> when there are no more results to return.</p>",
+        "GetLifecyclePolicyPreviewResponse$nextToken": "<p>The <code>nextToken</code> value to include in a future <code>GetLifecyclePolicyPreview</code> request. When the results of a <code>GetLifecyclePolicyPreview</code> request exceed <code>maxResults</code>, this value can be used to retrieve the next page of results. This value is <code>null</code> when there are no more results to return.</p>",
         "ListImagesRequest$nextToken": "<p>The <code>nextToken</code> value returned from a previous paginated <code>ListImages</code> request where <code>maxResults</code> was used and the results exceeded the value of that parameter. Pagination continues from the end of the previous results that returned the <code>nextToken</code> value. This value is <code>null</code> when there are no more results to return.</p> <note> <p>This token should be treated as an opaque identifier that is only used to retrieve the next items in a list and not for other programmatic purposes.</p> </note>",
         "ListImagesResponse$nextToken": "<p>The <code>nextToken</code> value to include in a future <code>ListImages</code> request. When the results of a <code>ListImages</code> request exceed <code>maxResults</code>, this value can be used to retrieve the next page of results. This value is <code>null</code> when there are no more results to return.</p>"
       }
@@ -535,7 +668,8 @@
     "PushTimestamp": {
       "base": null,
       "refs": {
-        "ImageDetail$imagePushedAt": "<p>The date and time, expressed in standard JavaScript date format, at which the current image was pushed to the repository. </p>"
+        "ImageDetail$imagePushedAt": "<p>The date and time, expressed in standard JavaScript date format, at which the current image was pushed to the repository. </p>",
+        "LifecyclePolicyPreviewResult$imagePushedAt": "<p>The date and time, expressed in standard JavaScript date format, at which the current image was pushed to the repository.</p>"
       }
     },
     "PutImageRequest": {
@@ -548,6 +682,16 @@
       "refs": {
       }
     },
+    "PutLifecyclePolicyRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "PutLifecyclePolicyResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "RegistryId": {
       "base": null,
       "refs": {
@@ -556,6 +700,8 @@
         "BatchGetImageRequest$registryId": "<p>The AWS account ID associated with the registry that contains the images to describe. If you do not specify a registry, the default registry is assumed.</p>",
         "CompleteLayerUploadRequest$registryId": "<p>The AWS account ID associated with the registry to which to upload layers. If you do not specify a registry, the default registry is assumed.</p>",
         "CompleteLayerUploadResponse$registryId": "<p>The registry ID associated with the request.</p>",
+        "DeleteLifecyclePolicyRequest$registryId": "<p>The AWS account ID associated with the registry that contains the repository. If you do not specify a registry, the default registry is assumed.</p>",
+        "DeleteLifecyclePolicyResponse$registryId": "<p>The registry ID associated with the request.</p>",
         "DeleteRepositoryPolicyRequest$registryId": "<p>The AWS account ID associated with the registry that contains the repository policy to delete. If you do not specify a registry, the default registry is assumed.</p>",
         "DeleteRepositoryPolicyResponse$registryId": "<p>The registry ID associated with the request.</p>",
         "DeleteRepositoryRequest$registryId": "<p>The AWS account ID associated with the registry that contains the repository to delete. If you do not specify a registry, the default registry is assumed.</p>",
@@ -563,18 +709,26 @@
         "DescribeRepositoriesRequest$registryId": "<p>The AWS account ID associated with the registry that contains the repositories to be described. If you do not specify a registry, the default registry is assumed.</p>",
         "GetAuthorizationTokenRegistryIdList$member": null,
         "GetDownloadUrlForLayerRequest$registryId": "<p>The AWS account ID associated with the registry that contains the image layer to download. If you do not specify a registry, the default registry is assumed.</p>",
+        "GetLifecyclePolicyPreviewRequest$registryId": "<p>The AWS account ID associated with the registry that contains the repository. If you do not specify a registry, the default registry is assumed.</p>",
+        "GetLifecyclePolicyPreviewResponse$registryId": "<p>The registry ID associated with the request.</p>",
+        "GetLifecyclePolicyRequest$registryId": "<p>The AWS account ID associated with the registry that contains the repository. If you do not specify a registry, the default registry is assumed.</p>",
+        "GetLifecyclePolicyResponse$registryId": "<p>The registry ID associated with the request.</p>",
         "GetRepositoryPolicyRequest$registryId": "<p>The AWS account ID associated with the registry that contains the repository. If you do not specify a registry, the default registry is assumed.</p>",
         "GetRepositoryPolicyResponse$registryId": "<p>The registry ID associated with the request.</p>",
         "Image$registryId": "<p>The AWS account ID associated with the registry containing the image.</p>",
         "ImageDetail$registryId": "<p>The AWS account ID associated with the registry to which this image belongs.</p>",
-        "InitiateLayerUploadRequest$registryId": "<p>The AWS account ID associated with the registry that you intend to upload layers to. If you do not specify a registry, the default registry is assumed.</p>",
+        "InitiateLayerUploadRequest$registryId": "<p>The AWS account ID associated with the registry to which you intend to upload layers. If you do not specify a registry, the default registry is assumed.</p>",
         "InvalidLayerPartException$registryId": "<p>The registry ID associated with the exception.</p>",
-        "ListImagesRequest$registryId": "<p>The AWS account ID associated with the registry that contains the repository to list images in. If you do not specify a registry, the default registry is assumed.</p>",
+        "ListImagesRequest$registryId": "<p>The AWS account ID associated with the registry that contains the repository in which to list images. If you do not specify a registry, the default registry is assumed.</p>",
         "PutImageRequest$registryId": "<p>The AWS account ID associated with the registry that contains the repository in which to put the image. If you do not specify a registry, the default registry is assumed.</p>",
+        "PutLifecyclePolicyRequest$registryId": "<p>The AWS account ID associated with the registry that contains the repository. If you do&#8232; not specify a registry, the default registry is assumed.</p>",
+        "PutLifecyclePolicyResponse$registryId": "<p>The registry ID associated with the request.</p>",
         "Repository$registryId": "<p>The AWS account ID associated with the registry that contains the repository.</p>",
         "SetRepositoryPolicyRequest$registryId": "<p>The AWS account ID associated with the registry that contains the repository. If you do not specify a registry, the default registry is assumed.</p>",
         "SetRepositoryPolicyResponse$registryId": "<p>The registry ID associated with the request.</p>",
-        "UploadLayerPartRequest$registryId": "<p>The AWS account ID associated with the registry that you are uploading layer parts to. If you do not specify a registry, the default registry is assumed.</p>",
+        "StartLifecyclePolicyPreviewRequest$registryId": "<p>The AWS account ID associated with the registry that contains the repository. If you do not specify a registry, the default registry is assumed.</p>",
+        "StartLifecyclePolicyPreviewResponse$registryId": "<p>The registry ID associated with the request.</p>",
+        "UploadLayerPartRequest$registryId": "<p>The AWS account ID associated with the registry to which you are uploading layer parts. If you do not specify a registry, the default registry is assumed.</p>",
         "UploadLayerPartResponse$registryId": "<p>The registry ID associated with the request.</p>"
       }
     },
@@ -606,24 +760,34 @@
         "CompleteLayerUploadRequest$repositoryName": "<p>The name of the repository to associate with the image layer.</p>",
         "CompleteLayerUploadResponse$repositoryName": "<p>The repository name associated with the request.</p>",
         "CreateRepositoryRequest$repositoryName": "<p>The name to use for the repository. The repository name may be specified on its own (such as <code>nginx-web-app</code>) or it can be prepended with a namespace to group the repository into a category (such as <code>project-a/nginx-web-app</code>).</p>",
+        "DeleteLifecyclePolicyRequest$repositoryName": "<p>The name of the repository that is associated with the repository policy to&#8232; delete.</p>",
+        "DeleteLifecyclePolicyResponse$repositoryName": "<p>The repository name associated with the request.</p>",
         "DeleteRepositoryPolicyRequest$repositoryName": "<p>The name of the repository that is associated with the repository policy to delete.</p>",
         "DeleteRepositoryPolicyResponse$repositoryName": "<p>The repository name associated with the request.</p>",
         "DeleteRepositoryRequest$repositoryName": "<p>The name of the repository to delete.</p>",
         "DescribeImagesRequest$repositoryName": "<p>A list of repositories to describe. If this parameter is omitted, then all repositories in a registry are described.</p>",
         "GetDownloadUrlForLayerRequest$repositoryName": "<p>The name of the repository that is associated with the image layer to download.</p>",
-        "GetRepositoryPolicyRequest$repositoryName": "<p>The name of the repository whose policy you want to retrieve.</p>",
+        "GetLifecyclePolicyPreviewRequest$repositoryName": "<p>The name of the repository with the policy to retrieve.</p>",
+        "GetLifecyclePolicyPreviewResponse$repositoryName": "<p>The repository name associated with the request.</p>",
+        "GetLifecyclePolicyRequest$repositoryName": "<p>The name of the repository with the policy to retrieve.</p>",
+        "GetLifecyclePolicyResponse$repositoryName": "<p>The repository name associated with the request.</p>",
+        "GetRepositoryPolicyRequest$repositoryName": "<p>The name of the repository with the policy to retrieve.</p>",
         "GetRepositoryPolicyResponse$repositoryName": "<p>The repository name associated with the request.</p>",
         "Image$repositoryName": "<p>The name of the repository associated with the image.</p>",
         "ImageDetail$repositoryName": "<p>The name of the repository to which this image belongs.</p>",
-        "InitiateLayerUploadRequest$repositoryName": "<p>The name of the repository that you intend to upload layers to.</p>",
+        "InitiateLayerUploadRequest$repositoryName": "<p>The name of the repository to which you intend to upload layers.</p>",
         "InvalidLayerPartException$repositoryName": "<p>The repository name associated with the exception.</p>",
-        "ListImagesRequest$repositoryName": "<p>The repository whose image IDs are to be listed.</p>",
+        "ListImagesRequest$repositoryName": "<p>The repository with image IDs to be listed.</p>",
         "PutImageRequest$repositoryName": "<p>The name of the repository in which to put the image.</p>",
+        "PutLifecyclePolicyRequest$repositoryName": "<p>The name of the repository to receive the policy.</p>",
+        "PutLifecyclePolicyResponse$repositoryName": "<p>The repository name associated with the request.</p>",
         "Repository$repositoryName": "<p>The name of the repository.</p>",
         "RepositoryNameList$member": null,
         "SetRepositoryPolicyRequest$repositoryName": "<p>The name of the repository to receive the policy.</p>",
         "SetRepositoryPolicyResponse$repositoryName": "<p>The repository name associated with the request.</p>",
-        "UploadLayerPartRequest$repositoryName": "<p>The name of the repository that you are uploading layer parts to.</p>",
+        "StartLifecyclePolicyPreviewRequest$repositoryName": "<p>The name of the repository to be evaluated.</p>",
+        "StartLifecyclePolicyPreviewResponse$repositoryName": "<p>The repository name associated with the request.</p>",
+        "UploadLayerPartRequest$repositoryName": "<p>The name of the repository to which you are uploading layer parts.</p>",
         "UploadLayerPartResponse$repositoryName": "<p>The repository name associated with the request.</p>"
       }
     },
@@ -672,10 +836,21 @@
       "refs": {
       }
     },
+    "StartLifecyclePolicyPreviewRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "StartLifecyclePolicyPreviewResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "TagStatus": {
       "base": null,
       "refs": {
         "DescribeImagesFilter$tagStatus": "<p>The tag status with which to filter your <a>DescribeImages</a> results. You can filter results based on whether they are <code>TAGGED</code> or <code>UNTAGGED</code>.</p>",
+        "LifecyclePolicyPreviewFilter$tagStatus": "<p>The tag status of the image.</p>",
         "ListImagesFilter$tagStatus": "<p>The tag status with which to filter your <a>ListImages</a> results. You can filter results based on whether they are <code>TAGGED</code> or <code>UNTAGGED</code>.</p>"
       }
     },
@@ -709,7 +884,7 @@
       "base": null,
       "refs": {
         "GetDownloadUrlForLayerResponse$downloadUrl": "<p>The pre-signed Amazon S3 download URL for the requested layer.</p>",
-        "Repository$repositoryUri": "<p>The URI for the repository. You can use this URI for Docker <code>push</code> and <code>pull</code> operations.</p>"
+        "Repository$repositoryUri": "<p>The URI for the repository. You can use this URI for Docker <code>push</code> or <code>pull</code> operations.</p>"
       }
     }
   }

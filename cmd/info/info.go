@@ -14,6 +14,8 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/object"
 	"github.com/ncw/rclone/fstest"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -103,7 +105,7 @@ func (r *results) Print() {
 // writeFile writes a file with some random contents
 func (r *results) writeFile(path string) (fs.Object, error) {
 	contents := fstest.RandomString(50)
-	src := fs.NewStaticObjectInfo(path, time.Now(), int64(len(contents)), true, nil, r.f)
+	src := object.NewStaticObjectInfo(path, time.Now(), int64(len(contents)), true, nil, r.f)
 	return r.f.Put(bytes.NewBufferString(contents), src)
 }
 
@@ -210,10 +212,10 @@ func (r *results) checkStreaming() {
 
 	contents := "thinking of test strings is hard"
 	buf := bytes.NewBufferString(contents)
-	hashIn := fs.NewMultiHasher()
+	hashIn := hash.NewMultiHasher()
 	in := io.TeeReader(buf, hashIn)
 
-	objIn := fs.NewStaticObjectInfo("checkStreamingTest", time.Now(), -1, true, nil, r.f)
+	objIn := object.NewStaticObjectInfo("checkStreamingTest", time.Now(), -1, true, nil, r.f)
 	objR, err := putter(in, objIn)
 	if err != nil {
 		fs.Infof(r.f, "Streamed file failed to upload (%v)", err)
@@ -223,15 +225,15 @@ func (r *results) checkStreaming() {
 
 	hashes := hashIn.Sums()
 	types := objR.Fs().Hashes().Array()
-	for _, hash := range types {
-		sum, err := objR.Hash(hash)
+	for _, Hash := range types {
+		sum, err := objR.Hash(Hash)
 		if err != nil {
-			fs.Infof(r.f, "Streamed file failed when getting hash %v (%v)", hash, err)
+			fs.Infof(r.f, "Streamed file failed when getting hash %v (%v)", Hash, err)
 			r.canStream = false
 			return
 		}
-		if !fs.HashEquals(hashes[hash], sum) {
-			fs.Infof(r.f, "Streamed file has incorrect hash %v: expecting %q got %q", hash, hashes[hash], sum)
+		if !hash.Equals(hashes[Hash], sum) {
+			fs.Infof(r.f, "Streamed file has incorrect hash %v: expecting %q got %q", Hash, hashes[Hash], sum)
 			r.canStream = false
 			return
 		}

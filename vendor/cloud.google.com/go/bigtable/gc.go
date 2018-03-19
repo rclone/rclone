@@ -135,24 +135,24 @@ func GCRuleToString(rule *bttdpb.GcRule) string {
 	if rule == nil {
 		return "<default>"
 	}
-	var ruleStr string
-	if r, ok := rule.Rule.(*bttdpb.GcRule_MaxNumVersions); ok {
-		ruleStr += MaxVersionsPolicy(int(r.MaxNumVersions)).String()
-	} else if r, ok := rule.Rule.(*bttdpb.GcRule_MaxAge); ok {
-		ruleStr += MaxAgePolicy(time.Duration(r.MaxAge.Seconds) * time.Second).String()
-	} else if r, ok := rule.Rule.(*bttdpb.GcRule_Intersection_); ok {
-		var chunks []string
-		for _, intRule := range r.Intersection.Rules {
-			chunks = append(chunks, GCRuleToString(intRule))
-		}
-		ruleStr += "(" + strings.Join(chunks, " && ") + ")"
-	} else if r, ok := rule.Rule.(*bttdpb.GcRule_Union_); ok {
-		var chunks []string
-		for _, unionRule := range r.Union.Rules {
-			chunks = append(chunks, GCRuleToString(unionRule))
-		}
-		ruleStr += "(" + strings.Join(chunks, " || ") + ")"
+	switch r := rule.Rule.(type) {
+	case *bttdpb.GcRule_MaxNumVersions:
+		return MaxVersionsPolicy(int(r.MaxNumVersions)).String()
+	case *bttdpb.GcRule_MaxAge:
+		return MaxAgePolicy(time.Duration(r.MaxAge.Seconds) * time.Second).String()
+	case *bttdpb.GcRule_Intersection_:
+		return joinRules(r.Intersection.Rules, " && ")
+	case *bttdpb.GcRule_Union_:
+		return joinRules(r.Union.Rules, " || ")
+	default:
+		return ""
 	}
+}
 
-	return ruleStr
+func joinRules(rules []*bttdpb.GcRule, sep string) string {
+	var chunks []string
+	for _, r := range rules {
+		chunks = append(chunks, GCRuleToString(r))
+	}
+	return "(" + strings.Join(chunks, sep) + ")"
 }

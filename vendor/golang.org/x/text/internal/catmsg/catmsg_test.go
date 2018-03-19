@@ -71,6 +71,10 @@ func TestCodec(t *testing.T) {
 		m:     String("foo"),
 		tests: single("foo", ""),
 	}, {
+		desc:  "affix",
+		m:     &Affix{String("foo"), "\t", "\n"},
+		tests: single("\t|foo|\n", ""),
+	}, {
 		desc:   "missing var",
 		m:      String("foo${bar}"),
 		enc:    "\x03\x03foo\x02\x03bar",
@@ -100,6 +104,13 @@ func TestCodec(t *testing.T) {
 			String("foo${bar}"),
 		},
 		tests: single("foo|baz", ""),
+	}, {
+		desc: "affix with substitution",
+		m: &Affix{seq{
+			&Var{"bar", String("baz")},
+			String("foo${bar}"),
+		}, "\t", "\n"},
+		tests: single("\t|foo|baz|\n", ""),
 	}, {
 		desc: "shadowed variable",
 		m: seq{
@@ -140,7 +151,7 @@ func TestCodec(t *testing.T) {
 			&Var{"bar", incomplete{}},
 			String("${bar}"),
 		},
-		enc: "\x00\t\b\x01\x01\x04\x04\x02bar\x03\x00\x00\x00",
+		enc: "\x00\t\b\x01\x01\x14\x04\x02bar\x03\x00\x00\x00",
 		// TODO: recognize that it is cheaper to substitute bar.
 		tests: single("bar", ""),
 	}, {
@@ -246,7 +257,7 @@ type seq []Message
 
 func (s seq) Compile(e *Encoder) (err error) {
 	err = ErrIncomplete
-	e.EncodeMessageType(First)
+	e.EncodeMessageType(msgFirst)
 	for _, m := range s {
 		// Pass only the last error, but allow erroneous or complete messages
 		// here to allow testing different scenarios.

@@ -1,6 +1,8 @@
 // Package account implements the Azure ARM Account service API version 2016-11-01.
 //
 // Creates an Azure Data Lake Store account management client.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/datalake/store/mgmt/2016-11-01/account
 package account
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

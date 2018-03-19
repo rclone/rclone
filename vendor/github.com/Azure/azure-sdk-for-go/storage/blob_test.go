@@ -522,6 +522,7 @@ func (b *Blob) putSingleBlockBlob(chunk []byte) error {
 
 	uri := b.Container.bsc.client.getEndpoint(blobServiceName, b.buildPath(), nil)
 	headers := b.Container.bsc.client.getStandardHeaders()
+	b.Properties.BlobType = BlobTypeBlock
 	headers["x-ms-blob-type"] = string(BlobTypeBlock)
 	headers["Content-Length"] = strconv.Itoa(len(chunk))
 

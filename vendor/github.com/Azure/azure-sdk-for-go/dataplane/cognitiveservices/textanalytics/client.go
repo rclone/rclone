@@ -5,6 +5,8 @@
 // extraction and language detection. No training data is needed to use this API; just bring your text data. This API
 // uses advanced natural language processing techniques to deliver best in class predictions. Further documentation can
 // be found in https://docs.microsoft.com/en-us/azure/cognitive-services/text-analytics/overview
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services
 package textanalytics
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
@@ -105,7 +107,9 @@ func (client ManagementClient) DetectLanguagePreparer(input BatchInput, numberOf
 // DetectLanguageSender sends the DetectLanguage request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) DetectLanguageSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // DetectLanguageResponder handles the response to the DetectLanguage request. The method always
@@ -168,7 +172,9 @@ func (client ManagementClient) KeyPhrasesPreparer(input MultiLanguageBatchInput)
 // KeyPhrasesSender sends the KeyPhrases request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) KeyPhrasesSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // KeyPhrasesResponder handles the response to the KeyPhrases request. The method always
@@ -232,7 +238,9 @@ func (client ManagementClient) SentimentPreparer(input MultiLanguageBatchInput) 
 // SentimentSender sends the Sentiment request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) SentimentSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // SentimentResponder handles the response to the Sentiment request. The method always

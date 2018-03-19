@@ -8,7 +8,8 @@ import (
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/cmd/mountlib"
+	"github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/vfs"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
@@ -24,7 +25,8 @@ var _ fusefs.Node = (*Dir)(nil)
 
 // Attr updates the attributes of a directory
 func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) (err error) {
-	defer fs.Trace(d, "")("attr=%+v, err=%v", a, &err)
+	defer log.Trace(d, "")("attr=%+v, err=%v", a, &err)
+	a.Valid = mountlib.AttrTimeout
 	a.Gid = d.VFS().Opt.GID
 	a.Uid = d.VFS().Opt.UID
 	a.Mode = os.ModeDir | d.VFS().Opt.DirPerms
@@ -43,7 +45,7 @@ var _ fusefs.NodeSetattrer = (*Dir)(nil)
 
 // Setattr handles attribute changes from FUSE. Currently supports ModTime only.
 func (d *Dir) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) (err error) {
-	defer fs.Trace(d, "stat=%+v", req)("err=%v", &err)
+	defer log.Trace(d, "stat=%+v", req)("err=%v", &err)
 	if d.VFS().Opt.NoModTime {
 		return nil
 	}
@@ -67,11 +69,12 @@ var _ fusefs.NodeRequestLookuper = (*Dir)(nil)
 //
 // Lookup need not to handle the names "." and "..".
 func (d *Dir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fuse.LookupResponse) (node fusefs.Node, err error) {
-	defer fs.Trace(d, "name=%q", req.Name)("node=%+v, err=%v", &node, &err)
+	defer log.Trace(d, "name=%q", req.Name)("node=%+v, err=%v", &node, &err)
 	mnode, err := d.Dir.Stat(req.Name)
 	if err != nil {
 		return nil, translateError(err)
 	}
+	resp.EntryValid = mountlib.AttrTimeout
 	switch x := mnode.(type) {
 	case *vfs.File:
 		return &File{x}, nil
@@ -87,7 +90,7 @@ var _ fusefs.HandleReadDirAller = (*Dir)(nil)
 // ReadDirAll reads the contents of the directory
 func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error) {
 	itemsRead := -1
-	defer fs.Trace(d, "")("item=%d, err=%v", &itemsRead, &err)
+	defer log.Trace(d, "")("item=%d, err=%v", &itemsRead, &err)
 	items, err := d.Dir.ReadDirAll()
 	if err != nil {
 		return nil, translateError(err)
@@ -111,8 +114,8 @@ var _ fusefs.NodeCreater = (*Dir)(nil)
 
 // Create makes a new file
 func (d *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.CreateResponse) (node fusefs.Node, handle fusefs.Handle, err error) {
-	defer fs.Trace(d, "name=%q", req.Name)("node=%v, handle=%v, err=%v", &node, &handle, &err)
-	file, err := d.Dir.Create(req.Name)
+	defer log.Trace(d, "name=%q", req.Name)("node=%v, handle=%v, err=%v", &node, &handle, &err)
+	file, err := d.Dir.Create(req.Name, int(req.Flags))
 	if err != nil {
 		return nil, nil, translateError(err)
 	}
@@ -127,7 +130,7 @@ var _ fusefs.NodeMkdirer = (*Dir)(nil)
 
 // Mkdir creates a new directory
 func (d *Dir) Mkdir(ctx context.Context, req *fuse.MkdirRequest) (node fusefs.Node, err error) {
-	defer fs.Trace(d, "name=%q", req.Name)("node=%+v, err=%v", &node, &err)
+	defer log.Trace(d, "name=%q", req.Name)("node=%+v, err=%v", &node, &err)
 	dir, err := d.Dir.Mkdir(req.Name)
 	if err != nil {
 		return nil, translateError(err)
@@ -141,7 +144,7 @@ var _ fusefs.NodeRemover = (*Dir)(nil)
 // the receiver, which must be a directory.  The entry to be removed
 // may correspond to a file (unlink) or to a directory (rmdir).
 func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) (err error) {
-	defer fs.Trace(d, "name=%q", req.Name)("err=%v", &err)
+	defer log.Trace(d, "name=%q", req.Name)("err=%v", &err)
 	err = d.Dir.RemoveName(req.Name)
 	if err != nil {
 		return translateError(err)
@@ -154,7 +157,7 @@ var _ fusefs.NodeRenamer = (*Dir)(nil)
 
 // Rename the file
 func (d *Dir) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs.Node) (err error) {
-	defer fs.Trace(d, "oldName=%q, newName=%q, newDir=%+v", req.OldName, req.NewName, newDir)("err=%v", &err)
+	defer log.Trace(d, "oldName=%q, newName=%q, newDir=%+v", req.OldName, req.NewName, newDir)("err=%v", &err)
 	destDir, ok := newDir.(*Dir)
 	if !ok {
 		return errors.Errorf("Unknown Dir type %T", newDir)
@@ -173,10 +176,20 @@ var _ fusefs.NodeFsyncer = (*Dir)(nil)
 
 // Fsync the directory
 func (d *Dir) Fsync(ctx context.Context, req *fuse.FsyncRequest) (err error) {
-	defer fs.Trace(d, "")("err=%v", &err)
+	defer log.Trace(d, "")("err=%v", &err)
 	err = d.Dir.Sync()
 	if err != nil {
 		return translateError(err)
 	}
 	return nil
+}
+
+// Check interface satisfied
+var _ fusefs.NodeLinker = (*Dir)(nil)
+
+// Link creates a new directory entry in the receiver based on an
+// existing Node. Receiver must be a directory.
+func (d *Dir) Link(ctx context.Context, req *fuse.LinkRequest, old fusefs.Node) (new fusefs.Node, err error) {
+	defer log.Trace(d, "req=%v, old=%v", req, old)("new=%v, err=%v", &new, &err)
+	return nil, fuse.ENOSYS
 }

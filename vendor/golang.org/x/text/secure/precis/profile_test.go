@@ -103,9 +103,9 @@ var compareTestCases = []struct {
 
 		// After applying the Nickname profile, \u00a8  becomes \u0020\u0308,
 		// however because the nickname profile is not idempotent, applying it again
-		// to \u0020\u0308 results in \u0308. This behavior is "correct", even if it
-		// is unexpected.
-		{"\u00a8", "\u0020\u0308", false},
+		// to \u0020\u0308 results in \u0308.
+		{"\u00a8", "\u0020\u0308", true},
+		{"\u00a8", "\u0308", true},
 		{"\u0020\u0308", "\u0308", true},
 	}},
 }

@@ -1,4 +1,4 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017, Google LLC All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import (
 	emptypb "github.com/golang/protobuf/ptypes/empty"
 	monitoredrespb "google.golang.org/genproto/googleapis/api/monitoredres"
 	loggingpb "google.golang.org/genproto/googleapis/logging/v2"
+	field_maskpb "google.golang.org/genproto/protobuf/field_mask"
 )
 
 import (
@@ -186,6 +187,66 @@ func (s *mockConfigServer) UpdateSink(ctx context.Context, req *loggingpb.Update
 }
 
 func (s *mockConfigServer) DeleteSink(ctx context.Context, req *loggingpb.DeleteSinkRequest) (*emptypb.Empty, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if xg := md["x-goog-api-client"]; len(xg) == 0 || !strings.Contains(xg[0], "gl-go/") {
+		return nil, fmt.Errorf("x-goog-api-client = %v, expected gl-go key", xg)
+	}
+	s.reqs = append(s.reqs, req)
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.resps[0].(*emptypb.Empty), nil
+}
+
+func (s *mockConfigServer) ListExclusions(ctx context.Context, req *loggingpb.ListExclusionsRequest) (*loggingpb.ListExclusionsResponse, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if xg := md["x-goog-api-client"]; len(xg) == 0 || !strings.Contains(xg[0], "gl-go/") {
+		return nil, fmt.Errorf("x-goog-api-client = %v, expected gl-go key", xg)
+	}
+	s.reqs = append(s.reqs, req)
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.resps[0].(*loggingpb.ListExclusionsResponse), nil
+}
+
+func (s *mockConfigServer) GetExclusion(ctx context.Context, req *loggingpb.GetExclusionRequest) (*loggingpb.LogExclusion, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if xg := md["x-goog-api-client"]; len(xg) == 0 || !strings.Contains(xg[0], "gl-go/") {
+		return nil, fmt.Errorf("x-goog-api-client = %v, expected gl-go key", xg)
+	}
+	s.reqs = append(s.reqs, req)
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.resps[0].(*loggingpb.LogExclusion), nil
+}
+
+func (s *mockConfigServer) CreateExclusion(ctx context.Context, req *loggingpb.CreateExclusionRequest) (*loggingpb.LogExclusion, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if xg := md["x-goog-api-client"]; len(xg) == 0 || !strings.Contains(xg[0], "gl-go/") {
+		return nil, fmt.Errorf("x-goog-api-client = %v, expected gl-go key", xg)
+	}
+	s.reqs = append(s.reqs, req)
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.resps[0].(*loggingpb.LogExclusion), nil
+}
+
+func (s *mockConfigServer) UpdateExclusion(ctx context.Context, req *loggingpb.UpdateExclusionRequest) (*loggingpb.LogExclusion, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if xg := md["x-goog-api-client"]; len(xg) == 0 || !strings.Contains(xg[0], "gl-go/") {
+		return nil, fmt.Errorf("x-goog-api-client = %v, expected gl-go key", xg)
+	}
+	s.reqs = append(s.reqs, req)
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.resps[0].(*loggingpb.LogExclusion), nil
+}
+
+func (s *mockConfigServer) DeleteExclusion(ctx context.Context, req *loggingpb.DeleteExclusionRequest) (*emptypb.Empty, error) {
 	md, _ := metadata.FromIncomingContext(ctx)
 	if xg := md["x-goog-api-client"]; len(xg) == 0 || !strings.Contains(xg[0], "gl-go/") {
 		return nil, fmt.Errorf("x-goog-api-client = %v, expected gl-go key", xg)
@@ -956,6 +1017,337 @@ func TestConfigServiceV2DeleteSinkError(t *testing.T) {
 		t.Errorf("got error code %q, want %q", c, errCode)
 	}
 }
+func TestConfigServiceV2ListExclusions(t *testing.T) {
+	var nextPageToken string = ""
+	var exclusionsElement *loggingpb.LogExclusion = &loggingpb.LogExclusion{}
+	var exclusions = []*loggingpb.LogExclusion{exclusionsElement}
+	var expectedResponse = &loggingpb.ListExclusionsResponse{
+		NextPageToken: nextPageToken,
+		Exclusions:    exclusions,
+	}
+
+	mockConfig.err = nil
+	mockConfig.reqs = nil
+
+	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
+
+	var formattedParent string = ConfigProjectPath("[PROJECT]")
+	var request = &loggingpb.ListExclusionsRequest{
+		Parent: formattedParent,
+	}
+
+	c, err := NewConfigClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.ListExclusions(context.Background(), request).Next()
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want, got := request, mockConfig.reqs[0]; !proto.Equal(want, got) {
+		t.Errorf("wrong request %q, want %q", got, want)
+	}
+
+	want := (interface{})(expectedResponse.Exclusions[0])
+	got := (interface{})(resp)
+	var ok bool
+
+	switch want := (want).(type) {
+	case proto.Message:
+		ok = proto.Equal(want, got.(proto.Message))
+	default:
+		ok = want == got
+	}
+	if !ok {
+		t.Errorf("wrong response %q, want %q)", got, want)
+	}
+}
+
+func TestConfigServiceV2ListExclusionsError(t *testing.T) {
+	errCode := codes.PermissionDenied
+	mockConfig.err = gstatus.Error(errCode, "test error")
+
+	var formattedParent string = ConfigProjectPath("[PROJECT]")
+	var request = &loggingpb.ListExclusionsRequest{
+		Parent: formattedParent,
+	}
+
+	c, err := NewConfigClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.ListExclusions(context.Background(), request).Next()
+
+	if st, ok := gstatus.FromError(err); !ok {
+		t.Errorf("got error %v, expected grpc error", err)
+	} else if c := st.Code(); c != errCode {
+		t.Errorf("got error code %q, want %q", c, errCode)
+	}
+	_ = resp
+}
+func TestConfigServiceV2GetExclusion(t *testing.T) {
+	var name2 string = "name2-1052831874"
+	var description string = "description-1724546052"
+	var filter string = "filter-1274492040"
+	var disabled bool = true
+	var expectedResponse = &loggingpb.LogExclusion{
+		Name:        name2,
+		Description: description,
+		Filter:      filter,
+		Disabled:    disabled,
+	}
+
+	mockConfig.err = nil
+	mockConfig.reqs = nil
+
+	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
+
+	var formattedName string = ConfigExclusionPath("[PROJECT]", "[EXCLUSION]")
+	var request = &loggingpb.GetExclusionRequest{
+		Name: formattedName,
+	}
+
+	c, err := NewConfigClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.GetExclusion(context.Background(), request)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want, got := request, mockConfig.reqs[0]; !proto.Equal(want, got) {
+		t.Errorf("wrong request %q, want %q", got, want)
+	}
+
+	if want, got := expectedResponse, resp; !proto.Equal(want, got) {
+		t.Errorf("wrong response %q, want %q)", got, want)
+	}
+}
+
+func TestConfigServiceV2GetExclusionError(t *testing.T) {
+	errCode := codes.PermissionDenied
+	mockConfig.err = gstatus.Error(errCode, "test error")
+
+	var formattedName string = ConfigExclusionPath("[PROJECT]", "[EXCLUSION]")
+	var request = &loggingpb.GetExclusionRequest{
+		Name: formattedName,
+	}
+
+	c, err := NewConfigClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.GetExclusion(context.Background(), request)
+
+	if st, ok := gstatus.FromError(err); !ok {
+		t.Errorf("got error %v, expected grpc error", err)
+	} else if c := st.Code(); c != errCode {
+		t.Errorf("got error code %q, want %q", c, errCode)
+	}
+	_ = resp
+}
+func TestConfigServiceV2CreateExclusion(t *testing.T) {
+	var name string = "name3373707"
+	var description string = "description-1724546052"
+	var filter string = "filter-1274492040"
+	var disabled bool = true
+	var expectedResponse = &loggingpb.LogExclusion{
+		Name:        name,
+		Description: description,
+		Filter:      filter,
+		Disabled:    disabled,
+	}
+
+	mockConfig.err = nil
+	mockConfig.reqs = nil
+
+	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
+
+	var formattedParent string = ConfigProjectPath("[PROJECT]")
+	var exclusion *loggingpb.LogExclusion = &loggingpb.LogExclusion{}
+	var request = &loggingpb.CreateExclusionRequest{
+		Parent:    formattedParent,
+		Exclusion: exclusion,
+	}
+
+	c, err := NewConfigClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.CreateExclusion(context.Background(), request)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want, got := request, mockConfig.reqs[0]; !proto.Equal(want, got) {
+		t.Errorf("wrong request %q, want %q", got, want)
+	}
+
+	if want, got := expectedResponse, resp; !proto.Equal(want, got) {
+		t.Errorf("wrong response %q, want %q)", got, want)
+	}
+}
+
+func TestConfigServiceV2CreateExclusionError(t *testing.T) {
+	errCode := codes.PermissionDenied
+	mockConfig.err = gstatus.Error(errCode, "test error")
+
+	var formattedParent string = ConfigProjectPath("[PROJECT]")
+	var exclusion *loggingpb.LogExclusion = &loggingpb.LogExclusion{}
+	var request = &loggingpb.CreateExclusionRequest{
+		Parent:    formattedParent,
+		Exclusion: exclusion,
+	}
+
+	c, err := NewConfigClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.CreateExclusion(context.Background(), request)
+
+	if st, ok := gstatus.FromError(err); !ok {
+		t.Errorf("got error %v, expected grpc error", err)
+	} else if c := st.Code(); c != errCode {
+		t.Errorf("got error code %q, want %q", c, errCode)
+	}
+	_ = resp
+}
+func TestConfigServiceV2UpdateExclusion(t *testing.T) {
+	var name2 string = "name2-1052831874"
+	var description string = "description-1724546052"
+	var filter string = "filter-1274492040"
+	var disabled bool = true
+	var expectedResponse = &loggingpb.LogExclusion{
+		Name:        name2,
+		Description: description,
+		Filter:      filter,
+		Disabled:    disabled,
+	}
+
+	mockConfig.err = nil
+	mockConfig.reqs = nil
+
+	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
+
+	var formattedName string = ConfigExclusionPath("[PROJECT]", "[EXCLUSION]")
+	var exclusion *loggingpb.LogExclusion = &loggingpb.LogExclusion{}
+	var updateMask *field_maskpb.FieldMask = &field_maskpb.FieldMask{}
+	var request = &loggingpb.UpdateExclusionRequest{
+		Name:       formattedName,
+		Exclusion:  exclusion,
+		UpdateMask: updateMask,
+	}
+
+	c, err := NewConfigClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.UpdateExclusion(context.Background(), request)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want, got := request, mockConfig.reqs[0]; !proto.Equal(want, got) {
+		t.Errorf("wrong request %q, want %q", got, want)
+	}
+
+	if want, got := expectedResponse, resp; !proto.Equal(want, got) {
+		t.Errorf("wrong response %q, want %q)", got, want)
+	}
+}
+
+func TestConfigServiceV2UpdateExclusionError(t *testing.T) {
+	errCode := codes.PermissionDenied
+	mockConfig.err = gstatus.Error(errCode, "test error")
+
+	var formattedName string = ConfigExclusionPath("[PROJECT]", "[EXCLUSION]")
+	var exclusion *loggingpb.LogExclusion = &loggingpb.LogExclusion{}
+	var updateMask *field_maskpb.FieldMask = &field_maskpb.FieldMask{}
+	var request = &loggingpb.UpdateExclusionRequest{
+		Name:       formattedName,
+		Exclusion:  exclusion,
+		UpdateMask: updateMask,
+	}
+
+	c, err := NewConfigClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.UpdateExclusion(context.Background(), request)
+
+	if st, ok := gstatus.FromError(err); !ok {
+		t.Errorf("got error %v, expected grpc error", err)
+	} else if c := st.Code(); c != errCode {
+		t.Errorf("got error code %q, want %q", c, errCode)
+	}
+	_ = resp
+}
+func TestConfigServiceV2DeleteExclusion(t *testing.T) {
+	var expectedResponse *emptypb.Empty = &emptypb.Empty{}
+
+	mockConfig.err = nil
+	mockConfig.reqs = nil
+
+	mockConfig.resps = append(mockConfig.resps[:0], expectedResponse)
+
+	var formattedName string = ConfigExclusionPath("[PROJECT]", "[EXCLUSION]")
+	var request = &loggingpb.DeleteExclusionRequest{
+		Name: formattedName,
+	}
+
+	c, err := NewConfigClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = c.DeleteExclusion(context.Background(), request)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want, got := request, mockConfig.reqs[0]; !proto.Equal(want, got) {
+		t.Errorf("wrong request %q, want %q", got, want)
+	}
+
+}
+
+func TestConfigServiceV2DeleteExclusionError(t *testing.T) {
+	errCode := codes.PermissionDenied
+	mockConfig.err = gstatus.Error(errCode, "test error")
+
+	var formattedName string = ConfigExclusionPath("[PROJECT]", "[EXCLUSION]")
+	var request = &loggingpb.DeleteExclusionRequest{
+		Name: formattedName,
+	}
+
+	c, err := NewConfigClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = c.DeleteExclusion(context.Background(), request)
+
+	if st, ok := gstatus.FromError(err); !ok {
+		t.Errorf("got error %v, expected grpc error", err)
+	} else if c := st.Code(); c != errCode {
+		t.Errorf("got error code %q, want %q", c, errCode)
+	}
+}
 func TestMetricsServiceV2ListLogMetrics(t *testing.T) {
 	var nextPageToken string = ""
 	var metricsElement *loggingpb.LogMetric = &loggingpb.LogMetric{}
@@ -1032,10 +1424,12 @@ func TestMetricsServiceV2GetLogMetric(t *testing.T) {
 	var name string = "name3373707"
 	var description string = "description-1724546052"
 	var filter string = "filter-1274492040"
+	var valueExtractor string = "valueExtractor2047672534"
 	var expectedResponse = &loggingpb.LogMetric{
-		Name:        name,
-		Description: description,
-		Filter:      filter,
+		Name:           name,
+		Description:    description,
+		Filter:         filter,
+		ValueExtractor: valueExtractor,
 	}
 
 	mockMetrics.err = nil
@@ -1095,10 +1489,12 @@ func TestMetricsServiceV2CreateLogMetric(t *testing.T) {
 	var name string = "name3373707"
 	var description string = "description-1724546052"
 	var filter string = "filter-1274492040"
+	var valueExtractor string = "valueExtractor2047672534"
 	var expectedResponse = &loggingpb.LogMetric{
-		Name:        name,
-		Description: description,
-		Filter:      filter,
+		Name:           name,
+		Description:    description,
+		Filter:         filter,
+		ValueExtractor: valueExtractor,
 	}
 
 	mockMetrics.err = nil
@@ -1162,10 +1558,12 @@ func TestMetricsServiceV2UpdateLogMetric(t *testing.T) {
 	var name string = "name3373707"
 	var description string = "description-1724546052"
 	var filter string = "filter-1274492040"
+	var valueExtractor string = "valueExtractor2047672534"
 	var expectedResponse = &loggingpb.LogMetric{
-		Name:        name,
-		Description: description,
-		Filter:      filter,
+		Name:           name,
+		Description:    description,
+		Filter:         filter,
+		ValueExtractor: valueExtractor,
 	}
 
 	mockMetrics.err = nil

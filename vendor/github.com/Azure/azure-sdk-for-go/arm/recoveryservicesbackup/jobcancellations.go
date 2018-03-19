@@ -90,7 +90,9 @@ func (client JobCancellationsClient) TriggerPreparer(vaultName string, resourceG
 // TriggerSender sends the Trigger request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobCancellationsClient) TriggerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // TriggerResponder handles the response to the Trigger request. The method always

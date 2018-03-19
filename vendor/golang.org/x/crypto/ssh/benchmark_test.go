@@ -40,7 +40,8 @@ func sshPipe() (Conn, *server, error) {
 	}
 
 	clientConf := ClientConfig{
-		User: "user",
+		User:            "user",
+		HostKeyCallback: InsecureIgnoreHostKey(),
 	}
 	serverConf := ServerConfig{
 		NoClientAuth: true,

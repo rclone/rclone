@@ -2,6 +2,8 @@
 //
 // The Azure Analysis Services Web API provides a RESTful set of web services that enables users to create, retrieve,
 // update, and delete Analysis Services servers
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/analysisservices/mgmt/2017-08-01-beta/analysisservices
 package analysisservices
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

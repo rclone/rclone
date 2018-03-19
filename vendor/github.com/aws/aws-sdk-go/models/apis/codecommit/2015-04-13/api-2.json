@@ -55,6 +55,42 @@
         {"shape":"EncryptionKeyUnavailableException"}
       ]
     },
+    "CreatePullRequest":{
+      "name":"CreatePullRequest",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreatePullRequestInput"},
+      "output":{"shape":"CreatePullRequestOutput"},
+      "errors":[
+        {"shape":"RepositoryNameRequiredException"},
+        {"shape":"InvalidRepositoryNameException"},
+        {"shape":"RepositoryDoesNotExistException"},
+        {"shape":"EncryptionIntegrityChecksFailedException"},
+        {"shape":"EncryptionKeyAccessDeniedException"},
+        {"shape":"EncryptionKeyDisabledException"},
+        {"shape":"EncryptionKeyNotFoundException"},
+        {"shape":"EncryptionKeyUnavailableException"},
+        {"shape":"ClientRequestTokenRequiredException"},
+        {"shape":"InvalidClientRequestTokenException"},
+        {"shape":"IdempotencyParameterMismatchException"},
+        {"shape":"ReferenceNameRequiredException"},
+        {"shape":"InvalidReferenceNameException"},
+        {"shape":"ReferenceDoesNotExistException"},
+        {"shape":"ReferenceTypeNotSupportedException"},
+        {"shape":"TitleRequiredException"},
+        {"shape":"InvalidTitleException"},
+        {"shape":"InvalidDescriptionException"},
+        {"shape":"TargetsRequiredException"},
+        {"shape":"InvalidTargetsException"},
+        {"shape":"TargetRequiredException"},
+        {"shape":"InvalidTargetException"},
+        {"shape":"MultipleRepositoriesInPullRequestException"},
+        {"shape":"MaximumOpenPullRequestsExceededException"},
+        {"shape":"SourceAndDestinationAreSameException"}
+      ]
+    },
     "CreateRepository":{
       "name":"CreateRepository",
       "http":{
@@ -76,6 +112,43 @@
         {"shape":"EncryptionKeyUnavailableException"}
       ]
     },
+    "DeleteBranch":{
+      "name":"DeleteBranch",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteBranchInput"},
+      "output":{"shape":"DeleteBranchOutput"},
+      "errors":[
+        {"shape":"RepositoryNameRequiredException"},
+        {"shape":"RepositoryDoesNotExistException"},
+        {"shape":"InvalidRepositoryNameException"},
+        {"shape":"BranchNameRequiredException"},
+        {"shape":"InvalidBranchNameException"},
+        {"shape":"DefaultBranchCannotBeDeletedException"},
+        {"shape":"EncryptionIntegrityChecksFailedException"},
+        {"shape":"EncryptionKeyAccessDeniedException"},
+        {"shape":"EncryptionKeyDisabledException"},
+        {"shape":"EncryptionKeyNotFoundException"},
+        {"shape":"EncryptionKeyUnavailableException"}
+      ]
+    },
+    "DeleteCommentContent":{
+      "name":"DeleteCommentContent",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteCommentContentInput"},
+      "output":{"shape":"DeleteCommentContentOutput"},
+      "errors":[
+        {"shape":"CommentDoesNotExistException"},
+        {"shape":"CommentIdRequiredException"},
+        {"shape":"InvalidCommentIdException"},
+        {"shape":"CommentDeletedException"}
+      ]
+    },
     "DeleteRepository":{
       "name":"DeleteRepository",
       "http":{
@@ -87,6 +160,30 @@
       "errors":[
         {"shape":"RepositoryNameRequiredException"},
         {"shape":"InvalidRepositoryNameException"},
+        {"shape":"EncryptionIntegrityChecksFailedException"},
+        {"shape":"EncryptionKeyAccessDeniedException"},
+        {"shape":"EncryptionKeyDisabledException"},
+        {"shape":"EncryptionKeyNotFoundException"},
+        {"shape":"EncryptionKeyUnavailableException"}
+      ]
+    },
+    "DescribePullRequestEvents":{
+      "name":"DescribePullRequestEvents",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribePullRequestEventsInput"},
+      "output":{"shape":"DescribePullRequestEventsOutput"},
+      "errors":[
+        {"shape":"PullRequestDoesNotExistException"},
+        {"shape":"InvalidPullRequestIdException"},
+        {"shape":"PullRequestIdRequiredException"},
+        {"shape":"InvalidPullRequestEventTypeException"},
+        {"shape":"InvalidActorArnException"},
+        {"shape":"ActorDoesNotExistException"},
+        {"shape":"InvalidMaxResultsException"},
+        {"shape":"InvalidContinuationTokenException"},
         {"shape":"EncryptionIntegrityChecksFailedException"},
         {"shape":"EncryptionKeyAccessDeniedException"},
         {"shape":"EncryptionKeyDisabledException"},
@@ -139,6 +236,73 @@
         {"shape":"EncryptionKeyUnavailableException"}
       ]
     },
+    "GetComment":{
+      "name":"GetComment",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetCommentInput"},
+      "output":{"shape":"GetCommentOutput"},
+      "errors":[
+        {"shape":"CommentDoesNotExistException"},
+        {"shape":"CommentIdRequiredException"},
+        {"shape":"InvalidCommentIdException"},
+        {"shape":"CommentDeletedException"}
+      ]
+    },
+    "GetCommentsForComparedCommit":{
+      "name":"GetCommentsForComparedCommit",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetCommentsForComparedCommitInput"},
+      "output":{"shape":"GetCommentsForComparedCommitOutput"},
+      "errors":[
+        {"shape":"RepositoryNameRequiredException"},
+        {"shape":"RepositoryDoesNotExistException"},
+        {"shape":"InvalidRepositoryNameException"},
+        {"shape":"CommitIdRequiredException"},
+        {"shape":"InvalidCommitIdException"},
+        {"shape":"CommitDoesNotExistException"},
+        {"shape":"InvalidMaxResultsException"},
+        {"shape":"InvalidContinuationTokenException"},
+        {"shape":"EncryptionIntegrityChecksFailedException"},
+        {"shape":"EncryptionKeyAccessDeniedException"},
+        {"shape":"EncryptionKeyDisabledException"},
+        {"shape":"EncryptionKeyNotFoundException"},
+        {"shape":"EncryptionKeyUnavailableException"}
+      ]
+    },
+    "GetCommentsForPullRequest":{
+      "name":"GetCommentsForPullRequest",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetCommentsForPullRequestInput"},
+      "output":{"shape":"GetCommentsForPullRequestOutput"},
+      "errors":[
+        {"shape":"PullRequestIdRequiredException"},
+        {"shape":"PullRequestDoesNotExistException"},
+        {"shape":"InvalidPullRequestIdException"},
+        {"shape":"RepositoryNameRequiredException"},
+        {"shape":"RepositoryDoesNotExistException"},
+        {"shape":"InvalidRepositoryNameException"},
+        {"shape":"CommitIdRequiredException"},
+        {"shape":"InvalidCommitIdException"},
+        {"shape":"CommitDoesNotExistException"},
+        {"shape":"InvalidMaxResultsException"},
+        {"shape":"InvalidContinuationTokenException"},
+        {"shape":"RepositoryNotAssociatedWithPullRequestException"},
+        {"shape":"EncryptionIntegrityChecksFailedException"},
+        {"shape":"EncryptionKeyAccessDeniedException"},
+        {"shape":"EncryptionKeyDisabledException"},
+        {"shape":"EncryptionKeyNotFoundException"},
+        {"shape":"EncryptionKeyUnavailableException"}
+      ]
+    },
     "GetCommit":{
       "name":"GetCommit",
       "http":{
@@ -181,6 +345,52 @@
         {"shape":"CommitDoesNotExistException"},
         {"shape":"InvalidPathException"},
         {"shape":"PathDoesNotExistException"},
+        {"shape":"EncryptionIntegrityChecksFailedException"},
+        {"shape":"EncryptionKeyAccessDeniedException"},
+        {"shape":"EncryptionKeyDisabledException"},
+        {"shape":"EncryptionKeyNotFoundException"},
+        {"shape":"EncryptionKeyUnavailableException"}
+      ]
+    },
+    "GetMergeConflicts":{
+      "name":"GetMergeConflicts",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetMergeConflictsInput"},
+      "output":{"shape":"GetMergeConflictsOutput"},
+      "errors":[
+        {"shape":"RepositoryNameRequiredException"},
+        {"shape":"InvalidRepositoryNameException"},
+        {"shape":"RepositoryDoesNotExistException"},
+        {"shape":"MergeOptionRequiredException"},
+        {"shape":"InvalidMergeOptionException"},
+        {"shape":"InvalidDestinationCommitSpecifierException"},
+        {"shape":"InvalidSourceCommitSpecifierException"},
+        {"shape":"CommitRequiredException"},
+        {"shape":"CommitDoesNotExistException"},
+        {"shape":"InvalidCommitException"},
+        {"shape":"TipsDivergenceExceededException"},
+        {"shape":"EncryptionIntegrityChecksFailedException"},
+        {"shape":"EncryptionKeyAccessDeniedException"},
+        {"shape":"EncryptionKeyDisabledException"},
+        {"shape":"EncryptionKeyNotFoundException"},
+        {"shape":"EncryptionKeyUnavailableException"}
+      ]
+    },
+    "GetPullRequest":{
+      "name":"GetPullRequest",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetPullRequestInput"},
+      "output":{"shape":"GetPullRequestOutput"},
+      "errors":[
+        {"shape":"PullRequestDoesNotExistException"},
+        {"shape":"InvalidPullRequestIdException"},
+        {"shape":"PullRequestIdRequiredException"},
         {"shape":"EncryptionIntegrityChecksFailedException"},
         {"shape":"EncryptionKeyAccessDeniedException"},
         {"shape":"EncryptionKeyDisabledException"},
@@ -246,6 +456,30 @@
         {"shape":"InvalidContinuationTokenException"}
       ]
     },
+    "ListPullRequests":{
+      "name":"ListPullRequests",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListPullRequestsInput"},
+      "output":{"shape":"ListPullRequestsOutput"},
+      "errors":[
+        {"shape":"InvalidPullRequestStatusException"},
+        {"shape":"InvalidAuthorArnException"},
+        {"shape":"AuthorDoesNotExistException"},
+        {"shape":"RepositoryNameRequiredException"},
+        {"shape":"InvalidRepositoryNameException"},
+        {"shape":"RepositoryDoesNotExistException"},
+        {"shape":"InvalidMaxResultsException"},
+        {"shape":"InvalidContinuationTokenException"},
+        {"shape":"EncryptionIntegrityChecksFailedException"},
+        {"shape":"EncryptionKeyAccessDeniedException"},
+        {"shape":"EncryptionKeyDisabledException"},
+        {"shape":"EncryptionKeyNotFoundException"},
+        {"shape":"EncryptionKeyUnavailableException"}
+      ]
+    },
     "ListRepositories":{
       "name":"ListRepositories",
       "http":{
@@ -259,6 +493,128 @@
         {"shape":"InvalidOrderException"},
         {"shape":"InvalidContinuationTokenException"}
       ]
+    },
+    "MergePullRequestByFastForward":{
+      "name":"MergePullRequestByFastForward",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"MergePullRequestByFastForwardInput"},
+      "output":{"shape":"MergePullRequestByFastForwardOutput"},
+      "errors":[
+        {"shape":"ManualMergeRequiredException"},
+        {"shape":"PullRequestAlreadyClosedException"},
+        {"shape":"PullRequestDoesNotExistException"},
+        {"shape":"InvalidPullRequestIdException"},
+        {"shape":"PullRequestIdRequiredException"},
+        {"shape":"TipOfSourceReferenceIsDifferentException"},
+        {"shape":"ReferenceDoesNotExistException"},
+        {"shape":"InvalidCommitIdException"},
+        {"shape":"RepositoryNameRequiredException"},
+        {"shape":"InvalidRepositoryNameException"},
+        {"shape":"RepositoryDoesNotExistException"},
+        {"shape":"EncryptionIntegrityChecksFailedException"},
+        {"shape":"EncryptionKeyAccessDeniedException"},
+        {"shape":"EncryptionKeyDisabledException"},
+        {"shape":"EncryptionKeyNotFoundException"},
+        {"shape":"EncryptionKeyUnavailableException"}
+      ]
+    },
+    "PostCommentForComparedCommit":{
+      "name":"PostCommentForComparedCommit",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"PostCommentForComparedCommitInput"},
+      "output":{"shape":"PostCommentForComparedCommitOutput"},
+      "errors":[
+        {"shape":"RepositoryNameRequiredException"},
+        {"shape":"RepositoryDoesNotExistException"},
+        {"shape":"InvalidRepositoryNameException"},
+        {"shape":"ClientRequestTokenRequiredException"},
+        {"shape":"InvalidClientRequestTokenException"},
+        {"shape":"IdempotencyParameterMismatchException"},
+        {"shape":"CommentContentRequiredException"},
+        {"shape":"CommentContentSizeLimitExceededException"},
+        {"shape":"InvalidFileLocationException"},
+        {"shape":"InvalidRelativeFileVersionEnumException"},
+        {"shape":"PathRequiredException"},
+        {"shape":"InvalidFilePositionException"},
+        {"shape":"CommitIdRequiredException"},
+        {"shape":"InvalidCommitIdException"},
+        {"shape":"EncryptionIntegrityChecksFailedException"},
+        {"shape":"EncryptionKeyAccessDeniedException"},
+        {"shape":"EncryptionKeyDisabledException"},
+        {"shape":"EncryptionKeyNotFoundException"},
+        {"shape":"EncryptionKeyUnavailableException"},
+        {"shape":"BeforeCommitIdAndAfterCommitIdAreSameException"},
+        {"shape":"CommitDoesNotExistException"},
+        {"shape":"InvalidPathException"},
+        {"shape":"PathDoesNotExistException"}
+      ],
+      "idempotent":true
+    },
+    "PostCommentForPullRequest":{
+      "name":"PostCommentForPullRequest",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"PostCommentForPullRequestInput"},
+      "output":{"shape":"PostCommentForPullRequestOutput"},
+      "errors":[
+        {"shape":"PullRequestDoesNotExistException"},
+        {"shape":"InvalidPullRequestIdException"},
+        {"shape":"PullRequestIdRequiredException"},
+        {"shape":"RepositoryNotAssociatedWithPullRequestException"},
+        {"shape":"RepositoryNameRequiredException"},
+        {"shape":"RepositoryDoesNotExistException"},
+        {"shape":"InvalidRepositoryNameException"},
+        {"shape":"ClientRequestTokenRequiredException"},
+        {"shape":"InvalidClientRequestTokenException"},
+        {"shape":"IdempotencyParameterMismatchException"},
+        {"shape":"CommentContentRequiredException"},
+        {"shape":"CommentContentSizeLimitExceededException"},
+        {"shape":"InvalidFileLocationException"},
+        {"shape":"InvalidRelativeFileVersionEnumException"},
+        {"shape":"PathRequiredException"},
+        {"shape":"InvalidFilePositionException"},
+        {"shape":"CommitIdRequiredException"},
+        {"shape":"InvalidCommitIdException"},
+        {"shape":"EncryptionIntegrityChecksFailedException"},
+        {"shape":"EncryptionKeyAccessDeniedException"},
+        {"shape":"EncryptionKeyDisabledException"},
+        {"shape":"EncryptionKeyNotFoundException"},
+        {"shape":"EncryptionKeyUnavailableException"},
+        {"shape":"CommitDoesNotExistException"},
+        {"shape":"InvalidPathException"},
+        {"shape":"PathDoesNotExistException"},
+        {"shape":"PathRequiredException"},
+        {"shape":"BeforeCommitIdAndAfterCommitIdAreSameException"}
+      ],
+      "idempotent":true
+    },
+    "PostCommentReply":{
+      "name":"PostCommentReply",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"PostCommentReplyInput"},
+      "output":{"shape":"PostCommentReplyOutput"},
+      "errors":[
+        {"shape":"ClientRequestTokenRequiredException"},
+        {"shape":"InvalidClientRequestTokenException"},
+        {"shape":"IdempotencyParameterMismatchException"},
+        {"shape":"CommentContentRequiredException"},
+        {"shape":"CommentContentSizeLimitExceededException"},
+        {"shape":"CommentDoesNotExistException"},
+        {"shape":"CommentIdRequiredException"},
+        {"shape":"InvalidCommentIdException"}
+      ],
+      "idempotent":true
     },
     "PutRepositoryTriggers":{
       "name":"PutRepositoryTriggers",
@@ -324,6 +680,24 @@
         {"shape":"EncryptionKeyUnavailableException"}
       ]
     },
+    "UpdateComment":{
+      "name":"UpdateComment",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateCommentInput"},
+      "output":{"shape":"UpdateCommentOutput"},
+      "errors":[
+        {"shape":"CommentContentRequiredException"},
+        {"shape":"CommentContentSizeLimitExceededException"},
+        {"shape":"CommentDoesNotExistException"},
+        {"shape":"CommentIdRequiredException"},
+        {"shape":"InvalidCommentIdException"},
+        {"shape":"CommentNotCreatedByCallerException"},
+        {"shape":"CommentDeletedException"}
+      ]
+    },
     "UpdateDefaultBranch":{
       "name":"UpdateDefaultBranch",
       "http":{
@@ -343,6 +717,61 @@
         {"shape":"EncryptionKeyDisabledException"},
         {"shape":"EncryptionKeyNotFoundException"},
         {"shape":"EncryptionKeyUnavailableException"}
+      ]
+    },
+    "UpdatePullRequestDescription":{
+      "name":"UpdatePullRequestDescription",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdatePullRequestDescriptionInput"},
+      "output":{"shape":"UpdatePullRequestDescriptionOutput"},
+      "errors":[
+        {"shape":"PullRequestDoesNotExistException"},
+        {"shape":"InvalidPullRequestIdException"},
+        {"shape":"PullRequestIdRequiredException"},
+        {"shape":"InvalidDescriptionException"},
+        {"shape":"PullRequestAlreadyClosedException"}
+      ]
+    },
+    "UpdatePullRequestStatus":{
+      "name":"UpdatePullRequestStatus",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdatePullRequestStatusInput"},
+      "output":{"shape":"UpdatePullRequestStatusOutput"},
+      "errors":[
+        {"shape":"PullRequestDoesNotExistException"},
+        {"shape":"InvalidPullRequestIdException"},
+        {"shape":"PullRequestIdRequiredException"},
+        {"shape":"InvalidPullRequestStatusUpdateException"},
+        {"shape":"InvalidPullRequestStatusException"},
+        {"shape":"PullRequestStatusRequiredException"},
+        {"shape":"EncryptionIntegrityChecksFailedException"},
+        {"shape":"EncryptionKeyAccessDeniedException"},
+        {"shape":"EncryptionKeyDisabledException"},
+        {"shape":"EncryptionKeyNotFoundException"},
+        {"shape":"EncryptionKeyUnavailableException"}
+      ]
+    },
+    "UpdatePullRequestTitle":{
+      "name":"UpdatePullRequestTitle",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdatePullRequestTitleInput"},
+      "output":{"shape":"UpdatePullRequestTitleOutput"},
+      "errors":[
+        {"shape":"PullRequestDoesNotExistException"},
+        {"shape":"InvalidPullRequestIdException"},
+        {"shape":"PullRequestIdRequiredException"},
+        {"shape":"TitleRequiredException"},
+        {"shape":"InvalidTitleException"},
+        {"shape":"PullRequestAlreadyClosedException"}
       ]
     },
     "UpdateRepositoryDescription":{
@@ -381,8 +810,20 @@
   },
   "shapes":{
     "AccountId":{"type":"string"},
+    "ActorDoesNotExistException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "AdditionalData":{"type":"string"},
     "Arn":{"type":"string"},
+    "AuthorDoesNotExistException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "BatchGetRepositoriesInput":{
       "type":"structure",
       "required":["repositoryNames"],
@@ -396,6 +837,12 @@
         "repositories":{"shape":"RepositoryMetadataList"},
         "repositoriesNotFound":{"shape":"RepositoryNotFoundList"}
       }
+    },
+    "BeforeCommitIdAndAfterCommitIdAreSameException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
     },
     "BlobIdDoesNotExistException":{
       "type":"structure",
@@ -432,7 +879,7 @@
     },
     "BranchName":{
       "type":"string",
-      "max":100,
+      "max":256,
       "min":1
     },
     "BranchNameExistsException":{
@@ -459,11 +906,106 @@
         "D"
       ]
     },
+    "ClientRequestToken":{"type":"string"},
+    "ClientRequestTokenRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "CloneUrlHttp":{"type":"string"},
     "CloneUrlSsh":{"type":"string"},
+    "Comment":{
+      "type":"structure",
+      "members":{
+        "commentId":{"shape":"CommentId"},
+        "content":{"shape":"Content"},
+        "inReplyTo":{"shape":"CommentId"},
+        "creationDate":{"shape":"CreationDate"},
+        "lastModifiedDate":{"shape":"LastModifiedDate"},
+        "authorArn":{"shape":"Arn"},
+        "deleted":{"shape":"IsCommentDeleted"},
+        "clientRequestToken":{"shape":"ClientRequestToken"}
+      }
+    },
+    "CommentContentRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "CommentContentSizeLimitExceededException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "CommentDeletedException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "CommentDoesNotExistException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "CommentId":{"type":"string"},
+    "CommentIdRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "CommentNotCreatedByCallerException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "Comments":{
+      "type":"list",
+      "member":{"shape":"Comment"}
+    },
+    "CommentsForComparedCommit":{
+      "type":"structure",
+      "members":{
+        "repositoryName":{"shape":"RepositoryName"},
+        "beforeCommitId":{"shape":"CommitId"},
+        "afterCommitId":{"shape":"CommitId"},
+        "beforeBlobId":{"shape":"ObjectId"},
+        "afterBlobId":{"shape":"ObjectId"},
+        "location":{"shape":"Location"},
+        "comments":{"shape":"Comments"}
+      }
+    },
+    "CommentsForComparedCommitData":{
+      "type":"list",
+      "member":{"shape":"CommentsForComparedCommit"}
+    },
+    "CommentsForPullRequest":{
+      "type":"structure",
+      "members":{
+        "pullRequestId":{"shape":"PullRequestId"},
+        "repositoryName":{"shape":"RepositoryName"},
+        "beforeCommitId":{"shape":"CommitId"},
+        "afterCommitId":{"shape":"CommitId"},
+        "beforeBlobId":{"shape":"ObjectId"},
+        "afterBlobId":{"shape":"ObjectId"},
+        "location":{"shape":"Location"},
+        "comments":{"shape":"Comments"}
+      }
+    },
+    "CommentsForPullRequestData":{
+      "type":"list",
+      "member":{"shape":"CommentsForPullRequest"}
+    },
     "Commit":{
       "type":"structure",
       "members":{
+        "commitId":{"shape":"ObjectId"},
         "treeId":{"shape":"ObjectId"},
         "parents":{"shape":"ParentList"},
         "message":{"shape":"Message"},
@@ -498,6 +1040,7 @@
       },
       "exception":true
     },
+    "Content":{"type":"string"},
     "CreateBranchInput":{
       "type":"structure",
       "required":[
@@ -509,6 +1052,29 @@
         "repositoryName":{"shape":"RepositoryName"},
         "branchName":{"shape":"BranchName"},
         "commitId":{"shape":"CommitId"}
+      }
+    },
+    "CreatePullRequestInput":{
+      "type":"structure",
+      "required":[
+        "title",
+        "targets"
+      ],
+      "members":{
+        "title":{"shape":"Title"},
+        "description":{"shape":"Description"},
+        "targets":{"shape":"TargetList"},
+        "clientRequestToken":{
+          "shape":"ClientRequestToken",
+          "idempotencyToken":true
+        }
+      }
+    },
+    "CreatePullRequestOutput":{
+      "type":"structure",
+      "required":["pullRequest"],
+      "members":{
+        "pullRequest":{"shape":"PullRequest"}
       }
     },
     "CreateRepositoryInput":{
@@ -527,6 +1093,42 @@
     },
     "CreationDate":{"type":"timestamp"},
     "Date":{"type":"string"},
+    "DefaultBranchCannotBeDeletedException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "DeleteBranchInput":{
+      "type":"structure",
+      "required":[
+        "repositoryName",
+        "branchName"
+      ],
+      "members":{
+        "repositoryName":{"shape":"RepositoryName"},
+        "branchName":{"shape":"BranchName"}
+      }
+    },
+    "DeleteBranchOutput":{
+      "type":"structure",
+      "members":{
+        "deletedBranch":{"shape":"BranchInfo"}
+      }
+    },
+    "DeleteCommentContentInput":{
+      "type":"structure",
+      "required":["commentId"],
+      "members":{
+        "commentId":{"shape":"CommentId"}
+      }
+    },
+    "DeleteCommentContentOutput":{
+      "type":"structure",
+      "members":{
+        "comment":{"shape":"Comment"}
+      }
+    },
     "DeleteRepositoryInput":{
       "type":"structure",
       "required":["repositoryName"],
@@ -539,6 +1141,29 @@
       "members":{
         "repositoryId":{"shape":"RepositoryId"}
       }
+    },
+    "DescribePullRequestEventsInput":{
+      "type":"structure",
+      "required":["pullRequestId"],
+      "members":{
+        "pullRequestId":{"shape":"PullRequestId"},
+        "pullRequestEventType":{"shape":"PullRequestEventType"},
+        "actorArn":{"shape":"Arn"},
+        "nextToken":{"shape":"NextToken"},
+        "maxResults":{"shape":"MaxResults"}
+      }
+    },
+    "DescribePullRequestEventsOutput":{
+      "type":"structure",
+      "required":["pullRequestEvents"],
+      "members":{
+        "pullRequestEvents":{"shape":"PullRequestEventList"},
+        "nextToken":{"shape":"NextToken"}
+      }
+    },
+    "Description":{
+      "type":"string",
+      "max":10240
     },
     "Difference":{
       "type":"structure",
@@ -584,6 +1209,7 @@
       },
       "exception":true
     },
+    "EventDate":{"type":"timestamp"},
     "FileTooLargeException":{
       "type":"structure",
       "members":{
@@ -619,6 +1245,59 @@
       "type":"structure",
       "members":{
         "branch":{"shape":"BranchInfo"}
+      }
+    },
+    "GetCommentInput":{
+      "type":"structure",
+      "required":["commentId"],
+      "members":{
+        "commentId":{"shape":"CommentId"}
+      }
+    },
+    "GetCommentOutput":{
+      "type":"structure",
+      "members":{
+        "comment":{"shape":"Comment"}
+      }
+    },
+    "GetCommentsForComparedCommitInput":{
+      "type":"structure",
+      "required":[
+        "repositoryName",
+        "afterCommitId"
+      ],
+      "members":{
+        "repositoryName":{"shape":"RepositoryName"},
+        "beforeCommitId":{"shape":"CommitId"},
+        "afterCommitId":{"shape":"CommitId"},
+        "nextToken":{"shape":"NextToken"},
+        "maxResults":{"shape":"MaxResults"}
+      }
+    },
+    "GetCommentsForComparedCommitOutput":{
+      "type":"structure",
+      "members":{
+        "commentsForComparedCommitData":{"shape":"CommentsForComparedCommitData"},
+        "nextToken":{"shape":"NextToken"}
+      }
+    },
+    "GetCommentsForPullRequestInput":{
+      "type":"structure",
+      "required":["pullRequestId"],
+      "members":{
+        "pullRequestId":{"shape":"PullRequestId"},
+        "repositoryName":{"shape":"RepositoryName"},
+        "beforeCommitId":{"shape":"CommitId"},
+        "afterCommitId":{"shape":"CommitId"},
+        "nextToken":{"shape":"NextToken"},
+        "maxResults":{"shape":"MaxResults"}
+      }
+    },
+    "GetCommentsForPullRequestOutput":{
+      "type":"structure",
+      "members":{
+        "commentsForPullRequestData":{"shape":"CommentsForPullRequestData"},
+        "nextToken":{"shape":"NextToken"}
       }
     },
     "GetCommitInput":{
@@ -662,6 +1341,48 @@
         "NextToken":{"shape":"NextToken"}
       }
     },
+    "GetMergeConflictsInput":{
+      "type":"structure",
+      "required":[
+        "repositoryName",
+        "destinationCommitSpecifier",
+        "sourceCommitSpecifier",
+        "mergeOption"
+      ],
+      "members":{
+        "repositoryName":{"shape":"RepositoryName"},
+        "destinationCommitSpecifier":{"shape":"CommitName"},
+        "sourceCommitSpecifier":{"shape":"CommitName"},
+        "mergeOption":{"shape":"MergeOptionTypeEnum"}
+      }
+    },
+    "GetMergeConflictsOutput":{
+      "type":"structure",
+      "required":[
+        "mergeable",
+        "destinationCommitId",
+        "sourceCommitId"
+      ],
+      "members":{
+        "mergeable":{"shape":"IsMergeable"},
+        "destinationCommitId":{"shape":"CommitId"},
+        "sourceCommitId":{"shape":"CommitId"}
+      }
+    },
+    "GetPullRequestInput":{
+      "type":"structure",
+      "required":["pullRequestId"],
+      "members":{
+        "pullRequestId":{"shape":"PullRequestId"}
+      }
+    },
+    "GetPullRequestOutput":{
+      "type":"structure",
+      "required":["pullRequest"],
+      "members":{
+        "pullRequest":{"shape":"PullRequest"}
+      }
+    },
     "GetRepositoryInput":{
       "type":"structure",
       "required":["repositoryName"],
@@ -689,6 +1410,24 @@
         "triggers":{"shape":"RepositoryTriggersList"}
       }
     },
+    "IdempotencyParameterMismatchException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidActorArnException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidAuthorArnException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "InvalidBlobIdException":{
       "type":"structure",
       "members":{
@@ -696,6 +1435,18 @@
       "exception":true
     },
     "InvalidBranchNameException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidClientRequestTokenException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidCommentIdException":{
       "type":"structure",
       "members":{
       },
@@ -719,7 +1470,37 @@
       },
       "exception":true
     },
+    "InvalidDescriptionException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidDestinationCommitSpecifierException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidFileLocationException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidFilePositionException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "InvalidMaxResultsException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidMergeOptionException":{
       "type":"structure",
       "members":{
       },
@@ -732,6 +1513,42 @@
       "exception":true
     },
     "InvalidPathException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidPullRequestEventTypeException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidPullRequestIdException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidPullRequestStatusException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidPullRequestStatusUpdateException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidReferenceNameException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidRelativeFileVersionEnumException":{
       "type":"structure",
       "members":{
       },
@@ -791,6 +1608,33 @@
       },
       "exception":true
     },
+    "InvalidSourceCommitSpecifierException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidTargetException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidTargetsException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidTitleException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "IsCommentDeleted":{"type":"boolean"},
+    "IsMergeable":{"type":"boolean"},
+    "IsMerged":{"type":"boolean"},
     "LastModifiedDate":{"type":"timestamp"},
     "Limit":{
       "type":"integer",
@@ -811,6 +1655,25 @@
         "nextToken":{"shape":"NextToken"}
       }
     },
+    "ListPullRequestsInput":{
+      "type":"structure",
+      "required":["repositoryName"],
+      "members":{
+        "repositoryName":{"shape":"RepositoryName"},
+        "authorArn":{"shape":"Arn"},
+        "pullRequestStatus":{"shape":"PullRequestStatusEnum"},
+        "nextToken":{"shape":"NextToken"},
+        "maxResults":{"shape":"MaxResults"}
+      }
+    },
+    "ListPullRequestsOutput":{
+      "type":"structure",
+      "required":["pullRequestIds"],
+      "members":{
+        "pullRequestIds":{"shape":"PullRequestIdList"},
+        "nextToken":{"shape":"NextToken"}
+      }
+    },
     "ListRepositoriesInput":{
       "type":"structure",
       "members":{
@@ -826,7 +1689,28 @@
         "nextToken":{"shape":"NextToken"}
       }
     },
+    "Location":{
+      "type":"structure",
+      "members":{
+        "filePath":{"shape":"Path"},
+        "filePosition":{"shape":"Position"},
+        "relativeFileVersion":{"shape":"RelativeFileVersionEnum"}
+      }
+    },
+    "ManualMergeRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "MaxResults":{"type":"integer"},
     "MaximumBranchesExceededException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "MaximumOpenPullRequestsExceededException":{
       "type":"structure",
       "members":{
       },
@@ -844,8 +1728,49 @@
       },
       "exception":true
     },
+    "MergeMetadata":{
+      "type":"structure",
+      "members":{
+        "isMerged":{"shape":"IsMerged"},
+        "mergedBy":{"shape":"Arn"}
+      }
+    },
+    "MergeOptionRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "MergeOptionTypeEnum":{
+      "type":"string",
+      "enum":["FAST_FORWARD_MERGE"]
+    },
+    "MergePullRequestByFastForwardInput":{
+      "type":"structure",
+      "required":[
+        "pullRequestId",
+        "repositoryName"
+      ],
+      "members":{
+        "pullRequestId":{"shape":"PullRequestId"},
+        "repositoryName":{"shape":"RepositoryName"},
+        "sourceCommitId":{"shape":"CommitId"}
+      }
+    },
+    "MergePullRequestByFastForwardOutput":{
+      "type":"structure",
+      "members":{
+        "pullRequest":{"shape":"PullRequest"}
+      }
+    },
     "Message":{"type":"string"},
     "Mode":{"type":"string"},
+    "MultipleRepositoriesInPullRequestException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "Name":{"type":"string"},
     "NextToken":{"type":"string"},
     "ObjectId":{"type":"string"},
@@ -867,6 +1792,212 @@
       },
       "exception":true
     },
+    "PathRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "Position":{"type":"long"},
+    "PostCommentForComparedCommitInput":{
+      "type":"structure",
+      "required":[
+        "repositoryName",
+        "afterCommitId",
+        "content"
+      ],
+      "members":{
+        "repositoryName":{"shape":"RepositoryName"},
+        "beforeCommitId":{"shape":"CommitId"},
+        "afterCommitId":{"shape":"CommitId"},
+        "location":{"shape":"Location"},
+        "content":{"shape":"Content"},
+        "clientRequestToken":{
+          "shape":"ClientRequestToken",
+          "idempotencyToken":true
+        }
+      }
+    },
+    "PostCommentForComparedCommitOutput":{
+      "type":"structure",
+      "members":{
+        "repositoryName":{"shape":"RepositoryName"},
+        "beforeCommitId":{"shape":"CommitId"},
+        "afterCommitId":{"shape":"CommitId"},
+        "beforeBlobId":{"shape":"ObjectId"},
+        "afterBlobId":{"shape":"ObjectId"},
+        "location":{"shape":"Location"},
+        "comment":{"shape":"Comment"}
+      }
+    },
+    "PostCommentForPullRequestInput":{
+      "type":"structure",
+      "required":[
+        "pullRequestId",
+        "repositoryName",
+        "beforeCommitId",
+        "afterCommitId",
+        "content"
+      ],
+      "members":{
+        "pullRequestId":{"shape":"PullRequestId"},
+        "repositoryName":{"shape":"RepositoryName"},
+        "beforeCommitId":{"shape":"CommitId"},
+        "afterCommitId":{"shape":"CommitId"},
+        "location":{"shape":"Location"},
+        "content":{"shape":"Content"},
+        "clientRequestToken":{
+          "shape":"ClientRequestToken",
+          "idempotencyToken":true
+        }
+      }
+    },
+    "PostCommentForPullRequestOutput":{
+      "type":"structure",
+      "members":{
+        "repositoryName":{"shape":"RepositoryName"},
+        "pullRequestId":{"shape":"PullRequestId"},
+        "beforeCommitId":{"shape":"CommitId"},
+        "afterCommitId":{"shape":"CommitId"},
+        "beforeBlobId":{"shape":"ObjectId"},
+        "afterBlobId":{"shape":"ObjectId"},
+        "location":{"shape":"Location"},
+        "comment":{"shape":"Comment"}
+      }
+    },
+    "PostCommentReplyInput":{
+      "type":"structure",
+      "required":[
+        "inReplyTo",
+        "content"
+      ],
+      "members":{
+        "inReplyTo":{"shape":"CommentId"},
+        "clientRequestToken":{
+          "shape":"ClientRequestToken",
+          "idempotencyToken":true
+        },
+        "content":{"shape":"Content"}
+      }
+    },
+    "PostCommentReplyOutput":{
+      "type":"structure",
+      "members":{
+        "comment":{"shape":"Comment"}
+      }
+    },
+    "PullRequest":{
+      "type":"structure",
+      "members":{
+        "pullRequestId":{"shape":"PullRequestId"},
+        "title":{"shape":"Title"},
+        "description":{"shape":"Description"},
+        "lastActivityDate":{"shape":"LastModifiedDate"},
+        "creationDate":{"shape":"CreationDate"},
+        "pullRequestStatus":{"shape":"PullRequestStatusEnum"},
+        "authorArn":{"shape":"Arn"},
+        "pullRequestTargets":{"shape":"PullRequestTargetList"},
+        "clientRequestToken":{"shape":"ClientRequestToken"}
+      }
+    },
+    "PullRequestAlreadyClosedException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "PullRequestDoesNotExistException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "PullRequestEvent":{
+      "type":"structure",
+      "members":{
+        "pullRequestId":{"shape":"PullRequestId"},
+        "eventDate":{"shape":"EventDate"},
+        "pullRequestEventType":{"shape":"PullRequestEventType"},
+        "actorArn":{"shape":"Arn"},
+        "pullRequestStatusChangedEventMetadata":{"shape":"PullRequestStatusChangedEventMetadata"},
+        "pullRequestSourceReferenceUpdatedEventMetadata":{"shape":"PullRequestSourceReferenceUpdatedEventMetadata"},
+        "pullRequestMergedStateChangedEventMetadata":{"shape":"PullRequestMergedStateChangedEventMetadata"}
+      }
+    },
+    "PullRequestEventList":{
+      "type":"list",
+      "member":{"shape":"PullRequestEvent"}
+    },
+    "PullRequestEventType":{
+      "type":"string",
+      "enum":[
+        "PULL_REQUEST_CREATED",
+        "PULL_REQUEST_STATUS_CHANGED",
+        "PULL_REQUEST_SOURCE_REFERENCE_UPDATED",
+        "PULL_REQUEST_MERGE_STATE_CHANGED"
+      ]
+    },
+    "PullRequestId":{"type":"string"},
+    "PullRequestIdList":{
+      "type":"list",
+      "member":{"shape":"PullRequestId"}
+    },
+    "PullRequestIdRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "PullRequestMergedStateChangedEventMetadata":{
+      "type":"structure",
+      "members":{
+        "repositoryName":{"shape":"RepositoryName"},
+        "destinationReference":{"shape":"ReferenceName"},
+        "mergeMetadata":{"shape":"MergeMetadata"}
+      }
+    },
+    "PullRequestSourceReferenceUpdatedEventMetadata":{
+      "type":"structure",
+      "members":{
+        "repositoryName":{"shape":"RepositoryName"},
+        "beforeCommitId":{"shape":"CommitId"},
+        "afterCommitId":{"shape":"CommitId"}
+      }
+    },
+    "PullRequestStatusChangedEventMetadata":{
+      "type":"structure",
+      "members":{
+        "pullRequestStatus":{"shape":"PullRequestStatusEnum"}
+      }
+    },
+    "PullRequestStatusEnum":{
+      "type":"string",
+      "enum":[
+        "OPEN",
+        "CLOSED"
+      ]
+    },
+    "PullRequestStatusRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "PullRequestTarget":{
+      "type":"structure",
+      "members":{
+        "repositoryName":{"shape":"RepositoryName"},
+        "sourceReference":{"shape":"ReferenceName"},
+        "destinationReference":{"shape":"ReferenceName"},
+        "destinationCommit":{"shape":"CommitId"},
+        "sourceCommit":{"shape":"CommitId"},
+        "mergeMetadata":{"shape":"MergeMetadata"}
+      }
+    },
+    "PullRequestTargetList":{
+      "type":"list",
+      "member":{"shape":"PullRequestTarget"}
+    },
     "PutRepositoryTriggersInput":{
       "type":"structure",
       "required":[
@@ -883,6 +2014,32 @@
       "members":{
         "configurationId":{"shape":"RepositoryTriggersConfigurationId"}
       }
+    },
+    "ReferenceDoesNotExistException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "ReferenceName":{"type":"string"},
+    "ReferenceNameRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "ReferenceTypeNotSupportedException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "RelativeFileVersionEnum":{
+      "type":"string",
+      "enum":[
+        "BEFORE",
+        "AFTER"
+      ]
     },
     "RepositoryDescription":{
       "type":"string",
@@ -954,6 +2111,12 @@
       "exception":true
     },
     "RepositoryNamesRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "RepositoryNotAssociatedWithPullRequestException":{
       "type":"structure",
       "members":{
       },
@@ -1051,6 +2214,40 @@
         "lastModifiedDate"
       ]
     },
+    "SourceAndDestinationAreSameException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "Target":{
+      "type":"structure",
+      "required":[
+        "repositoryName",
+        "sourceReference"
+      ],
+      "members":{
+        "repositoryName":{"shape":"RepositoryName"},
+        "sourceReference":{"shape":"ReferenceName"},
+        "destinationReference":{"shape":"ReferenceName"}
+      }
+    },
+    "TargetList":{
+      "type":"list",
+      "member":{"shape":"Target"}
+    },
+    "TargetRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "TargetsRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "TestRepositoryTriggersInput":{
       "type":"structure",
       "required":[
@@ -1069,6 +2266,45 @@
         "failedExecutions":{"shape":"RepositoryTriggerExecutionFailureList"}
       }
     },
+    "TipOfSourceReferenceIsDifferentException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "TipsDivergenceExceededException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "Title":{
+      "type":"string",
+      "max":150
+    },
+    "TitleRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "UpdateCommentInput":{
+      "type":"structure",
+      "required":[
+        "commentId",
+        "content"
+      ],
+      "members":{
+        "commentId":{"shape":"CommentId"},
+        "content":{"shape":"Content"}
+      }
+    },
+    "UpdateCommentOutput":{
+      "type":"structure",
+      "members":{
+        "comment":{"shape":"Comment"}
+      }
+    },
     "UpdateDefaultBranchInput":{
       "type":"structure",
       "required":[
@@ -1078,6 +2314,60 @@
       "members":{
         "repositoryName":{"shape":"RepositoryName"},
         "defaultBranchName":{"shape":"BranchName"}
+      }
+    },
+    "UpdatePullRequestDescriptionInput":{
+      "type":"structure",
+      "required":[
+        "pullRequestId",
+        "description"
+      ],
+      "members":{
+        "pullRequestId":{"shape":"PullRequestId"},
+        "description":{"shape":"Description"}
+      }
+    },
+    "UpdatePullRequestDescriptionOutput":{
+      "type":"structure",
+      "required":["pullRequest"],
+      "members":{
+        "pullRequest":{"shape":"PullRequest"}
+      }
+    },
+    "UpdatePullRequestStatusInput":{
+      "type":"structure",
+      "required":[
+        "pullRequestId",
+        "pullRequestStatus"
+      ],
+      "members":{
+        "pullRequestId":{"shape":"PullRequestId"},
+        "pullRequestStatus":{"shape":"PullRequestStatusEnum"}
+      }
+    },
+    "UpdatePullRequestStatusOutput":{
+      "type":"structure",
+      "required":["pullRequest"],
+      "members":{
+        "pullRequest":{"shape":"PullRequest"}
+      }
+    },
+    "UpdatePullRequestTitleInput":{
+      "type":"structure",
+      "required":[
+        "pullRequestId",
+        "title"
+      ],
+      "members":{
+        "pullRequestId":{"shape":"PullRequestId"},
+        "title":{"shape":"Title"}
+      }
+    },
+    "UpdatePullRequestTitleOutput":{
+      "type":"structure",
+      "required":["pullRequest"],
+      "members":{
+        "pullRequest":{"shape":"PullRequest"}
       }
     },
     "UpdateRepositoryDescriptionInput":{

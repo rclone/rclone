@@ -16,9 +16,10 @@ package pubsub
 
 import (
 	"net"
-	"reflect"
 	"testing"
 	"time"
+
+	"cloud.google.com/go/internal/testutil"
 
 	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
@@ -62,7 +63,7 @@ func checkTopicListing(t *testing.T, want []string) {
 		t.Errorf("error listing topics: %v", err)
 	}
 	got := topicNames(topics)
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Errorf("topic list: got: %v, want: %v", got, want)
 	}
 	if len(s.topics) != 0 {

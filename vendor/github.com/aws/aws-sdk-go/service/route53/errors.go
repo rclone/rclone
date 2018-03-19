@@ -22,7 +22,8 @@ const (
 	//    have any common name servers. You tried to create a hosted zone that has
 	//    the same name as an existing hosted zone or that's the parent or child
 	//    of an existing hosted zone, and you specified a delegation set that shares
-	//    one or more name servers with the existing hosted zone.
+	//    one or more name servers with the existing hosted zone. For more information,
+	//    see CreateReusableDelegationSet.
 	//
 	//    * Private hosted zone: You specified an Amazon VPC that you're already
 	//    using for another hosted zone, and the domain that you specified for one
@@ -122,6 +123,12 @@ const (
 	// The specified HostedZone can't be found.
 	ErrCodeHostedZoneNotFound = "HostedZoneNotFound"
 
+	// ErrCodeHostedZoneNotPrivate for service response error code
+	// "HostedZoneNotPrivate".
+	//
+	// The specified hosted zone is a public hosted zone, not a private hosted zone.
+	ErrCodeHostedZoneNotPrivate = "HostedZoneNotPrivate"
+
 	// ErrCodeIncompatibleVersion for service response error code
 	// "IncompatibleVersion".
 	//
@@ -201,7 +208,14 @@ const (
 	// ErrCodeLimitsExceeded for service response error code
 	// "LimitsExceeded".
 	//
-	// The limits specified for a resource have been exceeded.
+	// This operation can't be completed either because the current account has
+	// reached the limit on reusable delegation sets that it can create or because
+	// you've reached the limit on the number of Amazon VPCs that you can associate
+	// with a private hosted zone. To get the current limit on the number of reusable
+	// delegation sets, see GetAccountLimit. To get the current limit on the number
+	// of Amazon VPCs that you can associate with a private hosted zone, see GetHostedZoneLimit.
+	// To request a higher limit, create a case (http://aws.amazon.com/route53-request)
+	// with the AWS Support Center.
 	ErrCodeLimitsExceeded = "LimitsExceeded"
 
 	// ErrCodeNoSuchChange for service response error code
@@ -299,34 +313,84 @@ const (
 	// ErrCodeTooManyHealthChecks for service response error code
 	// "TooManyHealthChecks".
 	//
+	// This health check can't be created because the current account has reached
+	// the limit on the number of active health checks.
+	//
+	// For information about default limits, see Limits (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DNSLimitations.html)
+	// in the Amazon Route 53 Developer Guide.
+	//
+	// For information about how to get the current limit for an account, see GetAccountLimit.
+	// To request a higher limit, create a case (http://aws.amazon.com/route53-request)
+	// with the AWS Support Center.
+	//
 	// You have reached the maximum number of active health checks for an AWS account.
-	// The default limit is 100. To request a higher limit, create a case (http://aws.amazon.com/route53-request)
+	// To request a higher limit, create a case (http://aws.amazon.com/route53-request)
 	// with the AWS Support Center.
 	ErrCodeTooManyHealthChecks = "TooManyHealthChecks"
 
 	// ErrCodeTooManyHostedZones for service response error code
 	// "TooManyHostedZones".
 	//
-	// This hosted zone can't be created because the hosted zone limit is exceeded.
-	// To request a limit increase, go to the Amazon Route 53 Contact Us (http://aws.amazon.com/route53-request/)
-	// page.
+	// This operation can't be completed either because the current account has
+	// reached the limit on the number of hosted zones or because you've reached
+	// the limit on the number of hosted zones that can be associated with a reusable
+	// delegation set.
+	//
+	// For information about default limits, see Limits (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DNSLimitations.html)
+	// in the Amazon Route 53 Developer Guide.
+	//
+	// To get the current limit on hosted zones that can be created by an account,
+	// see GetAccountLimit.
+	//
+	// To get the current limit on hosted zones that can be associated with a reusable
+	// delegation set, see GetReusableDelegationSetLimit.
+	//
+	// To request a higher limit, create a case (http://aws.amazon.com/route53-request)
+	// with the AWS Support Center.
 	ErrCodeTooManyHostedZones = "TooManyHostedZones"
 
 	// ErrCodeTooManyTrafficPolicies for service response error code
 	// "TooManyTrafficPolicies".
 	//
-	// You've created the maximum number of traffic policies that can be created
-	// for the current AWS account. You can request an increase to the limit on
-	// the Contact Us (http://aws.amazon.com/route53-request/) page.
+	// This traffic policy can't be created because the current account has reached
+	// the limit on the number of traffic policies.
+	//
+	// For information about default limits, see Limits (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DNSLimitations.html)
+	// in the Amazon Route 53 Developer Guide.
+	//
+	// To get the current limit for an account, see GetAccountLimit.
+	//
+	// To request a higher limit, create a case (http://aws.amazon.com/route53-request)
+	// with the AWS Support Center.
 	ErrCodeTooManyTrafficPolicies = "TooManyTrafficPolicies"
 
 	// ErrCodeTooManyTrafficPolicyInstances for service response error code
 	// "TooManyTrafficPolicyInstances".
 	//
-	// You've created the maximum number of traffic policy instances that can be
-	// created for the current AWS account. You can request an increase to the limit
-	// on the Contact Us (http://aws.amazon.com/route53-request/) page.
+	// This traffic policy instance can't be created because the current account
+	// has reached the limit on the number of traffic policy instances.
+	//
+	// For information about default limits, see Limits (http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DNSLimitations.html)
+	// in the Amazon Route 53 Developer Guide.
+	//
+	// For information about how to get the current limit for an account, see GetAccountLimit.
+	//
+	// To request a higher limit, create a case (http://aws.amazon.com/route53-request)
+	// with the AWS Support Center.
 	ErrCodeTooManyTrafficPolicyInstances = "TooManyTrafficPolicyInstances"
+
+	// ErrCodeTooManyTrafficPolicyVersionsForCurrentPolicy for service response error code
+	// "TooManyTrafficPolicyVersionsForCurrentPolicy".
+	//
+	// This traffic policy version can't be created because you've reached the limit
+	// of 1000 on the number of versions that you can create for the current traffic
+	// policy.
+	//
+	// To create more traffic policy versions, you can use GetTrafficPolicy to get
+	// the traffic policy document for a specified traffic policy version, and then
+	// use CreateTrafficPolicy to create a new traffic policy using the traffic
+	// policy document.
+	ErrCodeTooManyTrafficPolicyVersionsForCurrentPolicy = "TooManyTrafficPolicyVersionsForCurrentPolicy"
 
 	// ErrCodeTooManyVPCAssociationAuthorizations for service response error code
 	// "TooManyVPCAssociationAuthorizations".

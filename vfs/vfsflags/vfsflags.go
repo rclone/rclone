@@ -2,7 +2,7 @@
 package vfsflags
 
 import (
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config/flags"
 	"github.com/ncw/rclone/vfs"
 	"github.com/spf13/pflag"
 )
@@ -13,15 +13,15 @@ var (
 )
 
 // AddFlags adds the non filing system specific flags to the command
-func AddFlags(flags *pflag.FlagSet) {
-	fs.BoolVarP(flags, &Opt.NoModTime, "no-modtime", "", Opt.NoModTime, "Don't read/write the modification time (can speed things up).")
-	fs.BoolVarP(flags, &Opt.NoChecksum, "no-checksum", "", Opt.NoChecksum, "Don't compare checksums on up/download.")
-	fs.BoolVarP(flags, &Opt.NoSeek, "no-seek", "", Opt.NoSeek, "Don't allow seeking in files.")
-	fs.DurationVarP(flags, &Opt.DirCacheTime, "dir-cache-time", "", Opt.DirCacheTime, "Time to cache directory entries for.")
-	fs.DurationVarP(flags, &Opt.PollInterval, "poll-interval", "", Opt.PollInterval, "Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable.")
-	fs.BoolVarP(flags, &Opt.ReadOnly, "read-only", "", Opt.ReadOnly, "Mount read-only.")
-	fs.FlagsVarP(flags, &Opt.CacheMode, "cache-mode", "", "Cache mode off|minimal|writes|full")
-	fs.DurationVarP(flags, &Opt.CachePollInterval, "cache-poll-interval", "", Opt.CachePollInterval, "Interval to poll the cache for stale objects.")
-	fs.DurationVarP(flags, &Opt.CacheMaxAge, "cache-max-age", "", Opt.CacheMaxAge, "Max age of objects in the cache.")
-	platformFlags(flags)
+func AddFlags(flagSet *pflag.FlagSet) {
+	flags.BoolVarP(flagSet, &Opt.NoModTime, "no-modtime", "", Opt.NoModTime, "Don't read/write the modification time (can speed things up).")
+	flags.BoolVarP(flagSet, &Opt.NoChecksum, "no-checksum", "", Opt.NoChecksum, "Don't compare checksums on up/download.")
+	flags.BoolVarP(flagSet, &Opt.NoSeek, "no-seek", "", Opt.NoSeek, "Don't allow seeking in files.")
+	flags.DurationVarP(flagSet, &Opt.DirCacheTime, "dir-cache-time", "", Opt.DirCacheTime, "Time to cache directory entries for.")
+	flags.DurationVarP(flagSet, &Opt.PollInterval, "poll-interval", "", Opt.PollInterval, "Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable.")
+	flags.BoolVarP(flagSet, &Opt.ReadOnly, "read-only", "", Opt.ReadOnly, "Mount read-only.")
+	flags.FVarP(flagSet, &Opt.CacheMode, "vfs-cache-mode", "", "Cache mode off|minimal|writes|full")
+	flags.DurationVarP(flagSet, &Opt.CachePollInterval, "vfs-cache-poll-interval", "", Opt.CachePollInterval, "Interval to poll the cache for stale objects.")
+	flags.DurationVarP(flagSet, &Opt.CacheMaxAge, "vfs-cache-max-age", "", Opt.CacheMaxAge, "Max age of objects in the cache.")
+	platformFlags(flagSet)
 }

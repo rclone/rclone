@@ -39,6 +39,13 @@ const (
 	// pool.
 	ErrCodeDuplicateProviderException = "DuplicateProviderException"
 
+	// ErrCodeEnableSoftwareTokenMFAException for service response error code
+	// "EnableSoftwareTokenMFAException".
+	//
+	// This exception is thrown when there is a code mismatch and the service fails
+	// to configure the software token TOTP multi-factor authentication (MFA).
+	ErrCodeEnableSoftwareTokenMFAException = "EnableSoftwareTokenMFAException"
+
 	// ErrCodeExpiredCodeException for service response error code
 	// "ExpiredCodeException".
 	//
@@ -159,6 +166,13 @@ const (
 	// This exception is thrown when the specified scope does not exist.
 	ErrCodeScopeDoesNotExistException = "ScopeDoesNotExistException"
 
+	// ErrCodeSoftwareTokenMFANotFoundException for service response error code
+	// "SoftwareTokenMFANotFoundException".
+	//
+	// This exception is thrown when the software token TOTP multi-factor authentication
+	// (MFA) is not enabled for the user pool.
+	ErrCodeSoftwareTokenMFANotFoundException = "SoftwareTokenMFANotFoundException"
+
 	// ErrCodeTooManyFailedAttemptsException for service response error code
 	// "TooManyFailedAttemptsException".
 	//
@@ -217,6 +231,12 @@ const (
 	//
 	// This exception is thrown when a user is not found.
 	ErrCodeUserNotFoundException = "UserNotFoundException"
+
+	// ErrCodeUserPoolAddOnNotEnabledException for service response error code
+	// "UserPoolAddOnNotEnabledException".
+	//
+	// This exception is thrown when user pool add-ons are not enabled.
+	ErrCodeUserPoolAddOnNotEnabledException = "UserPoolAddOnNotEnabledException"
 
 	// ErrCodeUserPoolTaggingException for service response error code
 	// "UserPoolTaggingException".

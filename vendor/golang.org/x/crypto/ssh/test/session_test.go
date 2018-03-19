@@ -333,21 +333,22 @@ func TestCiphers(t *testing.T) {
 	cipherOrder = append(cipherOrder, "aes128-cbc", "3des-cbc")
 
 	for _, ciph := range cipherOrder {
-		server := newServer(t)
-		defer server.Shutdown()
-		conf := clientConfig()
-		conf.Ciphers = []string{ciph}
-		// Don't fail if sshd doesn't have the cipher.
-		conf.Ciphers = append(conf.Ciphers, cipherOrder...)
-		conn, err := server.TryDial(conf)
-		if err == nil {
-			conn.Close()
-		} else {
-			t.Fatalf("failed for cipher %q", ciph)
-		}
+		t.Run(ciph, func(t *testing.T) {
+			server := newServer(t)
+			defer server.Shutdown()
+			conf := clientConfig()
+			conf.Ciphers = []string{ciph}
+			// Don't fail if sshd doesn't have the cipher.
+			conf.Ciphers = append(conf.Ciphers, cipherOrder...)
+			conn, err := server.TryDial(conf)
+			if err == nil {
+				conn.Close()
+			} else {
+				t.Fatalf("failed for cipher %q", ciph)
+			}
+		})
 	}
 }
-
 func TestMACs(t *testing.T) {
 	var config ssh.Config
 	config.SetDefaults()

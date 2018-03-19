@@ -147,6 +147,10 @@
       }
     },
     "Double":{"type":"double"},
+    "EC2InstanceId":{
+      "type":"string",
+      "max":20
+    },
     "Edge":{
       "type":"structure",
       "members":{
@@ -172,6 +176,7 @@
         "TotalResponseTime":{"shape":"NullableDouble"}
       }
     },
+    "ErrorMessage":{"type":"string"},
     "ErrorStatistics":{
       "type":"structure",
       "members":{
@@ -190,7 +195,7 @@
     "FilterExpression":{
       "type":"string",
       "max":2000,
-      "min":0
+      "min":1
     },
     "GetServiceGraphRequest":{
       "type":"structure",
@@ -262,6 +267,10 @@
         "Count":{"shape":"Integer"}
       }
     },
+    "Hostname":{
+      "type":"string",
+      "max":255
+    },
     "Http":{
       "type":"structure",
       "members":{
@@ -276,6 +285,7 @@
     "InvalidRequestException":{
       "type":"structure",
       "members":{
+        "Message":{"shape":"ErrorMessage"}
       },
       "exception":true
     },
@@ -288,9 +298,9 @@
       "required":["TelemetryRecords"],
       "members":{
         "TelemetryRecords":{"shape":"TelemetryRecordList"},
-        "EC2InstanceId":{"shape":"String"},
-        "Hostname":{"shape":"String"},
-        "ResourceARN":{"shape":"String"}
+        "EC2InstanceId":{"shape":"EC2InstanceId"},
+        "Hostname":{"shape":"Hostname"},
+        "ResourceARN":{"shape":"ResourceARN"}
       }
     },
     "PutTelemetryRecordsResult":{
@@ -311,6 +321,10 @@
         "UnprocessedTraceSegments":{"shape":"UnprocessedTraceSegmentList"}
       }
     },
+    "ResourceARN":{
+      "type":"string",
+      "max":500
+    },
     "Segment":{
       "type":"structure",
       "members":{
@@ -322,11 +336,7 @@
       "type":"string",
       "min":1
     },
-    "SegmentId":{
-      "type":"string",
-      "max":16,
-      "min":16
-    },
+    "SegmentId":{"type":"string"},
     "SegmentList":{
       "type":"list",
       "member":{"shape":"Segment"}
@@ -383,6 +393,7 @@
     "String":{"type":"string"},
     "TelemetryRecord":{
       "type":"structure",
+      "required":["Timestamp"],
       "members":{
         "Timestamp":{"shape":"Timestamp"},
         "SegmentsReceivedCount":{"shape":"NullableInteger"},
@@ -399,6 +410,7 @@
     "ThrottledException":{
       "type":"structure",
       "members":{
+        "Message":{"shape":"ErrorMessage"}
       },
       "error":{"httpStatusCode":429},
       "exception":true
@@ -415,7 +427,7 @@
     "TraceId":{
       "type":"string",
       "max":35,
-      "min":35
+      "min":1
     },
     "TraceIdList":{
       "type":"list",

@@ -1,35 +1,29 @@
-hash: 2e6b1ed4a2ee0638abc2e819ac3c247eaf80fa0f2053cfc41eecf883054c6032
-updated: 2017-07-20T20:14:05.143145325+08:00
+hash: 08f9d9c9c14c4e5927e38688e6bab5bc44b5cb920d05b2523de680a115f5a6b7
+updated: 2017-11-25T11:24:10.452444+08:00
 imports:
 - name: github.com/DATA-DOG/godog
-  version: 70f777599da0f5de682b8848d356611c1738b695
+  version: 272624afcc2fc5f818ce069e2e417e7b4fa8bb6c
   subpackages:
   - colors
   - gherkin
 - name: github.com/pengsrc/go-shared
-  version: 454950d6a0782c34427d4f29b46c6bf447256f20
+  version: b98065a377794d577e2a0e32869378b9ce4b8952
   subpackages:
+  - buffer
   - check
   - convert
-  - json
-  - yaml
-- name: github.com/sirupsen/logrus
-  version: 00386b3fbd637582f90cb17482dc3087646c0ac2
-- name: golang.org/x/sys
-  version: f3918c30c5c2cb527c0b071a27c35120a6c0719a
-  repo: https://github.com/golang/sys.git
-  subpackages:
-  - unix
+  - log
+  - reopen
 - name: gopkg.in/yaml.v2
-  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+  version: 287cf08546ab5e7e37d55a84f7ed3fd1db036de5
   repo: https://github.com/go-yaml/yaml.git
 testImports:
 - name: github.com/davecgh/go-spew
-  version: 346938d642f2ec3594ed81d874461961cd0faa76
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
 - name: github.com/pmezard/go-difflib
-  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
 - name: github.com/stretchr/testify

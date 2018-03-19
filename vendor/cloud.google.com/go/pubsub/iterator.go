@@ -47,7 +47,8 @@ type streamingMessageIterator struct {
 	mu                 sync.Mutex
 	keepAliveDeadlines map[string]time.Time
 	pendingReq         *pb.StreamingPullRequest
-	err                error // error from stream failure
+	pendingModAcks     map[string]int32 // ack IDs whose ack deadline is to be modified
+	err                error            // error from stream failure
 }
 
 func newStreamingMessageIterator(ctx context.Context, sp *streamingPuller, po *pullOptions) *streamingMessageIterator {
@@ -72,6 +73,7 @@ func newStreamingMessageIterator(ctx context.Context, sp *streamingPuller, po *p
 		drained:            make(chan struct{}),
 		keepAliveDeadlines: map[string]time.Time{},
 		pendingReq:         &pb.StreamingPullRequest{},
+		pendingModAcks:     map[string]int32{},
 	}
 	it.wg.Add(1)
 	go it.sender()
@@ -121,18 +123,9 @@ func (it *streamingMessageIterator) done(ackID string, ack bool) {
 	if ack {
 		it.pendingReq.AckIds = append(it.pendingReq.AckIds, ackID)
 	} else {
-		it.addDeadlineMod(ackID, 0) // Nack indicated by modifying the deadline to zero.
+		it.pendingModAcks[ackID] = 0 // Nack indicated by modifying the deadline to zero.
 	}
 	it.checkDrained()
-}
-
-// addDeadlineMod adds the ack ID to the pending request with the given deadline.
-//
-// Called with the lock held.
-func (it *streamingMessageIterator) addDeadlineMod(ackID string, deadlineSecs int32) {
-	pr := it.pendingReq
-	pr.ModifyDeadlineAckIds = append(pr.ModifyDeadlineAckIds, ackID)
-	pr.ModifyDeadlineSeconds = append(pr.ModifyDeadlineSeconds, deadlineSecs)
 }
 
 // fail is called when a stream method returns a permanent error.
@@ -169,13 +162,21 @@ func (it *streamingMessageIterator) receive() ([]*Message, error) {
 		it.fail(err)
 		return nil, err
 	}
-	// We received some messages. Remember them so we can
-	// keep them alive.
-	deadline := time.Now().Add(it.po.maxExtension)
+	// We received some messages. Remember them so we can keep them alive. Also,
+	// arrange for a receipt mod-ack (which will occur at the next firing of
+	// nackTicker).
+	maxExt := time.Now().Add(it.po.maxExtension)
+	deadline := trunc32(int64(it.po.ackDeadline.Seconds()))
 	it.mu.Lock()
 	for _, m := range msgs {
 		m.doneFunc = it.done
-		it.keepAliveDeadlines[m.ackID] = deadline
+		it.keepAliveDeadlines[m.ackID] = maxExt
+		// The receipt mod-ack uses the subscription's configured ack deadline. Don't
+		// change the mod-ack if one is already pending. This is possible if there
+		// are retries.
+		if _, ok := it.pendingModAcks[m.ackID]; !ok {
+			it.pendingModAcks[m.ackID] = deadline
+		}
 	}
 	it.mu.Unlock()
 	return msgs, nil
@@ -206,27 +207,33 @@ func (it *streamingMessageIterator) sender() {
 			// All outstanding messages have been marked done:
 			// nothing left to do except send the final request.
 			it.mu.Lock()
-			send = (len(it.pendingReq.AckIds) > 0 || len(it.pendingReq.ModifyDeadlineAckIds) > 0)
+			send = (len(it.pendingReq.AckIds) > 0 || len(it.pendingModAcks) > 0)
 			done = true
 
 		case <-it.kaTicker.C:
 			it.mu.Lock()
-			send = it.handleKeepAlives()
+			it.handleKeepAlives()
+			send = (len(it.pendingModAcks) > 0)
 
 		case <-it.nackTicker.C:
 			it.mu.Lock()
-			send = (len(it.pendingReq.ModifyDeadlineAckIds) > 0)
+			send = (len(it.pendingModAcks) > 0)
 
 		case <-it.ackTicker.C:
 			it.mu.Lock()
 			send = (len(it.pendingReq.AckIds) > 0)
-
 		}
 		// Lock is held here.
 		if send {
 			req := it.pendingReq
 			it.pendingReq = &pb.StreamingPullRequest{}
+			modAcks := it.pendingModAcks
+			it.pendingModAcks = map[string]int32{}
 			it.mu.Unlock()
+			for id, s := range modAcks {
+				req.ModifyDeadlineAckIds = append(req.ModifyDeadlineAckIds, id)
+				req.ModifyDeadlineSeconds = append(req.ModifyDeadlineSeconds, s)
+			}
 			err := it.sp.send(req)
 			if err != nil {
 				// The streamingPuller handles retries, so any error here
@@ -241,31 +248,23 @@ func (it *streamingMessageIterator) sender() {
 }
 
 // handleKeepAlives modifies the pending request to include deadline extensions
-// for live messages. It also purges expired messages. It reports whether
-// there were any live messages.
+// for live messages. It also purges expired messages.
 //
 // Called with the lock held.
-func (it *streamingMessageIterator) handleKeepAlives() bool {
-	live, expired := getKeepAliveAckIDs(it.keepAliveDeadlines)
-	for _, e := range expired {
-		delete(it.keepAliveDeadlines, e)
-	}
-	dl := trunc32(int64(it.po.ackDeadline.Seconds()))
-	for _, m := range live {
-		it.addDeadlineMod(m, dl)
-	}
-	it.checkDrained()
-	return len(live) > 0
-}
-
-func getKeepAliveAckIDs(items map[string]time.Time) (live, expired []string) {
+func (it *streamingMessageIterator) handleKeepAlives() {
 	now := time.Now()
-	for id, expiry := range items {
+	dl := trunc32(int64(it.po.ackDeadline.Seconds()))
+	for id, expiry := range it.keepAliveDeadlines {
 		if expiry.Before(now) {
-			expired = append(expired, id)
+			// This delete will not result in skipping any map items, as implied by
+			// the spec at https://golang.org/ref/spec#For_statements, "For
+			// statements with range clause", note 3, and stated explicitly at
+			// https://groups.google.com/forum/#!msg/golang-nuts/UciASUb03Js/pzSq5iVFAQAJ.
+			delete(it.keepAliveDeadlines, id)
 		} else {
-			live = append(live, id)
+			// This will not overwrite a nack, because nacking removes the ID from keepAliveDeadlines.
+			it.pendingModAcks[id] = dl
 		}
 	}
-	return live, expired
+	it.checkDrained()
 }

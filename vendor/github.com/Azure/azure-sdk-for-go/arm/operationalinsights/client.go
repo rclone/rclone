@@ -1,6 +1,8 @@
 // Package operationalinsights implements the Azure ARM Operationalinsights service API version .
 //
 // Operational Insights Client
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/operationalinsights/mgmt/2015-11-01-preview/operationalinsights
 package operationalinsights
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

@@ -14,6 +14,7 @@ import (
 
 	"github.com/billziss-gh/cgofuse/fuse"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/pkg/errors"
@@ -178,7 +179,7 @@ func (fsys *FS) stat(node vfs.Node, stat *fuse.Stat_t) (errc int) {
 
 // Init is called after the filesystem is ready
 func (fsys *FS) Init() {
-	defer fs.Trace(fsys.f, "")("")
+	defer log.Trace(fsys.f, "")("")
 	close(fsys.ready)
 }
 
@@ -186,12 +187,12 @@ func (fsys *FS) Init() {
 // the file system is terminated the file system may not receive the
 // Destroy call).
 func (fsys *FS) Destroy() {
-	defer fs.Trace(fsys.f, "")("")
+	defer log.Trace(fsys.f, "")("")
 }
 
 // Getattr reads the attributes for path
 func (fsys *FS) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
-	defer fs.Trace(path, "fh=0x%X", fh)("errc=%v", &errc)
+	defer log.Trace(path, "fh=0x%X", fh)("errc=%v", &errc)
 	node, _, errc := fsys.getNode(path, fh)
 	if errc == 0 {
 		errc = fsys.stat(node, stat)
@@ -201,7 +202,7 @@ func (fsys *FS) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
 
 // Opendir opens path as a directory
 func (fsys *FS) Opendir(path string) (errc int, fh uint64) {
-	defer fs.Trace(path, "")("errc=%d, fh=0x%X", &errc, &fh)
+	defer log.Trace(path, "")("errc=%d, fh=0x%X", &errc, &fh)
 	handle, err := fsys.VFS.OpenFile(path, os.O_RDONLY, 0777)
 	if errc != 0 {
 		return translateError(err), fhUnset
@@ -215,7 +216,7 @@ func (fsys *FS) Readdir(dirPath string,
 	ofst int64,
 	fh uint64) (errc int) {
 	itemsRead := -1
-	defer fs.Trace(dirPath, "ofst=%d, fh=0x%X", ofst, fh)("items=%d, errc=%d", &itemsRead, &errc)
+	defer log.Trace(dirPath, "ofst=%d, fh=0x%X", ofst, fh)("items=%d, errc=%d", &itemsRead, &errc)
 
 	node, errc := fsys.getHandle(fh)
 	if errc != 0 {
@@ -254,13 +255,13 @@ func (fsys *FS) Readdir(dirPath string,
 
 // Releasedir finished reading the directory
 func (fsys *FS) Releasedir(path string, fh uint64) (errc int) {
-	defer fs.Trace(path, "fh=0x%X", fh)("errc=%d", &errc)
+	defer log.Trace(path, "fh=0x%X", fh)("errc=%d", &errc)
 	return fsys.closeHandle(fh)
 }
 
 // Statfs reads overall stats on the filessystem
 func (fsys *FS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
-	defer fs.Trace(path, "")("stat=%+v, errc=%d", stat, &errc)
+	defer log.Trace(path, "")("stat=%+v, errc=%d", stat, &errc)
 	const blockSize = 4096
 	fsBlocks := uint64(1 << 50)
 	if runtime.GOOS == "windows" {
@@ -279,10 +280,10 @@ func (fsys *FS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 
 // Open opens a file
 func (fsys *FS) Open(path string, flags int) (errc int, fh uint64) {
-	defer fs.Trace(path, "flags=0x%X", flags)("errc=%d, fh=0x%X", &errc, &fh)
+	defer log.Trace(path, "flags=0x%X", flags)("errc=%d, fh=0x%X", &errc, &fh)
 
 	// translate the fuse flags to os flags
-	flags = translateOpenFlags(flags) | os.O_CREATE
+	flags = translateOpenFlags(flags)
 	handle, err := fsys.VFS.OpenFile(path, flags, 0777)
 	if errc != 0 {
 		return translateError(err), fhUnset
@@ -293,12 +294,12 @@ func (fsys *FS) Open(path string, flags int) (errc int, fh uint64) {
 
 // Create creates and opens a file.
 func (fsys *FS) Create(filePath string, flags int, mode uint32) (errc int, fh uint64) {
-	defer fs.Trace(filePath, "flags=0x%X, mode=0%o", flags, mode)("errc=%d, fh=0x%X", &errc, &fh)
+	defer log.Trace(filePath, "flags=0x%X, mode=0%o", flags, mode)("errc=%d, fh=0x%X", &errc, &fh)
 	leaf, parentDir, errc := fsys.lookupParentDir(filePath)
 	if errc != 0 {
 		return errc, fhUnset
 	}
-	file, err := parentDir.Create(leaf)
+	file, err := parentDir.Create(leaf, flags)
 	if err != nil {
 		return translateError(err), fhUnset
 	}
@@ -313,7 +314,7 @@ func (fsys *FS) Create(filePath string, flags int, mode uint32) (errc int, fh ui
 
 // Truncate truncates a file to size
 func (fsys *FS) Truncate(path string, size int64, fh uint64) (errc int) {
-	defer fs.Trace(path, "size=%d, fh=0x%X", size, fh)("errc=%d", &errc)
+	defer log.Trace(path, "size=%d, fh=0x%X", size, fh)("errc=%d", &errc)
 	node, handle, errc := fsys.getNode(path, fh)
 	if errc != 0 {
 		return errc
@@ -332,7 +333,7 @@ func (fsys *FS) Truncate(path string, size int64, fh uint64) (errc int) {
 
 // Read data from file handle
 func (fsys *FS) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
-	defer fs.Trace(path, "ofst=%d, fh=0x%X", ofst, fh)("n=%d", &n)
+	defer log.Trace(path, "ofst=%d, fh=0x%X", ofst, fh)("n=%d", &n)
 	handle, errc := fsys.getHandle(fh)
 	if errc != 0 {
 		return errc
@@ -348,7 +349,7 @@ func (fsys *FS) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
 
 // Write data to file handle
 func (fsys *FS) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
-	defer fs.Trace(path, "ofst=%d, fh=0x%X", ofst, fh)("n=%d", &n)
+	defer log.Trace(path, "ofst=%d, fh=0x%X", ofst, fh)("n=%d", &n)
 	handle, errc := fsys.getHandle(fh)
 	if errc != 0 {
 		return errc
@@ -362,7 +363,7 @@ func (fsys *FS) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
 
 // Flush flushes an open file descriptor or path
 func (fsys *FS) Flush(path string, fh uint64) (errc int) {
-	defer fs.Trace(path, "fh=0x%X", fh)("errc=%d", &errc)
+	defer log.Trace(path, "fh=0x%X", fh)("errc=%d", &errc)
 	handle, errc := fsys.getHandle(fh)
 	if errc != 0 {
 		return errc
@@ -372,7 +373,7 @@ func (fsys *FS) Flush(path string, fh uint64) (errc int) {
 
 // Release closes the file if still open
 func (fsys *FS) Release(path string, fh uint64) (errc int) {
-	defer fs.Trace(path, "fh=0x%X", fh)("errc=%d", &errc)
+	defer log.Trace(path, "fh=0x%X", fh)("errc=%d", &errc)
 	handle, errc := fsys.getHandle(fh)
 	if errc != 0 {
 		return errc
@@ -383,7 +384,7 @@ func (fsys *FS) Release(path string, fh uint64) (errc int) {
 
 // Unlink removes a file.
 func (fsys *FS) Unlink(filePath string) (errc int) {
-	defer fs.Trace(filePath, "")("errc=%d", &errc)
+	defer log.Trace(filePath, "")("errc=%d", &errc)
 	leaf, parentDir, errc := fsys.lookupParentDir(filePath)
 	if errc != 0 {
 		return errc
@@ -393,7 +394,7 @@ func (fsys *FS) Unlink(filePath string) (errc int) {
 
 // Mkdir creates a directory.
 func (fsys *FS) Mkdir(dirPath string, mode uint32) (errc int) {
-	defer fs.Trace(dirPath, "mode=0%o", mode)("errc=%d", &errc)
+	defer log.Trace(dirPath, "mode=0%o", mode)("errc=%d", &errc)
 	leaf, parentDir, errc := fsys.lookupParentDir(dirPath)
 	if errc != 0 {
 		return errc
@@ -404,7 +405,7 @@ func (fsys *FS) Mkdir(dirPath string, mode uint32) (errc int) {
 
 // Rmdir removes a directory
 func (fsys *FS) Rmdir(dirPath string) (errc int) {
-	defer fs.Trace(dirPath, "")("errc=%d", &errc)
+	defer log.Trace(dirPath, "")("errc=%d", &errc)
 	leaf, parentDir, errc := fsys.lookupParentDir(dirPath)
 	if errc != 0 {
 		return errc
@@ -414,13 +415,13 @@ func (fsys *FS) Rmdir(dirPath string) (errc int) {
 
 // Rename renames a file.
 func (fsys *FS) Rename(oldPath string, newPath string) (errc int) {
-	defer fs.Trace(oldPath, "newPath=%q", newPath)("errc=%d", &errc)
+	defer log.Trace(oldPath, "newPath=%q", newPath)("errc=%d", &errc)
 	return translateError(fsys.VFS.Rename(oldPath, newPath))
 }
 
 // Utimens changes the access and modification times of a file.
 func (fsys *FS) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
-	defer fs.Trace(path, "tmsp=%+v", tmsp)("errc=%d", &errc)
+	defer log.Trace(path, "tmsp=%+v", tmsp)("errc=%d", &errc)
 	node, errc := fsys.lookupNode(path)
 	if errc != 0 {
 		return errc
@@ -436,59 +437,59 @@ func (fsys *FS) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 
 // Mknod creates a file node.
 func (fsys *FS) Mknod(path string, mode uint32, dev uint64) (errc int) {
-	defer fs.Trace(path, "mode=0x%X, dev=0x%X", mode, dev)("errc=%d", &errc)
+	defer log.Trace(path, "mode=0x%X, dev=0x%X", mode, dev)("errc=%d", &errc)
 	return -fuse.ENOSYS
 }
 
 // Fsync synchronizes file contents.
 func (fsys *FS) Fsync(path string, datasync bool, fh uint64) (errc int) {
-	defer fs.Trace(path, "datasync=%v, fh=0x%X", datasync, fh)("errc=%d", &errc)
+	defer log.Trace(path, "datasync=%v, fh=0x%X", datasync, fh)("errc=%d", &errc)
 	// This is a no-op for rclone
 	return 0
 }
 
 // Link creates a hard link to a file.
 func (fsys *FS) Link(oldpath string, newpath string) (errc int) {
-	defer fs.Trace(oldpath, "newpath=%q", newpath)("errc=%d", &errc)
+	defer log.Trace(oldpath, "newpath=%q", newpath)("errc=%d", &errc)
 	return -fuse.ENOSYS
 }
 
 // Symlink creates a symbolic link.
 func (fsys *FS) Symlink(target string, newpath string) (errc int) {
-	defer fs.Trace(target, "newpath=%q", newpath)("errc=%d", &errc)
+	defer log.Trace(target, "newpath=%q", newpath)("errc=%d", &errc)
 	return -fuse.ENOSYS
 }
 
 // Readlink reads the target of a symbolic link.
 func (fsys *FS) Readlink(path string) (errc int, linkPath string) {
-	defer fs.Trace(path, "")("linkPath=%q, errc=%d", &linkPath, &errc)
+	defer log.Trace(path, "")("linkPath=%q, errc=%d", &linkPath, &errc)
 	return -fuse.ENOSYS, ""
 }
 
 // Chmod changes the permission bits of a file.
 func (fsys *FS) Chmod(path string, mode uint32) (errc int) {
-	defer fs.Trace(path, "mode=0%o", mode)("errc=%d", &errc)
+	defer log.Trace(path, "mode=0%o", mode)("errc=%d", &errc)
 	// This is a no-op for rclone
 	return 0
 }
 
 // Chown changes the owner and group of a file.
 func (fsys *FS) Chown(path string, uid uint32, gid uint32) (errc int) {
-	defer fs.Trace(path, "uid=%d, gid=%d", uid, gid)("errc=%d", &errc)
+	defer log.Trace(path, "uid=%d, gid=%d", uid, gid)("errc=%d", &errc)
 	// This is a no-op for rclone
 	return 0
 }
 
 // Access checks file access permissions.
 func (fsys *FS) Access(path string, mask uint32) (errc int) {
-	defer fs.Trace(path, "mask=0%o", mask)("errc=%d", &errc)
+	defer log.Trace(path, "mask=0%o", mask)("errc=%d", &errc)
 	// This is a no-op for rclone
 	return 0
 }
 
 // Fsyncdir synchronizes directory contents.
 func (fsys *FS) Fsyncdir(path string, datasync bool, fh uint64) (errc int) {
-	defer fs.Trace(path, "datasync=%v, fh=0x%X", datasync, fh)("errc=%d", &errc)
+	defer log.Trace(path, "datasync=%v, fh=0x%X", datasync, fh)("errc=%d", &errc)
 	// This is a no-op for rclone
 	return 0
 }
@@ -539,6 +540,8 @@ func translateError(err error) (errc int) {
 		return -fuse.EROFS
 	case vfs.ENOSYS:
 		return -fuse.ENOSYS
+	case vfs.EINVAL:
+		return -fuse.EINVAL
 	}
 	fs.Errorf(nil, "IO error: %v", err)
 	return -fuse.EIO

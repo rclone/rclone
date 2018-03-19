@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
+
+	"github.com/ncw/rclone/fs/hash"
+	"github.com/pkg/errors"
 )
 
 // OpenOption is an interface describing options for Open
@@ -21,6 +25,28 @@ type OpenOption interface {
 
 // RangeOption defines an HTTP Range option with start and end.  If
 // either start or end are < 0 then they will be omitted.
+//
+// End may be bigger than the Size of the object in which case it will
+// be capped to the size of the object.
+//
+// Note that the End is inclusive, so to fetch 100 bytes you would use
+// RangeOption{Start: 0, End: 99}
+//
+// If Start is specified but End is not then it will fetch from Start
+// to the end of the file.
+//
+// If End is specified, but Start is not then it will fetch the last
+// End bytes.
+//
+// Examples:
+//
+//     RangeOption{Start: 0, End: 99} - fetch the first 100 bytes
+//     RangeOption{Start: 100, End: 199} - fetch the second 100 bytes
+//     RangeOption{Start: 100} - fetch bytes from offset 100 to the end
+//     RangeOption{End: 100} - fetch the last 100 bytes
+//
+// A RangeOption implements a single byte-range-spec from
+// https://tools.ietf.org/html/rfc7233#section-2.1
 type RangeOption struct {
 	Start int64
 	End   int64
@@ -41,6 +67,38 @@ func (o *RangeOption) Header() (key string, value string) {
 	return key, value
 }
 
+// ParseRangeOption parses a RangeOption from a Range: header.
+// It only appects single ranges.
+func ParseRangeOption(s string) (po *RangeOption, err error) {
+	const preamble = "bytes="
+	if !strings.HasPrefix(s, preamble) {
+		return nil, errors.New("Range: header invalid: doesn't start with " + preamble)
+	}
+	s = s[len(preamble):]
+	if strings.IndexRune(s, ',') >= 0 {
+		return nil, errors.New("Range: header invalid: contains multiple ranges which isn't supported")
+	}
+	dash := strings.IndexRune(s, '-')
+	if dash < 0 {
+		return nil, errors.New("Range: header invalid: contains no '-'")
+	}
+	start, end := strings.TrimSpace(s[:dash]), strings.TrimSpace(s[dash+1:])
+	o := RangeOption{Start: -1, End: -1}
+	if start != "" {
+		o.Start, err = strconv.ParseInt(start, 10, 64)
+		if err != nil || o.Start < 0 {
+			return nil, errors.New("Range: header invalid: bad start")
+		}
+	}
+	if end != "" {
+		o.End, err = strconv.ParseInt(end, 10, 64)
+		if err != nil || o.End < 0 {
+			return nil, errors.New("Range: header invalid: bad end")
+		}
+	}
+	return &o, nil
+}
+
 // String formats the option into human readable form
 func (o *RangeOption) String() string {
 	return fmt.Sprintf("RangeOption(%d,%d)", o.Start, o.End)
@@ -48,7 +106,49 @@ func (o *RangeOption) String() string {
 
 // Mandatory returns whether the option must be parsed or can be ignored
 func (o *RangeOption) Mandatory() bool {
-	return false
+	return true
+}
+
+// Decode interprets the RangeOption into an offset and a limit
+//
+// The offset is the start of the stream and the limit is how many
+// bytes should be read from it.  If the limit is -1 then the stream
+// should be read to the end.
+func (o *RangeOption) Decode(size int64) (offset, limit int64) {
+	if o.Start >= 0 {
+		offset = o.Start
+		if o.End >= 0 {
+			limit = o.End - o.Start + 1
+		} else {
+			limit = -1
+		}
+	} else {
+		if o.End >= 0 {
+			offset = size - o.End
+		} else {
+			offset = 0
+		}
+		limit = -1
+	}
+	return offset, limit
+}
+
+// FixRangeOption looks through the slice of options and adjusts any
+// RangeOption~s found that request a fetch from the end into an
+// absolute fetch using the size passed in.  Some remotes (eg
+// Onedrive, Box) don't support range requests which index from the
+// end.
+func FixRangeOption(options []OpenOption, size int64) {
+	for i := range options {
+		option := options[i]
+		if x, ok := option.(*RangeOption); ok {
+			// If start is < 0 then fetch from the end
+			if x.Start < 0 {
+				x = &RangeOption{Start: size - x.End, End: -1}
+				options[i] = x
+			}
+		}
+	}
 }
 
 // SeekOption defines an HTTP Range option with start only.
@@ -97,7 +197,7 @@ func (o *HTTPOption) Mandatory() bool {
 // HashesOption defines an option used to tell the local fs to limit
 // the number of hashes it calculates.
 type HashesOption struct {
-	Hashes HashSet
+	Hashes hash.Set
 }
 
 // Header formats the option as an http header

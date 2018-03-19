@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +28,7 @@ password to protect your configuration.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
-		fs.EditConfig()
+		config.EditConfig()
 	},
 }
 
@@ -44,7 +44,7 @@ var configFileCommand = &cobra.Command{
 	Short: `Show path of configuration file in use.`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
-		fs.ShowConfigLocation()
+		config.ShowConfigLocation()
 	},
 }
 
@@ -54,9 +54,9 @@ var configShowCommand = &cobra.Command{
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 1, command, args)
 		if len(args) == 0 {
-			fs.ShowConfig()
+			config.ShowConfig()
 		} else {
-			fs.ShowRemote(args[0])
+			config.ShowRemote(args[0])
 		}
 	},
 }
@@ -66,7 +66,7 @@ var configDumpCommand = &cobra.Command{
 	Short: `Dump the config file as JSON.`,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 0, command, args)
-		return fs.ConfigDump()
+		return config.Dump()
 	},
 }
 
@@ -75,7 +75,7 @@ var configProvidersCommand = &cobra.Command{
 	Short: `List in JSON format all the providers and options.`,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 0, command, args)
-		return fs.JSONListProviders()
+		return config.JSONListProviders()
 	},
 }
 
@@ -93,7 +93,7 @@ you would do:
 `,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(2, 256, command, args)
-		return fs.CreateRemote(args[0], args[1], args[2:])
+		return config.CreateRemote(args[0], args[1], args[2:])
 	},
 }
 
@@ -110,7 +110,7 @@ For example to update the env_auth field of a remote of name myremote you would 
 `,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(3, 256, command, args)
-		return fs.UpdateRemote(args[0], args[1:])
+		return config.UpdateRemote(args[0], args[1:])
 	},
 }
 
@@ -119,7 +119,7 @@ var configDeleteCommand = &cobra.Command{
 	Short: `Delete an existing remote <name>.`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
-		fs.DeleteRemote(args[0])
+		config.DeleteRemote(args[0])
 	},
 }
 
@@ -136,6 +136,6 @@ For example to set password of a remote of name myremote you would do:
 `,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(3, 256, command, args)
-		return fs.PasswordRemote(args[0], args[1:])
+		return config.PasswordRemote(args[0], args[1:])
 	},
 }

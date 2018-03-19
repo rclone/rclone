@@ -18,135 +18,97 @@ func translate(in string) string {
 }
 
 func TestGenManDoc(t *testing.T) {
-	c := initializeWithRootCmd()
-	// Need two commands to run the command alphabetical sort
-	cmdEcho.AddCommand(cmdTimes, cmdEchoSub, cmdDeprecated)
-	c.AddCommand(cmdPrint, cmdEcho)
-	cmdRootWithRun.PersistentFlags().StringVarP(&flags2a, "rootflag", "r", "two", strtwoParentHelp)
-
-	out := new(bytes.Buffer)
-
 	header := &GenManHeader{
 		Title:   "Project",
 		Section: "2",
 	}
+
 	// We generate on a subcommand so we have both subcommands and parents
-	if err := GenMan(cmdEcho, header, out); err != nil {
+	buf := new(bytes.Buffer)
+	if err := GenMan(echoCmd, header, buf); err != nil {
 		t.Fatal(err)
 	}
-	found := out.String()
+	output := buf.String()
 
 	// Make sure parent has - in CommandPath() in SEE ALSO:
-	parentPath := cmdEcho.Parent().CommandPath()
+	parentPath := echoCmd.Parent().CommandPath()
 	dashParentPath := strings.Replace(parentPath, " ", "-", -1)
 	expected := translate(dashParentPath)
 	expected = expected + "(" + header.Section + ")"
-	checkStringContains(t, found, expected)
+	checkStringContains(t, output, expected)
 
-	// Our description
-	expected = translate(cmdEcho.Name())
-	checkStringContains(t, found, expected)
-
-	// Better have our example
-	expected = translate(cmdEcho.Name())
-	checkStringContains(t, found, expected)
-
-	// A local flag
-	expected = "boolone"
-	checkStringContains(t, found, expected)
-
-	// persistent flag on parent
-	expected = "rootflag"
-	checkStringContains(t, found, expected)
-
-	// We better output info about our parent
-	expected = translate(cmdRootWithRun.Name())
-	checkStringContains(t, found, expected)
-
-	// And about subcommands
-	expected = translate(cmdEchoSub.Name())
-	checkStringContains(t, found, expected)
-
-	unexpected := translate(cmdDeprecated.Name())
-	checkStringOmits(t, found, unexpected)
-
-	// auto generated
-	expected = translate("Auto generated")
-	checkStringContains(t, found, expected)
+	checkStringContains(t, output, translate(echoCmd.Name()))
+	checkStringContains(t, output, translate(echoCmd.Name()))
+	checkStringContains(t, output, "boolone")
+	checkStringContains(t, output, "rootflag")
+	checkStringContains(t, output, translate(rootCmd.Name()))
+	checkStringContains(t, output, translate(echoSubCmd.Name()))
+	checkStringOmits(t, output, translate(deprecatedCmd.Name()))
+	checkStringContains(t, output, translate("Auto generated"))
 }
 
 func TestGenManNoGenTag(t *testing.T) {
-	c := initializeWithRootCmd()
-	// Need two commands to run the command alphabetical sort
-	cmdEcho.AddCommand(cmdTimes, cmdEchoSub, cmdDeprecated)
-	c.AddCommand(cmdPrint, cmdEcho)
-	cmdRootWithRun.PersistentFlags().StringVarP(&flags2a, "rootflag", "r", "two", strtwoParentHelp)
-	cmdEcho.DisableAutoGenTag = true
-	out := new(bytes.Buffer)
+	echoCmd.DisableAutoGenTag = true
+	defer func() { echoCmd.DisableAutoGenTag = false }()
 
 	header := &GenManHeader{
 		Title:   "Project",
 		Section: "2",
 	}
+
 	// We generate on a subcommand so we have both subcommands and parents
-	if err := GenMan(cmdEcho, header, out); err != nil {
+	buf := new(bytes.Buffer)
+	if err := GenMan(echoCmd, header, buf); err != nil {
 		t.Fatal(err)
 	}
-	found := out.String()
+	output := buf.String()
 
 	unexpected := translate("#HISTORY")
-	checkStringOmits(t, found, unexpected)
+	checkStringOmits(t, output, unexpected)
 }
 
 func TestGenManSeeAlso(t *testing.T) {
-	noop := func(cmd *cobra.Command, args []string) {}
+	rootCmd := &cobra.Command{Use: "root", Run: emptyRun}
+	aCmd := &cobra.Command{Use: "aaa", Run: emptyRun, Hidden: true} // #229
+	bCmd := &cobra.Command{Use: "bbb", Run: emptyRun}
+	cCmd := &cobra.Command{Use: "ccc", Run: emptyRun}
+	rootCmd.AddCommand(aCmd, bCmd, cCmd)
 
-	top := &cobra.Command{Use: "top", Run: noop}
-	aaa := &cobra.Command{Use: "aaa", Run: noop, Hidden: true} // #229
-	bbb := &cobra.Command{Use: "bbb", Run: noop}
-	ccc := &cobra.Command{Use: "ccc", Run: noop}
-	top.AddCommand(aaa, bbb, ccc)
-
-	out := new(bytes.Buffer)
+	buf := new(bytes.Buffer)
 	header := &GenManHeader{}
-	if err := GenMan(top, header, out); err != nil {
+	if err := GenMan(rootCmd, header, buf); err != nil {
 		t.Fatal(err)
 	}
+	scanner := bufio.NewScanner(buf)
 
-	scanner := bufio.NewScanner(out)
-
-	if err := AssertLineFound(scanner, ".SH SEE ALSO"); err != nil {
-		t.Fatal(fmt.Errorf("Couldn't find SEE ALSO section header: %s", err.Error()))
+	if err := assertLineFound(scanner, ".SH SEE ALSO"); err != nil {
+		t.Fatalf("Couldn't find SEE ALSO section header: %v", err)
 	}
-
-	if err := AssertNextLineEquals(scanner, ".PP"); err != nil {
-		t.Fatal(fmt.Errorf("First line after SEE ALSO wasn't break-indent: %s", err.Error()))
+	if err := assertNextLineEquals(scanner, ".PP"); err != nil {
+		t.Fatalf("First line after SEE ALSO wasn't break-indent: %v", err)
 	}
-
-	if err := AssertNextLineEquals(scanner, `\fBtop\-bbb(1)\fP, \fBtop\-ccc(1)\fP`); err != nil {
-		t.Fatal(fmt.Errorf("Second line after SEE ALSO wasn't correct: %s", err.Error()))
+	if err := assertNextLineEquals(scanner, `\fBroot\-bbb(1)\fP, \fBroot\-ccc(1)\fP`); err != nil {
+		t.Fatalf("Second line after SEE ALSO wasn't correct: %v", err)
 	}
 }
 
 func TestManPrintFlagsHidesShortDeperecated(t *testing.T) {
-	cmd := &cobra.Command{}
-	flags := cmd.Flags()
-	flags.StringP("foo", "f", "default", "Foo flag")
-	flags.MarkShorthandDeprecated("foo", "don't use it no more")
+	c := &cobra.Command{}
+	c.Flags().StringP("foo", "f", "default", "Foo flag")
+	c.Flags().MarkShorthandDeprecated("foo", "don't use it no more")
 
-	out := new(bytes.Buffer)
-	manPrintFlags(out, flags)
+	buf := new(bytes.Buffer)
+	manPrintFlags(buf, c.Flags())
 
+	got := buf.String()
 	expected := "**--foo**=\"default\"\n\tFoo flag\n\n"
-	if out.String() != expected {
-		t.Fatalf("Expected %s, but got %s", expected, out.String())
+	if got != expected {
+		t.Errorf("Expected %v, got %v", expected, got)
 	}
 }
 
 func TestGenManTree(t *testing.T) {
-	cmd := &cobra.Command{
-		Use: "do [OPTIONS] arg1 arg2",
-	}
+	c := &cobra.Command{Use: "do [OPTIONS] arg1 arg2"}
 	header := &GenManHeader{Section: "2"}
 	tmpdir, err := ioutil.TempDir("", "test-gen-man-tree")
 	if err != nil {
@@ -154,7 +116,7 @@ func TestGenManTree(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpdir)
 
-	if err := GenManTree(cmd, header, tmpdir); err != nil {
+	if err := GenManTree(c, header, tmpdir); err != nil {
 		t.Fatalf("GenManTree failed: %s", err.Error())
 	}
 
@@ -167,7 +129,7 @@ func TestGenManTree(t *testing.T) {
 	}
 }
 
-func AssertLineFound(scanner *bufio.Scanner, expectedLine string) error {
+func assertLineFound(scanner *bufio.Scanner, expectedLine string) error {
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == expectedLine {
@@ -176,30 +138,29 @@ func AssertLineFound(scanner *bufio.Scanner, expectedLine string) error {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("AssertLineFound: scan failed: %s", err.Error())
+		return fmt.Errorf("scan failed: %s", err)
 	}
 
-	return fmt.Errorf("AssertLineFound: hit EOF before finding %#v", expectedLine)
+	return fmt.Errorf("hit EOF before finding %v", expectedLine)
 }
 
-func AssertNextLineEquals(scanner *bufio.Scanner, expectedLine string) error {
+func assertNextLineEquals(scanner *bufio.Scanner, expectedLine string) error {
 	if scanner.Scan() {
 		line := scanner.Text()
 		if line == expectedLine {
 			return nil
 		}
-		return fmt.Errorf("AssertNextLineEquals: got %#v, not %#v", line, expectedLine)
+		return fmt.Errorf("got %v, not %v", line, expectedLine)
 	}
 
 	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("AssertNextLineEquals: scan failed: %s", err.Error())
+		return fmt.Errorf("scan failed: %v", err)
 	}
 
-	return fmt.Errorf("AssertNextLineEquals: hit EOF before finding %#v", expectedLine)
+	return fmt.Errorf("hit EOF before finding %v", expectedLine)
 }
 
 func BenchmarkGenManToFile(b *testing.B) {
-	c := initializeWithRootCmd()
 	file, err := ioutil.TempFile("", "")
 	if err != nil {
 		b.Fatal(err)
@@ -209,7 +170,7 @@ func BenchmarkGenManToFile(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if err := GenMan(c, nil, file); err != nil {
+		if err := GenMan(rootCmd, nil, file); err != nil {
 			b.Fatal(err)
 		}
 	}

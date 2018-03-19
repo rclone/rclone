@@ -1,6 +1,8 @@
 // Package search implements the Azure ARM Search service API version 2015-08-19.
 //
 // Client that can be used to manage Azure Search services and API keys.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/search/2015-08-19/search
 package search
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

@@ -113,8 +113,8 @@ type DirectoryList struct {
 }
 
 func (s *DirectoryList) MarshalJSON() ([]byte, error) {
-	type noMethod DirectoryList
-	raw := noMethod(*s)
+	type NoMethod DirectoryList
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -175,8 +175,8 @@ type DirectoryListItems struct {
 }
 
 func (s *DirectoryListItems) MarshalJSON() ([]byte, error) {
-	type noMethod DirectoryListItems
-	raw := noMethod(*s)
+	type NoMethod DirectoryListItems
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -207,8 +207,8 @@ type DirectoryListItemsIcons struct {
 }
 
 func (s *DirectoryListItemsIcons) MarshalJSON() ([]byte, error) {
-	type noMethod DirectoryListItemsIcons
-	raw := noMethod(*s)
+	type NoMethod DirectoryListItemsIcons
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -307,8 +307,8 @@ type JsonSchema struct {
 }
 
 func (s *JsonSchema) MarshalJSON() ([]byte, error) {
-	type noMethod JsonSchema
-	raw := noMethod(*s)
+	type NoMethod JsonSchema
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -336,8 +336,8 @@ type JsonSchemaAnnotations struct {
 }
 
 func (s *JsonSchemaAnnotations) MarshalJSON() ([]byte, error) {
-	type noMethod JsonSchemaAnnotations
-	raw := noMethod(*s)
+	type NoMethod JsonSchemaAnnotations
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -369,8 +369,8 @@ type JsonSchemaVariant struct {
 }
 
 func (s *JsonSchemaVariant) MarshalJSON() ([]byte, error) {
-	type noMethod JsonSchemaVariant
-	raw := noMethod(*s)
+	type NoMethod JsonSchemaVariant
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -397,8 +397,8 @@ type JsonSchemaVariantMap struct {
 }
 
 func (s *JsonSchemaVariantMap) MarshalJSON() ([]byte, error) {
-	type noMethod JsonSchemaVariantMap
-	raw := noMethod(*s)
+	type NoMethod JsonSchemaVariantMap
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -521,8 +521,8 @@ type RestDescription struct {
 }
 
 func (s *RestDescription) MarshalJSON() ([]byte, error) {
-	type noMethod RestDescription
-	raw := noMethod(*s)
+	type NoMethod RestDescription
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -549,8 +549,8 @@ type RestDescriptionAuth struct {
 }
 
 func (s *RestDescriptionAuth) MarshalJSON() ([]byte, error) {
-	type noMethod RestDescriptionAuth
-	raw := noMethod(*s)
+	type NoMethod RestDescriptionAuth
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -577,8 +577,8 @@ type RestDescriptionAuthOauth2 struct {
 }
 
 func (s *RestDescriptionAuthOauth2) MarshalJSON() ([]byte, error) {
-	type noMethod RestDescriptionAuthOauth2
-	raw := noMethod(*s)
+	type NoMethod RestDescriptionAuthOauth2
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -605,8 +605,8 @@ type RestDescriptionAuthOauth2Scopes struct {
 }
 
 func (s *RestDescriptionAuthOauth2Scopes) MarshalJSON() ([]byte, error) {
-	type noMethod RestDescriptionAuthOauth2Scopes
-	raw := noMethod(*s)
+	type NoMethod RestDescriptionAuthOauth2Scopes
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -637,8 +637,8 @@ type RestDescriptionIcons struct {
 }
 
 func (s *RestDescriptionIcons) MarshalJSON() ([]byte, error) {
-	type noMethod RestDescriptionIcons
-	raw := noMethod(*s)
+	type NoMethod RestDescriptionIcons
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -713,8 +713,8 @@ type RestMethod struct {
 }
 
 func (s *RestMethod) MarshalJSON() ([]byte, error) {
-	type noMethod RestMethod
-	raw := noMethod(*s)
+	type NoMethod RestMethod
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -749,8 +749,8 @@ type RestMethodMediaUpload struct {
 }
 
 func (s *RestMethodMediaUpload) MarshalJSON() ([]byte, error) {
-	type noMethod RestMethodMediaUpload
-	raw := noMethod(*s)
+	type NoMethod RestMethodMediaUpload
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -780,8 +780,8 @@ type RestMethodMediaUploadProtocols struct {
 }
 
 func (s *RestMethodMediaUploadProtocols) MarshalJSON() ([]byte, error) {
-	type noMethod RestMethodMediaUploadProtocols
-	raw := noMethod(*s)
+	type NoMethod RestMethodMediaUploadProtocols
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -815,8 +815,8 @@ type RestMethodMediaUploadProtocolsResumable struct {
 }
 
 func (s *RestMethodMediaUploadProtocolsResumable) MarshalJSON() ([]byte, error) {
-	type noMethod RestMethodMediaUploadProtocolsResumable
-	raw := noMethod(*s)
+	type NoMethod RestMethodMediaUploadProtocolsResumable
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -850,8 +850,8 @@ type RestMethodMediaUploadProtocolsSimple struct {
 }
 
 func (s *RestMethodMediaUploadProtocolsSimple) MarshalJSON() ([]byte, error) {
-	type noMethod RestMethodMediaUploadProtocolsSimple
-	raw := noMethod(*s)
+	type NoMethod RestMethodMediaUploadProtocolsSimple
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -881,8 +881,8 @@ type RestMethodRequest struct {
 }
 
 func (s *RestMethodRequest) MarshalJSON() ([]byte, error) {
-	type noMethod RestMethodRequest
-	raw := noMethod(*s)
+	type NoMethod RestMethodRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -909,8 +909,8 @@ type RestMethodResponse struct {
 }
 
 func (s *RestMethodResponse) MarshalJSON() ([]byte, error) {
-	type noMethod RestMethodResponse
-	raw := noMethod(*s)
+	type NoMethod RestMethodResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -939,8 +939,8 @@ type RestResource struct {
 }
 
 func (s *RestResource) MarshalJSON() ([]byte, error) {
-	type noMethod RestResource
-	raw := noMethod(*s)
+	type NoMethod RestResource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1054,7 +1054,7 @@ func (c *ApisGetRestCall) Do(opts ...googleapi.CallOption) (*RestDescription, er
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1204,7 +1204,7 @@ func (c *ApisListCall) Do(opts ...googleapi.CallOption) (*DirectoryList, error) 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

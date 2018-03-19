@@ -169,9 +169,9 @@ func TestLocalization(t *testing.T) {
 
 type entry struct{ tag, key, msg string }
 
-func initCat(entries []entry) (*catalog.Catalog, []language.Tag) {
+func initCat(entries []entry) (*catalog.Builder, []language.Tag) {
 	tags := []language.Tag{}
-	cat := catalog.New()
+	cat := catalog.NewBuilder()
 	for _, e := range entries {
 		tag := language.MustParse(e.tag)
 		tags = append(tags, tag)

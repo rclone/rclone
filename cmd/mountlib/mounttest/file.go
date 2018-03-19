@@ -2,6 +2,7 @@ package mounttest
 
 import (
 	"os"
+	"runtime"
 	"testing"
 	"time"
 
@@ -36,6 +37,9 @@ func osCreate(name string) (*os.File, error) {
 // TestFileModTimeWithOpenWriters tests mod time on open files
 func TestFileModTimeWithOpenWriters(t *testing.T) {
 	run.skipIfNoFUSE(t)
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping test on Windows")
+	}
 
 	mtime := time.Date(2012, 11, 18, 17, 32, 31, 0, time.UTC)
 	filepath := run.path("cp-archive-test")

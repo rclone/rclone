@@ -462,6 +462,13 @@
         "DescribeDirectoriesResult$DirectoryDescriptions": "<p>The list of <a>DirectoryDescription</a> objects that were retrieved.</p> <p>It is possible that this list contains less than the number of items specified in the <i>Limit</i> member of the request. This occurs if there are less than the requested number of items left to retrieve, or if the limitations of the operation have been exceeded.</p>"
       }
     },
+    "DirectoryEdition": {
+      "base": null,
+      "refs": {
+        "CreateMicrosoftADRequest$Edition": "<p>AWS Microsoft AD is available in two editions: Standard and Enterprise. Enterprise is the default.</p>",
+        "DirectoryDescription$Edition": "<p>The edition associated with this directory.</p>"
+      }
+    },
     "DirectoryId": {
       "base": null,
       "refs": {
@@ -1105,7 +1112,7 @@
       "base": null,
       "refs": {
         "DirectoryConnectSettingsDescription$SecurityGroupId": "<p>The security group identifier for the AD Connector directory.</p>",
-        "DirectoryVpcSettingsDescription$SecurityGroupId": "<p>The security group identifier for the directory. If the directory was created before 8/1/2014, this is the identifier of the directory members security group that was created when the directory was created. If the directory was created after this date, this value is null.</p>"
+        "DirectoryVpcSettingsDescription$SecurityGroupId": "<p>The domain controller security group identifier for the directory.</p>"
       }
     },
     "Server": {

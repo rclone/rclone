@@ -157,8 +157,8 @@ type GeoJsonGeometryCollection struct {
 }
 
 func (s *GeoJsonGeometryCollection) MarshalJSON() ([]byte, error) {
-	type noMethod GeoJsonGeometryCollection
-	raw := noMethod(*s)
+	type NoMethod GeoJsonGeometryCollection
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -190,8 +190,8 @@ type GeoJsonLineString struct {
 }
 
 func (s *GeoJsonLineString) MarshalJSON() ([]byte, error) {
-	type noMethod GeoJsonLineString
-	raw := noMethod(*s)
+	type NoMethod GeoJsonLineString
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -225,8 +225,8 @@ type GeoJsonMultiLineString struct {
 }
 
 func (s *GeoJsonMultiLineString) MarshalJSON() ([]byte, error) {
-	type noMethod GeoJsonMultiLineString
-	raw := noMethod(*s)
+	type NoMethod GeoJsonMultiLineString
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -258,8 +258,8 @@ type GeoJsonMultiPoint struct {
 }
 
 func (s *GeoJsonMultiPoint) MarshalJSON() ([]byte, error) {
-	type noMethod GeoJsonMultiPoint
-	raw := noMethod(*s)
+	type NoMethod GeoJsonMultiPoint
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -292,8 +292,8 @@ type GeoJsonMultiPolygon struct {
 }
 
 func (s *GeoJsonMultiPolygon) MarshalJSON() ([]byte, error) {
-	type noMethod GeoJsonMultiPolygon
-	raw := noMethod(*s)
+	type NoMethod GeoJsonMultiPolygon
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -326,8 +326,8 @@ type GeoJsonPoint struct {
 }
 
 func (s *GeoJsonPoint) MarshalJSON() ([]byte, error) {
-	type noMethod GeoJsonPoint
-	raw := noMethod(*s)
+	type NoMethod GeoJsonPoint
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -364,8 +364,8 @@ type GeoJsonPolygon struct {
 }
 
 func (s *GeoJsonPolygon) MarshalJSON() ([]byte, error) {
-	type noMethod GeoJsonPolygon
-	raw := noMethod(*s)
+	type NoMethod GeoJsonPolygon
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -415,8 +415,8 @@ type MapFolder struct {
 }
 
 func (s *MapFolder) MarshalJSON() ([]byte, error) {
-	type noMethod MapFolder
-	raw := noMethod(*s)
+	type NoMethod MapFolder
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -491,8 +491,8 @@ type MapKmlLink struct {
 }
 
 func (s *MapKmlLink) MarshalJSON() ([]byte, error) {
-	type noMethod MapKmlLink
-	raw := noMethod(*s)
+	type NoMethod MapKmlLink
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -541,7 +541,7 @@ type MapLayer struct {
 }
 
 func (s *MapLayer) MarshalJSON() ([]byte, error) {
-	type noMethod MapLayer
-	raw := noMethod(*s)
+	type NoMethod MapLayer
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }

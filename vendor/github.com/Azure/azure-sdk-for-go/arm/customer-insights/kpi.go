@@ -132,6 +132,7 @@ func (client KpiClient) CreateOrUpdatePreparer(resourceGroupName string, hubName
 func (client KpiClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -214,6 +215,7 @@ func (client KpiClient) DeletePreparer(resourceGroupName string, hubName string,
 func (client KpiClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -279,7 +281,9 @@ func (client KpiClient) GetPreparer(resourceGroupName string, hubName string, kp
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client KpiClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -344,7 +348,9 @@ func (client KpiClient) ListByHubPreparer(resourceGroupName string, hubName stri
 // ListByHubSender sends the ListByHub request. The method will close the
 // http.Response Body if it receives an error.
 func (client KpiClient) ListByHubSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByHubResponder handles the response to the ListByHub request. The method always
@@ -479,7 +485,9 @@ func (client KpiClient) ReprocessPreparer(resourceGroupName string, hubName stri
 // ReprocessSender sends the Reprocess request. The method will close the
 // http.Response Body if it receives an error.
 func (client KpiClient) ReprocessSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ReprocessResponder handles the response to the Reprocess request. The method always

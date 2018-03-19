@@ -120,7 +120,9 @@ func (client PortsClient) GetPreparer(resourceGroupName string, workspaceName st
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client PortsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -215,7 +217,9 @@ func (client PortsClient) GetLivenessPreparer(resourceGroupName string, workspac
 // GetLivenessSender sends the GetLiveness request. The method will close the
 // http.Response Body if it receives an error.
 func (client PortsClient) GetLivenessSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetLivenessResponder handles the response to the GetLiveness request. The method always
@@ -310,7 +314,9 @@ func (client PortsClient) ListAcceptingProcessesPreparer(resourceGroupName strin
 // ListAcceptingProcessesSender sends the ListAcceptingProcesses request. The method will close the
 // http.Response Body if it receives an error.
 func (client PortsClient) ListAcceptingProcessesSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListAcceptingProcessesResponder handles the response to the ListAcceptingProcesses request. The method always
@@ -474,7 +480,9 @@ func (client PortsClient) ListConnectionsPreparer(resourceGroupName string, work
 // ListConnectionsSender sends the ListConnections request. The method will close the
 // http.Response Body if it receives an error.
 func (client PortsClient) ListConnectionsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListConnectionsResponder handles the response to the ListConnections request. The method always

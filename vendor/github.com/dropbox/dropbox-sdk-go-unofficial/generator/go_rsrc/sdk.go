@@ -21,6 +21,7 @@
 package dropbox
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -77,12 +78,12 @@ const (
 	LogInfo
 )
 
-func (l LogLevel) ShouldLog(v LogLevel) bool {
-	return l > v || l & v == v
+func (l LogLevel) shouldLog(v LogLevel) bool {
+	return l > v || l&v == v
 }
 
 func (c *Config) doLog(l LogLevel, format string, v ...interface{}) {
-	if !c.LogLevel.ShouldLog(l) {
+	if !c.LogLevel.shouldLog(l) {
 		return
 	}
 
@@ -152,7 +153,7 @@ func NewContext(c Config) Context {
 	if client == nil {
 		var conf = &oauth2.Config{Endpoint: OAuthEndpoint(domain)}
 		tok := &oauth2.Token{AccessToken: c.Token}
-		client = conf.Client(oauth2.NoContext, tok)
+		client = conf.Client(context.Background(), tok)
 	}
 
 	headerGenerator := c.HeaderGenerator

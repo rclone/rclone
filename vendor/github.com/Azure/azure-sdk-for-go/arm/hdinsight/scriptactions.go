@@ -89,7 +89,9 @@ func (client ScriptActionsClient) DeletePreparer(resourceGroupName string, clust
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ScriptActionsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -153,7 +155,9 @@ func (client ScriptActionsClient) ListPreparer(resourceGroupName string, cluster
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ScriptActionsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always

@@ -56,6 +56,15 @@ func main() {
 	removeFieldsRegex := regexp.MustCompile(`X__glibc\S*`)
 	b = removeFieldsRegex.ReplaceAll(b, []byte("_"))
 
+	// Convert [65]int8 to [65]byte in Utsname members to simplify
+	// conversion to string; see golang.org/issue/20753
+	convertUtsnameRegex := regexp.MustCompile(`((Sys|Node|Domain)name|Release|Version|Machine)(\s+)\[(\d+)\]u?int8`)
+	b = convertUtsnameRegex.ReplaceAll(b, []byte("$1$3[$4]byte"))
+
+	// Remove spare fields (e.g. in Statx_t)
+	spareFieldsRegex := regexp.MustCompile(`X__spare\S*`)
+	b = spareFieldsRegex.ReplaceAll(b, []byte("_"))
+
 	// We refuse to export private fields on s390x
 	if goarch == "s390x" && goos == "linux" {
 		// Remove cgo padding fields

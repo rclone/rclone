@@ -37,7 +37,7 @@ const opAcceptHandshake = "AcceptHandshake"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AcceptHandshake
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AcceptHandshake
 func (c *Organizations) AcceptHandshakeRequest(input *AcceptHandshakeInput) (req *request.Request, output *AcceptHandshakeOutput) {
 	op := &request.Operation{
 		Name:       opAcceptHandshake,
@@ -64,6 +64,13 @@ func (c *Organizations) AcceptHandshakeRequest(input *AcceptHandshakeInput) (req
 //
 //    * Invitation to join or Approve all features request handshakes: only
 //    a principal from the member account.
+//
+// The user who calls the API for an invitation to join must have the organizations:AcceptHandshake
+//    permission. If you enabled all features in the organization, then the
+//    user must also have the iam:CreateServiceLinkedRole permission so that
+//    Organizations can create the required service-linked role named OrgsServiceLinkedRoleName.
+//    For more information, see AWS Organizations and Service-Linked Roles (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_integration_services.html#orgs_integration_service-linked-roles)
+//    in the AWS Organizations User Guide.
 //
 //    * Enable all features final confirmation handshake: only a principal from
 //    the master account.
@@ -100,6 +107,9 @@ func (c *Organizations) AcceptHandshakeRequest(input *AcceptHandshakeInput) (req
 //   * ErrCodeHandshakeConstraintViolationException "HandshakeConstraintViolationException"
 //   The requested operation would violate the constraint identified in the reason
 //   code.
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on
 //      the number of accounts in an organization. Note: deleted and closed accounts
@@ -152,6 +162,9 @@ func (c *Organizations) AcceptHandshakeRequest(input *AcceptHandshakeInput) (req
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -213,7 +226,12 @@ func (c *Organizations) AcceptHandshakeRequest(input *AcceptHandshakeInput) (req
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AcceptHandshake
+//   * ErrCodeAccessDeniedForDependencyException "AccessDeniedForDependencyException"
+//   The operation you attempted requires you to have the iam:CreateServiceLinkedRole
+//   so that Organizations can create the required service-linked role. You do
+//   not have that permission.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AcceptHandshake
 func (c *Organizations) AcceptHandshake(input *AcceptHandshakeInput) (*AcceptHandshakeOutput, error) {
 	req, out := c.AcceptHandshakeRequest(input)
 	return out, req.Send()
@@ -260,7 +278,7 @@ const opAttachPolicy = "AttachPolicy"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AttachPolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AttachPolicy
 func (c *Organizations) AttachPolicyRequest(input *AttachPolicyInput) (req *request.Request, output *AttachPolicyOutput) {
 	op := &request.Operation{
 		Name:       opAttachPolicy,
@@ -351,6 +369,9 @@ func (c *Organizations) AttachPolicyRequest(input *AttachPolicyInput) (req *requ
 //   policies to an account, OU, or root. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
 //   of accounts in an organization. If you need more accounts, contact AWS Support
 //   to request an increase in your limit.
@@ -434,6 +455,9 @@ func (c *Organizations) AttachPolicyRequest(input *AttachPolicyInput) (req *requ
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -503,7 +527,7 @@ func (c *Organizations) AttachPolicyRequest(input *AttachPolicyInput) (req *requ
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AttachPolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AttachPolicy
 func (c *Organizations) AttachPolicy(input *AttachPolicyInput) (*AttachPolicyOutput, error) {
 	req, out := c.AttachPolicyRequest(input)
 	return out, req.Send()
@@ -550,7 +574,7 @@ const opCancelHandshake = "CancelHandshake"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CancelHandshake
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CancelHandshake
 func (c *Organizations) CancelHandshakeRequest(input *CancelHandshakeInput) (req *request.Request, output *CancelHandshakeOutput) {
 	op := &request.Operation{
 		Name:       opCancelHandshake,
@@ -615,6 +639,9 @@ func (c *Organizations) CancelHandshakeRequest(input *CancelHandshakeInput) (req
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -671,7 +698,7 @@ func (c *Organizations) CancelHandshakeRequest(input *CancelHandshakeInput) (req
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CancelHandshake
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CancelHandshake
 func (c *Organizations) CancelHandshake(input *CancelHandshakeInput) (*CancelHandshakeOutput, error) {
 	req, out := c.CancelHandshakeRequest(input)
 	return out, req.Send()
@@ -718,7 +745,7 @@ const opCreateAccount = "CreateAccount"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateAccount
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateAccount
 func (c *Organizations) CreateAccountRequest(input *CreateAccountInput) (req *request.Request, output *CreateAccountOutput) {
 	op := &request.Operation{
 		Name:       opCreateAccount,
@@ -743,11 +770,22 @@ func (c *Organizations) CreateAccountRequest(input *CreateAccountInput) (req *re
 // later, you need the OperationId response element from this operation to provide
 // as a parameter to the DescribeCreateAccountStatus operation.
 //
-// AWS Organizations preconfigures the new member account with a role (named
-// OrganizationAccountAccessRole by default) that grants administrator permissions
-// to the new account. Principals in the master account can assume the role.
-// AWS Organizations clones the company name and address information for the
-// new account from the organization's master account.
+// The user who calls the API for an invitation to join must have the organizations:CreateAccount
+// permission. If you enabled all features in the organization, then the user
+// must also have the iam:CreateServiceLinkedRole permission so that Organizations
+// can create the required service-linked role named OrgsServiceLinkedRoleName.
+// For more information, see AWS Organizations and Service-Linked Roles (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_integration_services.html#orgs_integration_service-linked-roles)
+// in the AWS Organizations User Guide.
+//
+// The user in the master account who calls this API must also have the iam:CreateRole
+// permission because AWS Organizations preconfigures the new member account
+// with a role (named OrganizationAccountAccessRole by default) that grants
+// users in the master account administrator permissions in the new member account.
+// Principals in the master account can assume the role. AWS Organizations clones
+// the company name and address information for the new account from the organization's
+// master account.
+//
+// This operation can be called only from the organization's master account.
 //
 // For more information about creating accounts, see Creating an AWS Account
 // in Your Organization (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_create.html)
@@ -805,6 +843,9 @@ func (c *Organizations) CreateAccountRequest(input *CreateAccountInput) (req *re
 //   or creating too many accounts to the organization, or attaching too many
 //   policies to an account, OU, or root. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
 //   of accounts in an organization. If you need more accounts, contact AWS Support
@@ -886,6 +927,9 @@ func (c *Organizations) CreateAccountRequest(input *CreateAccountInput) (req *re
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -946,7 +990,7 @@ func (c *Organizations) CreateAccountRequest(input *CreateAccountInput) (req *re
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateAccount
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateAccount
 func (c *Organizations) CreateAccount(input *CreateAccountInput) (*CreateAccountOutput, error) {
 	req, out := c.CreateAccountRequest(input)
 	return out, req.Send()
@@ -993,7 +1037,7 @@ const opCreateOrganization = "CreateOrganization"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganization
 func (c *Organizations) CreateOrganizationRequest(input *CreateOrganizationInput) (req *request.Request, output *CreateOrganizationOutput) {
 	op := &request.Operation{
 		Name:       opCreateOrganization,
@@ -1057,6 +1101,9 @@ func (c *Organizations) CreateOrganizationRequest(input *CreateOrganizationInput
 //   policies to an account, OU, or root. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
 //   of accounts in an organization. If you need more accounts, contact AWS Support
 //   to request an increase in your limit.
@@ -1137,6 +1184,9 @@ func (c *Organizations) CreateOrganizationRequest(input *CreateOrganizationInput
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -1193,7 +1243,12 @@ func (c *Organizations) CreateOrganizationRequest(input *CreateOrganizationInput
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganization
+//   * ErrCodeAccessDeniedForDependencyException "AccessDeniedForDependencyException"
+//   The operation you attempted requires you to have the iam:CreateServiceLinkedRole
+//   so that Organizations can create the required service-linked role. You do
+//   not have that permission.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganization
 func (c *Organizations) CreateOrganization(input *CreateOrganizationInput) (*CreateOrganizationOutput, error) {
 	req, out := c.CreateOrganizationRequest(input)
 	return out, req.Send()
@@ -1240,7 +1295,7 @@ const opCreateOrganizationalUnit = "CreateOrganizationalUnit"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationalUnit
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationalUnit
 func (c *Organizations) CreateOrganizationalUnitRequest(input *CreateOrganizationalUnitInput) (req *request.Request, output *CreateOrganizationalUnitOutput) {
 	op := &request.Operation{
 		Name:       opCreateOrganizationalUnit,
@@ -1299,6 +1354,9 @@ func (c *Organizations) CreateOrganizationalUnitRequest(input *CreateOrganizatio
 //   or creating too many accounts to the organization, or attaching too many
 //   policies to an account, OU, or root. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
 //   of accounts in an organization. If you need more accounts, contact AWS Support
@@ -1383,6 +1441,9 @@ func (c *Organizations) CreateOrganizationalUnitRequest(input *CreateOrganizatio
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -1443,7 +1504,7 @@ func (c *Organizations) CreateOrganizationalUnitRequest(input *CreateOrganizatio
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationalUnit
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationalUnit
 func (c *Organizations) CreateOrganizationalUnit(input *CreateOrganizationalUnitInput) (*CreateOrganizationalUnitOutput, error) {
 	req, out := c.CreateOrganizationalUnitRequest(input)
 	return out, req.Send()
@@ -1490,7 +1551,7 @@ const opCreatePolicy = "CreatePolicy"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreatePolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreatePolicy
 func (c *Organizations) CreatePolicyRequest(input *CreatePolicyInput) (req *request.Request, output *CreatePolicyOutput) {
 	op := &request.Operation{
 		Name:       opCreatePolicy,
@@ -1546,6 +1607,9 @@ func (c *Organizations) CreatePolicyRequest(input *CreatePolicyInput) (req *requ
 //   or creating too many accounts to the organization, or attaching too many
 //   policies to an account, OU, or root. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
 //   of accounts in an organization. If you need more accounts, contact AWS Support
@@ -1630,6 +1694,9 @@ func (c *Organizations) CreatePolicyRequest(input *CreatePolicyInput) (req *requ
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -1699,7 +1766,7 @@ func (c *Organizations) CreatePolicyRequest(input *CreatePolicyInput) (req *requ
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreatePolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreatePolicy
 func (c *Organizations) CreatePolicy(input *CreatePolicyInput) (*CreatePolicyOutput, error) {
 	req, out := c.CreatePolicyRequest(input)
 	return out, req.Send()
@@ -1746,7 +1813,7 @@ const opDeclineHandshake = "DeclineHandshake"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeclineHandshake
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeclineHandshake
 func (c *Organizations) DeclineHandshakeRequest(input *DeclineHandshakeInput) (req *request.Request, output *DeclineHandshakeOutput) {
 	op := &request.Operation{
 		Name:       opDeclineHandshake,
@@ -1812,6 +1879,9 @@ func (c *Organizations) DeclineHandshakeRequest(input *DeclineHandshakeInput) (r
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -1868,7 +1938,7 @@ func (c *Organizations) DeclineHandshakeRequest(input *DeclineHandshakeInput) (r
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeclineHandshake
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeclineHandshake
 func (c *Organizations) DeclineHandshake(input *DeclineHandshakeInput) (*DeclineHandshakeOutput, error) {
 	req, out := c.DeclineHandshakeRequest(input)
 	return out, req.Send()
@@ -1915,7 +1985,7 @@ const opDeleteOrganization = "DeleteOrganization"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganization
 func (c *Organizations) DeleteOrganizationRequest(input *DeleteOrganizationInput) (req *request.Request, output *DeleteOrganizationOutput) {
 	op := &request.Operation{
 		Name:       opDeleteOrganization,
@@ -1967,6 +2037,9 @@ func (c *Organizations) DeleteOrganizationRequest(input *DeleteOrganizationInput
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -2029,7 +2102,7 @@ func (c *Organizations) DeleteOrganizationRequest(input *DeleteOrganizationInput
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganization
 func (c *Organizations) DeleteOrganization(input *DeleteOrganizationInput) (*DeleteOrganizationOutput, error) {
 	req, out := c.DeleteOrganizationRequest(input)
 	return out, req.Send()
@@ -2076,7 +2149,7 @@ const opDeleteOrganizationalUnit = "DeleteOrganizationalUnit"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationalUnit
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationalUnit
 func (c *Organizations) DeleteOrganizationalUnitRequest(input *DeleteOrganizationalUnitInput) (req *request.Request, output *DeleteOrganizationalUnitOutput) {
 	op := &request.Operation{
 		Name:       opDeleteOrganizationalUnit,
@@ -2129,6 +2202,9 @@ func (c *Organizations) DeleteOrganizationalUnitRequest(input *DeleteOrganizatio
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -2195,7 +2271,7 @@ func (c *Organizations) DeleteOrganizationalUnitRequest(input *DeleteOrganizatio
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationalUnit
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationalUnit
 func (c *Organizations) DeleteOrganizationalUnit(input *DeleteOrganizationalUnitInput) (*DeleteOrganizationalUnitOutput, error) {
 	req, out := c.DeleteOrganizationalUnitRequest(input)
 	return out, req.Send()
@@ -2242,7 +2318,7 @@ const opDeletePolicy = "DeletePolicy"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeletePolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeletePolicy
 func (c *Organizations) DeletePolicyRequest(input *DeletePolicyInput) (req *request.Request, output *DeletePolicyOutput) {
 	op := &request.Operation{
 		Name:       opDeletePolicy,
@@ -2295,6 +2371,9 @@ func (c *Organizations) DeletePolicyRequest(input *DeletePolicyInput) (req *requ
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -2359,7 +2438,7 @@ func (c *Organizations) DeletePolicyRequest(input *DeletePolicyInput) (req *requ
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeletePolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeletePolicy
 func (c *Organizations) DeletePolicy(input *DeletePolicyInput) (*DeletePolicyOutput, error) {
 	req, out := c.DeletePolicyRequest(input)
 	return out, req.Send()
@@ -2406,7 +2485,7 @@ const opDescribeAccount = "DescribeAccount"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeAccount
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeAccount
 func (c *Organizations) DescribeAccountRequest(input *DescribeAccountInput) (req *request.Request, output *DescribeAccountOutput) {
 	op := &request.Operation{
 		Name:       opDescribeAccount,
@@ -2458,6 +2537,9 @@ func (c *Organizations) DescribeAccountRequest(input *DescribeAccountInput) (req
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -2514,7 +2596,7 @@ func (c *Organizations) DescribeAccountRequest(input *DescribeAccountInput) (req
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeAccount
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeAccount
 func (c *Organizations) DescribeAccount(input *DescribeAccountInput) (*DescribeAccountOutput, error) {
 	req, out := c.DescribeAccountRequest(input)
 	return out, req.Send()
@@ -2561,7 +2643,7 @@ const opDescribeCreateAccountStatus = "DescribeCreateAccountStatus"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeCreateAccountStatus
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeCreateAccountStatus
 func (c *Organizations) DescribeCreateAccountStatusRequest(input *DescribeCreateAccountStatusInput) (req *request.Request, output *DescribeCreateAccountStatusOutput) {
 	op := &request.Operation{
 		Name:       opDescribeCreateAccountStatus,
@@ -2612,6 +2694,9 @@ func (c *Organizations) DescribeCreateAccountStatusRequest(input *DescribeCreate
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -2668,7 +2753,7 @@ func (c *Organizations) DescribeCreateAccountStatusRequest(input *DescribeCreate
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeCreateAccountStatus
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeCreateAccountStatus
 func (c *Organizations) DescribeCreateAccountStatus(input *DescribeCreateAccountStatusInput) (*DescribeCreateAccountStatusOutput, error) {
 	req, out := c.DescribeCreateAccountStatusRequest(input)
 	return out, req.Send()
@@ -2715,7 +2800,7 @@ const opDescribeHandshake = "DescribeHandshake"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeHandshake
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeHandshake
 func (c *Organizations) DescribeHandshakeRequest(input *DescribeHandshakeInput) (req *request.Request, output *DescribeHandshakeOutput) {
 	op := &request.Operation{
 		Name:       opDescribeHandshake,
@@ -2771,6 +2856,9 @@ func (c *Organizations) DescribeHandshakeRequest(input *DescribeHandshakeInput) 
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -2827,7 +2915,7 @@ func (c *Organizations) DescribeHandshakeRequest(input *DescribeHandshakeInput) 
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeHandshake
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeHandshake
 func (c *Organizations) DescribeHandshake(input *DescribeHandshakeInput) (*DescribeHandshakeOutput, error) {
 	req, out := c.DescribeHandshakeRequest(input)
 	return out, req.Send()
@@ -2874,7 +2962,7 @@ const opDescribeOrganization = "DescribeOrganization"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganization
 func (c *Organizations) DescribeOrganizationRequest(input *DescribeOrganizationInput) (req *request.Request, output *DescribeOrganizationOutput) {
 	op := &request.Operation{
 		Name:       opDescribeOrganization,
@@ -2929,7 +3017,7 @@ func (c *Organizations) DescribeOrganizationRequest(input *DescribeOrganizationI
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganization
 func (c *Organizations) DescribeOrganization(input *DescribeOrganizationInput) (*DescribeOrganizationOutput, error) {
 	req, out := c.DescribeOrganizationRequest(input)
 	return out, req.Send()
@@ -2976,7 +3064,7 @@ const opDescribeOrganizationalUnit = "DescribeOrganizationalUnit"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationalUnit
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationalUnit
 func (c *Organizations) DescribeOrganizationalUnitRequest(input *DescribeOrganizationalUnitInput) (req *request.Request, output *DescribeOrganizationalUnitOutput) {
 	op := &request.Operation{
 		Name:       opDescribeOrganizationalUnit,
@@ -3022,6 +3110,9 @@ func (c *Organizations) DescribeOrganizationalUnitRequest(input *DescribeOrganiz
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -3083,7 +3174,7 @@ func (c *Organizations) DescribeOrganizationalUnitRequest(input *DescribeOrganiz
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationalUnit
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationalUnit
 func (c *Organizations) DescribeOrganizationalUnit(input *DescribeOrganizationalUnitInput) (*DescribeOrganizationalUnitOutput, error) {
 	req, out := c.DescribeOrganizationalUnitRequest(input)
 	return out, req.Send()
@@ -3130,7 +3221,7 @@ const opDescribePolicy = "DescribePolicy"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribePolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribePolicy
 func (c *Organizations) DescribePolicyRequest(input *DescribePolicyInput) (req *request.Request, output *DescribePolicyOutput) {
 	op := &request.Operation{
 		Name:       opDescribePolicy,
@@ -3176,6 +3267,9 @@ func (c *Organizations) DescribePolicyRequest(input *DescribePolicyInput) (req *
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -3236,7 +3330,7 @@ func (c *Organizations) DescribePolicyRequest(input *DescribePolicyInput) (req *
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribePolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribePolicy
 func (c *Organizations) DescribePolicy(input *DescribePolicyInput) (*DescribePolicyOutput, error) {
 	req, out := c.DescribePolicyRequest(input)
 	return out, req.Send()
@@ -3283,7 +3377,7 @@ const opDetachPolicy = "DetachPolicy"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DetachPolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DetachPolicy
 func (c *Organizations) DetachPolicyRequest(input *DetachPolicyInput) (req *request.Request, output *DetachPolicyOutput) {
 	op := &request.Operation{
 		Name:       opDetachPolicy,
@@ -3350,6 +3444,9 @@ func (c *Organizations) DetachPolicyRequest(input *DetachPolicyInput) (req *requ
 //   policies to an account, OU, or root. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
 //   of accounts in an organization. If you need more accounts, contact AWS Support
 //   to request an increase in your limit.
@@ -3429,6 +3526,9 @@ func (c *Organizations) DetachPolicyRequest(input *DetachPolicyInput) (req *requ
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -3495,7 +3595,7 @@ func (c *Organizations) DetachPolicyRequest(input *DetachPolicyInput) (req *requ
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DetachPolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DetachPolicy
 func (c *Organizations) DetachPolicy(input *DetachPolicyInput) (*DetachPolicyOutput, error) {
 	req, out := c.DetachPolicyRequest(input)
 	return out, req.Send()
@@ -3517,64 +3617,82 @@ func (c *Organizations) DetachPolicyWithContext(ctx aws.Context, input *DetachPo
 	return out, req.Send()
 }
 
-const opDisablePolicyType = "DisablePolicyType"
+const opDisableAWSServiceAccess = "DisableAWSServiceAccess"
 
-// DisablePolicyTypeRequest generates a "aws/request.Request" representing the
-// client's request for the DisablePolicyType operation. The "output" return
+// DisableAWSServiceAccessRequest generates a "aws/request.Request" representing the
+// client's request for the DisableAWSServiceAccess operation. The "output" return
 // value will be populated with the request's response once the request complets
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
 //
-// See DisablePolicyType for more information on using the DisablePolicyType
+// See DisableAWSServiceAccess for more information on using the DisableAWSServiceAccess
 // API call, and error handling.
 //
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
 //
-//    // Example sending a request using the DisablePolicyTypeRequest method.
-//    req, resp := client.DisablePolicyTypeRequest(params)
+//    // Example sending a request using the DisableAWSServiceAccessRequest method.
+//    req, resp := client.DisableAWSServiceAccessRequest(params)
 //
 //    err := req.Send()
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisablePolicyType
-func (c *Organizations) DisablePolicyTypeRequest(input *DisablePolicyTypeInput) (req *request.Request, output *DisablePolicyTypeOutput) {
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisableAWSServiceAccess
+func (c *Organizations) DisableAWSServiceAccessRequest(input *DisableAWSServiceAccessInput) (req *request.Request, output *DisableAWSServiceAccessOutput) {
 	op := &request.Operation{
-		Name:       opDisablePolicyType,
+		Name:       opDisableAWSServiceAccess,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
 	}
 
 	if input == nil {
-		input = &DisablePolicyTypeInput{}
+		input = &DisableAWSServiceAccessInput{}
 	}
 
-	output = &DisablePolicyTypeOutput{}
+	output = &DisableAWSServiceAccessOutput{}
 	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	return
 }
 
-// DisablePolicyType API operation for AWS Organizations.
+// DisableAWSServiceAccess API operation for AWS Organizations.
 //
-// Disables an organizational control policy type in a root. A policy of a certain
-// type can be attached to entities in a root only if that type is enabled in
-// the root. After you perform this operation, you no longer can attach policies
-// of the specified type to that root or to any OU or account in that root.
-// You can undo this by using the EnablePolicyType operation.
+// Disables the integration of an AWS service (the service that is specified
+// by ServicePrincipal) with AWS Organizations. When you disable integration,
+// the specified service no longer can create a service-linked role (http://docs.aws.amazon.com/IAM/latest/UserGuide/using-service-linked-roles.html)
+// in new accounts in your organization. This means the service can't perform
+// operations on your behalf on any new accounts in your organization. The service
+// can still perform operations in older accounts until the service completes
+// its clean-up from AWS Organizations.
 //
-// This operation can be called only from the organization's master account.
+// We recommend that you disable integration between AWS Organizations and the
+// specified AWS service by using the console or commands that are provided
+// by the specified service. Doing so ensures that the other service is aware
+// that it can clean up any resources that are required only for the integration.
+// How the service cleans up its resources in the organization's accounts depends
+// on that service. For more information, see the documentation for the other
+// AWS service.
+//
+// After you perform the DisableAWSServiceAccessoperation, the specified service can no longer perform operations in your
+// organization's accounts unless the operations are explicitly permitted by
+// the IAM policies that are attached to your roles.
+//
+// For more information about integrating other services with AWS Organizations,
+// including the list of services that work with Organizations, see Integrating
+// AWS Organizations with Other AWS Services (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_integrate_services.html)in the AWS Organizations User Guide
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
 //
 // See the AWS API reference guide for AWS Organizations's
-// API operation DisablePolicyType for usage and error information.
+// API operation DisableAWSServiceAccess for usage and error information.
 //
 // Returned Error Codes:
 //   * ErrCodeAccessDeniedException "AccessDeniedException"
@@ -3598,6 +3716,9 @@ func (c *Organizations) DisablePolicyTypeRequest(input *DisablePolicyTypeInput) 
 //   or creating too many accounts to the organization, or attaching too many
 //   policies to an account, OU, or root. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
 //   of accounts in an organization. If you need more accounts, contact AWS Support
@@ -3678,6 +3799,255 @@ func (c *Organizations) DisablePolicyTypeRequest(input *DisablePolicyTypeInput) 
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
+//
+//      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
+//      at least one invalid value.
+//
+//      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
+//      than allowed.
+//
+//      * MAX_VALUE_EXCEEDED: You provided a numeric parameter that has a larger
+//      value than allowed.
+//
+//      * MIN_LENGTH_EXCEEDED: You provided a string parameter that is shorter
+//      than allowed.
+//
+//      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
+//      value than allowed.
+//
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
+//
+//      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
+//      between entities in the same root.
+//
+//   * ErrCodeServiceException "ServiceException"
+//   AWS Organizations can't complete your request because of an internal service
+//   error. Try again later.
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//   You've sent too many requests in too short a period of time. The limit helps
+//   protect against denial-of-service attacks. Try again later.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisableAWSServiceAccess
+func (c *Organizations) DisableAWSServiceAccess(input *DisableAWSServiceAccessInput) (*DisableAWSServiceAccessOutput, error) {
+	req, out := c.DisableAWSServiceAccessRequest(input)
+	return out, req.Send()
+}
+
+// DisableAWSServiceAccessWithContext is the same as DisableAWSServiceAccess with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DisableAWSServiceAccess for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Organizations) DisableAWSServiceAccessWithContext(ctx aws.Context, input *DisableAWSServiceAccessInput, opts ...request.Option) (*DisableAWSServiceAccessOutput, error) {
+	req, out := c.DisableAWSServiceAccessRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDisablePolicyType = "DisablePolicyType"
+
+// DisablePolicyTypeRequest generates a "aws/request.Request" representing the
+// client's request for the DisablePolicyType operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DisablePolicyType for more information on using the DisablePolicyType
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DisablePolicyTypeRequest method.
+//    req, resp := client.DisablePolicyTypeRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisablePolicyType
+func (c *Organizations) DisablePolicyTypeRequest(input *DisablePolicyTypeInput) (req *request.Request, output *DisablePolicyTypeOutput) {
+	op := &request.Operation{
+		Name:       opDisablePolicyType,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DisablePolicyTypeInput{}
+	}
+
+	output = &DisablePolicyTypeOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DisablePolicyType API operation for AWS Organizations.
+//
+// Disables an organizational control policy type in a root. A policy of a certain
+// type can be attached to entities in a root only if that type is enabled in
+// the root. After you perform this operation, you no longer can attach policies
+// of the specified type to that root or to any OU or account in that root.
+// You can undo this by using the EnablePolicyType operation.
+//
+// This operation can be called only from the organization's master account.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Organizations's
+// API operation DisablePolicyType for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeAccessDeniedException "AccessDeniedException"
+//   You don't have permissions to perform the requested operation. The user or
+//   role that is making the request must have at least one IAM permissions policy
+//   attached that grants the required permissions. For more information, see
+//   Access Management (http://docs.aws.amazon.com/IAM/latest/UserGuide/access.html)
+//   in the IAM User Guide.
+//
+//   * ErrCodeAWSOrganizationsNotInUseException "AWSOrganizationsNotInUseException"
+//   Your account is not a member of an organization. To make this request, you
+//   must use the credentials of an account that belongs to an organization.
+//
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   The target of the operation is currently being modified by a different request.
+//   Try again later.
+//
+//   * ErrCodeConstraintViolationException "ConstraintViolationException"
+//   Performing this operation violates a minimum or maximum value limit. For
+//   example, attempting to removing the last SCP from an OU or root, inviting
+//   or creating too many accounts to the organization, or attaching too many
+//   policies to an account, OU, or root. This exception includes a reason that
+//   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
+//   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
+//   of accounts in an organization. If you need more accounts, contact AWS Support
+//   to request an increase in your limit.
+//
+//   Or, The number of invitations that you tried to send would cause you to exceed
+//   the limit of accounts in your organization. Send fewer invitations, or contact
+//   AWS Support to request an increase in the number of accounts.
+//
+//   Note: deleted and closed accounts still count toward your limit.
+//
+//   If you get an exception that indicates that you exceeded your account limits
+//   for the organization or that you can"t add an account because your organization
+//   is still initializing, please contact  AWS Customer Support (https://console.aws.amazon.com/support/home#/).
+//
+//      * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
+//      handshakes you can send in one day.
+//
+//      * OU_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the number of organizational
+//      units you can have in an organization.
+//
+//      * OU_DEPTH_LIMIT_EXCEEDED: You attempted to create an organizational unit
+//      tree that is too many levels deep.
+//
+//      * POLICY_NUMBER_LIMIT_EXCEEDED. You attempted to exceed the number of
+//      policies that you can have in an organization.
+//
+//      * MAX_POLICY_TYPE_ATTACHMENT_LIMIT_EXCEEDED: You attempted to exceed the
+//      number of policies of a certain type that can be attached to an entity
+//      at one time.
+//
+//      * MIN_POLICY_TYPE_ATTACHMENT_LIMIT_EXCEEDED: You attempted to detach a
+//      policy from an entity that would cause the entity to have fewer than the
+//      minimum number of policies of a certain type required.
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+//      from the organization that does not yet have enough information to exist
+//      as a stand-alone account. This account requires you to first agree to
+//      the AWS Customer Agreement. Follow the steps at To leave an organization
+//      when all required account information has not yet been provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+//      in the AWS Organizations User Guide.
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+//      an account from the organization that does not yet have enough information
+//      to exist as a stand-alone account. This account requires you to first
+//      complete phone verification. Follow the steps at To leave an organization
+//      when all required account information has not yet been provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+//      in the AWS Organizations User Guide.
+//
+//      * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
+//      with this account, you first must associate a payment instrument, such
+//      as a credit card, with the account. Follow the steps at To leave an organization
+//      when all required account information has not yet been provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+//      in the AWS Organizations User Guide.
+//
+//      * MEMBER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To complete this operation
+//      with this member account, you first must associate a payment instrument,
+//      such as a credit card, with the account. Follow the steps at To leave
+//      an organization when all required account information has not yet been
+//      provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+//      in the AWS Organizations User Guide.
+//
+//      * ACCOUNT_CREATION_RATE_LIMIT_EXCEEDED: You attempted to exceed the number
+//      of accounts that you can create in one day.
+//
+//      * MASTER_ACCOUNT_ADDRESS_DOES_NOT_MATCH_MARKETPLACE: To create an account
+//      in this organization, you first must migrate the organization's master
+//      account to the marketplace that corresponds to the master account's address.
+//      For example, accounts with India addresses must be associated with the
+//      AISPL marketplace. All accounts in an organization must be associated
+//      with the same marketplace.
+//
+//      * MASTER_ACCOUNT_MISSING_CONTACT_INFO: To complete this operation, you
+//      must first provide contact a valid address and phone number for the master
+//      account. Then try the operation again.
+//
+//   * ErrCodeInvalidInputException "InvalidInputException"
+//   The requested operation failed because you provided invalid values for one
+//   or more of the request parameters. This exception includes a reason that
+//   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -3745,7 +4115,7 @@ func (c *Organizations) DisablePolicyTypeRequest(input *DisablePolicyTypeInput) 
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisablePolicyType
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisablePolicyType
 func (c *Organizations) DisablePolicyType(input *DisablePolicyTypeInput) (*DisablePolicyTypeOutput, error) {
 	req, out := c.DisablePolicyTypeRequest(input)
 	return out, req.Send()
@@ -3762,6 +4132,267 @@ func (c *Organizations) DisablePolicyType(input *DisablePolicyTypeInput) (*Disab
 // for more information on using Contexts.
 func (c *Organizations) DisablePolicyTypeWithContext(ctx aws.Context, input *DisablePolicyTypeInput, opts ...request.Option) (*DisablePolicyTypeOutput, error) {
 	req, out := c.DisablePolicyTypeRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opEnableAWSServiceAccess = "EnableAWSServiceAccess"
+
+// EnableAWSServiceAccessRequest generates a "aws/request.Request" representing the
+// client's request for the EnableAWSServiceAccess operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See EnableAWSServiceAccess for more information on using the EnableAWSServiceAccess
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the EnableAWSServiceAccessRequest method.
+//    req, resp := client.EnableAWSServiceAccessRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAWSServiceAccess
+func (c *Organizations) EnableAWSServiceAccessRequest(input *EnableAWSServiceAccessInput) (req *request.Request, output *EnableAWSServiceAccessOutput) {
+	op := &request.Operation{
+		Name:       opEnableAWSServiceAccess,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &EnableAWSServiceAccessInput{}
+	}
+
+	output = &EnableAWSServiceAccessOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// EnableAWSServiceAccess API operation for AWS Organizations.
+//
+// Enables the integration of an AWS service (the service that is specified
+// by ServicePrincipal) with AWS Organizations. When you enable integration,
+// you allow the specified service to create a service-linked role (http://docs.aws.amazon.com/IAM/latest/UserGuide/using-service-linked-roles.html)
+// in all the accounts in your organization. This allows the service to perform
+// operations on your behalf in your organization and its accounts.
+//
+// We recommend that you enable integration between AWS Organizations and the
+// specified AWS service by using the console or commands that are provided
+// by the specified service. Doing so ensures that the service is aware that
+// it can create the resources that are required for the integration. How the
+// service creates those resources in the organization's accounts depends on
+// that service. For more information, see the documentation for the other AWS
+// service.
+//
+// For more information about enabling services to integrate with AWS Organizations,
+// see Integrating AWS Organizations with Other AWS Services (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_integrate_services.html)
+// in the AWS Organizations User Guide.
+//
+// This operation can be called only from the organization's master account
+// and only if the organization has enabled all features (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_org_support-all-features.html).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Organizations's
+// API operation EnableAWSServiceAccess for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeAccessDeniedException "AccessDeniedException"
+//   You don't have permissions to perform the requested operation. The user or
+//   role that is making the request must have at least one IAM permissions policy
+//   attached that grants the required permissions. For more information, see
+//   Access Management (http://docs.aws.amazon.com/IAM/latest/UserGuide/access.html)
+//   in the IAM User Guide.
+//
+//   * ErrCodeAWSOrganizationsNotInUseException "AWSOrganizationsNotInUseException"
+//   Your account is not a member of an organization. To make this request, you
+//   must use the credentials of an account that belongs to an organization.
+//
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   The target of the operation is currently being modified by a different request.
+//   Try again later.
+//
+//   * ErrCodeConstraintViolationException "ConstraintViolationException"
+//   Performing this operation violates a minimum or maximum value limit. For
+//   example, attempting to removing the last SCP from an OU or root, inviting
+//   or creating too many accounts to the organization, or attaching too many
+//   policies to an account, OU, or root. This exception includes a reason that
+//   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
+//   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
+//   of accounts in an organization. If you need more accounts, contact AWS Support
+//   to request an increase in your limit.
+//
+//   Or, The number of invitations that you tried to send would cause you to exceed
+//   the limit of accounts in your organization. Send fewer invitations, or contact
+//   AWS Support to request an increase in the number of accounts.
+//
+//   Note: deleted and closed accounts still count toward your limit.
+//
+//   If you get an exception that indicates that you exceeded your account limits
+//   for the organization or that you can"t add an account because your organization
+//   is still initializing, please contact  AWS Customer Support (https://console.aws.amazon.com/support/home#/).
+//
+//      * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
+//      handshakes you can send in one day.
+//
+//      * OU_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the number of organizational
+//      units you can have in an organization.
+//
+//      * OU_DEPTH_LIMIT_EXCEEDED: You attempted to create an organizational unit
+//      tree that is too many levels deep.
+//
+//      * POLICY_NUMBER_LIMIT_EXCEEDED. You attempted to exceed the number of
+//      policies that you can have in an organization.
+//
+//      * MAX_POLICY_TYPE_ATTACHMENT_LIMIT_EXCEEDED: You attempted to exceed the
+//      number of policies of a certain type that can be attached to an entity
+//      at one time.
+//
+//      * MIN_POLICY_TYPE_ATTACHMENT_LIMIT_EXCEEDED: You attempted to detach a
+//      policy from an entity that would cause the entity to have fewer than the
+//      minimum number of policies of a certain type required.
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+//      from the organization that does not yet have enough information to exist
+//      as a stand-alone account. This account requires you to first agree to
+//      the AWS Customer Agreement. Follow the steps at To leave an organization
+//      when all required account information has not yet been provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+//      in the AWS Organizations User Guide.
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+//      an account from the organization that does not yet have enough information
+//      to exist as a stand-alone account. This account requires you to first
+//      complete phone verification. Follow the steps at To leave an organization
+//      when all required account information has not yet been provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+//      in the AWS Organizations User Guide.
+//
+//      * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
+//      with this account, you first must associate a payment instrument, such
+//      as a credit card, with the account. Follow the steps at To leave an organization
+//      when all required account information has not yet been provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+//      in the AWS Organizations User Guide.
+//
+//      * MEMBER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To complete this operation
+//      with this member account, you first must associate a payment instrument,
+//      such as a credit card, with the account. Follow the steps at To leave
+//      an organization when all required account information has not yet been
+//      provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+//      in the AWS Organizations User Guide.
+//
+//      * ACCOUNT_CREATION_RATE_LIMIT_EXCEEDED: You attempted to exceed the number
+//      of accounts that you can create in one day.
+//
+//      * MASTER_ACCOUNT_ADDRESS_DOES_NOT_MATCH_MARKETPLACE: To create an account
+//      in this organization, you first must migrate the organization's master
+//      account to the marketplace that corresponds to the master account's address.
+//      For example, accounts with India addresses must be associated with the
+//      AISPL marketplace. All accounts in an organization must be associated
+//      with the same marketplace.
+//
+//      * MASTER_ACCOUNT_MISSING_CONTACT_INFO: To complete this operation, you
+//      must first provide contact a valid address and phone number for the master
+//      account. Then try the operation again.
+//
+//   * ErrCodeInvalidInputException "InvalidInputException"
+//   The requested operation failed because you provided invalid values for one
+//   or more of the request parameters. This exception includes a reason that
+//   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
+//
+//      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
+//      at least one invalid value.
+//
+//      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
+//      than allowed.
+//
+//      * MAX_VALUE_EXCEEDED: You provided a numeric parameter that has a larger
+//      value than allowed.
+//
+//      * MIN_LENGTH_EXCEEDED: You provided a string parameter that is shorter
+//      than allowed.
+//
+//      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
+//      value than allowed.
+//
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
+//
+//      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
+//      between entities in the same root.
+//
+//   * ErrCodeServiceException "ServiceException"
+//   AWS Organizations can't complete your request because of an internal service
+//   error. Try again later.
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//   You've sent too many requests in too short a period of time. The limit helps
+//   protect against denial-of-service attacks. Try again later.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAWSServiceAccess
+func (c *Organizations) EnableAWSServiceAccess(input *EnableAWSServiceAccessInput) (*EnableAWSServiceAccessOutput, error) {
+	req, out := c.EnableAWSServiceAccessRequest(input)
+	return out, req.Send()
+}
+
+// EnableAWSServiceAccessWithContext is the same as EnableAWSServiceAccess with the addition of
+// the ability to pass a context and additional request options.
+//
+// See EnableAWSServiceAccess for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Organizations) EnableAWSServiceAccessWithContext(ctx aws.Context, input *EnableAWSServiceAccessInput, opts ...request.Option) (*EnableAWSServiceAccessOutput, error) {
+	req, out := c.EnableAWSServiceAccessRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -3792,7 +4423,7 @@ const opEnableAllFeatures = "EnableAllFeatures"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAllFeatures
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAllFeatures
 func (c *Organizations) EnableAllFeaturesRequest(input *EnableAllFeaturesInput) (req *request.Request, output *EnableAllFeaturesOutput) {
 	op := &request.Operation{
 		Name:       opEnableAllFeatures,
@@ -3866,6 +4497,9 @@ func (c *Organizations) EnableAllFeaturesRequest(input *EnableAllFeaturesInput) 
 //   The requested operation would violate the constraint identified in the reason
 //   code.
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on
 //      the number of accounts in an organization. Note: deleted and closed accounts
 //      still count toward your limit.
@@ -3905,6 +4539,9 @@ func (c *Organizations) EnableAllFeaturesRequest(input *EnableAllFeaturesInput) 
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -3962,7 +4599,7 @@ func (c *Organizations) EnableAllFeaturesRequest(input *EnableAllFeaturesInput) 
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAllFeatures
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAllFeatures
 func (c *Organizations) EnableAllFeatures(input *EnableAllFeaturesInput) (*EnableAllFeaturesOutput, error) {
 	req, out := c.EnableAllFeaturesRequest(input)
 	return out, req.Send()
@@ -4009,7 +4646,7 @@ const opEnablePolicyType = "EnablePolicyType"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnablePolicyType
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnablePolicyType
 func (c *Organizations) EnablePolicyTypeRequest(input *EnablePolicyTypeInput) (req *request.Request, output *EnablePolicyTypeOutput) {
 	op := &request.Operation{
 		Name:       opEnablePolicyType,
@@ -4063,6 +4700,9 @@ func (c *Organizations) EnablePolicyTypeRequest(input *EnablePolicyTypeInput) (r
 //   or creating too many accounts to the organization, or attaching too many
 //   policies to an account, OU, or root. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
 //   of accounts in an organization. If you need more accounts, contact AWS Support
@@ -4144,6 +4784,9 @@ func (c *Organizations) EnablePolicyTypeRequest(input *EnablePolicyTypeInput) (r
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -4213,7 +4856,7 @@ func (c *Organizations) EnablePolicyTypeRequest(input *EnablePolicyTypeInput) (r
 //   see Enabling and Disabling a Policy Type on a Root (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies.html#enable_policies_on_root)
 //   in the AWS Organizations User Guide.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnablePolicyType
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnablePolicyType
 func (c *Organizations) EnablePolicyType(input *EnablePolicyTypeInput) (*EnablePolicyTypeOutput, error) {
 	req, out := c.EnablePolicyTypeRequest(input)
 	return out, req.Send()
@@ -4260,7 +4903,7 @@ const opInviteAccountToOrganization = "InviteAccountToOrganization"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/InviteAccountToOrganization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/InviteAccountToOrganization
 func (c *Organizations) InviteAccountToOrganizationRequest(input *InviteAccountToOrganizationInput) (req *request.Request, output *InviteAccountToOrganizationOutput) {
 	op := &request.Operation{
 		Name:       opInviteAccountToOrganization,
@@ -4324,6 +4967,9 @@ func (c *Organizations) InviteAccountToOrganizationRequest(input *InviteAccountT
 //   The requested operation would violate the constraint identified in the reason
 //   code.
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on
 //      the number of accounts in an organization. Note: deleted and closed accounts
 //      still count toward your limit.
@@ -4370,6 +5016,9 @@ func (c *Organizations) InviteAccountToOrganizationRequest(input *InviteAccountT
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -4431,7 +5080,7 @@ func (c *Organizations) InviteAccountToOrganizationRequest(input *InviteAccountT
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/InviteAccountToOrganization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/InviteAccountToOrganization
 func (c *Organizations) InviteAccountToOrganization(input *InviteAccountToOrganizationInput) (*InviteAccountToOrganizationOutput, error) {
 	req, out := c.InviteAccountToOrganizationRequest(input)
 	return out, req.Send()
@@ -4478,7 +5127,7 @@ const opLeaveOrganization = "LeaveOrganization"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/LeaveOrganization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/LeaveOrganization
 func (c *Organizations) LeaveOrganizationRequest(input *LeaveOrganizationInput) (req *request.Request, output *LeaveOrganizationOutput) {
 	op := &request.Operation{
 		Name:       opLeaveOrganization,
@@ -4564,6 +5213,9 @@ func (c *Organizations) LeaveOrganizationRequest(input *LeaveOrganizationInput) 
 //   policies to an account, OU, or root. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
 //   of accounts in an organization. If you need more accounts, contact AWS Support
 //   to request an increase in your limit.
@@ -4644,6 +5296,9 @@ func (c *Organizations) LeaveOrganizationRequest(input *LeaveOrganizationInput) 
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -4705,7 +5360,7 @@ func (c *Organizations) LeaveOrganizationRequest(input *LeaveOrganizationInput) 
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/LeaveOrganization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/LeaveOrganization
 func (c *Organizations) LeaveOrganization(input *LeaveOrganizationInput) (*LeaveOrganizationOutput, error) {
 	req, out := c.LeaveOrganizationRequest(input)
 	return out, req.Send()
@@ -4727,35 +5382,35 @@ func (c *Organizations) LeaveOrganizationWithContext(ctx aws.Context, input *Lea
 	return out, req.Send()
 }
 
-const opListAccounts = "ListAccounts"
+const opListAWSServiceAccessForOrganization = "ListAWSServiceAccessForOrganization"
 
-// ListAccountsRequest generates a "aws/request.Request" representing the
-// client's request for the ListAccounts operation. The "output" return
+// ListAWSServiceAccessForOrganizationRequest generates a "aws/request.Request" representing the
+// client's request for the ListAWSServiceAccessForOrganization operation. The "output" return
 // value will be populated with the request's response once the request complets
 // successfuly.
 //
 // Use "Send" method on the returned Request to send the API call to the service.
 // the "output" return value is not valid until after Send returns without error.
 //
-// See ListAccounts for more information on using the ListAccounts
+// See ListAWSServiceAccessForOrganization for more information on using the ListAWSServiceAccessForOrganization
 // API call, and error handling.
 //
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
 //
-//    // Example sending a request using the ListAccountsRequest method.
-//    req, resp := client.ListAccountsRequest(params)
+//    // Example sending a request using the ListAWSServiceAccessForOrganizationRequest method.
+//    req, resp := client.ListAWSServiceAccessForOrganizationRequest(params)
 //
 //    err := req.Send()
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccounts
-func (c *Organizations) ListAccountsRequest(input *ListAccountsInput) (req *request.Request, output *ListAccountsOutput) {
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAWSServiceAccessForOrganization
+func (c *Organizations) ListAWSServiceAccessForOrganizationRequest(input *ListAWSServiceAccessForOrganizationInput) (req *request.Request, output *ListAWSServiceAccessForOrganizationOutput) {
 	op := &request.Operation{
-		Name:       opListAccounts,
+		Name:       opListAWSServiceAccessForOrganization,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
 		Paginator: &request.Paginator{
@@ -4767,18 +5422,25 @@ func (c *Organizations) ListAccountsRequest(input *ListAccountsInput) (req *requ
 	}
 
 	if input == nil {
-		input = &ListAccountsInput{}
+		input = &ListAWSServiceAccessForOrganizationInput{}
 	}
 
-	output = &ListAccountsOutput{}
+	output = &ListAWSServiceAccessForOrganizationOutput{}
 	req = c.newRequest(op, input, output)
 	return
 }
 
-// ListAccounts API operation for AWS Organizations.
+// ListAWSServiceAccessForOrganization API operation for AWS Organizations.
 //
-// Lists all the accounts in the organization. To request only the accounts
-// in a root or OU, use the ListAccountsForParent operation instead.
+// Returns a list of the AWS services that you enabled to integrate with your
+// organization. After a service on this list creates the resources that it
+// requires for the integration, it can perform operations on your organization
+// and its accounts.
+//
+// For more information about integrating other services with AWS Organizations,
+// including the list of services that currently work with Organizations, see
+// Integrating AWS Organizations with Other AWS Services (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_integrate_services.html)
+// in the AWS Organizations User Guide.
 //
 // This operation can be called only from the organization's master account.
 //
@@ -4787,7 +5449,7 @@ func (c *Organizations) ListAccountsRequest(input *ListAccountsInput) (req *requ
 // the error.
 //
 // See the AWS API reference guide for AWS Organizations's
-// API operation ListAccounts for usage and error information.
+// API operation ListAWSServiceAccessForOrganization for usage and error information.
 //
 // Returned Error Codes:
 //   * ErrCodeAccessDeniedException "AccessDeniedException"
@@ -4801,10 +5463,98 @@ func (c *Organizations) ListAccountsRequest(input *ListAccountsInput) (req *requ
 //   Your account is not a member of an organization. To make this request, you
 //   must use the credentials of an account that belongs to an organization.
 //
+//   * ErrCodeConstraintViolationException "ConstraintViolationException"
+//   Performing this operation violates a minimum or maximum value limit. For
+//   example, attempting to removing the last SCP from an OU or root, inviting
+//   or creating too many accounts to the organization, or attaching too many
+//   policies to an account, OU, or root. This exception includes a reason that
+//   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
+//   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
+//   of accounts in an organization. If you need more accounts, contact AWS Support
+//   to request an increase in your limit.
+//
+//   Or, The number of invitations that you tried to send would cause you to exceed
+//   the limit of accounts in your organization. Send fewer invitations, or contact
+//   AWS Support to request an increase in the number of accounts.
+//
+//   Note: deleted and closed accounts still count toward your limit.
+//
+//   If you get an exception that indicates that you exceeded your account limits
+//   for the organization or that you can"t add an account because your organization
+//   is still initializing, please contact  AWS Customer Support (https://console.aws.amazon.com/support/home#/).
+//
+//      * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
+//      handshakes you can send in one day.
+//
+//      * OU_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the number of organizational
+//      units you can have in an organization.
+//
+//      * OU_DEPTH_LIMIT_EXCEEDED: You attempted to create an organizational unit
+//      tree that is too many levels deep.
+//
+//      * POLICY_NUMBER_LIMIT_EXCEEDED. You attempted to exceed the number of
+//      policies that you can have in an organization.
+//
+//      * MAX_POLICY_TYPE_ATTACHMENT_LIMIT_EXCEEDED: You attempted to exceed the
+//      number of policies of a certain type that can be attached to an entity
+//      at one time.
+//
+//      * MIN_POLICY_TYPE_ATTACHMENT_LIMIT_EXCEEDED: You attempted to detach a
+//      policy from an entity that would cause the entity to have fewer than the
+//      minimum number of policies of a certain type required.
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
+//      from the organization that does not yet have enough information to exist
+//      as a stand-alone account. This account requires you to first agree to
+//      the AWS Customer Agreement. Follow the steps at To leave an organization
+//      when all required account information has not yet been provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+//      in the AWS Organizations User Guide.
+//
+//      * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
+//      an account from the organization that does not yet have enough information
+//      to exist as a stand-alone account. This account requires you to first
+//      complete phone verification. Follow the steps at To leave an organization
+//      when all required account information has not yet been provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+//      in the AWS Organizations User Guide.
+//
+//      * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
+//      with this account, you first must associate a payment instrument, such
+//      as a credit card, with the account. Follow the steps at To leave an organization
+//      when all required account information has not yet been provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+//      in the AWS Organizations User Guide.
+//
+//      * MEMBER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To complete this operation
+//      with this member account, you first must associate a payment instrument,
+//      such as a credit card, with the account. Follow the steps at To leave
+//      an organization when all required account information has not yet been
+//      provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+//      in the AWS Organizations User Guide.
+//
+//      * ACCOUNT_CREATION_RATE_LIMIT_EXCEEDED: You attempted to exceed the number
+//      of accounts that you can create in one day.
+//
+//      * MASTER_ACCOUNT_ADDRESS_DOES_NOT_MATCH_MARKETPLACE: To create an account
+//      in this organization, you first must migrate the organization's master
+//      account to the marketplace that corresponds to the master account's address.
+//      For example, accounts with India addresses must be associated with the
+//      AISPL marketplace. All accounts in an organization must be associated
+//      with the same marketplace.
+//
+//      * MASTER_ACCOUNT_MISSING_CONTACT_INFO: To complete this operation, you
+//      must first provide contact a valid address and phone number for the master
+//      account. Then try the operation again.
+//
 //   * ErrCodeInvalidInputException "InvalidInputException"
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -4862,7 +5612,217 @@ func (c *Organizations) ListAccountsRequest(input *ListAccountsInput) (req *requ
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccounts
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAWSServiceAccessForOrganization
+func (c *Organizations) ListAWSServiceAccessForOrganization(input *ListAWSServiceAccessForOrganizationInput) (*ListAWSServiceAccessForOrganizationOutput, error) {
+	req, out := c.ListAWSServiceAccessForOrganizationRequest(input)
+	return out, req.Send()
+}
+
+// ListAWSServiceAccessForOrganizationWithContext is the same as ListAWSServiceAccessForOrganization with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListAWSServiceAccessForOrganization for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Organizations) ListAWSServiceAccessForOrganizationWithContext(ctx aws.Context, input *ListAWSServiceAccessForOrganizationInput, opts ...request.Option) (*ListAWSServiceAccessForOrganizationOutput, error) {
+	req, out := c.ListAWSServiceAccessForOrganizationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListAWSServiceAccessForOrganizationPages iterates over the pages of a ListAWSServiceAccessForOrganization operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListAWSServiceAccessForOrganization method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListAWSServiceAccessForOrganization operation.
+//    pageNum := 0
+//    err := client.ListAWSServiceAccessForOrganizationPages(params,
+//        func(page *ListAWSServiceAccessForOrganizationOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *Organizations) ListAWSServiceAccessForOrganizationPages(input *ListAWSServiceAccessForOrganizationInput, fn func(*ListAWSServiceAccessForOrganizationOutput, bool) bool) error {
+	return c.ListAWSServiceAccessForOrganizationPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListAWSServiceAccessForOrganizationPagesWithContext same as ListAWSServiceAccessForOrganizationPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Organizations) ListAWSServiceAccessForOrganizationPagesWithContext(ctx aws.Context, input *ListAWSServiceAccessForOrganizationInput, fn func(*ListAWSServiceAccessForOrganizationOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListAWSServiceAccessForOrganizationInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListAWSServiceAccessForOrganizationRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListAWSServiceAccessForOrganizationOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
+const opListAccounts = "ListAccounts"
+
+// ListAccountsRequest generates a "aws/request.Request" representing the
+// client's request for the ListAccounts operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListAccounts for more information on using the ListAccounts
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListAccountsRequest method.
+//    req, resp := client.ListAccountsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccounts
+func (c *Organizations) ListAccountsRequest(input *ListAccountsInput) (req *request.Request, output *ListAccountsOutput) {
+	op := &request.Operation{
+		Name:       opListAccounts,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListAccountsInput{}
+	}
+
+	output = &ListAccountsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListAccounts API operation for AWS Organizations.
+//
+// Lists all the accounts in the organization. To request only the accounts
+// in a root or OU, use the ListAccountsForParent operation instead.
+//
+// This operation can be called only from the organization's master account.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Organizations's
+// API operation ListAccounts for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeAccessDeniedException "AccessDeniedException"
+//   You don't have permissions to perform the requested operation. The user or
+//   role that is making the request must have at least one IAM permissions policy
+//   attached that grants the required permissions. For more information, see
+//   Access Management (http://docs.aws.amazon.com/IAM/latest/UserGuide/access.html)
+//   in the IAM User Guide.
+//
+//   * ErrCodeAWSOrganizationsNotInUseException "AWSOrganizationsNotInUseException"
+//   Your account is not a member of an organization. To make this request, you
+//   must use the credentials of an account that belongs to an organization.
+//
+//   * ErrCodeInvalidInputException "InvalidInputException"
+//   The requested operation failed because you provided invalid values for one
+//   or more of the request parameters. This exception includes a reason that
+//   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
+//      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+//      organization, or email) as a party.
+//
+//      * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+//      organization.
+//
+//      * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+//
+//      * INVALID_ENUM: You specified a value that is not valid for that parameter.
+//
+//      * INVALID_FULL_NAME_TARGET: You specified a full name that contains invalid
+//      characters.
+//
+//      * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
+//      at least one invalid value.
+//
+//      * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
+//      than allowed.
+//
+//      * MAX_VALUE_EXCEEDED: You provided a numeric parameter that has a larger
+//      value than allowed.
+//
+//      * MIN_LENGTH_EXCEEDED: You provided a string parameter that is shorter
+//      than allowed.
+//
+//      * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
+//      value than allowed.
+//
+//      * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+//      cannot be modified.
+//
+//      * INVALID_PATTERN: You provided a value that doesn't match the required
+//      pattern.
+//
+//      * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+//      match the required pattern.
+//
+//      * INPUT_REQUIRED: You must include a value for all required parameters.
+//
+//      * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+//      from the response to a previous call of the operation.
+//
+//      * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+//      for the operation.
+//
+//      * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
+//      between entities in the same root.
+//
+//   * ErrCodeServiceException "ServiceException"
+//   AWS Organizations can't complete your request because of an internal service
+//   error. Try again later.
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//   You've sent too many requests in too short a period of time. The limit helps
+//   protect against denial-of-service attacks. Try again later.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccounts
 func (c *Organizations) ListAccounts(input *ListAccountsInput) (*ListAccountsOutput, error) {
 	req, out := c.ListAccountsRequest(input)
 	return out, req.Send()
@@ -4959,7 +5919,7 @@ const opListAccountsForParent = "ListAccountsForParent"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsForParent
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsForParent
 func (c *Organizations) ListAccountsForParentRequest(input *ListAccountsForParentInput) (req *request.Request, output *ListAccountsForParentOutput) {
 	op := &request.Operation{
 		Name:       opListAccountsForParent,
@@ -4991,6 +5951,8 @@ func (c *Organizations) ListAccountsForParentRequest(input *ListAccountsForParen
 // OUs. To get a list of all accounts in the organization, use the ListAccounts
 // operation.
 //
+// This operation can be called only from the organization's master account.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -5014,6 +5976,9 @@ func (c *Organizations) ListAccountsForParentRequest(input *ListAccountsForParen
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -5075,7 +6040,7 @@ func (c *Organizations) ListAccountsForParentRequest(input *ListAccountsForParen
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsForParent
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsForParent
 func (c *Organizations) ListAccountsForParent(input *ListAccountsForParentInput) (*ListAccountsForParentOutput, error) {
 	req, out := c.ListAccountsForParentRequest(input)
 	return out, req.Send()
@@ -5172,7 +6137,7 @@ const opListChildren = "ListChildren"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListChildren
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListChildren
 func (c *Organizations) ListChildrenRequest(input *ListChildrenInput) (req *request.Request, output *ListChildrenOutput) {
 	op := &request.Operation{
 		Name:       opListChildren,
@@ -5201,6 +6166,8 @@ func (c *Organizations) ListChildrenRequest(input *ListChildrenInput) (req *requ
 // OU or root. This operation, along with ListParents enables you to traverse
 // the tree structure that makes up this root.
 //
+// This operation can be called only from the organization's master account.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -5224,6 +6191,9 @@ func (c *Organizations) ListChildrenRequest(input *ListChildrenInput) (req *requ
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -5285,7 +6255,7 @@ func (c *Organizations) ListChildrenRequest(input *ListChildrenInput) (req *requ
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListChildren
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListChildren
 func (c *Organizations) ListChildren(input *ListChildrenInput) (*ListChildrenOutput, error) {
 	req, out := c.ListChildrenRequest(input)
 	return out, req.Send()
@@ -5382,7 +6352,7 @@ const opListCreateAccountStatus = "ListCreateAccountStatus"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListCreateAccountStatus
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListCreateAccountStatus
 func (c *Organizations) ListCreateAccountStatusRequest(input *ListCreateAccountStatusInput) (req *request.Request, output *ListCreateAccountStatusOutput) {
 	op := &request.Operation{
 		Name:       opListCreateAccountStatus,
@@ -5435,6 +6405,9 @@ func (c *Organizations) ListCreateAccountStatusRequest(input *ListCreateAccountS
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -5492,7 +6465,7 @@ func (c *Organizations) ListCreateAccountStatusRequest(input *ListCreateAccountS
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListCreateAccountStatus
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListCreateAccountStatus
 func (c *Organizations) ListCreateAccountStatus(input *ListCreateAccountStatusInput) (*ListCreateAccountStatusOutput, error) {
 	req, out := c.ListCreateAccountStatusRequest(input)
 	return out, req.Send()
@@ -5589,7 +6562,7 @@ const opListHandshakesForAccount = "ListHandshakesForAccount"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForAccount
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForAccount
 func (c *Organizations) ListHandshakesForAccountRequest(input *ListHandshakesForAccountInput) (req *request.Request, output *ListHandshakesForAccountOutput) {
 	op := &request.Operation{
 		Name:       opListHandshakesForAccount,
@@ -5647,6 +6620,9 @@ func (c *Organizations) ListHandshakesForAccountRequest(input *ListHandshakesFor
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -5703,7 +6679,7 @@ func (c *Organizations) ListHandshakesForAccountRequest(input *ListHandshakesFor
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForAccount
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForAccount
 func (c *Organizations) ListHandshakesForAccount(input *ListHandshakesForAccountInput) (*ListHandshakesForAccountOutput, error) {
 	req, out := c.ListHandshakesForAccountRequest(input)
 	return out, req.Send()
@@ -5800,7 +6776,7 @@ const opListHandshakesForOrganization = "ListHandshakesForOrganization"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForOrganization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForOrganization
 func (c *Organizations) ListHandshakesForOrganizationRequest(input *ListHandshakesForOrganizationInput) (req *request.Request, output *ListHandshakesForOrganizationOutput) {
 	op := &request.Operation{
 		Name:       opListHandshakesForOrganization,
@@ -5864,6 +6840,9 @@ func (c *Organizations) ListHandshakesForOrganizationRequest(input *ListHandshak
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -5920,7 +6899,7 @@ func (c *Organizations) ListHandshakesForOrganizationRequest(input *ListHandshak
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForOrganization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForOrganization
 func (c *Organizations) ListHandshakesForOrganization(input *ListHandshakesForOrganizationInput) (*ListHandshakesForOrganizationOutput, error) {
 	req, out := c.ListHandshakesForOrganizationRequest(input)
 	return out, req.Send()
@@ -6017,7 +6996,7 @@ const opListOrganizationalUnitsForParent = "ListOrganizationalUnitsForParent"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListOrganizationalUnitsForParent
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListOrganizationalUnitsForParent
 func (c *Organizations) ListOrganizationalUnitsForParentRequest(input *ListOrganizationalUnitsForParentInput) (req *request.Request, output *ListOrganizationalUnitsForParentOutput) {
 	op := &request.Operation{
 		Name:       opListOrganizationalUnitsForParent,
@@ -6069,6 +7048,9 @@ func (c *Organizations) ListOrganizationalUnitsForParentRequest(input *ListOrgan
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -6130,7 +7112,7 @@ func (c *Organizations) ListOrganizationalUnitsForParentRequest(input *ListOrgan
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListOrganizationalUnitsForParent
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListOrganizationalUnitsForParent
 func (c *Organizations) ListOrganizationalUnitsForParent(input *ListOrganizationalUnitsForParentInput) (*ListOrganizationalUnitsForParentOutput, error) {
 	req, out := c.ListOrganizationalUnitsForParentRequest(input)
 	return out, req.Send()
@@ -6227,7 +7209,7 @@ const opListParents = "ListParents"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListParents
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListParents
 func (c *Organizations) ListParentsRequest(input *ListParentsInput) (req *request.Request, output *ListParentsOutput) {
 	op := &request.Operation{
 		Name:       opListParents,
@@ -6288,6 +7270,9 @@ func (c *Organizations) ListParentsRequest(input *ListParentsInput) (req *reques
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -6344,7 +7329,7 @@ func (c *Organizations) ListParentsRequest(input *ListParentsInput) (req *reques
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListParents
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListParents
 func (c *Organizations) ListParents(input *ListParentsInput) (*ListParentsOutput, error) {
 	req, out := c.ListParentsRequest(input)
 	return out, req.Send()
@@ -6441,7 +7426,7 @@ const opListPolicies = "ListPolicies"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPolicies
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPolicies
 func (c *Organizations) ListPoliciesRequest(input *ListPoliciesInput) (req *request.Request, output *ListPoliciesOutput) {
 	op := &request.Operation{
 		Name:       opListPolicies,
@@ -6493,6 +7478,9 @@ func (c *Organizations) ListPoliciesRequest(input *ListPoliciesInput) (req *requ
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -6550,7 +7538,7 @@ func (c *Organizations) ListPoliciesRequest(input *ListPoliciesInput) (req *requ
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPolicies
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPolicies
 func (c *Organizations) ListPolicies(input *ListPoliciesInput) (*ListPoliciesOutput, error) {
 	req, out := c.ListPoliciesRequest(input)
 	return out, req.Send()
@@ -6647,7 +7635,7 @@ const opListPoliciesForTarget = "ListPoliciesForTarget"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesForTarget
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesForTarget
 func (c *Organizations) ListPoliciesForTargetRequest(input *ListPoliciesForTargetInput) (req *request.Request, output *ListPoliciesForTargetOutput) {
 	op := &request.Operation{
 		Name:       opListPoliciesForTarget,
@@ -6701,6 +7689,9 @@ func (c *Organizations) ListPoliciesForTargetRequest(input *ListPoliciesForTarge
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -6761,7 +7752,7 @@ func (c *Organizations) ListPoliciesForTargetRequest(input *ListPoliciesForTarge
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesForTarget
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesForTarget
 func (c *Organizations) ListPoliciesForTarget(input *ListPoliciesForTargetInput) (*ListPoliciesForTargetOutput, error) {
 	req, out := c.ListPoliciesForTargetRequest(input)
 	return out, req.Send()
@@ -6858,7 +7849,7 @@ const opListRoots = "ListRoots"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListRoots
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListRoots
 func (c *Organizations) ListRootsRequest(input *ListRootsInput) (req *request.Request, output *ListRootsOutput) {
 	op := &request.Operation{
 		Name:       opListRoots,
@@ -6910,6 +7901,9 @@ func (c *Organizations) ListRootsRequest(input *ListRootsInput) (req *request.Re
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -6967,7 +7961,7 @@ func (c *Organizations) ListRootsRequest(input *ListRootsInput) (req *request.Re
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListRoots
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListRoots
 func (c *Organizations) ListRoots(input *ListRootsInput) (*ListRootsOutput, error) {
 	req, out := c.ListRootsRequest(input)
 	return out, req.Send()
@@ -7064,7 +8058,7 @@ const opListTargetsForPolicy = "ListTargetsForPolicy"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListTargetsForPolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListTargetsForPolicy
 func (c *Organizations) ListTargetsForPolicyRequest(input *ListTargetsForPolicyInput) (req *request.Request, output *ListTargetsForPolicyOutput) {
 	op := &request.Operation{
 		Name:       opListTargetsForPolicy,
@@ -7116,6 +8110,9 @@ func (c *Organizations) ListTargetsForPolicyRequest(input *ListTargetsForPolicyI
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -7176,7 +8173,7 @@ func (c *Organizations) ListTargetsForPolicyRequest(input *ListTargetsForPolicyI
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListTargetsForPolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListTargetsForPolicy
 func (c *Organizations) ListTargetsForPolicy(input *ListTargetsForPolicyInput) (*ListTargetsForPolicyOutput, error) {
 	req, out := c.ListTargetsForPolicyRequest(input)
 	return out, req.Send()
@@ -7273,7 +8270,7 @@ const opMoveAccount = "MoveAccount"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/MoveAccount
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/MoveAccount
 func (c *Organizations) MoveAccountRequest(input *MoveAccountInput) (req *request.Request, output *MoveAccountOutput) {
 	op := &request.Operation{
 		Name:       opMoveAccount,
@@ -7318,6 +8315,9 @@ func (c *Organizations) MoveAccountRequest(input *MoveAccountInput) (req *reques
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -7398,7 +8398,7 @@ func (c *Organizations) MoveAccountRequest(input *MoveAccountInput) (req *reques
 //   AWS Organizations can't complete your request because of an internal service
 //   error. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/MoveAccount
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/MoveAccount
 func (c *Organizations) MoveAccount(input *MoveAccountInput) (*MoveAccountOutput, error) {
 	req, out := c.MoveAccountRequest(input)
 	return out, req.Send()
@@ -7445,7 +8445,7 @@ const opRemoveAccountFromOrganization = "RemoveAccountFromOrganization"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/RemoveAccountFromOrganization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/RemoveAccountFromOrganization
 func (c *Organizations) RemoveAccountFromOrganizationRequest(input *RemoveAccountFromOrganizationInput) (req *request.Request, output *RemoveAccountFromOrganizationOutput) {
 	op := &request.Operation{
 		Name:       opRemoveAccountFromOrganization,
@@ -7532,6 +8532,9 @@ func (c *Organizations) RemoveAccountFromOrganizationRequest(input *RemoveAccoun
 //   policies to an account, OU, or root. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
 //   of accounts in an organization. If you need more accounts, contact AWS Support
 //   to request an increase in your limit.
@@ -7612,6 +8615,9 @@ func (c *Organizations) RemoveAccountFromOrganizationRequest(input *RemoveAccoun
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -7673,7 +8679,7 @@ func (c *Organizations) RemoveAccountFromOrganizationRequest(input *RemoveAccoun
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/RemoveAccountFromOrganization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/RemoveAccountFromOrganization
 func (c *Organizations) RemoveAccountFromOrganization(input *RemoveAccountFromOrganizationInput) (*RemoveAccountFromOrganizationOutput, error) {
 	req, out := c.RemoveAccountFromOrganizationRequest(input)
 	return out, req.Send()
@@ -7720,7 +8726,7 @@ const opUpdateOrganizationalUnit = "UpdateOrganizationalUnit"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdateOrganizationalUnit
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdateOrganizationalUnit
 func (c *Organizations) UpdateOrganizationalUnitRequest(input *UpdateOrganizationalUnitInput) (req *request.Request, output *UpdateOrganizationalUnitOutput) {
 	op := &request.Operation{
 		Name:       opUpdateOrganizationalUnit,
@@ -7775,6 +8781,9 @@ func (c *Organizations) UpdateOrganizationalUnitRequest(input *UpdateOrganizatio
 //   The requested operation failed because you provided invalid values for one
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
@@ -7836,7 +8845,7 @@ func (c *Organizations) UpdateOrganizationalUnitRequest(input *UpdateOrganizatio
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdateOrganizationalUnit
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdateOrganizationalUnit
 func (c *Organizations) UpdateOrganizationalUnit(input *UpdateOrganizationalUnitInput) (*UpdateOrganizationalUnitOutput, error) {
 	req, out := c.UpdateOrganizationalUnitRequest(input)
 	return out, req.Send()
@@ -7883,7 +8892,7 @@ const opUpdatePolicy = "UpdatePolicy"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdatePolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdatePolicy
 func (c *Organizations) UpdatePolicyRequest(input *UpdatePolicyInput) (req *request.Request, output *UpdatePolicyOutput) {
 	op := &request.Operation{
 		Name:       opUpdatePolicy,
@@ -7937,6 +8946,9 @@ func (c *Organizations) UpdatePolicyRequest(input *UpdatePolicyInput) (req *requ
 //   or creating too many accounts to the organization, or attaching too many
 //   policies to an account, OU, or root. This exception includes a reason that
 //   contains additional information about the violated limit:
+//
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
 //
 //   ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
 //   of accounts in an organization. If you need more accounts, contact AWS Support
@@ -8021,6 +9033,9 @@ func (c *Organizations) UpdatePolicyRequest(input *UpdatePolicyInput) (req *requ
 //   or more of the request parameters. This exception includes a reason that
 //   contains additional information about the violated limit:
 //
+//   Some of the reasons in the following list might not be applicable to this
+//   specific API or operation:
+//
 //      * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 //      organization, or email) as a party.
 //
@@ -8086,7 +9101,7 @@ func (c *Organizations) UpdatePolicyRequest(input *UpdatePolicyInput) (req *requ
 //   You've sent too many requests in too short a period of time. The limit helps
 //   protect against denial-of-service attacks. Try again later.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdatePolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdatePolicy
 func (c *Organizations) UpdatePolicy(input *UpdatePolicyInput) (*UpdatePolicyOutput, error) {
 	req, out := c.UpdatePolicyRequest(input)
 	return out, req.Send()
@@ -8108,7 +9123,7 @@ func (c *Organizations) UpdatePolicyWithContext(ctx aws.Context, input *UpdatePo
 	return out, req.Send()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AcceptHandshakeRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AcceptHandshakeRequest
 type AcceptHandshakeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8150,7 +9165,7 @@ func (s *AcceptHandshakeInput) SetHandshakeId(v string) *AcceptHandshakeInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AcceptHandshakeResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AcceptHandshakeResponse
 type AcceptHandshakeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8175,7 +9190,7 @@ func (s *AcceptHandshakeOutput) SetHandshake(v *Handshake) *AcceptHandshakeOutpu
 }
 
 // Contains information about an AWS account that is a member of an organization.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Account
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Account
 type Account struct {
 	_ struct{} `type:"structure"`
 
@@ -8267,7 +9282,7 @@ func (s *Account) SetStatus(v string) *Account {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AttachPolicyRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AttachPolicyRequest
 type AttachPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8339,7 +9354,7 @@ func (s *AttachPolicyInput) SetTargetId(v string) *AttachPolicyInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AttachPolicyOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/AttachPolicyOutput
 type AttachPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -8354,7 +9369,7 @@ func (s AttachPolicyOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CancelHandshakeRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CancelHandshakeRequest
 type CancelHandshakeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8397,7 +9412,7 @@ func (s *CancelHandshakeInput) SetHandshakeId(v string) *CancelHandshakeInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CancelHandshakeResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CancelHandshakeResponse
 type CancelHandshakeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8422,7 +9437,7 @@ func (s *CancelHandshakeOutput) SetHandshake(v *Handshake) *CancelHandshakeOutpu
 }
 
 // Contains a list of child entities, either OUs or accounts.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Child
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Child
 type Child struct {
 	_ struct{} `type:"structure"`
 
@@ -8465,7 +9480,7 @@ func (s *Child) SetType(v string) *Child {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateAccountRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateAccountRequest
 type CreateAccountInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8574,7 +9589,7 @@ func (s *CreateAccountInput) SetRoleName(v string) *CreateAccountInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateAccountResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateAccountResponse
 type CreateAccountOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8604,7 +9619,7 @@ func (s *CreateAccountOutput) SetCreateAccountStatus(v *CreateAccountStatus) *Cr
 
 // Contains the status about a CreateAccount request to create an AWS account
 // in an organization.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateAccountStatus
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateAccountStatus
 type CreateAccountStatus struct {
 	_ struct{} `type:"structure"`
 
@@ -8706,7 +9721,7 @@ func (s *CreateAccountStatus) SetState(v string) *CreateAccountStatus {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationRequest
 type CreateOrganizationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8742,7 +9757,7 @@ func (s *CreateOrganizationInput) SetFeatureSet(v string) *CreateOrganizationInp
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationResponse
 type CreateOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8766,7 +9781,7 @@ func (s *CreateOrganizationOutput) SetOrganization(v *Organization) *CreateOrgan
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationalUnitRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationalUnitRequest
 type CreateOrganizationalUnitInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8834,7 +9849,7 @@ func (s *CreateOrganizationalUnitInput) SetParentId(v string) *CreateOrganizatio
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationalUnitResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreateOrganizationalUnitResponse
 type CreateOrganizationalUnitOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8858,7 +9873,7 @@ func (s *CreateOrganizationalUnitOutput) SetOrganizationalUnit(v *Organizational
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreatePolicyRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreatePolicyRequest
 type CreatePolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8958,7 +9973,7 @@ func (s *CreatePolicyInput) SetType(v string) *CreatePolicyInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreatePolicyResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/CreatePolicyResponse
 type CreatePolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8982,7 +9997,7 @@ func (s *CreatePolicyOutput) SetPolicy(v *Policy) *CreatePolicyOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeclineHandshakeRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeclineHandshakeRequest
 type DeclineHandshakeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9025,7 +10040,7 @@ func (s *DeclineHandshakeInput) SetHandshakeId(v string) *DeclineHandshakeInput 
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeclineHandshakeResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeclineHandshakeResponse
 type DeclineHandshakeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9050,7 +10065,7 @@ func (s *DeclineHandshakeOutput) SetHandshake(v *Handshake) *DeclineHandshakeOut
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationInput
 type DeleteOrganizationInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9065,7 +10080,7 @@ func (s DeleteOrganizationInput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationOutput
 type DeleteOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9080,7 +10095,7 @@ func (s DeleteOrganizationOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationalUnitRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationalUnitRequest
 type DeleteOrganizationalUnitInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9125,7 +10140,7 @@ func (s *DeleteOrganizationalUnitInput) SetOrganizationalUnitId(v string) *Delet
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationalUnitOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeleteOrganizationalUnitOutput
 type DeleteOrganizationalUnitOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9140,7 +10155,7 @@ func (s DeleteOrganizationalUnitOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeletePolicyRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeletePolicyRequest
 type DeletePolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9183,7 +10198,7 @@ func (s *DeletePolicyInput) SetPolicyId(v string) *DeletePolicyInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeletePolicyOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DeletePolicyOutput
 type DeletePolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9198,7 +10213,7 @@ func (s DeletePolicyOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeAccountRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeAccountRequest
 type DescribeAccountInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9241,7 +10256,7 @@ func (s *DescribeAccountInput) SetAccountId(v string) *DescribeAccountInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeAccountResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeAccountResponse
 type DescribeAccountOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9265,7 +10280,7 @@ func (s *DescribeAccountOutput) SetAccount(v *Account) *DescribeAccountOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeCreateAccountStatusRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeCreateAccountStatusRequest
 type DescribeCreateAccountStatusInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9310,7 +10325,7 @@ func (s *DescribeCreateAccountStatusInput) SetCreateAccountRequestId(v string) *
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeCreateAccountStatusResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeCreateAccountStatusResponse
 type DescribeCreateAccountStatusOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9334,7 +10349,7 @@ func (s *DescribeCreateAccountStatusOutput) SetCreateAccountStatus(v *CreateAcco
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeHandshakeRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeHandshakeRequest
 type DescribeHandshakeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9378,7 +10393,7 @@ func (s *DescribeHandshakeInput) SetHandshakeId(v string) *DescribeHandshakeInpu
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeHandshakeResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeHandshakeResponse
 type DescribeHandshakeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9402,7 +10417,7 @@ func (s *DescribeHandshakeOutput) SetHandshake(v *Handshake) *DescribeHandshakeO
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationInput
 type DescribeOrganizationInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9417,7 +10432,7 @@ func (s DescribeOrganizationInput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationResponse
 type DescribeOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9441,7 +10456,7 @@ func (s *DescribeOrganizationOutput) SetOrganization(v *Organization) *DescribeO
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationalUnitRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationalUnitRequest
 type DescribeOrganizationalUnitInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9486,7 +10501,7 @@ func (s *DescribeOrganizationalUnitInput) SetOrganizationalUnitId(v string) *Des
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationalUnitResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribeOrganizationalUnitResponse
 type DescribeOrganizationalUnitOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9510,7 +10525,7 @@ func (s *DescribeOrganizationalUnitOutput) SetOrganizationalUnit(v *Organization
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribePolicyRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribePolicyRequest
 type DescribePolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9553,7 +10568,7 @@ func (s *DescribePolicyInput) SetPolicyId(v string) *DescribePolicyInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribePolicyResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DescribePolicyResponse
 type DescribePolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9577,7 +10592,7 @@ func (s *DescribePolicyOutput) SetPolicy(v *Policy) *DescribePolicyOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DetachPolicyRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DetachPolicyRequest
 type DetachPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9649,7 +10664,7 @@ func (s *DetachPolicyInput) SetTargetId(v string) *DetachPolicyInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DetachPolicyOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DetachPolicyOutput
 type DetachPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9664,7 +10679,66 @@ func (s DetachPolicyOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisablePolicyTypeRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisableAWSServiceAccessRequest
+type DisableAWSServiceAccessInput struct {
+	_ struct{} `type:"structure"`
+
+	// The service principal name of the AWS service for which you want to disable
+	// integration with your organization. This is typically in the form of a URL,
+	// such as service-abbreviation.amazonaws.com.
+	//
+	// ServicePrincipal is a required field
+	ServicePrincipal *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DisableAWSServiceAccessInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DisableAWSServiceAccessInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DisableAWSServiceAccessInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DisableAWSServiceAccessInput"}
+	if s.ServicePrincipal == nil {
+		invalidParams.Add(request.NewErrParamRequired("ServicePrincipal"))
+	}
+	if s.ServicePrincipal != nil && len(*s.ServicePrincipal) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ServicePrincipal", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetServicePrincipal sets the ServicePrincipal field's value.
+func (s *DisableAWSServiceAccessInput) SetServicePrincipal(v string) *DisableAWSServiceAccessInput {
+	s.ServicePrincipal = &v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisableAWSServiceAccessOutput
+type DisableAWSServiceAccessOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DisableAWSServiceAccessOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DisableAWSServiceAccessOutput) GoString() string {
+	return s.String()
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisablePolicyTypeRequest
 type DisablePolicyTypeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9721,7 +10795,7 @@ func (s *DisablePolicyTypeInput) SetRootId(v string) *DisablePolicyTypeInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisablePolicyTypeResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/DisablePolicyTypeResponse
 type DisablePolicyTypeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9745,7 +10819,66 @@ func (s *DisablePolicyTypeOutput) SetRoot(v *Root) *DisablePolicyTypeOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAllFeaturesRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAWSServiceAccessRequest
+type EnableAWSServiceAccessInput struct {
+	_ struct{} `type:"structure"`
+
+	// The service principal name of the AWS service for which you want to enable
+	// integration with your organization. This is typically in the form of a URL,
+	// such as service-abbreviation.amazonaws.com.
+	//
+	// ServicePrincipal is a required field
+	ServicePrincipal *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s EnableAWSServiceAccessInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EnableAWSServiceAccessInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *EnableAWSServiceAccessInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "EnableAWSServiceAccessInput"}
+	if s.ServicePrincipal == nil {
+		invalidParams.Add(request.NewErrParamRequired("ServicePrincipal"))
+	}
+	if s.ServicePrincipal != nil && len(*s.ServicePrincipal) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ServicePrincipal", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetServicePrincipal sets the ServicePrincipal field's value.
+func (s *EnableAWSServiceAccessInput) SetServicePrincipal(v string) *EnableAWSServiceAccessInput {
+	s.ServicePrincipal = &v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAWSServiceAccessOutput
+type EnableAWSServiceAccessOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s EnableAWSServiceAccessOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EnableAWSServiceAccessOutput) GoString() string {
+	return s.String()
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAllFeaturesRequest
 type EnableAllFeaturesInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9760,7 +10893,7 @@ func (s EnableAllFeaturesInput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAllFeaturesResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnableAllFeaturesResponse
 type EnableAllFeaturesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9785,7 +10918,7 @@ func (s *EnableAllFeaturesOutput) SetHandshake(v *Handshake) *EnableAllFeaturesO
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnablePolicyTypeRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnablePolicyTypeRequest
 type EnablePolicyTypeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9842,7 +10975,7 @@ func (s *EnablePolicyTypeInput) SetRootId(v string) *EnablePolicyTypeInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnablePolicyTypeResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnablePolicyTypeResponse
 type EnablePolicyTypeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9866,6 +10999,43 @@ func (s *EnablePolicyTypeOutput) SetRoot(v *Root) *EnablePolicyTypeOutput {
 	return s
 }
 
+// A structure that contains details of a service principal that is enabled
+// to integrate with AWS Organizations.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/EnabledServicePrincipal
+type EnabledServicePrincipal struct {
+	_ struct{} `type:"structure"`
+
+	// The date that the service principal was enabled for integration with AWS
+	// Organizations.
+	DateEnabled *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The name of the service principal. This is typically in the form of a URL,
+	// such as: servicename.amazonaws.com.
+	ServicePrincipal *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s EnabledServicePrincipal) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EnabledServicePrincipal) GoString() string {
+	return s.String()
+}
+
+// SetDateEnabled sets the DateEnabled field's value.
+func (s *EnabledServicePrincipal) SetDateEnabled(v time.Time) *EnabledServicePrincipal {
+	s.DateEnabled = &v
+	return s
+}
+
+// SetServicePrincipal sets the ServicePrincipal field's value.
+func (s *EnabledServicePrincipal) SetServicePrincipal(v string) *EnabledServicePrincipal {
+	s.ServicePrincipal = &v
+	return s
+}
+
 // Contains information that must be exchanged to securely establish a relationship
 // between two accounts (an originator and a recipient). For example, when a
 // master account (the originator) invites another account (the recipient) to
@@ -9874,12 +11044,26 @@ func (s *EnablePolicyTypeOutput) SetRoot(v *Root) *EnablePolicyTypeOutput {
 //
 // Note: Handshakes that are CANCELED, ACCEPTED, or DECLINED show up in lists
 // for only 30 days after entering that state After that they are deleted.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Handshake
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Handshake
 type Handshake struct {
 	_ struct{} `type:"structure"`
 
 	// The type of handshake, indicating what action occurs when the recipient accepts
-	// the handshake.
+	// the handshake. The following handshake types are supported:
+	//
+	//    * INVITE: This type of handshake represents a request to join an organization.
+	//    It is always sent from the master account to only non-member accounts.
+	//
+	//    * ENABLE_ALL_FEATURES: This type of handshake represents a request to
+	//    enable all features in an organization. It is always sent from the master
+	//    account to only invited member accounts. Created accounts do not receive
+	//    this because those accounts were created by the organization's master
+	//    account and approval is inferred.
+	//
+	//    * APPROVE_ALL_FEATURES: This type of handshake is sent from the Organizations
+	//    service when all member accounts have approved the ENABLE_ALL_FEATURES
+	//    invitation. It is sent only to the master account and signals the master
+	//    that it can finalize the process to enable all features.
 	Action *string `type:"string" enum:"ActionType"`
 
 	// The Amazon Resource Name (ARN) of a handshake.
@@ -9996,7 +11180,7 @@ func (s *Handshake) SetState(v string) *Handshake {
 }
 
 // Specifies the criteria that are used to select the handshakes for the operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/HandshakeFilter
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/HandshakeFilter
 type HandshakeFilter struct {
 	_ struct{} `type:"structure"`
 
@@ -10038,7 +11222,7 @@ func (s *HandshakeFilter) SetParentHandshakeId(v string) *HandshakeFilter {
 }
 
 // Identifies a participant in a handshake.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/HandshakeParty
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/HandshakeParty
 type HandshakeParty struct {
 	_ struct{} `type:"structure"`
 
@@ -10098,7 +11282,7 @@ func (s *HandshakeParty) SetType(v string) *HandshakeParty {
 }
 
 // Contains additional data that is needed to process a handshake.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/HandshakeResource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/HandshakeResource
 type HandshakeResource struct {
 	_ struct{} `type:"structure"`
 
@@ -10158,7 +11342,7 @@ func (s *HandshakeResource) SetValue(v string) *HandshakeResource {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/InviteAccountToOrganizationRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/InviteAccountToOrganizationRequest
 type InviteAccountToOrganizationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10226,7 +11410,7 @@ func (s *InviteAccountToOrganizationInput) SetTarget(v *HandshakeParty) *InviteA
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/InviteAccountToOrganizationResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/InviteAccountToOrganizationResponse
 type InviteAccountToOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10251,7 +11435,7 @@ func (s *InviteAccountToOrganizationOutput) SetHandshake(v *Handshake) *InviteAc
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/LeaveOrganizationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/LeaveOrganizationInput
 type LeaveOrganizationInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10266,7 +11450,7 @@ func (s LeaveOrganizationInput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/LeaveOrganizationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/LeaveOrganizationOutput
 type LeaveOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10281,7 +11465,103 @@ func (s LeaveOrganizationOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsForParentRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAWSServiceAccessForOrganizationRequest
+type ListAWSServiceAccessForOrganizationInput struct {
+	_ struct{} `type:"structure"`
+
+	// (Optional) Use this to limit the number of results you want included in the
+	// response. If you do not include this parameter, it defaults to a value that
+	// is specific to the operation. If additional items exist beyond the maximum
+	// you specify, the NextToken response element is present and has a value (is
+	// not null). Include that value as the NextToken request parameter in the next
+	// call to the operation to get the next part of the results. Note that Organizations
+	// might return fewer results than the maximum even when there are more results
+	// available. You should check NextToken after every operation to ensure that
+	// you receive all of the results.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// Use this parameter if you receive a NextToken response in a previous request
+	// that indicates that there is more output available. Set it to the value of
+	// the previous call's NextToken response to indicate where the output should
+	// continue from.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ListAWSServiceAccessForOrganizationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListAWSServiceAccessForOrganizationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListAWSServiceAccessForOrganizationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListAWSServiceAccessForOrganizationInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListAWSServiceAccessForOrganizationInput) SetMaxResults(v int64) *ListAWSServiceAccessForOrganizationInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListAWSServiceAccessForOrganizationInput) SetNextToken(v string) *ListAWSServiceAccessForOrganizationInput {
+	s.NextToken = &v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAWSServiceAccessForOrganizationResponse
+type ListAWSServiceAccessForOrganizationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of the service principals for the services that are enabled to integrate
+	// with your organization. Each principal is a structure that includes the name
+	// and the date that it was enabled for integration with AWS Organizations.
+	EnabledServicePrincipals []*EnabledServicePrincipal `type:"list"`
+
+	// If present, this value indicates that there is more output available than
+	// is included in the current response. Use this value in the NextToken request
+	// parameter in a subsequent call to the operation to get the next part of the
+	// output. You should repeat this until the NextToken response element comes
+	// back as null.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ListAWSServiceAccessForOrganizationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListAWSServiceAccessForOrganizationOutput) GoString() string {
+	return s.String()
+}
+
+// SetEnabledServicePrincipals sets the EnabledServicePrincipals field's value.
+func (s *ListAWSServiceAccessForOrganizationOutput) SetEnabledServicePrincipals(v []*EnabledServicePrincipal) *ListAWSServiceAccessForOrganizationOutput {
+	s.EnabledServicePrincipals = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListAWSServiceAccessForOrganizationOutput) SetNextToken(v string) *ListAWSServiceAccessForOrganizationOutput {
+	s.NextToken = &v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsForParentRequest
 type ListAccountsForParentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10353,7 +11633,7 @@ func (s *ListAccountsForParentInput) SetParentId(v string) *ListAccountsForParen
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsForParentResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsForParentResponse
 type ListAccountsForParentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10390,7 +11670,7 @@ func (s *ListAccountsForParentOutput) SetNextToken(v string) *ListAccountsForPar
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsRequest
 type ListAccountsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10447,7 +11727,7 @@ func (s *ListAccountsInput) SetNextToken(v string) *ListAccountsInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListAccountsResponse
 type ListAccountsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10484,7 +11764,7 @@ func (s *ListAccountsOutput) SetNextToken(v string) *ListAccountsOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListChildrenRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListChildrenRequest
 type ListChildrenInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10581,7 +11861,7 @@ func (s *ListChildrenInput) SetParentId(v string) *ListChildrenInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListChildrenResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListChildrenResponse
 type ListChildrenOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10618,7 +11898,7 @@ func (s *ListChildrenOutput) SetNextToken(v string) *ListChildrenOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListCreateAccountStatusRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListCreateAccountStatusRequest
 type ListCreateAccountStatusInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10685,7 +11965,7 @@ func (s *ListCreateAccountStatusInput) SetStates(v []*string) *ListCreateAccount
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListCreateAccountStatusResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListCreateAccountStatusResponse
 type ListCreateAccountStatusOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10724,7 +12004,7 @@ func (s *ListCreateAccountStatusOutput) SetNextToken(v string) *ListCreateAccoun
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForAccountRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForAccountRequest
 type ListHandshakesForAccountInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10795,7 +12075,7 @@ func (s *ListHandshakesForAccountInput) SetNextToken(v string) *ListHandshakesFo
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForAccountResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForAccountResponse
 type ListHandshakesForAccountOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10833,7 +12113,7 @@ func (s *ListHandshakesForAccountOutput) SetNextToken(v string) *ListHandshakesF
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForOrganizationRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForOrganizationRequest
 type ListHandshakesForOrganizationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10904,7 +12184,7 @@ func (s *ListHandshakesForOrganizationInput) SetNextToken(v string) *ListHandsha
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForOrganizationResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListHandshakesForOrganizationResponse
 type ListHandshakesForOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10942,7 +12222,7 @@ func (s *ListHandshakesForOrganizationOutput) SetNextToken(v string) *ListHandsh
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListOrganizationalUnitsForParentRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListOrganizationalUnitsForParentRequest
 type ListOrganizationalUnitsForParentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11025,7 +12305,7 @@ func (s *ListOrganizationalUnitsForParentInput) SetParentId(v string) *ListOrgan
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListOrganizationalUnitsForParentResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListOrganizationalUnitsForParentResponse
 type ListOrganizationalUnitsForParentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11062,7 +12342,7 @@ func (s *ListOrganizationalUnitsForParentOutput) SetOrganizationalUnits(v []*Org
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListParentsRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListParentsRequest
 type ListParentsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11144,7 +12424,7 @@ func (s *ListParentsInput) SetNextToken(v string) *ListParentsInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListParentsResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListParentsResponse
 type ListParentsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11181,7 +12461,7 @@ func (s *ListParentsOutput) SetParents(v []*Parent) *ListParentsOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesForTargetRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesForTargetRequest
 type ListPoliciesForTargetInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11280,7 +12560,7 @@ func (s *ListPoliciesForTargetInput) SetTargetId(v string) *ListPoliciesForTarge
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesForTargetResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesForTargetResponse
 type ListPoliciesForTargetOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11317,7 +12597,7 @@ func (s *ListPoliciesForTargetOutput) SetPolicies(v []*PolicySummary) *ListPolic
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesRequest
 type ListPoliciesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11388,7 +12668,7 @@ func (s *ListPoliciesInput) SetNextToken(v string) *ListPoliciesInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListPoliciesResponse
 type ListPoliciesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11427,7 +12707,7 @@ func (s *ListPoliciesOutput) SetPolicies(v []*PolicySummary) *ListPoliciesOutput
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListRootsRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListRootsRequest
 type ListRootsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11484,7 +12764,7 @@ func (s *ListRootsInput) SetNextToken(v string) *ListRootsInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListRootsResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListRootsResponse
 type ListRootsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11521,7 +12801,7 @@ func (s *ListRootsOutput) SetRoots(v []*Root) *ListRootsOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListTargetsForPolicyRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListTargetsForPolicyRequest
 type ListTargetsForPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11595,7 +12875,7 @@ func (s *ListTargetsForPolicyInput) SetPolicyId(v string) *ListTargetsForPolicyI
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListTargetsForPolicyResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/ListTargetsForPolicyResponse
 type ListTargetsForPolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11633,7 +12913,7 @@ func (s *ListTargetsForPolicyOutput) SetTargets(v []*PolicyTargetSummary) *ListT
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/MoveAccountRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/MoveAccountRequest
 type MoveAccountInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11727,7 +13007,7 @@ func (s *MoveAccountInput) SetSourceParentId(v string) *MoveAccountInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/MoveAccountOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/MoveAccountOutput
 type MoveAccountOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -11746,7 +13026,7 @@ func (s MoveAccountOutput) GoString() string {
 // accounts that are centrally managed together using consolidated billing,
 // organized hierarchically with organizational units (OUs), and controlled
 // with policies .
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Organization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Organization
 type Organization struct {
 	_ struct{} `type:"structure"`
 
@@ -11850,7 +13130,7 @@ func (s *Organization) SetMasterAccountId(v string) *Organization {
 // Contains details about an organizational unit (OU). An OU is a container
 // of AWS accounts within a root of an organization. Policies that are attached
 // to an OU apply to all accounts contained in that OU and in any child OUs.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/OrganizationalUnit
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/OrganizationalUnit
 type OrganizationalUnit struct {
 	_ struct{} `type:"structure"`
 
@@ -11907,7 +13187,7 @@ func (s *OrganizationalUnit) SetName(v string) *OrganizationalUnit {
 
 // Contains information about either a root or an organizational unit (OU) that
 // can contain OUs or accounts in an organization.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Parent
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Parent
 type Parent struct {
 	_ struct{} `type:"structure"`
 
@@ -11954,7 +13234,7 @@ func (s *Parent) SetType(v string) *Parent {
 // Contains rules to be applied to the affected accounts. Policies can be attached
 // directly to accounts, or to roots and OUs to affect all accounts in those
 // hierarchies.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Policy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Policy
 type Policy struct {
 	_ struct{} `type:"structure"`
 
@@ -11989,7 +13269,7 @@ func (s *Policy) SetPolicySummary(v *PolicySummary) *Policy {
 
 // Contains information about a policy, but does not include the content. To
 // see the content of a policy, see DescribePolicy.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/PolicySummary
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/PolicySummary
 type PolicySummary struct {
 	_ struct{} `type:"structure"`
 
@@ -12073,7 +13353,7 @@ func (s *PolicySummary) SetType(v string) *PolicySummary {
 
 // Contains information about a root, OU, or account that a policy is attached
 // to.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/PolicyTargetSummary
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/PolicyTargetSummary
 type PolicyTargetSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -12147,7 +13427,7 @@ func (s *PolicyTargetSummary) SetType(v string) *PolicyTargetSummary {
 
 // Contains information about a policy type and its status in the associated
 // root.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/PolicyTypeSummary
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/PolicyTypeSummary
 type PolicyTypeSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -12182,7 +13462,7 @@ func (s *PolicyTypeSummary) SetType(v string) *PolicyTypeSummary {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/RemoveAccountFromOrganizationRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/RemoveAccountFromOrganizationRequest
 type RemoveAccountFromOrganizationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12225,7 +13505,7 @@ func (s *RemoveAccountFromOrganizationInput) SetAccountId(v string) *RemoveAccou
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/RemoveAccountFromOrganizationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/RemoveAccountFromOrganizationOutput
 type RemoveAccountFromOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -12245,7 +13525,7 @@ func (s RemoveAccountFromOrganizationOutput) GoString() string {
 // Every root contains every AWS account in the organization. Each root enables
 // the accounts to be organized in a different way and to have different policy
 // types enabled for use in that root.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Root
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/Root
 type Root struct {
 	_ struct{} `type:"structure"`
 
@@ -12308,7 +13588,7 @@ func (s *Root) SetPolicyTypes(v []*PolicyTypeSummary) *Root {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdateOrganizationalUnitRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdateOrganizationalUnitRequest
 type UpdateOrganizationalUnitInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12369,7 +13649,7 @@ func (s *UpdateOrganizationalUnitInput) SetOrganizationalUnitId(v string) *Updat
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdateOrganizationalUnitResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdateOrganizationalUnitResponse
 type UpdateOrganizationalUnitOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12394,7 +13674,7 @@ func (s *UpdateOrganizationalUnitOutput) SetOrganizationalUnit(v *Organizational
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdatePolicyRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdatePolicyRequest
 type UpdatePolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12476,7 +13756,7 @@ func (s *UpdatePolicyInput) SetPolicyId(v string) *UpdatePolicyInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdatePolicyResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/organizations-2016-11-28/UpdatePolicyResponse
 type UpdatePolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12500,6 +13780,11 @@ func (s *UpdatePolicyOutput) SetPolicy(v *Policy) *UpdatePolicyOutput {
 	s.Policy = v
 	return s
 }
+
+const (
+	// AccessDeniedForDependencyExceptionReasonAccessDeniedDuringCreateServiceLinkedRole is a AccessDeniedForDependencyExceptionReason enum value
+	AccessDeniedForDependencyExceptionReasonAccessDeniedDuringCreateServiceLinkedRole = "ACCESS_DENIED_DURING_CREATE_SERVICE_LINKED_ROLE"
+)
 
 const (
 	// AccountJoinedMethodInvited is a AccountJoinedMethod enum value
@@ -12526,6 +13811,9 @@ const (
 
 	// ActionTypeApproveAllFeatures is a ActionType enum value
 	ActionTypeApproveAllFeatures = "APPROVE_ALL_FEATURES"
+
+	// ActionTypeAddOrganizationsServiceLinkedRole is a ActionType enum value
+	ActionTypeAddOrganizationsServiceLinkedRole = "ADD_ORGANIZATIONS_SERVICE_LINKED_ROLE"
 )
 
 const (
@@ -12581,6 +13869,9 @@ const (
 
 	// ConstraintViolationExceptionReasonMasterAccountMissingContactInfo is a ConstraintViolationExceptionReason enum value
 	ConstraintViolationExceptionReasonMasterAccountMissingContactInfo = "MASTER_ACCOUNT_MISSING_CONTACT_INFO"
+
+	// ConstraintViolationExceptionReasonOrganizationNotInAllFeaturesMode is a ConstraintViolationExceptionReason enum value
+	ConstraintViolationExceptionReasonOrganizationNotInAllFeaturesMode = "ORGANIZATION_NOT_IN_ALL_FEATURES_MODE"
 )
 
 const (
@@ -12595,6 +13886,9 @@ const (
 
 	// CreateAccountFailureReasonInvalidEmail is a CreateAccountFailureReason enum value
 	CreateAccountFailureReasonInvalidEmail = "INVALID_EMAIL"
+
+	// CreateAccountFailureReasonConcurrentAccountModification is a CreateAccountFailureReason enum value
+	CreateAccountFailureReasonConcurrentAccountModification = "CONCURRENT_ACCOUNT_MODIFICATION"
 
 	// CreateAccountFailureReasonInternalFailure is a CreateAccountFailureReason enum value
 	CreateAccountFailureReasonInternalFailure = "INTERNAL_FAILURE"
@@ -12753,6 +14047,9 @@ const (
 
 	// InvalidInputExceptionReasonInvalidFullNameTarget is a InvalidInputExceptionReason enum value
 	InvalidInputExceptionReasonInvalidFullNameTarget = "INVALID_FULL_NAME_TARGET"
+
+	// InvalidInputExceptionReasonUnrecognizedServicePrincipal is a InvalidInputExceptionReason enum value
+	InvalidInputExceptionReasonUnrecognizedServicePrincipal = "UNRECOGNIZED_SERVICE_PRINCIPAL"
 )
 
 const (

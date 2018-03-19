@@ -24,7 +24,10 @@ import (
 	"testing"
 	"time"
 
+	"cloud.google.com/go/internal/testutil"
+
 	"github.com/golang/protobuf/proto"
+	"github.com/google/go-cmp/cmp"
 	"golang.org/x/net/context"
 	pb "google.golang.org/genproto/googleapis/datastore/v1"
 	"google.golang.org/grpc"
@@ -1942,18 +1945,7 @@ func TestRoundTrip(t *testing.T) {
 			sortPL(*pl)
 		}
 
-		equal := false
-		switch v := got.(type) {
-		// Round tripping a time.Time can result in a different time.Location: Local instead of UTC.
-		// We therefore test equality explicitly, instead of relying on reflect.DeepEqual.
-		case *T:
-			equal = v.T.Equal(tc.want.(*T).T)
-		case *SpecialTime:
-			equal = v.MyTime.Equal(tc.want.(*SpecialTime).MyTime.Time)
-		default:
-			equal = reflect.DeepEqual(got, tc.want)
-		}
-		if !equal {
+		if !testutil.Equal(got, tc.want, cmp.AllowUnexported(X0{}, X2{})) {
 			t.Errorf("%s: compare:\ngot:  %+#v\nwant: %+#v", tc.desc, got, tc.want)
 			continue
 		}
@@ -2707,7 +2699,7 @@ func TestLoadSavePLS(t *testing.T) {
 				t.Errorf("%s: save: %v", tc.desc, err)
 				continue
 			}
-			if !reflect.DeepEqual(e, tc.wantSave) {
+			if !testutil.Equal(e, tc.wantSave) {
 				t.Errorf("%s: save: \ngot:  %+v\nwant: %+v", tc.desc, e, tc.wantSave)
 				continue
 			}
@@ -2729,7 +2721,7 @@ func TestLoadSavePLS(t *testing.T) {
 				t.Errorf("%s: load: %v", tc.desc, err)
 				continue
 			}
-			if !reflect.DeepEqual(gota, tc.wantLoad) {
+			if !testutil.Equal(gota, tc.wantLoad) {
 				t.Errorf("%s: load: \ngot:  %+v\nwant: %+v", tc.desc, gota, tc.wantLoad)
 				continue
 			}
@@ -2864,7 +2856,7 @@ func TestQueryConstruction(t *testing.T) {
 			}
 			continue
 		}
-		if !reflect.DeepEqual(test.q, test.exp) {
+		if !testutil.Equal(test.q, test.exp, cmp.AllowUnexported(Query{})) {
 			t.Errorf("%d: mismatch: got %v want %v", i, test.q, test.exp)
 		}
 	}
@@ -3322,7 +3314,7 @@ func TestKeyLoaderEndToEnd(t *testing.T) {
 	}
 
 	for i := range dst {
-		if !reflect.DeepEqual(dst[i].K, keys[i]) {
+		if !testutil.Equal(dst[i].K, keys[i]) {
 			t.Fatalf("unexpected entity %d to have key %+v, got %+v", i, keys[i], dst[i].K)
 		}
 	}

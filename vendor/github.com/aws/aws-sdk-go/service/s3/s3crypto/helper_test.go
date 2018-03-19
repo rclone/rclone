@@ -1,9 +1,8 @@
 package s3crypto
 
 import (
+	"bytes"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestBytesReadWriteSeeker_Read(t *testing.T) {
@@ -12,9 +11,17 @@ func TestBytesReadWriteSeeker_Read(t *testing.T) {
 	buf := make([]byte, 3)
 	n, err := b.Read(buf)
 
-	assert.NoError(t, err)
-	assert.Equal(t, 3, n)
-	assert.Equal(t, expected, buf)
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
+
+	if e, a := 3, n; e != a {
+		t.Errorf("expected %d, but received %d", e, a)
+	}
+
+	if !bytes.Equal(expected, buf) {
+		t.Error("expected equivalent byte slices, but received otherwise")
+	}
 }
 
 func TestBytesReadWriteSeeker_Write(t *testing.T) {
@@ -23,25 +30,53 @@ func TestBytesReadWriteSeeker_Write(t *testing.T) {
 	buf := make([]byte, 3)
 	n, err := b.Write([]byte{1, 2, 3})
 
-	assert.NoError(t, err)
-	assert.Equal(t, 3, n)
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
+
+	if e, a := 3, n; e != a {
+		t.Errorf("expected %d, but received %d", e, a)
+	}
 
 	n, err = b.Read(buf)
-	assert.NoError(t, err)
-	assert.Equal(t, 3, n)
-	assert.Equal(t, expected, buf)
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
+
+	if e, a := 3, n; e != a {
+		t.Errorf("expected %d, but received %d", e, a)
+	}
+
+	if !bytes.Equal(expected, buf) {
+		t.Error("expected equivalent byte slices, but received otherwise")
+	}
 }
 
 func TestBytesReadWriteSeeker_Seek(t *testing.T) {
 	b := &bytesReadWriteSeeker{[]byte{1, 2, 3}, 0}
 	expected := []byte{2, 3}
 	m, err := b.Seek(1, 0)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, int(m))
+
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
+
+	if e, a := 1, int(m); e != a {
+		t.Errorf("expected %d, but received %d", e, a)
+	}
+
 	buf := make([]byte, 3)
 	n, err := b.Read(buf)
 
-	assert.NoError(t, err)
-	assert.Equal(t, 2, n)
-	assert.Equal(t, expected, buf[:n])
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
+
+	if e, a := 2, n; e != a {
+		t.Errorf("expected %d, but received %d", e, a)
+	}
+
+	if !bytes.Equal(expected, buf[:n]) {
+		t.Error("expected equivalent byte slices, but received otherwise")
+	}
 }

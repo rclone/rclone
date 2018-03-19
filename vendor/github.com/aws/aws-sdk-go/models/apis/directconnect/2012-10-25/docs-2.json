@@ -8,30 +8,37 @@
     "AllocatePublicVirtualInterface": "<p>Provisions a public virtual interface to be owned by a different customer.</p> <p>The owner of a connection calls this function to provision a public virtual interface which will be owned by another AWS customer.</p> <p>Virtual interfaces created using this function must be confirmed by the virtual interface owner by calling ConfirmPublicVirtualInterface. Until this step has been completed, the virtual interface will be in 'Confirming' state, and will not be available for handling traffic.</p> <p>When creating an IPv6 public virtual interface (addressFamily is 'ipv6'), the customer and amazon address fields should be left blank to use auto-assigned IPv6 space. Custom IPv6 Addresses are currently not supported.</p>",
     "AssociateConnectionWithLag": "<p>Associates an existing connection with a link aggregation group (LAG). The connection is interrupted and re-established as a member of the LAG (connectivity to AWS will be interrupted). The connection must be hosted on the same AWS Direct Connect endpoint as the LAG, and its bandwidth must match the bandwidth for the LAG. You can reassociate a connection that's currently associated with a different LAG; however, if removing the connection will cause the original LAG to fall below its setting for minimum number of operational connections, the request fails.</p> <p>Any virtual interfaces that are directly associated with the connection are automatically re-associated with the LAG. If the connection was originally associated with a different LAG, the virtual interfaces remain associated with the original LAG.</p> <p>For interconnects, any hosted connections are automatically re-associated with the LAG. If the interconnect was originally associated with a different LAG, the hosted connections remain associated with the original LAG.</p>",
     "AssociateHostedConnection": "<p>Associates a hosted connection and its virtual interfaces with a link aggregation group (LAG) or interconnect. If the target interconnect or LAG has an existing hosted connection with a conflicting VLAN number or IP address, the operation fails. This action temporarily interrupts the hosted connection's connectivity to AWS as it is being migrated.</p> <note> <p>This is intended for use by AWS Direct Connect partners only.</p> </note>",
-    "AssociateVirtualInterface": "<p>Associates a virtual interface with a specified link aggregation group (LAG) or connection. Connectivity to AWS is temporarily interrupted as the virtual interface is being migrated. If the target connection or LAG has an associated virtual interface with a conflicting VLAN number or a conflicting IP address, the operation fails. </p> <p>Virtual interfaces associated with a hosted connection cannot be associated with a LAG; hosted connections must be migrated along with their virtual interfaces using <a>AssociateHostedConnection</a>.</p> <p>Hosted virtual interfaces (an interface for which the owner of the connection is not the owner of physical connection) can only be reassociated by the owner of the physical connection.</p>",
+    "AssociateVirtualInterface": "<p>Associates a virtual interface with a specified link aggregation group (LAG) or connection. Connectivity to AWS is temporarily interrupted as the virtual interface is being migrated. If the target connection or LAG has an associated virtual interface with a conflicting VLAN number or a conflicting IP address, the operation fails. </p> <p>Virtual interfaces associated with a hosted connection cannot be associated with a LAG; hosted connections must be migrated along with their virtual interfaces using <a>AssociateHostedConnection</a>.</p> <p>In order to reassociate a virtual interface to a new connection or LAG, the requester must own either the virtual interface itself or the connection to which the virtual interface is currently associated. Additionally, the requester must own the connection or LAG to which the virtual interface will be newly associated.</p>",
     "ConfirmConnection": "<p>Confirm the creation of a hosted connection on an interconnect.</p> <p>Upon creation, the hosted connection is initially in the 'Ordering' state, and will remain in this state until the owner calls ConfirmConnection to confirm creation of the hosted connection.</p>",
-    "ConfirmPrivateVirtualInterface": "<p>Accept ownership of a private virtual interface created by another customer.</p> <p>After the virtual interface owner calls this function, the virtual interface will be created and attached to the given virtual private gateway, and will be available for handling traffic.</p>",
+    "ConfirmPrivateVirtualInterface": "<p>Accept ownership of a private virtual interface created by another customer.</p> <p>After the virtual interface owner calls this function, the virtual interface will be created and attached to the given virtual private gateway or direct connect gateway, and will be available for handling traffic.</p>",
     "ConfirmPublicVirtualInterface": "<p>Accept ownership of a public virtual interface created by another customer.</p> <p>After the virtual interface owner calls this function, the specified virtual interface will be created and made available for handling traffic.</p>",
     "CreateBGPPeer": "<p>Creates a new BGP peer on a specified virtual interface. The BGP peer cannot be in the same address family (IPv4/IPv6) of an existing BGP peer on the virtual interface.</p> <p>You must create a BGP peer for the corresponding address family in order to access AWS resources that also use that address family.</p> <p>When creating a IPv6 BGP peer, the Amazon address and customer address fields must be left blank. IPv6 addresses are automatically assigned from Amazon's pool of IPv6 addresses; you cannot specify custom IPv6 addresses.</p> <p>For a public virtual interface, the Autonomous System Number (ASN) must be private or already whitelisted for the virtual interface.</p>",
-    "CreateConnection": "<p>Creates a new connection between the customer network and a specific AWS Direct Connect location.</p> <p>A connection links your internal network to an AWS Direct Connect location over a standard 1 gigabit or 10 gigabit Ethernet fiber-optic cable. One end of the cable is connected to your router, the other to an AWS Direct Connect router. An AWS Direct Connect location provides access to Amazon Web Services in the region it is associated with. You can establish connections with AWS Direct Connect locations in multiple regions, but a connection in one region does not provide connectivity to other regions.</p> <p>You can automatically add the new connection to a link aggregation group (LAG) by specifying a LAG ID in the request. This ensures that the new connection is allocated on the same AWS Direct Connect endpoint that hosts the specified LAG. If there are no available ports on the endpoint, the request fails and no connection will be created.</p>",
+    "CreateConnection": "<p>Creates a new connection between the customer network and a specific AWS Direct Connect location.</p> <p>A connection links your internal network to an AWS Direct Connect location over a standard 1 gigabit or 10 gigabit Ethernet fiber-optic cable. One end of the cable is connected to your router, the other to an AWS Direct Connect router. An AWS Direct Connect location provides access to Amazon Web Services in the region it is associated with. You can establish connections with AWS Direct Connect locations in multiple regions, but a connection in one region does not provide connectivity to other regions.</p> <p>To find the locations for your region, use <a>DescribeLocations</a>.</p> <p>You can automatically add the new connection to a link aggregation group (LAG) by specifying a LAG ID in the request. This ensures that the new connection is allocated on the same AWS Direct Connect endpoint that hosts the specified LAG. If there are no available ports on the endpoint, the request fails and no connection will be created.</p>",
+    "CreateDirectConnectGateway": "<p>Creates a new direct connect gateway. A direct connect gateway is an intermediate object that enables you to connect a set of virtual interfaces and virtual private gateways. direct connect gateways are global and visible in any AWS region after they are created. The virtual interfaces and virtual private gateways that are connected through a direct connect gateway can be in different regions. This enables you to connect to a VPC in any region, regardless of the region in which the virtual interfaces are located, and pass traffic between them.</p>",
+    "CreateDirectConnectGatewayAssociation": "<p>Creates an association between a direct connect gateway and a virtual private gateway (VGW). The VGW must be attached to a VPC and must not be associated with another direct connect gateway.</p>",
     "CreateInterconnect": "<p>Creates a new interconnect between a AWS Direct Connect partner's network and a specific AWS Direct Connect location.</p> <p>An interconnect is a connection which is capable of hosting other connections. The AWS Direct Connect partner can use an interconnect to provide sub-1Gbps AWS Direct Connect service to tier 2 customers who do not have their own connections. Like a standard connection, an interconnect links the AWS Direct Connect partner's network to an AWS Direct Connect location over a standard 1 Gbps or 10 Gbps Ethernet fiber-optic cable. One end is connected to the partner's router, the other to an AWS Direct Connect router.</p> <p>You can automatically add the new interconnect to a link aggregation group (LAG) by specifying a LAG ID in the request. This ensures that the new interconnect is allocated on the same AWS Direct Connect endpoint that hosts the specified LAG. If there are no available ports on the endpoint, the request fails and no interconnect will be created.</p> <p>For each end customer, the AWS Direct Connect partner provisions a connection on their interconnect by calling AllocateConnectionOnInterconnect. The end customer can then connect to AWS resources by creating a virtual interface on their connection, using the VLAN assigned to them by the AWS Direct Connect partner.</p> <note> <p>This is intended for use by AWS Direct Connect partners only.</p> </note>",
     "CreateLag": "<p>Creates a new link aggregation group (LAG) with the specified number of bundled physical connections between the customer network and a specific AWS Direct Connect location. A LAG is a logical interface that uses the Link Aggregation Control Protocol (LACP) to aggregate multiple 1 gigabit or 10 gigabit interfaces, allowing you to treat them as a single interface.</p> <p>All connections in a LAG must use the same bandwidth (for example, 10 Gbps), and must terminate at the same AWS Direct Connect endpoint.</p> <p>You can have up to 10 connections per LAG. Regardless of this limit, if you request more connections for the LAG than AWS Direct Connect can allocate on a single endpoint, no LAG is created.</p> <p>You can specify an existing physical connection or interconnect to include in the LAG (which counts towards the total number of connections). Doing so interrupts the current physical connection or hosted connections, and re-establishes them as a member of the LAG. The LAG will be created on the same AWS Direct Connect endpoint to which the connection terminates. Any virtual interfaces associated with the connection are automatically disassociated and re-associated with the LAG. The connection ID does not change.</p> <p>If the AWS account used to create a LAG is a registered AWS Direct Connect partner, the LAG is automatically enabled to host sub-connections. For a LAG owned by a partner, any associated virtual interfaces cannot be directly configured.</p>",
     "CreatePrivateVirtualInterface": "<p>Creates a new private virtual interface. A virtual interface is the VLAN that transports AWS Direct Connect traffic. A private virtual interface supports sending traffic to a single virtual private cloud (VPC).</p>",
     "CreatePublicVirtualInterface": "<p>Creates a new public virtual interface. A virtual interface is the VLAN that transports AWS Direct Connect traffic. A public virtual interface supports sending traffic to public services of AWS such as Amazon Simple Storage Service (Amazon S3).</p> <p>When creating an IPv6 public virtual interface (addressFamily is 'ipv6'), the customer and amazon address fields should be left blank to use auto-assigned IPv6 space. Custom IPv6 Addresses are currently not supported.</p>",
     "DeleteBGPPeer": "<p>Deletes a BGP peer on the specified virtual interface that matches the specified customer address and ASN. You cannot delete the last BGP peer from a virtual interface.</p>",
     "DeleteConnection": "<p>Deletes the connection.</p> <p>Deleting a connection only stops the AWS Direct Connect port hour and data transfer charges. You need to cancel separately with the providers any services or charges for cross-connects or network circuits that connect you to the AWS Direct Connect location.</p>",
+    "DeleteDirectConnectGateway": "<p>Deletes a direct connect gateway. You must first delete all virtual interfaces that are attached to the direct connect gateway and disassociate all virtual private gateways that are associated with the direct connect gateway.</p>",
+    "DeleteDirectConnectGatewayAssociation": "<p>Deletes the association between a direct connect gateway and a virtual private gateway.</p>",
     "DeleteInterconnect": "<p>Deletes the specified interconnect.</p> <note> <p>This is intended for use by AWS Direct Connect partners only.</p> </note>",
     "DeleteLag": "<p>Deletes a link aggregation group (LAG). You cannot delete a LAG if it has active virtual interfaces or hosted connections.</p>",
     "DeleteVirtualInterface": "<p>Deletes a virtual interface.</p>",
     "DescribeConnectionLoa": "<p>Deprecated in favor of <a>DescribeLoa</a>.</p> <p>Returns the LOA-CFA for a Connection.</p> <p>The Letter of Authorization - Connecting Facility Assignment (LOA-CFA) is a document that your APN partner or service provider uses when establishing your cross connect to AWS at the colocation facility. For more information, see <a href=\"http://docs.aws.amazon.com/directconnect/latest/UserGuide/Colocation.html\">Requesting Cross Connects at AWS Direct Connect Locations</a> in the AWS Direct Connect user guide.</p>",
     "DescribeConnections": "<p>Displays all connections in this region.</p> <p>If a connection ID is provided, the call returns only that particular connection.</p>",
     "DescribeConnectionsOnInterconnect": "<p>Deprecated in favor of <a>DescribeHostedConnections</a>.</p> <p>Returns a list of connections that have been provisioned on the given interconnect.</p> <note> <p>This is intended for use by AWS Direct Connect partners only.</p> </note>",
+    "DescribeDirectConnectGatewayAssociations": "<p>Returns a list of all direct connect gateway and virtual private gateway (VGW) associations. Either a direct connect gateway ID or a VGW ID must be provided in the request. If a direct connect gateway ID is provided, the response returns all VGWs associated with the direct connect gateway. If a VGW ID is provided, the response returns all direct connect gateways associated with the VGW. If both are provided, the response only returns the association that matches both the direct connect gateway and the VGW.</p>",
+    "DescribeDirectConnectGatewayAttachments": "<p>Returns a list of all direct connect gateway and virtual interface (VIF) attachments. Either a direct connect gateway ID or a VIF ID must be provided in the request. If a direct connect gateway ID is provided, the response returns all VIFs attached to the direct connect gateway. If a VIF ID is provided, the response returns all direct connect gateways attached to the VIF. If both are provided, the response only returns the attachment that matches both the direct connect gateway and the VIF.</p>",
+    "DescribeDirectConnectGateways": "<p>Returns a list of direct connect gateways in your account. Deleted direct connect gateways are not returned. You can provide a direct connect gateway ID in the request to return information about the specific direct connect gateway only. Otherwise, if a direct connect gateway ID is not provided, information about all of your direct connect gateways is returned. </p>",
     "DescribeHostedConnections": "<p>Returns a list of hosted connections that have been provisioned on the given interconnect or link aggregation group (LAG).</p> <note> <p>This is intended for use by AWS Direct Connect partners only.</p> </note>",
     "DescribeInterconnectLoa": "<p>Deprecated in favor of <a>DescribeLoa</a>.</p> <p>Returns the LOA-CFA for an Interconnect.</p> <p>The Letter of Authorization - Connecting Facility Assignment (LOA-CFA) is a document that is used when establishing your cross connect to AWS at the colocation facility. For more information, see <a href=\"http://docs.aws.amazon.com/directconnect/latest/UserGuide/Colocation.html\">Requesting Cross Connects at AWS Direct Connect Locations</a> in the AWS Direct Connect user guide.</p>",
     "DescribeInterconnects": "<p>Returns a list of interconnects owned by the AWS account.</p> <p>If an interconnect ID is provided, it will only return this particular interconnect.</p>",
     "DescribeLags": "<p>Describes the link aggregation groups (LAGs) in your account. </p> <p>If a LAG ID is provided, only information about the specified LAG is returned.</p>",
     "DescribeLoa": "<p>Returns the LOA-CFA for a connection, interconnect, or link aggregation group (LAG).</p> <p>The Letter of Authorization - Connecting Facility Assignment (LOA-CFA) is a document that is used when establishing your cross connect to AWS at the colocation facility. For more information, see <a href=\"http://docs.aws.amazon.com/directconnect/latest/UserGuide/Colocation.html\">Requesting Cross Connects at AWS Direct Connect Locations</a> in the AWS Direct Connect user guide.</p>",
-    "DescribeLocations": "<p>Returns the list of AWS Direct Connect locations in the current AWS region. These are the locations that may be selected when calling CreateConnection or CreateInterconnect.</p>",
+    "DescribeLocations": "<p>Returns the list of AWS Direct Connect locations in the current AWS region. These are the locations that may be selected when calling <a>CreateConnection</a> or <a>CreateInterconnect</a>.</p>",
     "DescribeTags": "<p>Describes the tags associated with the specified Direct Connect resources.</p>",
     "DescribeVirtualGateways": "<p>Returns a list of virtual private gateways owned by the AWS account.</p> <p>You can create one or more AWS Direct Connect private virtual interfaces linking to a virtual private gateway. A virtual private gateway can be managed via Amazon Virtual Private Cloud (VPC) console or the <a href=\"http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-query-CreateVpnGateway.html\">EC2 CreateVpnGateway</a> action.</p>",
     "DescribeVirtualInterfaces": "<p>Displays all virtual interfaces for an AWS account. Virtual interfaces deleted fewer than 15 minutes before you make the request are also returned. If you specify a connection ID, only the virtual interfaces associated with the connection are returned. If you specify a virtual interface ID, then only a single virtual interface is returned.</p> <p>A virtual interface (VLAN) transmits the traffic between the AWS Direct Connect location and the customer.</p>",
@@ -295,6 +302,26 @@
       "refs": {
       }
     },
+    "CreateDirectConnectGatewayAssociationRequest": {
+      "base": "<p>Container for the parameters to the CreateDirectConnectGatewayAssociation operation.</p>",
+      "refs": {
+      }
+    },
+    "CreateDirectConnectGatewayAssociationResult": {
+      "base": "<p>Container for the response from the CreateDirectConnectGatewayAssociation API call</p>",
+      "refs": {
+      }
+    },
+    "CreateDirectConnectGatewayRequest": {
+      "base": "<p>Container for the parameters to the CreateDirectConnectGateway operation.</p>",
+      "refs": {
+      }
+    },
+    "CreateDirectConnectGatewayResult": {
+      "base": "<p>Container for the response from the CreateDirectConnectGateway API call</p>",
+      "refs": {
+      }
+    },
     "CreateInterconnectRequest": {
       "base": "<p>Container for the parameters to the CreateInterconnect operation.</p>",
       "refs": {
@@ -343,6 +370,26 @@
       "refs": {
       }
     },
+    "DeleteDirectConnectGatewayAssociationRequest": {
+      "base": "<p>Container for the parameters to the DeleteDirectConnectGatewayAssociation operation.</p>",
+      "refs": {
+      }
+    },
+    "DeleteDirectConnectGatewayAssociationResult": {
+      "base": "<p>Container for the response from the DeleteDirectConnectGatewayAssociation API call</p>",
+      "refs": {
+      }
+    },
+    "DeleteDirectConnectGatewayRequest": {
+      "base": "<p>Container for the parameters to the DeleteDirectConnectGateway operation.</p>",
+      "refs": {
+      }
+    },
+    "DeleteDirectConnectGatewayResult": {
+      "base": "<p>Container for the response from the DeleteDirectConnectGateway API call</p>",
+      "refs": {
+      }
+    },
     "DeleteInterconnectRequest": {
       "base": "<p>Container for the parameters to the DeleteInterconnect operation.</p>",
       "refs": {
@@ -385,6 +432,36 @@
     },
     "DescribeConnectionsRequest": {
       "base": "<p>Container for the parameters to the DescribeConnections operation.</p>",
+      "refs": {
+      }
+    },
+    "DescribeDirectConnectGatewayAssociationsRequest": {
+      "base": "<p>Container for the parameters to the DescribeDirectConnectGatewayAssociations operation.</p>",
+      "refs": {
+      }
+    },
+    "DescribeDirectConnectGatewayAssociationsResult": {
+      "base": "<p>Container for the response from the DescribeDirectConnectGatewayAssociations API call</p>",
+      "refs": {
+      }
+    },
+    "DescribeDirectConnectGatewayAttachmentsRequest": {
+      "base": "<p>Container for the parameters to the DescribeDirectConnectGatewayAttachments operation.</p>",
+      "refs": {
+      }
+    },
+    "DescribeDirectConnectGatewayAttachmentsResult": {
+      "base": "<p>Container for the response from the DescribeDirectConnectGatewayAttachments API call</p>",
+      "refs": {
+      }
+    },
+    "DescribeDirectConnectGatewaysRequest": {
+      "base": "<p>Container for the parameters to the DescribeDirectConnectGateways operation.</p>",
+      "refs": {
+      }
+    },
+    "DescribeDirectConnectGatewaysResult": {
+      "base": "<p>Container for the response from the DescribeDirectConnectGateways API call</p>",
       "refs": {
       }
     },
@@ -436,6 +513,88 @@
     "DirectConnectClientException": {
       "base": "<p>The API was called with invalid parameters. The error message will contain additional details about the cause.</p>",
       "refs": {
+      }
+    },
+    "DirectConnectGateway": {
+      "base": "<p>A direct connect gateway is an intermediate object that enables you to connect virtual interfaces and virtual private gateways.</p>",
+      "refs": {
+        "CreateDirectConnectGatewayResult$directConnectGateway": "<p>The direct connect gateway to be created.</p>",
+        "DeleteDirectConnectGatewayResult$directConnectGateway": "<p>The direct connect gateway to be deleted.</p>",
+        "DirectConnectGatewayList$member": null
+      }
+    },
+    "DirectConnectGatewayAssociation": {
+      "base": "<p>The association between a direct connect gateway and virtual private gateway.</p>",
+      "refs": {
+        "CreateDirectConnectGatewayAssociationResult$directConnectGatewayAssociation": "<p>The direct connect gateway association to be created.</p>",
+        "DeleteDirectConnectGatewayAssociationResult$directConnectGatewayAssociation": "<p>The direct connect gateway association to be deleted.</p>",
+        "DirectConnectGatewayAssociationList$member": null
+      }
+    },
+    "DirectConnectGatewayAssociationList": {
+      "base": "<p>A list of direct connect gateway associations.</p>",
+      "refs": {
+        "DescribeDirectConnectGatewayAssociationsResult$directConnectGatewayAssociations": "<p>Information about the direct connect gateway associations.</p>"
+      }
+    },
+    "DirectConnectGatewayAssociationState": {
+      "base": "<p>State of the direct connect gateway association.</p> <ul> <li> <p> <b>Associating</b>: The initial state after calling <a>CreateDirectConnectGatewayAssociation</a>.</p> </li> <li> <p> <b>Associated</b>: The direct connect gateway and virtual private gateway are successfully associated and ready to pass traffic.</p> </li> <li> <p> <b>Disassociating</b>: The initial state after calling <a>DeleteDirectConnectGatewayAssociation</a>.</p> </li> <li> <p> <b>Disassociated</b>: The virtual private gateway is successfully disassociated from the direct connect gateway. Traffic flow between the direct connect gateway and virtual private gateway stops.</p> </li> </ul>",
+      "refs": {
+        "DirectConnectGatewayAssociation$associationState": null
+      }
+    },
+    "DirectConnectGatewayAttachment": {
+      "base": "<p>The association between a direct connect gateway and virtual interface.</p>",
+      "refs": {
+        "DirectConnectGatewayAttachmentList$member": null
+      }
+    },
+    "DirectConnectGatewayAttachmentList": {
+      "base": "<p>A list of direct connect gateway attachments.</p>",
+      "refs": {
+        "DescribeDirectConnectGatewayAttachmentsResult$directConnectGatewayAttachments": "<p>Information about the direct connect gateway attachments.</p>"
+      }
+    },
+    "DirectConnectGatewayAttachmentState": {
+      "base": "<p>State of the direct connect gateway attachment.</p> <ul> <li> <p> <b>Attaching</b>: The initial state after a virtual interface is created using the direct connect gateway.</p> </li> <li> <p> <b>Attached</b>: The direct connect gateway and virtual interface are successfully attached and ready to pass traffic.</p> </li> <li> <p> <b>Detaching</b>: The initial state after calling <a>DeleteVirtualInterface</a> on a virtual interface that is attached to a direct connect gateway.</p> </li> <li> <p> <b>Detached</b>: The virtual interface is successfully detached from the direct connect gateway. Traffic flow between the direct connect gateway and virtual interface stops.</p> </li> </ul>",
+      "refs": {
+        "DirectConnectGatewayAttachment$attachmentState": null
+      }
+    },
+    "DirectConnectGatewayId": {
+      "base": "<p>The ID of the direct connect gateway.</p> <p>Example: \"abcd1234-dcba-5678-be23-cdef9876ab45\"</p>",
+      "refs": {
+        "ConfirmPrivateVirtualInterfaceRequest$directConnectGatewayId": "<p>ID of the direct connect gateway that will be attached to the virtual interface.</p> <p> A direct connect gateway can be managed via the AWS Direct Connect console or the <a>CreateDirectConnectGateway</a> action.</p> <p>Default: None</p>",
+        "CreateDirectConnectGatewayAssociationRequest$directConnectGatewayId": "<p>The ID of the direct connect gateway.</p> <p>Example: \"abcd1234-dcba-5678-be23-cdef9876ab45\"</p> <p>Default: None</p>",
+        "DeleteDirectConnectGatewayAssociationRequest$directConnectGatewayId": "<p>The ID of the direct connect gateway.</p> <p>Example: \"abcd1234-dcba-5678-be23-cdef9876ab45\"</p> <p>Default: None</p>",
+        "DeleteDirectConnectGatewayRequest$directConnectGatewayId": "<p>The ID of the direct connect gateway.</p> <p>Example: \"abcd1234-dcba-5678-be23-cdef9876ab45\"</p> <p>Default: None</p>",
+        "DescribeDirectConnectGatewayAssociationsRequest$directConnectGatewayId": "<p>The ID of the direct connect gateway.</p> <p>Example: \"abcd1234-dcba-5678-be23-cdef9876ab45\"</p> <p>Default: None</p>",
+        "DescribeDirectConnectGatewayAttachmentsRequest$directConnectGatewayId": "<p>The ID of the direct connect gateway.</p> <p>Example: \"abcd1234-dcba-5678-be23-cdef9876ab45\"</p> <p>Default: None</p>",
+        "DescribeDirectConnectGatewaysRequest$directConnectGatewayId": "<p>The ID of the direct connect gateway.</p> <p>Example: \"abcd1234-dcba-5678-be23-cdef9876ab45\"</p> <p>Default: None</p>",
+        "DirectConnectGateway$directConnectGatewayId": null,
+        "DirectConnectGatewayAssociation$directConnectGatewayId": null,
+        "DirectConnectGatewayAttachment$directConnectGatewayId": null,
+        "NewPrivateVirtualInterface$directConnectGatewayId": null,
+        "VirtualInterface$directConnectGatewayId": null
+      }
+    },
+    "DirectConnectGatewayList": {
+      "base": "<p>A list of direct connect gateways.</p>",
+      "refs": {
+        "DescribeDirectConnectGatewaysResult$directConnectGateways": "<p>Information about the direct connect gateways.</p>"
+      }
+    },
+    "DirectConnectGatewayName": {
+      "base": "<p>The name of the direct connect gateway.</p> <p>Example: \"My direct connect gateway\"</p> <p>Default: None</p>",
+      "refs": {
+        "CreateDirectConnectGatewayRequest$directConnectGatewayName": "<p>The name of the direct connect gateway.</p> <p>Example: \"My direct connect gateway\"</p> <p>Default: None</p>",
+        "DirectConnectGateway$directConnectGatewayName": null
+      }
+    },
+    "DirectConnectGatewayState": {
+      "base": "<p>State of the direct connect gateway.</p> <ul> <li> <p> <b>Pending</b>: The initial state after calling <a>CreateDirectConnectGateway</a>.</p> </li> <li> <p> <b>Available</b>: The direct connect gateway is ready for use.</p> </li> <li> <p> <b>Deleting</b>: The initial state after calling <a>DeleteDirectConnectGateway</a>.</p> </li> <li> <p> <b>Deleted</b>: The direct connect gateway is deleted and cannot pass traffic.</p> </li> </ul>",
+      "refs": {
+        "DirectConnectGateway$directConnectGatewayState": null
       }
     },
     "DirectConnectServerException": {
@@ -613,6 +772,22 @@
       "refs": {
       }
     },
+    "LongAsn": {
+      "base": null,
+      "refs": {
+        "CreateDirectConnectGatewayRequest$amazonSideAsn": "<p>The autonomous system number (ASN) for Border Gateway Protocol (BGP) to be configured on the Amazon side of the connection. The ASN must be in the private range of 64,512 to 65,534 or 4,200,000,000 to 4,294,967,294 </p> <p>Example: 65200</p> <p>Default: 64512</p>",
+        "DirectConnectGateway$amazonSideAsn": "<p>The autonomous system number (ASN) for the Amazon side of the connection.</p>",
+        "VirtualInterface$amazonSideAsn": "<p>The autonomous system number (ASN) for the Amazon side of the connection.</p>"
+      }
+    },
+    "MaxResultSetSize": {
+      "base": "<p>Maximum number of objects to return per page.</p>",
+      "refs": {
+        "DescribeDirectConnectGatewayAssociationsRequest$maxResults": "<p>The maximum number of direct connect gateway associations to return per page.</p> <p>Example: 15</p> <p>Default: None</p>",
+        "DescribeDirectConnectGatewayAttachmentsRequest$maxResults": "<p>The maximum number of direct connect gateway attachments to return per page.</p> <p>Example: 15</p> <p>Default: None</p>",
+        "DescribeDirectConnectGatewaysRequest$maxResults": "<p>The maximum number of direct connect gateways to return per page.</p> <p>Example: 15</p> <p>Default: None</p>"
+      }
+    },
     "NewBGPPeer": {
       "base": "<p>A structure containing information about a new BGP peer.</p>",
       "refs": {
@@ -651,8 +826,22 @@
         "AllocatePrivateVirtualInterfaceRequest$ownerAccount": "<p>The AWS account that will own the new private virtual interface.</p> <p>Default: None</p>",
         "AllocatePublicVirtualInterfaceRequest$ownerAccount": "<p>The AWS account that will own the new public virtual interface.</p> <p>Default: None</p>",
         "Connection$ownerAccount": "<p>The AWS account that will own the new connection.</p>",
+        "DirectConnectGateway$ownerAccount": "<p>The AWS account ID of the owner of the direct connect gateway.</p>",
+        "DirectConnectGatewayAssociation$virtualGatewayOwnerAccount": "<p>The AWS account ID of the owner of the virtual private gateway.</p>",
+        "DirectConnectGatewayAttachment$virtualInterfaceOwnerAccount": "<p>The AWS account ID of the owner of the virtual interface.</p>",
         "Lag$ownerAccount": "<p>The owner of the LAG.</p>",
         "VirtualInterface$ownerAccount": "<p>The AWS account that will own the new virtual interface.</p>"
+      }
+    },
+    "PaginationToken": {
+      "base": "<p>Token to retrieve the next page of the result.</p>",
+      "refs": {
+        "DescribeDirectConnectGatewayAssociationsRequest$nextToken": "<p>The token provided in the previous describe result to retrieve the next page of the result.</p> <p>Default: None</p>",
+        "DescribeDirectConnectGatewayAssociationsResult$nextToken": null,
+        "DescribeDirectConnectGatewayAttachmentsRequest$nextToken": "<p>The token provided in the previous describe result to retrieve the next page of the result.</p> <p>Default: None</p>",
+        "DescribeDirectConnectGatewayAttachmentsResult$nextToken": null,
+        "DescribeDirectConnectGatewaysRequest$nextToken": "<p>The token provided in the previous describe result to retrieve the next page of the result.</p> <p>Default: None</p>",
+        "DescribeDirectConnectGatewaysResult$nextToken": null
       }
     },
     "PartnerName": {
@@ -722,6 +911,14 @@
       "base": null,
       "refs": {
         "VirtualInterface$customerRouterConfig": "<p>Information for generating the customer router configuration.</p>"
+      }
+    },
+    "StateChangeError": {
+      "base": "<p>Error message when the state of an object fails to advance.</p>",
+      "refs": {
+        "DirectConnectGateway$stateChangeError": null,
+        "DirectConnectGatewayAssociation$stateChangeError": null,
+        "DirectConnectGatewayAttachment$stateChangeError": null
       }
     },
     "Tag": {
@@ -809,6 +1006,10 @@
       "base": "<p>The ID of the virtual private gateway to a VPC. This only applies to private virtual interfaces.</p> <p>Example: vgw-123er56</p>",
       "refs": {
         "ConfirmPrivateVirtualInterfaceRequest$virtualGatewayId": "<p>ID of the virtual private gateway that will be attached to the virtual interface.</p> <p> A virtual private gateway can be managed via the Amazon Virtual Private Cloud (VPC) console or the <a href=\"http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-query-CreateVpnGateway.html\">EC2 CreateVpnGateway</a> action.</p> <p>Default: None</p>",
+        "CreateDirectConnectGatewayAssociationRequest$virtualGatewayId": "<p>The ID of the virtual private gateway.</p> <p>Example: \"vgw-abc123ef\"</p> <p>Default: None</p>",
+        "DeleteDirectConnectGatewayAssociationRequest$virtualGatewayId": "<p>The ID of the virtual private gateway.</p> <p>Example: \"vgw-abc123ef\"</p> <p>Default: None</p>",
+        "DescribeDirectConnectGatewayAssociationsRequest$virtualGatewayId": "<p>The ID of the virtual private gateway.</p> <p>Example: \"vgw-abc123ef\"</p> <p>Default: None</p>",
+        "DirectConnectGatewayAssociation$virtualGatewayId": null,
         "NewPrivateVirtualInterface$virtualGatewayId": null,
         "VirtualGateway$virtualGatewayId": null,
         "VirtualInterface$virtualGatewayId": null
@@ -818,6 +1019,12 @@
       "base": "<p>A list of virtual private gateways.</p>",
       "refs": {
         "VirtualGateways$virtualGateways": "<p>A list of virtual private gateways.</p>"
+      }
+    },
+    "VirtualGatewayRegion": {
+      "base": "<p>The region in which the virtual private gateway is located.</p> <p>Example: us-east-1</p>",
+      "refs": {
+        "DirectConnectGatewayAssociation$virtualGatewayRegion": null
       }
     },
     "VirtualGatewayState": {
@@ -848,7 +1055,9 @@
         "CreateBGPPeerRequest$virtualInterfaceId": "<p>The ID of the virtual interface on which the BGP peer will be provisioned.</p> <p>Example: dxvif-456abc78</p> <p>Default: None</p>",
         "DeleteBGPPeerRequest$virtualInterfaceId": "<p>The ID of the virtual interface from which the BGP peer will be deleted.</p> <p>Example: dxvif-456abc78</p> <p>Default: None</p>",
         "DeleteVirtualInterfaceRequest$virtualInterfaceId": null,
+        "DescribeDirectConnectGatewayAttachmentsRequest$virtualInterfaceId": "<p>The ID of the virtual interface.</p> <p>Example: \"dxvif-abc123ef\"</p> <p>Default: None</p>",
         "DescribeVirtualInterfacesRequest$virtualInterfaceId": null,
+        "DirectConnectGatewayAttachment$virtualInterfaceId": null,
         "VirtualInterface$virtualInterfaceId": null
       }
     },
@@ -866,6 +1075,12 @@
         "NewPublicVirtualInterface$virtualInterfaceName": null,
         "NewPublicVirtualInterfaceAllocation$virtualInterfaceName": null,
         "VirtualInterface$virtualInterfaceName": null
+      }
+    },
+    "VirtualInterfaceRegion": {
+      "base": "<p>The region in which the virtual interface is located.</p> <p>Example: us-east-1</p>",
+      "refs": {
+        "DirectConnectGatewayAttachment$virtualInterfaceRegion": null
       }
     },
     "VirtualInterfaceState": {

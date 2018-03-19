@@ -108,6 +108,14 @@ type DirectConnectAPI interface {
 	CreateConnectionWithContext(aws.Context, *directconnect.CreateConnectionInput, ...request.Option) (*directconnect.Connection, error)
 	CreateConnectionRequest(*directconnect.CreateConnectionInput) (*request.Request, *directconnect.Connection)
 
+	CreateDirectConnectGateway(*directconnect.CreateDirectConnectGatewayInput) (*directconnect.CreateDirectConnectGatewayOutput, error)
+	CreateDirectConnectGatewayWithContext(aws.Context, *directconnect.CreateDirectConnectGatewayInput, ...request.Option) (*directconnect.CreateDirectConnectGatewayOutput, error)
+	CreateDirectConnectGatewayRequest(*directconnect.CreateDirectConnectGatewayInput) (*request.Request, *directconnect.CreateDirectConnectGatewayOutput)
+
+	CreateDirectConnectGatewayAssociation(*directconnect.CreateDirectConnectGatewayAssociationInput) (*directconnect.CreateDirectConnectGatewayAssociationOutput, error)
+	CreateDirectConnectGatewayAssociationWithContext(aws.Context, *directconnect.CreateDirectConnectGatewayAssociationInput, ...request.Option) (*directconnect.CreateDirectConnectGatewayAssociationOutput, error)
+	CreateDirectConnectGatewayAssociationRequest(*directconnect.CreateDirectConnectGatewayAssociationInput) (*request.Request, *directconnect.CreateDirectConnectGatewayAssociationOutput)
+
 	CreateInterconnect(*directconnect.CreateInterconnectInput) (*directconnect.Interconnect, error)
 	CreateInterconnectWithContext(aws.Context, *directconnect.CreateInterconnectInput, ...request.Option) (*directconnect.Interconnect, error)
 	CreateInterconnectRequest(*directconnect.CreateInterconnectInput) (*request.Request, *directconnect.Interconnect)
@@ -132,6 +140,14 @@ type DirectConnectAPI interface {
 	DeleteConnectionWithContext(aws.Context, *directconnect.DeleteConnectionInput, ...request.Option) (*directconnect.Connection, error)
 	DeleteConnectionRequest(*directconnect.DeleteConnectionInput) (*request.Request, *directconnect.Connection)
 
+	DeleteDirectConnectGateway(*directconnect.DeleteDirectConnectGatewayInput) (*directconnect.DeleteDirectConnectGatewayOutput, error)
+	DeleteDirectConnectGatewayWithContext(aws.Context, *directconnect.DeleteDirectConnectGatewayInput, ...request.Option) (*directconnect.DeleteDirectConnectGatewayOutput, error)
+	DeleteDirectConnectGatewayRequest(*directconnect.DeleteDirectConnectGatewayInput) (*request.Request, *directconnect.DeleteDirectConnectGatewayOutput)
+
+	DeleteDirectConnectGatewayAssociation(*directconnect.DeleteDirectConnectGatewayAssociationInput) (*directconnect.DeleteDirectConnectGatewayAssociationOutput, error)
+	DeleteDirectConnectGatewayAssociationWithContext(aws.Context, *directconnect.DeleteDirectConnectGatewayAssociationInput, ...request.Option) (*directconnect.DeleteDirectConnectGatewayAssociationOutput, error)
+	DeleteDirectConnectGatewayAssociationRequest(*directconnect.DeleteDirectConnectGatewayAssociationInput) (*request.Request, *directconnect.DeleteDirectConnectGatewayAssociationOutput)
+
 	DeleteInterconnect(*directconnect.DeleteInterconnectInput) (*directconnect.DeleteInterconnectOutput, error)
 	DeleteInterconnectWithContext(aws.Context, *directconnect.DeleteInterconnectInput, ...request.Option) (*directconnect.DeleteInterconnectOutput, error)
 	DeleteInterconnectRequest(*directconnect.DeleteInterconnectInput) (*request.Request, *directconnect.DeleteInterconnectOutput)
@@ -155,6 +171,18 @@ type DirectConnectAPI interface {
 	DescribeConnectionsOnInterconnect(*directconnect.DescribeConnectionsOnInterconnectInput) (*directconnect.Connections, error)
 	DescribeConnectionsOnInterconnectWithContext(aws.Context, *directconnect.DescribeConnectionsOnInterconnectInput, ...request.Option) (*directconnect.Connections, error)
 	DescribeConnectionsOnInterconnectRequest(*directconnect.DescribeConnectionsOnInterconnectInput) (*request.Request, *directconnect.Connections)
+
+	DescribeDirectConnectGatewayAssociations(*directconnect.DescribeDirectConnectGatewayAssociationsInput) (*directconnect.DescribeDirectConnectGatewayAssociationsOutput, error)
+	DescribeDirectConnectGatewayAssociationsWithContext(aws.Context, *directconnect.DescribeDirectConnectGatewayAssociationsInput, ...request.Option) (*directconnect.DescribeDirectConnectGatewayAssociationsOutput, error)
+	DescribeDirectConnectGatewayAssociationsRequest(*directconnect.DescribeDirectConnectGatewayAssociationsInput) (*request.Request, *directconnect.DescribeDirectConnectGatewayAssociationsOutput)
+
+	DescribeDirectConnectGatewayAttachments(*directconnect.DescribeDirectConnectGatewayAttachmentsInput) (*directconnect.DescribeDirectConnectGatewayAttachmentsOutput, error)
+	DescribeDirectConnectGatewayAttachmentsWithContext(aws.Context, *directconnect.DescribeDirectConnectGatewayAttachmentsInput, ...request.Option) (*directconnect.DescribeDirectConnectGatewayAttachmentsOutput, error)
+	DescribeDirectConnectGatewayAttachmentsRequest(*directconnect.DescribeDirectConnectGatewayAttachmentsInput) (*request.Request, *directconnect.DescribeDirectConnectGatewayAttachmentsOutput)
+
+	DescribeDirectConnectGateways(*directconnect.DescribeDirectConnectGatewaysInput) (*directconnect.DescribeDirectConnectGatewaysOutput, error)
+	DescribeDirectConnectGatewaysWithContext(aws.Context, *directconnect.DescribeDirectConnectGatewaysInput, ...request.Option) (*directconnect.DescribeDirectConnectGatewaysOutput, error)
+	DescribeDirectConnectGatewaysRequest(*directconnect.DescribeDirectConnectGatewaysInput) (*request.Request, *directconnect.DescribeDirectConnectGatewaysOutput)
 
 	DescribeHostedConnections(*directconnect.DescribeHostedConnectionsInput) (*directconnect.Connections, error)
 	DescribeHostedConnectionsWithContext(aws.Context, *directconnect.DescribeHostedConnectionsInput, ...request.Option) (*directconnect.Connections, error)

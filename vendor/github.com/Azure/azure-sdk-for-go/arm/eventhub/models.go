@@ -138,11 +138,6 @@ type AuthorizationRule struct {
 	*AuthorizationRuleProperties `json:"properties,omitempty"`
 }
 
-// AuthorizationRuleProperties is properties supplied to create or update AuthorizationRule
-type AuthorizationRuleProperties struct {
-	Rights *[]AccessRights `json:"rights,omitempty"`
-}
-
 // AuthorizationRuleListResult is the response from the List namespace operation.
 type AuthorizationRuleListResult struct {
 	autorest.Response `json:"-"`
@@ -160,6 +155,11 @@ func (client AuthorizationRuleListResult) AuthorizationRuleListResultPreparer() 
 		autorest.AsJSON(),
 		autorest.AsGet(),
 		autorest.WithBaseURL(to.String(client.NextLink)))
+}
+
+// AuthorizationRuleProperties is properties supplied to create or update AuthorizationRule
+type AuthorizationRuleProperties struct {
+	Rights *[]AccessRights `json:"rights,omitempty"`
 }
 
 // CaptureDescription is properties to configure capture description for eventhub
@@ -193,13 +193,6 @@ type ConsumerGroup struct {
 	*ConsumerGroupProperties `json:"properties,omitempty"`
 }
 
-// ConsumerGroupProperties is single item in List or Get Consumer group operation
-type ConsumerGroupProperties struct {
-	CreatedAt    *date.Time `json:"createdAt,omitempty"`
-	UpdatedAt    *date.Time `json:"updatedAt,omitempty"`
-	UserMetadata *string    `json:"userMetadata,omitempty"`
-}
-
 // ConsumerGroupListResult is the result to the List Consumer Group operation.
 type ConsumerGroupListResult struct {
 	autorest.Response `json:"-"`
@@ -217,6 +210,13 @@ func (client ConsumerGroupListResult) ConsumerGroupListResultPreparer() (*http.R
 		autorest.AsJSON(),
 		autorest.AsGet(),
 		autorest.WithBaseURL(to.String(client.NextLink)))
+}
+
+// ConsumerGroupProperties is single item in List or Get Consumer group operation
+type ConsumerGroupProperties struct {
+	CreatedAt    *date.Time `json:"createdAt,omitempty"`
+	UpdatedAt    *date.Time `json:"updatedAt,omitempty"`
+	UserMetadata *string    `json:"userMetadata,omitempty"`
 }
 
 // Destination is capture storage details for capture description
@@ -245,17 +245,6 @@ type EHNamespace struct {
 	*EHNamespaceProperties `json:"properties,omitempty"`
 }
 
-// EHNamespaceProperties is namespace properties supplied for create namespace operation.
-type EHNamespaceProperties struct {
-	ProvisioningState      *string    `json:"provisioningState,omitempty"`
-	CreatedAt              *date.Time `json:"createdAt,omitempty"`
-	UpdatedAt              *date.Time `json:"updatedAt,omitempty"`
-	ServiceBusEndpoint     *string    `json:"serviceBusEndpoint,omitempty"`
-	MetricID               *string    `json:"metricId,omitempty"`
-	IsAutoInflateEnabled   *bool      `json:"isAutoInflateEnabled,omitempty"`
-	MaximumThroughputUnits *int32     `json:"maximumThroughputUnits,omitempty"`
-}
-
 // EHNamespaceListResult is the response of the List Namespace operation
 type EHNamespaceListResult struct {
 	autorest.Response `json:"-"`
@@ -273,6 +262,17 @@ func (client EHNamespaceListResult) EHNamespaceListResultPreparer() (*http.Reque
 		autorest.AsJSON(),
 		autorest.AsGet(),
 		autorest.WithBaseURL(to.String(client.NextLink)))
+}
+
+// EHNamespaceProperties is namespace properties supplied for create namespace operation.
+type EHNamespaceProperties struct {
+	ProvisioningState      *string    `json:"provisioningState,omitempty"`
+	CreatedAt              *date.Time `json:"createdAt,omitempty"`
+	UpdatedAt              *date.Time `json:"updatedAt,omitempty"`
+	ServiceBusEndpoint     *string    `json:"serviceBusEndpoint,omitempty"`
+	MetricID               *string    `json:"metricId,omitempty"`
+	IsAutoInflateEnabled   *bool      `json:"isAutoInflateEnabled,omitempty"`
+	MaximumThroughputUnits *int32     `json:"maximumThroughputUnits,omitempty"`
 }
 
 // ErrorResponse is error reponse indicates EventHub service is not able to process the incoming request. The reason is

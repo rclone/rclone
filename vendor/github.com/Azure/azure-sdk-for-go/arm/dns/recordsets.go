@@ -105,7 +105,9 @@ func (client RecordSetsClient) CreateOrUpdatePreparer(resourceGroupName string, 
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecordSetsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -180,7 +182,9 @@ func (client RecordSetsClient) DeletePreparer(resourceGroupName string, zoneName
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecordSetsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -248,7 +252,9 @@ func (client RecordSetsClient) GetPreparer(resourceGroupName string, zoneName st
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecordSetsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -323,7 +329,9 @@ func (client RecordSetsClient) ListByDNSZonePreparer(resourceGroupName string, z
 // ListByDNSZoneSender sends the ListByDNSZone request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecordSetsClient) ListByDNSZoneSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByDNSZoneResponder handles the response to the ListByDNSZone request. The method always
@@ -468,7 +476,9 @@ func (client RecordSetsClient) ListByTypePreparer(resourceGroupName string, zone
 // ListByTypeSender sends the ListByType request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecordSetsClient) ListByTypeSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByTypeResponder handles the response to the ListByType request. The method always
@@ -614,7 +624,9 @@ func (client RecordSetsClient) UpdatePreparer(resourceGroupName string, zoneName
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecordSetsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

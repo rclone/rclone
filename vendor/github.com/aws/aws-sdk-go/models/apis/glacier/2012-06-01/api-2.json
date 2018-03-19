@@ -561,11 +561,16 @@
         }
       }
     },
+    "AccessControlPolicyList":{
+      "type":"list",
+      "member":{"shape":"Grant"}
+    },
     "ActionCode":{
       "type":"string",
       "enum":[
         "ArchiveRetrieval",
-        "InventoryRetrieval"
+        "InventoryRetrieval",
+        "Select"
       ]
     },
     "AddTagsToVaultInput":{
@@ -607,6 +612,39 @@
           "locationName":"x-amz-archive-id"
         }
       }
+    },
+    "CSVInput":{
+      "type":"structure",
+      "members":{
+        "FileHeaderInfo":{"shape":"FileHeaderInfo"},
+        "Comments":{"shape":"string"},
+        "QuoteEscapeCharacter":{"shape":"string"},
+        "RecordDelimiter":{"shape":"string"},
+        "FieldDelimiter":{"shape":"string"},
+        "QuoteCharacter":{"shape":"string"}
+      }
+    },
+    "CSVOutput":{
+      "type":"structure",
+      "members":{
+        "QuoteFields":{"shape":"QuoteFields"},
+        "QuoteEscapeCharacter":{"shape":"string"},
+        "RecordDelimiter":{"shape":"string"},
+        "FieldDelimiter":{"shape":"string"},
+        "QuoteCharacter":{"shape":"string"}
+      }
+    },
+    "CannedACL":{
+      "type":"string",
+      "enum":[
+        "private",
+        "public-read",
+        "public-read-write",
+        "aws-exec-read",
+        "authenticated-read",
+        "bucket-owner-read",
+        "bucket-owner-full-control"
+      ]
     },
     "CompleteMultipartUploadInput":{
       "type":"structure",
@@ -852,6 +890,33 @@
         "SizeInBytes":{"shape":"long"}
       }
     },
+    "Encryption":{
+      "type":"structure",
+      "members":{
+        "EncryptionType":{"shape":"EncryptionType"},
+        "KMSKeyId":{"shape":"string"},
+        "KMSContext":{"shape":"string"}
+      }
+    },
+    "EncryptionType":{
+      "type":"string",
+      "enum":[
+        "aws:kms",
+        "AES256"
+      ]
+    },
+    "ExpressionType":{
+      "type":"string",
+      "enum":["SQL"]
+    },
+    "FileHeaderInfo":{
+      "type":"string",
+      "enum":[
+        "USE",
+        "IGNORE",
+        "NONE"
+      ]
+    },
     "GetDataRetrievalPolicyInput":{
       "type":"structure",
       "required":["accountId"],
@@ -1035,7 +1100,28 @@
         "ArchiveSHA256TreeHash":{"shape":"string"},
         "RetrievalByteRange":{"shape":"string"},
         "Tier":{"shape":"string"},
-        "InventoryRetrievalParameters":{"shape":"InventoryRetrievalJobDescription"}
+        "InventoryRetrievalParameters":{"shape":"InventoryRetrievalJobDescription"},
+        "JobOutputPath":{"shape":"string"},
+        "SelectParameters":{"shape":"SelectParameters"},
+        "OutputLocation":{"shape":"OutputLocation"}
+      }
+    },
+    "Grant":{
+      "type":"structure",
+      "members":{
+        "Grantee":{"shape":"Grantee"},
+        "Permission":{"shape":"Permission"}
+      }
+    },
+    "Grantee":{
+      "type":"structure",
+      "required":["Type"],
+      "members":{
+        "Type":{"shape":"Type"},
+        "DisplayName":{"shape":"string"},
+        "URI":{"shape":"string"},
+        "ID":{"shape":"string"},
+        "EmailAddress":{"shape":"string"}
       }
     },
     "InitiateJobInput":{
@@ -1071,6 +1157,11 @@
           "shape":"string",
           "location":"header",
           "locationName":"x-amz-job-id"
+        },
+        "jobOutputPath":{
+          "shape":"string",
+          "location":"header",
+          "locationName":"x-amz-job-output-path"
         }
       }
     },
@@ -1149,6 +1240,12 @@
         }
       }
     },
+    "InputSerialization":{
+      "type":"structure",
+      "members":{
+        "csv":{"shape":"CSVInput"}
+      }
+    },
     "InsufficientCapacityException":{
       "type":"structure",
       "members":{
@@ -1202,7 +1299,9 @@
         "SNSTopic":{"shape":"string"},
         "RetrievalByteRange":{"shape":"string"},
         "Tier":{"shape":"string"},
-        "InventoryRetrievalParameters":{"shape":"InventoryRetrievalJobInput"}
+        "InventoryRetrievalParameters":{"shape":"InventoryRetrievalJobInput"},
+        "SelectParameters":{"shape":"SelectParameters"},
+        "OutputLocation":{"shape":"OutputLocation"}
       }
     },
     "LimitExceededException":{
@@ -1429,6 +1528,18 @@
       "member":{"shape":"string"}
     },
     "NullableLong":{"type":"long"},
+    "OutputLocation":{
+      "type":"structure",
+      "members":{
+        "S3":{"shape":"S3Location"}
+      }
+    },
+    "OutputSerialization":{
+      "type":"structure",
+      "members":{
+        "csv":{"shape":"CSVOutput"}
+      }
+    },
     "PartList":{
       "type":"list",
       "member":{"shape":"PartListElement"}
@@ -1439,6 +1550,16 @@
         "RangeInBytes":{"shape":"string"},
         "SHA256TreeHash":{"shape":"string"}
       }
+    },
+    "Permission":{
+      "type":"string",
+      "enum":[
+        "FULL_CONTROL",
+        "WRITE",
+        "WRITE_ACP",
+        "READ",
+        "READ_ACP"
+      ]
     },
     "PolicyEnforcedException":{
       "type":"structure",
@@ -1483,6 +1604,13 @@
         }
       }
     },
+    "QuoteFields":{
+      "type":"string",
+      "enum":[
+        "ALWAYS",
+        "ASNEEDED"
+      ]
+    },
     "RemoveTagsFromVaultInput":{
       "type":"structure",
       "required":[
@@ -1522,6 +1650,28 @@
       },
       "error":{"httpStatusCode":404},
       "exception":true
+    },
+    "S3Location":{
+      "type":"structure",
+      "members":{
+        "BucketName":{"shape":"string"},
+        "Prefix":{"shape":"string"},
+        "Encryption":{"shape":"Encryption"},
+        "CannedACL":{"shape":"CannedACL"},
+        "AccessControlList":{"shape":"AccessControlPolicyList"},
+        "Tagging":{"shape":"hashmap"},
+        "UserMetadata":{"shape":"hashmap"},
+        "StorageClass":{"shape":"StorageClass"}
+      }
+    },
+    "SelectParameters":{
+      "type":"structure",
+      "members":{
+        "InputSerialization":{"shape":"InputSerialization"},
+        "ExpressionType":{"shape":"ExpressionType"},
+        "Expression":{"shape":"string"},
+        "OutputSerialization":{"shape":"OutputSerialization"}
+      }
     },
     "ServiceUnavailableException":{
       "type":"structure",
@@ -1596,6 +1746,14 @@
         "Failed"
       ]
     },
+    "StorageClass":{
+      "type":"string",
+      "enum":[
+        "STANDARD",
+        "REDUCED_REDUNDANCY",
+        "STANDARD_IA"
+      ]
+    },
     "Stream":{
       "type":"blob",
       "streaming":true
@@ -1611,6 +1769,14 @@
       "value":{"shape":"TagValue"}
     },
     "TagValue":{"type":"string"},
+    "Type":{
+      "type":"string",
+      "enum":[
+        "AmazonCustomerByEmail",
+        "CanonicalUser",
+        "Group"
+      ]
+    },
     "UploadArchiveInput":{
       "type":"structure",
       "required":[
@@ -1727,6 +1893,11 @@
       }
     },
     "boolean":{"type":"boolean"},
+    "hashmap":{
+      "type":"map",
+      "key":{"shape":"string"},
+      "value":{"shape":"string"}
+    },
     "httpstatus":{"type":"integer"},
     "long":{"type":"long"},
     "string":{"type":"string"}

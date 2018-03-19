@@ -244,84 +244,6 @@ func TestIntMap(t *testing.T) {
 	}
 }
 
-func TestInt64Value(t *testing.T) {
-	i := int64(1024)
-	assert.Equal(t, i, Int64Value(Int64(i)))
-
-	assert.Equal(t, int64(0), Int64Value(nil))
-}
-
-var testCasesInt64Slice = [][]int64{
-	{1, 2, 3, 4},
-}
-
-func TestInt64Slice(t *testing.T) {
-	for idx, in := range testCasesInt64Slice {
-		if in == nil {
-			continue
-		}
-		out := Int64Slice(in)
-		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
-		for i := range out {
-			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
-		}
-
-		out2 := Int64ValueSlice(out)
-		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
-		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
-	}
-}
-
-var testCasesInt64ValueSlice = [][]*int64{}
-
-func TestInt64ValueSlice(t *testing.T) {
-	for idx, in := range testCasesInt64ValueSlice {
-		if in == nil {
-			continue
-		}
-		out := Int64ValueSlice(in)
-		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
-		for i := range out {
-			if in[i] == nil {
-				assert.Empty(t, out[i], "Unexpected value at idx %d", idx)
-			} else {
-				assert.Equal(t, *(in[i]), out[i], "Unexpected value at idx %d", idx)
-			}
-		}
-
-		out2 := Int64Slice(out)
-		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
-		for i := range out2 {
-			if in[i] == nil {
-				assert.Empty(t, *(out2[i]), "Unexpected value at idx %d", idx)
-			} else {
-				assert.Equal(t, in[i], out2[i], "Unexpected value at idx %d", idx)
-			}
-		}
-	}
-}
-
-var testCasesInt64Map = []map[string]int64{
-	{"a": 3, "b": 2, "c": 1},
-}
-
-func TestInt64Map(t *testing.T) {
-	for idx, in := range testCasesInt64Map {
-		if in == nil {
-			continue
-		}
-		out := Int64Map(in)
-		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
-		for i := range out {
-			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
-		}
-
-		out2 := Int64ValueMap(out)
-		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
-		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
-	}
-}
-
 func TestInt32Value(t *testing.T) {
 	i := int32(1024)
 	assert.Equal(t, i, Int32Value(Int32(i)))
@@ -400,42 +322,42 @@ func TestInt32Map(t *testing.T) {
 	}
 }
 
-func TestFloat64Value(t *testing.T) {
-	i := float64(1024)
-	assert.Equal(t, i, Float64Value(Float64(i)))
+func TestInt64Value(t *testing.T) {
+	i := int64(1024)
+	assert.Equal(t, i, Int64Value(Int64(i)))
 
-	assert.Equal(t, float64(0), Float64Value(nil))
+	assert.Equal(t, int64(0), Int64Value(nil))
 }
 
-var testCasesFloat64Slice = [][]float64{
+var testCasesInt64Slice = [][]int64{
 	{1, 2, 3, 4},
 }
 
-func TestFloat64Slice(t *testing.T) {
-	for idx, in := range testCasesFloat64Slice {
+func TestInt64Slice(t *testing.T) {
+	for idx, in := range testCasesInt64Slice {
 		if in == nil {
 			continue
 		}
-		out := Float64Slice(in)
+		out := Int64Slice(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
 		}
 
-		out2 := Float64ValueSlice(out)
+		out2 := Int64ValueSlice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}
 }
 
-var testCasesFloat64ValueSlice = [][]*float64{}
+var testCasesInt64ValueSlice = [][]*int64{}
 
-func TestFloat64ValueSlice(t *testing.T) {
-	for idx, in := range testCasesFloat64ValueSlice {
+func TestInt64ValueSlice(t *testing.T) {
+	for idx, in := range testCasesInt64ValueSlice {
 		if in == nil {
 			continue
 		}
-		out := Float64ValueSlice(in)
+		out := Int64ValueSlice(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			if in[i] == nil {
@@ -445,7 +367,7 @@ func TestFloat64ValueSlice(t *testing.T) {
 			}
 		}
 
-		out2 := Float64Slice(out)
+		out2 := Int64Slice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		for i := range out2 {
 			if in[i] == nil {
@@ -457,22 +379,64 @@ func TestFloat64ValueSlice(t *testing.T) {
 	}
 }
 
-var testCasesFloat64Map = []map[string]float64{
+var testCasesInt64Map = []map[string]int64{
 	{"a": 3, "b": 2, "c": 1},
 }
 
-func TestFloat64Map(t *testing.T) {
-	for idx, in := range testCasesFloat64Map {
+func TestInt64Map(t *testing.T) {
+	for idx, in := range testCasesInt64Map {
 		if in == nil {
 			continue
 		}
-		out := Float64Map(in)
+		out := Int64Map(in)
 		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
 		for i := range out {
 			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
 		}
 
-		out2 := Float64ValueMap(out)
+		out2 := Int64ValueMap(out)
+		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
+		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
+	}
+}
+
+func TestUint8Value(t *testing.T) {
+	i := uint8(128)
+	assert.Equal(t, i, Uint8Value(Uint8(i)))
+
+	assert.Equal(t, uint8(0), Uint8Value(nil))
+}
+
+func TestUint32Value(t *testing.T) {
+	i := uint32(1024)
+	assert.Equal(t, i, Uint32Value(Uint32(i)))
+
+	assert.Equal(t, uint32(0), Uint32Value(nil))
+}
+
+func TestUint64Value(t *testing.T) {
+	i := uint64(1024)
+	assert.Equal(t, i, Uint64Value(Uint64(i)))
+
+	assert.Equal(t, uint64(0), Uint64Value(nil))
+}
+
+var testCasesUint64Slice = [][]uint64{
+	{1, 2, 3, 4},
+}
+
+func TestUint64Slice(t *testing.T) {
+	for idx, in := range testCasesUint64Slice {
+		if in == nil {
+			continue
+		}
+		out := Uint64Slice(in)
+		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
+		for i := range out {
+			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
+		}
+
+		out2 := Uint64ValueSlice(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}
@@ -551,6 +515,84 @@ func TestFloat32Map(t *testing.T) {
 		}
 
 		out2 := Float32ValueMap(out)
+		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
+		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
+	}
+}
+
+func TestFloat64Value(t *testing.T) {
+	i := float64(1024)
+	assert.Equal(t, i, Float64Value(Float64(i)))
+
+	assert.Equal(t, float64(0), Float64Value(nil))
+}
+
+var testCasesFloat64Slice = [][]float64{
+	{1, 2, 3, 4},
+}
+
+func TestFloat64Slice(t *testing.T) {
+	for idx, in := range testCasesFloat64Slice {
+		if in == nil {
+			continue
+		}
+		out := Float64Slice(in)
+		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
+		for i := range out {
+			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
+		}
+
+		out2 := Float64ValueSlice(out)
+		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
+		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
+	}
+}
+
+var testCasesFloat64ValueSlice = [][]*float64{}
+
+func TestFloat64ValueSlice(t *testing.T) {
+	for idx, in := range testCasesFloat64ValueSlice {
+		if in == nil {
+			continue
+		}
+		out := Float64ValueSlice(in)
+		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
+		for i := range out {
+			if in[i] == nil {
+				assert.Empty(t, out[i], "Unexpected value at idx %d", idx)
+			} else {
+				assert.Equal(t, *(in[i]), out[i], "Unexpected value at idx %d", idx)
+			}
+		}
+
+		out2 := Float64Slice(out)
+		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
+		for i := range out2 {
+			if in[i] == nil {
+				assert.Empty(t, *(out2[i]), "Unexpected value at idx %d", idx)
+			} else {
+				assert.Equal(t, in[i], out2[i], "Unexpected value at idx %d", idx)
+			}
+		}
+	}
+}
+
+var testCasesFloat64Map = []map[string]float64{
+	{"a": 3, "b": 2, "c": 1},
+}
+
+func TestFloat64Map(t *testing.T) {
+	for idx, in := range testCasesFloat64Map {
+		if in == nil {
+			continue
+		}
+		out := Float64Map(in)
+		assert.Len(t, out, len(in), "Unexpected len at idx %d", idx)
+		for i := range out {
+			assert.Equal(t, in[i], *(out[i]), "Unexpected value at idx %d", idx)
+		}
+
+		out2 := Float64ValueMap(out)
 		assert.Len(t, out2, len(in), "Unexpected len at idx %d", idx)
 		assert.Equal(t, in, out2, "Unexpected value at idx %d", idx)
 	}

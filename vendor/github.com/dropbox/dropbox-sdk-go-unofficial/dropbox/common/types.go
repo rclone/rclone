@@ -27,26 +27,13 @@ import (
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 )
 
-// InvalidPathRootError : has no documentation (yet)
-type InvalidPathRootError struct {
-	// PathRoot : The latest path root id for user's team if the user is still
-	// in a team.
-	PathRoot string `json:"path_root,omitempty"`
-}
-
-// NewInvalidPathRootError returns a new InvalidPathRootError instance
-func NewInvalidPathRootError() *InvalidPathRootError {
-	s := new(InvalidPathRootError)
-	return s
-}
-
 // PathRoot : has no documentation (yet)
 type PathRoot struct {
 	dropbox.Tagged
-	// Team : Paths are relative to the given team directory. (This results in
-	// `PathRootError.invalid` if the user is not a member of the team
-	// associated with that path root id.).
-	Team string `json:"team,omitempty"`
+	// Root : Paths are relative to the authenticating user's root namespace
+	// (This results in `PathRootError.invalid_root` if the user's root
+	// namespace has changed.).
+	Root string `json:"root,omitempty"`
 	// NamespaceId : Paths are relative to given namespace id (This results in
 	// `PathRootError.no_permission` if you don't have access to this
 	// namespace.).
@@ -56,9 +43,7 @@ type PathRoot struct {
 // Valid tag values for PathRoot
 const (
 	PathRootHome        = "home"
-	PathRootMemberHome  = "member_home"
-	PathRootTeam        = "team"
-	PathRootUserHome    = "user_home"
+	PathRootRoot        = "root"
 	PathRootNamespaceId = "namespace_id"
 	PathRootOther       = "other"
 )
@@ -75,8 +60,8 @@ func (u *PathRoot) UnmarshalJSON(body []byte) error {
 	}
 	u.Tag = w.Tag
 	switch u.Tag {
-	case "team":
-		err = json.Unmarshal(body, &u.Team)
+	case "root":
+		err = json.Unmarshal(body, &u.Root)
 
 		if err != nil {
 			return err
@@ -94,14 +79,14 @@ func (u *PathRoot) UnmarshalJSON(body []byte) error {
 // PathRootError : has no documentation (yet)
 type PathRootError struct {
 	dropbox.Tagged
-	// Invalid : The path root id value in Dropbox-API-Path-Root header is no
-	// longer valid.
-	Invalid *InvalidPathRootError `json:"invalid,omitempty"`
+	// InvalidRoot : The root namespace id in Dropbox-API-Path-Root header is
+	// not valid. The value of this error is use's latest root info.
+	InvalidRoot IsRootInfo `json:"invalid_root,omitempty"`
 }
 
 // Valid tag values for PathRootError
 const (
-	PathRootErrorInvalid      = "invalid"
+	PathRootErrorInvalidRoot  = "invalid_root"
 	PathRootErrorNoPermission = "no_permission"
 	PathRootErrorOther        = "other"
 )
@@ -110,9 +95,9 @@ const (
 func (u *PathRootError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// Invalid : The path root id value in Dropbox-API-Path-Root header is
-		// no longer valid.
-		Invalid json.RawMessage `json:"invalid,omitempty"`
+		// InvalidRoot : The root namespace id in Dropbox-API-Path-Root header
+		// is not valid. The value of this error is use's latest root info.
+		InvalidRoot json.RawMessage `json:"invalid_root,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -121,12 +106,133 @@ func (u *PathRootError) UnmarshalJSON(body []byte) error {
 	}
 	u.Tag = w.Tag
 	switch u.Tag {
-	case "invalid":
-		err = json.Unmarshal(body, &u.Invalid)
+	case "invalid_root":
+		u.InvalidRoot, err = IsRootInfoFromJSON(body)
 
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// RootInfo : Information about current user's root.
+type RootInfo struct {
+	// RootNamespaceId : The namespace ID for user's root namespace. It will be
+	// the namespace ID of the shared team root if the user is member of a team
+	// with a separate team root. Otherwise it will be same as
+	// `RootInfo.home_namespace_id`.
+	RootNamespaceId string `json:"root_namespace_id"`
+	// HomeNamespaceId : The namespace ID for user's home namespace.
+	HomeNamespaceId string `json:"home_namespace_id"`
+}
+
+// NewRootInfo returns a new RootInfo instance
+func NewRootInfo(RootNamespaceId string, HomeNamespaceId string) *RootInfo {
+	s := new(RootInfo)
+	s.RootNamespaceId = RootNamespaceId
+	s.HomeNamespaceId = HomeNamespaceId
+	return s
+}
+
+// IsRootInfo is the interface type for RootInfo and its subtypes
+type IsRootInfo interface {
+	IsRootInfo()
+}
+
+// IsRootInfo implements the IsRootInfo interface
+func (u *RootInfo) IsRootInfo() {}
+
+type rootInfoUnion struct {
+	dropbox.Tagged
+	// Team : has no documentation (yet)
+	Team *TeamRootInfo `json:"team,omitempty"`
+	// User : has no documentation (yet)
+	User *UserRootInfo `json:"user,omitempty"`
+}
+
+// Valid tag values for RootInfo
+const (
+	RootInfoTeam = "team"
+	RootInfoUser = "user"
+)
+
+// UnmarshalJSON deserializes into a rootInfoUnion instance
+func (u *rootInfoUnion) UnmarshalJSON(body []byte) error {
+	type wrap struct {
+		dropbox.Tagged
+		// Team : has no documentation (yet)
+		Team json.RawMessage `json:"team,omitempty"`
+		// User : has no documentation (yet)
+		User json.RawMessage `json:"user,omitempty"`
+	}
+	var w wrap
+	var err error
+	if err = json.Unmarshal(body, &w); err != nil {
+		return err
+	}
+	u.Tag = w.Tag
+	switch u.Tag {
+	case "team":
+		err = json.Unmarshal(body, &u.Team)
+
+		if err != nil {
+			return err
+		}
+	case "user":
+		err = json.Unmarshal(body, &u.User)
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// IsRootInfoFromJSON converts JSON to a concrete IsRootInfo instance
+func IsRootInfoFromJSON(data []byte) (IsRootInfo, error) {
+	var t rootInfoUnion
+	if err := json.Unmarshal(data, &t); err != nil {
+		return nil, err
+	}
+	switch t.Tag {
+	case "team":
+		return t.Team, nil
+
+	case "user":
+		return t.User, nil
+
+	}
+	return nil, nil
+}
+
+// TeamRootInfo : Root info when user is member of a team with a separate root
+// namespace ID.
+type TeamRootInfo struct {
+	RootInfo
+	// HomePath : The path for user's home directory under the shared team root.
+	HomePath string `json:"home_path"`
+}
+
+// NewTeamRootInfo returns a new TeamRootInfo instance
+func NewTeamRootInfo(RootNamespaceId string, HomeNamespaceId string, HomePath string) *TeamRootInfo {
+	s := new(TeamRootInfo)
+	s.RootNamespaceId = RootNamespaceId
+	s.HomeNamespaceId = HomeNamespaceId
+	s.HomePath = HomePath
+	return s
+}
+
+// UserRootInfo : Root info when user is not member of a team or the user is a
+// member of a team and the team does not have a separate root namespace.
+type UserRootInfo struct {
+	RootInfo
+}
+
+// NewUserRootInfo returns a new UserRootInfo instance
+func NewUserRootInfo(RootNamespaceId string, HomeNamespaceId string) *UserRootInfo {
+	s := new(UserRootInfo)
+	s.RootNamespaceId = RootNamespaceId
+	s.HomeNamespaceId = HomeNamespaceId
+	return s
 }

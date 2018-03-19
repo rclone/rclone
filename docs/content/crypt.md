@@ -228,7 +228,7 @@ Off
 Standard
 
   * file names encrypted
-  * file names can't be as long (~156 characters)
+  * file names can't be as long (~143 characters)
   * can use sub paths and copy single files
   * directory structure visible
   * identical files names will have identical uploaded names
@@ -278,7 +278,7 @@ False
 
 Only encrypts file names, skips directory names
 Example:
-`1/12/123/txt` is encrypted to
+`1/12/123.txt` is encrypted to
 `1/12/qgm4avr35m5loi1th53ato71v0`
 
 

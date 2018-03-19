@@ -63,6 +63,8 @@ const (
 	mouse_lmb = 0x1
 	mouse_rmb = 0x2
 	mouse_mmb = 0x4 | 0x8 | 0x10
+	SM_CXMIN  = 28
+	SM_CYMIN  = 29
 )
 
 func (this coord) uintptr() uintptr {
@@ -70,6 +72,7 @@ func (this coord) uintptr() uintptr {
 }
 
 var kernel32 = syscall.NewLazyDLL("kernel32.dll")
+var moduser32 = syscall.NewLazyDLL("user32.dll")
 var is_cjk = runewidth.IsEastAsian()
 
 var (
@@ -91,6 +94,7 @@ var (
 	proc_create_event                     = kernel32.NewProc("CreateEventW")
 	proc_wait_for_multiple_objects        = kernel32.NewProc("WaitForMultipleObjects")
 	proc_set_event                        = kernel32.NewProc("SetEvent")
+	get_system_metrics                    = moduser32.NewProc("GetSystemMetrics")
 )
 
 func set_console_active_screen_buffer(h syscall.Handle) (err error) {
@@ -397,15 +401,44 @@ func get_term_size(out syscall.Handle) coord {
 	return tmp_info.size
 }
 
+func get_win_min_size(out syscall.Handle) coord {
+	x, _, err := get_system_metrics.Call(SM_CXMIN)
+	y, _, err := get_system_metrics.Call(SM_CYMIN)
+
+	if x == 0 || y == 0 {
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	return coord{
+		x: short(x),
+		y: short(y),
+	}
+}
+
 func get_win_size(out syscall.Handle) coord {
 	err := get_console_screen_buffer_info(out, &tmp_info)
 	if err != nil {
 		panic(err)
 	}
-	return coord{
+
+	min_size := get_win_min_size(out)
+
+	size := coord{
 		x: tmp_info.window.right - tmp_info.window.left + 1,
 		y: tmp_info.window.bottom - tmp_info.window.top + 1,
 	}
+
+	if size.x < min_size.x {
+		size.x = min_size.x
+	}
+
+	if size.y < min_size.y {
+		size.y = min_size.y
+	}
+
+	return size
 }
 
 func update_size_maybe() {

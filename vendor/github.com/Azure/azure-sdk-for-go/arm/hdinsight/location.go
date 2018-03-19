@@ -86,7 +86,9 @@ func (client LocationClient) GetCapabilitiesPreparer(location string) (*http.Req
 // GetCapabilitiesSender sends the GetCapabilities request. The method will close the
 // http.Response Body if it receives an error.
 func (client LocationClient) GetCapabilitiesSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetCapabilitiesResponder handles the response to the GetCapabilities request. The method always

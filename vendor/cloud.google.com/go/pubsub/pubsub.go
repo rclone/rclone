@@ -88,9 +88,11 @@ func NewClient(ctx context.Context, projectID string, opts ...option.ClientOptio
 	return c, nil
 }
 
-// Close closes any resources held by the client.
+// Close releases any resources held by the client,
+// such as memory and goroutines.
 //
-// Close need not be called at program exit.
+// If the client is available for the lifetime of the program, then Close need not be
+// called at exit.
 func (c *Client) Close() error {
 	return c.s.close()
 }

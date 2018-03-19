@@ -1,6 +1,8 @@
 // Package hdinsight implements the Azure ARM Hdinsight service API version 2015-03-01-preview.
 //
 // HDInsight Management Client
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/hdinsight/mgmt/2015-03-01-preview/hdinsight
 package hdinsight
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

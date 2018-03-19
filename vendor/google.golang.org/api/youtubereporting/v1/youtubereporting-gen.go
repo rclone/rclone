@@ -142,6 +142,522 @@ type Empty struct {
 	googleapi.ServerResponse `json:"-"`
 }
 
+// GdataBlobstore2Info: gdata
+type GdataBlobstore2Info struct {
+	// BlobGeneration: gdata
+	BlobGeneration int64 `json:"blobGeneration,omitempty,string"`
+
+	// BlobId: gdata
+	BlobId string `json:"blobId,omitempty"`
+
+	// DownloadReadHandle: gdata
+	DownloadReadHandle string `json:"downloadReadHandle,omitempty"`
+
+	// ReadToken: gdata
+	ReadToken string `json:"readToken,omitempty"`
+
+	// UploadMetadataContainer: gdata
+	UploadMetadataContainer string `json:"uploadMetadataContainer,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BlobGeneration") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BlobGeneration") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GdataBlobstore2Info) MarshalJSON() ([]byte, error) {
+	type NoMethod GdataBlobstore2Info
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GdataCompositeMedia: gdata
+type GdataCompositeMedia struct {
+	// BlobRef: gdata
+	BlobRef string `json:"blobRef,omitempty"`
+
+	// Blobstore2Info: gdata
+	Blobstore2Info *GdataBlobstore2Info `json:"blobstore2Info,omitempty"`
+
+	// CosmoBinaryReference: gdata
+	CosmoBinaryReference string `json:"cosmoBinaryReference,omitempty"`
+
+	// Crc32cHash: gdata
+	Crc32cHash int64 `json:"crc32cHash,omitempty"`
+
+	// Inline: gdata
+	Inline string `json:"inline,omitempty"`
+
+	// Length: gdata
+	Length int64 `json:"length,omitempty,string"`
+
+	// Md5Hash: gdata
+	Md5Hash string `json:"md5Hash,omitempty"`
+
+	// ObjectId: gdata
+	ObjectId *GdataObjectId `json:"objectId,omitempty"`
+
+	// Path: gdata
+	Path string `json:"path,omitempty"`
+
+	// ReferenceType: gdata
+	//
+	// Possible values:
+	//   "PATH" - gdata
+	//   "BLOB_REF" - gdata
+	//   "INLINE" - gdata
+	//   "BIGSTORE_REF" - gdata
+	//   "COSMO_BINARY_REFERENCE" - gdata
+	ReferenceType string `json:"referenceType,omitempty"`
+
+	// Sha1Hash: gdata
+	Sha1Hash string `json:"sha1Hash,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BlobRef") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BlobRef") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GdataCompositeMedia) MarshalJSON() ([]byte, error) {
+	type NoMethod GdataCompositeMedia
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GdataContentTypeInfo: gdata
+type GdataContentTypeInfo struct {
+	// BestGuess: gdata
+	BestGuess string `json:"bestGuess,omitempty"`
+
+	// FromBytes: gdata
+	FromBytes string `json:"fromBytes,omitempty"`
+
+	// FromFileName: gdata
+	FromFileName string `json:"fromFileName,omitempty"`
+
+	// FromHeader: gdata
+	FromHeader string `json:"fromHeader,omitempty"`
+
+	// FromUrlPath: gdata
+	FromUrlPath string `json:"fromUrlPath,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BestGuess") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BestGuess") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GdataContentTypeInfo) MarshalJSON() ([]byte, error) {
+	type NoMethod GdataContentTypeInfo
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GdataDiffChecksumsResponse: gdata
+type GdataDiffChecksumsResponse struct {
+	// ChecksumsLocation: gdata
+	ChecksumsLocation *GdataCompositeMedia `json:"checksumsLocation,omitempty"`
+
+	// ChunkSizeBytes: gdata
+	ChunkSizeBytes int64 `json:"chunkSizeBytes,omitempty,string"`
+
+	// ObjectLocation: gdata
+	ObjectLocation *GdataCompositeMedia `json:"objectLocation,omitempty"`
+
+	// ObjectSizeBytes: gdata
+	ObjectSizeBytes int64 `json:"objectSizeBytes,omitempty,string"`
+
+	// ObjectVersion: gdata
+	ObjectVersion string `json:"objectVersion,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ChecksumsLocation")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ChecksumsLocation") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GdataDiffChecksumsResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod GdataDiffChecksumsResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GdataDiffDownloadResponse: gdata
+type GdataDiffDownloadResponse struct {
+	// ObjectLocation: gdata
+	ObjectLocation *GdataCompositeMedia `json:"objectLocation,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ObjectLocation") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ObjectLocation") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GdataDiffDownloadResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod GdataDiffDownloadResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GdataDiffUploadRequest: gdata
+type GdataDiffUploadRequest struct {
+	// ChecksumsInfo: gdata
+	ChecksumsInfo *GdataCompositeMedia `json:"checksumsInfo,omitempty"`
+
+	// ObjectInfo: gdata
+	ObjectInfo *GdataCompositeMedia `json:"objectInfo,omitempty"`
+
+	// ObjectVersion: gdata
+	ObjectVersion string `json:"objectVersion,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ChecksumsInfo") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ChecksumsInfo") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GdataDiffUploadRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod GdataDiffUploadRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GdataDiffUploadResponse: gdata
+type GdataDiffUploadResponse struct {
+	// ObjectVersion: gdata
+	ObjectVersion string `json:"objectVersion,omitempty"`
+
+	// OriginalObject: gdata
+	OriginalObject *GdataCompositeMedia `json:"originalObject,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ObjectVersion") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ObjectVersion") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GdataDiffUploadResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod GdataDiffUploadResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GdataDiffVersionResponse: gdata
+type GdataDiffVersionResponse struct {
+	// ObjectSizeBytes: gdata
+	ObjectSizeBytes int64 `json:"objectSizeBytes,omitempty,string"`
+
+	// ObjectVersion: gdata
+	ObjectVersion string `json:"objectVersion,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ObjectSizeBytes") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ObjectSizeBytes") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GdataDiffVersionResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod GdataDiffVersionResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GdataDownloadParameters: gdata
+type GdataDownloadParameters struct {
+	// AllowGzipCompression: gdata
+	AllowGzipCompression bool `json:"allowGzipCompression,omitempty"`
+
+	// IgnoreRange: gdata
+	IgnoreRange bool `json:"ignoreRange,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "AllowGzipCompression") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AllowGzipCompression") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GdataDownloadParameters) MarshalJSON() ([]byte, error) {
+	type NoMethod GdataDownloadParameters
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GdataMedia: gdata
+type GdataMedia struct {
+	// Algorithm: gdata
+	Algorithm string `json:"algorithm,omitempty"`
+
+	// BigstoreObjectRef: gdata
+	BigstoreObjectRef string `json:"bigstoreObjectRef,omitempty"`
+
+	// BlobRef: gdata
+	BlobRef string `json:"blobRef,omitempty"`
+
+	// Blobstore2Info: gdata
+	Blobstore2Info *GdataBlobstore2Info `json:"blobstore2Info,omitempty"`
+
+	// CompositeMedia: gdata
+	CompositeMedia []*GdataCompositeMedia `json:"compositeMedia,omitempty"`
+
+	// ContentType: gdata
+	ContentType string `json:"contentType,omitempty"`
+
+	// ContentTypeInfo: gdata
+	ContentTypeInfo *GdataContentTypeInfo `json:"contentTypeInfo,omitempty"`
+
+	// CosmoBinaryReference: gdata
+	CosmoBinaryReference string `json:"cosmoBinaryReference,omitempty"`
+
+	// Crc32cHash: gdata
+	Crc32cHash int64 `json:"crc32cHash,omitempty"`
+
+	// DiffChecksumsResponse: gdata
+	DiffChecksumsResponse *GdataDiffChecksumsResponse `json:"diffChecksumsResponse,omitempty"`
+
+	// DiffDownloadResponse: gdata
+	DiffDownloadResponse *GdataDiffDownloadResponse `json:"diffDownloadResponse,omitempty"`
+
+	// DiffUploadRequest: gdata
+	DiffUploadRequest *GdataDiffUploadRequest `json:"diffUploadRequest,omitempty"`
+
+	// DiffUploadResponse: gdata
+	DiffUploadResponse *GdataDiffUploadResponse `json:"diffUploadResponse,omitempty"`
+
+	// DiffVersionResponse: gdata
+	DiffVersionResponse *GdataDiffVersionResponse `json:"diffVersionResponse,omitempty"`
+
+	// DownloadParameters: gdata
+	DownloadParameters *GdataDownloadParameters `json:"downloadParameters,omitempty"`
+
+	// Filename: gdata
+	Filename string `json:"filename,omitempty"`
+
+	// Hash: gdata
+	Hash string `json:"hash,omitempty"`
+
+	// HashVerified: gdata
+	HashVerified bool `json:"hashVerified,omitempty"`
+
+	// Inline: gdata
+	Inline string `json:"inline,omitempty"`
+
+	// IsPotentialRetry: gdata
+	//
+	// Default: true
+	IsPotentialRetry *bool `json:"isPotentialRetry,omitempty"`
+
+	// Length: gdata
+	Length int64 `json:"length,omitempty,string"`
+
+	// Md5Hash: gdata
+	Md5Hash string `json:"md5Hash,omitempty"`
+
+	// MediaId: gdata
+	MediaId string `json:"mediaId,omitempty"`
+
+	// ObjectId: gdata
+	ObjectId *GdataObjectId `json:"objectId,omitempty"`
+
+	// Path: gdata
+	Path string `json:"path,omitempty"`
+
+	// ReferenceType: gdata
+	//
+	// Possible values:
+	//   "PATH" - gdata
+	//   "BLOB_REF" - gdata
+	//   "INLINE" - gdata
+	//   "GET_MEDIA" - gdata
+	//   "COMPOSITE_MEDIA" - gdata
+	//   "BIGSTORE_REF" - gdata
+	//   "DIFF_VERSION_RESPONSE" - gdata
+	//   "DIFF_CHECKSUMS_RESPONSE" - gdata
+	//   "DIFF_DOWNLOAD_RESPONSE" - gdata
+	//   "DIFF_UPLOAD_REQUEST" - gdata
+	//   "DIFF_UPLOAD_RESPONSE" - gdata
+	//   "COSMO_BINARY_REFERENCE" - gdata
+	//   "ARBITRARY_BYTES" - gdata
+	ReferenceType string `json:"referenceType,omitempty"`
+
+	// Sha1Hash: gdata
+	Sha1Hash string `json:"sha1Hash,omitempty"`
+
+	// Sha256Hash: gdata
+	Sha256Hash string `json:"sha256Hash,omitempty"`
+
+	// Timestamp: gdata
+	Timestamp uint64 `json:"timestamp,omitempty,string"`
+
+	// Token: gdata
+	Token string `json:"token,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Algorithm") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Algorithm") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GdataMedia) MarshalJSON() ([]byte, error) {
+	type NoMethod GdataMedia
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GdataObjectId: gdata
+type GdataObjectId struct {
+	// BucketName: gdata
+	BucketName string `json:"bucketName,omitempty"`
+
+	// Generation: gdata
+	Generation int64 `json:"generation,omitempty,string"`
+
+	// ObjectName: gdata
+	ObjectName string `json:"objectName,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BucketName") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BucketName") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GdataObjectId) MarshalJSON() ([]byte, error) {
+	type NoMethod GdataObjectId
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Job: A job creating reports of a specific type.
 type Job struct {
 	// CreateTime: The creation date/time of the job.
@@ -190,8 +706,8 @@ type Job struct {
 }
 
 func (s *Job) MarshalJSON() ([]byte, error) {
-	type noMethod Job
-	raw := noMethod(*s)
+	type NoMethod Job
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -230,8 +746,8 @@ type ListJobsResponse struct {
 }
 
 func (s *ListJobsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListJobsResponse
-	raw := noMethod(*s)
+	type NoMethod ListJobsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -271,8 +787,8 @@ type ListReportTypesResponse struct {
 }
 
 func (s *ListReportTypesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListReportTypesResponse
-	raw := noMethod(*s)
+	type NoMethod ListReportTypesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -312,40 +828,8 @@ type ListReportsResponse struct {
 }
 
 func (s *ListReportsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListReportsResponse
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// Media: Media resource.
-type Media struct {
-	// ResourceName: Name of the media resource.
-	ResourceName string `json:"resourceName,omitempty"`
-
-	// ServerResponse contains the HTTP response code and headers from the
-	// server.
-	googleapi.ServerResponse `json:"-"`
-
-	// ForceSendFields is a list of field names (e.g. "ResourceName") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "ResourceName") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *Media) MarshalJSON() ([]byte, error) {
-	type noMethod Media
-	raw := noMethod(*s)
+	type NoMethod ListReportsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -402,8 +886,8 @@ type Report struct {
 }
 
 func (s *Report) MarshalJSON() ([]byte, error) {
-	type noMethod Report
-	raw := noMethod(*s)
+	type NoMethod Report
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -444,8 +928,8 @@ type ReportType struct {
 }
 
 func (s *ReportType) MarshalJSON() ([]byte, error) {
-	type noMethod ReportType
-	raw := noMethod(*s)
+	type NoMethod ReportType
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -553,7 +1037,7 @@ func (c *JobsCreateCall) Do(opts ...googleapi.CallOption) (*Job, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -687,7 +1171,7 @@ func (c *JobsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -840,7 +1324,7 @@ func (c *JobsGetCall) Do(opts ...googleapi.CallOption) (*Job, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1018,7 +1502,7 @@ func (c *JobsListCall) Do(opts ...googleapi.CallOption) (*ListJobsResponse, erro
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1203,7 +1687,7 @@ func (c *JobsReportsGetCall) Do(opts ...googleapi.CallOption) (*Report, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1409,7 +1893,7 @@ func (c *JobsReportsListCall) Do(opts ...googleapi.CallOption) (*ListReportsResp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1588,13 +2072,13 @@ func (c *MediaDownloadCall) Download(opts ...googleapi.CallOption) (*http.Respon
 }
 
 // Do executes the "youtubereporting.media.download" call.
-// Exactly one of *Media or error will be non-nil. Any non-2xx status
-// code is an error. Response headers are in either
-// *Media.ServerResponse.Header or (if a response was returned at all)
-// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
-// check whether the returned error was because http.StatusNotModified
-// was returned.
-func (c *MediaDownloadCall) Do(opts ...googleapi.CallOption) (*Media, error) {
+// Exactly one of *GdataMedia or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *GdataMedia.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *MediaDownloadCall) Do(opts ...googleapi.CallOption) (*GdataMedia, error) {
 	gensupport.SetOptions(c.urlParams_, opts...)
 	res, err := c.doRequest("json")
 	if res != nil && res.StatusCode == http.StatusNotModified {
@@ -1613,14 +2097,14 @@ func (c *MediaDownloadCall) Do(opts ...googleapi.CallOption) (*Media, error) {
 	if err := googleapi.CheckResponse(res); err != nil {
 		return nil, err
 	}
-	ret := &Media{
+	ret := &GdataMedia{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1634,7 +2118,7 @@ func (c *MediaDownloadCall) Do(opts ...googleapi.CallOption) (*Media, error) {
 	//   ],
 	//   "parameters": {
 	//     "resourceName": {
-	//       "description": "Name of the media that is being downloaded.  See\nReadRequest.resource_name.",
+	//       "description": "Name of the media that is being downloaded.",
 	//       "location": "path",
 	//       "pattern": "^.+$",
 	//       "required": true,
@@ -1643,7 +2127,7 @@ func (c *MediaDownloadCall) Do(opts ...googleapi.CallOption) (*Media, error) {
 	//   },
 	//   "path": "v1/media/{+resourceName}",
 	//   "response": {
-	//     "$ref": "Media"
+	//     "$ref": "GdataMedia"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/yt-analytics-monetary.readonly",
@@ -1796,7 +2280,7 @@ func (c *ReportTypesListCall) Do(opts ...googleapi.CallOption) (*ListReportTypes
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

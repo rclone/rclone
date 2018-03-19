@@ -68,7 +68,7 @@ func main() {
 	ddbSvc.ListTables(&dynamodb.ListTablesInput{})
 
 	// Setting Config's Endpoint will override the EndpointResolver. Forcing
-	// the service clien to make all operation to the endpoint specified
+	// the service client to make all operation to the endpoint specified
 	// the in the config.
 	ddbSvcLocal := dynamodb.New(sess, &aws.Config{
 		Endpoint: aws.String("http://localhost:8088"),

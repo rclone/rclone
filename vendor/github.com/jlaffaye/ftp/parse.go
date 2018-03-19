@@ -2,6 +2,7 @@ package ftp
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -9,7 +10,9 @@ import (
 
 var errUnsupportedListLine = errors.New("Unsupported LIST line")
 
-var listLineParsers = []func(line string) (*Entry, error){
+type parseFunc func(string, time.Time) (*Entry, error)
+
+var listLineParsers = []parseFunc{
 	parseRFC3659ListLine,
 	parseLsListLine,
 	parseDirListLine,
@@ -22,7 +25,7 @@ var dirTimeFormats = []string{
 }
 
 // parseRFC3659ListLine parses the style of directory line defined in RFC 3659.
-func parseRFC3659ListLine(line string) (*Entry, error) {
+func parseRFC3659ListLine(line string, now time.Time) (*Entry, error) {
 	iSemicolon := strings.Index(line, ";")
 	iWhitespace := strings.Index(line, " ")
 
@@ -66,7 +69,7 @@ func parseRFC3659ListLine(line string) (*Entry, error) {
 
 // parseLsListLine parses a directory line in a format based on the output of
 // the UNIX ls command.
-func parseLsListLine(line string) (*Entry, error) {
+func parseLsListLine(line string, now time.Time) (*Entry, error) {
 
 	// Has the first field a length of 10 bytes?
 	if strings.IndexByte(line, ' ') != 10 {
@@ -85,7 +88,7 @@ func parseLsListLine(line string) (*Entry, error) {
 			Type: EntryTypeFolder,
 			Name: scanner.Remaining(),
 		}
-		if err := e.setTime(fields[3:6]); err != nil {
+		if err := e.setTime(fields[3:6], now); err != nil {
 			return nil, err
 		}
 
@@ -102,7 +105,7 @@ func parseLsListLine(line string) (*Entry, error) {
 		if err := e.setSize(fields[2]); err != nil {
 			return nil, errUnsupportedListLine
 		}
-		if err := e.setTime(fields[4:7]); err != nil {
+		if err := e.setTime(fields[4:7], now); err != nil {
 			return nil, err
 		}
 
@@ -132,7 +135,7 @@ func parseLsListLine(line string) (*Entry, error) {
 		return nil, errors.New("Unknown entry type")
 	}
 
-	if err := e.setTime(fields[5:8]); err != nil {
+	if err := e.setTime(fields[5:8], now); err != nil {
 		return nil, err
 	}
 
@@ -141,7 +144,7 @@ func parseLsListLine(line string) (*Entry, error) {
 
 // parseDirListLine parses a directory line in a format based on the output of
 // the MS-DOS DIR command.
-func parseDirListLine(line string) (*Entry, error) {
+func parseDirListLine(line string, now time.Time) (*Entry, error) {
 	e := &Entry{}
 	var err error
 
@@ -185,7 +188,7 @@ func parseDirListLine(line string) (*Entry, error) {
 // by hostedftp.com
 // -r--------   0 user group     65222236 Feb 24 00:39 UABlacklistingWeek8.csv
 // (The link count is inexplicably 0)
-func parseHostedFTPLine(line string) (*Entry, error) {
+func parseHostedFTPLine(line string, now time.Time) (*Entry, error) {
 	// Has the first field a length of 10 bytes?
 	if strings.IndexByte(line, ' ') != 10 {
 		return nil, errUnsupportedListLine
@@ -199,14 +202,14 @@ func parseHostedFTPLine(line string) (*Entry, error) {
 	}
 
 	// Set link count to 1 and attempt to parse as Unix.
-	return parseLsListLine(fields[0] + " 1 " + scanner.Remaining())
+	return parseLsListLine(fields[0]+" 1 "+scanner.Remaining(), now)
 }
 
 // parseListLine parses the various non-standard format returned by the LIST
 // FTP command.
-func parseListLine(line string) (*Entry, error) {
+func parseListLine(line string, now time.Time) (*Entry, error) {
 	for _, f := range listLineParsers {
-		e, err := f(line)
+		e, err := f(line, now)
 		if err != errUnsupportedListLine {
 			return e, err
 		}
@@ -219,17 +222,34 @@ func (e *Entry) setSize(str string) (err error) {
 	return
 }
 
-func (e *Entry) setTime(fields []string) (err error) {
-	var timeStr string
-	if strings.Contains(fields[2], ":") { // this year
-		thisYear, _, _ := time.Now().Date()
-		timeStr = fields[1] + " " + fields[0] + " " + strconv.Itoa(thisYear)[2:4] + " " + fields[2] + " GMT"
-	} else { // not this year
+func (e *Entry) setTime(fields []string, now time.Time) (err error) {
+	if strings.Contains(fields[2], ":") { // contains time
+		thisYear, _, _ := now.Date()
+		timeStr := fmt.Sprintf("%s %s %d %s GMT", fields[1], fields[0], thisYear, fields[2])
+		e.Time, err = time.Parse("_2 Jan 2006 15:04 MST", timeStr)
+
+		/*
+			On unix, `info ls` shows:
+
+			10.1.6 Formatting file timestamps
+			---------------------------------
+
+			A timestamp is considered to be “recent” if it is less than six
+			months old, and is not dated in the future.  If a timestamp dated today
+			is not listed in recent form, the timestamp is in the future, which
+			means you probably have clock skew problems which may break programs
+			like ‘make’ that rely on file timestamps.
+		*/
+		if !e.Time.Before(now.AddDate(0, 6, 0)) {
+			e.Time = e.Time.AddDate(-1, 0, 0)
+		}
+
+	} else { // only the date
 		if len(fields[2]) != 4 {
 			return errors.New("Invalid year format in time string")
 		}
-		timeStr = fields[1] + " " + fields[0] + " " + fields[2][2:4] + " 00:00 GMT"
+		timeStr := fmt.Sprintf("%s %s %s 00:00 GMT", fields[1], fields[0], fields[2])
+		e.Time, err = time.Parse("_2 Jan 2006 15:04 MST", timeStr)
 	}
-	e.Time, err = time.Parse("_2 Jan 06 15:04 MST", timeStr)
 	return
 }

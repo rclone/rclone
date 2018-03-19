@@ -92,7 +92,9 @@ func (client VaultCertificatesClient) CreatePreparer(resourceGroupName string, v
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client VaultCertificatesClient) CreateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateResponder handles the response to the Create request. The method always

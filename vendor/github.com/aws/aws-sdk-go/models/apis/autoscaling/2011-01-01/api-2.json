@@ -876,6 +876,7 @@
         "AutoScalingGroupName":{"shape":"XmlStringMaxLen255"},
         "AutoScalingGroupARN":{"shape":"ResourceName"},
         "LaunchConfigurationName":{"shape":"XmlStringMaxLen255"},
+        "LaunchTemplate":{"shape":"LaunchTemplateSpecification"},
         "MinSize":{"shape":"AutoScalingGroupMinSize"},
         "MaxSize":{"shape":"AutoScalingGroupMaxSize"},
         "DesiredCapacity":{"shape":"AutoScalingGroupDesiredCapacity"},
@@ -932,7 +933,6 @@
         "AvailabilityZone",
         "LifecycleState",
         "HealthStatus",
-        "LaunchConfigurationName",
         "ProtectedFromScaleIn"
       ],
       "members":{
@@ -942,6 +942,7 @@
         "LifecycleState":{"shape":"XmlStringMaxLen32"},
         "HealthStatus":{"shape":"XmlStringMaxLen32"},
         "LaunchConfigurationName":{"shape":"XmlStringMaxLen255"},
+        "LaunchTemplate":{"shape":"LaunchTemplateSpecification"},
         "ProtectedFromScaleIn":{"shape":"InstanceProtected"}
       }
     },
@@ -1031,6 +1032,7 @@
       "members":{
         "AutoScalingGroupName":{"shape":"XmlStringMaxLen255"},
         "LaunchConfigurationName":{"shape":"ResourceName"},
+        "LaunchTemplate":{"shape":"LaunchTemplateSpecification"},
         "InstanceId":{"shape":"XmlStringMaxLen19"},
         "MinSize":{"shape":"AutoScalingGroupMinSize"},
         "MaxSize":{"shape":"AutoScalingGroupMaxSize"},
@@ -1465,7 +1467,6 @@
         "AvailabilityZone",
         "LifecycleState",
         "HealthStatus",
-        "LaunchConfigurationName",
         "ProtectedFromScaleIn"
       ],
       "members":{
@@ -1474,6 +1475,7 @@
         "LifecycleState":{"shape":"LifecycleState"},
         "HealthStatus":{"shape":"XmlStringMaxLen32"},
         "LaunchConfigurationName":{"shape":"XmlStringMaxLen255"},
+        "LaunchTemplate":{"shape":"LaunchTemplateSpecification"},
         "ProtectedFromScaleIn":{"shape":"InstanceProtected"}
       }
     },
@@ -1565,6 +1567,20 @@
         "NextToken":{"shape":"XmlString"}
       }
     },
+    "LaunchTemplateName":{
+      "type":"string",
+      "max":128,
+      "min":3,
+      "pattern":"[a-zA-Z0-9\\(\\)\\.-/_]+"
+    },
+    "LaunchTemplateSpecification":{
+      "type":"structure",
+      "members":{
+        "LaunchTemplateId":{"shape":"XmlStringMaxLen255"},
+        "LaunchTemplateName":{"shape":"LaunchTemplateName"},
+        "Version":{"shape":"XmlStringMaxLen255"}
+      }
+    },
     "LifecycleActionResult":{"type":"string"},
     "LifecycleActionToken":{
       "type":"string",
@@ -1592,7 +1608,10 @@
     },
     "LifecycleHookSpecification":{
       "type":"structure",
-      "required":["LifecycleHookName"],
+      "required":[
+        "LifecycleHookName",
+        "LifecycleTransition"
+      ],
       "members":{
         "LifecycleHookName":{"shape":"AsciiStringMaxLen255"},
         "LifecycleTransition":{"shape":"LifecycleTransition"},
@@ -2190,6 +2209,7 @@
       "members":{
         "AutoScalingGroupName":{"shape":"ResourceName"},
         "LaunchConfigurationName":{"shape":"ResourceName"},
+        "LaunchTemplate":{"shape":"LaunchTemplateSpecification"},
         "MinSize":{"shape":"AutoScalingGroupMinSize"},
         "MaxSize":{"shape":"AutoScalingGroupMaxSize"},
         "DesiredCapacity":{"shape":"AutoScalingGroupDesiredCapacity"},

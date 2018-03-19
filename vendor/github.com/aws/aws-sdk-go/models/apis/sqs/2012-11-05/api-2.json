@@ -151,6 +151,18 @@
         {"shape":"QueueDoesNotExist"}
       ]
     },
+    "ListQueueTags":{
+      "name":"ListQueueTags",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListQueueTagsRequest"},
+      "output":{
+        "shape":"ListQueueTagsResult",
+        "resultWrapper":"ListQueueTagsResult"
+      }
+    },
     "ListQueues":{
       "name":"ListQueues",
       "http":{
@@ -244,6 +256,22 @@
       "errors":[
         {"shape":"InvalidAttributeName"}
       ]
+    },
+    "TagQueue":{
+      "name":"TagQueue",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"TagQueueRequest"}
+    },
+    "UntagQueue":{
+      "name":"UntagQueue",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UntagQueueRequest"}
     }
   },
   "shapes":{
@@ -584,6 +612,22 @@
       "required":["queueUrls"],
       "members":{
         "queueUrls":{"shape":"QueueUrlList"}
+      }
+    },
+    "ListQueueTagsRequest":{
+      "type":"structure",
+      "required":["QueueUrl"],
+      "members":{
+        "QueueUrl":{"shape":"String"}
+      }
+    },
+    "ListQueueTagsResult":{
+      "type":"structure",
+      "members":{
+        "Tags":{
+          "shape":"TagMap",
+          "locationName":"Tag"
+        }
       }
     },
     "ListQueuesRequest":{
@@ -962,6 +1006,40 @@
         "locationName":"StringListValue"
       }
     },
+    "TagKey":{"type":"string"},
+    "TagKeyList":{
+      "type":"list",
+      "member":{
+        "shape":"TagKey",
+        "locationName":"TagKey"
+      },
+      "flattened":true
+    },
+    "TagMap":{
+      "type":"map",
+      "key":{
+        "shape":"TagKey",
+        "locationName":"Key"
+      },
+      "value":{
+        "shape":"TagValue",
+        "locationName":"Value"
+      },
+      "flattened":true,
+      "locationName":"Tag"
+    },
+    "TagQueueRequest":{
+      "type":"structure",
+      "required":[
+        "QueueUrl",
+        "Tags"
+      ],
+      "members":{
+        "QueueUrl":{"shape":"String"},
+        "Tags":{"shape":"TagMap"}
+      }
+    },
+    "TagValue":{"type":"string"},
     "TooManyEntriesInBatchRequest":{
       "type":"structure",
       "members":{
@@ -983,6 +1061,17 @@
         "senderFault":true
       },
       "exception":true
+    },
+    "UntagQueueRequest":{
+      "type":"structure",
+      "required":[
+        "QueueUrl",
+        "TagKeys"
+      ],
+      "members":{
+        "QueueUrl":{"shape":"String"},
+        "TagKeys":{"shape":"TagKeyList"}
+      }
     }
   }
 }

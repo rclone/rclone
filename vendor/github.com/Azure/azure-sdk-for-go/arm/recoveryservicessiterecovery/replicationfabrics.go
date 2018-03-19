@@ -106,6 +106,7 @@ func (client ReplicationFabricsClient) CheckConsistencyPreparer(fabricName strin
 func (client ReplicationFabricsClient) CheckConsistencySender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -191,6 +192,7 @@ func (client ReplicationFabricsClient) CreatePreparer(fabricName string, input F
 func (client ReplicationFabricsClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -274,6 +276,7 @@ func (client ReplicationFabricsClient) DeletePreparer(fabricName string, cancel 
 func (client ReplicationFabricsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -339,7 +342,9 @@ func (client ReplicationFabricsClient) GetPreparer(fabricName string) (*http.Req
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationFabricsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -402,7 +407,9 @@ func (client ReplicationFabricsClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationFabricsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -554,6 +561,7 @@ func (client ReplicationFabricsClient) MigrateToAadPreparer(fabricName string, c
 func (client ReplicationFabricsClient) MigrateToAadSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -636,6 +644,7 @@ func (client ReplicationFabricsClient) PurgePreparer(fabricName string, cancel <
 func (client ReplicationFabricsClient) PurgeSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -721,6 +730,7 @@ func (client ReplicationFabricsClient) ReassociateGatewayPreparer(fabricName str
 func (client ReplicationFabricsClient) ReassociateGatewaySender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -806,6 +816,7 @@ func (client ReplicationFabricsClient) RenewCertificatePreparer(fabricName strin
 func (client ReplicationFabricsClient) RenewCertificateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

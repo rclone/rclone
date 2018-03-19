@@ -1,6 +1,8 @@
 // Package dns implements the Azure ARM Dns service API version 2016-04-01.
 //
 // The DNS Management Client.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/dns/mgmt/2016-04-01/dns
 package dns
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

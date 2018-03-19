@@ -36,7 +36,7 @@ const opAllocateConnectionOnInterconnect = "AllocateConnectionOnInterconnect"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocateConnectionOnInterconnect
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocateConnectionOnInterconnect
 func (c *DirectConnect) AllocateConnectionOnInterconnectRequest(input *AllocateConnectionOnInterconnectInput) (req *request.Request, output *Connection) {
 	if c.Client.Config.Logger != nil {
 		c.Client.Config.Logger.Log("This operation, AllocateConnectionOnInterconnect, has been deprecated")
@@ -83,7 +83,7 @@ func (c *DirectConnect) AllocateConnectionOnInterconnectRequest(input *AllocateC
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocateConnectionOnInterconnect
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocateConnectionOnInterconnect
 func (c *DirectConnect) AllocateConnectionOnInterconnect(input *AllocateConnectionOnInterconnectInput) (*Connection, error) {
 	req, out := c.AllocateConnectionOnInterconnectRequest(input)
 	return out, req.Send()
@@ -130,7 +130,7 @@ const opAllocateHostedConnection = "AllocateHostedConnection"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocateHostedConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocateHostedConnection
 func (c *DirectConnect) AllocateHostedConnectionRequest(input *AllocateHostedConnectionInput) (req *request.Request, output *Connection) {
 	op := &request.Operation{
 		Name:       opAllocateHostedConnection,
@@ -173,7 +173,7 @@ func (c *DirectConnect) AllocateHostedConnectionRequest(input *AllocateHostedCon
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocateHostedConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocateHostedConnection
 func (c *DirectConnect) AllocateHostedConnection(input *AllocateHostedConnectionInput) (*Connection, error) {
 	req, out := c.AllocateHostedConnectionRequest(input)
 	return out, req.Send()
@@ -220,7 +220,7 @@ const opAllocatePrivateVirtualInterface = "AllocatePrivateVirtualInterface"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocatePrivateVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocatePrivateVirtualInterface
 func (c *DirectConnect) AllocatePrivateVirtualInterfaceRequest(input *AllocatePrivateVirtualInterfaceInput) (req *request.Request, output *VirtualInterface) {
 	op := &request.Operation{
 		Name:       opAllocatePrivateVirtualInterface,
@@ -262,7 +262,7 @@ func (c *DirectConnect) AllocatePrivateVirtualInterfaceRequest(input *AllocatePr
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocatePrivateVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocatePrivateVirtualInterface
 func (c *DirectConnect) AllocatePrivateVirtualInterface(input *AllocatePrivateVirtualInterfaceInput) (*VirtualInterface, error) {
 	req, out := c.AllocatePrivateVirtualInterfaceRequest(input)
 	return out, req.Send()
@@ -309,7 +309,7 @@ const opAllocatePublicVirtualInterface = "AllocatePublicVirtualInterface"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocatePublicVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocatePublicVirtualInterface
 func (c *DirectConnect) AllocatePublicVirtualInterfaceRequest(input *AllocatePublicVirtualInterfaceInput) (req *request.Request, output *VirtualInterface) {
 	op := &request.Operation{
 		Name:       opAllocatePublicVirtualInterface,
@@ -358,7 +358,7 @@ func (c *DirectConnect) AllocatePublicVirtualInterfaceRequest(input *AllocatePub
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocatePublicVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocatePublicVirtualInterface
 func (c *DirectConnect) AllocatePublicVirtualInterface(input *AllocatePublicVirtualInterfaceInput) (*VirtualInterface, error) {
 	req, out := c.AllocatePublicVirtualInterfaceRequest(input)
 	return out, req.Send()
@@ -405,7 +405,7 @@ const opAssociateConnectionWithLag = "AssociateConnectionWithLag"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateConnectionWithLag
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateConnectionWithLag
 func (c *DirectConnect) AssociateConnectionWithLagRequest(input *AssociateConnectionWithLagInput) (req *request.Request, output *Connection) {
 	op := &request.Operation{
 		Name:       opAssociateConnectionWithLag,
@@ -458,7 +458,7 @@ func (c *DirectConnect) AssociateConnectionWithLagRequest(input *AssociateConnec
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateConnectionWithLag
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateConnectionWithLag
 func (c *DirectConnect) AssociateConnectionWithLag(input *AssociateConnectionWithLagInput) (*Connection, error) {
 	req, out := c.AssociateConnectionWithLagRequest(input)
 	return out, req.Send()
@@ -505,7 +505,7 @@ const opAssociateHostedConnection = "AssociateHostedConnection"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateHostedConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateHostedConnection
 func (c *DirectConnect) AssociateHostedConnectionRequest(input *AssociateHostedConnectionInput) (req *request.Request, output *Connection) {
 	op := &request.Operation{
 		Name:       opAssociateHostedConnection,
@@ -548,7 +548,7 @@ func (c *DirectConnect) AssociateHostedConnectionRequest(input *AssociateHostedC
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateHostedConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateHostedConnection
 func (c *DirectConnect) AssociateHostedConnection(input *AssociateHostedConnectionInput) (*Connection, error) {
 	req, out := c.AssociateHostedConnectionRequest(input)
 	return out, req.Send()
@@ -595,7 +595,7 @@ const opAssociateVirtualInterface = "AssociateVirtualInterface"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateVirtualInterface
 func (c *DirectConnect) AssociateVirtualInterfaceRequest(input *AssociateVirtualInterfaceInput) (req *request.Request, output *VirtualInterface) {
 	op := &request.Operation{
 		Name:       opAssociateVirtualInterface,
@@ -624,9 +624,11 @@ func (c *DirectConnect) AssociateVirtualInterfaceRequest(input *AssociateVirtual
 // with a LAG; hosted connections must be migrated along with their virtual
 // interfaces using AssociateHostedConnection.
 //
-// Hosted virtual interfaces (an interface for which the owner of the connection
-// is not the owner of physical connection) can only be reassociated by the
-// owner of the physical connection.
+// In order to reassociate a virtual interface to a new connection or LAG, the
+// requester must own either the virtual interface itself or the connection
+// to which the virtual interface is currently associated. Additionally, the
+// requester must own the connection or LAG to which the virtual interface will
+// be newly associated.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -644,7 +646,7 @@ func (c *DirectConnect) AssociateVirtualInterfaceRequest(input *AssociateVirtual
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateVirtualInterface
 func (c *DirectConnect) AssociateVirtualInterface(input *AssociateVirtualInterfaceInput) (*VirtualInterface, error) {
 	req, out := c.AssociateVirtualInterfaceRequest(input)
 	return out, req.Send()
@@ -691,7 +693,7 @@ const opConfirmConnection = "ConfirmConnection"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmConnection
 func (c *DirectConnect) ConfirmConnectionRequest(input *ConfirmConnectionInput) (req *request.Request, output *ConfirmConnectionOutput) {
 	op := &request.Operation{
 		Name:       opConfirmConnection,
@@ -732,7 +734,7 @@ func (c *DirectConnect) ConfirmConnectionRequest(input *ConfirmConnectionInput) 
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmConnection
 func (c *DirectConnect) ConfirmConnection(input *ConfirmConnectionInput) (*ConfirmConnectionOutput, error) {
 	req, out := c.ConfirmConnectionRequest(input)
 	return out, req.Send()
@@ -779,7 +781,7 @@ const opConfirmPrivateVirtualInterface = "ConfirmPrivateVirtualInterface"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPrivateVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPrivateVirtualInterface
 func (c *DirectConnect) ConfirmPrivateVirtualInterfaceRequest(input *ConfirmPrivateVirtualInterfaceInput) (req *request.Request, output *ConfirmPrivateVirtualInterfaceOutput) {
 	op := &request.Operation{
 		Name:       opConfirmPrivateVirtualInterface,
@@ -801,8 +803,8 @@ func (c *DirectConnect) ConfirmPrivateVirtualInterfaceRequest(input *ConfirmPriv
 // Accept ownership of a private virtual interface created by another customer.
 //
 // After the virtual interface owner calls this function, the virtual interface
-// will be created and attached to the given virtual private gateway, and will
-// be available for handling traffic.
+// will be created and attached to the given virtual private gateway or direct
+// connect gateway, and will be available for handling traffic.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -820,7 +822,7 @@ func (c *DirectConnect) ConfirmPrivateVirtualInterfaceRequest(input *ConfirmPriv
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPrivateVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPrivateVirtualInterface
 func (c *DirectConnect) ConfirmPrivateVirtualInterface(input *ConfirmPrivateVirtualInterfaceInput) (*ConfirmPrivateVirtualInterfaceOutput, error) {
 	req, out := c.ConfirmPrivateVirtualInterfaceRequest(input)
 	return out, req.Send()
@@ -867,7 +869,7 @@ const opConfirmPublicVirtualInterface = "ConfirmPublicVirtualInterface"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPublicVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPublicVirtualInterface
 func (c *DirectConnect) ConfirmPublicVirtualInterfaceRequest(input *ConfirmPublicVirtualInterfaceInput) (req *request.Request, output *ConfirmPublicVirtualInterfaceOutput) {
 	op := &request.Operation{
 		Name:       opConfirmPublicVirtualInterface,
@@ -907,7 +909,7 @@ func (c *DirectConnect) ConfirmPublicVirtualInterfaceRequest(input *ConfirmPubli
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPublicVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPublicVirtualInterface
 func (c *DirectConnect) ConfirmPublicVirtualInterface(input *ConfirmPublicVirtualInterfaceInput) (*ConfirmPublicVirtualInterfaceOutput, error) {
 	req, out := c.ConfirmPublicVirtualInterfaceRequest(input)
 	return out, req.Send()
@@ -954,7 +956,7 @@ const opCreateBGPPeer = "CreateBGPPeer"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateBGPPeer
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateBGPPeer
 func (c *DirectConnect) CreateBGPPeerRequest(input *CreateBGPPeerInput) (req *request.Request, output *CreateBGPPeerOutput) {
 	op := &request.Operation{
 		Name:       opCreateBGPPeer,
@@ -1003,7 +1005,7 @@ func (c *DirectConnect) CreateBGPPeerRequest(input *CreateBGPPeerInput) (req *re
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateBGPPeer
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateBGPPeer
 func (c *DirectConnect) CreateBGPPeer(input *CreateBGPPeerInput) (*CreateBGPPeerOutput, error) {
 	req, out := c.CreateBGPPeerRequest(input)
 	return out, req.Send()
@@ -1050,7 +1052,7 @@ const opCreateConnection = "CreateConnection"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateConnection
 func (c *DirectConnect) CreateConnectionRequest(input *CreateConnectionInput) (req *request.Request, output *Connection) {
 	op := &request.Operation{
 		Name:       opCreateConnection,
@@ -1080,6 +1082,8 @@ func (c *DirectConnect) CreateConnectionRequest(input *CreateConnectionInput) (r
 // Direct Connect locations in multiple regions, but a connection in one region
 // does not provide connectivity to other regions.
 //
+// To find the locations for your region, use DescribeLocations.
+//
 // You can automatically add the new connection to a link aggregation group
 // (LAG) by specifying a LAG ID in the request. This ensures that the new connection
 // is allocated on the same AWS Direct Connect endpoint that hosts the specified
@@ -1102,7 +1106,7 @@ func (c *DirectConnect) CreateConnectionRequest(input *CreateConnectionInput) (r
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateConnection
 func (c *DirectConnect) CreateConnection(input *CreateConnectionInput) (*Connection, error) {
 	req, out := c.CreateConnectionRequest(input)
 	return out, req.Send()
@@ -1119,6 +1123,183 @@ func (c *DirectConnect) CreateConnection(input *CreateConnectionInput) (*Connect
 // for more information on using Contexts.
 func (c *DirectConnect) CreateConnectionWithContext(ctx aws.Context, input *CreateConnectionInput, opts ...request.Option) (*Connection, error) {
 	req, out := c.CreateConnectionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opCreateDirectConnectGateway = "CreateDirectConnectGateway"
+
+// CreateDirectConnectGatewayRequest generates a "aws/request.Request" representing the
+// client's request for the CreateDirectConnectGateway operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateDirectConnectGateway for more information on using the CreateDirectConnectGateway
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the CreateDirectConnectGatewayRequest method.
+//    req, resp := client.CreateDirectConnectGatewayRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateDirectConnectGateway
+func (c *DirectConnect) CreateDirectConnectGatewayRequest(input *CreateDirectConnectGatewayInput) (req *request.Request, output *CreateDirectConnectGatewayOutput) {
+	op := &request.Operation{
+		Name:       opCreateDirectConnectGateway,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateDirectConnectGatewayInput{}
+	}
+
+	output = &CreateDirectConnectGatewayOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateDirectConnectGateway API operation for AWS Direct Connect.
+//
+// Creates a new direct connect gateway. A direct connect gateway is an intermediate
+// object that enables you to connect a set of virtual interfaces and virtual
+// private gateways. direct connect gateways are global and visible in any AWS
+// region after they are created. The virtual interfaces and virtual private
+// gateways that are connected through a direct connect gateway can be in different
+// regions. This enables you to connect to a VPC in any region, regardless of
+// the region in which the virtual interfaces are located, and pass traffic
+// between them.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Direct Connect's
+// API operation CreateDirectConnectGateway for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeServerException "ServerException"
+//   A server-side error occurred during the API call. The error message will
+//   contain additional details about the cause.
+//
+//   * ErrCodeClientException "ClientException"
+//   The API was called with invalid parameters. The error message will contain
+//   additional details about the cause.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateDirectConnectGateway
+func (c *DirectConnect) CreateDirectConnectGateway(input *CreateDirectConnectGatewayInput) (*CreateDirectConnectGatewayOutput, error) {
+	req, out := c.CreateDirectConnectGatewayRequest(input)
+	return out, req.Send()
+}
+
+// CreateDirectConnectGatewayWithContext is the same as CreateDirectConnectGateway with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateDirectConnectGateway for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DirectConnect) CreateDirectConnectGatewayWithContext(ctx aws.Context, input *CreateDirectConnectGatewayInput, opts ...request.Option) (*CreateDirectConnectGatewayOutput, error) {
+	req, out := c.CreateDirectConnectGatewayRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opCreateDirectConnectGatewayAssociation = "CreateDirectConnectGatewayAssociation"
+
+// CreateDirectConnectGatewayAssociationRequest generates a "aws/request.Request" representing the
+// client's request for the CreateDirectConnectGatewayAssociation operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateDirectConnectGatewayAssociation for more information on using the CreateDirectConnectGatewayAssociation
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the CreateDirectConnectGatewayAssociationRequest method.
+//    req, resp := client.CreateDirectConnectGatewayAssociationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateDirectConnectGatewayAssociation
+func (c *DirectConnect) CreateDirectConnectGatewayAssociationRequest(input *CreateDirectConnectGatewayAssociationInput) (req *request.Request, output *CreateDirectConnectGatewayAssociationOutput) {
+	op := &request.Operation{
+		Name:       opCreateDirectConnectGatewayAssociation,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateDirectConnectGatewayAssociationInput{}
+	}
+
+	output = &CreateDirectConnectGatewayAssociationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateDirectConnectGatewayAssociation API operation for AWS Direct Connect.
+//
+// Creates an association between a direct connect gateway and a virtual private
+// gateway (VGW). The VGW must be attached to a VPC and must not be associated
+// with another direct connect gateway.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Direct Connect's
+// API operation CreateDirectConnectGatewayAssociation for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeServerException "ServerException"
+//   A server-side error occurred during the API call. The error message will
+//   contain additional details about the cause.
+//
+//   * ErrCodeClientException "ClientException"
+//   The API was called with invalid parameters. The error message will contain
+//   additional details about the cause.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateDirectConnectGatewayAssociation
+func (c *DirectConnect) CreateDirectConnectGatewayAssociation(input *CreateDirectConnectGatewayAssociationInput) (*CreateDirectConnectGatewayAssociationOutput, error) {
+	req, out := c.CreateDirectConnectGatewayAssociationRequest(input)
+	return out, req.Send()
+}
+
+// CreateDirectConnectGatewayAssociationWithContext is the same as CreateDirectConnectGatewayAssociation with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateDirectConnectGatewayAssociation for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DirectConnect) CreateDirectConnectGatewayAssociationWithContext(ctx aws.Context, input *CreateDirectConnectGatewayAssociationInput, opts ...request.Option) (*CreateDirectConnectGatewayAssociationOutput, error) {
+	req, out := c.CreateDirectConnectGatewayAssociationRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -1149,7 +1330,7 @@ const opCreateInterconnect = "CreateInterconnect"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateInterconnect
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateInterconnect
 func (c *DirectConnect) CreateInterconnectRequest(input *CreateInterconnectInput) (req *request.Request, output *Interconnect) {
 	op := &request.Operation{
 		Name:       opCreateInterconnect,
@@ -1209,7 +1390,7 @@ func (c *DirectConnect) CreateInterconnectRequest(input *CreateInterconnectInput
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateInterconnect
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateInterconnect
 func (c *DirectConnect) CreateInterconnect(input *CreateInterconnectInput) (*Interconnect, error) {
 	req, out := c.CreateInterconnectRequest(input)
 	return out, req.Send()
@@ -1256,7 +1437,7 @@ const opCreateLag = "CreateLag"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateLag
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateLag
 func (c *DirectConnect) CreateLagRequest(input *CreateLagInput) (req *request.Request, output *Lag) {
 	op := &request.Operation{
 		Name:       opCreateLag,
@@ -1317,7 +1498,7 @@ func (c *DirectConnect) CreateLagRequest(input *CreateLagInput) (req *request.Re
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateLag
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateLag
 func (c *DirectConnect) CreateLag(input *CreateLagInput) (*Lag, error) {
 	req, out := c.CreateLagRequest(input)
 	return out, req.Send()
@@ -1364,7 +1545,7 @@ const opCreatePrivateVirtualInterface = "CreatePrivateVirtualInterface"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreatePrivateVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreatePrivateVirtualInterface
 func (c *DirectConnect) CreatePrivateVirtualInterfaceRequest(input *CreatePrivateVirtualInterfaceInput) (req *request.Request, output *VirtualInterface) {
 	op := &request.Operation{
 		Name:       opCreatePrivateVirtualInterface,
@@ -1403,7 +1584,7 @@ func (c *DirectConnect) CreatePrivateVirtualInterfaceRequest(input *CreatePrivat
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreatePrivateVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreatePrivateVirtualInterface
 func (c *DirectConnect) CreatePrivateVirtualInterface(input *CreatePrivateVirtualInterfaceInput) (*VirtualInterface, error) {
 	req, out := c.CreatePrivateVirtualInterfaceRequest(input)
 	return out, req.Send()
@@ -1450,7 +1631,7 @@ const opCreatePublicVirtualInterface = "CreatePublicVirtualInterface"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreatePublicVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreatePublicVirtualInterface
 func (c *DirectConnect) CreatePublicVirtualInterfaceRequest(input *CreatePublicVirtualInterfaceInput) (req *request.Request, output *VirtualInterface) {
 	op := &request.Operation{
 		Name:       opCreatePublicVirtualInterface,
@@ -1494,7 +1675,7 @@ func (c *DirectConnect) CreatePublicVirtualInterfaceRequest(input *CreatePublicV
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreatePublicVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreatePublicVirtualInterface
 func (c *DirectConnect) CreatePublicVirtualInterface(input *CreatePublicVirtualInterfaceInput) (*VirtualInterface, error) {
 	req, out := c.CreatePublicVirtualInterfaceRequest(input)
 	return out, req.Send()
@@ -1541,7 +1722,7 @@ const opDeleteBGPPeer = "DeleteBGPPeer"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteBGPPeer
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteBGPPeer
 func (c *DirectConnect) DeleteBGPPeerRequest(input *DeleteBGPPeerInput) (req *request.Request, output *DeleteBGPPeerOutput) {
 	op := &request.Operation{
 		Name:       opDeleteBGPPeer,
@@ -1580,7 +1761,7 @@ func (c *DirectConnect) DeleteBGPPeerRequest(input *DeleteBGPPeerInput) (req *re
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteBGPPeer
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteBGPPeer
 func (c *DirectConnect) DeleteBGPPeer(input *DeleteBGPPeerInput) (*DeleteBGPPeerOutput, error) {
 	req, out := c.DeleteBGPPeerRequest(input)
 	return out, req.Send()
@@ -1627,7 +1808,7 @@ const opDeleteConnection = "DeleteConnection"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteConnection
 func (c *DirectConnect) DeleteConnectionRequest(input *DeleteConnectionInput) (req *request.Request, output *Connection) {
 	op := &request.Operation{
 		Name:       opDeleteConnection,
@@ -1669,7 +1850,7 @@ func (c *DirectConnect) DeleteConnectionRequest(input *DeleteConnectionInput) (r
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteConnection
 func (c *DirectConnect) DeleteConnection(input *DeleteConnectionInput) (*Connection, error) {
 	req, out := c.DeleteConnectionRequest(input)
 	return out, req.Send()
@@ -1686,6 +1867,177 @@ func (c *DirectConnect) DeleteConnection(input *DeleteConnectionInput) (*Connect
 // for more information on using Contexts.
 func (c *DirectConnect) DeleteConnectionWithContext(ctx aws.Context, input *DeleteConnectionInput, opts ...request.Option) (*Connection, error) {
 	req, out := c.DeleteConnectionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteDirectConnectGateway = "DeleteDirectConnectGateway"
+
+// DeleteDirectConnectGatewayRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteDirectConnectGateway operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteDirectConnectGateway for more information on using the DeleteDirectConnectGateway
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteDirectConnectGatewayRequest method.
+//    req, resp := client.DeleteDirectConnectGatewayRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteDirectConnectGateway
+func (c *DirectConnect) DeleteDirectConnectGatewayRequest(input *DeleteDirectConnectGatewayInput) (req *request.Request, output *DeleteDirectConnectGatewayOutput) {
+	op := &request.Operation{
+		Name:       opDeleteDirectConnectGateway,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteDirectConnectGatewayInput{}
+	}
+
+	output = &DeleteDirectConnectGatewayOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteDirectConnectGateway API operation for AWS Direct Connect.
+//
+// Deletes a direct connect gateway. You must first delete all virtual interfaces
+// that are attached to the direct connect gateway and disassociate all virtual
+// private gateways that are associated with the direct connect gateway.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Direct Connect's
+// API operation DeleteDirectConnectGateway for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeServerException "ServerException"
+//   A server-side error occurred during the API call. The error message will
+//   contain additional details about the cause.
+//
+//   * ErrCodeClientException "ClientException"
+//   The API was called with invalid parameters. The error message will contain
+//   additional details about the cause.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteDirectConnectGateway
+func (c *DirectConnect) DeleteDirectConnectGateway(input *DeleteDirectConnectGatewayInput) (*DeleteDirectConnectGatewayOutput, error) {
+	req, out := c.DeleteDirectConnectGatewayRequest(input)
+	return out, req.Send()
+}
+
+// DeleteDirectConnectGatewayWithContext is the same as DeleteDirectConnectGateway with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteDirectConnectGateway for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DirectConnect) DeleteDirectConnectGatewayWithContext(ctx aws.Context, input *DeleteDirectConnectGatewayInput, opts ...request.Option) (*DeleteDirectConnectGatewayOutput, error) {
+	req, out := c.DeleteDirectConnectGatewayRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteDirectConnectGatewayAssociation = "DeleteDirectConnectGatewayAssociation"
+
+// DeleteDirectConnectGatewayAssociationRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteDirectConnectGatewayAssociation operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteDirectConnectGatewayAssociation for more information on using the DeleteDirectConnectGatewayAssociation
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteDirectConnectGatewayAssociationRequest method.
+//    req, resp := client.DeleteDirectConnectGatewayAssociationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteDirectConnectGatewayAssociation
+func (c *DirectConnect) DeleteDirectConnectGatewayAssociationRequest(input *DeleteDirectConnectGatewayAssociationInput) (req *request.Request, output *DeleteDirectConnectGatewayAssociationOutput) {
+	op := &request.Operation{
+		Name:       opDeleteDirectConnectGatewayAssociation,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteDirectConnectGatewayAssociationInput{}
+	}
+
+	output = &DeleteDirectConnectGatewayAssociationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteDirectConnectGatewayAssociation API operation for AWS Direct Connect.
+//
+// Deletes the association between a direct connect gateway and a virtual private
+// gateway.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Direct Connect's
+// API operation DeleteDirectConnectGatewayAssociation for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeServerException "ServerException"
+//   A server-side error occurred during the API call. The error message will
+//   contain additional details about the cause.
+//
+//   * ErrCodeClientException "ClientException"
+//   The API was called with invalid parameters. The error message will contain
+//   additional details about the cause.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteDirectConnectGatewayAssociation
+func (c *DirectConnect) DeleteDirectConnectGatewayAssociation(input *DeleteDirectConnectGatewayAssociationInput) (*DeleteDirectConnectGatewayAssociationOutput, error) {
+	req, out := c.DeleteDirectConnectGatewayAssociationRequest(input)
+	return out, req.Send()
+}
+
+// DeleteDirectConnectGatewayAssociationWithContext is the same as DeleteDirectConnectGatewayAssociation with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteDirectConnectGatewayAssociation for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DirectConnect) DeleteDirectConnectGatewayAssociationWithContext(ctx aws.Context, input *DeleteDirectConnectGatewayAssociationInput, opts ...request.Option) (*DeleteDirectConnectGatewayAssociationOutput, error) {
+	req, out := c.DeleteDirectConnectGatewayAssociationRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -1716,7 +2068,7 @@ const opDeleteInterconnect = "DeleteInterconnect"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteInterconnect
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteInterconnect
 func (c *DirectConnect) DeleteInterconnectRequest(input *DeleteInterconnectInput) (req *request.Request, output *DeleteInterconnectOutput) {
 	op := &request.Operation{
 		Name:       opDeleteInterconnect,
@@ -1755,7 +2107,7 @@ func (c *DirectConnect) DeleteInterconnectRequest(input *DeleteInterconnectInput
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteInterconnect
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteInterconnect
 func (c *DirectConnect) DeleteInterconnect(input *DeleteInterconnectInput) (*DeleteInterconnectOutput, error) {
 	req, out := c.DeleteInterconnectRequest(input)
 	return out, req.Send()
@@ -1802,7 +2154,7 @@ const opDeleteLag = "DeleteLag"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteLag
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteLag
 func (c *DirectConnect) DeleteLagRequest(input *DeleteLagInput) (req *request.Request, output *Lag) {
 	op := &request.Operation{
 		Name:       opDeleteLag,
@@ -1840,7 +2192,7 @@ func (c *DirectConnect) DeleteLagRequest(input *DeleteLagInput) (req *request.Re
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteLag
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteLag
 func (c *DirectConnect) DeleteLag(input *DeleteLagInput) (*Lag, error) {
 	req, out := c.DeleteLagRequest(input)
 	return out, req.Send()
@@ -1887,7 +2239,7 @@ const opDeleteVirtualInterface = "DeleteVirtualInterface"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteVirtualInterface
 func (c *DirectConnect) DeleteVirtualInterfaceRequest(input *DeleteVirtualInterfaceInput) (req *request.Request, output *DeleteVirtualInterfaceOutput) {
 	op := &request.Operation{
 		Name:       opDeleteVirtualInterface,
@@ -1924,7 +2276,7 @@ func (c *DirectConnect) DeleteVirtualInterfaceRequest(input *DeleteVirtualInterf
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteVirtualInterface
 func (c *DirectConnect) DeleteVirtualInterface(input *DeleteVirtualInterfaceInput) (*DeleteVirtualInterfaceOutput, error) {
 	req, out := c.DeleteVirtualInterfaceRequest(input)
 	return out, req.Send()
@@ -1971,7 +2323,7 @@ const opDescribeConnectionLoa = "DescribeConnectionLoa"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionLoa
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionLoa
 func (c *DirectConnect) DescribeConnectionLoaRequest(input *DescribeConnectionLoaInput) (req *request.Request, output *DescribeConnectionLoaOutput) {
 	if c.Client.Config.Logger != nil {
 		c.Client.Config.Logger.Log("This operation, DescribeConnectionLoa, has been deprecated")
@@ -2019,7 +2371,7 @@ func (c *DirectConnect) DescribeConnectionLoaRequest(input *DescribeConnectionLo
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionLoa
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionLoa
 func (c *DirectConnect) DescribeConnectionLoa(input *DescribeConnectionLoaInput) (*DescribeConnectionLoaOutput, error) {
 	req, out := c.DescribeConnectionLoaRequest(input)
 	return out, req.Send()
@@ -2066,7 +2418,7 @@ const opDescribeConnections = "DescribeConnections"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnections
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnections
 func (c *DirectConnect) DescribeConnectionsRequest(input *DescribeConnectionsInput) (req *request.Request, output *Connections) {
 	op := &request.Operation{
 		Name:       opDescribeConnections,
@@ -2105,7 +2457,7 @@ func (c *DirectConnect) DescribeConnectionsRequest(input *DescribeConnectionsInp
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnections
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnections
 func (c *DirectConnect) DescribeConnections(input *DescribeConnectionsInput) (*Connections, error) {
 	req, out := c.DescribeConnectionsRequest(input)
 	return out, req.Send()
@@ -2152,7 +2504,7 @@ const opDescribeConnectionsOnInterconnect = "DescribeConnectionsOnInterconnect"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionsOnInterconnect
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionsOnInterconnect
 func (c *DirectConnect) DescribeConnectionsOnInterconnectRequest(input *DescribeConnectionsOnInterconnectInput) (req *request.Request, output *Connections) {
 	if c.Client.Config.Logger != nil {
 		c.Client.Config.Logger.Log("This operation, DescribeConnectionsOnInterconnect, has been deprecated")
@@ -2196,7 +2548,7 @@ func (c *DirectConnect) DescribeConnectionsOnInterconnectRequest(input *Describe
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionsOnInterconnect
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionsOnInterconnect
 func (c *DirectConnect) DescribeConnectionsOnInterconnect(input *DescribeConnectionsOnInterconnectInput) (*Connections, error) {
 	req, out := c.DescribeConnectionsOnInterconnectRequest(input)
 	return out, req.Send()
@@ -2213,6 +2565,274 @@ func (c *DirectConnect) DescribeConnectionsOnInterconnect(input *DescribeConnect
 // for more information on using Contexts.
 func (c *DirectConnect) DescribeConnectionsOnInterconnectWithContext(ctx aws.Context, input *DescribeConnectionsOnInterconnectInput, opts ...request.Option) (*Connections, error) {
 	req, out := c.DescribeConnectionsOnInterconnectRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDescribeDirectConnectGatewayAssociations = "DescribeDirectConnectGatewayAssociations"
+
+// DescribeDirectConnectGatewayAssociationsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeDirectConnectGatewayAssociations operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeDirectConnectGatewayAssociations for more information on using the DescribeDirectConnectGatewayAssociations
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeDirectConnectGatewayAssociationsRequest method.
+//    req, resp := client.DescribeDirectConnectGatewayAssociationsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewayAssociations
+func (c *DirectConnect) DescribeDirectConnectGatewayAssociationsRequest(input *DescribeDirectConnectGatewayAssociationsInput) (req *request.Request, output *DescribeDirectConnectGatewayAssociationsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeDirectConnectGatewayAssociations,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeDirectConnectGatewayAssociationsInput{}
+	}
+
+	output = &DescribeDirectConnectGatewayAssociationsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeDirectConnectGatewayAssociations API operation for AWS Direct Connect.
+//
+// Returns a list of all direct connect gateway and virtual private gateway
+// (VGW) associations. Either a direct connect gateway ID or a VGW ID must be
+// provided in the request. If a direct connect gateway ID is provided, the
+// response returns all VGWs associated with the direct connect gateway. If
+// a VGW ID is provided, the response returns all direct connect gateways associated
+// with the VGW. If both are provided, the response only returns the association
+// that matches both the direct connect gateway and the VGW.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Direct Connect's
+// API operation DescribeDirectConnectGatewayAssociations for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeServerException "ServerException"
+//   A server-side error occurred during the API call. The error message will
+//   contain additional details about the cause.
+//
+//   * ErrCodeClientException "ClientException"
+//   The API was called with invalid parameters. The error message will contain
+//   additional details about the cause.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewayAssociations
+func (c *DirectConnect) DescribeDirectConnectGatewayAssociations(input *DescribeDirectConnectGatewayAssociationsInput) (*DescribeDirectConnectGatewayAssociationsOutput, error) {
+	req, out := c.DescribeDirectConnectGatewayAssociationsRequest(input)
+	return out, req.Send()
+}
+
+// DescribeDirectConnectGatewayAssociationsWithContext is the same as DescribeDirectConnectGatewayAssociations with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeDirectConnectGatewayAssociations for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DirectConnect) DescribeDirectConnectGatewayAssociationsWithContext(ctx aws.Context, input *DescribeDirectConnectGatewayAssociationsInput, opts ...request.Option) (*DescribeDirectConnectGatewayAssociationsOutput, error) {
+	req, out := c.DescribeDirectConnectGatewayAssociationsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDescribeDirectConnectGatewayAttachments = "DescribeDirectConnectGatewayAttachments"
+
+// DescribeDirectConnectGatewayAttachmentsRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeDirectConnectGatewayAttachments operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeDirectConnectGatewayAttachments for more information on using the DescribeDirectConnectGatewayAttachments
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeDirectConnectGatewayAttachmentsRequest method.
+//    req, resp := client.DescribeDirectConnectGatewayAttachmentsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewayAttachments
+func (c *DirectConnect) DescribeDirectConnectGatewayAttachmentsRequest(input *DescribeDirectConnectGatewayAttachmentsInput) (req *request.Request, output *DescribeDirectConnectGatewayAttachmentsOutput) {
+	op := &request.Operation{
+		Name:       opDescribeDirectConnectGatewayAttachments,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeDirectConnectGatewayAttachmentsInput{}
+	}
+
+	output = &DescribeDirectConnectGatewayAttachmentsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeDirectConnectGatewayAttachments API operation for AWS Direct Connect.
+//
+// Returns a list of all direct connect gateway and virtual interface (VIF)
+// attachments. Either a direct connect gateway ID or a VIF ID must be provided
+// in the request. If a direct connect gateway ID is provided, the response
+// returns all VIFs attached to the direct connect gateway. If a VIF ID is provided,
+// the response returns all direct connect gateways attached to the VIF. If
+// both are provided, the response only returns the attachment that matches
+// both the direct connect gateway and the VIF.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Direct Connect's
+// API operation DescribeDirectConnectGatewayAttachments for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeServerException "ServerException"
+//   A server-side error occurred during the API call. The error message will
+//   contain additional details about the cause.
+//
+//   * ErrCodeClientException "ClientException"
+//   The API was called with invalid parameters. The error message will contain
+//   additional details about the cause.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewayAttachments
+func (c *DirectConnect) DescribeDirectConnectGatewayAttachments(input *DescribeDirectConnectGatewayAttachmentsInput) (*DescribeDirectConnectGatewayAttachmentsOutput, error) {
+	req, out := c.DescribeDirectConnectGatewayAttachmentsRequest(input)
+	return out, req.Send()
+}
+
+// DescribeDirectConnectGatewayAttachmentsWithContext is the same as DescribeDirectConnectGatewayAttachments with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeDirectConnectGatewayAttachments for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DirectConnect) DescribeDirectConnectGatewayAttachmentsWithContext(ctx aws.Context, input *DescribeDirectConnectGatewayAttachmentsInput, opts ...request.Option) (*DescribeDirectConnectGatewayAttachmentsOutput, error) {
+	req, out := c.DescribeDirectConnectGatewayAttachmentsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDescribeDirectConnectGateways = "DescribeDirectConnectGateways"
+
+// DescribeDirectConnectGatewaysRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeDirectConnectGateways operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeDirectConnectGateways for more information on using the DescribeDirectConnectGateways
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeDirectConnectGatewaysRequest method.
+//    req, resp := client.DescribeDirectConnectGatewaysRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGateways
+func (c *DirectConnect) DescribeDirectConnectGatewaysRequest(input *DescribeDirectConnectGatewaysInput) (req *request.Request, output *DescribeDirectConnectGatewaysOutput) {
+	op := &request.Operation{
+		Name:       opDescribeDirectConnectGateways,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeDirectConnectGatewaysInput{}
+	}
+
+	output = &DescribeDirectConnectGatewaysOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeDirectConnectGateways API operation for AWS Direct Connect.
+//
+// Returns a list of direct connect gateways in your account. Deleted direct
+// connect gateways are not returned. You can provide a direct connect gateway
+// ID in the request to return information about the specific direct connect
+// gateway only. Otherwise, if a direct connect gateway ID is not provided,
+// information about all of your direct connect gateways is returned.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Direct Connect's
+// API operation DescribeDirectConnectGateways for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeServerException "ServerException"
+//   A server-side error occurred during the API call. The error message will
+//   contain additional details about the cause.
+//
+//   * ErrCodeClientException "ClientException"
+//   The API was called with invalid parameters. The error message will contain
+//   additional details about the cause.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGateways
+func (c *DirectConnect) DescribeDirectConnectGateways(input *DescribeDirectConnectGatewaysInput) (*DescribeDirectConnectGatewaysOutput, error) {
+	req, out := c.DescribeDirectConnectGatewaysRequest(input)
+	return out, req.Send()
+}
+
+// DescribeDirectConnectGatewaysWithContext is the same as DescribeDirectConnectGateways with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeDirectConnectGateways for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *DirectConnect) DescribeDirectConnectGatewaysWithContext(ctx aws.Context, input *DescribeDirectConnectGatewaysInput, opts ...request.Option) (*DescribeDirectConnectGatewaysOutput, error) {
+	req, out := c.DescribeDirectConnectGatewaysRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -2243,7 +2863,7 @@ const opDescribeHostedConnections = "DescribeHostedConnections"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeHostedConnections
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeHostedConnections
 func (c *DirectConnect) DescribeHostedConnectionsRequest(input *DescribeHostedConnectionsInput) (req *request.Request, output *Connections) {
 	op := &request.Operation{
 		Name:       opDescribeHostedConnections,
@@ -2283,7 +2903,7 @@ func (c *DirectConnect) DescribeHostedConnectionsRequest(input *DescribeHostedCo
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeHostedConnections
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeHostedConnections
 func (c *DirectConnect) DescribeHostedConnections(input *DescribeHostedConnectionsInput) (*Connections, error) {
 	req, out := c.DescribeHostedConnectionsRequest(input)
 	return out, req.Send()
@@ -2330,7 +2950,7 @@ const opDescribeInterconnectLoa = "DescribeInterconnectLoa"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnectLoa
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnectLoa
 func (c *DirectConnect) DescribeInterconnectLoaRequest(input *DescribeInterconnectLoaInput) (req *request.Request, output *DescribeInterconnectLoaOutput) {
 	if c.Client.Config.Logger != nil {
 		c.Client.Config.Logger.Log("This operation, DescribeInterconnectLoa, has been deprecated")
@@ -2378,7 +2998,7 @@ func (c *DirectConnect) DescribeInterconnectLoaRequest(input *DescribeInterconne
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnectLoa
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnectLoa
 func (c *DirectConnect) DescribeInterconnectLoa(input *DescribeInterconnectLoaInput) (*DescribeInterconnectLoaOutput, error) {
 	req, out := c.DescribeInterconnectLoaRequest(input)
 	return out, req.Send()
@@ -2425,7 +3045,7 @@ const opDescribeInterconnects = "DescribeInterconnects"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnects
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnects
 func (c *DirectConnect) DescribeInterconnectsRequest(input *DescribeInterconnectsInput) (req *request.Request, output *DescribeInterconnectsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeInterconnects,
@@ -2464,7 +3084,7 @@ func (c *DirectConnect) DescribeInterconnectsRequest(input *DescribeInterconnect
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnects
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnects
 func (c *DirectConnect) DescribeInterconnects(input *DescribeInterconnectsInput) (*DescribeInterconnectsOutput, error) {
 	req, out := c.DescribeInterconnectsRequest(input)
 	return out, req.Send()
@@ -2511,7 +3131,7 @@ const opDescribeLags = "DescribeLags"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLags
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLags
 func (c *DirectConnect) DescribeLagsRequest(input *DescribeLagsInput) (req *request.Request, output *DescribeLagsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeLags,
@@ -2550,7 +3170,7 @@ func (c *DirectConnect) DescribeLagsRequest(input *DescribeLagsInput) (req *requ
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLags
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLags
 func (c *DirectConnect) DescribeLags(input *DescribeLagsInput) (*DescribeLagsOutput, error) {
 	req, out := c.DescribeLagsRequest(input)
 	return out, req.Send()
@@ -2597,7 +3217,7 @@ const opDescribeLoa = "DescribeLoa"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLoa
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLoa
 func (c *DirectConnect) DescribeLoaRequest(input *DescribeLoaInput) (req *request.Request, output *Loa) {
 	op := &request.Operation{
 		Name:       opDescribeLoa,
@@ -2641,7 +3261,7 @@ func (c *DirectConnect) DescribeLoaRequest(input *DescribeLoaInput) (req *reques
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLoa
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLoa
 func (c *DirectConnect) DescribeLoa(input *DescribeLoaInput) (*Loa, error) {
 	req, out := c.DescribeLoaRequest(input)
 	return out, req.Send()
@@ -2688,7 +3308,7 @@ const opDescribeLocations = "DescribeLocations"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLocations
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLocations
 func (c *DirectConnect) DescribeLocationsRequest(input *DescribeLocationsInput) (req *request.Request, output *DescribeLocationsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeLocations,
@@ -2727,7 +3347,7 @@ func (c *DirectConnect) DescribeLocationsRequest(input *DescribeLocationsInput) 
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLocations
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLocations
 func (c *DirectConnect) DescribeLocations(input *DescribeLocationsInput) (*DescribeLocationsOutput, error) {
 	req, out := c.DescribeLocationsRequest(input)
 	return out, req.Send()
@@ -2774,7 +3394,7 @@ const opDescribeTags = "DescribeTags"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeTags
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeTags
 func (c *DirectConnect) DescribeTagsRequest(input *DescribeTagsInput) (req *request.Request, output *DescribeTagsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeTags,
@@ -2811,7 +3431,7 @@ func (c *DirectConnect) DescribeTagsRequest(input *DescribeTagsInput) (req *requ
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeTags
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeTags
 func (c *DirectConnect) DescribeTags(input *DescribeTagsInput) (*DescribeTagsOutput, error) {
 	req, out := c.DescribeTagsRequest(input)
 	return out, req.Send()
@@ -2858,7 +3478,7 @@ const opDescribeVirtualGateways = "DescribeVirtualGateways"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeVirtualGateways
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeVirtualGateways
 func (c *DirectConnect) DescribeVirtualGatewaysRequest(input *DescribeVirtualGatewaysInput) (req *request.Request, output *DescribeVirtualGatewaysOutput) {
 	op := &request.Operation{
 		Name:       opDescribeVirtualGateways,
@@ -2901,7 +3521,7 @@ func (c *DirectConnect) DescribeVirtualGatewaysRequest(input *DescribeVirtualGat
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeVirtualGateways
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeVirtualGateways
 func (c *DirectConnect) DescribeVirtualGateways(input *DescribeVirtualGatewaysInput) (*DescribeVirtualGatewaysOutput, error) {
 	req, out := c.DescribeVirtualGatewaysRequest(input)
 	return out, req.Send()
@@ -2948,7 +3568,7 @@ const opDescribeVirtualInterfaces = "DescribeVirtualInterfaces"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeVirtualInterfaces
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeVirtualInterfaces
 func (c *DirectConnect) DescribeVirtualInterfacesRequest(input *DescribeVirtualInterfacesInput) (req *request.Request, output *DescribeVirtualInterfacesOutput) {
 	op := &request.Operation{
 		Name:       opDescribeVirtualInterfaces,
@@ -2992,7 +3612,7 @@ func (c *DirectConnect) DescribeVirtualInterfacesRequest(input *DescribeVirtualI
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeVirtualInterfaces
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeVirtualInterfaces
 func (c *DirectConnect) DescribeVirtualInterfaces(input *DescribeVirtualInterfacesInput) (*DescribeVirtualInterfacesOutput, error) {
 	req, out := c.DescribeVirtualInterfacesRequest(input)
 	return out, req.Send()
@@ -3039,7 +3659,7 @@ const opDisassociateConnectionFromLag = "DisassociateConnectionFromLag"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DisassociateConnectionFromLag
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DisassociateConnectionFromLag
 func (c *DirectConnect) DisassociateConnectionFromLagRequest(input *DisassociateConnectionFromLagInput) (req *request.Request, output *Connection) {
 	op := &request.Operation{
 		Name:       opDisassociateConnectionFromLag,
@@ -3086,7 +3706,7 @@ func (c *DirectConnect) DisassociateConnectionFromLagRequest(input *Disassociate
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DisassociateConnectionFromLag
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DisassociateConnectionFromLag
 func (c *DirectConnect) DisassociateConnectionFromLag(input *DisassociateConnectionFromLagInput) (*Connection, error) {
 	req, out := c.DisassociateConnectionFromLagRequest(input)
 	return out, req.Send()
@@ -3133,7 +3753,7 @@ const opTagResource = "TagResource"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/TagResource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/TagResource
 func (c *DirectConnect) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
 	op := &request.Operation{
 		Name:       opTagResource,
@@ -3182,7 +3802,7 @@ func (c *DirectConnect) TagResourceRequest(input *TagResourceInput) (req *reques
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/TagResource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/TagResource
 func (c *DirectConnect) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
 	req, out := c.TagResourceRequest(input)
 	return out, req.Send()
@@ -3229,7 +3849,7 @@ const opUntagResource = "UntagResource"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UntagResource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UntagResource
 func (c *DirectConnect) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
 	op := &request.Operation{
 		Name:       opUntagResource,
@@ -3266,7 +3886,7 @@ func (c *DirectConnect) UntagResourceRequest(input *UntagResourceInput) (req *re
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UntagResource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UntagResource
 func (c *DirectConnect) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
 	req, out := c.UntagResourceRequest(input)
 	return out, req.Send()
@@ -3313,7 +3933,7 @@ const opUpdateLag = "UpdateLag"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UpdateLag
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UpdateLag
 func (c *DirectConnect) UpdateLagRequest(input *UpdateLagInput) (req *request.Request, output *Lag) {
 	op := &request.Operation{
 		Name:       opUpdateLag,
@@ -3364,7 +3984,7 @@ func (c *DirectConnect) UpdateLagRequest(input *UpdateLagInput) (req *request.Re
 //   The API was called with invalid parameters. The error message will contain
 //   additional details about the cause.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UpdateLag
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UpdateLag
 func (c *DirectConnect) UpdateLag(input *UpdateLagInput) (*Lag, error) {
 	req, out := c.UpdateLagRequest(input)
 	return out, req.Send()
@@ -3387,7 +4007,7 @@ func (c *DirectConnect) UpdateLagWithContext(ctx aws.Context, input *UpdateLagIn
 }
 
 // Container for the parameters to the AllocateConnectionOnInterconnect operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocateConnectionOnInterconnectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocateConnectionOnInterconnectRequest
 type AllocateConnectionOnInterconnectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3505,7 +4125,7 @@ func (s *AllocateConnectionOnInterconnectInput) SetVlan(v int64) *AllocateConnec
 }
 
 // Container for the parameters to theHostedConnection operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocateHostedConnectionRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocateHostedConnectionRequest
 type AllocateHostedConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3623,7 +4243,7 @@ func (s *AllocateHostedConnectionInput) SetVlan(v int64) *AllocateHostedConnecti
 }
 
 // Container for the parameters to the AllocatePrivateVirtualInterface operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocatePrivateVirtualInterfaceRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocatePrivateVirtualInterfaceRequest
 type AllocatePrivateVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3702,7 +4322,7 @@ func (s *AllocatePrivateVirtualInterfaceInput) SetOwnerAccount(v string) *Alloca
 }
 
 // Container for the parameters to the AllocatePublicVirtualInterface operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocatePublicVirtualInterfaceRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocatePublicVirtualInterfaceRequest
 type AllocatePublicVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3781,7 +4401,7 @@ func (s *AllocatePublicVirtualInterfaceInput) SetOwnerAccount(v string) *Allocat
 }
 
 // Container for the parameters to the AssociateConnectionWithLag operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateConnectionWithLagRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateConnectionWithLagRequest
 type AssociateConnectionWithLagInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3843,7 +4463,7 @@ func (s *AssociateConnectionWithLagInput) SetLagId(v string) *AssociateConnectio
 }
 
 // Container for the parameters to the AssociateHostedConnection operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateHostedConnectionRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateHostedConnectionRequest
 type AssociateHostedConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3905,7 +4525,7 @@ func (s *AssociateHostedConnectionInput) SetParentConnectionId(v string) *Associ
 }
 
 // Container for the parameters to the AssociateVirtualInterface operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateVirtualInterfaceRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateVirtualInterfaceRequest
 type AssociateVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3967,7 +4587,7 @@ func (s *AssociateVirtualInterfaceInput) SetVirtualInterfaceId(v string) *Associ
 }
 
 // A structure containing information about a BGP peer.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/BGPPeer
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/BGPPeer
 type BGPPeer struct {
 	_ struct{} `type:"structure"`
 
@@ -4075,7 +4695,7 @@ func (s *BGPPeer) SetCustomerAddress(v string) *BGPPeer {
 }
 
 // Container for the parameters to the ConfirmConnection operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmConnectionRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmConnectionRequest
 type ConfirmConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4120,7 +4740,7 @@ func (s *ConfirmConnectionInput) SetConnectionId(v string) *ConfirmConnectionInp
 }
 
 // The response received when ConfirmConnection is called.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmConnectionResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmConnectionResponse
 type ConfirmConnectionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4166,9 +4786,17 @@ func (s *ConfirmConnectionOutput) SetConnectionState(v string) *ConfirmConnectio
 }
 
 // Container for the parameters to the ConfirmPrivateVirtualInterface operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPrivateVirtualInterfaceRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPrivateVirtualInterfaceRequest
 type ConfirmPrivateVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
+
+	// ID of the direct connect gateway that will be attached to the virtual interface.
+	//
+	// A direct connect gateway can be managed via the AWS Direct Connect console
+	// or the CreateDirectConnectGateway action.
+	//
+	// Default: None
+	DirectConnectGatewayId *string `locationName:"directConnectGatewayId" type:"string"`
 
 	// ID of the virtual private gateway that will be attached to the virtual interface.
 	//
@@ -4177,9 +4805,7 @@ type ConfirmPrivateVirtualInterfaceInput struct {
 	// action.
 	//
 	// Default: None
-	//
-	// VirtualGatewayId is a required field
-	VirtualGatewayId *string `locationName:"virtualGatewayId" type:"string" required:"true"`
+	VirtualGatewayId *string `locationName:"virtualGatewayId" type:"string"`
 
 	// The ID of the virtual interface.
 	//
@@ -4204,9 +4830,6 @@ func (s ConfirmPrivateVirtualInterfaceInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *ConfirmPrivateVirtualInterfaceInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "ConfirmPrivateVirtualInterfaceInput"}
-	if s.VirtualGatewayId == nil {
-		invalidParams.Add(request.NewErrParamRequired("VirtualGatewayId"))
-	}
 	if s.VirtualInterfaceId == nil {
 		invalidParams.Add(request.NewErrParamRequired("VirtualInterfaceId"))
 	}
@@ -4215,6 +4838,12 @@ func (s *ConfirmPrivateVirtualInterfaceInput) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetDirectConnectGatewayId sets the DirectConnectGatewayId field's value.
+func (s *ConfirmPrivateVirtualInterfaceInput) SetDirectConnectGatewayId(v string) *ConfirmPrivateVirtualInterfaceInput {
+	s.DirectConnectGatewayId = &v
+	return s
 }
 
 // SetVirtualGatewayId sets the VirtualGatewayId field's value.
@@ -4230,7 +4859,7 @@ func (s *ConfirmPrivateVirtualInterfaceInput) SetVirtualInterfaceId(v string) *C
 }
 
 // The response received when ConfirmPrivateVirtualInterface is called.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPrivateVirtualInterfaceResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPrivateVirtualInterfaceResponse
 type ConfirmPrivateVirtualInterfaceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4282,7 +4911,7 @@ func (s *ConfirmPrivateVirtualInterfaceOutput) SetVirtualInterfaceState(v string
 }
 
 // Container for the parameters to the ConfirmPublicVirtualInterface operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPublicVirtualInterfaceRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPublicVirtualInterfaceRequest
 type ConfirmPublicVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4326,7 +4955,7 @@ func (s *ConfirmPublicVirtualInterfaceInput) SetVirtualInterfaceId(v string) *Co
 }
 
 // The response received when ConfirmPublicVirtualInterface is called.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPublicVirtualInterfaceResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPublicVirtualInterfaceResponse
 type ConfirmPublicVirtualInterfaceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4379,7 +5008,7 @@ func (s *ConfirmPublicVirtualInterfaceOutput) SetVirtualInterfaceState(v string)
 
 // A connection represents the physical network connection between the AWS Direct
 // Connect location and the customer.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Connection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Connection
 type Connection struct {
 	_ struct{} `type:"structure"`
 
@@ -4549,7 +5178,7 @@ func (s *Connection) SetVlan(v int64) *Connection {
 }
 
 // A structure containing a list of connections.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Connections
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Connections
 type Connections struct {
 	_ struct{} `type:"structure"`
 
@@ -4574,7 +5203,7 @@ func (s *Connections) SetConnections(v []*Connection) *Connections {
 }
 
 // Container for the parameters to the CreateBGPPeer operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateBGPPeerRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateBGPPeerRequest
 type CreateBGPPeerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4614,7 +5243,7 @@ func (s *CreateBGPPeerInput) SetVirtualInterfaceId(v string) *CreateBGPPeerInput
 }
 
 // The response received when CreateBGPPeer is called.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateBGPPeerResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateBGPPeerResponse
 type CreateBGPPeerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4640,7 +5269,7 @@ func (s *CreateBGPPeerOutput) SetVirtualInterface(v *VirtualInterface) *CreateBG
 }
 
 // Container for the parameters to the CreateConnection operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateConnectionRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateConnectionRequest
 type CreateConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4730,8 +5359,181 @@ func (s *CreateConnectionInput) SetLocation(v string) *CreateConnectionInput {
 	return s
 }
 
+// Container for the parameters to the CreateDirectConnectGatewayAssociation
+// operation.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateDirectConnectGatewayAssociationRequest
+type CreateDirectConnectGatewayAssociationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the direct connect gateway.
+	//
+	// Example: "abcd1234-dcba-5678-be23-cdef9876ab45"
+	//
+	// Default: None
+	//
+	// DirectConnectGatewayId is a required field
+	DirectConnectGatewayId *string `locationName:"directConnectGatewayId" type:"string" required:"true"`
+
+	// The ID of the virtual private gateway.
+	//
+	// Example: "vgw-abc123ef"
+	//
+	// Default: None
+	//
+	// VirtualGatewayId is a required field
+	VirtualGatewayId *string `locationName:"virtualGatewayId" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateDirectConnectGatewayAssociationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateDirectConnectGatewayAssociationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateDirectConnectGatewayAssociationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateDirectConnectGatewayAssociationInput"}
+	if s.DirectConnectGatewayId == nil {
+		invalidParams.Add(request.NewErrParamRequired("DirectConnectGatewayId"))
+	}
+	if s.VirtualGatewayId == nil {
+		invalidParams.Add(request.NewErrParamRequired("VirtualGatewayId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDirectConnectGatewayId sets the DirectConnectGatewayId field's value.
+func (s *CreateDirectConnectGatewayAssociationInput) SetDirectConnectGatewayId(v string) *CreateDirectConnectGatewayAssociationInput {
+	s.DirectConnectGatewayId = &v
+	return s
+}
+
+// SetVirtualGatewayId sets the VirtualGatewayId field's value.
+func (s *CreateDirectConnectGatewayAssociationInput) SetVirtualGatewayId(v string) *CreateDirectConnectGatewayAssociationInput {
+	s.VirtualGatewayId = &v
+	return s
+}
+
+// Container for the response from the CreateDirectConnectGatewayAssociation
+// API call
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateDirectConnectGatewayAssociationResult
+type CreateDirectConnectGatewayAssociationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The direct connect gateway association to be created.
+	DirectConnectGatewayAssociation *GatewayAssociation `locationName:"directConnectGatewayAssociation" type:"structure"`
+}
+
+// String returns the string representation
+func (s CreateDirectConnectGatewayAssociationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateDirectConnectGatewayAssociationOutput) GoString() string {
+	return s.String()
+}
+
+// SetDirectConnectGatewayAssociation sets the DirectConnectGatewayAssociation field's value.
+func (s *CreateDirectConnectGatewayAssociationOutput) SetDirectConnectGatewayAssociation(v *GatewayAssociation) *CreateDirectConnectGatewayAssociationOutput {
+	s.DirectConnectGatewayAssociation = v
+	return s
+}
+
+// Container for the parameters to the CreateDirectConnectGateway operation.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateDirectConnectGatewayRequest
+type CreateDirectConnectGatewayInput struct {
+	_ struct{} `type:"structure"`
+
+	// The autonomous system number (ASN) for Border Gateway Protocol (BGP) to be
+	// configured on the Amazon side of the connection. The ASN must be in the private
+	// range of 64,512 to 65,534 or 4,200,000,000 to 4,294,967,294
+	//
+	// Example: 65200
+	//
+	// Default: 64512
+	AmazonSideAsn *int64 `locationName:"amazonSideAsn" type:"long"`
+
+	// The name of the direct connect gateway.
+	//
+	// Example: "My direct connect gateway"
+	//
+	// Default: None
+	//
+	// DirectConnectGatewayName is a required field
+	DirectConnectGatewayName *string `locationName:"directConnectGatewayName" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateDirectConnectGatewayInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateDirectConnectGatewayInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateDirectConnectGatewayInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateDirectConnectGatewayInput"}
+	if s.DirectConnectGatewayName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DirectConnectGatewayName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAmazonSideAsn sets the AmazonSideAsn field's value.
+func (s *CreateDirectConnectGatewayInput) SetAmazonSideAsn(v int64) *CreateDirectConnectGatewayInput {
+	s.AmazonSideAsn = &v
+	return s
+}
+
+// SetDirectConnectGatewayName sets the DirectConnectGatewayName field's value.
+func (s *CreateDirectConnectGatewayInput) SetDirectConnectGatewayName(v string) *CreateDirectConnectGatewayInput {
+	s.DirectConnectGatewayName = &v
+	return s
+}
+
+// Container for the response from the CreateDirectConnectGateway API call
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateDirectConnectGatewayResult
+type CreateDirectConnectGatewayOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The direct connect gateway to be created.
+	DirectConnectGateway *Gateway `locationName:"directConnectGateway" type:"structure"`
+}
+
+// String returns the string representation
+func (s CreateDirectConnectGatewayOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateDirectConnectGatewayOutput) GoString() string {
+	return s.String()
+}
+
+// SetDirectConnectGateway sets the DirectConnectGateway field's value.
+func (s *CreateDirectConnectGatewayOutput) SetDirectConnectGateway(v *Gateway) *CreateDirectConnectGatewayOutput {
+	s.DirectConnectGateway = v
+	return s
+}
+
 // Container for the parameters to the CreateInterconnect operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateInterconnectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateInterconnectRequest
 type CreateInterconnectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4824,7 +5626,7 @@ func (s *CreateInterconnectInput) SetLocation(v string) *CreateInterconnectInput
 }
 
 // Container for the parameters to the CreateLag operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateLagRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateLagRequest
 type CreateLagInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4932,7 +5734,7 @@ func (s *CreateLagInput) SetNumberOfConnections(v int64) *CreateLagInput {
 }
 
 // Container for the parameters to the CreatePrivateVirtualInterface operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreatePrivateVirtualInterfaceRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreatePrivateVirtualInterfaceRequest
 type CreatePrivateVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4998,7 +5800,7 @@ func (s *CreatePrivateVirtualInterfaceInput) SetNewPrivateVirtualInterface(v *Ne
 }
 
 // Container for the parameters to the CreatePublicVirtualInterface operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreatePublicVirtualInterfaceRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreatePublicVirtualInterfaceRequest
 type CreatePublicVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5064,7 +5866,7 @@ func (s *CreatePublicVirtualInterfaceInput) SetNewPublicVirtualInterface(v *NewP
 }
 
 // Container for the parameters to the DeleteBGPPeer operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteBGPPeerRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteBGPPeerRequest
 type DeleteBGPPeerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5115,7 +5917,7 @@ func (s *DeleteBGPPeerInput) SetVirtualInterfaceId(v string) *DeleteBGPPeerInput
 }
 
 // The response received when DeleteBGPPeer is called.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteBGPPeerResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteBGPPeerResponse
 type DeleteBGPPeerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5141,7 +5943,7 @@ func (s *DeleteBGPPeerOutput) SetVirtualInterface(v *VirtualInterface) *DeleteBG
 }
 
 // Container for the parameters to the DeleteConnection operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteConnectionRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteConnectionRequest
 type DeleteConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5185,8 +5987,166 @@ func (s *DeleteConnectionInput) SetConnectionId(v string) *DeleteConnectionInput
 	return s
 }
 
+// Container for the parameters to the DeleteDirectConnectGatewayAssociation
+// operation.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteDirectConnectGatewayAssociationRequest
+type DeleteDirectConnectGatewayAssociationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the direct connect gateway.
+	//
+	// Example: "abcd1234-dcba-5678-be23-cdef9876ab45"
+	//
+	// Default: None
+	//
+	// DirectConnectGatewayId is a required field
+	DirectConnectGatewayId *string `locationName:"directConnectGatewayId" type:"string" required:"true"`
+
+	// The ID of the virtual private gateway.
+	//
+	// Example: "vgw-abc123ef"
+	//
+	// Default: None
+	//
+	// VirtualGatewayId is a required field
+	VirtualGatewayId *string `locationName:"virtualGatewayId" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteDirectConnectGatewayAssociationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteDirectConnectGatewayAssociationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteDirectConnectGatewayAssociationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteDirectConnectGatewayAssociationInput"}
+	if s.DirectConnectGatewayId == nil {
+		invalidParams.Add(request.NewErrParamRequired("DirectConnectGatewayId"))
+	}
+	if s.VirtualGatewayId == nil {
+		invalidParams.Add(request.NewErrParamRequired("VirtualGatewayId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDirectConnectGatewayId sets the DirectConnectGatewayId field's value.
+func (s *DeleteDirectConnectGatewayAssociationInput) SetDirectConnectGatewayId(v string) *DeleteDirectConnectGatewayAssociationInput {
+	s.DirectConnectGatewayId = &v
+	return s
+}
+
+// SetVirtualGatewayId sets the VirtualGatewayId field's value.
+func (s *DeleteDirectConnectGatewayAssociationInput) SetVirtualGatewayId(v string) *DeleteDirectConnectGatewayAssociationInput {
+	s.VirtualGatewayId = &v
+	return s
+}
+
+// Container for the response from the DeleteDirectConnectGatewayAssociation
+// API call
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteDirectConnectGatewayAssociationResult
+type DeleteDirectConnectGatewayAssociationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The direct connect gateway association to be deleted.
+	DirectConnectGatewayAssociation *GatewayAssociation `locationName:"directConnectGatewayAssociation" type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteDirectConnectGatewayAssociationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteDirectConnectGatewayAssociationOutput) GoString() string {
+	return s.String()
+}
+
+// SetDirectConnectGatewayAssociation sets the DirectConnectGatewayAssociation field's value.
+func (s *DeleteDirectConnectGatewayAssociationOutput) SetDirectConnectGatewayAssociation(v *GatewayAssociation) *DeleteDirectConnectGatewayAssociationOutput {
+	s.DirectConnectGatewayAssociation = v
+	return s
+}
+
+// Container for the parameters to the DeleteDirectConnectGateway operation.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteDirectConnectGatewayRequest
+type DeleteDirectConnectGatewayInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the direct connect gateway.
+	//
+	// Example: "abcd1234-dcba-5678-be23-cdef9876ab45"
+	//
+	// Default: None
+	//
+	// DirectConnectGatewayId is a required field
+	DirectConnectGatewayId *string `locationName:"directConnectGatewayId" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteDirectConnectGatewayInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteDirectConnectGatewayInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteDirectConnectGatewayInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteDirectConnectGatewayInput"}
+	if s.DirectConnectGatewayId == nil {
+		invalidParams.Add(request.NewErrParamRequired("DirectConnectGatewayId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDirectConnectGatewayId sets the DirectConnectGatewayId field's value.
+func (s *DeleteDirectConnectGatewayInput) SetDirectConnectGatewayId(v string) *DeleteDirectConnectGatewayInput {
+	s.DirectConnectGatewayId = &v
+	return s
+}
+
+// Container for the response from the DeleteDirectConnectGateway API call
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteDirectConnectGatewayResult
+type DeleteDirectConnectGatewayOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The direct connect gateway to be deleted.
+	DirectConnectGateway *Gateway `locationName:"directConnectGateway" type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteDirectConnectGatewayOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteDirectConnectGatewayOutput) GoString() string {
+	return s.String()
+}
+
+// SetDirectConnectGateway sets the DirectConnectGateway field's value.
+func (s *DeleteDirectConnectGatewayOutput) SetDirectConnectGateway(v *Gateway) *DeleteDirectConnectGatewayOutput {
+	s.DirectConnectGateway = v
+	return s
+}
+
 // Container for the parameters to the DeleteInterconnect operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteInterconnectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteInterconnectRequest
 type DeleteInterconnectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5228,7 +6188,7 @@ func (s *DeleteInterconnectInput) SetInterconnectId(v string) *DeleteInterconnec
 }
 
 // The response received when DeleteInterconnect is called.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteInterconnectResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteInterconnectResponse
 type DeleteInterconnectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5268,7 +6228,7 @@ func (s *DeleteInterconnectOutput) SetInterconnectState(v string) *DeleteInterco
 }
 
 // Container for the parameters to the DeleteLag operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteLagRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteLagRequest
 type DeleteLagInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5312,7 +6272,7 @@ func (s *DeleteLagInput) SetLagId(v string) *DeleteLagInput {
 }
 
 // Container for the parameters to the DeleteVirtualInterface operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteVirtualInterfaceRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteVirtualInterfaceRequest
 type DeleteVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5356,7 +6316,7 @@ func (s *DeleteVirtualInterfaceInput) SetVirtualInterfaceId(v string) *DeleteVir
 }
 
 // The response received when DeleteVirtualInterface is called.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteVirtualInterfaceResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteVirtualInterfaceResponse
 type DeleteVirtualInterfaceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5408,7 +6368,7 @@ func (s *DeleteVirtualInterfaceOutput) SetVirtualInterfaceState(v string) *Delet
 }
 
 // Container for the parameters to the DescribeConnectionLoa operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionLoaRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionLoaRequest
 type DescribeConnectionLoaInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5478,7 +6438,7 @@ func (s *DescribeConnectionLoaInput) SetProviderName(v string) *DescribeConnecti
 }
 
 // The response received when DescribeConnectionLoa is called.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionLoaResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionLoaResponse
 type DescribeConnectionLoaOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5504,7 +6464,7 @@ func (s *DescribeConnectionLoaOutput) SetLoa(v *Loa) *DescribeConnectionLoaOutpu
 }
 
 // Container for the parameters to the DescribeConnections operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionsRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionsRequest
 type DescribeConnectionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5534,7 +6494,7 @@ func (s *DescribeConnectionsInput) SetConnectionId(v string) *DescribeConnection
 }
 
 // Container for the parameters to the DescribeConnectionsOnInterconnect operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionsOnInterconnectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionsOnInterconnectRequest
 type DescribeConnectionsOnInterconnectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5577,8 +6537,302 @@ func (s *DescribeConnectionsOnInterconnectInput) SetInterconnectId(v string) *De
 	return s
 }
 
+// Container for the parameters to the DescribeDirectConnectGatewayAssociations
+// operation.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewayAssociationsRequest
+type DescribeDirectConnectGatewayAssociationsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the direct connect gateway.
+	//
+	// Example: "abcd1234-dcba-5678-be23-cdef9876ab45"
+	//
+	// Default: None
+	DirectConnectGatewayId *string `locationName:"directConnectGatewayId" type:"string"`
+
+	// The maximum number of direct connect gateway associations to return per page.
+	//
+	// Example: 15
+	//
+	// Default: None
+	MaxResults *int64 `locationName:"maxResults" type:"integer"`
+
+	// The token provided in the previous describe result to retrieve the next page
+	// of the result.
+	//
+	// Default: None
+	NextToken *string `locationName:"nextToken" type:"string"`
+
+	// The ID of the virtual private gateway.
+	//
+	// Example: "vgw-abc123ef"
+	//
+	// Default: None
+	VirtualGatewayId *string `locationName:"virtualGatewayId" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeDirectConnectGatewayAssociationsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeDirectConnectGatewayAssociationsInput) GoString() string {
+	return s.String()
+}
+
+// SetDirectConnectGatewayId sets the DirectConnectGatewayId field's value.
+func (s *DescribeDirectConnectGatewayAssociationsInput) SetDirectConnectGatewayId(v string) *DescribeDirectConnectGatewayAssociationsInput {
+	s.DirectConnectGatewayId = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *DescribeDirectConnectGatewayAssociationsInput) SetMaxResults(v int64) *DescribeDirectConnectGatewayAssociationsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeDirectConnectGatewayAssociationsInput) SetNextToken(v string) *DescribeDirectConnectGatewayAssociationsInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetVirtualGatewayId sets the VirtualGatewayId field's value.
+func (s *DescribeDirectConnectGatewayAssociationsInput) SetVirtualGatewayId(v string) *DescribeDirectConnectGatewayAssociationsInput {
+	s.VirtualGatewayId = &v
+	return s
+}
+
+// Container for the response from the DescribeDirectConnectGatewayAssociations
+// API call
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewayAssociationsResult
+type DescribeDirectConnectGatewayAssociationsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the direct connect gateway associations.
+	DirectConnectGatewayAssociations []*GatewayAssociation `locationName:"directConnectGatewayAssociations" type:"list"`
+
+	// Token to retrieve the next page of the result.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeDirectConnectGatewayAssociationsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeDirectConnectGatewayAssociationsOutput) GoString() string {
+	return s.String()
+}
+
+// SetDirectConnectGatewayAssociations sets the DirectConnectGatewayAssociations field's value.
+func (s *DescribeDirectConnectGatewayAssociationsOutput) SetDirectConnectGatewayAssociations(v []*GatewayAssociation) *DescribeDirectConnectGatewayAssociationsOutput {
+	s.DirectConnectGatewayAssociations = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeDirectConnectGatewayAssociationsOutput) SetNextToken(v string) *DescribeDirectConnectGatewayAssociationsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// Container for the parameters to the DescribeDirectConnectGatewayAttachments
+// operation.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewayAttachmentsRequest
+type DescribeDirectConnectGatewayAttachmentsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the direct connect gateway.
+	//
+	// Example: "abcd1234-dcba-5678-be23-cdef9876ab45"
+	//
+	// Default: None
+	DirectConnectGatewayId *string `locationName:"directConnectGatewayId" type:"string"`
+
+	// The maximum number of direct connect gateway attachments to return per page.
+	//
+	// Example: 15
+	//
+	// Default: None
+	MaxResults *int64 `locationName:"maxResults" type:"integer"`
+
+	// The token provided in the previous describe result to retrieve the next page
+	// of the result.
+	//
+	// Default: None
+	NextToken *string `locationName:"nextToken" type:"string"`
+
+	// The ID of the virtual interface.
+	//
+	// Example: "dxvif-abc123ef"
+	//
+	// Default: None
+	VirtualInterfaceId *string `locationName:"virtualInterfaceId" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeDirectConnectGatewayAttachmentsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeDirectConnectGatewayAttachmentsInput) GoString() string {
+	return s.String()
+}
+
+// SetDirectConnectGatewayId sets the DirectConnectGatewayId field's value.
+func (s *DescribeDirectConnectGatewayAttachmentsInput) SetDirectConnectGatewayId(v string) *DescribeDirectConnectGatewayAttachmentsInput {
+	s.DirectConnectGatewayId = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *DescribeDirectConnectGatewayAttachmentsInput) SetMaxResults(v int64) *DescribeDirectConnectGatewayAttachmentsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeDirectConnectGatewayAttachmentsInput) SetNextToken(v string) *DescribeDirectConnectGatewayAttachmentsInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetVirtualInterfaceId sets the VirtualInterfaceId field's value.
+func (s *DescribeDirectConnectGatewayAttachmentsInput) SetVirtualInterfaceId(v string) *DescribeDirectConnectGatewayAttachmentsInput {
+	s.VirtualInterfaceId = &v
+	return s
+}
+
+// Container for the response from the DescribeDirectConnectGatewayAttachments
+// API call
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewayAttachmentsResult
+type DescribeDirectConnectGatewayAttachmentsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the direct connect gateway attachments.
+	DirectConnectGatewayAttachments []*GatewayAttachment `locationName:"directConnectGatewayAttachments" type:"list"`
+
+	// Token to retrieve the next page of the result.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeDirectConnectGatewayAttachmentsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeDirectConnectGatewayAttachmentsOutput) GoString() string {
+	return s.String()
+}
+
+// SetDirectConnectGatewayAttachments sets the DirectConnectGatewayAttachments field's value.
+func (s *DescribeDirectConnectGatewayAttachmentsOutput) SetDirectConnectGatewayAttachments(v []*GatewayAttachment) *DescribeDirectConnectGatewayAttachmentsOutput {
+	s.DirectConnectGatewayAttachments = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeDirectConnectGatewayAttachmentsOutput) SetNextToken(v string) *DescribeDirectConnectGatewayAttachmentsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// Container for the parameters to the DescribeDirectConnectGateways operation.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewaysRequest
+type DescribeDirectConnectGatewaysInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the direct connect gateway.
+	//
+	// Example: "abcd1234-dcba-5678-be23-cdef9876ab45"
+	//
+	// Default: None
+	DirectConnectGatewayId *string `locationName:"directConnectGatewayId" type:"string"`
+
+	// The maximum number of direct connect gateways to return per page.
+	//
+	// Example: 15
+	//
+	// Default: None
+	MaxResults *int64 `locationName:"maxResults" type:"integer"`
+
+	// The token provided in the previous describe result to retrieve the next page
+	// of the result.
+	//
+	// Default: None
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeDirectConnectGatewaysInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeDirectConnectGatewaysInput) GoString() string {
+	return s.String()
+}
+
+// SetDirectConnectGatewayId sets the DirectConnectGatewayId field's value.
+func (s *DescribeDirectConnectGatewaysInput) SetDirectConnectGatewayId(v string) *DescribeDirectConnectGatewaysInput {
+	s.DirectConnectGatewayId = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *DescribeDirectConnectGatewaysInput) SetMaxResults(v int64) *DescribeDirectConnectGatewaysInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeDirectConnectGatewaysInput) SetNextToken(v string) *DescribeDirectConnectGatewaysInput {
+	s.NextToken = &v
+	return s
+}
+
+// Container for the response from the DescribeDirectConnectGateways API call
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewaysResult
+type DescribeDirectConnectGatewaysOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the direct connect gateways.
+	DirectConnectGateways []*Gateway `locationName:"directConnectGateways" type:"list"`
+
+	// Token to retrieve the next page of the result.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeDirectConnectGatewaysOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeDirectConnectGatewaysOutput) GoString() string {
+	return s.String()
+}
+
+// SetDirectConnectGateways sets the DirectConnectGateways field's value.
+func (s *DescribeDirectConnectGatewaysOutput) SetDirectConnectGateways(v []*Gateway) *DescribeDirectConnectGatewaysOutput {
+	s.DirectConnectGateways = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeDirectConnectGatewaysOutput) SetNextToken(v string) *DescribeDirectConnectGatewaysOutput {
+	s.NextToken = &v
+	return s
+}
+
 // Container for the parameters to the DescribeHostedConnections operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeHostedConnectionsRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeHostedConnectionsRequest
 type DescribeHostedConnectionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5622,7 +6876,7 @@ func (s *DescribeHostedConnectionsInput) SetConnectionId(v string) *DescribeHost
 }
 
 // Container for the parameters to the DescribeInterconnectLoa operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnectLoaRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnectLoaRequest
 type DescribeInterconnectLoaInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5689,7 +6943,7 @@ func (s *DescribeInterconnectLoaInput) SetProviderName(v string) *DescribeInterc
 }
 
 // The response received when DescribeInterconnectLoa is called.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnectLoaResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnectLoaResponse
 type DescribeInterconnectLoaOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5715,7 +6969,7 @@ func (s *DescribeInterconnectLoaOutput) SetLoa(v *Loa) *DescribeInterconnectLoaO
 }
 
 // Container for the parameters to the DescribeInterconnects operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnectsRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnectsRequest
 type DescribeInterconnectsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5742,7 +6996,7 @@ func (s *DescribeInterconnectsInput) SetInterconnectId(v string) *DescribeInterc
 }
 
 // A structure containing a list of interconnects.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Interconnects
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Interconnects
 type DescribeInterconnectsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5767,7 +7021,7 @@ func (s *DescribeInterconnectsOutput) SetInterconnects(v []*Interconnect) *Descr
 }
 
 // Container for the parameters to the DescribeLags operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLagsRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLagsRequest
 type DescribeLagsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5796,7 +7050,7 @@ func (s *DescribeLagsInput) SetLagId(v string) *DescribeLagsInput {
 }
 
 // A structure containing a list of LAGs.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Lags
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Lags
 type DescribeLagsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5821,7 +7075,7 @@ func (s *DescribeLagsOutput) SetLags(v []*Lag) *DescribeLagsOutput {
 }
 
 // Container for the parameters to the DescribeLoa operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLoaRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLoaRequest
 type DescribeLoaInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5890,7 +7144,7 @@ func (s *DescribeLoaInput) SetProviderName(v string) *DescribeLoaInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLocationsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLocationsInput
 type DescribeLocationsInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5909,7 +7163,7 @@ func (s DescribeLocationsInput) GoString() string {
 // to be connected. Generally, these are colocation hubs where many network
 // providers have equipment, and where cross connects can be delivered. Locations
 // include a name and facility code, and must be provided when creating a connection.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Locations
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Locations
 type DescribeLocationsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5935,7 +7189,7 @@ func (s *DescribeLocationsOutput) SetLocations(v []*Location) *DescribeLocations
 }
 
 // Container for the parameters to the DescribeTags operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeTagsRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeTagsRequest
 type DescribeTagsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5975,7 +7229,7 @@ func (s *DescribeTagsInput) SetResourceArns(v []*string) *DescribeTagsInput {
 }
 
 // The response received when DescribeTags is called.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeTagsResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeTagsResponse
 type DescribeTagsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5999,7 +7253,7 @@ func (s *DescribeTagsOutput) SetResourceTags(v []*ResourceTag) *DescribeTagsOutp
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeVirtualGatewaysInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeVirtualGatewaysInput
 type DescribeVirtualGatewaysInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6015,7 +7269,7 @@ func (s DescribeVirtualGatewaysInput) GoString() string {
 }
 
 // A structure containing a list of virtual private gateways.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/VirtualGateways
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/VirtualGateways
 type DescribeVirtualGatewaysOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6040,7 +7294,7 @@ func (s *DescribeVirtualGatewaysOutput) SetVirtualGateways(v []*VirtualGateway) 
 }
 
 // Container for the parameters to the DescribeVirtualInterfaces operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeVirtualInterfacesRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeVirtualInterfacesRequest
 type DescribeVirtualInterfacesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6083,7 +7337,7 @@ func (s *DescribeVirtualInterfacesInput) SetVirtualInterfaceId(v string) *Descri
 }
 
 // A structure containing a list of virtual interfaces.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/VirtualInterfaces
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/VirtualInterfaces
 type DescribeVirtualInterfacesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6108,7 +7362,7 @@ func (s *DescribeVirtualInterfacesOutput) SetVirtualInterfaces(v []*VirtualInter
 }
 
 // Container for the parameters to the DisassociateConnectionFromLag operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DisassociateConnectionFromLagRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DisassociateConnectionFromLagRequest
 type DisassociateConnectionFromLagInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6169,6 +7423,270 @@ func (s *DisassociateConnectionFromLagInput) SetLagId(v string) *DisassociateCon
 	return s
 }
 
+// A direct connect gateway is an intermediate object that enables you to connect
+// virtual interfaces and virtual private gateways.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DirectConnectGateway
+type Gateway struct {
+	_ struct{} `type:"structure"`
+
+	// The autonomous system number (ASN) for the Amazon side of the connection.
+	AmazonSideAsn *int64 `locationName:"amazonSideAsn" type:"long"`
+
+	// The ID of the direct connect gateway.
+	//
+	// Example: "abcd1234-dcba-5678-be23-cdef9876ab45"
+	DirectConnectGatewayId *string `locationName:"directConnectGatewayId" type:"string"`
+
+	// The name of the direct connect gateway.
+	//
+	// Example: "My direct connect gateway"
+	//
+	// Default: None
+	DirectConnectGatewayName *string `locationName:"directConnectGatewayName" type:"string"`
+
+	// State of the direct connect gateway.
+	//
+	//    * Pending: The initial state after calling CreateDirectConnectGateway.
+	//
+	//    * Available: The direct connect gateway is ready for use.
+	//
+	//    * Deleting: The initial state after calling DeleteDirectConnectGateway.
+	//
+	//    * Deleted: The direct connect gateway is deleted and cannot pass traffic.
+	DirectConnectGatewayState *string `locationName:"directConnectGatewayState" type:"string" enum:"GatewayState"`
+
+	// The AWS account ID of the owner of the direct connect gateway.
+	OwnerAccount *string `locationName:"ownerAccount" type:"string"`
+
+	// Error message when the state of an object fails to advance.
+	StateChangeError *string `locationName:"stateChangeError" type:"string"`
+}
+
+// String returns the string representation
+func (s Gateway) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Gateway) GoString() string {
+	return s.String()
+}
+
+// SetAmazonSideAsn sets the AmazonSideAsn field's value.
+func (s *Gateway) SetAmazonSideAsn(v int64) *Gateway {
+	s.AmazonSideAsn = &v
+	return s
+}
+
+// SetDirectConnectGatewayId sets the DirectConnectGatewayId field's value.
+func (s *Gateway) SetDirectConnectGatewayId(v string) *Gateway {
+	s.DirectConnectGatewayId = &v
+	return s
+}
+
+// SetDirectConnectGatewayName sets the DirectConnectGatewayName field's value.
+func (s *Gateway) SetDirectConnectGatewayName(v string) *Gateway {
+	s.DirectConnectGatewayName = &v
+	return s
+}
+
+// SetDirectConnectGatewayState sets the DirectConnectGatewayState field's value.
+func (s *Gateway) SetDirectConnectGatewayState(v string) *Gateway {
+	s.DirectConnectGatewayState = &v
+	return s
+}
+
+// SetOwnerAccount sets the OwnerAccount field's value.
+func (s *Gateway) SetOwnerAccount(v string) *Gateway {
+	s.OwnerAccount = &v
+	return s
+}
+
+// SetStateChangeError sets the StateChangeError field's value.
+func (s *Gateway) SetStateChangeError(v string) *Gateway {
+	s.StateChangeError = &v
+	return s
+}
+
+// The association between a direct connect gateway and virtual private gateway.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DirectConnectGatewayAssociation
+type GatewayAssociation struct {
+	_ struct{} `type:"structure"`
+
+	// State of the direct connect gateway association.
+	//
+	//    * Associating: The initial state after calling CreateDirectConnectGatewayAssociation.
+	//
+	//    * Associated: The direct connect gateway and virtual private gateway are
+	//    successfully associated and ready to pass traffic.
+	//
+	//    * Disassociating: The initial state after calling DeleteDirectConnectGatewayAssociation.
+	//
+	//    * Disassociated: The virtual private gateway is successfully disassociated
+	//    from the direct connect gateway. Traffic flow between the direct connect
+	//    gateway and virtual private gateway stops.
+	AssociationState *string `locationName:"associationState" type:"string" enum:"GatewayAssociationState"`
+
+	// The ID of the direct connect gateway.
+	//
+	// Example: "abcd1234-dcba-5678-be23-cdef9876ab45"
+	DirectConnectGatewayId *string `locationName:"directConnectGatewayId" type:"string"`
+
+	// Error message when the state of an object fails to advance.
+	StateChangeError *string `locationName:"stateChangeError" type:"string"`
+
+	// The ID of the virtual private gateway to a VPC. This only applies to private
+	// virtual interfaces.
+	//
+	// Example: vgw-123er56
+	VirtualGatewayId *string `locationName:"virtualGatewayId" type:"string"`
+
+	// The AWS account ID of the owner of the virtual private gateway.
+	VirtualGatewayOwnerAccount *string `locationName:"virtualGatewayOwnerAccount" type:"string"`
+
+	// The region in which the virtual private gateway is located.
+	//
+	// Example: us-east-1
+	VirtualGatewayRegion *string `locationName:"virtualGatewayRegion" type:"string"`
+}
+
+// String returns the string representation
+func (s GatewayAssociation) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GatewayAssociation) GoString() string {
+	return s.String()
+}
+
+// SetAssociationState sets the AssociationState field's value.
+func (s *GatewayAssociation) SetAssociationState(v string) *GatewayAssociation {
+	s.AssociationState = &v
+	return s
+}
+
+// SetDirectConnectGatewayId sets the DirectConnectGatewayId field's value.
+func (s *GatewayAssociation) SetDirectConnectGatewayId(v string) *GatewayAssociation {
+	s.DirectConnectGatewayId = &v
+	return s
+}
+
+// SetStateChangeError sets the StateChangeError field's value.
+func (s *GatewayAssociation) SetStateChangeError(v string) *GatewayAssociation {
+	s.StateChangeError = &v
+	return s
+}
+
+// SetVirtualGatewayId sets the VirtualGatewayId field's value.
+func (s *GatewayAssociation) SetVirtualGatewayId(v string) *GatewayAssociation {
+	s.VirtualGatewayId = &v
+	return s
+}
+
+// SetVirtualGatewayOwnerAccount sets the VirtualGatewayOwnerAccount field's value.
+func (s *GatewayAssociation) SetVirtualGatewayOwnerAccount(v string) *GatewayAssociation {
+	s.VirtualGatewayOwnerAccount = &v
+	return s
+}
+
+// SetVirtualGatewayRegion sets the VirtualGatewayRegion field's value.
+func (s *GatewayAssociation) SetVirtualGatewayRegion(v string) *GatewayAssociation {
+	s.VirtualGatewayRegion = &v
+	return s
+}
+
+// The association between a direct connect gateway and virtual interface.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DirectConnectGatewayAttachment
+type GatewayAttachment struct {
+	_ struct{} `type:"structure"`
+
+	// State of the direct connect gateway attachment.
+	//
+	//    * Attaching: The initial state after a virtual interface is created using
+	//    the direct connect gateway.
+	//
+	//    * Attached: The direct connect gateway and virtual interface are successfully
+	//    attached and ready to pass traffic.
+	//
+	//    * Detaching: The initial state after calling DeleteVirtualInterface on
+	//    a virtual interface that is attached to a direct connect gateway.
+	//
+	//    * Detached: The virtual interface is successfully detached from the direct
+	//    connect gateway. Traffic flow between the direct connect gateway and virtual
+	//    interface stops.
+	AttachmentState *string `locationName:"attachmentState" type:"string" enum:"GatewayAttachmentState"`
+
+	// The ID of the direct connect gateway.
+	//
+	// Example: "abcd1234-dcba-5678-be23-cdef9876ab45"
+	DirectConnectGatewayId *string `locationName:"directConnectGatewayId" type:"string"`
+
+	// Error message when the state of an object fails to advance.
+	StateChangeError *string `locationName:"stateChangeError" type:"string"`
+
+	// The ID of the virtual interface.
+	//
+	// Example: dxvif-123dfg56
+	//
+	// Default: None
+	VirtualInterfaceId *string `locationName:"virtualInterfaceId" type:"string"`
+
+	// The AWS account ID of the owner of the virtual interface.
+	VirtualInterfaceOwnerAccount *string `locationName:"virtualInterfaceOwnerAccount" type:"string"`
+
+	// The region in which the virtual interface is located.
+	//
+	// Example: us-east-1
+	VirtualInterfaceRegion *string `locationName:"virtualInterfaceRegion" type:"string"`
+}
+
+// String returns the string representation
+func (s GatewayAttachment) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GatewayAttachment) GoString() string {
+	return s.String()
+}
+
+// SetAttachmentState sets the AttachmentState field's value.
+func (s *GatewayAttachment) SetAttachmentState(v string) *GatewayAttachment {
+	s.AttachmentState = &v
+	return s
+}
+
+// SetDirectConnectGatewayId sets the DirectConnectGatewayId field's value.
+func (s *GatewayAttachment) SetDirectConnectGatewayId(v string) *GatewayAttachment {
+	s.DirectConnectGatewayId = &v
+	return s
+}
+
+// SetStateChangeError sets the StateChangeError field's value.
+func (s *GatewayAttachment) SetStateChangeError(v string) *GatewayAttachment {
+	s.StateChangeError = &v
+	return s
+}
+
+// SetVirtualInterfaceId sets the VirtualInterfaceId field's value.
+func (s *GatewayAttachment) SetVirtualInterfaceId(v string) *GatewayAttachment {
+	s.VirtualInterfaceId = &v
+	return s
+}
+
+// SetVirtualInterfaceOwnerAccount sets the VirtualInterfaceOwnerAccount field's value.
+func (s *GatewayAttachment) SetVirtualInterfaceOwnerAccount(v string) *GatewayAttachment {
+	s.VirtualInterfaceOwnerAccount = &v
+	return s
+}
+
+// SetVirtualInterfaceRegion sets the VirtualInterfaceRegion field's value.
+func (s *GatewayAttachment) SetVirtualInterfaceRegion(v string) *GatewayAttachment {
+	s.VirtualInterfaceRegion = &v
+	return s
+}
+
 // An interconnect is a connection that can host other connections.
 //
 // Like a standard AWS Direct Connect connection, an interconnect represents
@@ -6181,7 +7699,7 @@ func (s *DisassociateConnectionFromLagInput) SetLagId(v string) *DisassociateCon
 // The resources of the interconnect, including bandwidth and VLAN numbers,
 // are shared by all of the hosted connections on the interconnect, and the
 // owner of the interconnect determines how these resources are assigned.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Interconnect
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Interconnect
 type Interconnect struct {
 	_ struct{} `type:"structure"`
 
@@ -6315,7 +7833,7 @@ func (s *Interconnect) SetRegion(v string) *Interconnect {
 // of physical connections. Like an interconnect, it can host other connections.
 // All connections in a LAG must terminate on the same physical AWS Direct Connect
 // endpoint, and must be the same bandwidth.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Lag
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Lag
 type Lag struct {
 	_ struct{} `type:"structure"`
 
@@ -6473,7 +7991,7 @@ func (s *Lag) SetRegion(v string) *Lag {
 
 // A structure containing the Letter of Authorization - Connecting Facility
 // Assignment (LOA-CFA) for a connection.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Loa
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Loa
 type Loa struct {
 	_ struct{} `type:"structure"`
 
@@ -6513,7 +8031,7 @@ func (s *Loa) SetLoaContentType(v string) *Loa {
 
 // An AWS Direct Connect location where connections and interconnects can be
 // requested.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Location
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Location
 type Location struct {
 	_ struct{} `type:"structure"`
 
@@ -6548,7 +8066,7 @@ func (s *Location) SetLocationName(v string) *Location {
 }
 
 // A structure containing information about a new BGP peer.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewBGPPeer
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewBGPPeer
 type NewBGPPeer struct {
 	_ struct{} `type:"structure"`
 
@@ -6621,7 +8139,7 @@ func (s *NewBGPPeer) SetCustomerAddress(v string) *NewBGPPeer {
 }
 
 // A structure containing information about a new private virtual interface.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewPrivateVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewPrivateVirtualInterface
 type NewPrivateVirtualInterface struct {
 	_ struct{} `type:"structure"`
 
@@ -6654,13 +8172,16 @@ type NewPrivateVirtualInterface struct {
 	// Example: 192.168.1.2/30 or 2001:db8::2/125
 	CustomerAddress *string `locationName:"customerAddress" type:"string"`
 
+	// The ID of the direct connect gateway.
+	//
+	// Example: "abcd1234-dcba-5678-be23-cdef9876ab45"
+	DirectConnectGatewayId *string `locationName:"directConnectGatewayId" type:"string"`
+
 	// The ID of the virtual private gateway to a VPC. This only applies to private
 	// virtual interfaces.
 	//
 	// Example: vgw-123er56
-	//
-	// VirtualGatewayId is a required field
-	VirtualGatewayId *string `locationName:"virtualGatewayId" type:"string" required:"true"`
+	VirtualGatewayId *string `locationName:"virtualGatewayId" type:"string"`
 
 	// The name of the virtual interface assigned by the customer.
 	//
@@ -6692,9 +8213,6 @@ func (s *NewPrivateVirtualInterface) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "NewPrivateVirtualInterface"}
 	if s.Asn == nil {
 		invalidParams.Add(request.NewErrParamRequired("Asn"))
-	}
-	if s.VirtualGatewayId == nil {
-		invalidParams.Add(request.NewErrParamRequired("VirtualGatewayId"))
 	}
 	if s.VirtualInterfaceName == nil {
 		invalidParams.Add(request.NewErrParamRequired("VirtualInterfaceName"))
@@ -6739,6 +8257,12 @@ func (s *NewPrivateVirtualInterface) SetCustomerAddress(v string) *NewPrivateVir
 	return s
 }
 
+// SetDirectConnectGatewayId sets the DirectConnectGatewayId field's value.
+func (s *NewPrivateVirtualInterface) SetDirectConnectGatewayId(v string) *NewPrivateVirtualInterface {
+	s.DirectConnectGatewayId = &v
+	return s
+}
+
 // SetVirtualGatewayId sets the VirtualGatewayId field's value.
 func (s *NewPrivateVirtualInterface) SetVirtualGatewayId(v string) *NewPrivateVirtualInterface {
 	s.VirtualGatewayId = &v
@@ -6759,7 +8283,7 @@ func (s *NewPrivateVirtualInterface) SetVlan(v int64) *NewPrivateVirtualInterfac
 
 // A structure containing information about a private virtual interface that
 // will be provisioned on a connection.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewPrivateVirtualInterfaceAllocation
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewPrivateVirtualInterfaceAllocation
 type NewPrivateVirtualInterfaceAllocation struct {
 	_ struct{} `type:"structure"`
 
@@ -6879,7 +8403,7 @@ func (s *NewPrivateVirtualInterfaceAllocation) SetVlan(v int64) *NewPrivateVirtu
 }
 
 // A structure containing information about a new public virtual interface.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewPublicVirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewPublicVirtualInterface
 type NewPublicVirtualInterface struct {
 	_ struct{} `type:"structure"`
 
@@ -7010,7 +8534,7 @@ func (s *NewPublicVirtualInterface) SetVlan(v int64) *NewPublicVirtualInterface 
 
 // A structure containing information about a public virtual interface that
 // will be provisioned on a connection.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewPublicVirtualInterfaceAllocation
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewPublicVirtualInterfaceAllocation
 type NewPublicVirtualInterfaceAllocation struct {
 	_ struct{} `type:"structure"`
 
@@ -7140,7 +8664,7 @@ func (s *NewPublicVirtualInterfaceAllocation) SetVlan(v int64) *NewPublicVirtual
 }
 
 // The tags associated with a Direct Connect resource.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ResourceTag
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ResourceTag
 type ResourceTag struct {
 	_ struct{} `type:"structure"`
 
@@ -7175,7 +8699,7 @@ func (s *ResourceTag) SetTags(v []*Tag) *ResourceTag {
 
 // A route filter prefix that the customer can advertise through Border Gateway
 // Protocol (BGP) over a public virtual interface.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/RouteFilterPrefix
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/RouteFilterPrefix
 type RouteFilterPrefix struct {
 	_ struct{} `type:"structure"`
 
@@ -7205,7 +8729,7 @@ func (s *RouteFilterPrefix) SetCidr(v string) *RouteFilterPrefix {
 }
 
 // Information about a tag.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Tag
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Tag
 type Tag struct {
 	_ struct{} `type:"structure"`
 
@@ -7257,7 +8781,7 @@ func (s *Tag) SetValue(v string) *Tag {
 }
 
 // Container for the parameters to the TagResource operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/TagResourceRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/TagResourceRequest
 type TagResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7326,7 +8850,7 @@ func (s *TagResourceInput) SetTags(v []*Tag) *TagResourceInput {
 }
 
 // The response received when TagResource is called.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/TagResourceResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/TagResourceResponse
 type TagResourceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -7342,7 +8866,7 @@ func (s TagResourceOutput) GoString() string {
 }
 
 // Container for the parameters to the UntagResource operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UntagResourceRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UntagResourceRequest
 type UntagResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7396,7 +8920,7 @@ func (s *UntagResourceInput) SetTagKeys(v []*string) *UntagResourceInput {
 }
 
 // The response received when UntagResource is called.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UntagResourceResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UntagResourceResponse
 type UntagResourceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -7412,7 +8936,7 @@ func (s UntagResourceOutput) GoString() string {
 }
 
 // Container for the parameters to the UpdateLag operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UpdateLagRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UpdateLagRequest
 type UpdateLagInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7485,7 +9009,7 @@ func (s *UpdateLagInput) SetMinimumLinks(v int64) *UpdateLagInput {
 //
 // Virtual private gateways can be managed using the Amazon Virtual Private
 // Cloud (Amazon VPC) console or the Amazon EC2 CreateVpnGateway action (http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-query-CreateVpnGateway.html).
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/VirtualGateway
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/VirtualGateway
 type VirtualGateway struct {
 	_ struct{} `type:"structure"`
 
@@ -7532,7 +9056,7 @@ func (s *VirtualGateway) SetVirtualGatewayState(v string) *VirtualGateway {
 
 // A virtual interface (VLAN) transmits the traffic between the AWS Direct Connect
 // location and the customer.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/VirtualInterface
+// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/VirtualInterface
 type VirtualInterface struct {
 	_ struct{} `type:"structure"`
 
@@ -7547,6 +9071,9 @@ type VirtualInterface struct {
 	//
 	// Example: 192.168.1.1/30 or 2001:db8::1/125
 	AmazonAddress *string `locationName:"amazonAddress" type:"string"`
+
+	// The autonomous system number (ASN) for the Amazon side of the connection.
+	AmazonSideAsn *int64 `locationName:"amazonSideAsn" type:"long"`
 
 	// The autonomous system (AS) number for Border Gateway Protocol (BGP) configuration.
 	//
@@ -7576,6 +9103,11 @@ type VirtualInterface struct {
 
 	// Information for generating the customer router configuration.
 	CustomerRouterConfig *string `locationName:"customerRouterConfig" type:"string"`
+
+	// The ID of the direct connect gateway.
+	//
+	// Example: "abcd1234-dcba-5678-be23-cdef9876ab45"
+	DirectConnectGatewayId *string `locationName:"directConnectGatewayId" type:"string"`
 
 	// Where the connection is located.
 	//
@@ -7673,6 +9205,12 @@ func (s *VirtualInterface) SetAmazonAddress(v string) *VirtualInterface {
 	return s
 }
 
+// SetAmazonSideAsn sets the AmazonSideAsn field's value.
+func (s *VirtualInterface) SetAmazonSideAsn(v int64) *VirtualInterface {
+	s.AmazonSideAsn = &v
+	return s
+}
+
 // SetAsn sets the Asn field's value.
 func (s *VirtualInterface) SetAsn(v int64) *VirtualInterface {
 	s.Asn = &v
@@ -7706,6 +9244,12 @@ func (s *VirtualInterface) SetCustomerAddress(v string) *VirtualInterface {
 // SetCustomerRouterConfig sets the CustomerRouterConfig field's value.
 func (s *VirtualInterface) SetCustomerRouterConfig(v string) *VirtualInterface {
 	s.CustomerRouterConfig = &v
+	return s
+}
+
+// SetDirectConnectGatewayId sets the DirectConnectGatewayId field's value.
+func (s *VirtualInterface) SetDirectConnectGatewayId(v string) *VirtualInterface {
+	s.DirectConnectGatewayId = &v
 	return s
 }
 
@@ -7866,6 +9410,83 @@ const (
 
 	// ConnectionStateRejected is a ConnectionState enum value
 	ConnectionStateRejected = "rejected"
+)
+
+// State of the direct connect gateway association.
+//
+//    * Associating: The initial state after calling CreateDirectConnectGatewayAssociation.
+//
+//    * Associated: The direct connect gateway and virtual private gateway are
+//    successfully associated and ready to pass traffic.
+//
+//    * Disassociating: The initial state after calling DeleteDirectConnectGatewayAssociation.
+//
+//    * Disassociated: The virtual private gateway is successfully disassociated
+//    from the direct connect gateway. Traffic flow between the direct connect
+//    gateway and virtual private gateway stops.
+const (
+	// GatewayAssociationStateAssociating is a GatewayAssociationState enum value
+	GatewayAssociationStateAssociating = "associating"
+
+	// GatewayAssociationStateAssociated is a GatewayAssociationState enum value
+	GatewayAssociationStateAssociated = "associated"
+
+	// GatewayAssociationStateDisassociating is a GatewayAssociationState enum value
+	GatewayAssociationStateDisassociating = "disassociating"
+
+	// GatewayAssociationStateDisassociated is a GatewayAssociationState enum value
+	GatewayAssociationStateDisassociated = "disassociated"
+)
+
+// State of the direct connect gateway attachment.
+//
+//    * Attaching: The initial state after a virtual interface is created using
+//    the direct connect gateway.
+//
+//    * Attached: The direct connect gateway and virtual interface are successfully
+//    attached and ready to pass traffic.
+//
+//    * Detaching: The initial state after calling DeleteVirtualInterface on
+//    a virtual interface that is attached to a direct connect gateway.
+//
+//    * Detached: The virtual interface is successfully detached from the direct
+//    connect gateway. Traffic flow between the direct connect gateway and virtual
+//    interface stops.
+const (
+	// GatewayAttachmentStateAttaching is a GatewayAttachmentState enum value
+	GatewayAttachmentStateAttaching = "attaching"
+
+	// GatewayAttachmentStateAttached is a GatewayAttachmentState enum value
+	GatewayAttachmentStateAttached = "attached"
+
+	// GatewayAttachmentStateDetaching is a GatewayAttachmentState enum value
+	GatewayAttachmentStateDetaching = "detaching"
+
+	// GatewayAttachmentStateDetached is a GatewayAttachmentState enum value
+	GatewayAttachmentStateDetached = "detached"
+)
+
+// State of the direct connect gateway.
+//
+//    * Pending: The initial state after calling CreateDirectConnectGateway.
+//
+//    * Available: The direct connect gateway is ready for use.
+//
+//    * Deleting: The initial state after calling DeleteDirectConnectGateway.
+//
+//    * Deleted: The direct connect gateway is deleted and cannot pass traffic.
+const (
+	// GatewayStatePending is a GatewayState enum value
+	GatewayStatePending = "pending"
+
+	// GatewayStateAvailable is a GatewayState enum value
+	GatewayStateAvailable = "available"
+
+	// GatewayStateDeleting is a GatewayState enum value
+	GatewayStateDeleting = "deleting"
+
+	// GatewayStateDeleted is a GatewayState enum value
+	GatewayStateDeleted = "deleted"
 )
 
 // State of the interconnect.

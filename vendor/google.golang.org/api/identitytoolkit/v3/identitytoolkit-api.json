@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/YDuUtEWk-s4RoFmU1uyfiL_piZ0\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/-CIGDhyktArHgwyopFUaXBy_0sc\"",
  "discoveryVersion": "v1",
  "id": "identitytoolkit:v3",
  "name": "identitytoolkit",
  "canonicalName": "Identity Toolkit",
  "version": "v3",
- "revision": "20170828",
+ "revision": "20170927",
  "title": "Google Identity Toolkit API",
  "description": "Help the third party sites to implement federated login.",
  "ownerDomain": "google.com",
@@ -120,6 +120,13 @@
     "sessionId": {
      "type": "string",
      "description": "Session ID which should be passed in the following verifyAssertion request."
+    },
+    "signinMethods": {
+     "type": "array",
+     "description": "All sign-in methods this user has used.",
+     "items": {
+      "type": "string"
+     }
     }
    }
   },
@@ -155,6 +162,43 @@
      "items": {
       "$ref": "UserInfo"
      }
+    }
+   }
+  },
+  "EmailLinkSigninResponse": {
+   "id": "EmailLinkSigninResponse",
+   "type": "object",
+   "description": "Response of email signIn.",
+   "properties": {
+    "email": {
+     "type": "string",
+     "description": "The user's email."
+    },
+    "expiresIn": {
+     "type": "string",
+     "description": "Expiration time of STS id token in seconds.",
+     "format": "int64"
+    },
+    "idToken": {
+     "type": "string",
+     "description": "The STS id token to login the newly signed in user."
+    },
+    "isNewUser": {
+     "type": "boolean",
+     "description": "Whether the user is new."
+    },
+    "kind": {
+     "type": "string",
+     "description": "The fixed string \"identitytoolkit#EmailLinkSigninResponse\".",
+     "default": "identitytoolkit#EmailLinkSigninResponse"
+    },
+    "localId": {
+     "type": "string",
+     "description": "The RP local ID of the user."
+    },
+    "refreshToken": {
+     "type": "string",
+     "description": "The refresh token for the signed in user."
     }
    }
   },
@@ -357,6 +401,25 @@
     "targetProjectId": {
      "type": "string",
      "description": "Specify which project (field value is actually project id) to operate. Only used when provided credential."
+    }
+   }
+  },
+  "IdentitytoolkitRelyingpartyEmailLinkSigninRequest": {
+   "id": "IdentitytoolkitRelyingpartyEmailLinkSigninRequest",
+   "type": "object",
+   "description": "Request to sign in with email.",
+   "properties": {
+    "email": {
+     "type": "string",
+     "description": "The email address of the user."
+    },
+    "idToken": {
+     "type": "string",
+     "description": "Token for linking flow."
+    },
+    "oobCode": {
+     "type": "string",
+     "description": "The confirmation code."
     }
    }
   },
@@ -1749,6 +1812,21 @@
      "scopes": [
       "https://www.googleapis.com/auth/cloud-platform",
       "https://www.googleapis.com/auth/firebase"
+     ]
+    },
+    "emailLinkSignin": {
+     "id": "identitytoolkit.relyingparty.emailLinkSignin",
+     "path": "emailLinkSignin",
+     "httpMethod": "POST",
+     "description": "Reset password for a user.",
+     "request": {
+      "$ref": "IdentitytoolkitRelyingpartyEmailLinkSigninRequest"
+     },
+     "response": {
+      "$ref": "EmailLinkSigninResponse"
+     },
+     "scopes": [
+      "https://www.googleapis.com/auth/cloud-platform"
      ]
     },
     "getAccountInfo": {

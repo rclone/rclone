@@ -15,6 +15,7 @@
 package bigquery
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -59,6 +60,7 @@ type TableMetadata struct {
 
 	// Use Legacy SQL for the view query. The default.
 	// At most one of UseLegacySQL and UseStandardSQL can be true.
+	// Deprecated: use UseLegacySQL.
 	UseStandardSQL bool
 
 	// If non-nil, the table is partitioned by time.
@@ -67,6 +69,12 @@ type TableMetadata struct {
 	// The time when this table expires. If not set, the table will persist
 	// indefinitely. Expired tables will be deleted and their storage reclaimed.
 	ExpirationTime time.Time
+
+	// User-provided labels.
+	Labels map[string]string
+
+	// Information about a table stored outside of BigQuery.
+	ExternalDataConfig *ExternalDataConfig
 
 	// All the fields below are read-only.
 
@@ -139,6 +147,32 @@ type TimePartitioning struct {
 	// The amount of time to keep the storage for a partition.
 	// If the duration is empty (0), the data in the partitions do not expire.
 	Expiration time.Duration
+
+	// If empty, the table is partitioned by pseudo column '_PARTITIONTIME'; if set, the
+	// table is partitioned by this field. The field must be a top-level TIMESTAMP or
+	// DATE field. Its mode must be NULLABLE or REQUIRED.
+	Field string
+}
+
+func (p *TimePartitioning) toBQ() *bq.TimePartitioning {
+	if p == nil {
+		return nil
+	}
+	return &bq.TimePartitioning{
+		Type:         "DAY",
+		ExpirationMs: int64(p.Expiration / time.Millisecond),
+		Field:        p.Field,
+	}
+}
+
+func bqToTimePartitioning(q *bq.TimePartitioning) *TimePartitioning {
+	if q == nil {
+		return nil
+	}
+	return &TimePartitioning{
+		Expiration: time.Duration(q.ExpirationMs) * time.Millisecond,
+		Field:      q.Field,
+	}
 }
 
 // StreamingBuffer holds information about the streaming buffer.
@@ -155,7 +189,7 @@ type StreamingBuffer struct {
 	OldestEntryTime time.Time
 }
 
-func (t *Table) tableRefProto() *bq.TableReference {
+func (t *Table) toBQ() *bq.TableReference {
 	return &bq.TableReference{
 		ProjectId: t.ProjectID,
 		DatasetId: t.DatasetID,
@@ -174,60 +208,280 @@ func (t *Table) implicitTable() bool {
 }
 
 // Create creates a table in the BigQuery service.
-// Pass in a TableMetadata value to configure the dataset.
+// Pass in a TableMetadata value to configure the table.
+// If tm.View.Query is non-empty, the created table will be of type VIEW.
+// Expiration can only be set during table creation.
+// After table creation, a view can be modified only if its table was initially created
+// with a view.
 func (t *Table) Create(ctx context.Context, tm *TableMetadata) error {
-	return t.c.service.createTable(ctx, t.ProjectID, t.DatasetID, t.TableID, tm)
+	table, err := tm.toBQ()
+	if err != nil {
+		return err
+	}
+	table.TableReference = &bq.TableReference{
+		ProjectId: t.ProjectID,
+		DatasetId: t.DatasetID,
+		TableId:   t.TableID,
+	}
+	req := t.c.bqs.Tables.Insert(t.ProjectID, t.DatasetID, table).Context(ctx)
+	setClientHeader(req.Header())
+	_, err = req.Do()
+	return err
+}
+
+func (tm *TableMetadata) toBQ() (*bq.Table, error) {
+	t := &bq.Table{}
+	if tm == nil {
+		return t, nil
+	}
+	if tm.Schema != nil && tm.ViewQuery != "" {
+		return nil, errors.New("bigquery: provide Schema or ViewQuery, not both")
+	}
+	t.FriendlyName = tm.Name
+	t.Description = tm.Description
+	t.Labels = tm.Labels
+	if tm.Schema != nil {
+		t.Schema = tm.Schema.toBQ()
+	}
+	if tm.ViewQuery != "" {
+		if tm.UseStandardSQL && tm.UseLegacySQL {
+			return nil, errors.New("bigquery: cannot provide both UseStandardSQL and UseLegacySQL")
+		}
+		t.View = &bq.ViewDefinition{Query: tm.ViewQuery}
+		if tm.UseLegacySQL {
+			t.View.UseLegacySql = true
+		} else {
+			t.View.UseLegacySql = false
+			t.View.ForceSendFields = append(t.View.ForceSendFields, "UseLegacySql")
+		}
+	} else if tm.UseLegacySQL || tm.UseStandardSQL {
+		return nil, errors.New("bigquery: UseLegacy/StandardSQL requires ViewQuery")
+	}
+	t.TimePartitioning = tm.TimePartitioning.toBQ()
+	if !tm.ExpirationTime.IsZero() {
+		t.ExpirationTime = tm.ExpirationTime.UnixNano() / 1e6
+	}
+	if tm.ExternalDataConfig != nil {
+		edc := tm.ExternalDataConfig.toBQ()
+		t.ExternalDataConfiguration = &edc
+	}
+	if tm.FullID != "" {
+		return nil, errors.New("cannot set FullID on create")
+	}
+	if tm.Type != "" {
+		return nil, errors.New("cannot set Type on create")
+	}
+	if !tm.CreationTime.IsZero() {
+		return nil, errors.New("cannot set CreationTime on create")
+	}
+	if !tm.LastModifiedTime.IsZero() {
+		return nil, errors.New("cannot set LastModifiedTime on create")
+	}
+	if tm.NumBytes != 0 {
+		return nil, errors.New("cannot set NumBytes on create")
+	}
+	if tm.NumRows != 0 {
+		return nil, errors.New("cannot set NumRows on create")
+	}
+	if tm.StreamingBuffer != nil {
+		return nil, errors.New("cannot set StreamingBuffer on create")
+	}
+	if tm.ETag != "" {
+		return nil, errors.New("cannot set ETag on create")
+	}
+	return t, nil
 }
 
 // Metadata fetches the metadata for the table.
 func (t *Table) Metadata(ctx context.Context) (*TableMetadata, error) {
-	return t.c.service.getTableMetadata(ctx, t.ProjectID, t.DatasetID, t.TableID)
+	req := t.c.bqs.Tables.Get(t.ProjectID, t.DatasetID, t.TableID).Context(ctx)
+	setClientHeader(req.Header())
+	var table *bq.Table
+	err := runWithRetry(ctx, func() (err error) {
+		table, err = req.Do()
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return bqToTableMetadata(table)
+}
+
+func bqToTableMetadata(t *bq.Table) (*TableMetadata, error) {
+	md := &TableMetadata{
+		Description:      t.Description,
+		Name:             t.FriendlyName,
+		Type:             TableType(t.Type),
+		FullID:           t.Id,
+		Labels:           t.Labels,
+		NumBytes:         t.NumBytes,
+		NumRows:          t.NumRows,
+		ExpirationTime:   unixMillisToTime(t.ExpirationTime),
+		CreationTime:     unixMillisToTime(t.CreationTime),
+		LastModifiedTime: unixMillisToTime(int64(t.LastModifiedTime)),
+		ETag:             t.Etag,
+	}
+	if t.Schema != nil {
+		md.Schema = bqToSchema(t.Schema)
+	}
+	if t.View != nil {
+		md.ViewQuery = t.View.Query
+		md.UseLegacySQL = t.View.UseLegacySql
+	}
+	md.TimePartitioning = bqToTimePartitioning(t.TimePartitioning)
+	if t.StreamingBuffer != nil {
+		md.StreamingBuffer = &StreamingBuffer{
+			EstimatedBytes:  t.StreamingBuffer.EstimatedBytes,
+			EstimatedRows:   t.StreamingBuffer.EstimatedRows,
+			OldestEntryTime: unixMillisToTime(int64(t.StreamingBuffer.OldestEntryTime)),
+		}
+	}
+	if t.ExternalDataConfiguration != nil {
+		edc, err := bqToExternalDataConfig(t.ExternalDataConfiguration)
+		if err != nil {
+			return nil, err
+		}
+		md.ExternalDataConfig = edc
+	}
+	return md, nil
 }
 
 // Delete deletes the table.
 func (t *Table) Delete(ctx context.Context) error {
-	return t.c.service.deleteTable(ctx, t.ProjectID, t.DatasetID, t.TableID)
+	req := t.c.bqs.Tables.Delete(t.ProjectID, t.DatasetID, t.TableID).Context(ctx)
+	setClientHeader(req.Header())
+	return req.Do()
 }
 
 // Read fetches the contents of the table.
 func (t *Table) Read(ctx context.Context) *RowIterator {
-	return newRowIterator(ctx, t.c.service, &readTableConf{
-		projectID: t.ProjectID,
-		datasetID: t.DatasetID,
-		tableID:   t.TableID,
-	})
+	return t.read(ctx, fetchPage)
+}
+
+func (t *Table) read(ctx context.Context, pf pageFetcher) *RowIterator {
+	return newRowIterator(ctx, t, pf)
 }
 
 // Update modifies specific Table metadata fields.
 func (t *Table) Update(ctx context.Context, tm TableMetadataToUpdate, etag string) (*TableMetadata, error) {
-	var conf patchTableConf
+	bqt := tm.toBQ()
+	call := t.c.bqs.Tables.Patch(t.ProjectID, t.DatasetID, t.TableID, bqt).Context(ctx)
+	setClientHeader(call.Header())
+	if etag != "" {
+		call.Header().Set("If-Match", etag)
+	}
+	var res *bq.Table
+	if err := runWithRetry(ctx, func() (err error) {
+		res, err = call.Do()
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return bqToTableMetadata(res)
+}
+
+func (tm *TableMetadataToUpdate) toBQ() *bq.Table {
+	t := &bq.Table{}
+	forceSend := func(field string) {
+		t.ForceSendFields = append(t.ForceSendFields, field)
+	}
+
 	if tm.Description != nil {
-		s := optional.ToString(tm.Description)
-		conf.Description = &s
+		t.Description = optional.ToString(tm.Description)
+		forceSend("Description")
 	}
 	if tm.Name != nil {
-		s := optional.ToString(tm.Name)
-		conf.Name = &s
+		t.FriendlyName = optional.ToString(tm.Name)
+		forceSend("FriendlyName")
 	}
-	conf.Schema = tm.Schema
-	conf.ExpirationTime = tm.ExpirationTime
-	return t.c.service.patchTable(ctx, t.ProjectID, t.DatasetID, t.TableID, &conf, etag)
+	if tm.Schema != nil {
+		t.Schema = tm.Schema.toBQ()
+		forceSend("Schema")
+	}
+	if !tm.ExpirationTime.IsZero() {
+		t.ExpirationTime = tm.ExpirationTime.UnixNano() / 1e6
+		forceSend("ExpirationTime")
+	}
+	if tm.ViewQuery != nil {
+		t.View = &bq.ViewDefinition{
+			Query:           optional.ToString(tm.ViewQuery),
+			ForceSendFields: []string{"Query"},
+		}
+	}
+	if tm.UseLegacySQL != nil {
+		if t.View == nil {
+			t.View = &bq.ViewDefinition{}
+		}
+		t.View.UseLegacySql = optional.ToBool(tm.UseLegacySQL)
+		t.View.ForceSendFields = append(t.View.ForceSendFields, "UseLegacySql")
+	}
+	labels, forces, nulls := tm.update()
+	t.Labels = labels
+	t.ForceSendFields = append(t.ForceSendFields, forces...)
+	t.NullFields = append(t.NullFields, nulls...)
+	return t
 }
 
 // TableMetadataToUpdate is used when updating a table's metadata.
 // Only non-nil fields will be updated.
 type TableMetadataToUpdate struct {
-	// Description is the user-friendly description of this table.
+	// The user-friendly description of this table.
 	Description optional.String
 
-	// Name is the user-friendly name for this table.
+	// The user-friendly name for this table.
 	Name optional.String
 
-	// Schema is the table's schema.
+	// The table's schema.
 	// When updating a schema, you can add columns but not remove them.
 	Schema Schema
-	// TODO(jba): support updating the view
 
-	// ExpirationTime is the time when this table expires.
+	// The time when this table expires.
 	ExpirationTime time.Time
+
+	// The query to use for a view.
+	ViewQuery optional.String
+
+	// Use Legacy SQL for the view query.
+	UseLegacySQL optional.Bool
+
+	labelUpdater
+}
+
+// labelUpdater contains common code for updating labels.
+type labelUpdater struct {
+	setLabels    map[string]string
+	deleteLabels map[string]bool
+}
+
+// SetLabel causes a label to be added or modified on a call to Update.
+func (u *labelUpdater) SetLabel(name, value string) {
+	if u.setLabels == nil {
+		u.setLabels = map[string]string{}
+	}
+	u.setLabels[name] = value
+}
+
+// DeleteLabel causes a label to be deleted on a call to Update.
+func (u *labelUpdater) DeleteLabel(name string) {
+	if u.deleteLabels == nil {
+		u.deleteLabels = map[string]bool{}
+	}
+	u.deleteLabels[name] = true
+}
+
+func (u *labelUpdater) update() (labels map[string]string, forces, nulls []string) {
+	if u.setLabels == nil && u.deleteLabels == nil {
+		return nil, nil, nil
+	}
+	labels = map[string]string{}
+	for k, v := range u.setLabels {
+		labels[k] = v
+	}
+	if len(labels) == 0 && len(u.deleteLabels) > 0 {
+		forces = []string{"Labels"}
+	}
+	for l := range u.deleteLabels {
+		nulls = append(nulls, "Labels."+l)
+	}
+	return labels, forces, nulls
 }

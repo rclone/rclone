@@ -1,26 +1,32 @@
 # Change Log
 All notable changes to QingStor SDK for Go will be documented in this file.
 
+## [v2.2.9] - 2017-11-25
+
+### Changed
+
+- Refactor logger.
+
 ## [v2.2.8] - 2017-09-25
 
 ### Added
 
-- Support setting custom SDK logger
+- Support setting custom SDK logger.
 
 ## [v2.2.7] - 2017-09-01
 
 ### Added
 
-- Support image process APIs
-- Add advanced client for image process
+- Support image process APIs.
+- Add advanced client for image process.
 
 ### Changed
 
-- Force the zone ID to be lowercase
+- Force the zone ID to be lowercase.
 
 ### Fixed
 
-- Add support for the X-QS-Date header
+- Add support for the X-QS-Date header.
 
 ## [v2.2.6] - 2017-07-21
 
@@ -52,19 +58,19 @@ All notable changes to QingStor SDK for Go will be documented in this file.
 
 ### Added
 
-- Allow user to append additional info to User-Agent
+- Allow user to append additional info to User-Agent.
 
 ## [v2.2.2] - 2017-03-08
 
 ### Fixed
 
-- Resource is not mandatory in bucket policy statement
+- Resource is not mandatory in bucket policy statement.
 
 ## [v2.2.1] - 2017-03-05
 
 ### Changed
 
-- Add "Encrypted" field to  "KeyType" struct
+- Add "Encrypted" field to "KeyType" struct.
 
 ## [v2.2.0] - 2017-02-28
 
@@ -121,6 +127,7 @@ All notable changes to QingStor SDK for Go will be documented in this file.
 
 - QingStor SDK for the Go programming language.
 
+[v2.2.9]: https://github.com/yunify/qingstor-sdk-go/compare/v2.2.8...v2.2.9
 [v2.2.8]: https://github.com/yunify/qingstor-sdk-go/compare/v2.2.7...v2.2.8
 [v2.2.7]: https://github.com/yunify/qingstor-sdk-go/compare/v2.2.6...v2.2.7
 [v2.2.6]: https://github.com/yunify/qingstor-sdk-go/compare/v2.2.5...v2.2.6
