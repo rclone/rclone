@@ -1,12 +1,158 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2017-12-23"
+date: "2018-03-19"
 ---
 
 Changelog
 ---------
 
+  * v1.40 - 2018-03-19
+    * New backends
+      * Alias backend to create aliases for existing remote names (Fabian Möller)
+    * New commands
+      * `lsf`: list for parsing purposes (Jakub Tasiemski)
+         * by default this is a simple non recursive list of files and directories
+         * it can be configured to add more info in an easy to parse way
+      * `serve restic`: for serving a remote as a Restic REST endpoint
+         * This enables restic to use any backends that rclone can access
+         * Thanks Alexander Neumann for help, patches and review
+      * `rc`: enable the remote control of a running rclone
+         * The running rclone must be started with --rc and related flags.
+         * Currently there is support for bwlimit, and flushing for mount and cache.
+    * New Features
+      * `--max-delete` flag to add a delete threshold (Bjørn Erik Pedersen)
+      * All backends now support RangeOption for ranged Open
+         * `cat`: Use RangeOption for limited fetches to make more efficient
+         * `cryptcheck`: make reading of nonce more efficient with RangeOption
+      * serve http/webdav/restic
+         * support SSL/TLS
+         * add `--user` `--pass` and `--htpasswd` for authentication
+      * `copy`/`move`: detect file size change during copy/move and abort transfer (ishuah)
+      * `cryptdecode`: added option to return encrypted file names. (ishuah)
+      * `lsjson`: add `--encrypted` to show encrypted name (Jakub Tasiemski)
+      * Add `--stats-file-name-length` to specify the printed file name length for stats (Will Gunn)
+    * Compile
+      * Code base was shuffled and factored
+         * backends moved into a backend directory
+         * large packages split up
+         * See the CONTRIBUTING.md doc for info as to what lives where now
+      * Update to using go1.10 as the default go version
+      * Implement daily [full integration tests](https://pub.rclone.org/integration-tests/)
+    * Release
+      * Include a source tarball and sign it and the binaries
+      * Sign the git tags as part of the release process
+      * Add .deb and .rpm packages as part of the build
+      * Make a beta release for all branches on the main repo (but not pull requests)
+    * Bug Fixes
+      * config: fixes errors on non existing config by loading config file only on first access
+      * config: retry saving the config after failure (Mateusz)
+      * sync: when using `--backup-dir` don't delete files if we can't set their modtime
+         * this fixes odd behaviour with Dropbox and `--backup-dir`
+      * fshttp: fix idle timeouts for HTTP connections
+      * `serve http`: fix serving files with : in - fixes
+      * Fix `--exclude-if-present` to ignore directories which it doesn't have permission for (Iakov Davydov)
+      * Make accounting work properly with crypt and b2
+      * remove `--no-traverse` flag because it is obsolete
+    * Mount
+      * Add `--attr-timeout` flag to control attribute caching in kernel
+         * this now defaults to 0 which is correct but less efficient
+         * see [the mount docs](/commands/rclone_mount/#attribute-caching) for more info
+      * Add `--daemon` flag to allow mount to run in the background (ishuah)
+      * Fix: Return ENOSYS rather than EIO on attempted link
+         * This fixes FileZilla accessing an rclone mount served over sftp.
+      * Fix setting modtime twice
+      * Mount tests now run on CI for Linux (mount & cmount)/Mac/Windows
+      * Many bugs fixed in the VFS layer - see below
+    * VFS
+      * Many fixes for `--vfs-cache-mode` writes and above
+         * Update cached copy if we know it has changed (fixes stale data)
+         * Clean path names before using them in the cache
+         * Disable cache cleaner if `--vfs-cache-poll-interval=0`
+         * Fill and clean the cache immediately on startup
+      * Fix Windows opening every file when it stats the file
+      * Fix applying modtime for an open Write Handle
+      * Fix creation of files when truncating
+      * Write 0 bytes when flushing unwritten handles to avoid race conditions in FUSE
+      * Downgrade "poll-interval is not supported" message to Info
+      * Make OpenFile and friends return EINVAL if O_RDONLY and O_TRUNC
+    * Local
+      * Downgrade "invalid cross-device link: trying copy" to debug
+      * Make DirMove return fs.ErrorCantDirMove to allow fallback to Copy for cross device
+      * Fix race conditions updating the hashes
+    * Cache
+      * Add support for polling - cache will update when remote changes on supported backends
+      * Reduce log level for Plex api
+      * Fix dir cache issue
+      * Implement `--cache-db-wait-time` flag
+      * Improve efficiency with RangeOption and RangeSeek
+      * Fix dirmove with temp fs enabled
+      * Notify vfs when using temp fs
+      * Offline uploading
+      * Remote control support for path flushing
+    * Amazon cloud drive
+      * Rclone no longer has any working keys - disable integration tests
+      * Implement DirChangeNotify to notify cache/vfs/mount of changes
+    * Azureblob
+      * Don't check for bucket/container presense if listing was OK
+         * this makes rclone do one less request per invocation
+      * Improve accounting for chunked uploads
+    * Backblaze B2
+      * Don't check for bucket/container presense if listing was OK
+         * this makes rclone do one less request per invocation
+    * Box
+      * Improve accounting for chunked uploads
+    * Dropbox
+      * Fix custom oauth client parameters
+    * Google Cloud Storage
+      * Don't check for bucket/container presense if listing was OK
+         * this makes rclone do one less request per invocation
+    * Google Drive
+      * Migrate to api v3 (Fabian Möller)
+      * Add scope configuration and root folder selection
+      * Add `--drive-impersonate` for service accounts
+         * thanks to everyone who tested, explored and contributed docs
+      * Add `--drive-use-created-date` to use created date as modified date (nbuchanan)
+      * Request the export formats only when required
+        * This makes rclone quicker when there are no google docs
+      * Fix finding paths with latin1 chars (a workaround for a drive bug)
+      * Fix copying of a single Google doc file
+      * Fix `--drive-auth-owner-only` to look in all directories
+    * HTTP
+      * Fix handling of directories with & in
+    * Onedrive
+      * Removed upload cutoff and always do session uploads
+         * this stops the creation of multiple versions on business onedrive
+      * Overwrite object size value with real size when reading file. (Victor)
+         * this fixes oddities when onedrive misreports the size of images
+    * Pcloud
+      * Remove unused chunked upload flag and code
+    * Qingstor
+      * Don't check for bucket/container presense if listing was OK
+         * this makes rclone do one less request per invocation
+    * S3
+      * Support hashes for multipart files (Chris Redekop)
+      * Initial support for IBM COS (S3) (Giri Badanahatti)
+      * Update docs to discourage use of v2 auth with CEPH and others
+      * Don't check for bucket/container presense if listing was OK
+         * this makes rclone do one less request per invocation
+      * Fix server side copy and set modtime on files with + in
+    * SFTP
+      * Add option to disable remote hash check command execution (Jon Fautley)
+      * Add `--sftp-ask-password` flag to prompt for password when needed (Leo R. Lundgren)
+      * Add `set_modtime` configuration option
+      * Fix following of symlinks
+      * Fix reading config file outside of Fs setup
+      * Fix reading $USER in username fallback not $HOME
+      * Fix running under crontab - Use correct OS way of reading username 
+    * Swift
+      * Fix refresh of authentication token
+         * in v1.39 a bug was introduced which ignored new tokens - this fixes it
+      * Fix extra HEAD transaction when uploading a new file
+      * Don't check for bucket/container presense if listing was OK
+         * this makes rclone do one less request per invocation
+    * Webdav
+      * Add new time formats to support mydrive.ch and others
   * v1.39 - 2017-12-23
     * New backends
       * WebDAV
