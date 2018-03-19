@@ -2,6 +2,9 @@
 //
 // Automatically generated - DO NOT EDIT
 // Regenerate with: make gen_tests
+
+// +build !plan9,go1.8
+
 package sftp_test
 
 import (

@@ -1,3 +1,5 @@
+// +build !plan9,go1.8
+
 package sftp
 
 import (
