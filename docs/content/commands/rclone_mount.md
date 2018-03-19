@@ -1,5 +1,5 @@
 ---
-date: 2017-12-23T13:05:26Z
+date: 2018-03-19T10:05:30Z
 title: "rclone mount"
 slug: rclone_mount
 url: /commands/rclone_mount/
@@ -11,7 +11,6 @@ Mount the remote as a mountpoint. **EXPERIMENTAL**
 ### Synopsis
 
 
-
 rclone mount allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with
 FUSE.
@@ -19,11 +18,6 @@ FUSE.
 This is **EXPERIMENTAL** - use with care.
 
 First set up your remote using `rclone config`.  Check it works with `rclone ls` etc.
-
-You can either run mount in foreground mode or background(daemon) mode. Mount runs in
-foreground mode by default, use the `--daemon` flag to specify background mode mode.
-Background mode is only supported on Linux and OSX, you can only run mount in
-foreground mode on Windows.
 
 Start the mount like this
 
@@ -33,21 +27,18 @@ Or on Windows like this where X: is an unused drive letter
 
     rclone mount remote:path/to/files X:
 
-When running in background mode the user will have to stop the mount manually (specified below).
-
-When the program ends while in foreground mode, either via Ctrl+C or receiving
-a SIGINT or SIGTERM signal, the mount is automatically stopped.
+When the program ends, either via Ctrl+C or receiving a SIGINT or SIGTERM signal,
+the mount is automatically stopped.
 
 The umount operation can fail, for example when the mountpoint is busy.
-When that happens, it is the user's responsibility to stop the mount manually.
+When that happens, it is the user's responsibility to stop the mount manually with
 
-Stopping the mount manually:
     # Linux
     fusermount -u /path/to/local/mount
     # OS X
     umount /path/to/local/mount
 
-### Installing on Windows ###
+### Installing on Windows
 
 To run rclone mount on Windows, you will need to
 download and install [WinFsp](http://www.secfs.net/winfsp/).
@@ -60,7 +51,7 @@ uses combination with
 packages are by Bill Zissimopoulos who was very helpful during the
 implementation of rclone mount for Windows.
 
-#### Windows caveats ####
+#### Windows caveats
 
 Note that drives created as Administrator are not visible by other
 accounts (including the account that was elevated as
@@ -73,13 +64,16 @@ The easiest way around this is to start the drive from a normal
 command prompt. It is also possible to start a drive from the SYSTEM
 account (using [the WinFsp.Launcher
 infrastructure](https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Architecture))
-which creates drives accessible for everyone on the system.
+which creates drives accessible for everyone on the system or
+alternatively using [the nssm service manager](https://nssm.cc/usage).
 
-### Limitations ###
+### Limitations
 
-This can only write files seqentially, it can only seek when reading.
-This means that many applications won't work with their files on an
-rclone mount.
+Without the use of "--vfs-cache-mode" this can only write files
+sequentially, it can only seek when reading.  This means that many
+applications won't work with their files on an rclone mount without
+"--vfs-cache-mode writes" or "--vfs-cache-mode full".  See the [File
+Caching](#file-caching) section for more info.
 
 The bucket based remotes (eg Swift, S3, Google Compute Storage, B2,
 Hubic) won't work from the root - you will need to specify a bucket,
@@ -91,29 +85,43 @@ the directory cache.
 
 Only supported on Linux, FreeBSD, OS X and Windows at the moment.
 
-### rclone mount vs rclone sync/copy ##
+### rclone mount vs rclone sync/copy
 
 File systems expect things to be 100% reliable, whereas cloud storage
 systems are a long way from 100% reliable. The rclone sync/copy
 commands cope with this with lots of retries.  However rclone mount
 can't use retries in the same way without making local copies of the
-uploads.  This might happen in the future, but for the moment rclone
-mount won't do that, so will be less reliable than the rclone command.
+uploads. Look at the **EXPERIMENTAL** [file caching](#file-caching)
+for solutions to make mount mount more reliable.
 
-### Filters ###
+### Attribute caching
+
+You can use the flag --attr-timeout to set the time the kernel caches
+the attributes (size, modification time etc) for directory entries.
+
+The default is 0s - no caching - which is recommended for filesystems
+which can change outside the control of the kernel.
+
+If you set it higher ('1s' or '1m' say) then the kernel will call back
+to rclone less often making it more efficient, however there may be
+strange effects when files change on the remote.
+
+This is the same as setting the attr_timeout option in mount.fuse.
+
+### Filters
 
 Note that all the rclone filters can be used to select a subset of the
 files to be visible in the mount.
 
-### systemd ###
+### systemd
 
 When running rclone mount as a systemd service, it is possible
-to use Type=notify. In this case the service will enter the started state 
+to use Type=notify. In this case the service will enter the started state
 after the mountpoint has been successfully set up.
 Units having the rclone mount service specified as a requirement
 will see all files and folders immediately in this mode.
 
-### Directory Cache ###
+### Directory Cache
 
 Using the `--dir-cache-time` flag, you can set how long a
 directory should be considered up to date and not refreshed from the
@@ -128,12 +136,21 @@ like this:
 
     kill -SIGHUP $(pidof rclone)
 
-### File Caching ###
+If you configure rclone with a [remote control](/rc) then you can use
+rclone rc to flush the whole directory cache:
+
+    rclone rc vfs/forget
+
+Or individual files or directories:
+
+    rclone rc vfs/forget file=path/to/file dir=path/to/dir
+
+### File Caching
 
 **NB** File caching is **EXPERIMENTAL** - use with care!
 
 These flags control the VFS file caching options.  The VFS layer is
-used by rclone mount to make a cloud storage systm work more like a
+used by rclone mount to make a cloud storage system work more like a
 normal file system.
 
 You'll need to enable VFS caching if you want, for example, to read
@@ -142,7 +159,7 @@ and write simultaneously to a file.  See below for more details.
 Note that the VFS cache works in addition to the cache backend and you
 may find that you need one or the other or both.
 
-    --vfs-cache-dir string               Directory rclone will use for caching.
+    --cache-dir string                   Directory rclone will use for caching.
     --vfs-cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
     --vfs-cache-mode string              Cache mode off|minimal|writes|full (default "off")
     --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
@@ -161,7 +178,7 @@ closed so if rclone is quit or dies with open files then these won't
 get written back to the remote.  However they will still be in the on
 disk cache.
 
-#### --vfs-cache-mode off ####
+#### --vfs-cache-mode off
 
 In this mode the cache will read directly from the remote and write
 directly to the remote without caching anything on disk.
@@ -176,7 +193,7 @@ This will mean some operations are not possible
   * Open modes O_APPEND, O_TRUNC are ignored
   * If an upload fails it can't be retried
 
-#### --vfs-cache-mode minimal ####
+#### --vfs-cache-mode minimal
 
 This is very similar to "off" except that files opened for read AND
 write will be buffered to disks.  This means that files opened for
@@ -189,7 +206,7 @@ These operations are not possible
   * Files opened for write only will ignore O_APPEND, O_TRUNC
   * If an upload fails it can't be retried
 
-#### --vfs-cache-mode writes ####
+#### --vfs-cache-mode writes
 
 In this mode files opened for read only are still read directly from
 the remote, write only and read/write files are buffered to disk
@@ -199,14 +216,14 @@ This mode should support all normal file system operations.
 
 If an upload fails it will be retried up to --low-level-retries times.
 
-#### --vfs-cache-mode full ####
+#### --vfs-cache-mode full
 
 In this mode all reads and writes are buffered to and from disk.  When
 a file is opened for read it will be downloaded in its entirety first.
 
 This may be appropriate for your needs, or you may prefer to look at
 the cache backend which does a much more sophisticated job of caching,
-including caching directory heirachies and chunks of files.q
+including caching directory hierarchies and chunks of files.
 
 In this mode, unlike the others, when a file is written to the disk,
 it will be kept on the disk after it is written to the remote.  It
@@ -228,6 +245,8 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --allow-non-empty                    Allow mounting over a non-empty directory.
       --allow-other                        Allow access to other users.
       --allow-root                         Allow access to root user.
+      --attr-timeout duration              Time for which file/directory attributes are cached.
+      --daemon                             Run mount as a daemon (background mode).
       --debug-fuse                         Debug the FUSE internals - needs -v.
       --default-permissions                Makes kernel enforce access control based on the file mode.
       --dir-cache-time duration            Time to cache directory entries for. (default 5m0s)
@@ -274,10 +293,13 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --cache-chunk-size string             The size of a chunk (default "5M")
       --cache-db-path string                Directory to cache DB (default "/home/ncw/.cache/rclone/cache-backend")
       --cache-db-purge                      Purge the cache DB before
+      --cache-db-wait-time duration         How long to wait for the DB to be available - 0 is unlimited (default 1s)
       --cache-dir string                    Directory rclone will use for caching. (default "/home/ncw/.cache/rclone")
       --cache-info-age string               How much time should object info be stored in cache (default "6h")
       --cache-read-retries int              How many times to retry a read from a cache storage (default 10)
       --cache-rps int                       Limits the number of requests per second to the source FS. -1 disables the rate limiter (default -1)
+      --cache-tmp-upload-path string        Directory to keep temporary files until they are uploaded to the cloud storage
+      --cache-tmp-wait-time string          How long should files be stored in local cache before being uploaded (default "15m")
       --cache-total-chunk-size string       The total size which the chunks can take up from the disk (default "10G")
       --cache-workers int                   How many workers should run in parallel to download chunks (default 4)
       --cache-writes                        Will cache file data on writes through the FS
@@ -296,17 +318,19 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --drive-auth-owner-only               Only consider files owned by the authenticated user.
       --drive-chunk-size int                Upload chunk size. Must a power of 2 >= 256k. (default 8M)
       --drive-formats string                Comma separated list of preferred formats for downloading Google docs. (default "docx,xlsx,pptx,svg")
+      --drive-impersonate string            Impersonate this user when using a service account.
       --drive-list-chunk int                Size of listing chunk 100-1000. 0 to disable. (default 1000)
       --drive-shared-with-me                Only show files that are shared with me
       --drive-skip-gdocs                    Skip google documents in all listings.
       --drive-trashed-only                  Only show files that are in the trash
       --drive-upload-cutoff int             Cutoff for switching to chunked upload (default 8M)
+      --drive-use-created-date              Use created date instead of modified date.
       --drive-use-trash                     Send files to the trash instead of deleting permanently. (default true)
       --dropbox-chunk-size int              Upload chunk size. Max 150M. (default 48M)
   -n, --dry-run                             Do a trial run with no permanent changes
-      --dump string                         List of items to dump from: 
+      --dump string                         List of items to dump from: headers,bodies,requests,responses,auth,filters
       --dump-bodies                         Dump HTTP headers and bodies - may contain sensitive info
-      --dump-headers                        Dump HTTP headers - may contain sensitive info
+      --dump-headers                        Dump HTTP bodies - may contain sensitive info
       --exclude stringArray                 Exclude files matching pattern
       --exclude-from stringArray            Read exclude patterns from file
       --exclude-if-present string           Exclude directories if filename is present
@@ -327,29 +351,41 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --log-file string                     Log everything to this file
       --log-level string                    Log level DEBUG|INFO|NOTICE|ERROR (default "NOTICE")
       --low-level-retries int               Number of low level retries to do. (default 10)
-      --max-age string                      Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y
+      --max-age duration                    Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
+      --max-delete int                      When synchronizing, limit the number of deletes (default -1)
       --max-depth int                       If set limits the recursion depth to this. (default -1)
       --max-size int                        Don't transfer any file larger than this in k or suffix b|k|M|G (default off)
       --memprofile string                   Write memory profile to file
-      --min-age string                      Don't transfer any file younger than this in s or suffix ms|s|m|h|d|w|M|y
+      --min-age duration                    Don't transfer any file younger than this in s or suffix ms|s|m|h|d|w|M|y (default off)
       --min-size int                        Don't transfer any file smaller than this in k or suffix b|k|M|G (default off)
       --modify-window duration              Max time diff to be considered the same (default 1ns)
       --no-check-certificate                Do not verify the server SSL certificate. Insecure.
       --no-gzip-encoding                    Don't set Accept-Encoding: gzip.
-      --no-traverse                         Don't traverse destination file system on copy.
+      --no-traverse                         Obsolete - does nothing.
       --no-update-modtime                   Don't update destination mod-time if files identical.
-      --old-sync-method                     Deprecated - use --fast-list instead
   -x, --one-file-system                     Don't cross filesystem boundaries.
       --onedrive-chunk-size int             Above this size files will be chunked - must be multiple of 320k. (default 10M)
-      --onedrive-upload-cutoff int          Cutoff for switching to chunked upload - must be <= 100MB (default 10M)
-      --pcloud-upload-cutoff int            Cutoff for switching to multipart upload (default 50M)
   -q, --quiet                               Print as little stuff as possible
+      --rc                                  Enable the remote control server.
+      --rc-addr string                      IPaddress:Port or :Port to bind server to. (default "localhost:5572")
+      --rc-cert string                      SSL PEM key (concatenation of certificate and CA certificate)
+      --rc-client-ca string                 Client certificate authority to verify clients with
+      --rc-htpasswd string                  htpasswd file - if not provided no authentication is done
+      --rc-key string                       SSL PEM Private key
+      --rc-max-header-bytes int             Maximum size of request header (default 4096)
+      --rc-pass string                      Password for authentication.
+      --rc-realm string                     realm for authentication (default "rclone")
+      --rc-server-read-timeout duration     Timeout for server reading data (default 1h0m0s)
+      --rc-server-write-timeout duration    Timeout for server writing data (default 1h0m0s)
+      --rc-user string                      User name for authentication.
       --retries int                         Retry operations this many times if they fail (default 3)
       --s3-acl string                       Canned ACL used when creating buckets and/or storing objects in S3
       --s3-storage-class string             Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA)
+      --sftp-ask-password                   Allow asking for SFTP password when needed.
       --size-only                           Skip based on size only, not mod-time or checksum
       --skip-links                          Don't warn about skipped symlinks.
       --stats duration                      Interval between printing stats, e.g 500ms, 60s, 5m. (0 to disable) (default 1m0s)
+      --stats-file-name-length int          Max file name length in stats. 0 for no limit (default 40)
       --stats-log-level string              Log level to show --stats output DEBUG|INFO|NOTICE|ERROR (default "INFO")
       --stats-unit string                   Show data rate in stats as either 'bits' or 'bytes'/s (default "bytes")
       --streaming-upload-cutoff int         Cutoff for switching to chunked upload if file size is unknown. Upload starts after reaching cutoff or when file ends. (default 100k)
@@ -363,11 +399,12 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --track-renames                       When synchronizing, track file renames and do a server side move if possible
       --transfers int                       Number of file transfers to run in parallel. (default 4)
   -u, --update                              Skip files that are newer on the destination.
-      --user-agent string                   Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.39")
-  -v, --verbose count[=-1]                  Print lots more stuff (repeat for more)
+      --user-agent string                   Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.40")
+  -v, --verbose count                       Print lots more stuff (repeat for more)
 ```
 
 ### SEE ALSO
-* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.39
 
-###### Auto generated by spf13/cobra on 23-Dec-2017
+* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.40
+
+###### Auto generated by spf13/cobra on 19-Mar-2018
