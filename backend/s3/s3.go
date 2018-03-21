@@ -550,7 +550,7 @@ func (f *Fs) list(dir string, recurse bool, fn listFn) error {
 			}
 			remote := key[rootLength:]
 			// is this a directory marker?
-			if strings.HasSuffix(remote, "/") && *object.Size == 0 {
+			if (strings.HasSuffix(remote, "/") || remote == "") && *object.Size == 0 {
 				if recurse {
 					// add a directory in if --fast-list since will have no prefixes
 					remote = remote[:len(remote)-1]
