@@ -146,34 +146,17 @@ func (r *Handle) scaleWorkers(desired int) {
 	}
 }
 
-func (r *Handle) requestExternalConfirmation() {
-	// if there's no external confirmation available
-	// then we skip this step
-	if len(r.workers) >= r.cacheFs().totalMaxWorkers ||
-		!r.cacheFs().plexConnector.isConnected() {
-		return
-	}
-	go r.cacheFs().plexConnector.isPlayingAsync(r.cachedObject, r.confirmReading)
-}
-
 func (r *Handle) confirmExternalReading() {
 	// if we have a max value of workers
 	// or there's no external confirmation available
 	// then we skip this step
-	if len(r.workers) >= r.cacheFs().totalMaxWorkers ||
+	if len(r.workers) > 1 ||
 		!r.cacheFs().plexConnector.isConnected() {
 		return
 	}
-
-	select {
-	case confirmed := <-r.confirmReading:
-		if !confirmed {
-			return
-		}
-	default:
+	if !r.cacheFs().plexConnector.isPlaying(r.cachedObject) {
 		return
 	}
-
 	fs.Infof(r, "confirmed reading by external reader")
 	r.scaleWorkers(r.cacheFs().totalMaxWorkers)
 }
@@ -209,8 +192,6 @@ func (r *Handle) queueOffset(offset int64) {
 			r.seenOffsets[o] = true
 			r.preloadQueue <- o
 		}
-
-		r.requestExternalConfirmation()
 	}
 }
 
@@ -294,7 +275,6 @@ func (r *Handle) Read(p []byte) (n int, err error) {
 	// first reading
 	if !r.reading {
 		r.reading = true
-		r.requestExternalConfirmation()
 	}
 	// reached EOF
 	if r.offset >= r.cachedObject.Size() {
