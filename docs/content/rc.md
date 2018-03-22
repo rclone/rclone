@@ -75,8 +75,8 @@ This sets the bandwidth limit to that passed in.
 
 Eg
 
-    rclone core/bwlimit rate=1M
-    rclone core/bwlimit rate=off
+    rclone rc core/bwlimit rate=1M
+    rclone rc core/bwlimit rate=off
 
 ### cache/expire: Purge a remote from cache
 
@@ -85,6 +85,11 @@ Params:
 
   - remote = path to remote (required)
   - withData = true/false to delete cached data (chunks) as well (optional)
+
+Eg
+
+    rclone rc cache/expire remote=path/to/sub/folder/
+    rclone rc cache/expire remote=/ withData=true 
 
 ### vfs/forget: Forget files or directories in the directory cache.
 
