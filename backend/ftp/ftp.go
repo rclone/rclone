@@ -111,6 +111,7 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
+// Decrement the number of connections and notify about it
 func (f *Fs) poolDecrement() {
 	f.poolCnd.L.Lock()
 	f.poolN--
@@ -123,14 +124,13 @@ func (f *Fs) ftpConnection() (*ftp.ServerConn, error) {
 	fs.Debugf(f, "Connecting to FTP server")
 	c, err := ftp.DialTimeout(f.dialAddr, fs.Config.ConnectTimeout)
 	if err != nil {
-		fs.Errorf(f, "Error while Dialing %s: %s", f.dialAddr, err)
 		f.poolDecrement()
+		fs.Errorf(f, "Error while Dialing %s: %s", f.dialAddr, err)
 		return nil, errors.Wrap(err, "ftpConnection Dial")
 	}
 	err = c.Login(f.user, f.pass)
 	if err != nil {
-		_ = c.Quit()
-		f.poolDecrement()
+		f.dropFtpConnection(c)
 		fs.Errorf(f, "Error while Logging in into %s: %s", f.dialAddr, err)
 		return nil, errors.Wrap(err, "ftpConnection Login")
 	}
@@ -161,6 +161,12 @@ func (f *Fs) getFtpConnection() (c *ftp.ServerConn, err error) {
 	return f.ftpConnection()
 }
 
+// Drop an FTP connection, decrement the number of connections and notify about it
+func (f *Fs) dropFtpConnection(c *ftp.ServerConn) {
+	_ = c.Quit()
+	f.poolDecrement()
+}
+
 // Return an FTP connection to the pool
 //
 // It nils the pointed to connection out so it can't be reused
@@ -177,8 +183,7 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 			nopErr := c.NoOp()
 			if nopErr != nil {
 				fs.Debugf(f, "Connection failed, closing: %v", nopErr)
-				_ = c.Quit()
-				f.poolDecrement()
+				f.dropFtpConnection(c)
 				return
 			}
 		}
@@ -646,7 +651,7 @@ func (f *ftpReadCloser) Close() error {
 	err := f.rc.Close()
 	// if errors while reading or closing, dump the connection
 	if err != nil || f.err != nil {
-		_ = f.c.Quit()
+		f.f.dropFtpConnection(f.c)
 	} else {
 		f.f.putFtpConnection(&f.c, nil)
 	}
@@ -714,7 +719,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 	err = c.Stor(path, in)
 	if err != nil {
-		_ = c.Quit()
+		o.fs.dropFtpConnection(c)
 		remove()
 		return errors.Wrap(err, "update stor")
 	}
