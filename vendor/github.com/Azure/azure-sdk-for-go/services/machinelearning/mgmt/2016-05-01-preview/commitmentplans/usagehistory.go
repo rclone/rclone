@@ -44,8 +44,8 @@ func NewUsageHistoryClientWithBaseURI(baseURI string, subscriptionID string) Usa
 
 // List retrieve the usage history for an Azure ML commitment plan.
 //
-// resourceGroupName is the resource group name. commitmentPlanName is the Azure ML commitment plan name. skipToken is
-// continuation token for pagination.
+// resourceGroupName is the resource group name. commitmentPlanName is the Azure ML commitment plan name. skipToken
+// is continuation token for pagination.
 func (client UsageHistoryClient) List(ctx context.Context, resourceGroupName string, commitmentPlanName string, skipToken string) (result PlanUsageHistoryListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, commitmentPlanName, skipToken)

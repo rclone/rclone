@@ -42,8 +42,9 @@ func NewLoggersClientWithBaseURI(baseURI string, subscriptionID string) LoggersC
 
 // CreateOrUpdate creates or Updates a logger.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. loggerid
-// is logger identifier. Must be unique in the API Management service instance. parameters is create parameters.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// loggerid is logger identifier. Must be unique in the API Management service instance. parameters is create
+// parameters.
 func (client LoggersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, loggerid string, parameters LoggerCreateParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -56,7 +57,7 @@ func (client LoggersClient) CreateOrUpdate(ctx context.Context, resourceGroupNam
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Type", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.Credentials", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.LoggersClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.LoggersClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, loggerid, parameters)
@@ -125,9 +126,10 @@ func (client LoggersClient) CreateOrUpdateResponder(resp *http.Response) (result
 
 // Delete deletes the specified logger.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. loggerid
-// is logger identifier. Must be unique in the API Management service instance. ifMatch is the entity state (Etag)
-// version of the logger to delete. A value of "*" can be used for If-Match to unconditionally apply the operation.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// loggerid is logger identifier. Must be unique in the API Management service instance. ifMatch is the entity
+// state (Etag) version of the logger to delete. A value of "*" can be used for If-Match to unconditionally apply
+// the operation.
 func (client LoggersClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, loggerid string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -137,7 +139,7 @@ func (client LoggersClient) Delete(ctx context.Context, resourceGroupName string
 		{TargetValue: loggerid,
 			Constraints: []validation.Constraint{{Target: "loggerid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "loggerid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.LoggersClient", "Delete")
+		return result, validation.NewError("apimanagement.LoggersClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, loggerid, ifMatch)
@@ -205,8 +207,8 @@ func (client LoggersClient) DeleteResponder(resp *http.Response) (result autores
 
 // Get gets the details of the logger specified by its identifier.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. loggerid
-// is logger identifier. Must be unique in the API Management service instance.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// loggerid is logger identifier. Must be unique in the API Management service instance.
 func (client LoggersClient) Get(ctx context.Context, resourceGroupName string, serviceName string, loggerid string) (result LoggerResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -216,7 +218,7 @@ func (client LoggersClient) Get(ctx context.Context, resourceGroupName string, s
 		{TargetValue: loggerid,
 			Constraints: []validation.Constraint{{Target: "loggerid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "loggerid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.LoggersClient", "Get")
+		return result, validation.NewError("apimanagement.LoggersClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, loggerid)
@@ -284,12 +286,12 @@ func (client LoggersClient) GetResponder(resp *http.Response) (result LoggerResp
 
 // ListByService lists a collection of loggers in the specified service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. filter
-// is | Field | Supported operators    | Supported functions                         |
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// filter is | Field | Supported operators    | Supported functions                         |
 // |-------|------------------------|---------------------------------------------|
 // | id    | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | type  | eq                     |                                             | top is number of records to return.
-// skip is number of records to skip.
+// | type  | eq                     |                                             | top is number of records to
+// return. skip is number of records to skip.
 func (client LoggersClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result LoggerCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -302,7 +304,7 @@ func (client LoggersClient) ListByService(ctx context.Context, resourceGroupName
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.LoggersClient", "ListByService")
+		return result, validation.NewError("apimanagement.LoggersClient", "ListByService", err.Error())
 	}
 
 	result.fn = client.listByServiceNextResults
@@ -406,10 +408,10 @@ func (client LoggersClient) ListByServiceComplete(ctx context.Context, resourceG
 
 // Update updates an existing logger.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. loggerid
-// is logger identifier. Must be unique in the API Management service instance. parameters is update parameters.
-// ifMatch is the entity state (Etag) version of the logger to update. A value of "*" can be used for If-Match to
-// unconditionally apply the operation.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// loggerid is logger identifier. Must be unique in the API Management service instance. parameters is update
+// parameters. ifMatch is the entity state (Etag) version of the logger to update. A value of "*" can be used for
+// If-Match to unconditionally apply the operation.
 func (client LoggersClient) Update(ctx context.Context, resourceGroupName string, serviceName string, loggerid string, parameters LoggerUpdateParameters, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -419,7 +421,7 @@ func (client LoggersClient) Update(ctx context.Context, resourceGroupName string
 		{TargetValue: loggerid,
 			Constraints: []validation.Constraint{{Target: "loggerid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "loggerid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.LoggersClient", "Update")
+		return result, validation.NewError("apimanagement.LoggersClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serviceName, loggerid, parameters, ifMatch)

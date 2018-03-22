@@ -53,7 +53,6 @@ func New(client *http.Client) (*Service, error) {
 	s.Analytics = NewAnalyticsService(s)
 	s.ClientMessages = NewClientMessagesService(s)
 	s.Companies = NewCompaniesService(s)
-	s.Exams = NewExamsService(s)
 	s.Leads = NewLeadsService(s)
 	s.Offers = NewOffersService(s)
 	s.UserEvents = NewUserEventsService(s)
@@ -73,8 +72,6 @@ type Service struct {
 	ClientMessages *ClientMessagesService
 
 	Companies *CompaniesService
-
-	Exams *ExamsService
 
 	Leads *LeadsService
 
@@ -132,15 +129,6 @@ func NewCompaniesLeadsService(s *Service) *CompaniesLeadsService {
 }
 
 type CompaniesLeadsService struct {
-	s *Service
-}
-
-func NewExamsService(s *Service) *ExamsService {
-	rs := &ExamsService{s: s}
-	return rs
-}
-
-type ExamsService struct {
 	s *Service
 }
 
@@ -1248,57 +1236,6 @@ type ExamStatus struct {
 
 func (s *ExamStatus) MarshalJSON() ([]byte, error) {
 	type NoMethod ExamStatus
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// ExamToken: A token that allows a user to take an exam.
-type ExamToken struct {
-	// ExamId: The id of the exam the token is for.
-	ExamId int64 `json:"examId,omitempty,string"`
-
-	// ExamType: The type of the exam the token belongs to.
-	//
-	// Possible values:
-	//   "CERTIFICATION_EXAM_TYPE_UNSPECIFIED" - Unchosen.
-	//   "CET_ADWORDS_FUNDAMENTALS" - Adwords Fundamentals exam.
-	//   "CET_ADWORDS_ADVANCED_SEARCH" - AdWords advanced search exam.
-	//   "CET_ADWORDS_ADVANCED_DISPLAY" - AdWords advanced display exam.
-	//   "CET_VIDEO_ADS" - VideoAds exam.
-	//   "CET_DOUBLECLICK" - DoubleClick exam.
-	//   "CET_ANALYTICS" - Analytics exam.
-	//   "CET_SHOPPING" - Shopping exam.
-	//   "CET_MOBILE" - Mobile exam.
-	//   "CET_DIGITAL_SALES" - Digital Sales exam.
-	//   "CET_MOBILE_SITES" - Mobile Sites exam.
-	ExamType string `json:"examType,omitempty"`
-
-	// Token: The token, only present if the user has access to the exam.
-	Token string `json:"token,omitempty"`
-
-	// ServerResponse contains the HTTP response code and headers from the
-	// server.
-	googleapi.ServerResponse `json:"-"`
-
-	// ForceSendFields is a list of field names (e.g. "ExamId") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "ExamId") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *ExamToken) MarshalJSON() ([]byte, error) {
-	type NoMethod ExamToken
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -4554,251 +4491,6 @@ func (c *CompaniesLeadsCreateCall) Do(opts ...googleapi.CallOption) (*CreateLead
 	//   },
 	//   "response": {
 	//     "$ref": "CreateLeadResponse"
-	//   }
-	// }
-
-}
-
-// method id "partners.exams.getToken":
-
-type ExamsGetTokenCall struct {
-	s            *Service
-	examType     string
-	urlParams_   gensupport.URLParams
-	ifNoneMatch_ string
-	ctx_         context.Context
-	header_      http.Header
-}
-
-// GetToken: Gets an Exam Token for a Partner's user to take an exam in
-// the Exams System
-func (r *ExamsService) GetToken(examType string) *ExamsGetTokenCall {
-	c := &ExamsGetTokenCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.examType = examType
-	return c
-}
-
-// RequestMetadataExperimentIds sets the optional parameter
-// "requestMetadata.experimentIds": Experiment IDs the current request
-// belongs to.
-func (c *ExamsGetTokenCall) RequestMetadataExperimentIds(requestMetadataExperimentIds ...string) *ExamsGetTokenCall {
-	c.urlParams_.SetMulti("requestMetadata.experimentIds", append([]string{}, requestMetadataExperimentIds...))
-	return c
-}
-
-// RequestMetadataLocale sets the optional parameter
-// "requestMetadata.locale": Locale to use for the current request.
-func (c *ExamsGetTokenCall) RequestMetadataLocale(requestMetadataLocale string) *ExamsGetTokenCall {
-	c.urlParams_.Set("requestMetadata.locale", requestMetadataLocale)
-	return c
-}
-
-// RequestMetadataPartnersSessionId sets the optional parameter
-// "requestMetadata.partnersSessionId": Google Partners session ID.
-func (c *ExamsGetTokenCall) RequestMetadataPartnersSessionId(requestMetadataPartnersSessionId string) *ExamsGetTokenCall {
-	c.urlParams_.Set("requestMetadata.partnersSessionId", requestMetadataPartnersSessionId)
-	return c
-}
-
-// RequestMetadataTrafficSourceTrafficSourceId sets the optional
-// parameter "requestMetadata.trafficSource.trafficSourceId": Identifier
-// to indicate where the traffic comes from.
-// An identifier has multiple letters created by a team which redirected
-// the
-// traffic to us.
-func (c *ExamsGetTokenCall) RequestMetadataTrafficSourceTrafficSourceId(requestMetadataTrafficSourceTrafficSourceId string) *ExamsGetTokenCall {
-	c.urlParams_.Set("requestMetadata.trafficSource.trafficSourceId", requestMetadataTrafficSourceTrafficSourceId)
-	return c
-}
-
-// RequestMetadataTrafficSourceTrafficSubId sets the optional parameter
-// "requestMetadata.trafficSource.trafficSubId": Second level identifier
-// to indicate where the traffic comes from.
-// An identifier has multiple letters created by a team which redirected
-// the
-// traffic to us.
-func (c *ExamsGetTokenCall) RequestMetadataTrafficSourceTrafficSubId(requestMetadataTrafficSourceTrafficSubId string) *ExamsGetTokenCall {
-	c.urlParams_.Set("requestMetadata.trafficSource.trafficSubId", requestMetadataTrafficSourceTrafficSubId)
-	return c
-}
-
-// RequestMetadataUserOverridesIpAddress sets the optional parameter
-// "requestMetadata.userOverrides.ipAddress": IP address to use instead
-// of the user's geo-located IP address.
-func (c *ExamsGetTokenCall) RequestMetadataUserOverridesIpAddress(requestMetadataUserOverridesIpAddress string) *ExamsGetTokenCall {
-	c.urlParams_.Set("requestMetadata.userOverrides.ipAddress", requestMetadataUserOverridesIpAddress)
-	return c
-}
-
-// RequestMetadataUserOverridesUserId sets the optional parameter
-// "requestMetadata.userOverrides.userId": Logged-in user ID to
-// impersonate instead of the user's ID.
-func (c *ExamsGetTokenCall) RequestMetadataUserOverridesUserId(requestMetadataUserOverridesUserId string) *ExamsGetTokenCall {
-	c.urlParams_.Set("requestMetadata.userOverrides.userId", requestMetadataUserOverridesUserId)
-	return c
-}
-
-// Fields allows partial responses to be retrieved. See
-// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
-// for more information.
-func (c *ExamsGetTokenCall) Fields(s ...googleapi.Field) *ExamsGetTokenCall {
-	c.urlParams_.Set("fields", googleapi.CombineFields(s))
-	return c
-}
-
-// IfNoneMatch sets the optional parameter which makes the operation
-// fail if the object's ETag matches the given value. This is useful for
-// getting updates only after the object has changed since the last
-// request. Use googleapi.IsNotModified to check whether the response
-// error from Do is the result of In-None-Match.
-func (c *ExamsGetTokenCall) IfNoneMatch(entityTag string) *ExamsGetTokenCall {
-	c.ifNoneMatch_ = entityTag
-	return c
-}
-
-// Context sets the context to be used in this call's Do method. Any
-// pending HTTP request will be aborted if the provided context is
-// canceled.
-func (c *ExamsGetTokenCall) Context(ctx context.Context) *ExamsGetTokenCall {
-	c.ctx_ = ctx
-	return c
-}
-
-// Header returns an http.Header that can be modified by the caller to
-// add HTTP headers to the request.
-func (c *ExamsGetTokenCall) Header() http.Header {
-	if c.header_ == nil {
-		c.header_ = make(http.Header)
-	}
-	return c.header_
-}
-
-func (c *ExamsGetTokenCall) doRequest(alt string) (*http.Response, error) {
-	reqHeaders := make(http.Header)
-	for k, v := range c.header_ {
-		reqHeaders[k] = v
-	}
-	reqHeaders.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	var body io.Reader = nil
-	c.urlParams_.Set("alt", alt)
-	urls := googleapi.ResolveRelative(c.s.BasePath, "v2/exams/{examType}/token")
-	urls += "?" + c.urlParams_.Encode()
-	req, _ := http.NewRequest("GET", urls, body)
-	req.Header = reqHeaders
-	googleapi.Expand(req.URL, map[string]string{
-		"examType": c.examType,
-	})
-	return gensupport.SendRequest(c.ctx_, c.s.client, req)
-}
-
-// Do executes the "partners.exams.getToken" call.
-// Exactly one of *ExamToken or error will be non-nil. Any non-2xx
-// status code is an error. Response headers are in either
-// *ExamToken.ServerResponse.Header or (if a response was returned at
-// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
-// to check whether the returned error was because
-// http.StatusNotModified was returned.
-func (c *ExamsGetTokenCall) Do(opts ...googleapi.CallOption) (*ExamToken, error) {
-	gensupport.SetOptions(c.urlParams_, opts...)
-	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, &googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer googleapi.CloseBody(res)
-	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
-	}
-	ret := &ExamToken{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	if err := gensupport.DecodeResponse(target, res); err != nil {
-		return nil, err
-	}
-	return ret, nil
-	// {
-	//   "description": "Gets an Exam Token for a Partner's user to take an exam in the Exams System",
-	//   "flatPath": "v2/exams/{examType}/token",
-	//   "httpMethod": "GET",
-	//   "id": "partners.exams.getToken",
-	//   "parameterOrder": [
-	//     "examType"
-	//   ],
-	//   "parameters": {
-	//     "examType": {
-	//       "description": "The exam type we are requesting a token for.",
-	//       "enum": [
-	//         "CERTIFICATION_EXAM_TYPE_UNSPECIFIED",
-	//         "CET_ADWORDS_FUNDAMENTALS",
-	//         "CET_ADWORDS_ADVANCED_SEARCH",
-	//         "CET_ADWORDS_ADVANCED_DISPLAY",
-	//         "CET_VIDEO_ADS",
-	//         "CET_DOUBLECLICK",
-	//         "CET_ANALYTICS",
-	//         "CET_SHOPPING",
-	//         "CET_MOBILE",
-	//         "CET_DIGITAL_SALES",
-	//         "CET_MOBILE_SITES"
-	//       ],
-	//       "location": "path",
-	//       "required": true,
-	//       "type": "string"
-	//     },
-	//     "requestMetadata.experimentIds": {
-	//       "description": "Experiment IDs the current request belongs to.",
-	//       "location": "query",
-	//       "repeated": true,
-	//       "type": "string"
-	//     },
-	//     "requestMetadata.locale": {
-	//       "description": "Locale to use for the current request.",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
-	//     "requestMetadata.partnersSessionId": {
-	//       "description": "Google Partners session ID.",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
-	//     "requestMetadata.trafficSource.trafficSourceId": {
-	//       "description": "Identifier to indicate where the traffic comes from.\nAn identifier has multiple letters created by a team which redirected the\ntraffic to us.",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
-	//     "requestMetadata.trafficSource.trafficSubId": {
-	//       "description": "Second level identifier to indicate where the traffic comes from.\nAn identifier has multiple letters created by a team which redirected the\ntraffic to us.",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
-	//     "requestMetadata.userOverrides.ipAddress": {
-	//       "description": "IP address to use instead of the user's geo-located IP address.",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
-	//     "requestMetadata.userOverrides.userId": {
-	//       "description": "Logged-in user ID to impersonate instead of the user's ID.",
-	//       "location": "query",
-	//       "type": "string"
-	//     }
-	//   },
-	//   "path": "v2/exams/{examType}/token",
-	//   "response": {
-	//     "$ref": "ExamToken"
 	//   }
 	// }
 

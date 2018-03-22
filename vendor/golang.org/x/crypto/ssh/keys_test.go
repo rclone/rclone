@@ -234,7 +234,7 @@ func TestMarshalParsePublicKey(t *testing.T) {
 	}
 }
 
-type authResult struct {
+type testAuthResult struct {
 	pubKey   PublicKey
 	options  []string
 	comments string
@@ -242,11 +242,11 @@ type authResult struct {
 	ok       bool
 }
 
-func testAuthorizedKeys(t *testing.T, authKeys []byte, expected []authResult) {
+func testAuthorizedKeys(t *testing.T, authKeys []byte, expected []testAuthResult) {
 	rest := authKeys
-	var values []authResult
+	var values []testAuthResult
 	for len(rest) > 0 {
-		var r authResult
+		var r testAuthResult
 		var err error
 		r.pubKey, r.comments, r.options, rest, err = ParseAuthorizedKey(rest)
 		r.ok = (err == nil)
@@ -264,7 +264,7 @@ func TestAuthorizedKeyBasic(t *testing.T) {
 	pub, pubSerialized := getTestKey()
 	line := "ssh-rsa " + pubSerialized + " user@host"
 	testAuthorizedKeys(t, []byte(line),
-		[]authResult{
+		[]testAuthResult{
 			{pub, nil, "user@host", "", true},
 		})
 }
@@ -286,7 +286,7 @@ func TestAuth(t *testing.T) {
 		authOptions := strings.Join(authWithOptions, eol)
 		rest2 := strings.Join(authWithOptions[3:], eol)
 		rest3 := strings.Join(authWithOptions[6:], eol)
-		testAuthorizedKeys(t, []byte(authOptions), []authResult{
+		testAuthorizedKeys(t, []byte(authOptions), []testAuthResult{
 			{pub, []string{`env="HOME=/home/root"`, "no-port-forwarding"}, "user@host", rest2, true},
 			{pub, []string{`env="HOME=/home/root2"`}, "user2@host2", rest3, true},
 			{nil, nil, "", "", false},
@@ -297,7 +297,7 @@ func TestAuth(t *testing.T) {
 func TestAuthWithQuotedSpaceInEnv(t *testing.T) {
 	pub, pubSerialized := getTestKey()
 	authWithQuotedSpaceInEnv := []byte(`env="HOME=/home/root dir",no-port-forwarding ssh-rsa ` + pubSerialized + ` user@host`)
-	testAuthorizedKeys(t, []byte(authWithQuotedSpaceInEnv), []authResult{
+	testAuthorizedKeys(t, []byte(authWithQuotedSpaceInEnv), []testAuthResult{
 		{pub, []string{`env="HOME=/home/root dir"`, "no-port-forwarding"}, "user@host", "", true},
 	})
 }
@@ -305,7 +305,7 @@ func TestAuthWithQuotedSpaceInEnv(t *testing.T) {
 func TestAuthWithQuotedCommaInEnv(t *testing.T) {
 	pub, pubSerialized := getTestKey()
 	authWithQuotedCommaInEnv := []byte(`env="HOME=/home/root,dir",no-port-forwarding ssh-rsa ` + pubSerialized + `   user@host`)
-	testAuthorizedKeys(t, []byte(authWithQuotedCommaInEnv), []authResult{
+	testAuthorizedKeys(t, []byte(authWithQuotedCommaInEnv), []testAuthResult{
 		{pub, []string{`env="HOME=/home/root,dir"`, "no-port-forwarding"}, "user@host", "", true},
 	})
 }
@@ -314,11 +314,11 @@ func TestAuthWithQuotedQuoteInEnv(t *testing.T) {
 	pub, pubSerialized := getTestKey()
 	authWithQuotedQuoteInEnv := []byte(`env="HOME=/home/\"root dir",no-port-forwarding` + "\t" + `ssh-rsa` + "\t" + pubSerialized + `   user@host`)
 	authWithDoubleQuotedQuote := []byte(`no-port-forwarding,env="HOME=/home/ \"root dir\"" ssh-rsa ` + pubSerialized + "\t" + `user@host`)
-	testAuthorizedKeys(t, []byte(authWithQuotedQuoteInEnv), []authResult{
+	testAuthorizedKeys(t, []byte(authWithQuotedQuoteInEnv), []testAuthResult{
 		{pub, []string{`env="HOME=/home/\"root dir"`, "no-port-forwarding"}, "user@host", "", true},
 	})
 
-	testAuthorizedKeys(t, []byte(authWithDoubleQuotedQuote), []authResult{
+	testAuthorizedKeys(t, []byte(authWithDoubleQuotedQuote), []testAuthResult{
 		{pub, []string{"no-port-forwarding", `env="HOME=/home/ \"root dir\""`}, "user@host", "", true},
 	})
 }
@@ -327,7 +327,7 @@ func TestAuthWithInvalidSpace(t *testing.T) {
 	_, pubSerialized := getTestKey()
 	authWithInvalidSpace := []byte(`env="HOME=/home/root dir", no-port-forwarding ssh-rsa ` + pubSerialized + ` user@host
 #more to follow but still no valid keys`)
-	testAuthorizedKeys(t, []byte(authWithInvalidSpace), []authResult{
+	testAuthorizedKeys(t, []byte(authWithInvalidSpace), []testAuthResult{
 		{nil, nil, "", "", false},
 	})
 }
@@ -337,7 +337,7 @@ func TestAuthWithMissingQuote(t *testing.T) {
 	authWithMissingQuote := []byte(`env="HOME=/home/root,no-port-forwarding ssh-rsa ` + pubSerialized + ` user@host
 env="HOME=/home/root",shared-control ssh-rsa ` + pubSerialized + ` user@host`)
 
-	testAuthorizedKeys(t, []byte(authWithMissingQuote), []authResult{
+	testAuthorizedKeys(t, []byte(authWithMissingQuote), []testAuthResult{
 		{pub, []string{`env="HOME=/home/root"`, `shared-control`}, "user@host", "", true},
 	})
 }

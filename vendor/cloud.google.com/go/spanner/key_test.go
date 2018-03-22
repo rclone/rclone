@@ -17,7 +17,6 @@ limitations under the License.
 package spanner
 
 import (
-	"reflect"
 	"testing"
 	"time"
 
@@ -193,7 +192,7 @@ func TestKey(t *testing.T) {
 		if err != nil {
 			t.Errorf("%v.proto() returns error %v; want nil error", test.k, err)
 		}
-		if !reflect.DeepEqual(gotProto, test.wantProto) {
+		if !testEqual(gotProto, test.wantProto) {
 			t.Errorf("%v.proto() = \n%v\nwant:\n%v", test.k, gotProto, test.wantProto)
 		}
 	}
@@ -246,7 +245,7 @@ func TestKeyRange(t *testing.T) {
 		if err != nil {
 			t.Errorf("%v.proto() returns error %v; want nil error", test.kr, err)
 		}
-		if !reflect.DeepEqual(gotProto, test.wantProto) {
+		if !testEqual(gotProto, test.wantProto) {
 			t.Errorf("%v.proto() = \n%v\nwant:\n%v", test.kr, gotProto.String(), test.wantProto.String())
 		}
 	}
@@ -255,7 +254,7 @@ func TestKeyRange(t *testing.T) {
 func TestPrefixRange(t *testing.T) {
 	got := Key{1}.AsPrefix()
 	want := KeyRange{Start: Key{1}, End: Key{1}, Kind: ClosedClosed}
-	if !reflect.DeepEqual(got, want) {
+	if !testEqual(got, want) {
 		t.Errorf("got %v, want %v", got, want)
 	}
 }
@@ -366,7 +365,7 @@ func TestKeySets(t *testing.T) {
 		if err != nil {
 			t.Errorf("#%d: %v.proto() returns error %v; want nil error", i, test.ks, err)
 		}
-		if !reflect.DeepEqual(gotProto, test.wantProto) {
+		if !testEqual(gotProto, test.wantProto) {
 			t.Errorf("#%d: %v.proto() = \n%v\nwant:\n%v", i, test.ks, gotProto.String(), test.wantProto.String())
 		}
 	}

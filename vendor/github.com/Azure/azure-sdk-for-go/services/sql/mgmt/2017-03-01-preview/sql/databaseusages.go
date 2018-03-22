@@ -43,9 +43,9 @@ func NewDatabaseUsagesClientWithBaseURI(baseURI string, subscriptionID string) D
 
 // ListByDatabase returns database usages.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database.
 func (client DatabaseUsagesClient) ListByDatabase(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result DatabaseUsageListResult, err error) {
 	req, err := client.ListByDatabasePreparer(ctx, resourceGroupName, serverName, databaseName)
 	if err != nil {

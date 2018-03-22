@@ -53,7 +53,7 @@ func (client ProfilesClient) Create(ctx context.Context, resourceGroupName strin
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}},
 		{TargetValue: profile,
 			Constraints: []validation.Constraint{{Target: "profile.Sku", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.ProfilesClient", "Create")
+		return result, validation.NewError("cdn.ProfilesClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, profileName, profile)
@@ -133,7 +133,7 @@ func (client ProfilesClient) Delete(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.ProfilesClient", "Delete")
+		return result, validation.NewError("cdn.ProfilesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, profileName)
@@ -212,7 +212,7 @@ func (client ProfilesClient) GenerateSsoURI(ctx context.Context, resourceGroupNa
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.ProfilesClient", "GenerateSsoURI")
+		return result, validation.NewError("cdn.ProfilesClient", "GenerateSsoURI", err.Error())
 	}
 
 	req, err := client.GenerateSsoURIPreparer(ctx, resourceGroupName, profileName)
@@ -287,7 +287,7 @@ func (client ProfilesClient) Get(ctx context.Context, resourceGroupName string, 
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.ProfilesClient", "Get")
+		return result, validation.NewError("cdn.ProfilesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, profileName)
@@ -451,7 +451,7 @@ func (client ProfilesClient) ListByResourceGroup(ctx context.Context, resourceGr
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.ProfilesClient", "ListByResourceGroup")
+		return result, validation.NewError("cdn.ProfilesClient", "ListByResourceGroup", err.Error())
 	}
 
 	result.fn = client.listByResourceGroupNextResults
@@ -553,7 +553,7 @@ func (client ProfilesClient) ListResourceUsage(ctx context.Context, resourceGrou
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.ProfilesClient", "ListResourceUsage")
+		return result, validation.NewError("cdn.ProfilesClient", "ListResourceUsage", err.Error())
 	}
 
 	result.fn = client.listResourceUsageNextResults
@@ -657,7 +657,7 @@ func (client ProfilesClient) ListSupportedOptimizationTypes(ctx context.Context,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.ProfilesClient", "ListSupportedOptimizationTypes")
+		return result, validation.NewError("cdn.ProfilesClient", "ListSupportedOptimizationTypes", err.Error())
 	}
 
 	req, err := client.ListSupportedOptimizationTypesPreparer(ctx, resourceGroupName, profileName)
@@ -726,15 +726,15 @@ func (client ProfilesClient) ListSupportedOptimizationTypesResponder(resp *http.
 // group.
 //
 // resourceGroupName is name of the Resource group within the Azure subscription. profileName is name of the CDN
-// profile which is unique within the resource group. profileUpdateParameters is profile properties needed to update an
-// existing profile.
+// profile which is unique within the resource group. profileUpdateParameters is profile properties needed to
+// update an existing profile.
 func (client ProfilesClient) Update(ctx context.Context, resourceGroupName string, profileName string, profileUpdateParameters ProfileUpdateParameters) (result ProfilesUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.ProfilesClient", "Update")
+		return result, validation.NewError("cdn.ProfilesClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, profileName, profileUpdateParameters)

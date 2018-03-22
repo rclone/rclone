@@ -146,8 +146,8 @@ type Annotation struct {
 }
 
 func (s *Annotation) MarshalJSON() ([]byte, error) {
-	type noMethod Annotation
-	raw := noMethod(*s)
+	type NoMethod Annotation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -181,8 +181,8 @@ type AttributeValue struct {
 }
 
 func (s *AttributeValue) MarshalJSON() ([]byte, error) {
-	type noMethod AttributeValue
-	raw := noMethod(*s)
+	type NoMethod AttributeValue
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -230,8 +230,8 @@ type Attributes struct {
 }
 
 func (s *Attributes) MarshalJSON() ([]byte, error) {
-	type noMethod Attributes
-	raw := noMethod(*s)
+	type NoMethod Attributes
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -259,8 +259,8 @@ type BatchWriteSpansRequest struct {
 }
 
 func (s *BatchWriteSpansRequest) MarshalJSON() ([]byte, error) {
-	type noMethod BatchWriteSpansRequest
-	raw := noMethod(*s)
+	type NoMethod BatchWriteSpansRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -333,8 +333,8 @@ type Link struct {
 }
 
 func (s *Link) MarshalJSON() ([]byte, error) {
-	type noMethod Link
-	raw := noMethod(*s)
+	type NoMethod Link
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -369,8 +369,8 @@ type Links struct {
 }
 
 func (s *Links) MarshalJSON() ([]byte, error) {
-	type noMethod Links
-	raw := noMethod(*s)
+	type NoMethod Links
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -408,8 +408,8 @@ type ListSpansResponse struct {
 }
 
 func (s *ListSpansResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListSpansResponse
-	raw := noMethod(*s)
+	type NoMethod ListSpansResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -447,8 +447,8 @@ type ListTracesResponse struct {
 }
 
 func (s *ListTracesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListTracesResponse
-	raw := noMethod(*s)
+	type NoMethod ListTracesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -481,8 +481,8 @@ type Module struct {
 }
 
 func (s *Module) MarshalJSON() ([]byte, error) {
-	type noMethod Module
-	raw := noMethod(*s)
+	type NoMethod Module
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -533,8 +533,8 @@ type NetworkEvent struct {
 }
 
 func (s *NetworkEvent) MarshalJSON() ([]byte, error) {
-	type noMethod NetworkEvent
-	raw := noMethod(*s)
+	type NoMethod NetworkEvent
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -649,8 +649,8 @@ type Span struct {
 }
 
 func (s *Span) MarshalJSON() ([]byte, error) {
-	type noMethod Span
-	raw := noMethod(*s)
+	type NoMethod Span
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -705,8 +705,8 @@ type StackFrame struct {
 }
 
 func (s *StackFrame) MarshalJSON() ([]byte, error) {
-	type noMethod StackFrame
-	raw := noMethod(*s)
+	type NoMethod StackFrame
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -740,8 +740,8 @@ type StackFrames struct {
 }
 
 func (s *StackFrames) MarshalJSON() ([]byte, error) {
-	type noMethod StackFrames
-	raw := noMethod(*s)
+	type NoMethod StackFrames
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -782,8 +782,8 @@ type StackTrace struct {
 }
 
 func (s *StackTrace) MarshalJSON() ([]byte, error) {
-	type noMethod StackTrace
-	raw := noMethod(*s)
+	type NoMethod StackTrace
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -901,8 +901,8 @@ type Status struct {
 }
 
 func (s *Status) MarshalJSON() ([]byte, error) {
-	type noMethod Status
-	raw := noMethod(*s)
+	type NoMethod Status
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -936,8 +936,8 @@ type TimeEvent struct {
 }
 
 func (s *TimeEvent) MarshalJSON() ([]byte, error) {
-	type noMethod TimeEvent
-	raw := noMethod(*s)
+	type NoMethod TimeEvent
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -980,8 +980,8 @@ type TimeEvents struct {
 }
 
 func (s *TimeEvents) MarshalJSON() ([]byte, error) {
-	type noMethod TimeEvents
-	raw := noMethod(*s)
+	type NoMethod TimeEvents
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1017,8 +1017,8 @@ type Trace struct {
 }
 
 func (s *Trace) MarshalJSON() ([]byte, error) {
-	type noMethod Trace
-	raw := noMethod(*s)
+	type NoMethod Trace
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1054,8 +1054,8 @@ type TruncatableString struct {
 }
 
 func (s *TruncatableString) MarshalJSON() ([]byte, error) {
-	type noMethod TruncatableString
-	raw := noMethod(*s)
+	type NoMethod TruncatableString
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1167,7 +1167,7 @@ func (c *ProjectsTracesBatchWriteCall) Do(opts ...googleapi.CallOption) (*Empty,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1377,7 +1377,7 @@ func (c *ProjectsTracesListCall) Do(opts ...googleapi.CallOption) (*ListTracesRe
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1579,7 +1579,7 @@ func (c *ProjectsTracesListSpansCall) Do(opts ...googleapi.CallOption) (*ListSpa
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1738,7 +1738,7 @@ func (c *ProjectsTracesSpansCreateCall) Do(opts ...googleapi.CallOption) (*Span,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

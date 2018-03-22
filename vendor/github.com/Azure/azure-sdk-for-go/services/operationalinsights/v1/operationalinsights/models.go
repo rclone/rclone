@@ -40,8 +40,8 @@ type ErrorDetail struct {
 	// Value - Indicates which value in 'target' is responsible for the error.
 	Value *string `json:"value,omitempty"`
 	// Resources - Indicates resources which were responsible for the error.
-	Resources            *[]string               `json:"resources,omitempty"`
-	AdditionalProperties *map[string]interface{} `json:"additionalProperties,omitempty"`
+	Resources            *[]string   `json:"resources,omitempty"`
+	AdditionalProperties interface{} `json:"additionalProperties,omitempty"`
 }
 
 // ErrorInfo ...
@@ -53,8 +53,8 @@ type ErrorInfo struct {
 	// Details - error details.
 	Details *[]ErrorDetail `json:"details,omitempty"`
 	// Innererror - Inner error details if they exist.
-	Innererror           *ErrorInfo              `json:"innererror,omitempty"`
-	AdditionalProperties *map[string]interface{} `json:"additionalProperties,omitempty"`
+	Innererror           *ErrorInfo  `json:"innererror,omitempty"`
+	AdditionalProperties interface{} `json:"additionalProperties,omitempty"`
 }
 
 // ErrorResponse contains details when the response code indicates an error.

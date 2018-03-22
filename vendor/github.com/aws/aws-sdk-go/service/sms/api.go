@@ -1267,7 +1267,6 @@ func (c *SMS) UpdateReplicationJobWithContext(ctx aws.Context, input *UpdateRepl
 }
 
 // Object representing a Connector
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/Connector
 type Connector struct {
 	_ struct{} `type:"structure"`
 
@@ -1372,7 +1371,6 @@ func (s *Connector) SetVmManagerType(v string) *Connector {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/CreateReplicationJobRequest
 type CreateReplicationJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1468,7 +1466,6 @@ func (s *CreateReplicationJobInput) SetServerId(v string) *CreateReplicationJobI
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/CreateReplicationJobResponse
 type CreateReplicationJobOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1492,7 +1489,6 @@ func (s *CreateReplicationJobOutput) SetReplicationJobId(v string) *CreateReplic
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/DeleteReplicationJobRequest
 type DeleteReplicationJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1531,7 +1527,6 @@ func (s *DeleteReplicationJobInput) SetReplicationJobId(v string) *DeleteReplica
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/DeleteReplicationJobResponse
 type DeleteReplicationJobOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1546,7 +1541,6 @@ func (s DeleteReplicationJobOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/DeleteServerCatalogRequest
 type DeleteServerCatalogInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1561,7 +1555,6 @@ func (s DeleteServerCatalogInput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/DeleteServerCatalogResponse
 type DeleteServerCatalogOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1576,7 +1569,6 @@ func (s DeleteServerCatalogOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/DisassociateConnectorRequest
 type DisassociateConnectorInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1615,7 +1607,6 @@ func (s *DisassociateConnectorInput) SetConnectorId(v string) *DisassociateConne
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/DisassociateConnectorResponse
 type DisassociateConnectorOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1630,7 +1621,6 @@ func (s DisassociateConnectorOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/GetConnectorsRequest
 type GetConnectorsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1664,7 +1654,6 @@ func (s *GetConnectorsInput) SetNextToken(v string) *GetConnectorsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/GetConnectorsResponse
 type GetConnectorsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1697,7 +1686,6 @@ func (s *GetConnectorsOutput) SetNextToken(v string) *GetConnectorsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/GetReplicationJobsRequest
 type GetReplicationJobsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1740,7 +1728,6 @@ func (s *GetReplicationJobsInput) SetReplicationJobId(v string) *GetReplicationJ
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/GetReplicationJobsResponse
 type GetReplicationJobsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1773,7 +1760,6 @@ func (s *GetReplicationJobsOutput) SetReplicationJobList(v []*ReplicationJob) *G
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/GetReplicationRunsRequest
 type GetReplicationRunsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1831,7 +1817,6 @@ func (s *GetReplicationRunsInput) SetReplicationJobId(v string) *GetReplicationR
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/GetReplicationRunsResponse
 type GetReplicationRunsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1873,7 +1858,6 @@ func (s *GetReplicationRunsOutput) SetReplicationRunList(v []*ReplicationRun) *G
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/GetServersRequest
 type GetServersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1907,7 +1891,6 @@ func (s *GetServersInput) SetNextToken(v string) *GetServersInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/GetServersResponse
 type GetServersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1958,7 +1941,6 @@ func (s *GetServersOutput) SetServerList(v []*Server) *GetServersOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/ImportServerCatalogRequest
 type ImportServerCatalogInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1973,7 +1955,6 @@ func (s ImportServerCatalogInput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/ImportServerCatalogResponse
 type ImportServerCatalogOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1989,7 +1970,6 @@ func (s ImportServerCatalogOutput) GoString() string {
 }
 
 // Object representing a Replication Job
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/ReplicationJob
 type ReplicationJob struct {
 	_ struct{} `type:"structure"`
 
@@ -2133,7 +2113,6 @@ func (s *ReplicationJob) SetVmServer(v *VmServer) *ReplicationJob {
 }
 
 // Object representing a Replication Run
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/ReplicationRun
 type ReplicationRun struct {
 	_ struct{} `type:"structure"`
 
@@ -2221,7 +2200,6 @@ func (s *ReplicationRun) SetType(v string) *ReplicationRun {
 }
 
 // Object representing a server
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/Server
 type Server struct {
 	_ struct{} `type:"structure"`
 
@@ -2281,7 +2259,6 @@ func (s *Server) SetVmServer(v *VmServer) *Server {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/StartOnDemandReplicationRunRequest
 type StartOnDemandReplicationRunInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2329,7 +2306,6 @@ func (s *StartOnDemandReplicationRunInput) SetReplicationJobId(v string) *StartO
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/StartOnDemandReplicationRunResponse
 type StartOnDemandReplicationRunOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2353,7 +2329,6 @@ func (s *StartOnDemandReplicationRunOutput) SetReplicationRunId(v string) *Start
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/UpdateReplicationJobRequest
 type UpdateReplicationJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2439,7 +2414,6 @@ func (s *UpdateReplicationJobInput) SetRoleName(v string) *UpdateReplicationJobI
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/UpdateReplicationJobResponse
 type UpdateReplicationJobOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2455,7 +2429,6 @@ func (s UpdateReplicationJobOutput) GoString() string {
 }
 
 // Object representing a VM server
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/VmServer
 type VmServer struct {
 	_ struct{} `type:"structure"`
 
@@ -2516,7 +2489,6 @@ func (s *VmServer) SetVmServerAddress(v *VmServerAddress) *VmServer {
 }
 
 // Object representing a server's location
-// See also, https://docs.aws.amazon.com/goto/WebAPI/sms-2016-10-24/VmServerAddress
 type VmServerAddress struct {
 	_ struct{} `type:"structure"`
 

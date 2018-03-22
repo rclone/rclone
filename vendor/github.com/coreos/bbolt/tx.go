@@ -303,7 +303,9 @@ func (tx *Tx) close() {
 }
 
 // Copy writes the entire database to a writer.
-// This function exists for backwards compatibility. Use WriteTo() instead.
+// This function exists for backwards compatibility.
+//
+// Deprecated; Use WriteTo() instead.
 func (tx *Tx) Copy(w io.Writer) error {
 	_, err := tx.WriteTo(w)
 	return err

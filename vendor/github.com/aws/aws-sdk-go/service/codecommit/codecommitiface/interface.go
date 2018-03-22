@@ -185,6 +185,10 @@ type CodeCommitAPI interface {
 	PostCommentReplyWithContext(aws.Context, *codecommit.PostCommentReplyInput, ...request.Option) (*codecommit.PostCommentReplyOutput, error)
 	PostCommentReplyRequest(*codecommit.PostCommentReplyInput) (*request.Request, *codecommit.PostCommentReplyOutput)
 
+	PutFile(*codecommit.PutFileInput) (*codecommit.PutFileOutput, error)
+	PutFileWithContext(aws.Context, *codecommit.PutFileInput, ...request.Option) (*codecommit.PutFileOutput, error)
+	PutFileRequest(*codecommit.PutFileInput) (*request.Request, *codecommit.PutFileOutput)
+
 	PutRepositoryTriggers(*codecommit.PutRepositoryTriggersInput) (*codecommit.PutRepositoryTriggersOutput, error)
 	PutRepositoryTriggersWithContext(aws.Context, *codecommit.PutRepositoryTriggersInput, ...request.Option) (*codecommit.PutRepositoryTriggersOutput, error)
 	PutRepositoryTriggersRequest(*codecommit.PutRepositoryTriggersInput) (*request.Request, *codecommit.PutRepositoryTriggersOutput)

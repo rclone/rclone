@@ -41,8 +41,8 @@ func NewCertificatesClientWithBaseURI(baseURI string, subscriptionID string) Cer
 
 // CreateOrUpdateCertificate sends the create or update certificate request.
 //
-// resourceGroupName is name of the resource group name is name of the certificate. certificateEnvelope is details of
-// certificate if it exists already.
+// resourceGroupName is name of the resource group name is name of the certificate. certificateEnvelope is details
+// of certificate if it exists already.
 func (client CertificatesClient) CreateOrUpdateCertificate(ctx context.Context, resourceGroupName string, name string, certificateEnvelope Certificate) (result Certificate, err error) {
 	req, err := client.CreateOrUpdateCertificatePreparer(ctx, resourceGroupName, name, certificateEnvelope)
 	if err != nil {
@@ -601,8 +601,8 @@ func (client CertificatesClient) GetCsrsResponder(resp *http.Response) (result L
 
 // UpdateCertificate sends the update certificate request.
 //
-// resourceGroupName is name of the resource group name is name of the certificate. certificateEnvelope is details of
-// certificate if it exists already.
+// resourceGroupName is name of the resource group name is name of the certificate. certificateEnvelope is details
+// of certificate if it exists already.
 func (client CertificatesClient) UpdateCertificate(ctx context.Context, resourceGroupName string, name string, certificateEnvelope Certificate) (result Certificate, err error) {
 	req, err := client.UpdateCertificatePreparer(ctx, resourceGroupName, name, certificateEnvelope)
 	if err != nil {

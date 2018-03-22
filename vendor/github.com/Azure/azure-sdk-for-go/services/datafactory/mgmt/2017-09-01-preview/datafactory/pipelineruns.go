@@ -43,7 +43,8 @@ func NewPipelineRunsClientWithBaseURI(baseURI string, subscriptionID string) Pip
 
 // Get get a pipeline run by its run ID.
 //
-// resourceGroupName is the resource group name. factoryName is the factory name. runID is the pipeline run identifier.
+// resourceGroupName is the resource group name. factoryName is the factory name. runID is the pipeline run
+// identifier.
 func (client PipelineRunsClient) Get(ctx context.Context, resourceGroupName string, factoryName string, runID string) (result PipelineRun, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -54,7 +55,7 @@ func (client PipelineRunsClient) Get(ctx context.Context, resourceGroupName stri
 			Constraints: []validation.Constraint{{Target: "factoryName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "factoryName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "factoryName", Name: validation.Pattern, Rule: `^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.PipelineRunsClient", "Get")
+		return result, validation.NewError("datafactory.PipelineRunsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, factoryName, runID)
@@ -137,7 +138,7 @@ func (client PipelineRunsClient) QueryByFactory(ctx context.Context, resourceGro
 		{TargetValue: filterParameters,
 			Constraints: []validation.Constraint{{Target: "filterParameters.LastUpdatedAfter", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "filterParameters.LastUpdatedBefore", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.PipelineRunsClient", "QueryByFactory")
+		return result, validation.NewError("datafactory.PipelineRunsClient", "QueryByFactory", err.Error())
 	}
 
 	req, err := client.QueryByFactoryPreparer(ctx, resourceGroupName, factoryName, filterParameters)

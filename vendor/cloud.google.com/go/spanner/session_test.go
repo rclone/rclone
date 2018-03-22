@@ -17,9 +17,9 @@ limitations under the License.
 package spanner
 
 import (
+	"bytes"
 	"container/heap"
 	"math/rand"
-	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -74,7 +74,7 @@ func TestSessionCreation(t *testing.T) {
 	if len(gotDs) != len(shs) {
 		t.Errorf("session pool created %v sessions, want %v", len(gotDs), len(shs))
 	}
-	if wantDs := sc.DumpSessions(); !reflect.DeepEqual(gotDs, wantDs) {
+	if wantDs := sc.DumpSessions(); !testEqual(gotDs, wantDs) {
 		t.Errorf("session pool creates sessions %v, want %v", gotDs, wantDs)
 	}
 	// Verify that created sessions are recorded correctly in session pool.
@@ -133,7 +133,7 @@ func TestTakeFromIdleList(t *testing.T) {
 	if len(gotSessions) != 10 {
 		t.Errorf("got %v unique sessions, want 10", len(gotSessions))
 	}
-	if !reflect.DeepEqual(gotSessions, wantSessions) {
+	if !testEqual(gotSessions, wantSessions) {
 		t.Errorf("got sessions: %v, want %v", gotSessions, wantSessions)
 	}
 }
@@ -177,7 +177,7 @@ func TestTakeWriteSessionFromIdleList(t *testing.T) {
 	if len(gotSessions) != 10 {
 		t.Errorf("got %v unique sessions, want 10", len(gotSessions))
 	}
-	if !reflect.DeepEqual(gotSessions, wantSessions) {
+	if !testEqual(gotSessions, wantSessions) {
 		t.Errorf("got sessions: %v, want %v", gotSessions, wantSessions)
 	}
 }
@@ -215,7 +215,7 @@ func TestTakeFromIdleListChecked(t *testing.T) {
 		}
 		// The two back-to-back session requests shouldn't trigger any session pings because sessionPool.Take
 		// reschedules the next healthcheck.
-		if got, want := sc.DumpPings(), ([]string{wantSid}); !reflect.DeepEqual(got, want) {
+		if got, want := sc.DumpPings(), ([]string{wantSid}); !testEqual(got, want) {
 			t.Errorf("%v - got ping session requests: %v, want %v", i, got, want)
 		}
 		sh.recycle()
@@ -272,7 +272,7 @@ func TestTakeFromIdleWriteListChecked(t *testing.T) {
 		}
 		// The two back-to-back session requests shouldn't trigger any session pings because sessionPool.Take
 		// reschedules the next healthcheck.
-		if got, want := sc.DumpPings(), ([]string{wantSid}); !reflect.DeepEqual(got, want) {
+		if got, want := sc.DumpPings(), ([]string{wantSid}); !testEqual(got, want) {
 			t.Errorf("%v - got ping session requests: %v, want %v", i, got, want)
 		}
 		sh.recycle()
@@ -311,7 +311,7 @@ func TestMaxOpenedSessions(t *testing.T) {
 	defer cancel()
 	// Session request will timeout due to the max open sessions constraint.
 	sh2, gotErr := sp.take(ctx)
-	if wantErr := errGetSessionTimeout(); !reflect.DeepEqual(gotErr, wantErr) {
+	if wantErr := errGetSessionTimeout(); !testEqual(gotErr, wantErr) {
 		t.Errorf("the second session retrival returns error %v, want %v", gotErr, wantErr)
 	}
 	go func() {
@@ -388,7 +388,7 @@ func TestMaxBurst(t *testing.T) {
 	defer cancel()
 	sh, gotErr := sp.take(ctx)
 	// Since MaxBurst == 1, the second session request should block.
-	if wantErr := errGetSessionTimeout(); !reflect.DeepEqual(gotErr, wantErr) {
+	if wantErr := errGetSessionTimeout(); !testEqual(gotErr, wantErr) {
 		t.Errorf("session retrival returns error %v, want %v", gotErr, wantErr)
 	}
 	// Let the first session request succeed.
@@ -474,7 +474,7 @@ func TestHcHeap(t *testing.T) {
 	for idx := 0; hh.Len() > 0; idx++ {
 		got := heap.Pop(&hh).(*session)
 		want[idx].hcIndex = -1
-		if !reflect.DeepEqual(got, want[idx]) {
+		if !testEqual(got, want[idx]) {
 			t.Errorf("%v: heap.Pop returns %v, want %v", idx, got, want[idx])
 		}
 	}
@@ -700,7 +700,7 @@ func TestStressSessionPool(t *testing.T) {
 						if pool.isValid() {
 							t.Errorf("%v.%v: pool.take returns error when pool is still valid: %v", ti, idx, gotErr)
 						}
-						if wantErr := errInvalidSessionPool(); !reflect.DeepEqual(gotErr, wantErr) {
+						if wantErr := errInvalidSessionPool(); !testEqual(gotErr, wantErr) {
 							t.Errorf("%v.%v: got error when pool is closed: %v, want %v", ti, idx, gotErr, wantErr)
 						}
 						continue
@@ -765,10 +765,10 @@ func TestStressSessionPool(t *testing.T) {
 		sp.mu.Unlock()
 
 		// Verify that idleSessions == hcSessions == mockSessions.
-		if !reflect.DeepEqual(idleSessions, hcSessions) {
+		if !testEqual(idleSessions, hcSessions) {
 			t.Errorf("%v: sessions in idle list (%v) != sessions in healthcheck queue (%v)", ti, idleSessions, hcSessions)
 		}
-		if !reflect.DeepEqual(hcSessions, mockSessions) {
+		if !testEqual(hcSessions, mockSessions) {
 			t.Errorf("%v: sessions in healthcheck queue (%v) != sessions in mockclient (%v)", ti, hcSessions, mockSessions)
 		}
 		sp.close()
@@ -840,4 +840,18 @@ func TestMaintainer(t *testing.T) {
 		t.Errorf("Scale down. Expect %d open, got %d", minOpened, sp.numOpened)
 	}
 	sp.mu.Unlock()
+}
+
+func (s1 *session) Equal(s2 *session) bool {
+	return s1.client == s2.client &&
+		s1.id == s2.id &&
+		s1.pool == s2.pool &&
+		s1.createTime == s2.createTime &&
+		s1.valid == s2.valid &&
+		s1.hcIndex == s2.hcIndex &&
+		s1.idleList == s2.idleList &&
+		s1.nextCheck.Equal(s2.nextCheck) &&
+		s1.checkingHealth == s2.checkingHealth &&
+		testEqual(s1.md, s2.md) &&
+		bytes.Equal(s1.tx, s2.tx)
 }

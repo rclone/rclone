@@ -42,7 +42,8 @@ func NewDefinitionsClientWithBaseURI(baseURI string, subscriptionID string) Defi
 
 // CreateOrUpdate creates or updates a policy definition.
 //
-// policyDefinitionName is the name of the policy definition to create. parameters is the policy definition properties.
+// policyDefinitionName is the name of the policy definition to create. parameters is the policy definition
+// properties.
 func (client DefinitionsClient) CreateOrUpdate(ctx context.Context, policyDefinitionName string, parameters Definition) (result Definition, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, policyDefinitionName, parameters)
 	if err != nil {
@@ -109,8 +110,8 @@ func (client DefinitionsClient) CreateOrUpdateResponder(resp *http.Response) (re
 
 // CreateOrUpdateAtManagementGroup creates or updates a policy definition at management group level.
 //
-// policyDefinitionName is the name of the policy definition to create. parameters is the policy definition properties.
-// managementGroupID is the ID of the management group.
+// policyDefinitionName is the name of the policy definition to create. parameters is the policy definition
+// properties. managementGroupID is the ID of the management group.
 func (client DefinitionsClient) CreateOrUpdateAtManagementGroup(ctx context.Context, policyDefinitionName string, parameters Definition, managementGroupID string) (result Definition, err error) {
 	req, err := client.CreateOrUpdateAtManagementGroupPreparer(ctx, policyDefinitionName, parameters, managementGroupID)
 	if err != nil {
@@ -241,8 +242,8 @@ func (client DefinitionsClient) DeleteResponder(resp *http.Response) (result aut
 
 // DeleteAtManagementGroup deletes a policy definition at management group level.
 //
-// policyDefinitionName is the name of the policy definition to delete. managementGroupID is the ID of the management
-// group.
+// policyDefinitionName is the name of the policy definition to delete. managementGroupID is the ID of the
+// management group.
 func (client DefinitionsClient) DeleteAtManagementGroup(ctx context.Context, policyDefinitionName string, managementGroupID string) (result autorest.Response, err error) {
 	req, err := client.DeleteAtManagementGroupPreparer(ctx, policyDefinitionName, managementGroupID)
 	if err != nil {

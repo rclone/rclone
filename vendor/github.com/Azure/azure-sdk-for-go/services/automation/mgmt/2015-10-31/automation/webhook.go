@@ -42,8 +42,8 @@ func NewWebhookClientWithBaseURI(baseURI string, subscriptionID string, resource
 
 // CreateOrUpdate create the webhook identified by webhook name.
 //
-// automationAccountName is the automation account name. webhookName is the webhook name. parameters is the create or
-// update parameters for webhook.
+// automationAccountName is the automation account name. webhookName is the webhook name. parameters is the create
+// or update parameters for webhook.
 func (client WebhookClient) CreateOrUpdate(ctx context.Context, automationAccountName string, webhookName string, parameters WebhookCreateOrUpdateParameters) (result Webhook, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
@@ -51,7 +51,7 @@ func (client WebhookClient) CreateOrUpdate(ctx context.Context, automationAccoun
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.WebhookCreateOrUpdateProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.WebhookClient", "CreateOrUpdate")
+		return result, validation.NewError("automation.WebhookClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, automationAccountName, webhookName, parameters)
@@ -126,7 +126,7 @@ func (client WebhookClient) Delete(ctx context.Context, automationAccountName st
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.WebhookClient", "Delete")
+		return result, validation.NewError("automation.WebhookClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, automationAccountName, webhookName)
@@ -198,7 +198,7 @@ func (client WebhookClient) GenerateURI(ctx context.Context, automationAccountNa
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.WebhookClient", "GenerateURI")
+		return result, validation.NewError("automation.WebhookClient", "GenerateURI", err.Error())
 	}
 
 	req, err := client.GenerateURIPreparer(ctx, automationAccountName)
@@ -270,7 +270,7 @@ func (client WebhookClient) Get(ctx context.Context, automationAccountName strin
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.WebhookClient", "Get")
+		return result, validation.NewError("automation.WebhookClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, webhookName)
@@ -343,7 +343,7 @@ func (client WebhookClient) ListByAutomationAccount(ctx context.Context, automat
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.WebhookClient", "ListByAutomationAccount")
+		return result, validation.NewError("automation.WebhookClient", "ListByAutomationAccount", err.Error())
 	}
 
 	result.fn = client.listByAutomationAccountNextResults
@@ -447,7 +447,7 @@ func (client WebhookClient) Update(ctx context.Context, automationAccountName st
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.WebhookClient", "Update")
+		return result, validation.NewError("automation.WebhookClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, automationAccountName, webhookName, parameters)

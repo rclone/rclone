@@ -65,7 +65,7 @@ func (client HubsClient) CreateOrUpdate(ctx context.Context, resourceGroupName s
 							}},
 					}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "customerinsights.HubsClient", "CreateOrUpdate")
+		return result, validation.NewError("customerinsights.HubsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, hubName, parameters)

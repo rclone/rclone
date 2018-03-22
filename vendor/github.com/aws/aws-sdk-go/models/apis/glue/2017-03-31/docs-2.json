@@ -6,9 +6,10 @@
     "BatchDeleteConnection": "<p>Deletes a list of connection definitions from the Data Catalog.</p>",
     "BatchDeletePartition": "<p>Deletes one or more partitions in a batch operation.</p>",
     "BatchDeleteTable": "<p>Deletes multiple tables at once.</p>",
+    "BatchDeleteTableVersion": "<p>Deletes a specified batch of versions of a table.</p>",
     "BatchGetPartition": "<p>Retrieves partitions in a batch request.</p>",
     "BatchStopJobRun": "<p>Stops one or more job runs for a specified Job.</p>",
-    "CreateClassifier": "<p>Creates a classifier in the user's account. This may be either a <code>GrokClassifier</code> or an <code>XMLClassifier</code>. </p>",
+    "CreateClassifier": "<p>Creates a classifier in the user's account. This may be a <code>GrokClassifier</code>, an <code>XMLClassifier</code>, or abbrev <code>JsonClassifier</code>, depending on which field of the request is present.</p>",
     "CreateConnection": "<p>Creates a connection definition in the Data Catalog.</p>",
     "CreateCrawler": "<p>Creates a new crawler with specified targets, role, configuration, and optional schedule. At least one crawl target must be specified, in either the <i>s3Targets</i> or the <i>jdbcTargets</i> field.</p>",
     "CreateDatabase": "<p>Creates a new database in a Data Catalog.</p>",
@@ -27,6 +28,7 @@
     "DeleteJob": "<p>Deletes a specified job. If the job is not found, no exception is thrown.</p>",
     "DeletePartition": "<p>Deletes a specified partition.</p>",
     "DeleteTable": "<p>Removes a table definition from the Data Catalog.</p>",
+    "DeleteTableVersion": "<p>Deletes a specified version of a table.</p>",
     "DeleteTrigger": "<p>Deletes a specified trigger. If the trigger is not found, no exception is thrown.</p>",
     "DeleteUserDefinedFunction": "<p>Deletes an existing function definition from the Data Catalog.</p>",
     "GetCatalogImportStatus": "<p>Retrieves the status of a migration operation.</p>",
@@ -51,6 +53,7 @@
     "GetPartitions": "<p>Retrieves information about the partitions in a table.</p>",
     "GetPlan": "<p>Gets code to perform a specified mapping.</p>",
     "GetTable": "<p>Retrieves the <code>Table</code> definition in a Data Catalog for a specified table.</p>",
+    "GetTableVersion": "<p>Retrieves a specified version of a table.</p>",
     "GetTableVersions": "<p>Retrieves a list of strings that identify available versions of a specified table.</p>",
     "GetTables": "<p>Retrieves the definitions of some or all of the tables in a given <code>Database</code>.</p>",
     "GetTrigger": "<p>Retrieves the definition of a trigger.</p>",
@@ -66,7 +69,7 @@
     "StopCrawler": "<p>If the specified crawler is running, stops the crawl.</p>",
     "StopCrawlerSchedule": "<p>Sets the schedule state of the specified crawler to <code>NOT_SCHEDULED</code>, but does not stop the crawler if it is already running.</p>",
     "StopTrigger": "<p>Stops a specified trigger.</p>",
-    "UpdateClassifier": "<p>Modifies an existing classifier (either a <code>GrokClassifier</code> or an <code>XMLClassifier</code>).</p>",
+    "UpdateClassifier": "<p>Modifies an existing classifier (a <code>GrokClassifier</code>, <code>XMLClassifier</code>, or <code>JsonClassifier</code>, depending on which field is present).</p>",
     "UpdateConnection": "<p>Updates a connection definition in the Data Catalog.</p>",
     "UpdateCrawler": "<p>Updates a crawler. If a crawler is running, you must stop it using <code>StopCrawler</code> before updating it.</p>",
     "UpdateCrawlerSchedule": "<p>Updates the schedule of a crawler using a <code>cron</code> expression. </p>",
@@ -161,6 +164,22 @@
       "refs": {
       }
     },
+    "BatchDeleteTableVersionList": {
+      "base": null,
+      "refs": {
+        "BatchDeleteTableVersionRequest$VersionIds": "<p>A list of the IDs of versions to be deleted.</p>"
+      }
+    },
+    "BatchDeleteTableVersionRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "BatchDeleteTableVersionResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "BatchGetPartitionRequest": {
       "base": null,
       "refs": {
@@ -228,6 +247,12 @@
         "StorageDescriptor$StoredAsSubDirectories": "<p>True if the table data is stored in subdirectories, or False if not.</p>"
       }
     },
+    "BooleanNullable": {
+      "base": null,
+      "refs": {
+        "UpdateTableRequest$SkipArchive": "<p>By default, <code>UpdateTable</code> always creates an archived version of the table before updating it. If <code>skipArchive</code> is set to true, however, <code>UpdateTable</code> does not create the archived version.</p>"
+      }
+    },
     "BooleanValue": {
       "base": null,
       "refs": {
@@ -263,6 +288,7 @@
         "BatchDeleteConnectionRequest$CatalogId": "<p>The ID of the Data Catalog in which the connections reside. If none is supplied, the AWS account ID is used by default.</p>",
         "BatchDeletePartitionRequest$CatalogId": "<p>The ID of the Data Catalog where the partition to be deleted resides. If none is supplied, the AWS account ID is used by default.</p>",
         "BatchDeleteTableRequest$CatalogId": "<p>The ID of the Data Catalog where the table resides. If none is supplied, the AWS account ID is used by default.</p>",
+        "BatchDeleteTableVersionRequest$CatalogId": "<p>The ID of the Data Catalog where the tables reside. If none is supplied, the AWS account ID is used by default.</p>",
         "BatchGetPartitionRequest$CatalogId": "<p>The ID of the Data Catalog where the partitions in question reside. If none is supplied, the AWS account ID is used by default.</p>",
         "CreateConnectionRequest$CatalogId": "<p>The ID of the Data Catalog in which to create the connection. If none is supplied, the AWS account ID is used by default.</p>",
         "CreateDatabaseRequest$CatalogId": "<p>The ID of the Data Catalog in which to create the database. If none is supplied, the AWS account ID is used by default.</p>",
@@ -273,6 +299,7 @@
         "DeleteDatabaseRequest$CatalogId": "<p>The ID of the Data Catalog in which the database resides. If none is supplied, the AWS account ID is used by default.</p>",
         "DeletePartitionRequest$CatalogId": "<p>The ID of the Data Catalog where the partition to be deleted resides. If none is supplied, the AWS account ID is used by default.</p>",
         "DeleteTableRequest$CatalogId": "<p>The ID of the Data Catalog where the table resides. If none is supplied, the AWS account ID is used by default.</p>",
+        "DeleteTableVersionRequest$CatalogId": "<p>The ID of the Data Catalog where the tables reside. If none is supplied, the AWS account ID is used by default.</p>",
         "DeleteUserDefinedFunctionRequest$CatalogId": "<p>The ID of the Data Catalog where the function to be deleted is located. If none is supplied, the AWS account ID is used by default.</p>",
         "GetCatalogImportStatusRequest$CatalogId": "<p>The ID of the catalog to migrate. Currently, this should be the AWS account ID.</p>",
         "GetConnectionRequest$CatalogId": "<p>The ID of the Data Catalog in which the connection resides. If none is supplied, the AWS account ID is used by default.</p>",
@@ -282,6 +309,7 @@
         "GetPartitionRequest$CatalogId": "<p>The ID of the Data Catalog where the partition in question resides. If none is supplied, the AWS account ID is used by default.</p>",
         "GetPartitionsRequest$CatalogId": "<p>The ID of the Data Catalog where the partitions in question reside. If none is supplied, the AWS account ID is used by default.</p>",
         "GetTableRequest$CatalogId": "<p>The ID of the Data Catalog where the table resides. If none is supplied, the AWS account ID is used by default.</p>",
+        "GetTableVersionRequest$CatalogId": "<p>The ID of the Data Catalog where the tables reside. If none is supplied, the AWS account ID is used by default.</p>",
         "GetTableVersionsRequest$CatalogId": "<p>The ID of the Data Catalog where the tables reside. If none is supplied, the AWS account ID is used by default.</p>",
         "GetTablesRequest$CatalogId": "<p>The ID of the Data Catalog where the tables reside. If none is supplied, the AWS account ID is used by default.</p>",
         "GetUserDefinedFunctionRequest$CatalogId": "<p>The ID of the Data Catalog where the function to be retrieved is located. If none is supplied, the AWS account ID is used by default.</p>",
@@ -312,7 +340,7 @@
       }
     },
     "Classifier": {
-      "base": "<p>Classifiers are written in Python and triggered during a crawl task. You can write your own classifiers to best categorize your data sources and specify the appropriate schemas to use for them. A classifier checks whether a given file is in a format it can handle, and if it is, the classifier creates a schema in the form of a <code>StructType</code> object that matches that data format.</p> <p>A classifier can be either a <code>grok</code> classifier or an XML classifier, specified in one or the other field of the <code>Classifier</code> object.</p>",
+      "base": "<p>Classifiers are written in Python and triggered during a crawl task. You can write your own classifiers to best categorize your data sources and specify the appropriate schemas to use for them. A classifier checks whether a given file is in a format it can handle, and if it is, the classifier creates a schema in the form of a <code>StructType</code> object that matches that data format.</p> <p>A classifier can be a <code>grok</code> classifier, an XML classifier, or a JSON classifier, asspecified in one of the fields in the <code>Classifier</code> object.</p>",
       "refs": {
         "ClassifierList$member": null,
         "GetClassifierResponse$Classifier": "<p>The requested classifier.</p>"
@@ -514,7 +542,7 @@
       "refs": {
         "Crawler$Configuration": "<p>Crawler configuration information. This versioned JSON string allows users to specify aspects of a Crawler's behavior.</p> <p>You can use this field to force partitions to inherit metadata such as classification, input format, output format, serde information, and schema from their parent table, rather than detect this information separately for each partition. Use the following JSON string to specify that behavior:</p> <p>Example: <code>'{ \"Version\": 1.0, \"CrawlerOutput\": { \"Partitions\": { \"AddOrUpdateBehavior\": \"InheritFromTable\" } } }'</code> </p>",
         "CreateCrawlerRequest$Configuration": "<p>Crawler configuration information. This versioned JSON string allows users to specify aspects of a Crawler's behavior.</p> <p>You can use this field to force partitions to inherit metadata such as classification, input format, output format, serde information, and schema from their parent table, rather than detect this information separately for each partition. Use the following JSON string to specify that behavior:</p> <p>Example: <code>'{ \"Version\": 1.0, \"CrawlerOutput\": { \"Partitions\": { \"AddOrUpdateBehavior\": \"InheritFromTable\" } } }'</code> </p>",
-        "UpdateCrawlerRequest$Configuration": "<p>Crawler configuration information. This versioned JSON string allows users to specify aspects of a Crawler's behavior.</p> <p>You can use this field to force partitions to inherit metadata such as classification, input format, output format, serde information, and schema from their parent table, rather than detect this information separately for each partition. Use the following JSON string to specify that behavior:</p> <p>Example:  <code>'{ \"Version\": 1.0, \"CrawlerOutput\": { \"Partitions\": { \"AddOrUpdateBehavior\": \"InheritFromTable\" } } }'</code> </p>"
+        "UpdateCrawlerRequest$Configuration": "<p>Crawler configuration information. This versioned JSON string allows users to specify aspects of a Crawler's behavior.</p> <p>You can use this field to force partitions to inherit metadata such as classification, input format, output format, serde information, and schema from their parent table, rather than detect this information separately for each partition. Use the following JSON string to specify that behavior:</p> <p>Example: <code>'{ \"Version\": 1.0, \"CrawlerOutput\": { \"Partitions\": { \"AddOrUpdateBehavior\": \"InheritFromTable\" } } }'</code> </p>"
       }
     },
     "CrawlerList": {
@@ -636,6 +664,12 @@
       "refs": {
       }
     },
+    "CreateJsonClassifierRequest": {
+      "base": "<p>Specifies a JSON classifier for <code>CreateClassifier</code> to create.</p>",
+      "refs": {
+        "CreateClassifierRequest$JsonClassifier": "<p>A <code>JsonClassifier</code> object specifying the classifier to create.</p>"
+      }
+    },
     "CreatePartitionRequest": {
       "base": null,
       "refs": {
@@ -731,7 +765,7 @@
       }
     },
     "DatabaseInput": {
-      "base": "<p>The structure used to create or updata a database.</p>",
+      "base": "<p>The structure used to create or update a database.</p>",
       "refs": {
         "CreateDatabaseRequest$DatabaseInput": "<p>A <code>DatabaseInput</code> object defining the metadata database to create in the catalog.</p>",
         "UpdateDatabaseRequest$DatabaseInput": "<p>A <code>DatabaseInput</code> object specifying the new definition of the metadata database in the catalog.</p>"
@@ -843,6 +877,16 @@
       "refs": {
       }
     },
+    "DeleteTableVersionRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteTableVersionResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "DeleteTriggerRequest": {
       "base": null,
       "refs": {
@@ -926,7 +970,8 @@
         "BatchStopJobRunError$ErrorDetail": "<p>Specifies details about the error that was encountered.</p>",
         "ErrorByName$value": null,
         "PartitionError$ErrorDetail": "<p>Details about the partition error.</p>",
-        "TableError$ErrorDetail": "<p>Detail about the error.</p>"
+        "TableError$ErrorDetail": "<p>Detail about the error.</p>",
+        "TableVersionError$ErrorDetail": "<p>Detail about the error.</p>"
       }
     },
     "ErrorString": {
@@ -1252,6 +1297,16 @@
       "refs": {
       }
     },
+    "GetTableVersionRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetTableVersionResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "GetTableVersionsList": {
       "base": null,
       "refs": {
@@ -1475,6 +1530,20 @@
         "UpdateJobRequest$JobUpdate": "<p>Specifies the values with which to update the job.</p>"
       }
     },
+    "JsonClassifier": {
+      "base": "<p>A classifier for <code>JSON</code> content.</p>",
+      "refs": {
+        "Classifier$JsonClassifier": "<p>A <code>JsonClassifier</code> object.</p>"
+      }
+    },
+    "JsonPath": {
+      "base": null,
+      "refs": {
+        "CreateJsonClassifierRequest$JsonPath": "<p>A <code>JsonPath</code> string defining the JSON data for the classifier to classify. AWS Glue supports a subset of JsonPath, as described in <a href=\"https://docs.aws.amazon.com/glue/latest/dg/custom-classifier.html#custom-classifier-json\">Writing JsonPath Custom Classifiers</a>.</p>",
+        "JsonClassifier$JsonPath": "<p>A <code>JsonPath</code> string defining the JSON data for the classifier to classify. AWS Glue supports a subset of JsonPath, as described in <a href=\"https://docs.aws.amazon.com/glue/latest/dg/custom-classifier.html#custom-classifier-json\">Writing JsonPath Custom Classifiers</a>.</p>",
+        "UpdateJsonClassifierRequest$JsonPath": "<p>A <code>JsonPath</code> string defining the JSON data for the classifier to classify. AWS Glue supports a subset of JsonPath, as described in <a href=\"https://docs.aws.amazon.com/glue/latest/dg/custom-classifier.html#custom-classifier-json\">Writing JsonPath Custom Classifiers</a>.</p>"
+      }
+    },
     "JsonValue": {
       "base": null,
       "refs": {
@@ -1629,7 +1698,9 @@
         "BatchDeletePartitionRequest$DatabaseName": "<p>The name of the catalog database in which the table in question resides.</p>",
         "BatchDeletePartitionRequest$TableName": "<p>The name of the table where the partitions to be deleted is located.</p>",
         "BatchDeleteTableNameList$member": null,
-        "BatchDeleteTableRequest$DatabaseName": "<p>The name of the catalog database where the tables to delete reside.</p>",
+        "BatchDeleteTableRequest$DatabaseName": "<p>The name of the catalog database where the tables to delete reside. For Hive compatibility, this name is entirely lowercase.</p>",
+        "BatchDeleteTableVersionRequest$DatabaseName": "<p>The database in the catalog in which the table resides. For Hive compatibility, this name is entirely lowercase.</p>",
+        "BatchDeleteTableVersionRequest$TableName": "<p>The name of the table. For Hive compatibility, this name is entirely lowercase.</p>",
         "BatchGetPartitionRequest$DatabaseName": "<p>The name of the catalog database where the partitions reside.</p>",
         "BatchGetPartitionRequest$TableName": "<p>The name of the partitions' table.</p>",
         "BatchStopJobRunError$JobName": "<p>The name of the Job in question.</p>",
@@ -1651,26 +1722,29 @@
         "CreateGrokClassifierRequest$Name": "<p>The name of the new classifier.</p>",
         "CreateJobRequest$Name": "<p>The name you assign to this job. It must be unique in your account.</p>",
         "CreateJobResponse$Name": "<p>The unique name that was provided.</p>",
+        "CreateJsonClassifierRequest$Name": "<p>The name of the classifier.</p>",
         "CreatePartitionRequest$DatabaseName": "<p>The name of the metadata database in which the partition is to be created.</p>",
         "CreatePartitionRequest$TableName": "<p>The name of the metadata table in which the partition is to be created.</p>",
-        "CreateTableRequest$DatabaseName": "<p>The catalog database in which to create the new table.</p>",
+        "CreateTableRequest$DatabaseName": "<p>The catalog database in which to create the new table. For Hive compatibility, this name is entirely lowercase.</p>",
         "CreateTriggerRequest$Name": "<p>The name of the trigger.</p>",
         "CreateTriggerResponse$Name": "<p>The name of the trigger.</p>",
         "CreateUserDefinedFunctionRequest$DatabaseName": "<p>The name of the catalog database in which to create the function.</p>",
         "CreateXMLClassifierRequest$Name": "<p>The name of the classifier.</p>",
-        "Database$Name": "<p>Name of the database.</p>",
-        "DatabaseInput$Name": "<p>Name of the database.</p>",
+        "Database$Name": "<p>Name of the database. For Hive compatibility, this is folded to lowercase when it is stored.</p>",
+        "DatabaseInput$Name": "<p>Name of the database. For Hive compatibility, this is folded to lowercase when it is stored.</p>",
         "DeleteClassifierRequest$Name": "<p>Name of the classifier to remove.</p>",
         "DeleteConnectionNameList$member": null,
         "DeleteConnectionRequest$ConnectionName": "<p>The name of the connection to delete.</p>",
         "DeleteCrawlerRequest$Name": "<p>Name of the crawler to remove.</p>",
-        "DeleteDatabaseRequest$Name": "<p>The name of the Database to delete.</p>",
+        "DeleteDatabaseRequest$Name": "<p>The name of the Database to delete. For Hive compatibility, this must be all lowercase.</p>",
         "DeleteJobRequest$JobName": "<p>The name of the job to delete.</p>",
         "DeleteJobResponse$JobName": "<p>The name of the job that was deleted.</p>",
         "DeletePartitionRequest$DatabaseName": "<p>The name of the catalog database in which the table in question resides.</p>",
         "DeletePartitionRequest$TableName": "<p>The name of the table where the partition to be deleted is located.</p>",
-        "DeleteTableRequest$DatabaseName": "<p>The name of the catalog database in which the table resides.</p>",
-        "DeleteTableRequest$Name": "<p>The name of the table to be deleted.</p>",
+        "DeleteTableRequest$DatabaseName": "<p>The name of the catalog database in which the table resides. For Hive compatibility, this name is entirely lowercase.</p>",
+        "DeleteTableRequest$Name": "<p>The name of the table to be deleted. For Hive compatibility, this name is entirely lowercase.</p>",
+        "DeleteTableVersionRequest$DatabaseName": "<p>The database in the catalog in which the table resides. For Hive compatibility, this name is entirely lowercase.</p>",
+        "DeleteTableVersionRequest$TableName": "<p>The name of the table. For Hive compatibility, this name is entirely lowercase.</p>",
         "DeleteTriggerRequest$Name": "<p>The name of the trigger to delete.</p>",
         "DeleteTriggerResponse$Name": "<p>The name of the trigger that was deleted.</p>",
         "DeleteUserDefinedFunctionRequest$DatabaseName": "<p>The name of the catalog database where the function is located.</p>",
@@ -1680,7 +1754,7 @@
         "GetClassifierRequest$Name": "<p>Name of the classifier to retrieve.</p>",
         "GetConnectionRequest$Name": "<p>The name of the connection definition to retrieve.</p>",
         "GetCrawlerRequest$Name": "<p>Name of the crawler to retrieve metadata for.</p>",
-        "GetDatabaseRequest$Name": "<p>The name of the database to retrieve.</p>",
+        "GetDatabaseRequest$Name": "<p>The name of the database to retrieve. For Hive compatibility, this should be all lowercase.</p>",
         "GetJobRequest$JobName": "<p>The name of the job to retrieve.</p>",
         "GetJobRunRequest$JobName": "<p>Name of the job being run.</p>",
         "GetJobRunsRequest$JobName": "<p>The name of the job for which to retrieve all job runs.</p>",
@@ -1688,11 +1762,13 @@
         "GetPartitionRequest$TableName": "<p>The name of the partition's table.</p>",
         "GetPartitionsRequest$DatabaseName": "<p>The name of the catalog database where the partitions reside.</p>",
         "GetPartitionsRequest$TableName": "<p>The name of the partitions' table.</p>",
-        "GetTableRequest$DatabaseName": "<p>The name of the database in the catalog in which the table resides.</p>",
-        "GetTableRequest$Name": "<p>The name of the table for which to retrieve the definition.</p>",
-        "GetTableVersionsRequest$DatabaseName": "<p>The database in the catalog in which the table resides.</p>",
-        "GetTableVersionsRequest$TableName": "<p>The name of the table.</p>",
-        "GetTablesRequest$DatabaseName": "<p>The database in the catalog whose tables to list.</p>",
+        "GetTableRequest$DatabaseName": "<p>The name of the database in the catalog in which the table resides. For Hive compatibility, this name is entirely lowercase.</p>",
+        "GetTableRequest$Name": "<p>The name of the table for which to retrieve the definition. For Hive compatibility, this name is entirely lowercase.</p>",
+        "GetTableVersionRequest$DatabaseName": "<p>The database in the catalog in which the table resides. For Hive compatibility, this name is entirely lowercase.</p>",
+        "GetTableVersionRequest$TableName": "<p>The name of the table. For Hive compatibility, this name is entirely lowercase.</p>",
+        "GetTableVersionsRequest$DatabaseName": "<p>The database in the catalog in which the table resides. For Hive compatibility, this name is entirely lowercase.</p>",
+        "GetTableVersionsRequest$TableName": "<p>The name of the table. For Hive compatibility, this name is entirely lowercase.</p>",
+        "GetTablesRequest$DatabaseName": "<p>The database in the catalog whose tables to list. For Hive compatibility, this name is entirely lowercase.</p>",
         "GetTriggerRequest$Name": "<p>The name of the trigger to retrieve.</p>",
         "GetTriggersRequest$DependentJobName": "<p>The name of the job for which to retrieve triggers. The trigger that can start this job will be returned, and if there is no such trigger, all triggers will be returned.</p>",
         "GetUserDefinedFunctionRequest$DatabaseName": "<p>The name of the catalog database where the function is located.</p>",
@@ -1703,13 +1779,14 @@
         "Job$Name": "<p>The name you assign to this job.</p>",
         "JobRun$TriggerName": "<p>The name of the trigger that started this job run.</p>",
         "JobRun$JobName": "<p>The name of the job being run.</p>",
+        "JsonClassifier$Name": "<p>The name of the classifier.</p>",
         "MatchCriteria$member": null,
         "NameStringList$member": null,
         "Order$Column": "<p>The name of the column.</p>",
         "Partition$DatabaseName": "<p>The name of the catalog database where the table in question is located.</p>",
         "Partition$TableName": "<p>The name of the table in question.</p>",
         "PhysicalConnectionRequirements$SubnetId": "<p>The subnet ID used by the connection.</p>",
-        "PhysicalConnectionRequirements$AvailabilityZone": "<p>The connection's availability zone.</p>",
+        "PhysicalConnectionRequirements$AvailabilityZone": "<p>The connection's availability zone. This field is deprecated and has no effect.</p>",
         "Predecessor$JobName": "<p>The name of the predecessor job.</p>",
         "SecurityGroupIdList$member": null,
         "SerDeInfo$Name": "<p>Name of the SerDe.</p>",
@@ -1723,25 +1800,27 @@
         "StopCrawlerScheduleRequest$CrawlerName": "<p>Name of the crawler whose schedule state to set.</p>",
         "StopTriggerRequest$Name": "<p>The name of the trigger to stop.</p>",
         "StopTriggerResponse$Name": "<p>The name of the trigger that was stopped.</p>",
-        "Table$Name": "<p>Name of the table.</p>",
-        "Table$DatabaseName": "<p>Name of the metadata database where the table metadata resides.</p>",
+        "Table$Name": "<p>Name of the table. For Hive compatibility, this must be entirely lowercase.</p>",
+        "Table$DatabaseName": "<p>Name of the metadata database where the table metadata resides. For Hive compatibility, this must be all lowercase.</p>",
         "Table$Owner": "<p>Owner of the table.</p>",
         "Table$CreatedBy": "<p>Person or entity who created the table.</p>",
-        "TableError$TableName": "<p>Name of the table.</p>",
-        "TableInput$Name": "<p>Name of the table.</p>",
+        "TableError$TableName": "<p>Name of the table. For Hive compatibility, this must be entirely lowercase.</p>",
+        "TableInput$Name": "<p>Name of the table. For Hive compatibility, this is folded to lowercase when it is stored.</p>",
         "TableInput$Owner": "<p>Owner of the table.</p>",
+        "TableVersionError$TableName": "<p>The name of the table in question.</p>",
         "Trigger$Name": "<p>Name of the trigger.</p>",
         "TriggerUpdate$Name": "<p>Reserved for future use.</p>",
         "UpdateConnectionRequest$Name": "<p>The name of the connection definition to update.</p>",
         "UpdateCrawlerRequest$Name": "<p>Name of the new crawler.</p>",
         "UpdateCrawlerScheduleRequest$CrawlerName": "<p>Name of the crawler whose schedule to update.</p>",
-        "UpdateDatabaseRequest$Name": "<p>The name of the metadata database to update in the catalog.</p>",
+        "UpdateDatabaseRequest$Name": "<p>The name of the database to update in the catalog. For Hive compatibility, this is folded to lowercase.</p>",
         "UpdateGrokClassifierRequest$Name": "<p>The name of the <code>GrokClassifier</code>.</p>",
         "UpdateJobRequest$JobName": "<p>Name of the job definition to update.</p>",
         "UpdateJobResponse$JobName": "<p>Returns the name of the updated job.</p>",
+        "UpdateJsonClassifierRequest$Name": "<p>The name of the classifier.</p>",
         "UpdatePartitionRequest$DatabaseName": "<p>The name of the catalog database in which the table in question resides.</p>",
         "UpdatePartitionRequest$TableName": "<p>The name of the table where the partition to be updated is located.</p>",
-        "UpdateTableRequest$DatabaseName": "<p>The name of the catalog database in which the table resides.</p>",
+        "UpdateTableRequest$DatabaseName": "<p>The name of the catalog database in which the table resides. For Hive compatibility, this name is entirely lowercase.</p>",
         "UpdateTriggerRequest$Name": "<p>The name of the trigger to update.</p>",
         "UpdateUserDefinedFunctionRequest$DatabaseName": "<p>The name of the catalog database where the function to be updated is located.</p>",
         "UpdateUserDefinedFunctionRequest$FunctionName": "<p>The name of the function.</p>",
@@ -2255,7 +2334,20 @@
     "TableVersion": {
       "base": "<p>Specifies a version of a table.</p>",
       "refs": {
+        "GetTableVersionResponse$TableVersion": "<p>The requested table version.</p>",
         "GetTableVersionsList$member": null
+      }
+    },
+    "TableVersionError": {
+      "base": "<p>An error record for table-version operations.</p>",
+      "refs": {
+        "TableVersionErrors$member": null
+      }
+    },
+    "TableVersionErrors": {
+      "base": null,
+      "refs": {
+        "BatchDeleteTableVersionResponse$Errors": "<p>A list of errors encountered while trying to delete the specified table versions.</p>"
       }
     },
     "Timestamp": {
@@ -2269,6 +2361,8 @@
         "Database$CreateTime": "<p>The time at which the metadata database was created in the catalog.</p>",
         "GrokClassifier$CreationTime": "<p>The time this classifier was registered.</p>",
         "GrokClassifier$LastUpdated": "<p>The time this classifier was last updated.</p>",
+        "JsonClassifier$CreationTime": "<p>The time this classifier was registered.</p>",
+        "JsonClassifier$LastUpdated": "<p>The time this classifier was last updated.</p>",
         "LastCrawlInfo$StartTime": "<p>The time at which the crawl started.</p>",
         "Partition$CreationTime": "<p>The time at which the partition was created.</p>",
         "Partition$LastAccessTime": "<p>The last time at which the partition was accessed.</p>",
@@ -2451,6 +2545,12 @@
       "refs": {
       }
     },
+    "UpdateJsonClassifierRequest": {
+      "base": "<p>Specifies a JSON classifier to be updated.</p>",
+      "refs": {
+        "UpdateClassifierRequest$JsonClassifier": "<p>A <code>JsonClassifier</code> object with updated fields.</p>"
+      }
+    },
     "UpdatePartitionRequest": {
       "base": null,
       "refs": {
@@ -2554,6 +2654,7 @@
       "refs": {
         "Crawler$Version": "<p>The version of the crawler.</p>",
         "GrokClassifier$Version": "<p>The version of this classifier.</p>",
+        "JsonClassifier$Version": "<p>The version of this classifier.</p>",
         "XMLClassifier$Version": "<p>The version of this classifier.</p>"
       }
     },
@@ -2565,7 +2666,11 @@
     "VersionString": {
       "base": null,
       "refs": {
-        "TableVersion$VersionId": "<p>The ID value that identifies this table version.</p>"
+        "BatchDeleteTableVersionList$member": null,
+        "DeleteTableVersionRequest$VersionId": "<p>The ID of the table version to be deleted.</p>",
+        "GetTableVersionRequest$VersionId": "<p>The ID value of the table version to be retrieved.</p>",
+        "TableVersion$VersionId": "<p>The ID value that identifies this table version.</p>",
+        "TableVersionError$VersionId": "<p>The ID value of the version in question.</p>"
       }
     },
     "ViewTextString": {

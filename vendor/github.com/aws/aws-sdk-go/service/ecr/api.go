@@ -463,7 +463,7 @@ func (c *ECR) CreateRepositoryRequest(input *CreateRepositoryInput) (req *reques
 //   The operation did not succeed because it would have exceeded a service limit
 //   for your account. For more information, see Amazon ECR Default Service Limits
 //   (http://docs.aws.amazon.com/AmazonECR/latest/userguide/service_limits.html)
-//   in the Amazon EC2 Container Registry User Guide.
+//   in the Amazon Elastic Container Registry User Guide.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/CreateRepository
 func (c *ECR) CreateRepository(input *CreateRepositoryInput) (*CreateRepositoryOutput, error) {
@@ -1837,7 +1837,7 @@ func (c *ECR) PutImageRequest(input *PutImageInput) (req *request.Request, outpu
 //   The operation did not succeed because it would have exceeded a service limit
 //   for your account. For more information, see Amazon ECR Default Service Limits
 //   (http://docs.aws.amazon.com/AmazonECR/latest/userguide/service_limits.html)
-//   in the Amazon EC2 Container Registry User Guide.
+//   in the Amazon Elastic Container Registry User Guide.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/PutImage
 func (c *ECR) PutImage(input *PutImageInput) (*PutImageOutput, error) {
@@ -1905,7 +1905,8 @@ func (c *ECR) PutLifecyclePolicyRequest(input *PutLifecyclePolicyInput) (req *re
 
 // PutLifecyclePolicy API operation for Amazon EC2 Container Registry.
 //
-// Creates or updates a lifecycle policy.
+// Creates or updates a lifecycle policy. For information about lifecycle policy
+// syntax, see Lifecycle Policy Template (http://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2211,7 +2212,7 @@ func (c *ECR) UploadLayerPartRequest(input *UploadLayerPartInput) (req *request.
 //   The operation did not succeed because it would have exceeded a service limit
 //   for your account. For more information, see Amazon ECR Default Service Limits
 //   (http://docs.aws.amazon.com/AmazonECR/latest/userguide/service_limits.html)
-//   in the Amazon EC2 Container Registry User Guide.
+//   in the Amazon Elastic Container Registry User Guide.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/UploadLayerPart
 func (c *ECR) UploadLayerPart(input *UploadLayerPartInput) (*UploadLayerPartOutput, error) {
@@ -2236,7 +2237,6 @@ func (c *ECR) UploadLayerPartWithContext(ctx aws.Context, input *UploadLayerPart
 }
 
 // An object representing authorization data for an Amazon ECR registry.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/AuthorizationData
 type AuthorizationData struct {
 	_ struct{} `type:"structure"`
 
@@ -2283,7 +2283,6 @@ func (s *AuthorizationData) SetProxyEndpoint(v string) *AuthorizationData {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/BatchCheckLayerAvailabilityRequest
 type BatchCheckLayerAvailabilityInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2352,7 +2351,6 @@ func (s *BatchCheckLayerAvailabilityInput) SetRepositoryName(v string) *BatchChe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/BatchCheckLayerAvailabilityResponse
 type BatchCheckLayerAvailabilityOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2388,7 +2386,6 @@ func (s *BatchCheckLayerAvailabilityOutput) SetLayers(v []*Layer) *BatchCheckLay
 
 // Deletes specified images within a specified repository. Images are specified
 // with either the imageTag or imageDigest.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/BatchDeleteImageRequest
 type BatchDeleteImageInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2458,7 +2455,6 @@ func (s *BatchDeleteImageInput) SetRepositoryName(v string) *BatchDeleteImageInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/BatchDeleteImageResponse
 type BatchDeleteImageOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2491,7 +2487,6 @@ func (s *BatchDeleteImageOutput) SetImageIds(v []*ImageIdentifier) *BatchDeleteI
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/BatchGetImageRequest
 type BatchGetImageInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2576,7 +2571,6 @@ func (s *BatchGetImageInput) SetRepositoryName(v string) *BatchGetImageInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/BatchGetImageResponse
 type BatchGetImageOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2609,7 +2603,6 @@ func (s *BatchGetImageOutput) SetImages(v []*Image) *BatchGetImageOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/CompleteLayerUploadRequest
 type CompleteLayerUploadInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2693,7 +2686,6 @@ func (s *CompleteLayerUploadInput) SetUploadId(v string) *CompleteLayerUploadInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/CompleteLayerUploadResponse
 type CompleteLayerUploadOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2744,7 +2736,6 @@ func (s *CompleteLayerUploadOutput) SetUploadId(v string) *CompleteLayerUploadOu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/CreateRepositoryRequest
 type CreateRepositoryInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2788,7 +2779,6 @@ func (s *CreateRepositoryInput) SetRepositoryName(v string) *CreateRepositoryInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/CreateRepositoryResponse
 type CreateRepositoryOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2812,7 +2802,6 @@ func (s *CreateRepositoryOutput) SetRepository(v *Repository) *CreateRepositoryO
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/DeleteLifecyclePolicyRequest
 type DeleteLifecyclePolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2820,8 +2809,7 @@ type DeleteLifecyclePolicyInput struct {
 	// If you do not specify a registry, the default registry is assumed.
 	RegistryId *string `locationName:"registryId" type:"string"`
 
-	// The name of the repository that is associated with the repository policy
-	// to  delete.
+	// The name of the repository.
 	//
 	// RepositoryName is a required field
 	RepositoryName *string `locationName:"repositoryName" min:"2" type:"string" required:"true"`
@@ -2865,14 +2853,13 @@ func (s *DeleteLifecyclePolicyInput) SetRepositoryName(v string) *DeleteLifecycl
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/DeleteLifecyclePolicyResponse
 type DeleteLifecyclePolicyOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The time stamp of the last time that the lifecycle policy was run.
 	LastEvaluatedAt *time.Time `locationName:"lastEvaluatedAt" type:"timestamp" timestampFormat:"unix"`
 
-	// The JSON repository policy text.
+	// The JSON lifecycle policy text.
 	LifecyclePolicyText *string `locationName:"lifecyclePolicyText" min:"100" type:"string"`
 
 	// The registry ID associated with the request.
@@ -2916,7 +2903,6 @@ func (s *DeleteLifecyclePolicyOutput) SetRepositoryName(v string) *DeleteLifecyc
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/DeleteRepositoryRequest
 type DeleteRepositoryInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2977,7 +2963,6 @@ func (s *DeleteRepositoryInput) SetRepositoryName(v string) *DeleteRepositoryInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/DeleteRepositoryResponse
 type DeleteRepositoryOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3001,7 +2986,6 @@ func (s *DeleteRepositoryOutput) SetRepository(v *Repository) *DeleteRepositoryO
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/DeleteRepositoryPolicyRequest
 type DeleteRepositoryPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3055,7 +3039,6 @@ func (s *DeleteRepositoryPolicyInput) SetRepositoryName(v string) *DeleteReposit
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/DeleteRepositoryPolicyResponse
 type DeleteRepositoryPolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3098,7 +3081,6 @@ func (s *DeleteRepositoryPolicyOutput) SetRepositoryName(v string) *DeleteReposi
 }
 
 // An object representing a filter on a DescribeImages operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/DescribeImagesFilter
 type DescribeImagesFilter struct {
 	_ struct{} `type:"structure"`
 
@@ -3123,7 +3105,6 @@ func (s *DescribeImagesFilter) SetTagStatus(v string) *DescribeImagesFilter {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/DescribeImagesRequest
 type DescribeImagesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3139,13 +3120,15 @@ type DescribeImagesInput struct {
 	// results of the initial request can be seen by sending another DescribeImages
 	// request with the returned nextToken value. This value can be between 1 and
 	// 100. If this parameter is not used, then DescribeImages returns up to 100
-	// results and a nextToken value, if applicable.
+	// results and a nextToken value, if applicable. This option cannot be used
+	// when you specify images with imageIds.
 	MaxResults *int64 `locationName:"maxResults" min:"1" type:"integer"`
 
 	// The nextToken value returned from a previous paginated DescribeImages request
 	// where maxResults was used and the results exceeded the value of that parameter.
 	// Pagination continues from the end of the previous results that returned the
 	// nextToken value. This value is null when there are no more results to return.
+	// This option cannot be used when you specify images with imageIds.
 	NextToken *string `locationName:"nextToken" type:"string"`
 
 	// The AWS account ID associated with the registry that contains the repository
@@ -3228,7 +3211,6 @@ func (s *DescribeImagesInput) SetRepositoryName(v string) *DescribeImagesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/DescribeImagesResponse
 type DescribeImagesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3264,7 +3246,6 @@ func (s *DescribeImagesOutput) SetNextToken(v string) *DescribeImagesOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/DescribeRepositoriesRequest
 type DescribeRepositoriesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3274,14 +3255,16 @@ type DescribeRepositoriesInput struct {
 	// element. The remaining results of the initial request can be seen by sending
 	// another DescribeRepositories request with the returned nextToken value. This
 	// value can be between 1 and 100. If this parameter is not used, then DescribeRepositories
-	// returns up to 100 results and a nextToken value, if applicable.
+	// returns up to 100 results and a nextToken value, if applicable. This option
+	// cannot be used when you specify repositories with repositoryNames.
 	MaxResults *int64 `locationName:"maxResults" min:"1" type:"integer"`
 
 	// The nextToken value returned from a previous paginated DescribeRepositories
 	// request where maxResults was used and the results exceeded the value of that
 	// parameter. Pagination continues from the end of the previous results that
 	// returned the nextToken value. This value is null when there are no more results
-	// to return.
+	// to return. This option cannot be used when you specify repositories with
+	// repositoryNames.
 	//
 	// This token should be treated as an opaque identifier that is only used to
 	// retrieve the next items in a list and not for other programmatic purposes.
@@ -3347,7 +3330,6 @@ func (s *DescribeRepositoriesInput) SetRepositoryNames(v []*string) *DescribeRep
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/DescribeRepositoriesResponse
 type DescribeRepositoriesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3383,7 +3365,6 @@ func (s *DescribeRepositoriesOutput) SetRepositories(v []*Repository) *DescribeR
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/GetAuthorizationTokenRequest
 type GetAuthorizationTokenInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3422,7 +3403,6 @@ func (s *GetAuthorizationTokenInput) SetRegistryIds(v []*string) *GetAuthorizati
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/GetAuthorizationTokenResponse
 type GetAuthorizationTokenOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3447,7 +3427,6 @@ func (s *GetAuthorizationTokenOutput) SetAuthorizationData(v []*AuthorizationDat
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/GetDownloadUrlForLayerRequest
 type GetDownloadUrlForLayerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3513,7 +3492,6 @@ func (s *GetDownloadUrlForLayerInput) SetRepositoryName(v string) *GetDownloadUr
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/GetDownloadUrlForLayerResponse
 type GetDownloadUrlForLayerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3546,7 +3524,6 @@ func (s *GetDownloadUrlForLayerOutput) SetLayerDigest(v string) *GetDownloadUrlF
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/GetLifecyclePolicyRequest
 type GetLifecyclePolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3554,7 +3531,7 @@ type GetLifecyclePolicyInput struct {
 	// If you do not specify a registry, the default registry is assumed.
 	RegistryId *string `locationName:"registryId" type:"string"`
 
-	// The name of the repository with the policy to retrieve.
+	// The name of the repository.
 	//
 	// RepositoryName is a required field
 	RepositoryName *string `locationName:"repositoryName" min:"2" type:"string" required:"true"`
@@ -3598,14 +3575,13 @@ func (s *GetLifecyclePolicyInput) SetRepositoryName(v string) *GetLifecyclePolic
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/GetLifecyclePolicyResponse
 type GetLifecyclePolicyOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The time stamp of the last time that the lifecycle policy was run.
 	LastEvaluatedAt *time.Time `locationName:"lastEvaluatedAt" type:"timestamp" timestampFormat:"unix"`
 
-	// The JSON repository policy text.
+	// The JSON lifecycle policy text.
 	LifecyclePolicyText *string `locationName:"lifecyclePolicyText" min:"100" type:"string"`
 
 	// The registry ID associated with the request.
@@ -3649,7 +3625,6 @@ func (s *GetLifecyclePolicyOutput) SetRepositoryName(v string) *GetLifecyclePoli
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/GetLifecyclePolicyPreviewRequest
 type GetLifecyclePolicyPreviewInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3667,21 +3642,23 @@ type GetLifecyclePolicyPreviewInput struct {
 	// by sending  another GetLifecyclePolicyPreviewRequest request with the returned
 	// nextToken  value. This value can be between 1 and 100. If this  parameter
 	// is not used, then GetLifecyclePolicyPreviewRequest returns up to  100 results
-	// and a nextToken value, if  applicable.
+	// and a nextToken value, if  applicable. This option cannot be used when you
+	// specify images with imageIds.
 	MaxResults *int64 `locationName:"maxResults" min:"1" type:"integer"`
 
 	// The nextToken value returned from a previous paginated  GetLifecyclePolicyPreviewRequest
 	// request where maxResults was used and the  results exceeded the value of
 	// that parameter. Pagination continues from the end of the  previous results
 	// that returned the nextToken value. This value is  null when there are no
-	// more results to return.
+	// more results to return. This option cannot be used when you specify images
+	// with imageIds.
 	NextToken *string `locationName:"nextToken" type:"string"`
 
 	// The AWS account ID associated with the registry that contains the repository.
 	// If you do not specify a registry, the default registry is assumed.
 	RegistryId *string `locationName:"registryId" type:"string"`
 
-	// The name of the repository with the policy to retrieve.
+	// The name of the repository.
 	//
 	// RepositoryName is a required field
 	RepositoryName *string `locationName:"repositoryName" min:"2" type:"string" required:"true"`
@@ -3755,11 +3732,10 @@ func (s *GetLifecyclePolicyPreviewInput) SetRepositoryName(v string) *GetLifecyc
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/GetLifecyclePolicyPreviewResponse
 type GetLifecyclePolicyPreviewOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The JSON repository policy text.
+	// The JSON lifecycle policy text.
 	LifecyclePolicyText *string `locationName:"lifecyclePolicyText" min:"100" type:"string"`
 
 	// The nextToken value to include in a future GetLifecyclePolicyPreview request.
@@ -3836,7 +3812,6 @@ func (s *GetLifecyclePolicyPreviewOutput) SetSummary(v *LifecyclePolicyPreviewSu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/GetRepositoryPolicyRequest
 type GetRepositoryPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3888,7 +3863,6 @@ func (s *GetRepositoryPolicyInput) SetRepositoryName(v string) *GetRepositoryPol
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/GetRepositoryPolicyResponse
 type GetRepositoryPolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3931,7 +3905,6 @@ func (s *GetRepositoryPolicyOutput) SetRepositoryName(v string) *GetRepositoryPo
 }
 
 // An object representing an Amazon ECR image.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/Image
 type Image struct {
 	_ struct{} `type:"structure"`
 
@@ -3983,7 +3956,6 @@ func (s *Image) SetRepositoryName(v string) *Image {
 }
 
 // An object that describes an image returned by a DescribeImages operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/ImageDetail
 type ImageDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -4059,7 +4031,6 @@ func (s *ImageDetail) SetRepositoryName(v string) *ImageDetail {
 }
 
 // An object representing an Amazon ECR image failure.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/ImageFailure
 type ImageFailure struct {
 	_ struct{} `type:"structure"`
 
@@ -4102,7 +4073,6 @@ func (s *ImageFailure) SetImageId(v *ImageIdentifier) *ImageFailure {
 }
 
 // An object with identifying information for an Amazon ECR image.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/ImageIdentifier
 type ImageIdentifier struct {
 	_ struct{} `type:"structure"`
 
@@ -4135,7 +4105,6 @@ func (s *ImageIdentifier) SetImageTag(v string) *ImageIdentifier {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/InitiateLayerUploadRequest
 type InitiateLayerUploadInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4187,7 +4156,6 @@ func (s *InitiateLayerUploadInput) SetRepositoryName(v string) *InitiateLayerUpl
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/InitiateLayerUploadResponse
 type InitiateLayerUploadOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4223,7 +4191,6 @@ func (s *InitiateLayerUploadOutput) SetUploadId(v string) *InitiateLayerUploadOu
 }
 
 // An object representing an Amazon ECR image layer.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/Layer
 type Layer struct {
 	_ struct{} `type:"structure"`
 
@@ -4276,7 +4243,6 @@ func (s *Layer) SetMediaType(v string) *Layer {
 }
 
 // An object representing an Amazon ECR image layer failure.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/LayerFailure
 type LayerFailure struct {
 	_ struct{} `type:"structure"`
 
@@ -4319,7 +4285,6 @@ func (s *LayerFailure) SetLayerDigest(v string) *LayerFailure {
 }
 
 // The filter for the lifecycle policy preview.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/LifecyclePolicyPreviewFilter
 type LifecyclePolicyPreviewFilter struct {
 	_ struct{} `type:"structure"`
 
@@ -4344,7 +4309,6 @@ func (s *LifecyclePolicyPreviewFilter) SetTagStatus(v string) *LifecyclePolicyPr
 }
 
 // The result of the lifecycle policy preview.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/LifecyclePolicyPreviewResult
 type LifecyclePolicyPreviewResult struct {
 	_ struct{} `type:"structure"`
 
@@ -4406,7 +4370,6 @@ func (s *LifecyclePolicyPreviewResult) SetImageTags(v []*string) *LifecyclePolic
 }
 
 // The summary of the lifecycle policy preview request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/LifecyclePolicyPreviewSummary
 type LifecyclePolicyPreviewSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -4431,7 +4394,6 @@ func (s *LifecyclePolicyPreviewSummary) SetExpiringImageTotalCount(v int64) *Lif
 }
 
 // The type of action to be taken.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/LifecyclePolicyRuleAction
 type LifecyclePolicyRuleAction struct {
 	_ struct{} `type:"structure"`
 
@@ -4456,7 +4418,6 @@ func (s *LifecyclePolicyRuleAction) SetType(v string) *LifecyclePolicyRuleAction
 }
 
 // An object representing a filter on a ListImages operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/ListImagesFilter
 type ListImagesFilter struct {
 	_ struct{} `type:"structure"`
 
@@ -4481,7 +4442,6 @@ func (s *ListImagesFilter) SetTagStatus(v string) *ListImagesFilter {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/ListImagesRequest
 type ListImagesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4576,7 +4536,6 @@ func (s *ListImagesInput) SetRepositoryName(v string) *ListImagesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/ListImagesResponse
 type ListImagesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4612,7 +4571,6 @@ func (s *ListImagesOutput) SetNextToken(v string) *ListImagesOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/PutImageRequest
 type PutImageInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4689,7 +4647,6 @@ func (s *PutImageInput) SetRepositoryName(v string) *PutImageInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/PutImageResponse
 type PutImageOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4713,7 +4670,6 @@ func (s *PutImageOutput) SetImage(v *Image) *PutImageOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/PutLifecyclePolicyRequest
 type PutLifecyclePolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4782,7 +4738,6 @@ func (s *PutLifecyclePolicyInput) SetRepositoryName(v string) *PutLifecyclePolic
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/PutLifecyclePolicyResponse
 type PutLifecyclePolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4825,7 +4780,6 @@ func (s *PutLifecyclePolicyOutput) SetRepositoryName(v string) *PutLifecyclePoli
 }
 
 // An object representing a repository.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/Repository
 type Repository struct {
 	_ struct{} `type:"structure"`
 
@@ -4889,7 +4843,6 @@ func (s *Repository) SetRepositoryUri(v string) *Repository {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/SetRepositoryPolicyRequest
 type SetRepositoryPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4966,7 +4919,6 @@ func (s *SetRepositoryPolicyInput) SetRepositoryName(v string) *SetRepositoryPol
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/SetRepositoryPolicyResponse
 type SetRepositoryPolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5008,7 +4960,6 @@ func (s *SetRepositoryPolicyOutput) SetRepositoryName(v string) *SetRepositoryPo
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/StartLifecyclePolicyPreviewRequest
 type StartLifecyclePolicyPreviewInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5073,7 +5024,6 @@ func (s *StartLifecyclePolicyPreviewInput) SetRepositoryName(v string) *StartLif
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/StartLifecyclePolicyPreviewResponse
 type StartLifecyclePolicyPreviewOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5124,7 +5074,6 @@ func (s *StartLifecyclePolicyPreviewOutput) SetStatus(v string) *StartLifecycleP
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/UploadLayerPartRequest
 type UploadLayerPartInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5235,7 +5184,6 @@ func (s *UploadLayerPartInput) SetUploadId(v string) *UploadLayerPartInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecr-2015-09-21/UploadLayerPartResponse
 type UploadLayerPartOutput struct {
 	_ struct{} `type:"structure"`
 

@@ -112,8 +112,8 @@ func (client ManagedHostingEnvironmentsClient) CreateOrUpdateManagedHostingEnvir
 
 // DeleteManagedHostingEnvironment sends the delete managed hosting environment request.
 //
-// resourceGroupName is name of resource group name is name of managed hosting environment forceDelete is delete even
-// if the managed hosting environment contains resources
+// resourceGroupName is name of resource group name is name of managed hosting environment forceDelete is delete
+// even if the managed hosting environment contains resources
 func (client ManagedHostingEnvironmentsClient) DeleteManagedHostingEnvironment(ctx context.Context, resourceGroupName string, name string, forceDelete *bool) (result ManagedHostingEnvironmentsDeleteManagedHostingEnvironmentFuture, err error) {
 	req, err := client.DeleteManagedHostingEnvironmentPreparer(ctx, resourceGroupName, name, forceDelete)
 	if err != nil {
@@ -505,8 +505,8 @@ func (client ManagedHostingEnvironmentsClient) GetManagedHostingEnvironmentServe
 
 // GetManagedHostingEnvironmentSites sends the get managed hosting environment sites request.
 //
-// resourceGroupName is name of resource group name is name of managed hosting environment propertiesToInclude is comma
-// separated list of site properties to include
+// resourceGroupName is name of resource group name is name of managed hosting environment propertiesToInclude is
+// comma separated list of site properties to include
 func (client ManagedHostingEnvironmentsClient) GetManagedHostingEnvironmentSites(ctx context.Context, resourceGroupName string, name string, propertiesToInclude string) (result SiteCollectionPage, err error) {
 	result.fn = client.getManagedHostingEnvironmentSitesNextResults
 	req, err := client.GetManagedHostingEnvironmentSitesPreparer(ctx, resourceGroupName, name, propertiesToInclude)

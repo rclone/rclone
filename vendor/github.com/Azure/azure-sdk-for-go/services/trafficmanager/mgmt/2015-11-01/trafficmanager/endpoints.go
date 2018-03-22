@@ -115,8 +115,8 @@ func (client EndpointsClient) CreateOrUpdateResponder(resp *http.Response) (resu
 // Delete deletes a Traffic Manager endpoint.
 //
 // resourceGroupName is the name of the resource group containing the Traffic Manager endpoint to be deleted.
-// profileName is the name of the Traffic Manager profile. endpointType is the type of the Traffic Manager endpoint to
-// be deleted. endpointName is the name of the Traffic Manager endpoint to be deleted.
+// profileName is the name of the Traffic Manager profile. endpointType is the type of the Traffic Manager endpoint
+// to be deleted. endpointName is the name of the Traffic Manager endpoint to be deleted.
 func (client EndpointsClient) Delete(ctx context.Context, resourceGroupName string, profileName string, endpointType string, endpointName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, profileName, endpointType, endpointName)
 	if err != nil {
@@ -183,9 +183,9 @@ func (client EndpointsClient) DeleteResponder(resp *http.Response) (result autor
 
 // Get gets a Traffic Manager endpoint.
 //
-// resourceGroupName is the name of the resource group containing the Traffic Manager endpoint. profileName is the name
-// of the Traffic Manager profile. endpointType is the type of the Traffic Manager endpoint. endpointName is the name
-// of the Traffic Manager endpoint.
+// resourceGroupName is the name of the resource group containing the Traffic Manager endpoint. profileName is the
+// name of the Traffic Manager profile. endpointType is the type of the Traffic Manager endpoint. endpointName is
+// the name of the Traffic Manager endpoint.
 func (client EndpointsClient) Get(ctx context.Context, resourceGroupName string, profileName string, endpointType string, endpointName string) (result Endpoint, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, profileName, endpointType, endpointName)
 	if err != nil {
@@ -254,8 +254,8 @@ func (client EndpointsClient) GetResponder(resp *http.Response) (result Endpoint
 // Update update a Traffic Manager endpoint.
 //
 // resourceGroupName is the name of the resource group containing the Traffic Manager endpoint to be updated.
-// profileName is the name of the Traffic Manager profile. endpointType is the type of the Traffic Manager endpoint to
-// be updated. endpointName is the name of the Traffic Manager endpoint to be updated. parameters is the Traffic
+// profileName is the name of the Traffic Manager profile. endpointType is the type of the Traffic Manager endpoint
+// to be updated. endpointName is the name of the Traffic Manager endpoint to be updated. parameters is the Traffic
 // Manager endpoint parameters supplied to the Update operation.
 func (client EndpointsClient) Update(ctx context.Context, resourceGroupName string, profileName string, endpointType string, endpointName string, parameters Endpoint) (result Endpoint, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, profileName, endpointType, endpointName, parameters)

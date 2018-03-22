@@ -43,9 +43,9 @@ func NewPipelinesClientWithBaseURI(baseURI string, subscriptionID string) Pipeli
 
 // CreateOrUpdate creates or updates a pipeline.
 //
-// resourceGroupName is the resource group name. factoryName is the factory name. pipelineName is the pipeline name.
-// pipeline is pipeline resource definition. ifMatch is eTag of the pipeline entity.  Should only be specified for
-// update, for which it should match existing entity or can be * for unconditional update.
+// resourceGroupName is the resource group name. factoryName is the factory name. pipelineName is the pipeline
+// name. pipeline is pipeline resource definition. ifMatch is eTag of the pipeline entity.  Should only be
+// specified for update, for which it should match existing entity or can be * for unconditional update.
 func (client PipelinesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, factoryName string, pipelineName string, pipeline PipelineResource, ifMatch string) (result PipelineResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -65,7 +65,7 @@ func (client PipelinesClient) CreateOrUpdate(ctx context.Context, resourceGroupN
 				Chain: []validation.Constraint{{Target: "pipeline.Pipeline.Concurrency", Name: validation.Null, Rule: false,
 					Chain: []validation.Constraint{{Target: "pipeline.Pipeline.Concurrency", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil}}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.PipelinesClient", "CreateOrUpdate")
+		return result, validation.NewError("datafactory.PipelinesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, factoryName, pipelineName, pipeline, ifMatch)
@@ -139,9 +139,9 @@ func (client PipelinesClient) CreateOrUpdateResponder(resp *http.Response) (resu
 
 // CreateRun creates a run of a pipeline.
 //
-// resourceGroupName is the resource group name. factoryName is the factory name. pipelineName is the pipeline name.
-// parameters is parameters of the pipeline run.
-func (client PipelinesClient) CreateRun(ctx context.Context, resourceGroupName string, factoryName string, pipelineName string, parameters map[string]*map[string]interface{}) (result CreateRunResponse, err error) {
+// resourceGroupName is the resource group name. factoryName is the factory name. pipelineName is the pipeline
+// name. parameters is parameters of the pipeline run.
+func (client PipelinesClient) CreateRun(ctx context.Context, resourceGroupName string, factoryName string, pipelineName string, parameters map[string]interface{}) (result CreateRunResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
@@ -155,7 +155,7 @@ func (client PipelinesClient) CreateRun(ctx context.Context, resourceGroupName s
 			Constraints: []validation.Constraint{{Target: "pipelineName", Name: validation.MaxLength, Rule: 260, Chain: nil},
 				{Target: "pipelineName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "pipelineName", Name: validation.Pattern, Rule: `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.PipelinesClient", "CreateRun")
+		return result, validation.NewError("datafactory.PipelinesClient", "CreateRun", err.Error())
 	}
 
 	req, err := client.CreateRunPreparer(ctx, resourceGroupName, factoryName, pipelineName, parameters)
@@ -180,7 +180,7 @@ func (client PipelinesClient) CreateRun(ctx context.Context, resourceGroupName s
 }
 
 // CreateRunPreparer prepares the CreateRun request.
-func (client PipelinesClient) CreateRunPreparer(ctx context.Context, resourceGroupName string, factoryName string, pipelineName string, parameters map[string]*map[string]interface{}) (*http.Request, error) {
+func (client PipelinesClient) CreateRunPreparer(ctx context.Context, resourceGroupName string, factoryName string, pipelineName string, parameters map[string]interface{}) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"factoryName":       autorest.Encode("path", factoryName),
 		"pipelineName":      autorest.Encode("path", pipelineName),
@@ -228,7 +228,8 @@ func (client PipelinesClient) CreateRunResponder(resp *http.Response) (result Cr
 
 // Delete deletes a pipeline.
 //
-// resourceGroupName is the resource group name. factoryName is the factory name. pipelineName is the pipeline name.
+// resourceGroupName is the resource group name. factoryName is the factory name. pipelineName is the pipeline
+// name.
 func (client PipelinesClient) Delete(ctx context.Context, resourceGroupName string, factoryName string, pipelineName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -243,7 +244,7 @@ func (client PipelinesClient) Delete(ctx context.Context, resourceGroupName stri
 			Constraints: []validation.Constraint{{Target: "pipelineName", Name: validation.MaxLength, Rule: 260, Chain: nil},
 				{Target: "pipelineName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "pipelineName", Name: validation.Pattern, Rule: `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.PipelinesClient", "Delete")
+		return result, validation.NewError("datafactory.PipelinesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, factoryName, pipelineName)
@@ -310,7 +311,8 @@ func (client PipelinesClient) DeleteResponder(resp *http.Response) (result autor
 
 // Get gets a pipeline.
 //
-// resourceGroupName is the resource group name. factoryName is the factory name. pipelineName is the pipeline name.
+// resourceGroupName is the resource group name. factoryName is the factory name. pipelineName is the pipeline
+// name.
 func (client PipelinesClient) Get(ctx context.Context, resourceGroupName string, factoryName string, pipelineName string) (result PipelineResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -325,7 +327,7 @@ func (client PipelinesClient) Get(ctx context.Context, resourceGroupName string,
 			Constraints: []validation.Constraint{{Target: "pipelineName", Name: validation.MaxLength, Rule: 260, Chain: nil},
 				{Target: "pipelineName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "pipelineName", Name: validation.Pattern, Rule: `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.PipelinesClient", "Get")
+		return result, validation.NewError("datafactory.PipelinesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, factoryName, pipelineName)
@@ -404,7 +406,7 @@ func (client PipelinesClient) ListByFactory(ctx context.Context, resourceGroupNa
 			Constraints: []validation.Constraint{{Target: "factoryName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "factoryName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "factoryName", Name: validation.Pattern, Rule: `^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.PipelinesClient", "ListByFactory")
+		return result, validation.NewError("datafactory.PipelinesClient", "ListByFactory", err.Error())
 	}
 
 	result.fn = client.listByFactoryNextResults

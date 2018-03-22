@@ -30,7 +30,7 @@
     "ListArtifacts": "<p>Gets information about artifacts.</p>",
     "ListDevicePools": "<p>Gets information about device pools.</p>",
     "ListDevices": "<p>Gets information about unique device types.</p>",
-    "ListJobs": "<p>Gets information about jobs.</p>",
+    "ListJobs": "<p>Gets information about jobs for a given test run.</p>",
     "ListNetworkProfiles": "<p>Returns the list of available network profiles.</p>",
     "ListOfferingPromotions": "<p>Returns a list of offering promotions. Each offering promotion record contains the ID and description of the promotion. The API returns a <code>NotEligible</code> error if the caller is not permitted to invoke the operation. Contact <a href=\"mailto:aws-devicefarm-support@amazon.com\">aws-devicefarm-support@amazon.com</a> if you believe that you should be able to invoke this operation.</p>",
     "ListOfferingTransactions": "<p>Returns a list of all historical purchases, renewals, and system renewal transactions for an AWS account. The list is paginated and ordered by a descending timestamp (most recent transactions are first). The API returns a <code>NotEligible</code> error if the user is not permitted to invoke the operation. Please contact <a href=\"mailto:aws-devicefarm-support@amazon.com\">aws-devicefarm-support@amazon.com</a> if you believe that you should be able to invoke this operation.</p>",
@@ -39,8 +39,8 @@
     "ListRemoteAccessSessions": "<p>Returns a list of all currently running remote access sessions.</p>",
     "ListRuns": "<p>Gets information about runs, given an AWS Device Farm project ARN.</p>",
     "ListSamples": "<p>Gets information about samples, given an AWS Device Farm project ARN</p>",
-    "ListSuites": "<p>Gets information about suites.</p>",
-    "ListTests": "<p>Gets information about tests.</p>",
+    "ListSuites": "<p>Gets information about test suites for a given job.</p>",
+    "ListTests": "<p>Gets information about tests in a given test suite.</p>",
     "ListUniqueProblems": "<p>Gets information about unique problems.</p>",
     "ListUploads": "<p>Gets information about uploads, given an AWS Device Farm project ARN.</p>",
     "PurchaseOffering": "<p>Immediately purchases offerings for an AWS account. Offerings renew with the latest total purchased quantity for an offering, unless the renewal was overridden. The API returns a <code>NotEligible</code> error if the user is not permitted to invoke the operation. Please contact <a href=\"mailto:aws-devicefarm-support@amazon.com\">aws-devicefarm-support@amazon.com</a> if you believe that you should be able to invoke this operation.</p>",
@@ -80,6 +80,7 @@
         "CreateNetworkProfileRequest$projectArn": "<p>The Amazon Resource Name (ARN) of the project for which you want to create a network profile.</p>",
         "CreateRemoteAccessSessionRequest$projectArn": "<p>The Amazon Resource Name (ARN) of the project for which you want to create a remote access session.</p>",
         "CreateRemoteAccessSessionRequest$deviceArn": "<p>The Amazon Resource Name (ARN) of the device for which you want to create a remote access session.</p>",
+        "CreateRemoteAccessSessionRequest$remoteRecordAppArn": "<p>The Amazon Resource Name (ARN) for the app to be recorded in the remote access session.</p>",
         "CreateUploadRequest$projectArn": "<p>The ARN of the project for the upload.</p>",
         "DeleteDevicePoolRequest$arn": "<p>Represents the Amazon Resource Name (ARN) of the Device Farm device pool you wish to delete.</p>",
         "DeleteNetworkProfileRequest$arn": "<p>The Amazon Resource Name (ARN) of the network profile you want to delete.</p>",
@@ -107,21 +108,24 @@
         "ListArtifactsRequest$arn": "<p>The Run, Job, Suite, or Test ARN.</p>",
         "ListDevicePoolsRequest$arn": "<p>The project ARN.</p>",
         "ListDevicesRequest$arn": "<p>The Amazon Resource Name (ARN) of the project.</p>",
-        "ListJobsRequest$arn": "<p>The jobs' ARNs.</p>",
+        "ListJobsRequest$arn": "<p>The run's Amazon Resource Name (ARN).</p>",
         "ListNetworkProfilesRequest$arn": "<p>The Amazon Resource Name (ARN) of the project for which you want to list network profiles.</p>",
         "ListProjectsRequest$arn": "<p>Optional. If no Amazon Resource Name (ARN) is specified, then AWS Device Farm returns a list of all projects for the AWS account. You can also specify a project ARN.</p>",
         "ListRemoteAccessSessionsRequest$arn": "<p>The Amazon Resource Name (ARN) of the remote access session about which you are requesting information.</p>",
         "ListRunsRequest$arn": "<p>The Amazon Resource Name (ARN) of the project for which you want to list runs.</p>",
         "ListSamplesRequest$arn": "<p>The Amazon Resource Name (ARN) of the project for which you want to list samples.</p>",
-        "ListSuitesRequest$arn": "<p>The suites' ARNs.</p>",
-        "ListTestsRequest$arn": "<p>The tests' ARNs.</p>",
+        "ListSuitesRequest$arn": "<p>The job's Amazon Resource Name (ARN).</p>",
+        "ListTestsRequest$arn": "<p>The test suite's Amazon Resource Name (ARN).</p>",
         "ListUniqueProblemsRequest$arn": "<p>The unique problems' ARNs.</p>",
         "ListUploadsRequest$arn": "<p>The Amazon Resource Name (ARN) of the project for which you want to list uploads.</p>",
         "NetworkProfile$arn": "<p>The Amazon Resource Name (ARN) of the network profile.</p>",
         "ProblemDetail$arn": "<p>The problem detail's ARN.</p>",
         "Project$arn": "<p>The project's ARN.</p>",
         "RemoteAccessSession$arn": "<p>The Amazon Resource Name (ARN) of the remote access session.</p>",
+        "RemoteAccessSession$remoteRecordAppArn": "<p>The Amazon Resource Name (ARN) for the app to be recorded in the remote access session.</p>",
         "Run$arn": "<p>The run's ARN.</p>",
+        "Run$appUpload": "<p>An app to upload or that has been uploaded.</p>",
+        "Run$devicePoolArn": "<p>The ARN of the device pool for the run.</p>",
         "Sample$arn": "<p>The sample's ARN.</p>",
         "ScheduleRunConfiguration$extraDataPackageArn": "<p>The ARN of the extra data for the run. The extra data is a .zip file that AWS Device Farm will extract to external data for Android or the app's sandbox for iOS.</p>",
         "ScheduleRunConfiguration$networkProfileArn": "<p>Reserved for internal use.</p>",
@@ -134,7 +138,7 @@
         "Suite$arn": "<p>The suite's ARN.</p>",
         "Test$arn": "<p>The test's ARN.</p>",
         "UpdateDevicePoolRequest$arn": "<p>The Amazon Resourc Name (ARN) of the Device Farm device pool you wish to update.</p>",
-        "UpdateNetworkProfileRequest$arn": "<p>The Amazon Resource Name (ARN) of the project that you wish to update network profile settings.</p>",
+        "UpdateNetworkProfileRequest$arn": "<p>The Amazon Resource Name (ARN) of the project for which you want to update network profile settings.</p>",
         "UpdateProjectRequest$arn": "<p>The Amazon Resource Name (ARN) of the project whose name you wish to update.</p>",
         "Upload$arn": "<p>The upload's ARN.</p>"
       }
@@ -199,6 +203,7 @@
       "base": null,
       "refs": {
         "CreateRemoteAccessSessionRequest$remoteDebugEnabled": "<p>Set to <code>true</code> if you want to access devices remotely for debugging in your remote access session.</p>",
+        "CreateRemoteAccessSessionRequest$remoteRecordEnabled": "<p>Set to <code>true</code> to enable remote recording for the remote access session.</p>",
         "Device$remoteAccessEnabled": "<p>Specifies whether remote access has been enabled for the specified device.</p>",
         "Device$remoteDebugEnabled": "<p>This flag is set to <code>true</code> if remote debugging is enabled for the device.</p>",
         "DevicePoolCompatibilityResult$compatible": "<p>Whether the result was compatible with the device pool.</p>",
@@ -206,7 +211,8 @@
         "Radios$bluetooth": "<p>True if Bluetooth is enabled at the beginning of the test; otherwise, false.</p>",
         "Radios$nfc": "<p>True if NFC is enabled at the beginning of the test; otherwise, false.</p>",
         "Radios$gps": "<p>True if GPS is enabled at the beginning of the test; otherwise, false.</p>",
-        "RemoteAccessSession$remoteDebugEnabled": "<p>This flag is set to <code>true</code> if remote debugging is enabled for the remote access session.</p>"
+        "RemoteAccessSession$remoteDebugEnabled": "<p>This flag is set to <code>true</code> if remote debugging is enabled for the remote access session.</p>",
+        "RemoteAccessSession$remoteRecordEnabled": "<p>This flag is set to <code>true</code> if remote recording is enabled for the remote access session.</p>"
       }
     },
     "CPU": {
@@ -218,7 +224,7 @@
     "ClientId": {
       "base": null,
       "refs": {
-        "CreateRemoteAccessSessionRequest$clientId": "<p>Unique identifier for the client. If you want access to multiple devices on the same client, you should pass the same <code>clientId</code> value in each call to <code>CreateRemoteAccessSession</code>. This is required only if <code>remoteDebugEnabled</code> is set to true <code>true</code>.</p>",
+        "CreateRemoteAccessSessionRequest$clientId": "<p>Unique identifier for the client. If you want access to multiple devices on the same client, you should pass the same <code>clientId</code> value in each call to <code>CreateRemoteAccessSession</code>. This is required only if <code>remoteDebugEnabled</code> is set to <code>true</code>.</p>",
         "RemoteAccessSession$clientId": "<p>Unique identifier of your client for the remote access session. Only returned if remote debugging is enabled for the remote access session.</p>"
       }
     },
@@ -716,7 +722,16 @@
         "Resolution$width": "<p>The screen resolution's width, expressed in pixels.</p>",
         "Resolution$height": "<p>The screen resolution's height, expressed in pixels.</p>",
         "Run$totalJobs": "<p>The total number of jobs for the run.</p>",
-        "Run$completedJobs": "<p>The total number of completed jobs.</p>"
+        "Run$completedJobs": "<p>The total number of completed jobs.</p>",
+        "Run$seed": "<p>For fuzz tests, this is a seed to use for randomizing the UI fuzz test. Using the same seed value between tests ensures identical event sequences.</p>",
+        "Run$eventCount": "<p>For fuzz tests, this is the number of events, between 1 and 10000, that the UI fuzz test should perform.</p>"
+      }
+    },
+    "InteractionMode": {
+      "base": null,
+      "refs": {
+        "CreateRemoteAccessSessionRequest$interactionMode": "<p>The interaction mode of the remote access session. Valid values are:</p> <ul> <li> <p>INTERACTIVE: You can interact with the iOS device by viewing, touching, and rotating the screen. You <b>cannot</b> run XCUITest framework-based tests in this mode.</p> </li> <li> <p>NO_VIDEO: You are connected to the device but cannot interact with it or view the screen. This mode has the fastest test execution speed. You <b>can</b> run XCUITest framework-based tests in this mode.</p> </li> <li> <p>VIDEO_ONLY: You can view the screen but cannot touch or rotate it. You <b>can</b> run XCUITest framework-based tests and watch the screen in this mode.</p> </li> </ul>",
+        "RemoteAccessSession$interactionMode": "<p>The interaction mode of the remote access session. Valid values are:</p> <ul> <li> <p>INTERACTIVE: You can interact with the iOS device by viewing, touching, and rotating the screen. You <b>cannot</b> run XCUITest framework-based tests in this mode.</p> </li> <li> <p>NO_VIDEO: You are connected to the device but cannot interact with it or view the screen. This mode has the fastest test execution speed. You <b>can</b> run XCUITest framework-based tests in this mode.</p> </li> <li> <p>VIDEO_ONLY: You can view the screen but cannot touch or rotate it. You <b>can</b> run XCUITest framework-based tests and watch the screen in this mode.</p> </li> </ul>"
       }
     },
     "IosPaths": {
@@ -740,6 +755,7 @@
         "CreateProjectRequest$defaultJobTimeoutMinutes": "<p>Sets the execution timeout value (in minutes) for a project. All test runs in this project will use the specified execution timeout value unless overridden when scheduling a run.</p>",
         "ExecutionConfiguration$jobTimeoutMinutes": "<p>The number of minutes a test run will execute before it times out.</p>",
         "Project$defaultJobTimeoutMinutes": "<p>The default number of minutes (at the project level) a test run will execute before it times out. Default value is 60 minutes.</p>",
+        "Run$jobTimeoutMinutes": "<p>The number of minutes the job will execute before it times out.</p>",
         "UpdateProjectRequest$defaultJobTimeoutMinutes": "<p>The number of minutes a test run in the project will execute before it times out.</p>"
       }
     },
@@ -917,6 +933,7 @@
     "Location": {
       "base": "<p>Represents a latitude and longitude pair, expressed in geographic coordinate system degrees (for example 47.6204, -122.3491).</p> <p>Elevation is currently not supported.</p>",
       "refs": {
+        "Run$location": "<p>Information about the location that is used for the run.</p>",
         "ScheduleRunConfiguration$location": "<p>Information about the location that is used for the run.</p>"
       }
     },
@@ -1241,6 +1258,7 @@
     "Radios": {
       "base": "<p>Represents the set of radios and their states on a device. Examples of radios include Wi-Fi, GPS, Bluetooth, and NFC.</p>",
       "refs": {
+        "Run$radios": "<p>Information about the radio states for the run.</p>",
         "ScheduleRunConfiguration$radios": "<p>Information about the radio states for the run.</p>"
       }
     },
@@ -1409,6 +1427,7 @@
         "CPU$architecture": "<p>The CPU's architecture, for example x86 or ARM.</p>",
         "Device$manufacturer": "<p>The device's manufacturer name.</p>",
         "Device$model": "<p>The device's model name.</p>",
+        "Device$modelId": "<p>The device's model ID.</p>",
         "Device$os": "<p>The device's operating system type.</p>",
         "Device$image": "<p>The device's image name.</p>",
         "Device$carrier": "<p>The device's carrier.</p>",
@@ -1422,6 +1441,8 @@
         "RemoteAccessSession$deviceUdid": "<p>Unique device identifier for the remote device. Only returned if remote debugging is enabled for the remote access session.</p>",
         "Rule$value": "<p>The rule's value.</p>",
         "Run$parsingResultUrl": "<p>Read-only URL for an object in S3 bucket where you can get the parsing results of the test package. If the test package doesn't parse, the reason why it doesn't parse appears in the file that this URL points to.</p>",
+        "Run$locale": "<p>Information about the locale that is used for the run.</p>",
+        "Run$webUrl": "<p>A pre-signed Amazon S3 URL that can be used with a corresponding GET request to download the symbol file for the run.</p>",
         "ScheduleRunConfiguration$locale": "<p>Information about the locale that is used for the run.</p>",
         "TestParameters$key": null,
         "TestParameters$value": null

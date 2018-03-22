@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:generate go run gen.go gen_bits.go
+//go:generate go run gen.go
 
 // Package runenames provides rune names from the Unicode Character Database.
 // For example, the name for '\u0100' is "LATIN CAPITAL LETTER A WITH MACRON".
@@ -16,33 +16,33 @@ import (
 
 // Name returns the name for r.
 func Name(r rune) string {
-	i := sort.Search(len(table0), func(j int) bool {
-		e := table0[j]
-		rOffset := rune(e >> shiftRuneOffset)
-		return r < rOffset
+	i := sort.Search(len(entries), func(j int) bool {
+		return entries[j].startRune() > r
 	})
 	if i == 0 {
 		return ""
 	}
+	e := entries[i-1]
 
-	e := table0[i-1]
-	rOffset := rune(e >> shiftRuneOffset)
-	rLength := rune(e>>shiftRuneLength) & maskRuneLength
-	if r >= rOffset+rLength {
+	offset := int(r - e.startRune())
+	if offset >= e.numRunes() {
 		return ""
 	}
 
-	if (e>>shiftDirect)&maskDirect != 0 {
-		o := int(e>>shiftDataOffset) & maskDataOffset
-		n := int(e>>shiftDataLength) & maskDataLength
-		return data[o : o+n]
+	if e.direct() {
+		o := e.index()
+		n := e.len()
+		return directData[o : o+n]
 	}
 
-	base := uint32(e>>shiftDataBase) & maskDataBase
-	base <<= dataBaseUnit
-	j := rune(e>>shiftTable1Offset) & maskTable1Offset
-	j += r - rOffset
-	d0 := base + uint32(table1[j-1]) // dataOffset
-	d1 := base + uint32(table1[j-0]) // dataOffset + dataLength
-	return data[d0:d1]
+	start := int(index[e.index()+offset])
+	end := int(index[e.index()+offset+1])
+	base1 := e.base() << 16
+	base2 := base1
+	if start > end {
+		base2 += 1 << 16
+	}
+	return singleData[start+base1 : end+base2]
 }
+
+func (e entry) len() int { return e.base() }

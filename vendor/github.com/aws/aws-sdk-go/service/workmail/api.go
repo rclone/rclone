@@ -3112,7 +3112,6 @@ func (c *WorkMail) UpdateResourceWithContext(ctx aws.Context, input *UpdateResou
 	return out, req.Send()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/AssociateDelegateToResourceRequest
 type AssociateDelegateToResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3182,7 +3181,6 @@ func (s *AssociateDelegateToResourceInput) SetResourceId(v string) *AssociateDel
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/AssociateDelegateToResourceResponse
 type AssociateDelegateToResourceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3197,7 +3195,6 @@ func (s AssociateDelegateToResourceOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/AssociateMemberToGroupRequest
 type AssociateMemberToGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3270,7 +3267,6 @@ func (s *AssociateMemberToGroupInput) SetOrganizationId(v string) *AssociateMemb
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/AssociateMemberToGroupResponse
 type AssociateMemberToGroupOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3287,7 +3283,6 @@ func (s AssociateMemberToGroupOutput) GoString() string {
 
 // At least one delegate must be associated to the resource to disable automatic
 // replies from the resource.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/BookingOptions
 type BookingOptions struct {
 	_ struct{} `type:"structure"`
 
@@ -3330,7 +3325,6 @@ func (s *BookingOptions) SetAutoDeclineRecurringRequests(v bool) *BookingOptions
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/CreateAliasRequest
 type CreateAliasInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3403,7 +3397,6 @@ func (s *CreateAliasInput) SetOrganizationId(v string) *CreateAliasInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/CreateAliasResponse
 type CreateAliasOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3418,7 +3411,6 @@ func (s CreateAliasOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/CreateGroupRequest
 type CreateGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3474,7 +3466,6 @@ func (s *CreateGroupInput) SetOrganizationId(v string) *CreateGroupInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/CreateGroupResponse
 type CreateGroupOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3498,7 +3489,6 @@ func (s *CreateGroupOutput) SetGroupId(v string) *CreateGroupOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/CreateResourceRequest
 type CreateResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3569,7 +3559,6 @@ func (s *CreateResourceInput) SetType(v string) *CreateResourceInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/CreateResourceResponse
 type CreateResourceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3593,7 +3582,6 @@ func (s *CreateResourceOutput) SetResourceId(v string) *CreateResourceOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/CreateUserRequest
 type CreateUserInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3677,7 +3665,6 @@ func (s *CreateUserInput) SetPassword(v string) *CreateUserInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/CreateUserResponse
 type CreateUserOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3703,7 +3690,6 @@ func (s *CreateUserOutput) SetUserId(v string) *CreateUserOutput {
 
 // The name of the attribute, which is one of the values defined in the UserAttribute
 // enumeration.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/Delegate
 type Delegate struct {
 	_ struct{} `type:"structure"`
 
@@ -3740,7 +3726,6 @@ func (s *Delegate) SetType(v string) *Delegate {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DeleteAliasRequest
 type DeleteAliasInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3815,7 +3800,6 @@ func (s *DeleteAliasInput) SetOrganizationId(v string) *DeleteAliasInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DeleteAliasResponse
 type DeleteAliasOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3830,7 +3814,6 @@ func (s DeleteAliasOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DeleteGroupRequest
 type DeleteGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3886,7 +3869,6 @@ func (s *DeleteGroupInput) SetOrganizationId(v string) *DeleteGroupInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DeleteGroupResponse
 type DeleteGroupOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3901,7 +3883,6 @@ func (s DeleteGroupOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DeleteResourceRequest
 type DeleteResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3955,7 +3936,6 @@ func (s *DeleteResourceInput) SetResourceId(v string) *DeleteResourceInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DeleteResourceResponse
 type DeleteResourceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3970,7 +3950,6 @@ func (s DeleteResourceOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DeleteUserRequest
 type DeleteUserInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4026,7 +4005,6 @@ func (s *DeleteUserInput) SetUserId(v string) *DeleteUserInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DeleteUserResponse
 type DeleteUserOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4041,7 +4019,6 @@ func (s DeleteUserOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DeregisterFromWorkMailRequest
 type DeregisterFromWorkMailInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4098,7 +4075,6 @@ func (s *DeregisterFromWorkMailInput) SetOrganizationId(v string) *DeregisterFro
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DeregisterFromWorkMailResponse
 type DeregisterFromWorkMailOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4113,7 +4089,6 @@ func (s DeregisterFromWorkMailOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DescribeGroupRequest
 type DescribeGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4169,7 +4144,6 @@ func (s *DescribeGroupInput) SetOrganizationId(v string) *DescribeGroupInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DescribeGroupResponse
 type DescribeGroupOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4241,7 +4215,6 @@ func (s *DescribeGroupOutput) SetState(v string) *DescribeGroupOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DescribeOrganizationRequest
 type DescribeOrganizationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4280,7 +4253,6 @@ func (s *DescribeOrganizationInput) SetOrganizationId(v string) *DescribeOrganiz
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DescribeOrganizationResponse
 type DescribeOrganizationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4369,7 +4341,6 @@ func (s *DescribeOrganizationOutput) SetState(v string) *DescribeOrganizationOut
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DescribeResourceRequest
 type DescribeResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4423,7 +4394,6 @@ func (s *DescribeResourceInput) SetResourceId(v string) *DescribeResourceInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DescribeResourceResponse
 type DescribeResourceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4513,7 +4483,6 @@ func (s *DescribeResourceOutput) SetType(v string) *DescribeResourceOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DescribeUserRequest
 type DescribeUserInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4569,7 +4538,6 @@ func (s *DescribeUserInput) SetUserId(v string) *DescribeUserInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DescribeUserResponse
 type DescribeUserOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4664,7 +4632,6 @@ func (s *DescribeUserOutput) SetUserRole(v string) *DescribeUserOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DisassociateDelegateFromResourceRequest
 type DisassociateDelegateFromResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4735,7 +4702,6 @@ func (s *DisassociateDelegateFromResourceInput) SetResourceId(v string) *Disasso
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DisassociateDelegateFromResourceResponse
 type DisassociateDelegateFromResourceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4750,7 +4716,6 @@ func (s DisassociateDelegateFromResourceOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DisassociateMemberFromGroupRequest
 type DisassociateMemberFromGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4823,7 +4788,6 @@ func (s *DisassociateMemberFromGroupInput) SetOrganizationId(v string) *Disassoc
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/DisassociateMemberFromGroupResponse
 type DisassociateMemberFromGroupOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4839,7 +4803,6 @@ func (s DisassociateMemberFromGroupOutput) GoString() string {
 }
 
 // The representation of an Amazon WorkMail group.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/Group
 type Group struct {
 	_ struct{} `type:"structure"`
 
@@ -4908,7 +4871,6 @@ func (s *Group) SetState(v string) *Group {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListAliasesRequest
 type ListAliasesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4989,7 +4951,6 @@ func (s *ListAliasesInput) SetOrganizationId(v string) *ListAliasesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListAliasesResponse
 type ListAliasesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5023,7 +4984,6 @@ func (s *ListAliasesOutput) SetNextToken(v string) *ListAliasesOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListGroupMembersRequest
 type ListGroupMembersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5104,7 +5064,6 @@ func (s *ListGroupMembersInput) SetOrganizationId(v string) *ListGroupMembersInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListGroupMembersResponse
 type ListGroupMembersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5138,7 +5097,6 @@ func (s *ListGroupMembersOutput) SetNextToken(v string) *ListGroupMembersOutput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListGroupsRequest
 type ListGroupsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5202,7 +5160,6 @@ func (s *ListGroupsInput) SetOrganizationId(v string) *ListGroupsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListGroupsResponse
 type ListGroupsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5236,7 +5193,6 @@ func (s *ListGroupsOutput) SetNextToken(v string) *ListGroupsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListOrganizationsRequest
 type ListOrganizationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5286,7 +5242,6 @@ func (s *ListOrganizationsInput) SetNextToken(v string) *ListOrganizationsInput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListOrganizationsResponse
 type ListOrganizationsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5320,7 +5275,6 @@ func (s *ListOrganizationsOutput) SetOrganizationSummaries(v []*OrganizationSumm
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListResourceDelegatesRequest
 type ListResourceDelegatesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5401,7 +5355,6 @@ func (s *ListResourceDelegatesInput) SetResourceId(v string) *ListResourceDelega
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListResourceDelegatesResponse
 type ListResourceDelegatesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5436,7 +5389,6 @@ func (s *ListResourceDelegatesOutput) SetNextToken(v string) *ListResourceDelega
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListResourcesRequest
 type ListResourcesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5500,7 +5452,6 @@ func (s *ListResourcesInput) SetOrganizationId(v string) *ListResourcesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListResourcesResponse
 type ListResourcesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5535,7 +5486,6 @@ func (s *ListResourcesOutput) SetResources(v []*Resource) *ListResourcesOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListUsersRequest
 type ListUsersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5598,7 +5548,6 @@ func (s *ListUsersInput) SetOrganizationId(v string) *ListUsersInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ListUsersResponse
 type ListUsersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5633,7 +5582,6 @@ func (s *ListUsersOutput) SetUsers(v []*User) *ListUsersOutput {
 }
 
 // The representation of a group member (user or group).
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/Member
 type Member struct {
 	_ struct{} `type:"structure"`
 
@@ -5703,7 +5651,6 @@ func (s *Member) SetType(v string) *Member {
 }
 
 // The brief overview associated with an organization.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/OrganizationSummary
 type OrganizationSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -5756,7 +5703,6 @@ func (s *OrganizationSummary) SetState(v string) *OrganizationSummary {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/RegisterToWorkMailRequest
 type RegisterToWorkMailInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5830,7 +5776,6 @@ func (s *RegisterToWorkMailInput) SetOrganizationId(v string) *RegisterToWorkMai
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/RegisterToWorkMailResponse
 type RegisterToWorkMailOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5845,7 +5790,6 @@ func (s RegisterToWorkMailOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ResetPasswordRequest
 type ResetPasswordInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5916,7 +5860,6 @@ func (s *ResetPasswordInput) SetUserId(v string) *ResetPasswordInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/ResetPasswordResponse
 type ResetPasswordOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5932,7 +5875,6 @@ func (s ResetPasswordOutput) GoString() string {
 }
 
 // The overview for a resource containing relevant data regarding it.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/Resource
 type Resource struct {
 	_ struct{} `type:"structure"`
 
@@ -6010,7 +5952,6 @@ func (s *Resource) SetType(v string) *Resource {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/UpdatePrimaryEmailAddressRequest
 type UpdatePrimaryEmailAddressInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6083,7 +6024,6 @@ func (s *UpdatePrimaryEmailAddressInput) SetOrganizationId(v string) *UpdatePrim
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/UpdatePrimaryEmailAddressResponse
 type UpdatePrimaryEmailAddressOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6098,7 +6038,6 @@ func (s UpdatePrimaryEmailAddressOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/UpdateResourceRequest
 type UpdateResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6173,7 +6112,6 @@ func (s *UpdateResourceInput) SetResourceId(v string) *UpdateResourceInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/UpdateResourceResponse
 type UpdateResourceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6189,7 +6127,6 @@ func (s UpdateResourceOutput) GoString() string {
 }
 
 // The representation of an Amazon WorkMail user.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workmail-2017-10-01/User
 type User struct {
 	_ struct{} `type:"structure"`
 

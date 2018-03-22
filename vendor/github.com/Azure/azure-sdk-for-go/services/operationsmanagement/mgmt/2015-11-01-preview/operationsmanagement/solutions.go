@@ -53,7 +53,7 @@ func (client SolutionsClient) CreateOrUpdate(ctx context.Context, resourceGroupN
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Properties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.Properties.WorkspaceResourceID", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationsmanagement.SolutionsClient", "CreateOrUpdate")
+		return result, validation.NewError("operationsmanagement.SolutionsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, solutionName, parameters)
@@ -130,7 +130,7 @@ func (client SolutionsClient) Delete(ctx context.Context, resourceGroupName stri
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationsmanagement.SolutionsClient", "Delete")
+		return result, validation.NewError("operationsmanagement.SolutionsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, solutionName)
@@ -204,7 +204,7 @@ func (client SolutionsClient) Get(ctx context.Context, resourceGroupName string,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationsmanagement.SolutionsClient", "Get")
+		return result, validation.NewError("operationsmanagement.SolutionsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, solutionName)
@@ -278,7 +278,7 @@ func (client SolutionsClient) ListByResourceGroup(ctx context.Context, resourceG
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationsmanagement.SolutionsClient", "ListByResourceGroup")
+		return result, validation.NewError("operationsmanagement.SolutionsClient", "ListByResourceGroup", err.Error())
 	}
 
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)

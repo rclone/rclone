@@ -51,7 +51,7 @@ func (client VirtualMachinesClient) Capture(ctx context.Context, resourceGroupNa
 			Constraints: []validation.Constraint{{Target: "parameters.VhdPrefix", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.DestinationContainerName", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.OverwriteVhds", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "compute.VirtualMachinesClient", "Capture")
+		return result, validation.NewError("compute.VirtualMachinesClient", "Capture", err.Error())
 	}
 
 	req, err := client.CapturePreparer(ctx, resourceGroupName, VMName, parameters)
@@ -145,7 +145,7 @@ func (client VirtualMachinesClient) CreateOrUpdate(ctx context.Context, resource
 						}},
 					}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "compute.VirtualMachinesClient", "CreateOrUpdate")
+		return result, validation.NewError("compute.VirtualMachinesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, VMName, parameters)
@@ -419,8 +419,8 @@ func (client VirtualMachinesClient) GeneralizeResponder(resp *http.Response) (re
 
 // Get retrieves information about the model view or the instance view of a virtual machine.
 //
-// resourceGroupName is the name of the resource group. VMName is the name of the virtual machine. expand is the expand
-// expression to apply on the operation.
+// resourceGroupName is the name of the resource group. VMName is the name of the virtual machine. expand is the
+// expand expression to apply on the operation.
 func (client VirtualMachinesClient) Get(ctx context.Context, resourceGroupName string, VMName string, expand InstanceViewTypes) (result VirtualMachine, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, VMName, expand)
 	if err != nil {

@@ -42,13 +42,13 @@ func NewCostsClientWithBaseURI(baseURI string, subscriptionID string) CostsClien
 
 // CreateOrUpdate create or replace an existing cost.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the cost.
-// labCost is a cost item.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// cost. labCost is a cost item.
 func (client CostsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, labName string, name string, labCost LabCost) (result LabCost, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: labCost,
 			Constraints: []validation.Constraint{{Target: "labCost.LabCostProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "dtl.CostsClient", "CreateOrUpdate")
+		return result, validation.NewError("dtl.CostsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, labName, name, labCost)
@@ -118,8 +118,8 @@ func (client CostsClient) CreateOrUpdateResponder(resp *http.Response) (result L
 
 // Get get cost.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the cost.
-// expand is specify the $expand query. Example: 'properties($expand=labCostDetails)'
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// cost. expand is specify the $expand query. Example: 'properties($expand=labCostDetails)'
 func (client CostsClient) Get(ctx context.Context, resourceGroupName string, labName string, name string, expand string) (result LabCost, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, labName, name, expand)
 	if err != nil {

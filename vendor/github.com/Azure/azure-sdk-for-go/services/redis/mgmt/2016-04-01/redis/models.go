@@ -102,8 +102,58 @@ type AccessKeys struct {
 	SecondaryKey *string `json:"secondaryKey,omitempty"`
 }
 
+// CreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+type CreateFuture struct {
+	azure.Future
+	req *http.Request
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future CreateFuture) Result(client Client) (rt ResourceType, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.CreateFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		return rt, azure.NewAsyncOpIncompleteError("redis.CreateFuture")
+	}
+	if future.PollingMethod() == azure.PollingLocation {
+		rt, err = client.CreateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "redis.CreateFuture", "Result", future.Response(), "Failure responding to request")
+		}
+		return
+	}
+	var req *http.Request
+	var resp *http.Response
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.CreateFuture", "Result", resp, "Failure sending request")
+		return
+	}
+	rt, err = client.CreateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.CreateFuture", "Result", resp, "Failure responding to request")
+	}
+	return
+}
+
 // CreateParameters parameters supplied to the Create Redis operation.
 type CreateParameters struct {
+	// CreateProperties - Redis cache properties.
+	*CreateProperties `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
@@ -113,9 +163,31 @@ type CreateParameters struct {
 	// Location - Resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// CreateProperties - Redis cache properties.
-	*CreateProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for CreateParameters.
+func (cp CreateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cp.CreateProperties != nil {
+		objectMap["properties"] = cp.CreateProperties
+	}
+	if cp.ID != nil {
+		objectMap["id"] = cp.ID
+	}
+	if cp.Name != nil {
+		objectMap["name"] = cp.Name
+	}
+	if cp.Type != nil {
+		objectMap["type"] = cp.Type
+	}
+	if cp.Location != nil {
+		objectMap["location"] = cp.Location
+	}
+	if cp.Tags != nil {
+		objectMap["tags"] = cp.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for CreateParameters struct.
@@ -125,66 +197,63 @@ func (cp *CreateParameters) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties CreateProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var createProperties CreateProperties
+				err = json.Unmarshal(*v, &createProperties)
+				if err != nil {
+					return err
+				}
+				cp.CreateProperties = &createProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				cp.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				cp.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				cp.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				cp.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				cp.Tags = tags
+			}
 		}
-		cp.CreateProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		cp.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		cp.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		cp.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		cp.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		cp.Tags = &tags
 	}
 
 	return nil
@@ -192,20 +261,143 @@ func (cp *CreateParameters) UnmarshalJSON(body []byte) error {
 
 // CreateProperties properties supplied to Create Redis operation.
 type CreateProperties struct {
+	// Sku - The SKU of the Redis cache to deploy.
+	Sku *Sku `json:"sku,omitempty"`
 	// RedisConfiguration - All Redis Settings. Few possible keys: rdb-backup-enabled,rdb-storage-connection-string,rdb-backup-frequency,maxmemory-delta,maxmemory-policy,notify-keyspace-events,maxmemory-samples,slowlog-log-slower-than,slowlog-max-len,list-max-ziplist-entries,list-max-ziplist-value,hash-max-ziplist-entries,hash-max-ziplist-value,set-max-intset-entries,zset-max-ziplist-entries,zset-max-ziplist-value etc.
-	RedisConfiguration *map[string]*string `json:"redisConfiguration,omitempty"`
+	RedisConfiguration map[string]*string `json:"redisConfiguration"`
 	// EnableNonSslPort - Specifies whether the non-ssl Redis server port (6379) is enabled.
 	EnableNonSslPort *bool `json:"enableNonSslPort,omitempty"`
 	// TenantSettings - tenantSettings
-	TenantSettings *map[string]*string `json:"tenantSettings,omitempty"`
+	TenantSettings map[string]*string `json:"tenantSettings"`
 	// ShardCount - The number of shards to be created on a Premium Cluster Cache.
 	ShardCount *int32 `json:"shardCount,omitempty"`
 	// SubnetID - The full resource ID of a subnet in a virtual network to deploy the Redis cache in. Example format: /subscriptions/{subid}/resourceGroups/{resourceGroupName}/Microsoft.{Network|ClassicNetwork}/VirtualNetworks/vnet1/subnets/subnet1
 	SubnetID *string `json:"subnetId,omitempty"`
 	// StaticIP - Static IP address. Required when deploying a Redis cache inside an existing Azure Virtual Network.
 	StaticIP *string `json:"staticIP,omitempty"`
-	// Sku - The SKU of the Redis cache to deploy.
-	Sku *Sku `json:"sku,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CreateProperties.
+func (cp CreateProperties) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cp.Sku != nil {
+		objectMap["sku"] = cp.Sku
+	}
+	if cp.RedisConfiguration != nil {
+		objectMap["redisConfiguration"] = cp.RedisConfiguration
+	}
+	if cp.EnableNonSslPort != nil {
+		objectMap["enableNonSslPort"] = cp.EnableNonSslPort
+	}
+	if cp.TenantSettings != nil {
+		objectMap["tenantSettings"] = cp.TenantSettings
+	}
+	if cp.ShardCount != nil {
+		objectMap["shardCount"] = cp.ShardCount
+	}
+	if cp.SubnetID != nil {
+		objectMap["subnetId"] = cp.SubnetID
+	}
+	if cp.StaticIP != nil {
+		objectMap["staticIP"] = cp.StaticIP
+	}
+	return json.Marshal(objectMap)
+}
+
+// DeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+type DeleteFuture struct {
+	azure.Future
+	req *http.Request
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future DeleteFuture) Result(client Client) (ar autorest.Response, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.DeleteFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		return ar, azure.NewAsyncOpIncompleteError("redis.DeleteFuture")
+	}
+	if future.PollingMethod() == azure.PollingLocation {
+		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "redis.DeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
+		return
+	}
+	var req *http.Request
+	var resp *http.Response
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.DeleteFuture", "Result", resp, "Failure sending request")
+		return
+	}
+	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.DeleteFuture", "Result", resp, "Failure responding to request")
+	}
+	return
+}
+
+// ExportDataFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+type ExportDataFuture struct {
+	azure.Future
+	req *http.Request
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future ExportDataFuture) Result(client Client) (ar autorest.Response, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.ExportDataFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		return ar, azure.NewAsyncOpIncompleteError("redis.ExportDataFuture")
+	}
+	if future.PollingMethod() == azure.PollingLocation {
+		ar, err = client.ExportDataResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "redis.ExportDataFuture", "Result", future.Response(), "Failure responding to request")
+		}
+		return
+	}
+	var req *http.Request
+	var resp *http.Response
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.ExportDataFuture", "Result", resp, "Failure sending request")
+		return
+	}
+	ar, err = client.ExportDataResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.ExportDataFuture", "Result", resp, "Failure responding to request")
+	}
+	return
 }
 
 // ExportRDBParameters parameters for Redis export operation.
@@ -218,8 +410,8 @@ type ExportRDBParameters struct {
 	Container *string `json:"container,omitempty"`
 }
 
-// FirewallRule a firewall rule on a redis cache has a name, and describes a contiguous range of IP addresses permitted
-// to connect
+// FirewallRule a firewall rule on a redis cache has a name, and describes a contiguous range of IP addresses
+// permitted to connect
 type FirewallRule struct {
 	autorest.Response `json:"-"`
 	// ID - resource ID (of the firewall rule)
@@ -239,46 +431,45 @@ func (fr *FirewallRule) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				fr.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				fr.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				fr.Type = &typeVar
+			}
+		case "properties":
+			if v != nil {
+				var firewallRuleProperties FirewallRuleProperties
+				err = json.Unmarshal(*v, &firewallRuleProperties)
+				if err != nil {
+					return err
+				}
+				fr.FirewallRuleProperties = &firewallRuleProperties
+			}
 		}
-		fr.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		fr.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		fr.Type = &typeVar
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties FirewallRuleProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		fr.FirewallRuleProperties = &properties
 	}
 
 	return nil
@@ -399,6 +590,54 @@ type ForceRebootResponse struct {
 	autorest.Response `json:"-"`
 	// Message - Status message
 	Message *string `json:"Message,omitempty"`
+}
+
+// ImportDataFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+type ImportDataFuture struct {
+	azure.Future
+	req *http.Request
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future ImportDataFuture) Result(client Client) (ar autorest.Response, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.ImportDataFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		return ar, azure.NewAsyncOpIncompleteError("redis.ImportDataFuture")
+	}
+	if future.PollingMethod() == azure.PollingLocation {
+		ar, err = client.ImportDataResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "redis.ImportDataFuture", "Result", future.Response(), "Failure responding to request")
+		}
+		return
+	}
+	var req *http.Request
+	var resp *http.Response
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.ImportDataFuture", "Result", resp, "Failure sending request")
+		return
+	}
+	ar, err = client.ImportDataResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "redis.ImportDataFuture", "Result", resp, "Failure responding to request")
+	}
+	return
 }
 
 // ImportRDBParameters parameters for Redis import operation.
@@ -531,8 +770,8 @@ type OperationDisplay struct {
 	Description *string `json:"description,omitempty"`
 }
 
-// OperationListResult result of the request to list REST API operations. It contains a list of operations and a URL
-// nextLink to get the next set of results.
+// OperationListResult result of the request to list REST API operations. It contains a list of operations and a
+// URL nextLink to get the next set of results.
 type OperationListResult struct {
 	autorest.Response `json:"-"`
 	// Value - List of operations supported by the resource provider.
@@ -656,56 +895,54 @@ func (ps *PatchSchedule) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ps.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ps.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ps.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				ps.Location = &location
+			}
+		case "properties":
+			if v != nil {
+				var scheduleEntries ScheduleEntries
+				err = json.Unmarshal(*v, &scheduleEntries)
+				if err != nil {
+					return err
+				}
+				ps.ScheduleEntries = &scheduleEntries
+			}
 		}
-		ps.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ps.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		ps.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		ps.Location = &location
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties ScheduleEntries
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		ps.ScheduleEntries = &properties
 	}
 
 	return nil
@@ -714,11 +951,11 @@ func (ps *PatchSchedule) UnmarshalJSON(body []byte) error {
 // Properties properties supplied to Create or Update Redis operation.
 type Properties struct {
 	// RedisConfiguration - All Redis Settings. Few possible keys: rdb-backup-enabled,rdb-storage-connection-string,rdb-backup-frequency,maxmemory-delta,maxmemory-policy,notify-keyspace-events,maxmemory-samples,slowlog-log-slower-than,slowlog-max-len,list-max-ziplist-entries,list-max-ziplist-value,hash-max-ziplist-entries,hash-max-ziplist-value,set-max-intset-entries,zset-max-ziplist-entries,zset-max-ziplist-value etc.
-	RedisConfiguration *map[string]*string `json:"redisConfiguration,omitempty"`
+	RedisConfiguration map[string]*string `json:"redisConfiguration"`
 	// EnableNonSslPort - Specifies whether the non-ssl Redis server port (6379) is enabled.
 	EnableNonSslPort *bool `json:"enableNonSslPort,omitempty"`
 	// TenantSettings - tenantSettings
-	TenantSettings *map[string]*string `json:"tenantSettings,omitempty"`
+	TenantSettings map[string]*string `json:"tenantSettings"`
 	// ShardCount - The number of shards to be created on a Premium Cluster Cache.
 	ShardCount *int32 `json:"shardCount,omitempty"`
 	// SubnetID - The full resource ID of a subnet in a virtual network to deploy the Redis cache in. Example format: /subscriptions/{subid}/resourceGroups/{resourceGroupName}/Microsoft.{Network|ClassicNetwork}/VirtualNetworks/vnet1/subnets/subnet1
@@ -727,136 +964,36 @@ type Properties struct {
 	StaticIP *string `json:"staticIP,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for Properties.
+func (p Properties) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if p.RedisConfiguration != nil {
+		objectMap["redisConfiguration"] = p.RedisConfiguration
+	}
+	if p.EnableNonSslPort != nil {
+		objectMap["enableNonSslPort"] = p.EnableNonSslPort
+	}
+	if p.TenantSettings != nil {
+		objectMap["tenantSettings"] = p.TenantSettings
+	}
+	if p.ShardCount != nil {
+		objectMap["shardCount"] = p.ShardCount
+	}
+	if p.SubnetID != nil {
+		objectMap["subnetId"] = p.SubnetID
+	}
+	if p.StaticIP != nil {
+		objectMap["staticIP"] = p.StaticIP
+	}
+	return json.Marshal(objectMap)
+}
+
 // RebootParameters specifies which Redis node(s) to reboot.
 type RebootParameters struct {
 	// RebootType - Which Redis node(s) to reboot. Depending on this value data loss is possible. Possible values include: 'PrimaryNode', 'SecondaryNode', 'AllNodes'
 	RebootType RebootType `json:"rebootType,omitempty"`
 	// ShardID - If clustering is enabled, the ID of the shard to be rebooted.
 	ShardID *int32 `json:"shardId,omitempty"`
-}
-
-// RedisCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
-type RedisCreateFuture struct {
-	azure.Future
-	req *http.Request
-}
-
-// Result returns the result of the asynchronous operation.
-// If the operation has not completed it will return an error.
-func (future RedisCreateFuture) Result(client Client) (rt ResourceType, err error) {
-	var done bool
-	done, err = future.Done(client)
-	if err != nil {
-		return
-	}
-	if !done {
-		return rt, autorest.NewError("redis.RedisCreateFuture", "Result", "asynchronous operation has not completed")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		rt, err = client.CreateResponder(future.Response())
-		return
-	}
-	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		return
-	}
-	rt, err = client.CreateResponder(resp)
-	return
-}
-
-// RedisDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
-type RedisDeleteFuture struct {
-	azure.Future
-	req *http.Request
-}
-
-// Result returns the result of the asynchronous operation.
-// If the operation has not completed it will return an error.
-func (future RedisDeleteFuture) Result(client Client) (ar autorest.Response, err error) {
-	var done bool
-	done, err = future.Done(client)
-	if err != nil {
-		return
-	}
-	if !done {
-		return ar, autorest.NewError("redis.RedisDeleteFuture", "Result", "asynchronous operation has not completed")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		return
-	}
-	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	return
-}
-
-// RedisExportDataFuture an abstraction for monitoring and retrieving the results of a long-running operation.
-type RedisExportDataFuture struct {
-	azure.Future
-	req *http.Request
-}
-
-// Result returns the result of the asynchronous operation.
-// If the operation has not completed it will return an error.
-func (future RedisExportDataFuture) Result(client Client) (ar autorest.Response, err error) {
-	var done bool
-	done, err = future.Done(client)
-	if err != nil {
-		return
-	}
-	if !done {
-		return ar, autorest.NewError("redis.RedisExportDataFuture", "Result", "asynchronous operation has not completed")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.ExportDataResponder(future.Response())
-		return
-	}
-	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		return
-	}
-	ar, err = client.ExportDataResponder(resp)
-	return
-}
-
-// RedisImportDataFuture an abstraction for monitoring and retrieving the results of a long-running operation.
-type RedisImportDataFuture struct {
-	azure.Future
-	req *http.Request
-}
-
-// Result returns the result of the asynchronous operation.
-// If the operation has not completed it will return an error.
-func (future RedisImportDataFuture) Result(client Client) (ar autorest.Response, err error) {
-	var done bool
-	done, err = future.Done(client)
-	if err != nil {
-		return
-	}
-	if !done {
-		return ar, autorest.NewError("redis.RedisImportDataFuture", "Result", "asynchronous operation has not completed")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.ImportDataResponder(future.Response())
-		return
-	}
-	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		return
-	}
-	ar, err = client.ImportDataResponder(resp)
-	return
 }
 
 // RegenerateKeyParameters specifies which Redis access keys to reset.
@@ -876,23 +1013,32 @@ type Resource struct {
 	// Location - Resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // ResourceProperties parameters describing a Redis instance.
 type ResourceProperties struct {
-	// RedisConfiguration - All Redis Settings. Few possible keys: rdb-backup-enabled,rdb-storage-connection-string,rdb-backup-frequency,maxmemory-delta,maxmemory-policy,notify-keyspace-events,maxmemory-samples,slowlog-log-slower-than,slowlog-max-len,list-max-ziplist-entries,list-max-ziplist-value,hash-max-ziplist-entries,hash-max-ziplist-value,set-max-intset-entries,zset-max-ziplist-entries,zset-max-ziplist-value etc.
-	RedisConfiguration *map[string]*string `json:"redisConfiguration,omitempty"`
-	// EnableNonSslPort - Specifies whether the non-ssl Redis server port (6379) is enabled.
-	EnableNonSslPort *bool `json:"enableNonSslPort,omitempty"`
-	// TenantSettings - tenantSettings
-	TenantSettings *map[string]*string `json:"tenantSettings,omitempty"`
-	// ShardCount - The number of shards to be created on a Premium Cluster Cache.
-	ShardCount *int32 `json:"shardCount,omitempty"`
-	// SubnetID - The full resource ID of a subnet in a virtual network to deploy the Redis cache in. Example format: /subscriptions/{subid}/resourceGroups/{resourceGroupName}/Microsoft.{Network|ClassicNetwork}/VirtualNetworks/vnet1/subnets/subnet1
-	SubnetID *string `json:"subnetId,omitempty"`
-	// StaticIP - Static IP address. Required when deploying a Redis cache inside an existing Azure Virtual Network.
-	StaticIP *string `json:"staticIP,omitempty"`
 	// Sku - The SKU of the Redis cache to deploy.
 	Sku *Sku `json:"sku,omitempty"`
 	// RedisVersion - Redis version.
@@ -907,11 +1053,70 @@ type ResourceProperties struct {
 	SslPort *int32 `json:"sslPort,omitempty"`
 	// AccessKeys - The keys of the Redis cache - not set if this object is not the response to Create or Update redis cache
 	AccessKeys *AccessKeys `json:"accessKeys,omitempty"`
+	// RedisConfiguration - All Redis Settings. Few possible keys: rdb-backup-enabled,rdb-storage-connection-string,rdb-backup-frequency,maxmemory-delta,maxmemory-policy,notify-keyspace-events,maxmemory-samples,slowlog-log-slower-than,slowlog-max-len,list-max-ziplist-entries,list-max-ziplist-value,hash-max-ziplist-entries,hash-max-ziplist-value,set-max-intset-entries,zset-max-ziplist-entries,zset-max-ziplist-value etc.
+	RedisConfiguration map[string]*string `json:"redisConfiguration"`
+	// EnableNonSslPort - Specifies whether the non-ssl Redis server port (6379) is enabled.
+	EnableNonSslPort *bool `json:"enableNonSslPort,omitempty"`
+	// TenantSettings - tenantSettings
+	TenantSettings map[string]*string `json:"tenantSettings"`
+	// ShardCount - The number of shards to be created on a Premium Cluster Cache.
+	ShardCount *int32 `json:"shardCount,omitempty"`
+	// SubnetID - The full resource ID of a subnet in a virtual network to deploy the Redis cache in. Example format: /subscriptions/{subid}/resourceGroups/{resourceGroupName}/Microsoft.{Network|ClassicNetwork}/VirtualNetworks/vnet1/subnets/subnet1
+	SubnetID *string `json:"subnetId,omitempty"`
+	// StaticIP - Static IP address. Required when deploying a Redis cache inside an existing Azure Virtual Network.
+	StaticIP *string `json:"staticIP,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ResourceProperties.
+func (rp ResourceProperties) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rp.Sku != nil {
+		objectMap["sku"] = rp.Sku
+	}
+	if rp.RedisVersion != nil {
+		objectMap["redisVersion"] = rp.RedisVersion
+	}
+	if rp.ProvisioningState != nil {
+		objectMap["provisioningState"] = rp.ProvisioningState
+	}
+	if rp.HostName != nil {
+		objectMap["hostName"] = rp.HostName
+	}
+	if rp.Port != nil {
+		objectMap["port"] = rp.Port
+	}
+	if rp.SslPort != nil {
+		objectMap["sslPort"] = rp.SslPort
+	}
+	if rp.AccessKeys != nil {
+		objectMap["accessKeys"] = rp.AccessKeys
+	}
+	if rp.RedisConfiguration != nil {
+		objectMap["redisConfiguration"] = rp.RedisConfiguration
+	}
+	if rp.EnableNonSslPort != nil {
+		objectMap["enableNonSslPort"] = rp.EnableNonSslPort
+	}
+	if rp.TenantSettings != nil {
+		objectMap["tenantSettings"] = rp.TenantSettings
+	}
+	if rp.ShardCount != nil {
+		objectMap["shardCount"] = rp.ShardCount
+	}
+	if rp.SubnetID != nil {
+		objectMap["subnetId"] = rp.SubnetID
+	}
+	if rp.StaticIP != nil {
+		objectMap["staticIP"] = rp.StaticIP
+	}
+	return json.Marshal(objectMap)
 }
 
 // ResourceType a single Redis item in List or Get Operation.
 type ResourceType struct {
 	autorest.Response `json:"-"`
+	// ResourceProperties - Redis cache properties.
+	*ResourceProperties `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
@@ -921,9 +1126,31 @@ type ResourceType struct {
 	// Location - Resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// ResourceProperties - Redis cache properties.
-	*ResourceProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for ResourceType.
+func (rt ResourceType) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rt.ResourceProperties != nil {
+		objectMap["properties"] = rt.ResourceProperties
+	}
+	if rt.ID != nil {
+		objectMap["id"] = rt.ID
+	}
+	if rt.Name != nil {
+		objectMap["name"] = rt.Name
+	}
+	if rt.Type != nil {
+		objectMap["type"] = rt.Type
+	}
+	if rt.Location != nil {
+		objectMap["location"] = rt.Location
+	}
+	if rt.Tags != nil {
+		objectMap["tags"] = rt.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ResourceType struct.
@@ -933,66 +1160,63 @@ func (rt *ResourceType) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ResourceProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var resourceProperties ResourceProperties
+				err = json.Unmarshal(*v, &resourceProperties)
+				if err != nil {
+					return err
+				}
+				rt.ResourceProperties = &resourceProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				rt.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				rt.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				rt.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				rt.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				rt.Tags = tags
+			}
 		}
-		rt.ResourceProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		rt.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		rt.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		rt.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		rt.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		rt.Tags = &tags
 	}
 
 	return nil
@@ -1029,7 +1253,19 @@ type UpdateParameters struct {
 	// UpdateProperties - Redis cache properties.
 	*UpdateProperties `json:"properties,omitempty"`
 	// Tags - Resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for UpdateParameters.
+func (up UpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if up.UpdateProperties != nil {
+		objectMap["properties"] = up.UpdateProperties
+	}
+	if up.Tags != nil {
+		objectMap["tags"] = up.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for UpdateParameters struct.
@@ -1039,26 +1275,27 @@ func (up *UpdateParameters) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties UpdateProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var updateProperties UpdateProperties
+				err = json.Unmarshal(*v, &updateProperties)
+				if err != nil {
+					return err
+				}
+				up.UpdateProperties = &updateProperties
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				up.Tags = tags
+			}
 		}
-		up.UpdateProperties = &properties
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		up.Tags = &tags
 	}
 
 	return nil
@@ -1066,18 +1303,45 @@ func (up *UpdateParameters) UnmarshalJSON(body []byte) error {
 
 // UpdateProperties properties supplied to Update Redis operation.
 type UpdateProperties struct {
+	// Sku - The SKU of the Redis cache to deploy.
+	Sku *Sku `json:"sku,omitempty"`
 	// RedisConfiguration - All Redis Settings. Few possible keys: rdb-backup-enabled,rdb-storage-connection-string,rdb-backup-frequency,maxmemory-delta,maxmemory-policy,notify-keyspace-events,maxmemory-samples,slowlog-log-slower-than,slowlog-max-len,list-max-ziplist-entries,list-max-ziplist-value,hash-max-ziplist-entries,hash-max-ziplist-value,set-max-intset-entries,zset-max-ziplist-entries,zset-max-ziplist-value etc.
-	RedisConfiguration *map[string]*string `json:"redisConfiguration,omitempty"`
+	RedisConfiguration map[string]*string `json:"redisConfiguration"`
 	// EnableNonSslPort - Specifies whether the non-ssl Redis server port (6379) is enabled.
 	EnableNonSslPort *bool `json:"enableNonSslPort,omitempty"`
 	// TenantSettings - tenantSettings
-	TenantSettings *map[string]*string `json:"tenantSettings,omitempty"`
+	TenantSettings map[string]*string `json:"tenantSettings"`
 	// ShardCount - The number of shards to be created on a Premium Cluster Cache.
 	ShardCount *int32 `json:"shardCount,omitempty"`
 	// SubnetID - The full resource ID of a subnet in a virtual network to deploy the Redis cache in. Example format: /subscriptions/{subid}/resourceGroups/{resourceGroupName}/Microsoft.{Network|ClassicNetwork}/VirtualNetworks/vnet1/subnets/subnet1
 	SubnetID *string `json:"subnetId,omitempty"`
 	// StaticIP - Static IP address. Required when deploying a Redis cache inside an existing Azure Virtual Network.
 	StaticIP *string `json:"staticIP,omitempty"`
-	// Sku - The SKU of the Redis cache to deploy.
-	Sku *Sku `json:"sku,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for UpdateProperties.
+func (up UpdateProperties) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if up.Sku != nil {
+		objectMap["sku"] = up.Sku
+	}
+	if up.RedisConfiguration != nil {
+		objectMap["redisConfiguration"] = up.RedisConfiguration
+	}
+	if up.EnableNonSslPort != nil {
+		objectMap["enableNonSslPort"] = up.EnableNonSslPort
+	}
+	if up.TenantSettings != nil {
+		objectMap["tenantSettings"] = up.TenantSettings
+	}
+	if up.ShardCount != nil {
+		objectMap["shardCount"] = up.ShardCount
+	}
+	if up.SubnetID != nil {
+		objectMap["subnetId"] = up.SubnetID
+	}
+	if up.StaticIP != nil {
+		objectMap["staticIP"] = up.StaticIP
+	}
+	return json.Marshal(objectMap)
 }

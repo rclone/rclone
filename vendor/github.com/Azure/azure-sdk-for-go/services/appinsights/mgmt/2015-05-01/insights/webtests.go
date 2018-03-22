@@ -43,8 +43,8 @@ func NewWebTestsClientWithBaseURI(baseURI string, subscriptionID string) WebTest
 // CreateOrUpdate creates or updates an Application Insights web test definition.
 //
 // resourceGroupName is the name of the resource group. webTestName is the name of the Application Insights webtest
-// resource. webTestDefinition is properties that need to be specified to create or update an Application Insights web
-// test definition.
+// resource. webTestDefinition is properties that need to be specified to create or update an Application Insights
+// web test definition.
 func (client WebTestsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, webTestName string, webTestDefinition WebTest) (result WebTest, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: webTestDefinition,
@@ -53,7 +53,7 @@ func (client WebTestsClient) CreateOrUpdate(ctx context.Context, resourceGroupNa
 					{Target: "webTestDefinition.WebTestProperties.WebTestName", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "webTestDefinition.WebTestProperties.Locations", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "insights.WebTestsClient", "CreateOrUpdate")
+		return result, validation.NewError("insights.WebTestsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, webTestName, webTestDefinition)

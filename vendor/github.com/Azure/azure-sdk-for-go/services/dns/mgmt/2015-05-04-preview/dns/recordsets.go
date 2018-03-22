@@ -42,10 +42,10 @@ func NewRecordSetsClientWithBaseURI(baseURI string, subscriptionID string) Recor
 // CreateOrUpdate creates a RecordSet within a DNS zone.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the zone without a terminating dot.
-// recordType is the type of DNS record. relativeRecordSetName is the name of the RecordSet, relative to the name of
-// the zone. parameters is parameters supplied to the CreateOrUpdate operation. ifMatch is the etag of RecordSet.
-// ifNoneMatch is defines the If-None-Match condition. Set to '*' to force Create-If-Not-Exist. Other values will be
-// ignored.
+// recordType is the type of DNS record. relativeRecordSetName is the name of the RecordSet, relative to the name
+// of the zone. parameters is parameters supplied to the CreateOrUpdate operation. ifMatch is the etag of
+// RecordSet. ifNoneMatch is defines the If-None-Match condition. Set to '*' to force Create-If-Not-Exist. Other
+// values will be ignored.
 func (client RecordSetsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, zoneName string, recordType RecordType, relativeRecordSetName string, parameters RecordSet, ifMatch string, ifNoneMatch string) (result RecordSet, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, zoneName, recordType, relativeRecordSetName, parameters, ifMatch, ifNoneMatch)
 	if err != nil {
@@ -124,9 +124,9 @@ func (client RecordSetsClient) CreateOrUpdateResponder(resp *http.Response) (res
 // Delete removes a RecordSet from a DNS zone.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the zone without a terminating dot.
-// recordType is the type of DNS record. relativeRecordSetName is the name of the RecordSet, relative to the name of
-// the zone. ifMatch is defines the If-Match condition. The delete operation will be performed only if the ETag of the
-// zone on the server matches this value.
+// recordType is the type of DNS record. relativeRecordSetName is the name of the RecordSet, relative to the name
+// of the zone. ifMatch is defines the If-Match condition. The delete operation will be performed only if the ETag
+// of the zone on the server matches this value.
 func (client RecordSetsClient) Delete(ctx context.Context, resourceGroupName string, zoneName string, recordType RecordType, relativeRecordSetName string, ifMatch string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, zoneName, recordType, relativeRecordSetName, ifMatch)
 	if err != nil {
@@ -198,8 +198,8 @@ func (client RecordSetsClient) DeleteResponder(resp *http.Response) (result auto
 // Get gets a RecordSet.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the zone without a terminating dot.
-// recordType is the type of DNS record. relativeRecordSetName is the name of the RecordSet, relative to the name of
-// the zone.
+// recordType is the type of DNS record. relativeRecordSetName is the name of the RecordSet, relative to the name
+// of the zone.
 func (client RecordSetsClient) Get(ctx context.Context, resourceGroupName string, zoneName string, recordType RecordType, relativeRecordSetName string) (result RecordSet, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, zoneName, recordType, relativeRecordSetName)
 	if err != nil {
@@ -267,9 +267,10 @@ func (client RecordSetsClient) GetResponder(resp *http.Response) (result RecordS
 
 // List lists the RecordSets of a specified type in a DNS zone.
 //
-// resourceGroupName is the name of the resource group that contains the zone. zoneName is the name of the zone from
-// which to enumerate RecordsSets. recordType is the type of record sets to enumerate. top is query parameters. If null
-// is passed returns the default number of zones. filter is the filter to apply on the operation.
+// resourceGroupName is the name of the resource group that contains the zone. zoneName is the name of the zone
+// from which to enumerate RecordsSets. recordType is the type of record sets to enumerate. top is query
+// parameters. If null is passed returns the default number of zones. filter is the filter to apply on the
+// operation.
 func (client RecordSetsClient) List(ctx context.Context, resourceGroupName string, zoneName string, recordType RecordType, top string, filter string) (result RecordSetListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, zoneName, recordType, top, filter)
@@ -370,9 +371,9 @@ func (client RecordSetsClient) ListComplete(ctx context.Context, resourceGroupNa
 
 // ListAll lists all RecordSets in a DNS zone.
 //
-// resourceGroupName is the name of the resource group that contains the zone. zoneName is the name of the zone from
-// which to enumerate RecordSets. top is query parameters. If null is passed returns the default number of zones.
-// filter is the filter to apply on the operation.
+// resourceGroupName is the name of the resource group that contains the zone. zoneName is the name of the zone
+// from which to enumerate RecordSets. top is query parameters. If null is passed returns the default number of
+// zones. filter is the filter to apply on the operation.
 func (client RecordSetsClient) ListAll(ctx context.Context, resourceGroupName string, zoneName string, top string, filter string) (result RecordSetListResultPage, err error) {
 	result.fn = client.listAllNextResults
 	req, err := client.ListAllPreparer(ctx, resourceGroupName, zoneName, top, filter)

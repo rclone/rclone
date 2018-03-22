@@ -545,12 +545,12 @@ func (s *CustomerListConfigurationsResponse) MarshalJSON() ([]byte, error) {
 // CustomerListCustomersResponse: Response message for listing my
 // customers.
 type CustomerListCustomersResponse struct {
-	// Customers: Customers the current user can act as.
+	// Customers: The customer accounts the calling user is a member of.
 	Customers []*Company `json:"customers,omitempty"`
 
-	// NextPageToken: Token to retrieve the next page of results, or empty
-	// if there are no
-	// more results in the list.
+	// NextPageToken: A token used to access the next page of results.
+	// Omitted if no further
+	// results are available.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1786,21 +1786,22 @@ type CustomersListCall struct {
 	header_      http.Header
 }
 
-// List: List the user's customer accounts.
+// List: Lists the user's customer accounts.
 func (r *CustomersService) List() *CustomersListCall {
 	c := &CustomersListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	return c
 }
 
 // PageSize sets the optional parameter "pageSize": The maximum number
-// of items to return.
+// of customers to show in a page of results.
+// A number between 1 and 100 (inclusive).
 func (c *CustomersListCall) PageSize(pageSize int64) *CustomersListCall {
 	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
 	return c
 }
 
-// PageToken sets the optional parameter "pageToken": The
-// next_page_token value returned from a previous List request, if any.
+// PageToken sets the optional parameter "pageToken": A token specifying
+// which result page to return.
 func (c *CustomersListCall) PageToken(pageToken string) *CustomersListCall {
 	c.urlParams_.Set("pageToken", pageToken)
 	return c
@@ -1897,20 +1898,20 @@ func (c *CustomersListCall) Do(opts ...googleapi.CallOption) (*CustomerListCusto
 	}
 	return ret, nil
 	// {
-	//   "description": "List the user's customer accounts.",
+	//   "description": "Lists the user's customer accounts.",
 	//   "flatPath": "v1/customers",
 	//   "httpMethod": "GET",
 	//   "id": "androiddeviceprovisioning.customers.list",
 	//   "parameterOrder": [],
 	//   "parameters": {
 	//     "pageSize": {
-	//       "description": "The maximum number of items to return.",
+	//       "description": "The maximum number of customers to show in a page of results.\nA number between 1 and 100 (inclusive).",
 	//       "format": "int32",
 	//       "location": "query",
 	//       "type": "integer"
 	//     },
 	//     "pageToken": {
-	//       "description": "The next_page_token value returned from a previous List request, if any.",
+	//       "description": "A token specifying which result page to return.",
 	//       "location": "query",
 	//       "type": "string"
 	//     }

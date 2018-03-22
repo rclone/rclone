@@ -120,7 +120,7 @@ func (client DisksClient) CreateOrUpdate(ctx context.Context, resourceGroupName 
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: disk,
 			Constraints: []validation.Constraint{{Target: "disk.DiskProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "dtl.DisksClient", "CreateOrUpdate")
+		return result, validation.NewError("dtl.DisksClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, labName, userName, name, disk)
@@ -410,9 +410,9 @@ func (client DisksClient) GetResponder(resp *http.Response) (result Disk, err er
 // List list disks in a given user profile.
 //
 // resourceGroupName is the name of the resource group. labName is the name of the lab. userName is the name of the
-// user profile. expand is specify the $expand query. Example: 'properties($select=diskType)' filter is the filter to
-// apply to the operation. top is the maximum number of resources to return from the operation. orderby is the ordering
-// expression for the results, using OData notation.
+// user profile. expand is specify the $expand query. Example: 'properties($select=diskType)' filter is the filter
+// to apply to the operation. top is the maximum number of resources to return from the operation. orderby is the
+// ordering expression for the results, using OData notation.
 func (client DisksClient) List(ctx context.Context, resourceGroupName string, labName string, userName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationDiskPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, userName, expand, filter, top, orderby)

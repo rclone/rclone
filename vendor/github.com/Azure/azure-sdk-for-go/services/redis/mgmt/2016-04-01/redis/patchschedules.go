@@ -42,14 +42,14 @@ func NewPatchSchedulesClientWithBaseURI(baseURI string, subscriptionID string) P
 
 // CreateOrUpdate create or replace the patching schedule for Redis cache (requires Premium SKU).
 //
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is parameters
-// to set the patching schedule for Redis cache.
+// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is
+// parameters to set the patching schedule for Redis cache.
 func (client PatchSchedulesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, name string, parameters PatchSchedule) (result PatchSchedule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ScheduleEntries", Name: validation.Null, Rule: true,
 				Chain: []validation.Constraint{{Target: "parameters.ScheduleEntries.ScheduleEntries", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "redis.PatchSchedulesClient", "CreateOrUpdate")
+		return result, validation.NewError("redis.PatchSchedulesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, name, parameters)

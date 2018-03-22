@@ -195,7 +195,8 @@ func (t *Transaction) rollback() {
 	// Note: Rollback is idempotent so it will be retried by the gapic layer.
 }
 
-// Get gets the document in the context of the transaction.
+// Get gets the document in the context of the transaction. The transaction holds a
+// pessimistic lock on the returned document.
 func (t *Transaction) Get(dr *DocumentRef) (*DocumentSnapshot, error) {
 	if len(t.writes) > 0 {
 		t.readAfterWrite = true
@@ -209,6 +210,18 @@ func (t *Transaction) Get(dr *DocumentRef) (*DocumentSnapshot, error) {
 		return nil, err
 	}
 	return newDocumentSnapshot(dr, docProto, t.c)
+}
+
+// GetAll retrieves multiple documents with a single call. The DocumentSnapshots are
+// returned in the order of the given DocumentRefs. If a document is not present, the
+// corresponding DocumentSnapshot will be nil. The transaction holds a pessimistic
+// lock on all of the returned documents.
+func (t *Transaction) GetAll(drs []*DocumentRef) ([]*DocumentSnapshot, error) {
+	if len(t.writes) > 0 {
+		t.readAfterWrite = true
+		return nil, errReadAfterWrite
+	}
+	return t.c.getAll(t.ctx, drs, t.id)
 }
 
 // A Queryer is a Query or a CollectionRef. CollectionRefs act as queries whose

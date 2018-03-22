@@ -52,7 +52,7 @@ func (client ScheduleClient) CreateOrUpdate(ctx context.Context, automationAccou
 			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.ScheduleCreateOrUpdateProperties", Name: validation.Null, Rule: true,
 					Chain: []validation.Constraint{{Target: "parameters.ScheduleCreateOrUpdateProperties.StartTime", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ScheduleClient", "CreateOrUpdate")
+		return result, validation.NewError("automation.ScheduleClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, automationAccountName, scheduleName, parameters)
@@ -127,7 +127,7 @@ func (client ScheduleClient) Delete(ctx context.Context, automationAccountName s
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ScheduleClient", "Delete")
+		return result, validation.NewError("automation.ScheduleClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, automationAccountName, scheduleName)
@@ -199,7 +199,7 @@ func (client ScheduleClient) Get(ctx context.Context, automationAccountName stri
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ScheduleClient", "Get")
+		return result, validation.NewError("automation.ScheduleClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, scheduleName)
@@ -272,7 +272,7 @@ func (client ScheduleClient) ListByAutomationAccount(ctx context.Context, automa
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ScheduleClient", "ListByAutomationAccount")
+		return result, validation.NewError("automation.ScheduleClient", "ListByAutomationAccount", err.Error())
 	}
 
 	result.fn = client.listByAutomationAccountNextResults
@@ -373,7 +373,7 @@ func (client ScheduleClient) Update(ctx context.Context, automationAccountName s
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ScheduleClient", "Update")
+		return result, validation.NewError("automation.ScheduleClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, automationAccountName, scheduleName, parameters)

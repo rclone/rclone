@@ -43,16 +43,16 @@ func NewProductSubscriptionsClientWithBaseURI(baseURI string, subscriptionID str
 // ListByProducts lists the collection of subscriptions to the specified product.
 //
 // resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// productID is product identifier. Must be unique in the current API Management service instance. filter is | Field
-// | Supported operators    | Supported functions                         |
+// productID is product identifier. Must be unique in the current API Management service instance. filter is |
+// Field        | Supported operators    | Supported functions                         |
 // |--------------|------------------------|---------------------------------------------|
 // | id           | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | name         | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | stateComment | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | userId       | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | productId    | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | state        | eq                     |                                             | top is number of records to
-// return. skip is number of records to skip.
+// | state        | eq                     |                                             | top is number of records
+// to return. skip is number of records to skip.
 func (client ProductSubscriptionsClient) ListByProducts(ctx context.Context, resourceGroupName string, serviceName string, productID string, filter string, top *int32, skip *int32) (result SubscriptionCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -69,7 +69,7 @@ func (client ProductSubscriptionsClient) ListByProducts(ctx context.Context, res
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ProductSubscriptionsClient", "ListByProducts")
+		return result, validation.NewError("apimanagement.ProductSubscriptionsClient", "ListByProducts", err.Error())
 	}
 
 	result.fn = client.listByProductsNextResults

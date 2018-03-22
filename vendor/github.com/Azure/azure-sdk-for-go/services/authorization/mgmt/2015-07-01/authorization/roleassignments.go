@@ -44,8 +44,8 @@ func NewRoleAssignmentsClientWithBaseURI(baseURI string, subscriptionID string) 
 
 // Create creates a role assignment.
 //
-// scope is the scope of the role assignment to create. The scope can be any REST resource instance. For example, use
-// '/subscriptions/{subscription-id}/' for a subscription,
+// scope is the scope of the role assignment to create. The scope can be any REST resource instance. For example,
+// use '/subscriptions/{subscription-id}/' for a subscription,
 // '/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}' for a resource group, and
 // '/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-type}/{resource-name}'
 // for a resource. roleAssignmentName is the name of the role assignment to create. It can be any valid GUID.
@@ -116,8 +116,9 @@ func (client RoleAssignmentsClient) CreateResponder(resp *http.Response) (result
 
 // CreateByID creates a role assignment by ID.
 //
-// roleAssignmentID is the fully qualified ID of the role assignment, including the scope, resource name and resource
-// type. Use the format, /{scope}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}. Example:
+// roleAssignmentID is the fully qualified ID of the role assignment, including the scope, resource name and
+// resource type. Use the format, /{scope}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}.
+// Example:
 // /subscriptions/{subId}/resourcegroups/{rgname}//providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}.
 // parameters is parameters for the role assignment.
 func (client RoleAssignmentsClient) CreateByID(ctx context.Context, roleAssignmentID string, parameters RoleAssignmentCreateParameters) (result RoleAssignment, err error) {
@@ -251,8 +252,9 @@ func (client RoleAssignmentsClient) DeleteResponder(resp *http.Response) (result
 
 // DeleteByID deletes a role assignment.
 //
-// roleAssignmentID is the fully qualified ID of the role assignment, including the scope, resource name and resource
-// type. Use the format, /{scope}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}. Example:
+// roleAssignmentID is the fully qualified ID of the role assignment, including the scope, resource name and
+// resource type. Use the format, /{scope}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}.
+// Example:
 // /subscriptions/{subId}/resourcegroups/{rgname}//providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}.
 func (client RoleAssignmentsClient) DeleteByID(ctx context.Context, roleAssignmentID string) (result RoleAssignment, err error) {
 	req, err := client.DeleteByIDPreparer(ctx, roleAssignmentID)
@@ -382,8 +384,9 @@ func (client RoleAssignmentsClient) GetResponder(resp *http.Response) (result Ro
 
 // GetByID gets a role assignment by ID.
 //
-// roleAssignmentID is the fully qualified ID of the role assignment, including the scope, resource name and resource
-// type. Use the format, /{scope}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}. Example:
+// roleAssignmentID is the fully qualified ID of the role assignment, including the scope, resource name and
+// resource type. Use the format, /{scope}/providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}.
+// Example:
 // /subscriptions/{subId}/resourcegroups/{rgname}//providers/Microsoft.Authorization/roleAssignments/{roleAssignmentName}.
 func (client RoleAssignmentsClient) GetByID(ctx context.Context, roleAssignmentID string) (result RoleAssignment, err error) {
 	req, err := client.GetByIDPreparer(ctx, roleAssignmentID)
@@ -448,9 +451,9 @@ func (client RoleAssignmentsClient) GetByIDResponder(resp *http.Response) (resul
 
 // List gets all role assignments for the subscription.
 //
-// filter is the filter to apply on the operation. Use $filter=atScope() to return all role assignments at or above the
-// scope. Use $filter=principalId eq {id} to return all role assignments at, above or below the scope for the specified
-// principal.
+// filter is the filter to apply on the operation. Use $filter=atScope() to return all role assignments at or above
+// the scope. Use $filter=principalId eq {id} to return all role assignments at, above or below the scope for the
+// specified principal.
 func (client RoleAssignmentsClient) List(ctx context.Context, filter string) (result RoleAssignmentListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, filter)
@@ -548,8 +551,8 @@ func (client RoleAssignmentsClient) ListComplete(ctx context.Context, filter str
 // resourceGroupName is the name of the resource group. resourceProviderNamespace is the namespace of the resource
 // provider. parentResourcePath is the parent resource identity. resourceType is the resource type of the resource.
 // resourceName is the name of the resource to get role assignments for. filter is the filter to apply on the
-// operation. Use $filter=atScope() to return all role assignments at or above the scope. Use $filter=principalId eq
-// {id} to return all role assignments at, above or below the scope for the specified principal.
+// operation. Use $filter=atScope() to return all role assignments at or above the scope. Use $filter=principalId
+// eq {id} to return all role assignments at, above or below the scope for the specified principal.
 func (client RoleAssignmentsClient) ListForResource(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string, filter string) (result RoleAssignmentListResultPage, err error) {
 	result.fn = client.listForResourceNextResults
 	req, err := client.ListForResourcePreparer(ctx, resourceGroupName, resourceProviderNamespace, parentResourcePath, resourceType, resourceName, filter)
@@ -650,8 +653,8 @@ func (client RoleAssignmentsClient) ListForResourceComplete(ctx context.Context,
 // ListForResourceGroup gets role assignments for a resource group.
 //
 // resourceGroupName is the name of the resource group. filter is the filter to apply on the operation. Use
-// $filter=atScope() to return all role assignments at or above the scope. Use $filter=principalId eq {id} to return
-// all role assignments at, above or below the scope for the specified principal.
+// $filter=atScope() to return all role assignments at or above the scope. Use $filter=principalId eq {id} to
+// return all role assignments at, above or below the scope for the specified principal.
 func (client RoleAssignmentsClient) ListForResourceGroup(ctx context.Context, resourceGroupName string, filter string) (result RoleAssignmentListResultPage, err error) {
 	result.fn = client.listForResourceGroupNextResults
 	req, err := client.ListForResourceGroupPreparer(ctx, resourceGroupName, filter)
@@ -747,9 +750,9 @@ func (client RoleAssignmentsClient) ListForResourceGroupComplete(ctx context.Con
 
 // ListForScope gets role assignments for a scope.
 //
-// scope is the scope of the role assignments. filter is the filter to apply on the operation. Use $filter=atScope() to
-// return all role assignments at or above the scope. Use $filter=principalId eq {id} to return all role assignments
-// at, above or below the scope for the specified principal.
+// scope is the scope of the role assignments. filter is the filter to apply on the operation. Use
+// $filter=atScope() to return all role assignments at or above the scope. Use $filter=principalId eq {id} to
+// return all role assignments at, above or below the scope for the specified principal.
 func (client RoleAssignmentsClient) ListForScope(ctx context.Context, scope string, filter string) (result RoleAssignmentListResultPage, err error) {
 	result.fn = client.listForScopeNextResults
 	req, err := client.ListForScopePreparer(ctx, scope, filter)

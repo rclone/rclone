@@ -5,6 +5,7 @@
     "endpointPrefix":"redshift",
     "protocol":"query",
     "serviceFullName":"Amazon Redshift",
+    "serviceId":"Redshift",
     "signatureVersion":"v4",
     "uid":"redshift-2012-12-01",
     "xmlNamespace":"http://redshift.amazonaws.com/doc/2012-12-01/"
@@ -461,6 +462,7 @@
         "resultWrapper":"DescribeClusterSnapshotsResult"
       },
       "errors":[
+        {"shape":"ClusterNotFoundFault"},
         {"shape":"ClusterSnapshotNotFoundFault"},
         {"shape":"InvalidTagFault"}
       ]
@@ -1186,7 +1188,8 @@
     "AvailabilityZone":{
       "type":"structure",
       "members":{
-        "Name":{"shape":"String"}
+        "Name":{"shape":"String"},
+        "SupportedPlatforms":{"shape":"SupportedPlatformsList"}
       },
       "wrapper":true
     },
@@ -2040,7 +2043,8 @@
         "Marker":{"shape":"String"},
         "OwnerAccount":{"shape":"String"},
         "TagKeys":{"shape":"TagKeyList"},
-        "TagValues":{"shape":"TagValueList"}
+        "TagValues":{"shape":"TagValueList"},
+        "ClusterExists":{"shape":"BooleanOptional"}
       }
     },
     "DescribeClusterSubnetGroupsMessage":{
@@ -3100,7 +3104,8 @@
         "NodeCount":{"shape":"Integer"},
         "State":{"shape":"String"},
         "OfferingType":{"shape":"String"},
-        "RecurringCharges":{"shape":"RecurringChargeList"}
+        "RecurringCharges":{"shape":"RecurringChargeList"},
+        "ReservedNodeOfferingType":{"shape":"ReservedNodeOfferingType"}
       },
       "wrapper":true
     },
@@ -3143,7 +3148,8 @@
         "UsagePrice":{"shape":"Double"},
         "CurrencyCode":{"shape":"String"},
         "OfferingType":{"shape":"String"},
-        "RecurringCharges":{"shape":"RecurringChargeList"}
+        "RecurringCharges":{"shape":"RecurringChargeList"},
+        "ReservedNodeOfferingType":{"shape":"ReservedNodeOfferingType"}
       },
       "wrapper":true
     },
@@ -3164,6 +3170,13 @@
         "senderFault":true
       },
       "exception":true
+    },
+    "ReservedNodeOfferingType":{
+      "type":"string",
+      "enum":[
+        "Regular",
+        "Upgradable"
+      ]
     },
     "ReservedNodeOfferingsMessage":{
       "type":"structure",
@@ -3656,6 +3669,20 @@
         "senderFault":true
       },
       "exception":true
+    },
+    "SupportedPlatform":{
+      "type":"structure",
+      "members":{
+        "Name":{"shape":"String"}
+      },
+      "wrapper":true
+    },
+    "SupportedPlatformsList":{
+      "type":"list",
+      "member":{
+        "shape":"SupportedPlatform",
+        "locationName":"SupportedPlatform"
+      }
     },
     "TStamp":{"type":"timestamp"},
     "TableRestoreNotFoundFault":{

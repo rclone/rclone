@@ -2728,7 +2728,7 @@ func (c *ECS) RunTaskRequest(input *RunTaskInput) (req *request.Request, output 
 //   You do not have authorization to perform the requested action.
 //
 //   * ErrCodeBlockedException "BlockedException"
-//   Your AWS account has been blocked. Contact AWS Customer Support (http://aws.amazon.com/contact-us/)
+//   Your AWS account has been blocked. Contact AWS Support (http://aws.amazon.com/contact-us/)
 //   for more information.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/RunTask
@@ -3565,7 +3565,6 @@ func (c *ECS) UpdateServiceWithContext(ctx aws.Context, input *UpdateServiceInpu
 }
 
 // An object representing a container instance or task attachment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/Attachment
 type Attachment struct {
 	_ struct{} `type:"structure"`
 
@@ -3581,7 +3580,7 @@ type Attachment struct {
 	// ATTACHED, DETACHING, DETACHED, and DELETED.
 	Status *string `locationName:"status" type:"string"`
 
-	// The type of the attachment, such as an ElasticNetworkInterface.
+	// The type of the attachment, such as ElasticNetworkInterface.
 	Type *string `locationName:"type" type:"string"`
 }
 
@@ -3620,7 +3619,6 @@ func (s *Attachment) SetType(v string) *Attachment {
 }
 
 // An object representing a change in state for a task attachment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/AttachmentStateChange
 type AttachmentStateChange struct {
 	_ struct{} `type:"structure"`
 
@@ -3677,7 +3675,6 @@ func (s *AttachmentStateChange) SetStatus(v string) *AttachmentStateChange {
 // enable you to extend the Amazon ECS data model by adding custom metadata
 // to your resources. For more information, see Attributes (http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-placement-constraints.html#attributes)
 // in the Amazon Elastic Container Service Developer Guide.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/Attribute
 type Attribute struct {
 	_ struct{} `type:"structure"`
 
@@ -3750,12 +3747,10 @@ func (s *Attribute) SetValue(v string) *Attribute {
 }
 
 // An object representing the networking details for a task or service.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/AwsVpcConfiguration
 type AwsVpcConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies whether or not the task's elastic network interface receives a
-	// public IP address.
+	// Whether the task's elastic network interface receives a public IP address.
 	AssignPublicIp *string `locationName:"assignPublicIp" type:"string" enum:"AssignPublicIp"`
 
 	// The security groups associated with the task or service. If you do not specify
@@ -3813,7 +3808,6 @@ func (s *AwsVpcConfiguration) SetSubnets(v []*string) *AwsVpcConfiguration {
 // task requests. Each account receives a default cluster the first time you
 // use the Amazon ECS service, but you may also create other clusters. Clusters
 // may contain more than one instance type simultaneously.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/Cluster
 type Cluster struct {
 	_ struct{} `type:"structure"`
 
@@ -3924,7 +3918,6 @@ func (s *Cluster) SetStatus(v string) *Cluster {
 }
 
 // A Docker container that is part of a task.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/Container
 type Container struct {
 	_ struct{} `type:"structure"`
 
@@ -3933,6 +3926,10 @@ type Container struct {
 
 	// The exit code returned from the container.
 	ExitCode *int64 `locationName:"exitCode" type:"integer"`
+
+	// The health status of the container. If health checks are not configured for
+	// this container in its task definition, then it reports health status as UNKNOWN.
+	HealthStatus *string `locationName:"healthStatus" type:"string" enum:"HealthStatus"`
 
 	// The last known status of the container.
 	LastStatus *string `locationName:"lastStatus" type:"string"`
@@ -3976,6 +3973,12 @@ func (s *Container) SetExitCode(v int64) *Container {
 	return s
 }
 
+// SetHealthStatus sets the HealthStatus field's value.
+func (s *Container) SetHealthStatus(v string) *Container {
+	s.HealthStatus = &v
+	return s
+}
+
 // SetLastStatus sets the LastStatus field's value.
 func (s *Container) SetLastStatus(v string) *Container {
 	s.LastStatus = &v
@@ -4014,7 +4017,6 @@ func (s *Container) SetTaskArn(v string) *Container {
 
 // Container definitions are used in task definitions to describe the different
 // containers that are launched as part of a task.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ContainerDefinition
 type ContainerDefinition struct {
 	_ struct{} `type:"structure"`
 
@@ -4064,9 +4066,9 @@ type ContainerDefinition struct {
 	// uses the CPU value to calculate the relative CPU share ratios for running
 	// containers. For more information, see CPU share constraint (https://docs.docker.com/engine/reference/run/#cpu-share-constraint)
 	// in the Docker documentation. The minimum valid CPU share value that the Linux
-	// kernel will allow is 2; however, the CPU parameter is not required, and you
-	// can use CPU values below 2 in your container definitions. For CPU values
-	// below 2 (including null), the behavior varies based on your Amazon ECS container
+	// kernel allows is 2; however, the CPU parameter is not required, and you can
+	// use CPU values below 2 in your container definitions. For CPU values below
+	// 2 (including null), the behavior varies based on your Amazon ECS container
 	// agent version:
 	//
 	//    * Agent versions less than or equal to 1.1.0: Null and zero CPU values
@@ -4178,6 +4180,12 @@ type ContainerDefinition struct {
 	// This parameter is not supported for Windows containers.
 	ExtraHosts []*HostEntry `locationName:"extraHosts" type:"list"`
 
+	// The health check command and associated configuration parameters for the
+	// container. This parameter maps to HealthCheck in the Create a container (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.27/#create-a-container)
+	// section of the Docker Remote API (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.27/)
+	// and the HEALTHCHECK parameter of docker run (https://docs.docker.com/engine/reference/run/).
+	HealthCheck *HealthCheck `locationName:"healthCheck" type:"structure"`
+
 	// The hostname to use for your container. This parameter maps to Hostname in
 	// the Create a container (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.27/#create-a-container)
 	// section of the Docker Remote API (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.27/)
@@ -4193,6 +4201,11 @@ type ContainerDefinition struct {
 	// (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.27/#create-a-container)
 	// section of the Docker Remote API (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.27/)
 	// and the IMAGE parameter of docker run (https://docs.docker.com/engine/reference/run/).
+	//
+	//    * When a new task starts, the Amazon ECS container agent pulls the latest
+	//    version of the specified image and tag for the container to use. However,
+	//    subsequent updates to a repository image are not propagated to already
+	//    running tasks.
 	//
 	//    * Images in Amazon ECR repositories can be specified by either using the
 	//    full registry/repository:tag or registry/repository@digest. For example,
@@ -4232,8 +4245,7 @@ type ContainerDefinition struct {
 	// Linux-specific modifications that are applied to the container, such as Linux
 	// KernelCapabilities.
 	//
-	// This parameter is not supported for Windows containers or tasks using the
-	// Fargate launch type.
+	// This parameter is not supported for Windows containers.
 	LinuxParameters *LinuxParameters `locationName:"linuxParameters" type:"structure"`
 
 	// The log configuration specification for the container.
@@ -4275,13 +4287,12 @@ type ContainerDefinition struct {
 	// section of the Docker Remote API (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.27/)
 	// and the --memory option to docker run (https://docs.docker.com/engine/reference/run/).
 	//
-	// If your containers will be part of a task using the Fargate launch type,
-	// this field is optional and the only requirement is that the total amount
-	// of memory reserved for all containers within a task be lower than the task
-	// memory value.
+	// If your containers are part of a task using the Fargate launch type, this
+	// field is optional and the only requirement is that the total amount of memory
+	// reserved for all containers within a task be lower than the task memory value.
 	//
-	// For containers that will be part of a task using the EC2 launch type, you
-	// must specify a non-zero integer for one or both of memory or memoryReservation
+	// For containers that are part of a task using the EC2 launch type, you must
+	// specify a non-zero integer for one or both of memory or memoryReservation
 	// in container definitions. If you specify both, memory must be greater than
 	// memoryReservation. If you specify memoryReservation, then that value is subtracted
 	// from the available memory resources for the container instance on which the
@@ -4439,6 +4450,11 @@ func (s *ContainerDefinition) Validate() error {
 			}
 		}
 	}
+	if s.HealthCheck != nil {
+		if err := s.HealthCheck.Validate(); err != nil {
+			invalidParams.AddNested("HealthCheck", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.LinuxParameters != nil {
 		if err := s.LinuxParameters.Validate(); err != nil {
 			invalidParams.AddNested("LinuxParameters", err.(request.ErrInvalidParams))
@@ -4529,6 +4545,12 @@ func (s *ContainerDefinition) SetEssential(v bool) *ContainerDefinition {
 // SetExtraHosts sets the ExtraHosts field's value.
 func (s *ContainerDefinition) SetExtraHosts(v []*HostEntry) *ContainerDefinition {
 	s.ExtraHosts = v
+	return s
+}
+
+// SetHealthCheck sets the HealthCheck field's value.
+func (s *ContainerDefinition) SetHealthCheck(v *HealthCheck) *ContainerDefinition {
+	s.HealthCheck = v
 	return s
 }
 
@@ -4630,7 +4652,6 @@ func (s *ContainerDefinition) SetWorkingDirectory(v string) *ContainerDefinition
 
 // An EC2 instance that is running the Amazon ECS agent and has been registered
 // with a cluster.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ContainerInstance
 type ContainerInstance struct {
 	_ struct{} `type:"structure"`
 
@@ -4799,7 +4820,6 @@ func (s *ContainerInstance) SetVersionInfo(v *VersionInfo) *ContainerInstance {
 }
 
 // The overrides that should be sent to a container.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ContainerOverride
 type ContainerOverride struct {
 	_ struct{} `type:"structure"`
 
@@ -4881,7 +4901,6 @@ func (s *ContainerOverride) SetName(v string) *ContainerOverride {
 }
 
 // An object representing a change in state for a container.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ContainerStateChange
 type ContainerStateChange struct {
 	_ struct{} `type:"structure"`
 
@@ -4942,7 +4961,6 @@ func (s *ContainerStateChange) SetStatus(v string) *ContainerStateChange {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/CreateClusterRequest
 type CreateClusterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4968,7 +4986,6 @@ func (s *CreateClusterInput) SetClusterName(v string) *CreateClusterInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/CreateClusterResponse
 type CreateClusterOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4992,7 +5009,6 @@ func (s *CreateClusterOutput) SetCluster(v *Cluster) *CreateClusterOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/CreateServiceRequest
 type CreateServiceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5019,11 +5035,11 @@ type CreateServiceInput struct {
 	// ignore unhealthy Elastic Load Balancing target health checks after a task
 	// has first started. This is only valid if your service is configured to use
 	// a load balancer. If your service's tasks take a while to start and respond
-	// to ELB health checks, you can specify a health check grace period of up to
-	// 1,800 seconds during which the ECS service scheduler will ignore ELB health
-	// check status. This grace period can prevent the ECS service scheduler from
-	// marking tasks as unhealthy and stopping them before they have time to come
-	// up.
+	// to Elastic Load Balancing health checks, you can specify a health check grace
+	// period of up to 1,800 seconds during which the ECS service scheduler ignores
+	// health check status. This grace period can prevent the ECS service scheduler
+	// from marking tasks as unhealthy and stopping them before they have time to
+	// come up.
 	HealthCheckGracePeriodSeconds *int64 `locationName:"healthCheckGracePeriodSeconds" type:"integer"`
 
 	// The launch type on which to run your service.
@@ -5224,7 +5240,6 @@ func (s *CreateServiceInput) SetTaskDefinition(v string) *CreateServiceInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/CreateServiceResponse
 type CreateServiceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5248,7 +5263,6 @@ func (s *CreateServiceOutput) SetService(v *Service) *CreateServiceOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DeleteAttributesRequest
 type DeleteAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5311,7 +5325,6 @@ func (s *DeleteAttributesInput) SetCluster(v string) *DeleteAttributesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DeleteAttributesResponse
 type DeleteAttributesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5335,7 +5348,6 @@ func (s *DeleteAttributesOutput) SetAttributes(v []*Attribute) *DeleteAttributes
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DeleteClusterRequest
 type DeleteClusterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5374,7 +5386,6 @@ func (s *DeleteClusterInput) SetCluster(v string) *DeleteClusterInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DeleteClusterResponse
 type DeleteClusterOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5398,7 +5409,6 @@ func (s *DeleteClusterOutput) SetCluster(v *Cluster) *DeleteClusterOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DeleteServiceRequest
 type DeleteServiceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5448,7 +5458,6 @@ func (s *DeleteServiceInput) SetService(v string) *DeleteServiceInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DeleteServiceResponse
 type DeleteServiceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5473,7 +5482,6 @@ func (s *DeleteServiceOutput) SetService(v *Service) *DeleteServiceOutput {
 }
 
 // The details of an Amazon ECS service deployment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/Deployment
 type Deployment struct {
 	_ struct{} `type:"structure"`
 
@@ -5594,7 +5602,6 @@ func (s *Deployment) SetUpdatedAt(v time.Time) *Deployment {
 
 // Optional deployment parameters that control how many tasks run during the
 // deployment and the ordering of stopping and starting tasks.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DeploymentConfiguration
 type DeploymentConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -5634,7 +5641,6 @@ func (s *DeploymentConfiguration) SetMinimumHealthyPercent(v int64) *DeploymentC
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DeregisterContainerInstanceRequest
 type DeregisterContainerInstanceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5708,7 +5714,6 @@ func (s *DeregisterContainerInstanceInput) SetForce(v bool) *DeregisterContainer
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DeregisterContainerInstanceResponse
 type DeregisterContainerInstanceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5732,7 +5737,6 @@ func (s *DeregisterContainerInstanceOutput) SetContainerInstance(v *ContainerIns
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DeregisterTaskDefinitionRequest
 type DeregisterTaskDefinitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5772,7 +5776,6 @@ func (s *DeregisterTaskDefinitionInput) SetTaskDefinition(v string) *DeregisterT
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DeregisterTaskDefinitionResponse
 type DeregisterTaskDefinitionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5796,7 +5799,6 @@ func (s *DeregisterTaskDefinitionOutput) SetTaskDefinition(v *TaskDefinition) *D
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DescribeClustersRequest
 type DescribeClustersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5847,7 +5849,6 @@ func (s *DescribeClustersInput) SetInclude(v []*string) *DescribeClustersInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DescribeClustersResponse
 type DescribeClustersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5880,7 +5881,6 @@ func (s *DescribeClustersOutput) SetFailures(v []*Failure) *DescribeClustersOutp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DescribeContainerInstancesRequest
 type DescribeContainerInstancesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5930,7 +5930,6 @@ func (s *DescribeContainerInstancesInput) SetContainerInstances(v []*string) *De
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DescribeContainerInstancesResponse
 type DescribeContainerInstancesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5963,7 +5962,6 @@ func (s *DescribeContainerInstancesOutput) SetFailures(v []*Failure) *DescribeCo
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DescribeServicesRequest
 type DescribeServicesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6014,7 +6012,6 @@ func (s *DescribeServicesInput) SetServices(v []*string) *DescribeServicesInput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DescribeServicesResponse
 type DescribeServicesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6047,7 +6044,6 @@ func (s *DescribeServicesOutput) SetServices(v []*Service) *DescribeServicesOutp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DescribeTaskDefinitionRequest
 type DescribeTaskDefinitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6088,7 +6084,6 @@ func (s *DescribeTaskDefinitionInput) SetTaskDefinition(v string) *DescribeTaskD
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DescribeTaskDefinitionResponse
 type DescribeTaskDefinitionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6112,7 +6107,6 @@ func (s *DescribeTaskDefinitionOutput) SetTaskDefinition(v *TaskDefinition) *Des
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DescribeTasksRequest
 type DescribeTasksInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6162,7 +6156,6 @@ func (s *DescribeTasksInput) SetTasks(v []*string) *DescribeTasksInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DescribeTasksResponse
 type DescribeTasksOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6196,7 +6189,6 @@ func (s *DescribeTasksOutput) SetTasks(v []*Task) *DescribeTasksOutput {
 }
 
 // An object representing a container instance host device.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/Device
 type Device struct {
 	_ struct{} `type:"structure"`
 
@@ -6254,7 +6246,6 @@ func (s *Device) SetPermissions(v []*string) *Device {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DiscoverPollEndpointRequest
 type DiscoverPollEndpointInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6291,7 +6282,6 @@ func (s *DiscoverPollEndpointInput) SetContainerInstance(v string) *DiscoverPoll
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/DiscoverPollEndpointResponse
 type DiscoverPollEndpointOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6325,7 +6315,6 @@ func (s *DiscoverPollEndpointOutput) SetTelemetryEndpoint(v string) *DiscoverPol
 }
 
 // A failed resource.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/Failure
 type Failure struct {
 	_ struct{} `type:"structure"`
 
@@ -6358,9 +6347,107 @@ func (s *Failure) SetReason(v string) *Failure {
 	return s
 }
 
+// An object representing a container health check. Health check parameters
+// that are specified in a container definition override any Docker health checks
+// that exist in the container image (such as those specified in a parent image
+// or from the image's Dockerfile).
+type HealthCheck struct {
+	_ struct{} `type:"structure"`
+
+	// A string array representing the command that the container runs to determine
+	// if it is healthy. The string array must start with CMD to execute the command
+	// arguments directly, or CMD-SHELL to run the command with the container's
+	// default shell. For example:
+	//
+	// [ "CMD-SHELL", "curl -f http://localhost/ || exit 1" ]
+	//
+	// An exit code of 0 indicates success, and non-zero exit code indicates failure.
+	// For more information, see HealthCheck in the Create a container (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.27/#create-a-container)
+	// section of the Docker Remote API (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.27/).
+	//
+	// Command is a required field
+	Command []*string `locationName:"command" type:"list" required:"true"`
+
+	// The time period in seconds between each health check execution. You may specify
+	// between 5 and 300 seconds. The default value is 30 seconds.
+	Interval *int64 `locationName:"interval" type:"integer"`
+
+	// The number of times to retry a failed health check before the container is
+	// considered unhealthy. You may specify between 1 and 10 retries. The default
+	// value is 3 retries.
+	Retries *int64 `locationName:"retries" type:"integer"`
+
+	// The optional grace period within which to provide containers time to bootstrap
+	// before failed health checks count towards the maximum number of retries.
+	// You may specify between 0 and 300 seconds. The startPeriod is disabled by
+	// default.
+	//
+	// If a health check succeeds within the startPeriod, then the container is
+	// considered healthy and any subsequent failures count toward the maximum number
+	// of retries.
+	StartPeriod *int64 `locationName:"startPeriod" type:"integer"`
+
+	// The time period in seconds to wait for a health check to succeed before it
+	// is considered a failure. You may specify between 2 and 60 seconds. The default
+	// value is 5 seconds.
+	Timeout *int64 `locationName:"timeout" type:"integer"`
+}
+
+// String returns the string representation
+func (s HealthCheck) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s HealthCheck) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *HealthCheck) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "HealthCheck"}
+	if s.Command == nil {
+		invalidParams.Add(request.NewErrParamRequired("Command"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCommand sets the Command field's value.
+func (s *HealthCheck) SetCommand(v []*string) *HealthCheck {
+	s.Command = v
+	return s
+}
+
+// SetInterval sets the Interval field's value.
+func (s *HealthCheck) SetInterval(v int64) *HealthCheck {
+	s.Interval = &v
+	return s
+}
+
+// SetRetries sets the Retries field's value.
+func (s *HealthCheck) SetRetries(v int64) *HealthCheck {
+	s.Retries = &v
+	return s
+}
+
+// SetStartPeriod sets the StartPeriod field's value.
+func (s *HealthCheck) SetStartPeriod(v int64) *HealthCheck {
+	s.StartPeriod = &v
+	return s
+}
+
+// SetTimeout sets the Timeout field's value.
+func (s *HealthCheck) SetTimeout(v int64) *HealthCheck {
+	s.Timeout = &v
+	return s
+}
+
 // Hostnames and IP address entries that are added to the /etc/hosts file of
 // a container via the extraHosts parameter of its ContainerDefinition.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/HostEntry
 type HostEntry struct {
 	_ struct{} `type:"structure"`
 
@@ -6414,7 +6501,6 @@ func (s *HostEntry) SetIpAddress(v string) *HostEntry {
 }
 
 // Details on a container instance host volume.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/HostVolumeProperties
 type HostVolumeProperties struct {
 	_ struct{} `type:"structure"`
 
@@ -6454,7 +6540,6 @@ func (s *HostVolumeProperties) SetSourcePath(v string) *HostVolumeProperties {
 // in the Docker run reference. For more detailed information on these Linux
 // capabilities, see the capabilities(7) (http://man7.org/linux/man-pages/man7/capabilities.7.html)
 // Linux manual page.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/KernelCapabilities
 type KernelCapabilities struct {
 	_ struct{} `type:"structure"`
 
@@ -6463,6 +6548,9 @@ type KernelCapabilities struct {
 	// a container (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.27/#create-a-container)
 	// section of the Docker Remote API (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.27/)
 	// and the --cap-add option to docker run (https://docs.docker.com/engine/reference/run/).
+	//
+	// If you are using tasks that use the Fargate launch type, the add parameter
+	// is not supported.
 	//
 	// Valid values: "ALL" | "AUDIT_CONTROL" | "AUDIT_WRITE" | "BLOCK_SUSPEND" |
 	// "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "IPC_LOCK"
@@ -6514,7 +6602,6 @@ func (s *KernelCapabilities) SetDrop(v []*string) *KernelCapabilities {
 }
 
 // A key and value pair object.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/KeyValuePair
 type KeyValuePair struct {
 	_ struct{} `type:"structure"`
 
@@ -6550,18 +6637,23 @@ func (s *KeyValuePair) SetValue(v string) *KeyValuePair {
 }
 
 // Linux-specific options that are applied to the container, such as Linux KernelCapabilities.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/LinuxParameters
 type LinuxParameters struct {
 	_ struct{} `type:"structure"`
 
 	// The Linux capabilities for the container that are added to or dropped from
 	// the default configuration provided by Docker.
+	//
+	// If you are using tasks that use the Fargate launch type, capabilities is
+	// supported but the add parameter is not supported.
 	Capabilities *KernelCapabilities `locationName:"capabilities" type:"structure"`
 
 	// Any host devices to expose to the container. This parameter maps to Devices
 	// in the Create a container (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.27/#create-a-container)
 	// section of the Docker Remote API (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.27/)
 	// and the --device option to docker run (https://docs.docker.com/engine/reference/run/).
+	//
+	// If you are using tasks that use the Fargate launch type, the devices parameter
+	// is not supported.
 	Devices []*Device `locationName:"devices" type:"list"`
 
 	// Run an init process inside the container that forwards signals and reaps
@@ -6621,7 +6713,6 @@ func (s *LinuxParameters) SetInitProcessEnabled(v bool) *LinuxParameters {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ListAttributesRequest
 type ListAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6719,7 +6810,6 @@ func (s *ListAttributesInput) SetTargetType(v string) *ListAttributesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ListAttributesResponse
 type ListAttributesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6755,7 +6845,6 @@ func (s *ListAttributesOutput) SetNextToken(v string) *ListAttributesOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ListClustersRequest
 type ListClustersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6800,7 +6889,6 @@ func (s *ListClustersInput) SetNextToken(v string) *ListClustersInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ListClustersResponse
 type ListClustersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6837,7 +6925,6 @@ func (s *ListClustersOutput) SetNextToken(v string) *ListClustersOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ListContainerInstancesRequest
 type ListContainerInstancesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6919,7 +7006,6 @@ func (s *ListContainerInstancesInput) SetStatus(v string) *ListContainerInstance
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ListContainerInstancesResponse
 type ListContainerInstancesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6956,7 +7042,6 @@ func (s *ListContainerInstancesOutput) SetNextToken(v string) *ListContainerInst
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ListServicesRequest
 type ListServicesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7021,7 +7106,6 @@ func (s *ListServicesInput) SetNextToken(v string) *ListServicesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ListServicesResponse
 type ListServicesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7058,7 +7142,6 @@ func (s *ListServicesOutput) SetServiceArns(v []*string) *ListServicesOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ListTaskDefinitionFamiliesRequest
 type ListTaskDefinitionFamiliesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7130,7 +7213,6 @@ func (s *ListTaskDefinitionFamiliesInput) SetStatus(v string) *ListTaskDefinitio
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ListTaskDefinitionFamiliesResponse
 type ListTaskDefinitionFamiliesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7167,7 +7249,6 @@ func (s *ListTaskDefinitionFamiliesOutput) SetNextToken(v string) *ListTaskDefin
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ListTaskDefinitionsRequest
 type ListTaskDefinitionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7250,7 +7331,6 @@ func (s *ListTaskDefinitionsInput) SetStatus(v string) *ListTaskDefinitionsInput
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ListTaskDefinitionsResponse
 type ListTaskDefinitionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7287,7 +7367,6 @@ func (s *ListTaskDefinitionsOutput) SetTaskDefinitionArns(v []*string) *ListTask
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ListTasksRequest
 type ListTasksInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7411,7 +7490,6 @@ func (s *ListTasksInput) SetStartedBy(v string) *ListTasksInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ListTasksResponse
 type ListTasksOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7448,7 +7526,6 @@ func (s *ListTasksOutput) SetTaskArns(v []*string) *ListTasksOutput {
 }
 
 // Details on a load balancer that is used with a service.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/LoadBalancer
 type LoadBalancer struct {
 	_ struct{} `type:"structure"`
 
@@ -7505,7 +7582,6 @@ func (s *LoadBalancer) SetTargetGroupArn(v string) *LoadBalancer {
 }
 
 // Log configuration options to send to a custom log driver for the container.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/LogConfiguration
 type LogConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -7575,7 +7651,6 @@ func (s *LogConfiguration) SetOptions(v map[string]*string) *LogConfiguration {
 }
 
 // Details on a volume mount point that is used in a container definition.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/MountPoint
 type MountPoint struct {
 	_ struct{} `type:"structure"`
 
@@ -7623,7 +7698,6 @@ func (s *MountPoint) SetSourceVolume(v string) *MountPoint {
 // instance. After a task reaches the RUNNING status, manual and automatic host
 // and container port assignments are visible in the networkBindings section
 // of DescribeTasks API responses.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/NetworkBinding
 type NetworkBinding struct {
 	_ struct{} `type:"structure"`
 
@@ -7675,7 +7749,6 @@ func (s *NetworkBinding) SetProtocol(v string) *NetworkBinding {
 }
 
 // An object representing the network configuration for a task or service.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/NetworkConfiguration
 type NetworkConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -7716,7 +7789,6 @@ func (s *NetworkConfiguration) SetAwsvpcConfiguration(v *AwsVpcConfiguration) *N
 
 // An object representing the Elastic Network Interface for tasks that use the
 // awsvpc network mode.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/NetworkInterface
 type NetworkInterface struct {
 	_ struct{} `type:"structure"`
 
@@ -7761,7 +7833,6 @@ func (s *NetworkInterface) SetPrivateIpv4Address(v string) *NetworkInterface {
 // An object representing a constraint on task placement. For more information,
 // see Task Placement Constraints (http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-placement-constraints.html)
 // in the Amazon Elastic Container Service Developer Guide.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/PlacementConstraint
 type PlacementConstraint struct {
 	_ struct{} `type:"structure"`
 
@@ -7803,7 +7874,6 @@ func (s *PlacementConstraint) SetType(v string) *PlacementConstraint {
 // The task placement strategy for a task or service. For more information,
 // see Task Placement Strategies (http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-placement-strategies.html)
 // in the Amazon Elastic Container Service Developer Guide.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/PlacementStrategy
 type PlacementStrategy struct {
 	_ struct{} `type:"structure"`
 
@@ -7858,7 +7928,6 @@ func (s *PlacementStrategy) SetType(v string) *PlacementStrategy {
 // After a task reaches the RUNNING status, manual and automatic host and container
 // port assignments are visible in the networkBindings section of DescribeTasks
 // API responses.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/PortMapping
 type PortMapping struct {
 	_ struct{} `type:"structure"`
 
@@ -7878,7 +7947,7 @@ type PortMapping struct {
 	// The port number on the container instance to reserve for your container.
 	//
 	// If using containers in a task with the awsvpc or host network mode, the hostPort
-	// can either be left blank or needs to be the same value as the containerPort.
+	// can either be left blank or set to the same value as the containerPort.
 	//
 	// If using containers in a task with the bridge network mode, you can specify
 	// a non-reserved host port for your container port mapping, or you can omit
@@ -7939,7 +8008,6 @@ func (s *PortMapping) SetProtocol(v string) *PortMapping {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/PutAttributesRequest
 type PutAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8001,7 +8069,6 @@ func (s *PutAttributesInput) SetCluster(v string) *PutAttributesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/PutAttributesResponse
 type PutAttributesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8025,7 +8092,6 @@ func (s *PutAttributesOutput) SetAttributes(v []*Attribute) *PutAttributesOutput
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/RegisterContainerInstanceRequest
 type RegisterContainerInstanceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8129,7 +8195,6 @@ func (s *RegisterContainerInstanceInput) SetVersionInfo(v *VersionInfo) *Registe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/RegisterContainerInstanceResponse
 type RegisterContainerInstanceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8153,7 +8218,6 @@ func (s *RegisterContainerInstanceOutput) SetContainerInstance(v *ContainerInsta
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/RegisterTaskDefinitionRequest
 type RegisterTaskDefinitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8163,28 +8227,35 @@ type RegisterTaskDefinitionInput struct {
 	// ContainerDefinitions is a required field
 	ContainerDefinitions []*ContainerDefinition `locationName:"containerDefinitions" type:"list" required:"true"`
 
-	// The number of cpu units used by the task. If using the EC2 launch type, this
-	// field is optional and any value can be used.
+	// The number of CPU units used by the task. It can be expressed as an integer
+	// using CPU units, for example 1024, or as a string using vCPUs, for example
+	// 1 vCPU or 1 vcpu, in a task definition but will be converted to an integer
+	// indicating the CPU units when the task definition is registered.
 	//
 	// Task-level CPU and memory parameters are ignored for Windows containers.
 	// We recommend specifying container-level resources for Windows containers.
 	//
-	// If you are using the Fargate launch type, this field is required and you
-	// must use one of the following values, which determines your range of valid
-	// values for the memory parameter:
+	// If using the EC2 launch type, this field is optional. Supported values are
+	// between 128 CPU units (0.125 vCPUs) and 10240 CPU units (10 vCPUs).
 	//
-	//    * 256 (.25 vCPU) - Available memory values: 0.5GB, 1GB, 2GB
+	// If using the Fargate launch type, this field is required and you must use
+	// one of the following values, which determines your range of supported values
+	// for the memory parameter:
 	//
-	//    * 512 (.5 vCPU) - Available memory values: 1GB, 2GB, 3GB, 4GB
+	//    * 256 (.25 vCPU) - Available memory values: 512 (0.5 GB), 1024 (1 GB),
+	//    2048 (2 GB)
 	//
-	//    * 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB,
-	//    8GB
+	//    * 512 (.5 vCPU) - Available memory values: 1024 (1 GB), 2048 (2 GB), 3072
+	//    (3 GB), 4096 (4 GB)
 	//
-	//    * 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB
-	//    increments
+	//    * 1024 (1 vCPU) - Available memory values: 2048 (2 GB), 3072 (3 GB), 4096
+	//    (4 GB), 5120 (5 GB), 6144 (6 GB), 7168 (7 GB), 8192 (8 GB)
 	//
-	//    * 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB
-	//    increments
+	//    * 2048 (2 vCPU) - Available memory values: Between 4096 (4 GB) and 16384
+	//    (16 GB) in increments of 1024 (1 GB)
+	//
+	//    * 4096 (4 vCPU) - Available memory values: Between 8192 (8 GB) and 30720
+	//    (30 GB) in increments of 1024 (1 GB)
 	Cpu *string `locationName:"cpu" type:"string"`
 
 	// The Amazon Resource Name (ARN) of the task execution role that the Amazon
@@ -8199,27 +8270,34 @@ type RegisterTaskDefinitionInput struct {
 	// Family is a required field
 	Family *string `locationName:"family" type:"string" required:"true"`
 
-	// The amount (in MiB) of memory used by the task. If using the EC2 launch type,
-	// this field is optional and any value can be used.
+	// The amount of memory (in MiB) used by the task. It can be expressed as an
+	// integer using MiB, for example 1024, or as a string using GB, for example
+	// 1GB or 1 GB, in a task definition but will be converted to an integer indicating
+	// the MiB when the task definition is registered.
 	//
 	// Task-level CPU and memory parameters are ignored for Windows containers.
 	// We recommend specifying container-level resources for Windows containers.
 	//
-	// If you are using the Fargate launch type, this field is required and you
-	// must use one of the following values, which determines your range of valid
-	// values for the cpu parameter:
+	// If using the EC2 launch type, this field is optional.
 	//
-	//    * 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
+	// If using the Fargate launch type, this field is required and you must use
+	// one of the following values, which determines your range of supported values
+	// for the cpu parameter:
 	//
-	//    * 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
+	//    * 512 (0.5 GB), 1024 (1 GB), 2048 (2 GB) - Available cpu values: 256 (.25
+	//    vCPU)
 	//
-	//    * 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
+	//    * 1024 (1 GB), 2048 (2 GB), 3072 (3 GB), 4096 (4 GB) - Available cpu values:
+	//    512 (.5 vCPU)
 	//
-	//    * Between 4GB and 16GB in 1GB increments - Available cpu values: 2048
-	//    (2 vCPU)
+	//    * 2048 (2 GB), 3072 (3 GB), 4096 (4 GB), 5120 (5 GB), 6144 (6 GB), 7168
+	//    (7 GB), 8192 (8 GB) - Available cpu values: 1024 (1 vCPU)
 	//
-	//    * Between 8GB and 30GB in 1GB increments - Available cpu values: 4096
-	//    (4 vCPU)
+	//    * Between 4096 (4 GB) and 16384 (16 GB) in increments of 1024 (1 GB) -
+	//    Available cpu values: 2048 (2 vCPU)
+	//
+	//    * Between 8192 (8 GB) and 30720 (30 GB) in increments of 1024 (1 GB) -
+	//    Available cpu values: 4096 (4 vCPU)
 	Memory *string `locationName:"memory" type:"string"`
 
 	// The Docker networking mode to use for the containers in the task. The valid
@@ -8371,7 +8449,6 @@ func (s *RegisterTaskDefinitionInput) SetVolumes(v []*Volume) *RegisterTaskDefin
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/RegisterTaskDefinitionResponse
 type RegisterTaskDefinitionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8396,7 +8473,6 @@ func (s *RegisterTaskDefinitionOutput) SetTaskDefinition(v *TaskDefinition) *Reg
 }
 
 // Describes the resources available for a container instance.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/Resource
 type Resource struct {
 	_ struct{} `type:"structure"`
 
@@ -8468,7 +8544,6 @@ func (s *Resource) SetType(v string) *Resource {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/RunTaskRequest
 type RunTaskInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8632,7 +8707,6 @@ func (s *RunTaskInput) SetTaskDefinition(v string) *RunTaskInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/RunTaskResponse
 type RunTaskOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8667,7 +8741,6 @@ func (s *RunTaskOutput) SetTasks(v []*Task) *RunTaskOutput {
 }
 
 // Details on a service within a cluster
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/Service
 type Service struct {
 	_ struct{} `type:"structure"`
 
@@ -8883,7 +8956,6 @@ func (s *Service) SetTaskDefinition(v string) *Service {
 }
 
 // Details on an event associated with a service.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/ServiceEvent
 type ServiceEvent struct {
 	_ struct{} `type:"structure"`
 
@@ -8925,7 +8997,6 @@ func (s *ServiceEvent) SetMessage(v string) *ServiceEvent {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/StartTaskRequest
 type StartTaskInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9052,7 +9123,6 @@ func (s *StartTaskInput) SetTaskDefinition(v string) *StartTaskInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/StartTaskResponse
 type StartTaskOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9086,7 +9156,6 @@ func (s *StartTaskOutput) SetTasks(v []*Task) *StartTaskOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/StopTaskRequest
 type StopTaskInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9148,7 +9217,6 @@ func (s *StopTaskInput) SetTask(v string) *StopTaskInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/StopTaskResponse
 type StopTaskOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9172,7 +9240,6 @@ func (s *StopTaskOutput) SetTask(v *Task) *StopTaskOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/SubmitContainerStateChangeRequest
 type SubmitContainerStateChangeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9251,7 +9318,6 @@ func (s *SubmitContainerStateChangeInput) SetTask(v string) *SubmitContainerStat
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/SubmitContainerStateChangeResponse
 type SubmitContainerStateChangeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9275,7 +9341,6 @@ func (s *SubmitContainerStateChangeOutput) SetAcknowledgment(v string) *SubmitCo
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/SubmitTaskStateChangeRequest
 type SubmitTaskStateChangeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9289,7 +9354,7 @@ type SubmitTaskStateChangeInput struct {
 	// Any containers associated with the state change request.
 	Containers []*ContainerStateChange `locationName:"containers" type:"list"`
 
-	// The Unix timestamp for when the task execution stopped.
+	// The Unix time stamp for when the task execution stopped.
 	ExecutionStoppedAt *time.Time `locationName:"executionStoppedAt" type:"timestamp" timestampFormat:"unix"`
 
 	// The Unix time stamp for when the container image pull began.
@@ -9392,7 +9457,6 @@ func (s *SubmitTaskStateChangeInput) SetTask(v string) *SubmitTaskStateChangeInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/SubmitTaskStateChangeResponse
 type SubmitTaskStateChangeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9417,7 +9481,6 @@ func (s *SubmitTaskStateChangeOutput) SetAcknowledgment(v string) *SubmitTaskSta
 }
 
 // Details on a task in a cluster.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/Task
 type Task struct {
 	_ struct{} `type:"structure"`
 
@@ -9440,23 +9503,32 @@ type Task struct {
 	// The containers associated with the task.
 	Containers []*Container `locationName:"containers" type:"list"`
 
-	// The number of cpu units used by the task. If using the EC2 launch type, this
-	// field is optional and any value can be used. If using the Fargate launch
-	// type, this field is required and you must use one of the following values,
-	// which determines your range of valid values for the memory parameter:
+	// The number of CPU units used by the task. It can be expressed as an integer
+	// using CPU units, for example 1024, or as a string using vCPUs, for example
+	// 1 vCPU or 1 vcpu, in a task definition but is converted to an integer indicating
+	// the CPU units when the task definition is registered.
 	//
-	//    * 256 (.25 vCPU) - Available memory values: 0.5GB, 1GB, 2GB
+	// If using the EC2 launch type, this field is optional. Supported values are
+	// between 128 CPU units (0.125 vCPUs) and 10240 CPU units (10 vCPUs).
 	//
-	//    * 512 (.5 vCPU) - Available memory values: 1GB, 2GB, 3GB, 4GB
+	// If using the Fargate launch type, this field is required and you must use
+	// one of the following values, which determines your range of supported values
+	// for the memory parameter:
 	//
-	//    * 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB,
-	//    8GB
+	//    * 256 (.25 vCPU) - Available memory values: 512 (0.5 GB), 1024 (1 GB),
+	//    2048 (2 GB)
 	//
-	//    * 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB
-	//    increments
+	//    * 512 (.5 vCPU) - Available memory values: 1024 (1 GB), 2048 (2 GB), 3072
+	//    (3 GB), 4096 (4 GB)
 	//
-	//    * 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB
-	//    increments
+	//    * 1024 (1 vCPU) - Available memory values: 2048 (2 GB), 3072 (3 GB), 4096
+	//    (4 GB), 5120 (5 GB), 6144 (6 GB), 7168 (7 GB), 8192 (8 GB)
+	//
+	//    * 2048 (2 vCPU) - Available memory values: Between 4096 (4 GB) and 16384
+	//    (16 GB) in increments of 1024 (1 GB)
+	//
+	//    * 4096 (4 vCPU) - Available memory values: Between 8192 (8 GB) and 30720
+	//    (30 GB) in increments of 1024 (1 GB)
 	Cpu *string `locationName:"cpu" type:"string"`
 
 	// The Unix time stamp for when the task was created (the task entered the PENDING
@@ -9466,11 +9538,24 @@ type Task struct {
 	// The desired status of the task.
 	DesiredStatus *string `locationName:"desiredStatus" type:"string"`
 
-	// The Unix timestamp for when the task execution stopped.
+	// The Unix time stamp for when the task execution stopped.
 	ExecutionStoppedAt *time.Time `locationName:"executionStoppedAt" type:"timestamp" timestampFormat:"unix"`
 
 	// The name of the task group associated with the task.
 	Group *string `locationName:"group" type:"string"`
+
+	// The health status for the task, which is determined by the health of the
+	// essential containers in the task. If all essential containers in the task
+	// are reporting as HEALTHY, then the task status also reports as HEALTHY. If
+	// any essential containers in the task are reporting as UNHEALTHY or UNKNOWN,
+	// then the task status also reports as UNHEALTHY or UNKNOWN, accordingly.
+	//
+	// The Amazon ECS container agent does not monitor or report on Docker health
+	// checks that are embedded in a container image (such as those specified in
+	// a parent image or from the image's Dockerfile) and not specified in the container
+	// definition. Health check parameters that are specified in a container definition
+	// override any Docker health checks that exist in the container image.
+	HealthStatus *string `locationName:"healthStatus" type:"string" enum:"HealthStatus"`
 
 	// The last known status of the task.
 	LastStatus *string `locationName:"lastStatus" type:"string"`
@@ -9478,22 +9563,31 @@ type Task struct {
 	// The launch type on which your task is running.
 	LaunchType *string `locationName:"launchType" type:"string" enum:"LaunchType"`
 
-	// The amount (in MiB) of memory used by the task. If using the EC2 launch type,
-	// this field is optional and any value can be used. If using the Fargate launch
-	// type, this field is required and you must use one of the following values,
-	// which determines your range of valid values for the cpu parameter:
+	// The amount of memory (in MiB) used by the task. It can be expressed as an
+	// integer using MiB, for example 1024, or as a string using GB, for example
+	// 1GB or 1 GB, in a task definition but is converted to an integer indicating
+	// the MiB when the task definition is registered.
 	//
-	//    * 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
+	// If using the EC2 launch type, this field is optional.
 	//
-	//    * 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
+	// If using the Fargate launch type, this field is required and you must use
+	// one of the following values, which determines your range of supported values
+	// for the cpu parameter:
 	//
-	//    * 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
+	//    * 512 (0.5 GB), 1024 (1 GB), 2048 (2 GB) - Available cpu values: 256 (.25
+	//    vCPU)
 	//
-	//    * Between 4GB and 16GB in 1GB increments - Available cpu values: 2048
-	//    (2 vCPU)
+	//    * 1024 (1 GB), 2048 (2 GB), 3072 (3 GB), 4096 (4 GB) - Available cpu values:
+	//    512 (.5 vCPU)
 	//
-	//    * Between 8GB and 30GB in 1GB increments - Available cpu values: 4096
-	//    (4 vCPU)
+	//    * 2048 (2 GB), 3072 (3 GB), 4096 (4 GB), 5120 (5 GB), 6144 (6 GB), 7168
+	//    (7 GB), 8192 (8 GB) - Available cpu values: 1024 (1 vCPU)
+	//
+	//    * Between 4096 (4 GB) and 16384 (16 GB) in increments of 1024 (1 GB) -
+	//    Available cpu values: 2048 (2 vCPU)
+	//
+	//    * Between 8192 (8 GB) and 30720 (30 GB) in increments of 1024 (1 GB) -
+	//    Available cpu values: 4096 (4 vCPU)
 	Memory *string `locationName:"memory" type:"string"`
 
 	// One or more container overrides.
@@ -9526,8 +9620,8 @@ type Task struct {
 	// The reason the task was stopped.
 	StoppedReason *string `locationName:"stoppedReason" type:"string"`
 
-	// The Unix time stamp for when the task will stop (the task transitioned from
-	// the RUNNING state to the STOPPED state).
+	// The Unix time stamp for when the task will stop (transitions from the RUNNING
+	// state to STOPPED).
 	StoppingAt *time.Time `locationName:"stoppingAt" type:"timestamp" timestampFormat:"unix"`
 
 	// The Amazon Resource Name (ARN) of the task.
@@ -9618,6 +9712,12 @@ func (s *Task) SetExecutionStoppedAt(v time.Time) *Task {
 // SetGroup sets the Group field's value.
 func (s *Task) SetGroup(v string) *Task {
 	s.Group = &v
+	return s
+}
+
+// SetHealthStatus sets the HealthStatus field's value.
+func (s *Task) SetHealthStatus(v string) *Task {
+	s.HealthStatus = &v
 	return s
 }
 
@@ -9712,7 +9812,6 @@ func (s *Task) SetVersion(v int64) *Task {
 }
 
 // Details of a task definition.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/TaskDefinition
 type TaskDefinition struct {
 	_ struct{} `type:"structure"`
 
@@ -9732,18 +9831,20 @@ type TaskDefinition struct {
 	// type, this field is required and you must use one of the following values,
 	// which determines your range of valid values for the memory parameter:
 	//
-	//    * 256 (.25 vCPU) - Available memory values: 0.5GB, 1GB, 2GB
+	//    * 256 (.25 vCPU) - Available memory values: 512 (0.5 GB), 1024 (1 GB),
+	//    2048 (2 GB)
 	//
-	//    * 512 (.5 vCPU) - Available memory values: 1GB, 2GB, 3GB, 4GB
+	//    * 512 (.5 vCPU) - Available memory values: 1024 (1 GB), 2048 (2 GB), 3072
+	//    (3 GB), 4096 (4 GB)
 	//
-	//    * 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB,
-	//    8GB
+	//    * 1024 (1 vCPU) - Available memory values: 2048 (2 GB), 3072 (3 GB), 4096
+	//    (4 GB), 5120 (5 GB), 6144 (6 GB), 7168 (7 GB), 8192 (8 GB)
 	//
-	//    * 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB
-	//    increments
+	//    * 2048 (2 vCPU) - Available memory values: Between 4096 (4 GB) and 16384
+	//    (16 GB) in increments of 1024 (1 GB)
 	//
-	//    * 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB
-	//    increments
+	//    * 4096 (4 vCPU) - Available memory values: Between 8192 (8 GB) and 30720
+	//    (30 GB) in increments of 1024 (1 GB)
 	Cpu *string `locationName:"cpu" type:"string"`
 
 	// The Amazon Resource Name (ARN) of the task execution role that the Amazon
@@ -9758,17 +9859,20 @@ type TaskDefinition struct {
 	// type, this field is required and you must use one of the following values,
 	// which determines your range of valid values for the cpu parameter:
 	//
-	//    * 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
+	//    * 512 (0.5 GB), 1024 (1 GB), 2048 (2 GB) - Available cpu values: 256 (.25
+	//    vCPU)
 	//
-	//    * 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
+	//    * 1024 (1 GB), 2048 (2 GB), 3072 (3 GB), 4096 (4 GB) - Available cpu values:
+	//    512 (.5 vCPU)
 	//
-	//    * 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
+	//    * 2048 (2 GB), 3072 (3 GB), 4096 (4 GB), 5120 (5 GB), 6144 (6 GB), 7168
+	//    (7 GB), 8192 (8 GB) - Available cpu values: 1024 (1 vCPU)
 	//
-	//    * Between 4GB and 16GB in 1GB increments - Available cpu values: 2048
-	//    (2 vCPU)
+	//    * Between 4096 (4 GB) and 16384 (16 GB) in increments of 1024 (1 GB) -
+	//    Available cpu values: 2048 (2 vCPU)
 	//
-	//    * Between 8GB and 30GB in 1GB increments - Available cpu values: 4096
-	//    (4 vCPU)
+	//    * Between 8192 (8 GB) and 30720 (30 GB) in increments of 1024 (1 GB) -
+	//    Available cpu values: 4096 (4 vCPU)
 	Memory *string `locationName:"memory" type:"string"`
 
 	// The Docker networking mode to use for the containers in the task. The valid
@@ -9955,12 +10059,11 @@ func (s *TaskDefinition) SetVolumes(v []*Volume) *TaskDefinition {
 
 // An object representing a constraint on task placement in the task definition.
 //
-// If you are using the Fargate launch type, task placement contraints are not
-// supported.
+// If you are using the Fargate launch type, task placement constraints are
+// not supported.
 //
 // For more information, see Task Placement Constraints (http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-placement-constraints.html)
 // in the Amazon Elastic Container Service Developer Guide.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/TaskDefinitionPlacementConstraint
 type TaskDefinitionPlacementConstraint struct {
 	_ struct{} `type:"structure"`
 
@@ -9998,7 +10101,6 @@ func (s *TaskDefinitionPlacementConstraint) SetType(v string) *TaskDefinitionPla
 }
 
 // The overrides associated with a task.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/TaskOverride
 type TaskOverride struct {
 	_ struct{} `type:"structure"`
 
@@ -10044,7 +10146,6 @@ func (s *TaskOverride) SetTaskRoleArn(v string) *TaskOverride {
 }
 
 // The ulimit settings to pass to the container.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/Ulimit
 type Ulimit struct {
 	_ struct{} `type:"structure"`
 
@@ -10111,7 +10212,6 @@ func (s *Ulimit) SetSoftLimit(v int64) *Ulimit {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/UpdateContainerAgentRequest
 type UpdateContainerAgentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10162,7 +10262,6 @@ func (s *UpdateContainerAgentInput) SetContainerInstance(v string) *UpdateContai
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/UpdateContainerAgentResponse
 type UpdateContainerAgentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10186,7 +10285,6 @@ func (s *UpdateContainerAgentOutput) SetContainerInstance(v *ContainerInstance) 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/UpdateContainerInstancesStateRequest
 type UpdateContainerInstancesStateInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10250,7 +10348,6 @@ func (s *UpdateContainerInstancesStateInput) SetStatus(v string) *UpdateContaine
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/UpdateContainerInstancesStateResponse
 type UpdateContainerInstancesStateOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10283,7 +10380,6 @@ func (s *UpdateContainerInstancesStateOutput) SetFailures(v []*Failure) *UpdateC
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/UpdateServiceRequest
 type UpdateServiceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10300,23 +10396,24 @@ type UpdateServiceInput struct {
 	// service.
 	DesiredCount *int64 `locationName:"desiredCount" type:"integer"`
 
-	// Whether or not to force a new deployment of the service.
+	// Whether to force a new deployment of the service. By default, --no-force-new-deployment
+	// is assumed unless otherwise specified.
 	ForceNewDeployment *bool `locationName:"forceNewDeployment" type:"boolean"`
 
 	// The period of time, in seconds, that the Amazon ECS service scheduler should
 	// ignore unhealthy Elastic Load Balancing target health checks after a task
 	// has first started. This is only valid if your service is configured to use
 	// a load balancer. If your service's tasks take a while to start and respond
-	// to ELB health checks, you can specify a health check grace period of up to
-	// 1,800 seconds during which the ECS service scheduler will ignore ELB health
-	// check status. This grace period can prevent the ECS service scheduler from
-	// marking tasks as unhealthy and stopping them before they have time to come
-	// up.
+	// to Elastic Load Balancing health checks, you can specify a health check grace
+	// period of up to 1,800 seconds during which the ECS service scheduler ignores
+	// the Elastic Load Balancing health check status. This grace period can prevent
+	// the ECS service scheduler from marking tasks as unhealthy and stopping them
+	// before they have time to come up.
 	HealthCheckGracePeriodSeconds *int64 `locationName:"healthCheckGracePeriodSeconds" type:"integer"`
 
 	// The network configuration for the service. This parameter is required for
-	// task definitions that use the awsvpc network mode to receive their own Elastic
-	// Network Interface, and it is not supported for other network modes. For more
+	// task definitions that use the awsvpc network mode to receive their own elastic
+	// network interface, and it is not supported for other network modes. For more
 	// information, see Task Networking (http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-networking.html)
 	// in the Amazon Elastic Container Service Developer Guide.
 	//
@@ -10424,7 +10521,6 @@ func (s *UpdateServiceInput) SetTaskDefinition(v string) *UpdateServiceInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/UpdateServiceResponse
 type UpdateServiceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10450,7 +10546,6 @@ func (s *UpdateServiceOutput) SetService(v *Service) *UpdateServiceOutput {
 
 // The Docker and Amazon ECS container agent version information about a container
 // instance.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/VersionInfo
 type VersionInfo struct {
 	_ struct{} `type:"structure"`
 
@@ -10494,7 +10589,6 @@ func (s *VersionInfo) SetDockerVersion(v string) *VersionInfo {
 }
 
 // A data volume used in a task definition.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/Volume
 type Volume struct {
 	_ struct{} `type:"structure"`
 
@@ -10539,7 +10633,6 @@ func (s *Volume) SetName(v string) *Volume {
 }
 
 // Details on a data volume from another container in the same task definition.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/ecs-2014-11-13/VolumeFrom
 type VolumeFrom struct {
 	_ struct{} `type:"structure"`
 
@@ -10652,6 +10745,17 @@ const (
 
 	// DeviceCgroupPermissionMknod is a DeviceCgroupPermission enum value
 	DeviceCgroupPermissionMknod = "mknod"
+)
+
+const (
+	// HealthStatusHealthy is a HealthStatus enum value
+	HealthStatusHealthy = "HEALTHY"
+
+	// HealthStatusUnhealthy is a HealthStatus enum value
+	HealthStatusUnhealthy = "UNHEALTHY"
+
+	// HealthStatusUnknown is a HealthStatus enum value
+	HealthStatusUnknown = "UNKNOWN"
 )
 
 const (

@@ -64,6 +64,7 @@ func TestIterator(t *testing.T) {
 		want           [][]Value
 		wantErr        error
 		wantSchema     Schema
+		wantTotalRows  uint64
 	}{
 		{
 			desc: "Iteration over single empty page",
@@ -87,11 +88,13 @@ func TestIterator(t *testing.T) {
 						pageToken: "",
 						rows:      [][]Value{{1, 2}, {11, 12}},
 						schema:    iiSchema,
+						totalRows: 4,
 					},
 				},
 			},
-			want:       [][]Value{{1, 2}, {11, 12}},
-			wantSchema: iiSchema,
+			want:          [][]Value{{1, 2}, {11, 12}},
+			wantSchema:    iiSchema,
+			wantTotalRows: 4,
 		},
 		{
 			desc: "Iteration over single page with different schema",
@@ -115,6 +118,7 @@ func TestIterator(t *testing.T) {
 						pageToken: "a",
 						rows:      [][]Value{{1, 2}, {11, 12}},
 						schema:    iiSchema,
+						totalRows: 4,
 					},
 				},
 				"a": {
@@ -122,11 +126,13 @@ func TestIterator(t *testing.T) {
 						pageToken: "",
 						rows:      [][]Value{{101, 102}, {111, 112}},
 						schema:    iiSchema,
+						totalRows: 4,
 					},
 				},
 			},
-			want:       [][]Value{{1, 2}, {11, 12}, {101, 102}, {111, 112}},
-			wantSchema: iiSchema,
+			want:          [][]Value{{1, 2}, {11, 12}, {101, 102}, {111, 112}},
+			wantSchema:    iiSchema,
+			wantTotalRows: 4,
 		},
 		{
 			desc: "Server response includes empty page",
@@ -240,7 +246,7 @@ func TestIterator(t *testing.T) {
 		}
 		it := newRowIterator(context.Background(), nil, pf.fetchPage)
 		it.PageInfo().Token = tc.pageToken
-		values, schema, err := consumeRowIterator(it)
+		values, schema, totalRows, err := consumeRowIterator(it)
 		if err != tc.wantErr {
 			t.Fatalf("%s: got %v, want %v", tc.desc, err, tc.wantErr)
 		}
@@ -250,35 +256,31 @@ func TestIterator(t *testing.T) {
 		if (len(schema) != 0 || len(tc.wantSchema) != 0) && !testutil.Equal(schema, tc.wantSchema) {
 			t.Errorf("%s: iterator.Schema:\ngot: %v\nwant: %v", tc.desc, schema, tc.wantSchema)
 		}
+		if totalRows != tc.wantTotalRows {
+			t.Errorf("%s: totalRows: got %d, want %d", tc.desc, totalRows, tc.wantTotalRows)
+		}
 	}
 }
 
-type valueListWithSchema struct {
-	vals   valueList
-	schema Schema
-}
-
-func (v *valueListWithSchema) Load(vs []Value, s Schema) error {
-	v.vals.Load(vs, s)
-	v.schema = s
-	return nil
-}
-
 // consumeRowIterator reads the schema and all values from a RowIterator and returns them.
-func consumeRowIterator(it *RowIterator) ([][]Value, Schema, error) {
-	var got [][]Value
-	var schema Schema
+func consumeRowIterator(it *RowIterator) ([][]Value, Schema, uint64, error) {
+	var (
+		got       [][]Value
+		schema    Schema
+		totalRows uint64
+	)
 	for {
-		var vls valueListWithSchema
+		var vls []Value
 		err := it.Next(&vls)
 		if err == iterator.Done {
-			return got, schema, nil
+			return got, schema, totalRows, nil
 		}
 		if err != nil {
-			return got, schema, err
+			return got, schema, totalRows, err
 		}
-		got = append(got, vls.vals)
-		schema = vls.schema
+		got = append(got, vls)
+		schema = it.Schema
+		totalRows = it.TotalRows
 	}
 }
 
@@ -333,7 +335,7 @@ func TestNextAfterFinished(t *testing.T) {
 		}
 		it := newRowIterator(context.Background(), nil, pf.fetchPage)
 
-		values, _, err := consumeRowIterator(it)
+		values, _, _, err := consumeRowIterator(it)
 		if err != nil {
 			t.Fatal(err)
 		}

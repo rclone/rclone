@@ -42,8 +42,9 @@ func NewManagementAssociationsClientWithBaseURI(baseURI string, subscriptionID s
 
 // CreateOrUpdate creates or updates the ManagementAssociation.
 //
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. managementAssociationName
-// is user ManagementAssociation Name. parameters is the parameters required to create ManagementAssociation extension.
+// resourceGroupName is the name of the resource group to get. The name is case insensitive.
+// managementAssociationName is user ManagementAssociation Name. parameters is the parameters required to create
+// ManagementAssociation extension.
 func (client ManagementAssociationsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, managementAssociationName string, parameters ManagementAssociation) (result ManagementAssociation, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -53,7 +54,7 @@ func (client ManagementAssociationsClient) CreateOrUpdate(ctx context.Context, r
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Properties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.Properties.ApplicationID", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationsmanagement.ManagementAssociationsClient", "CreateOrUpdate")
+		return result, validation.NewError("operationsmanagement.ManagementAssociationsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, managementAssociationName, parameters)
@@ -125,15 +126,15 @@ func (client ManagementAssociationsClient) CreateOrUpdateResponder(resp *http.Re
 
 // Delete deletes the ManagementAssociation in the subscription.
 //
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. managementAssociationName
-// is user ManagementAssociation Name.
+// resourceGroupName is the name of the resource group to get. The name is case insensitive.
+// managementAssociationName is user ManagementAssociation Name.
 func (client ManagementAssociationsClient) Delete(ctx context.Context, resourceGroupName string, managementAssociationName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationsmanagement.ManagementAssociationsClient", "Delete")
+		return result, validation.NewError("operationsmanagement.ManagementAssociationsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, managementAssociationName)
@@ -202,15 +203,15 @@ func (client ManagementAssociationsClient) DeleteResponder(resp *http.Response) 
 
 // Get retrieves the user ManagementAssociation.
 //
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. managementAssociationName
-// is user ManagementAssociation Name.
+// resourceGroupName is the name of the resource group to get. The name is case insensitive.
+// managementAssociationName is user ManagementAssociation Name.
 func (client ManagementAssociationsClient) Get(ctx context.Context, resourceGroupName string, managementAssociationName string) (result ManagementAssociation, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationsmanagement.ManagementAssociationsClient", "Get")
+		return result, validation.NewError("operationsmanagement.ManagementAssociationsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, managementAssociationName)

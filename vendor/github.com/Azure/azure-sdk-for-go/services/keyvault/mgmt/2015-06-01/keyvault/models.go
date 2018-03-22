@@ -18,6 +18,7 @@ package keyvault
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
+	"encoding/json"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/satori/go.uuid"
@@ -168,7 +169,28 @@ type Resource struct {
 	// Location - The supported Azure location where the key vault should be created.
 	Location *string `json:"location,omitempty"`
 	// Tags - The tags that will be assigned to the key vault.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // ResourceListResult list of vault resources.
@@ -284,6 +306,8 @@ type Sku struct {
 // Vault resource information with extended details.
 type Vault struct {
 	autorest.Response `json:"-"`
+	// Properties - Properties of the vault
+	Properties *VaultProperties `json:"properties,omitempty"`
 	// ID - The Azure Resource Manager resource ID for the key vault.
 	ID *string `json:"id,omitempty"`
 	// Name - The name of the key vault.
@@ -293,9 +317,31 @@ type Vault struct {
 	// Location - The supported Azure location where the key vault should be created.
 	Location *string `json:"location,omitempty"`
 	// Tags - The tags that will be assigned to the key vault.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// Properties - Properties of the vault
-	Properties *VaultProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Vault.
+func (vVar Vault) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vVar.Properties != nil {
+		objectMap["properties"] = vVar.Properties
+	}
+	if vVar.ID != nil {
+		objectMap["id"] = vVar.ID
+	}
+	if vVar.Name != nil {
+		objectMap["name"] = vVar.Name
+	}
+	if vVar.Type != nil {
+		objectMap["type"] = vVar.Type
+	}
+	if vVar.Location != nil {
+		objectMap["location"] = vVar.Location
+	}
+	if vVar.Tags != nil {
+		objectMap["tags"] = vVar.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // VaultCreateOrUpdateParameters parameters for creating or updating a vault
@@ -303,9 +349,24 @@ type VaultCreateOrUpdateParameters struct {
 	// Location - The supported Azure location where the key vault should be created.
 	Location *string `json:"location,omitempty"`
 	// Tags - The tags that will be assigned to the key vault.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// Properties - Properties of the vault
 	Properties *VaultProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for VaultCreateOrUpdateParameters.
+func (vcoup VaultCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vcoup.Location != nil {
+		objectMap["location"] = vcoup.Location
+	}
+	if vcoup.Tags != nil {
+		objectMap["tags"] = vcoup.Tags
+	}
+	if vcoup.Properties != nil {
+		objectMap["properties"] = vcoup.Properties
+	}
+	return json.Marshal(objectMap)
 }
 
 // VaultListResult list of vaults

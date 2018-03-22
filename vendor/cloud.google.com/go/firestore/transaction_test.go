@@ -343,3 +343,33 @@ func TestTransactionErrors(t *testing.T) {
 		}
 	}
 }
+
+func TestTransactionGetAll(t *testing.T) {
+	c, srv := newMock(t)
+	defer c.Close()
+	const dbPath = "projects/projectID/databases/(default)"
+	tid := []byte{1}
+	beginReq := &pb.BeginTransactionRequest{Database: dbPath}
+	beginRes := &pb.BeginTransactionResponse{Transaction: tid}
+	srv.addRPC(beginReq, beginRes)
+	req := &pb.BatchGetDocumentsRequest{
+		Database: dbPath,
+		Documents: []string{
+			dbPath + "/documents/C/a",
+			dbPath + "/documents/C/b",
+			dbPath + "/documents/C/c",
+		},
+		ConsistencySelector: &pb.BatchGetDocumentsRequest_Transaction{tid},
+	}
+	err := c.RunTransaction(context.Background(), func(_ context.Context, tx *Transaction) error {
+		testGetAll(t, c, srv, dbPath,
+			func(drs []*DocumentRef) ([]*DocumentSnapshot, error) { return tx.GetAll(drs) },
+			req)
+		commitReq := &pb.CommitRequest{Database: dbPath, Transaction: tid}
+		srv.addRPC(commitReq, &pb.CommitResponse{CommitTime: aTimestamp})
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}

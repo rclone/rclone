@@ -44,8 +44,8 @@ func NewRelationshipsClientWithBaseURI(baseURI string, subscriptionID string) Re
 
 // CreateOrUpdate creates a relationship or updates an existing relationship within a hub.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. relationshipName is the name of
-// the Relationship. parameters is parameters supplied to the CreateOrUpdate Relationship operation.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. relationshipName is the
+// name of the Relationship. parameters is parameters supplied to the CreateOrUpdate Relationship operation.
 func (client RelationshipsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, relationshipName string, parameters RelationshipResourceFormat) (result RelationshipsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: relationshipName,
@@ -57,7 +57,7 @@ func (client RelationshipsClient) CreateOrUpdate(ctx context.Context, resourceGr
 				Chain: []validation.Constraint{{Target: "parameters.RelationshipDefinition.ProfileType", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "parameters.RelationshipDefinition.RelatedProfileType", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "customerinsights.RelationshipsClient", "CreateOrUpdate")
+		return result, validation.NewError("customerinsights.RelationshipsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, hubName, relationshipName, parameters)
@@ -129,8 +129,8 @@ func (client RelationshipsClient) CreateOrUpdateResponder(resp *http.Response) (
 
 // Delete deletes a relationship within a hub.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. relationshipName is the name of
-// the relationship.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. relationshipName is the
+// name of the relationship.
 func (client RelationshipsClient) Delete(ctx context.Context, resourceGroupName string, hubName string, relationshipName string) (result RelationshipsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, hubName, relationshipName)
 	if err != nil {
@@ -198,8 +198,8 @@ func (client RelationshipsClient) DeleteResponder(resp *http.Response) (result a
 
 // Get gets information about the specified relationship.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. relationshipName is the name of
-// the relationship.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. relationshipName is the
+// name of the relationship.
 func (client RelationshipsClient) Get(ctx context.Context, resourceGroupName string, hubName string, relationshipName string) (result RelationshipResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, relationshipName)
 	if err != nil {

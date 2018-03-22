@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -227,7 +227,7 @@ func TestInstanceAdminListInstanceConfigs(t *testing.T) {
 
 	mockInstanceAdmin.resps = append(mockInstanceAdmin.resps[:0], expectedResponse)
 
-	var formattedParent string = InstanceAdminProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &instancepb.ListInstanceConfigsRequest{
 		Parent: formattedParent,
 	}
@@ -266,7 +266,7 @@ func TestInstanceAdminListInstanceConfigsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockInstanceAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = InstanceAdminProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &instancepb.ListInstanceConfigsRequest{
 		Parent: formattedParent,
 	}
@@ -298,7 +298,7 @@ func TestInstanceAdminGetInstanceConfig(t *testing.T) {
 
 	mockInstanceAdmin.resps = append(mockInstanceAdmin.resps[:0], expectedResponse)
 
-	var formattedName string = InstanceAdminInstanceConfigPath("[PROJECT]", "[INSTANCE_CONFIG]")
+	var formattedName string = fmt.Sprintf("projects/%s/instanceConfigs/%s", "[PROJECT]", "[INSTANCE_CONFIG]")
 	var request = &instancepb.GetInstanceConfigRequest{
 		Name: formattedName,
 	}
@@ -327,7 +327,7 @@ func TestInstanceAdminGetInstanceConfigError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockInstanceAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = InstanceAdminInstanceConfigPath("[PROJECT]", "[INSTANCE_CONFIG]")
+	var formattedName string = fmt.Sprintf("projects/%s/instanceConfigs/%s", "[PROJECT]", "[INSTANCE_CONFIG]")
 	var request = &instancepb.GetInstanceConfigRequest{
 		Name: formattedName,
 	}
@@ -360,7 +360,7 @@ func TestInstanceAdminListInstances(t *testing.T) {
 
 	mockInstanceAdmin.resps = append(mockInstanceAdmin.resps[:0], expectedResponse)
 
-	var formattedParent string = InstanceAdminProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &instancepb.ListInstancesRequest{
 		Parent: formattedParent,
 	}
@@ -399,7 +399,7 @@ func TestInstanceAdminListInstancesError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockInstanceAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = InstanceAdminProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &instancepb.ListInstancesRequest{
 		Parent: formattedParent,
 	}
@@ -435,7 +435,7 @@ func TestInstanceAdminGetInstance(t *testing.T) {
 
 	mockInstanceAdmin.resps = append(mockInstanceAdmin.resps[:0], expectedResponse)
 
-	var formattedName string = InstanceAdminInstancePath("[PROJECT]", "[INSTANCE]")
+	var formattedName string = fmt.Sprintf("projects/%s/instances/%s", "[PROJECT]", "[INSTANCE]")
 	var request = &instancepb.GetInstanceRequest{
 		Name: formattedName,
 	}
@@ -464,7 +464,7 @@ func TestInstanceAdminGetInstanceError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockInstanceAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = InstanceAdminInstancePath("[PROJECT]", "[INSTANCE]")
+	var formattedName string = fmt.Sprintf("projects/%s/instances/%s", "[PROJECT]", "[INSTANCE]")
 	var request = &instancepb.GetInstanceRequest{
 		Name: formattedName,
 	}
@@ -508,7 +508,7 @@ func TestInstanceAdminCreateInstance(t *testing.T) {
 		Result: &longrunningpb.Operation_Response{Response: any},
 	})
 
-	var formattedParent string = InstanceAdminProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var instanceId string = "instanceId-2101995259"
 	var instance *instancepb.Instance = &instancepb.Instance{}
 	var request = &instancepb.CreateInstanceRequest{
@@ -555,7 +555,7 @@ func TestInstanceAdminCreateInstanceError(t *testing.T) {
 		},
 	})
 
-	var formattedParent string = InstanceAdminProjectPath("[PROJECT]")
+	var formattedParent string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var instanceId string = "instanceId-2101995259"
 	var instance *instancepb.Instance = &instancepb.Instance{}
 	var request = &instancepb.CreateInstanceRequest{
@@ -685,7 +685,7 @@ func TestInstanceAdminDeleteInstance(t *testing.T) {
 
 	mockInstanceAdmin.resps = append(mockInstanceAdmin.resps[:0], expectedResponse)
 
-	var formattedName string = InstanceAdminInstancePath("[PROJECT]", "[INSTANCE]")
+	var formattedName string = fmt.Sprintf("projects/%s/instances/%s", "[PROJECT]", "[INSTANCE]")
 	var request = &instancepb.DeleteInstanceRequest{
 		Name: formattedName,
 	}
@@ -711,7 +711,7 @@ func TestInstanceAdminDeleteInstanceError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockInstanceAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = InstanceAdminInstancePath("[PROJECT]", "[INSTANCE]")
+	var formattedName string = fmt.Sprintf("projects/%s/instances/%s", "[PROJECT]", "[INSTANCE]")
 	var request = &instancepb.DeleteInstanceRequest{
 		Name: formattedName,
 	}
@@ -742,7 +742,7 @@ func TestInstanceAdminSetIamPolicy(t *testing.T) {
 
 	mockInstanceAdmin.resps = append(mockInstanceAdmin.resps[:0], expectedResponse)
 
-	var formattedResource string = InstanceAdminInstancePath("[PROJECT]", "[INSTANCE]")
+	var formattedResource string = fmt.Sprintf("projects/%s/instances/%s", "[PROJECT]", "[INSTANCE]")
 	var policy *iampb.Policy = &iampb.Policy{}
 	var request = &iampb.SetIamPolicyRequest{
 		Resource: formattedResource,
@@ -773,7 +773,7 @@ func TestInstanceAdminSetIamPolicyError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockInstanceAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedResource string = InstanceAdminInstancePath("[PROJECT]", "[INSTANCE]")
+	var formattedResource string = fmt.Sprintf("projects/%s/instances/%s", "[PROJECT]", "[INSTANCE]")
 	var policy *iampb.Policy = &iampb.Policy{}
 	var request = &iampb.SetIamPolicyRequest{
 		Resource: formattedResource,
@@ -807,7 +807,7 @@ func TestInstanceAdminGetIamPolicy(t *testing.T) {
 
 	mockInstanceAdmin.resps = append(mockInstanceAdmin.resps[:0], expectedResponse)
 
-	var formattedResource string = InstanceAdminInstancePath("[PROJECT]", "[INSTANCE]")
+	var formattedResource string = fmt.Sprintf("projects/%s/instances/%s", "[PROJECT]", "[INSTANCE]")
 	var request = &iampb.GetIamPolicyRequest{
 		Resource: formattedResource,
 	}
@@ -836,7 +836,7 @@ func TestInstanceAdminGetIamPolicyError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockInstanceAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedResource string = InstanceAdminInstancePath("[PROJECT]", "[INSTANCE]")
+	var formattedResource string = fmt.Sprintf("projects/%s/instances/%s", "[PROJECT]", "[INSTANCE]")
 	var request = &iampb.GetIamPolicyRequest{
 		Resource: formattedResource,
 	}
@@ -863,7 +863,7 @@ func TestInstanceAdminTestIamPermissions(t *testing.T) {
 
 	mockInstanceAdmin.resps = append(mockInstanceAdmin.resps[:0], expectedResponse)
 
-	var formattedResource string = InstanceAdminInstancePath("[PROJECT]", "[INSTANCE]")
+	var formattedResource string = fmt.Sprintf("projects/%s/instances/%s", "[PROJECT]", "[INSTANCE]")
 	var permissions []string = nil
 	var request = &iampb.TestIamPermissionsRequest{
 		Resource:    formattedResource,
@@ -894,7 +894,7 @@ func TestInstanceAdminTestIamPermissionsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockInstanceAdmin.err = gstatus.Error(errCode, "test error")
 
-	var formattedResource string = InstanceAdminInstancePath("[PROJECT]", "[INSTANCE]")
+	var formattedResource string = fmt.Sprintf("projects/%s/instances/%s", "[PROJECT]", "[INSTANCE]")
 	var permissions []string = nil
 	var request = &iampb.TestIamPermissionsRequest{
 		Resource:    formattedResource,

@@ -33,7 +33,7 @@ import (
 )
 
 func setupFakeServer(opt ...grpc.ServerOption) (tbl *Table, cleanup func(), err error) {
-	srv, err := bttest.NewServer("127.0.0.1:0", opt...)
+	srv, err := bttest.NewServer("localhost:0", opt...)
 	if err != nil {
 		return nil, nil, err
 	}

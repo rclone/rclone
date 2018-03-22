@@ -1065,10 +1065,12 @@
         "Role":{"shape":"Role"},
         "LocationARN":{"shape":"LocationARN"},
         "DefaultStorageClass":{"shape":"StorageClass"},
+        "ObjectACL":{"shape":"ObjectACL"},
         "ClientList":{"shape":"FileShareClientList"},
         "Squash":{"shape":"Squash"},
         "ReadOnly":{"shape":"Boolean"},
-        "GuessMIMETypeEnabled":{"shape":"Boolean"}
+        "GuessMIMETypeEnabled":{"shape":"Boolean"},
+        "RequesterPays":{"shape":"Boolean"}
       }
     },
     "CreateNFSFileShareOutput":{
@@ -1988,10 +1990,12 @@
         "Role":{"shape":"Role"},
         "LocationARN":{"shape":"LocationARN"},
         "DefaultStorageClass":{"shape":"StorageClass"},
+        "ObjectACL":{"shape":"ObjectACL"},
         "ClientList":{"shape":"FileShareClientList"},
         "Squash":{"shape":"Squash"},
         "ReadOnly":{"shape":"Boolean"},
-        "GuessMIMETypeEnabled":{"shape":"Boolean"}
+        "GuessMIMETypeEnabled":{"shape":"Boolean"},
+        "RequesterPays":{"shape":"Boolean"}
       }
     },
     "NFSFileShareInfoList":{
@@ -2038,6 +2042,18 @@
       "type":"integer",
       "max":10,
       "min":1
+    },
+    "ObjectACL":{
+      "type":"string",
+      "enum":[
+        "private",
+        "public-read",
+        "public-read-write",
+        "authenticated-read",
+        "bucket-owner-read",
+        "bucket-owner-full-control",
+        "aws-exec-read"
+      ]
     },
     "Path":{"type":"string"},
     "PermissionId":{
@@ -2479,10 +2495,12 @@
         "KMSKey":{"shape":"KMSKey"},
         "NFSFileShareDefaults":{"shape":"NFSFileShareDefaults"},
         "DefaultStorageClass":{"shape":"StorageClass"},
+        "ObjectACL":{"shape":"ObjectACL"},
         "ClientList":{"shape":"FileShareClientList"},
         "Squash":{"shape":"Squash"},
         "ReadOnly":{"shape":"Boolean"},
-        "GuessMIMETypeEnabled":{"shape":"Boolean"}
+        "GuessMIMETypeEnabled":{"shape":"Boolean"},
+        "RequesterPays":{"shape":"Boolean"}
       }
     },
     "UpdateNFSFileShareOutput":{

@@ -42,13 +42,13 @@ func NewCustomImagesClientWithBaseURI(baseURI string, subscriptionID string) Cus
 
 // CreateOrUpdate create or replace an existing custom image. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the custom
-// image. customImage is a custom image.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// custom image. customImage is a custom image.
 func (client CustomImagesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, labName string, name string, customImage CustomImage) (result CustomImagesCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: customImage,
 			Constraints: []validation.Constraint{{Target: "customImage.CustomImageProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "dtl.CustomImagesClient", "CreateOrUpdate")
+		return result, validation.NewError("dtl.CustomImagesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, labName, name, customImage)
@@ -120,8 +120,8 @@ func (client CustomImagesClient) CreateOrUpdateResponder(resp *http.Response) (r
 
 // Delete delete custom image. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the custom
-// image.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// custom image.
 func (client CustomImagesClient) Delete(ctx context.Context, resourceGroupName string, labName string, name string) (result CustomImagesDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -189,8 +189,8 @@ func (client CustomImagesClient) DeleteResponder(resp *http.Response) (result au
 
 // Get get custom image.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the custom
-// image. expand is specify the $expand query. Example: 'properties($select=vm)'
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// custom image. expand is specify the $expand query. Example: 'properties($select=vm)'
 func (client CustomImagesClient) Get(ctx context.Context, resourceGroupName string, labName string, name string, expand string) (result CustomImage, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, labName, name, expand)
 	if err != nil {
@@ -260,9 +260,10 @@ func (client CustomImagesClient) GetResponder(resp *http.Response) (result Custo
 
 // List list custom images in a given lab.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. expand is specify the $expand
-// query. Example: 'properties($select=vm)' filter is the filter to apply to the operation. top is the maximum number
-// of resources to return from the operation. orderby is the ordering expression for the results, using OData notation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. expand is specify the
+// $expand query. Example: 'properties($select=vm)' filter is the filter to apply to the operation. top is the
+// maximum number of resources to return from the operation. orderby is the ordering expression for the results,
+// using OData notation.
 func (client CustomImagesClient) List(ctx context.Context, resourceGroupName string, labName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationCustomImagePage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, expand, filter, top, orderby)

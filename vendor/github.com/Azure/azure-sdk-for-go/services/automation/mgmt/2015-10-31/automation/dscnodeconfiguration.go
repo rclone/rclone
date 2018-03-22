@@ -42,8 +42,8 @@ func NewDscNodeConfigurationClientWithBaseURI(baseURI string, subscriptionID str
 
 // CreateOrUpdate create the node configuration identified by node configuration name.
 //
-// automationAccountName is the automation account name. nodeConfigurationName is the create or update parameters for
-// configuration. parameters is the create or update parameters for configuration.
+// automationAccountName is the automation account name. nodeConfigurationName is the create or update parameters
+// for configuration. parameters is the create or update parameters for configuration.
 func (client DscNodeConfigurationClient) CreateOrUpdate(ctx context.Context, automationAccountName string, nodeConfigurationName string, parameters DscNodeConfigurationCreateOrUpdateParameters) (result DscNodeConfiguration, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
@@ -57,7 +57,7 @@ func (client DscNodeConfigurationClient) CreateOrUpdate(ctx context.Context, aut
 				}},
 				{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.Configuration", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.DscNodeConfigurationClient", "CreateOrUpdate")
+		return result, validation.NewError("automation.DscNodeConfigurationClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, automationAccountName, nodeConfigurationName, parameters)
@@ -132,7 +132,7 @@ func (client DscNodeConfigurationClient) Delete(ctx context.Context, automationA
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.DscNodeConfigurationClient", "Delete")
+		return result, validation.NewError("automation.DscNodeConfigurationClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, automationAccountName, nodeConfigurationName)
@@ -204,7 +204,7 @@ func (client DscNodeConfigurationClient) Get(ctx context.Context, automationAcco
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.DscNodeConfigurationClient", "Get")
+		return result, validation.NewError("automation.DscNodeConfigurationClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, nodeConfigurationName)
@@ -277,7 +277,7 @@ func (client DscNodeConfigurationClient) ListByAutomationAccount(ctx context.Con
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.DscNodeConfigurationClient", "ListByAutomationAccount")
+		return result, validation.NewError("automation.DscNodeConfigurationClient", "ListByAutomationAccount", err.Error())
 	}
 
 	result.fn = client.listByAutomationAccountNextResults

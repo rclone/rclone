@@ -294,36 +294,36 @@ func (dmr *DomainModelResults) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["result"]
-	if v != nil {
-		var resultVar DomainModelResult
-		err = json.Unmarshal(*m["result"], &resultVar)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "result":
+			if v != nil {
+				var domainModelResult DomainModelResult
+				err = json.Unmarshal(*v, &domainModelResult)
+				if err != nil {
+					return err
+				}
+				dmr.DomainModelResult = &domainModelResult
+			}
+		case "requestId":
+			if v != nil {
+				var requestID string
+				err = json.Unmarshal(*v, &requestID)
+				if err != nil {
+					return err
+				}
+				dmr.RequestID = &requestID
+			}
+		case "metadata":
+			if v != nil {
+				var metadata ImageMetadata
+				err = json.Unmarshal(*v, &metadata)
+				if err != nil {
+					return err
+				}
+				dmr.Metadata = &metadata
+			}
 		}
-		dmr.DomainModelResult = &resultVar
-	}
-
-	v = m["requestId"]
-	if v != nil {
-		var requestID string
-		err = json.Unmarshal(*m["requestId"], &requestID)
-		if err != nil {
-			return err
-		}
-		dmr.RequestID = &requestID
-	}
-
-	v = m["metadata"]
-	if v != nil {
-		var metadata ImageMetadata
-		err = json.Unmarshal(*m["metadata"], &metadata)
-		if err != nil {
-			return err
-		}
-		dmr.Metadata = &metadata
 	}
 
 	return nil
@@ -391,8 +391,8 @@ type ImageCaption struct {
 	Confidence *float64 `json:"confidence,omitempty"`
 }
 
-// ImageDescription a collection of content tags, along with a list of captions sorted by confidence level, and image
-// metadata.
+// ImageDescription a collection of content tags, along with a list of captions sorted by confidence level, and
+// image metadata.
 type ImageDescription struct {
 	autorest.Response        `json:"-"`
 	*ImageDescriptionDetails `json:"description,omitempty"`
@@ -405,23 +405,25 @@ func (ID *ImageDescription) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["description"]
-	if v != nil {
-		var description ImageDescriptionDetails
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "description":
+			if v != nil {
+				var imageDescriptionDetails ImageDescriptionDetails
+				err = json.Unmarshal(*v, &imageDescriptionDetails)
+				if err != nil {
+					return err
+				}
+				ID.ImageDescriptionDetails = &imageDescriptionDetails
+			}
 		}
-		ID.ImageDescriptionDetails = &description
 	}
 
 	return nil
 }
 
-// ImageDescriptionDetails a collection of content tags, along with a list of captions sorted by confidence level, and
-// image metadata.
+// ImageDescriptionDetails a collection of content tags, along with a list of captions sorted by confidence level,
+// and image metadata.
 type ImageDescriptionDetails struct {
 	// Tags - A collection of image tags.
 	Tags *[]string `json:"tags,omitempty"`

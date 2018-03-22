@@ -116,5 +116,11 @@ Authentication
 
 See examples of authorization and authentication at
 https://godoc.org/cloud.google.com/go#pkg-examples.
+
+Slow Message Processing
+
+For use cases where message processing exceeds 30 minutes, we recommend using
+the base client in a pull model, since long-lived streams are periodically killed
+by firewalls. See the example at https://godoc.org/cloud.google.com/go/pubsub/apiv1#example-SubscriberClient-Pull-LengthyClientProcessing
 */
 package pubsub // import "cloud.google.com/go/pubsub"

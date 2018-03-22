@@ -55,7 +55,7 @@ func (client ResourceLinksClient) CreateOrUpdate(ctx context.Context, linkID str
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Properties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.Properties.TargetID", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "links.ResourceLinksClient", "CreateOrUpdate")
+		return result, validation.NewError("links.ResourceLinksClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, linkID, parameters)
@@ -253,8 +253,8 @@ func (client ResourceLinksClient) GetResponder(resp *http.Response) (result Reso
 
 // ListAtSourceScope gets a list of resource links at and below the specified source scope.
 //
-// scope is the fully qualified ID of the scope for getting the resource links. For example, to list resource links at
-// and under a resource group, set the scope to
+// scope is the fully qualified ID of the scope for getting the resource links. For example, to list resource links
+// at and under a resource group, set the scope to
 // /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/myGroup. filter is the filter to apply when
 // getting resource links. To get links only at the specified scope (not below the scope), use Filter.atScope().
 func (client ResourceLinksClient) ListAtSourceScope(ctx context.Context, scope string, filter Filter) (result ResourceLinkResultPage, err error) {
@@ -351,8 +351,8 @@ func (client ResourceLinksClient) ListAtSourceScopeComplete(ctx context.Context,
 
 // ListAtSubscription gets all the linked resources for the subscription.
 //
-// filter is the filter to apply on the list resource links operation. The supported filter for list resource links is
-// targetid. For example, $filter=targetid eq {value}
+// filter is the filter to apply on the list resource links operation. The supported filter for list resource links
+// is targetid. For example, $filter=targetid eq {value}
 func (client ResourceLinksClient) ListAtSubscription(ctx context.Context, filter string) (result ResourceLinkResultPage, err error) {
 	result.fn = client.listAtSubscriptionNextResults
 	req, err := client.ListAtSubscriptionPreparer(ctx, filter)

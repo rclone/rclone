@@ -4087,7 +4087,6 @@ func (c *WorkDocs) UpdateUserWithContext(ctx aws.Context, input *UpdateUserInput
 	return out, req.Send()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/AbortDocumentVersionUploadRequest
 type AbortDocumentVersionUploadInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4159,7 +4158,6 @@ func (s *AbortDocumentVersionUploadInput) SetVersionId(v string) *AbortDocumentV
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/AbortDocumentVersionUploadOutput
 type AbortDocumentVersionUploadOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4174,7 +4172,6 @@ func (s AbortDocumentVersionUploadOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/ActivateUserRequest
 type ActivateUserInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4229,7 +4226,6 @@ func (s *ActivateUserInput) SetUserId(v string) *ActivateUserInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/ActivateUserResponse
 type ActivateUserOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4254,7 +4250,6 @@ func (s *ActivateUserOutput) SetUser(v *User) *ActivateUserOutput {
 }
 
 // Describes the activity information.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/Activity
 type Activity struct {
 	_ struct{} `type:"structure"`
 
@@ -4345,7 +4340,6 @@ func (s *Activity) SetType(v string) *Activity {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/AddResourcePermissionsRequest
 type AddResourcePermissionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4433,7 +4427,6 @@ func (s *AddResourcePermissionsInput) SetResourceId(v string) *AddResourcePermis
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/AddResourcePermissionsResponse
 type AddResourcePermissionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4458,7 +4451,6 @@ func (s *AddResourcePermissionsOutput) SetShareResults(v []*ShareResult) *AddRes
 }
 
 // Describes a comment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/Comment
 type Comment struct {
 	_ struct{} `type:"structure"`
 
@@ -4560,7 +4552,6 @@ func (s *Comment) SetVisibility(v string) *Comment {
 }
 
 // Describes the metadata of a comment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/CommentMetadata
 type CommentMetadata struct {
 	_ struct{} `type:"structure"`
 
@@ -4620,7 +4611,6 @@ func (s *CommentMetadata) SetRecipientId(v string) *CommentMetadata {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/CreateCommentRequest
 type CreateCommentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4754,7 +4744,6 @@ func (s *CreateCommentInput) SetVisibility(v string) *CreateCommentInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/CreateCommentResponse
 type CreateCommentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4778,7 +4767,6 @@ func (s *CreateCommentOutput) SetComment(v *Comment) *CreateCommentOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/CreateCustomMetadataRequest
 type CreateCustomMetadataInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4863,7 +4851,6 @@ func (s *CreateCustomMetadataInput) SetVersionId(v string) *CreateCustomMetadata
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/CreateCustomMetadataResponse
 type CreateCustomMetadataOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4878,7 +4865,6 @@ func (s CreateCustomMetadataOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/CreateFolderRequest
 type CreateFolderInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4945,7 +4931,6 @@ func (s *CreateFolderInput) SetParentFolderId(v string) *CreateFolderInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/CreateFolderResponse
 type CreateFolderOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4969,7 +4954,6 @@ func (s *CreateFolderOutput) SetMetadata(v *FolderMetadata) *CreateFolderOutput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/CreateLabelsRequest
 type CreateLabelsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5038,7 +5022,6 @@ func (s *CreateLabelsInput) SetResourceId(v string) *CreateLabelsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/CreateLabelsResponse
 type CreateLabelsOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5053,7 +5036,6 @@ func (s CreateLabelsOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/CreateNotificationSubscriptionRequest
 type CreateNotificationSubscriptionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5142,7 +5124,6 @@ func (s *CreateNotificationSubscriptionInput) SetSubscriptionType(v string) *Cre
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/CreateNotificationSubscriptionResponse
 type CreateNotificationSubscriptionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5166,7 +5147,6 @@ func (s *CreateNotificationSubscriptionOutput) SetSubscription(v *Subscription) 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/CreateUserRequest
 type CreateUserInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5317,7 +5297,6 @@ func (s *CreateUserInput) SetUsername(v string) *CreateUserInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/CreateUserResponse
 type CreateUserOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5341,7 +5320,6 @@ func (s *CreateUserOutput) SetUser(v *User) *CreateUserOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeactivateUserRequest
 type DeactivateUserInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5396,7 +5374,6 @@ func (s *DeactivateUserInput) SetUserId(v string) *DeactivateUserInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeactivateUserOutput
 type DeactivateUserOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5411,7 +5388,6 @@ func (s DeactivateUserOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteCommentRequest
 type DeleteCommentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5500,7 +5476,6 @@ func (s *DeleteCommentInput) SetVersionId(v string) *DeleteCommentInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteCommentOutput
 type DeleteCommentOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5515,7 +5490,6 @@ func (s DeleteCommentOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteCustomMetadataRequest
 type DeleteCustomMetadataInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5602,7 +5576,6 @@ func (s *DeleteCustomMetadataInput) SetVersionId(v string) *DeleteCustomMetadata
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteCustomMetadataResponse
 type DeleteCustomMetadataOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5617,7 +5590,6 @@ func (s DeleteCustomMetadataOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteDocumentRequest
 type DeleteDocumentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5672,7 +5644,6 @@ func (s *DeleteDocumentInput) SetDocumentId(v string) *DeleteDocumentInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteDocumentOutput
 type DeleteDocumentOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5687,7 +5658,6 @@ func (s DeleteDocumentOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteFolderContentsRequest
 type DeleteFolderContentsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5742,7 +5712,6 @@ func (s *DeleteFolderContentsInput) SetFolderId(v string) *DeleteFolderContentsI
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteFolderContentsOutput
 type DeleteFolderContentsOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5757,7 +5726,6 @@ func (s DeleteFolderContentsOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteFolderRequest
 type DeleteFolderInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5812,7 +5780,6 @@ func (s *DeleteFolderInput) SetFolderId(v string) *DeleteFolderInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteFolderOutput
 type DeleteFolderOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5827,7 +5794,6 @@ func (s DeleteFolderOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteLabelsRequest
 type DeleteLabelsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5900,7 +5866,6 @@ func (s *DeleteLabelsInput) SetResourceId(v string) *DeleteLabelsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteLabelsResponse
 type DeleteLabelsOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5915,7 +5880,6 @@ func (s DeleteLabelsOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteNotificationSubscriptionRequest
 type DeleteNotificationSubscriptionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5974,7 +5938,6 @@ func (s *DeleteNotificationSubscriptionInput) SetSubscriptionId(v string) *Delet
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteNotificationSubscriptionOutput
 type DeleteNotificationSubscriptionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5989,7 +5952,6 @@ func (s DeleteNotificationSubscriptionOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteUserRequest
 type DeleteUserInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6044,7 +6006,6 @@ func (s *DeleteUserInput) SetUserId(v string) *DeleteUserInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DeleteUserOutput
 type DeleteUserOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6059,7 +6020,6 @@ func (s DeleteUserOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeActivitiesRequest
 type DescribeActivitiesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6168,7 +6128,6 @@ func (s *DescribeActivitiesInput) SetUserId(v string) *DescribeActivitiesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeActivitiesResponse
 type DescribeActivitiesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6201,7 +6160,6 @@ func (s *DescribeActivitiesOutput) SetUserActivities(v []*Activity) *DescribeAct
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeCommentsRequest
 type DescribeCommentsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6298,7 +6256,6 @@ func (s *DescribeCommentsInput) SetVersionId(v string) *DescribeCommentsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeCommentsResponse
 type DescribeCommentsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6332,7 +6289,6 @@ func (s *DescribeCommentsOutput) SetMarker(v string) *DescribeCommentsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeDocumentVersionsRequest
 type DescribeDocumentVersionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6438,7 +6394,6 @@ func (s *DescribeDocumentVersionsInput) SetMarker(v string) *DescribeDocumentVer
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeDocumentVersionsResponse
 type DescribeDocumentVersionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6472,7 +6427,6 @@ func (s *DescribeDocumentVersionsOutput) SetMarker(v string) *DescribeDocumentVe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeFolderContentsRequest
 type DescribeFolderContentsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6591,7 +6545,6 @@ func (s *DescribeFolderContentsInput) SetType(v string) *DescribeFolderContentsI
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeFolderContentsResponse
 type DescribeFolderContentsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6634,7 +6587,6 @@ func (s *DescribeFolderContentsOutput) SetMarker(v string) *DescribeFolderConten
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeGroupsRequest
 type DescribeGroupsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6726,7 +6678,6 @@ func (s *DescribeGroupsInput) SetSearchQuery(v string) *DescribeGroupsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeGroupsResponse
 type DescribeGroupsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6760,7 +6711,6 @@ func (s *DescribeGroupsOutput) SetMarker(v string) *DescribeGroupsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeNotificationSubscriptionsRequest
 type DescribeNotificationSubscriptionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6827,7 +6777,6 @@ func (s *DescribeNotificationSubscriptionsInput) SetOrganizationId(v string) *De
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeNotificationSubscriptionsResponse
 type DescribeNotificationSubscriptionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6861,7 +6810,6 @@ func (s *DescribeNotificationSubscriptionsOutput) SetSubscriptions(v []*Subscrip
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeResourcePermissionsRequest
 type DescribeResourcePermissionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6953,7 +6901,6 @@ func (s *DescribeResourcePermissionsInput) SetResourceId(v string) *DescribeReso
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeResourcePermissionsResponse
 type DescribeResourcePermissionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6987,7 +6934,6 @@ func (s *DescribeResourcePermissionsOutput) SetPrincipals(v []*Principal) *Descr
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeRootFoldersRequest
 type DescribeRootFoldersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7055,7 +7001,6 @@ func (s *DescribeRootFoldersInput) SetMarker(v string) *DescribeRootFoldersInput
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeRootFoldersResponse
 type DescribeRootFoldersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7088,7 +7033,6 @@ func (s *DescribeRootFoldersOutput) SetMarker(v string) *DescribeRootFoldersOutp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeUsersRequest
 type DescribeUsersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7227,7 +7171,6 @@ func (s *DescribeUsersInput) SetUserIds(v string) *DescribeUsersInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DescribeUsersResponse
 type DescribeUsersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7271,7 +7214,6 @@ func (s *DescribeUsersOutput) SetUsers(v []*User) *DescribeUsersOutput {
 }
 
 // Describes the document.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DocumentMetadata
 type DocumentMetadata struct {
 	_ struct{} `type:"structure"`
 
@@ -7359,7 +7301,6 @@ func (s *DocumentMetadata) SetResourceState(v string) *DocumentMetadata {
 }
 
 // Describes a version of a document.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/DocumentVersionMetadata
 type DocumentVersionMetadata struct {
 	_ struct{} `type:"structure"`
 
@@ -7492,7 +7433,6 @@ func (s *DocumentVersionMetadata) SetThumbnail(v map[string]*string) *DocumentVe
 }
 
 // Describes a folder.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/FolderMetadata
 type FolderMetadata struct {
 	_ struct{} `type:"structure"`
 
@@ -7606,7 +7546,6 @@ func (s *FolderMetadata) SetSize(v int64) *FolderMetadata {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/GetCurrentUserRequest
 type GetCurrentUserInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7649,7 +7588,6 @@ func (s *GetCurrentUserInput) SetAuthenticationToken(v string) *GetCurrentUserIn
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/GetCurrentUserResponse
 type GetCurrentUserOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7673,7 +7611,6 @@ func (s *GetCurrentUserOutput) SetUser(v *User) *GetCurrentUserOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/GetDocumentRequest
 type GetDocumentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7737,7 +7674,6 @@ func (s *GetDocumentInput) SetIncludeCustomMetadata(v bool) *GetDocumentInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/GetDocumentResponse
 type GetDocumentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7770,7 +7706,6 @@ func (s *GetDocumentOutput) SetMetadata(v *DocumentMetadata) *GetDocumentOutput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/GetDocumentPathRequest
 type GetDocumentPathInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7862,7 +7797,6 @@ func (s *GetDocumentPathInput) SetMarker(v string) *GetDocumentPathInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/GetDocumentPathResponse
 type GetDocumentPathOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7886,7 +7820,6 @@ func (s *GetDocumentPathOutput) SetPath(v *ResourcePath) *GetDocumentPathOutput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/GetDocumentVersionRequest
 type GetDocumentVersionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7980,7 +7913,6 @@ func (s *GetDocumentVersionInput) SetVersionId(v string) *GetDocumentVersionInpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/GetDocumentVersionResponse
 type GetDocumentVersionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8013,7 +7945,6 @@ func (s *GetDocumentVersionOutput) SetMetadata(v *DocumentVersionMetadata) *GetD
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/GetFolderRequest
 type GetFolderInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8077,7 +8008,6 @@ func (s *GetFolderInput) SetIncludeCustomMetadata(v bool) *GetFolderInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/GetFolderResponse
 type GetFolderOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8110,7 +8040,6 @@ func (s *GetFolderOutput) SetMetadata(v *FolderMetadata) *GetFolderOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/GetFolderPathRequest
 type GetFolderPathInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8202,7 +8131,6 @@ func (s *GetFolderPathInput) SetMarker(v string) *GetFolderPathInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/GetFolderPathResponse
 type GetFolderPathOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8227,7 +8155,6 @@ func (s *GetFolderPathOutput) SetPath(v *ResourcePath) *GetFolderPathOutput {
 }
 
 // Describes the metadata of a user group.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/GroupMetadata
 type GroupMetadata struct {
 	_ struct{} `type:"structure"`
 
@@ -8260,7 +8187,6 @@ func (s *GroupMetadata) SetName(v string) *GroupMetadata {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/InitiateDocumentVersionUploadRequest
 type InitiateDocumentVersionUploadInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8378,7 +8304,6 @@ func (s *InitiateDocumentVersionUploadInput) SetParentFolderId(v string) *Initia
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/InitiateDocumentVersionUploadResponse
 type InitiateDocumentVersionUploadOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8412,7 +8337,6 @@ func (s *InitiateDocumentVersionUploadOutput) SetUploadMetadata(v *UploadMetadat
 }
 
 // Set of options which defines notification preferences of given action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/NotificationOptions
 type NotificationOptions struct {
 	_ struct{} `type:"structure"`
 
@@ -8446,7 +8370,6 @@ func (s *NotificationOptions) SetSendEmail(v bool) *NotificationOptions {
 }
 
 // Describes the users or user groups.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/Participants
 type Participants struct {
 	_ struct{} `type:"structure"`
 
@@ -8480,7 +8403,6 @@ func (s *Participants) SetUsers(v []*UserMetadata) *Participants {
 }
 
 // Describes the permissions.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/PermissionInfo
 type PermissionInfo struct {
 	_ struct{} `type:"structure"`
 
@@ -8514,7 +8436,6 @@ func (s *PermissionInfo) SetType(v string) *PermissionInfo {
 }
 
 // Describes a resource.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/Principal
 type Principal struct {
 	_ struct{} `type:"structure"`
 
@@ -8556,7 +8477,6 @@ func (s *Principal) SetType(v string) *Principal {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/RemoveAllResourcePermissionsRequest
 type RemoveAllResourcePermissionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8611,7 +8531,6 @@ func (s *RemoveAllResourcePermissionsInput) SetResourceId(v string) *RemoveAllRe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/RemoveAllResourcePermissionsOutput
 type RemoveAllResourcePermissionsOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -8626,7 +8545,6 @@ func (s RemoveAllResourcePermissionsOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/RemoveResourcePermissionRequest
 type RemoveResourcePermissionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8707,7 +8625,6 @@ func (s *RemoveResourcePermissionInput) SetResourceId(v string) *RemoveResourceP
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/RemoveResourcePermissionOutput
 type RemoveResourcePermissionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -8723,7 +8640,6 @@ func (s RemoveResourcePermissionOutput) GoString() string {
 }
 
 // Describes the metadata of a resource.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/ResourceMetadata
 type ResourceMetadata struct {
 	_ struct{} `type:"structure"`
 
@@ -8803,7 +8719,6 @@ func (s *ResourceMetadata) SetVersionId(v string) *ResourceMetadata {
 }
 
 // Describes the path information of a resource.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/ResourcePath
 type ResourcePath struct {
 	_ struct{} `type:"structure"`
 
@@ -8828,7 +8743,6 @@ func (s *ResourcePath) SetComponents(v []*ResourcePathComponent) *ResourcePath {
 }
 
 // Describes the resource path.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/ResourcePathComponent
 type ResourcePathComponent struct {
 	_ struct{} `type:"structure"`
 
@@ -8862,7 +8776,6 @@ func (s *ResourcePathComponent) SetName(v string) *ResourcePathComponent {
 }
 
 // Describes the recipient type and ID, if available.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/SharePrincipal
 type SharePrincipal struct {
 	_ struct{} `type:"structure"`
 
@@ -8933,7 +8846,6 @@ func (s *SharePrincipal) SetType(v string) *SharePrincipal {
 }
 
 // Describes the share results of a resource.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/ShareResult
 type ShareResult struct {
 	_ struct{} `type:"structure"`
 
@@ -8994,7 +8906,6 @@ func (s *ShareResult) SetStatusMessage(v string) *ShareResult {
 }
 
 // Describes the storage for a user.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/StorageRuleType
 type StorageRuleType struct {
 	_ struct{} `type:"structure"`
 
@@ -9028,7 +8939,6 @@ func (s *StorageRuleType) SetStorageType(v string) *StorageRuleType {
 }
 
 // Describes a subscription.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/Subscription
 type Subscription struct {
 	_ struct{} `type:"structure"`
 
@@ -9070,7 +8980,6 @@ func (s *Subscription) SetSubscriptionId(v string) *Subscription {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/UpdateDocumentRequest
 type UpdateDocumentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9158,7 +9067,6 @@ func (s *UpdateDocumentInput) SetResourceState(v string) *UpdateDocumentInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/UpdateDocumentOutput
 type UpdateDocumentOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9173,7 +9081,6 @@ func (s UpdateDocumentOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/UpdateDocumentVersionRequest
 type UpdateDocumentVersionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9254,7 +9161,6 @@ func (s *UpdateDocumentVersionInput) SetVersionStatus(v string) *UpdateDocumentV
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/UpdateDocumentVersionOutput
 type UpdateDocumentVersionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9269,7 +9175,6 @@ func (s UpdateDocumentVersionOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/UpdateFolderRequest
 type UpdateFolderInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9358,7 +9263,6 @@ func (s *UpdateFolderInput) SetResourceState(v string) *UpdateFolderInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/UpdateFolderOutput
 type UpdateFolderOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -9373,7 +9277,6 @@ func (s UpdateFolderOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/UpdateUserRequest
 type UpdateUserInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9500,7 +9403,6 @@ func (s *UpdateUserInput) SetUserId(v string) *UpdateUserInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/UpdateUserResponse
 type UpdateUserOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9525,7 +9427,6 @@ func (s *UpdateUserOutput) SetUser(v *User) *UpdateUserOutput {
 }
 
 // Describes the upload.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/UploadMetadata
 type UploadMetadata struct {
 	_ struct{} `type:"structure"`
 
@@ -9559,7 +9460,6 @@ func (s *UploadMetadata) SetUploadUrl(v string) *UploadMetadata {
 }
 
 // Describes a user.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/User
 type User struct {
 	_ struct{} `type:"structure"`
 
@@ -9710,7 +9610,6 @@ func (s *User) SetUsername(v string) *User {
 }
 
 // Describes the metadata of the user.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/UserMetadata
 type UserMetadata struct {
 	_ struct{} `type:"structure"`
 
@@ -9771,7 +9670,6 @@ func (s *UserMetadata) SetUsername(v string) *UserMetadata {
 }
 
 // Describes the storage for a user.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/workdocs-2016-05-01/UserStorageMetadata
 type UserStorageMetadata struct {
 	_ struct{} `type:"structure"`
 

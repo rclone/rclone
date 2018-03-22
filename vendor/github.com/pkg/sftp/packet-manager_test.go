@@ -3,9 +3,7 @@ package sftp
 import (
 	"encoding"
 	"fmt"
-	"sync"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -101,54 +99,4 @@ func (p sshFxpWritePacket) String() string {
 }
 func (p sshFxpClosePacket) String() string {
 	return fmt.Sprintf("ClPct:%d", p.ID)
-}
-
-// Test what happens when the pool processes a close packet on a file that it
-// is still reading from.
-func TestCloseOutOfOrder(t *testing.T) {
-	packets := []requestPacket{
-		&sshFxpRemovePacket{ID: 0, Filename: "foo"},
-		&sshFxpOpenPacket{ID: 1},
-		&sshFxpWritePacket{ID: 2, Handle: "foo"},
-		&sshFxpWritePacket{ID: 3, Handle: "foo"},
-		&sshFxpWritePacket{ID: 4, Handle: "foo"},
-		&sshFxpWritePacket{ID: 5, Handle: "foo"},
-		&sshFxpClosePacket{ID: 6, Handle: "foo"},
-		&sshFxpRemovePacket{ID: 7, Filename: "foo"},
-	}
-
-	recvChan := make(chan requestPacket, len(packets)+1)
-	sender := newTestSender()
-	pktMgr := newPktMgr(sender)
-	wg := sync.WaitGroup{}
-	wg.Add(len(packets))
-	runWorker := func(ch requestChan) {
-		go func() {
-			for pkt := range ch {
-				if _, ok := pkt.(*sshFxpWritePacket); ok {
-					// sleep to cause writes to come after close/remove
-					time.Sleep(time.Millisecond)
-				}
-				pktMgr.working.Done()
-				recvChan <- pkt
-				wg.Done()
-			}
-		}()
-	}
-	pktChan := pktMgr.workerChan(runWorker)
-	for _, p := range packets {
-		pktChan <- p
-	}
-	wg.Wait()
-	close(recvChan)
-	received := []requestPacket{}
-	for p := range recvChan {
-		received = append(received, p)
-	}
-	if received[len(received)-2].id() != packets[len(packets)-2].id() {
-		t.Fatal("Packets processed out of order1:", received, packets)
-	}
-	if received[len(received)-1].id() != packets[len(packets)-1].id() {
-		t.Fatal("Packets processed out of order2:", received, packets)
-	}
 }

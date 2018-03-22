@@ -41,8 +41,8 @@ func NewManagedApisClientWithBaseURI(baseURI string, subscriptionID string) Mana
 
 // Get gets a managed API.
 //
-// location is the location. APIName is the managed API name. export is flag showing whether to export API definition
-// in format specified by Accept header.
+// location is the location. APIName is the managed API name. export is flag showing whether to export API
+// definition in format specified by Accept header.
 func (client ManagedApisClient) Get(ctx context.Context, location string, APIName string, export *bool) (result APIEntity, err error) {
 	req, err := client.GetPreparer(ctx, location, APIName, export)
 	if err != nil {

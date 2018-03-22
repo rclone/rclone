@@ -42,8 +42,8 @@ func NewUserIdentitiesClientWithBaseURI(baseURI string, subscriptionID string) U
 
 // ListByUsers lists all user identities.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. UID is
-// user identifier. Must be unique in the current API Management service instance.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. UID
+// is user identifier. Must be unique in the current API Management service instance.
 func (client UserIdentitiesClient) ListByUsers(ctx context.Context, resourceGroupName string, serviceName string, UID string) (result UserIdentityCollection, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -54,7 +54,7 @@ func (client UserIdentitiesClient) ListByUsers(ctx context.Context, resourceGrou
 			Constraints: []validation.Constraint{{Target: "UID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "UID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "UID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.UserIdentitiesClient", "ListByUsers")
+		return result, validation.NewError("apimanagement.UserIdentitiesClient", "ListByUsers", err.Error())
 	}
 
 	req, err := client.ListByUsersPreparer(ctx, resourceGroupName, serviceName, UID)

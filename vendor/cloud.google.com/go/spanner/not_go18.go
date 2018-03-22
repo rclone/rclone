@@ -16,8 +16,21 @@
 
 package spanner
 
-import "google.golang.org/api/option"
+import (
+	"golang.org/x/net/context"
+	"google.golang.org/api/option"
+)
 
 // OpenCensus only supports go 1.8 and higher.
 
 func openCensusOptions() []option.ClientOption { return nil }
+
+func traceStartSpan(ctx context.Context, _ string) context.Context {
+	return ctx
+}
+
+func traceEndSpan(context.Context, error) {
+}
+
+func tracePrintf(context.Context, map[string]interface{}, string, ...interface{}) {
+}

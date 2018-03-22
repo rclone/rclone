@@ -36,8 +36,8 @@ type ErrorDetails struct {
 	Target *string `json:"target,omitempty"`
 }
 
-// ErrorResponse error response indicates that the service is not able to process the incoming request. The reason is
-// provided in the error message.
+// ErrorResponse error response indicates that the service is not able to process the incoming request. The reason
+// is provided in the error message.
 type ErrorResponse struct {
 	// Error - The details of the error.
 	Error *ErrorDetails `json:"error,omitempty"`
@@ -79,8 +79,8 @@ type OperationDisplay struct {
 	Operation *string `json:"operation,omitempty"`
 }
 
-// OperationListResult result of listing consumption operations. It contains a list of operations and a URL link to get
-// the next set of results.
+// OperationListResult result of listing consumption operations. It contains a list of operations and a URL link to
+// get the next set of results.
 type OperationListResult struct {
 	autorest.Response `json:"-"`
 	// Value - List of consumption operations supported by the Microsoft.Consumption resource provider.
@@ -191,11 +191,30 @@ type Resource struct {
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
 	// Tags - Resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UsageDetail an usage detail resource.
 type UsageDetail struct {
+	*UsageDetailProperties `json:"properties,omitempty"`
 	// ID - Resource Id.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
@@ -203,8 +222,28 @@ type UsageDetail struct {
 	// Type - Resource type.
 	Type *string `json:"type,omitempty"`
 	// Tags - Resource tags.
-	Tags                   *map[string]*string `json:"tags,omitempty"`
-	*UsageDetailProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for UsageDetail.
+func (ud UsageDetail) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ud.UsageDetailProperties != nil {
+		objectMap["properties"] = ud.UsageDetailProperties
+	}
+	if ud.ID != nil {
+		objectMap["id"] = ud.ID
+	}
+	if ud.Name != nil {
+		objectMap["name"] = ud.Name
+	}
+	if ud.Type != nil {
+		objectMap["type"] = ud.Type
+	}
+	if ud.Tags != nil {
+		objectMap["tags"] = ud.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for UsageDetail struct.
@@ -214,56 +253,54 @@ func (ud *UsageDetail) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties UsageDetailProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var usageDetailProperties UsageDetailProperties
+				err = json.Unmarshal(*v, &usageDetailProperties)
+				if err != nil {
+					return err
+				}
+				ud.UsageDetailProperties = &usageDetailProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ud.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ud.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ud.Type = &typeVar
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				ud.Tags = tags
+			}
 		}
-		ud.UsageDetailProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		ud.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ud.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		ud.Type = &typeVar
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		ud.Tags = &tags
 	}
 
 	return nil
@@ -300,7 +337,58 @@ type UsageDetailProperties struct {
 	// MeterDetails - The details about the meter. By default this is not populated, unless it's specified in $expand.
 	MeterDetails *MeterDetails `json:"meterDetails,omitempty"`
 	// AdditionalProperties - The list of key/value pairs for the additional properties, in the format 'key':'value' where key = the field name, and value = the field value. By default this is not populated, unless it's specified in $expand.
-	AdditionalProperties *map[string]*string `json:"additionalProperties,omitempty"`
+	AdditionalProperties map[string]*string `json:"additionalProperties"`
+}
+
+// MarshalJSON is the custom marshaler for UsageDetailProperties.
+func (UDP UsageDetailProperties) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if UDP.BillingPeriodID != nil {
+		objectMap["billingPeriodId"] = UDP.BillingPeriodID
+	}
+	if UDP.InvoiceID != nil {
+		objectMap["invoiceId"] = UDP.InvoiceID
+	}
+	if UDP.UsageStart != nil {
+		objectMap["usageStart"] = UDP.UsageStart
+	}
+	if UDP.UsageEnd != nil {
+		objectMap["usageEnd"] = UDP.UsageEnd
+	}
+	if UDP.InstanceName != nil {
+		objectMap["instanceName"] = UDP.InstanceName
+	}
+	if UDP.InstanceID != nil {
+		objectMap["instanceId"] = UDP.InstanceID
+	}
+	if UDP.InstanceLocation != nil {
+		objectMap["instanceLocation"] = UDP.InstanceLocation
+	}
+	if UDP.Currency != nil {
+		objectMap["currency"] = UDP.Currency
+	}
+	if UDP.UsageQuantity != nil {
+		objectMap["usageQuantity"] = UDP.UsageQuantity
+	}
+	if UDP.BillableQuantity != nil {
+		objectMap["billableQuantity"] = UDP.BillableQuantity
+	}
+	if UDP.PretaxCost != nil {
+		objectMap["pretaxCost"] = UDP.PretaxCost
+	}
+	if UDP.IsEstimated != nil {
+		objectMap["isEstimated"] = UDP.IsEstimated
+	}
+	if UDP.MeterID != nil {
+		objectMap["meterId"] = UDP.MeterID
+	}
+	if UDP.MeterDetails != nil {
+		objectMap["meterDetails"] = UDP.MeterDetails
+	}
+	if UDP.AdditionalProperties != nil {
+		objectMap["additionalProperties"] = UDP.AdditionalProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UsageDetailsListResult result of listing usage details. It contains a list of available usage details in reverse

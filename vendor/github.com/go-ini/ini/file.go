@@ -140,9 +140,14 @@ func (f *File) Section(name string) *Section {
 
 // Section returns list of Section.
 func (f *File) Sections() []*Section {
+	if f.BlockMode {
+		f.lock.RLock()
+		defer f.lock.RUnlock()
+	}
+
 	sections := make([]*Section, len(f.sectionList))
-	for i := range f.sectionList {
-		sections[i] = f.Section(f.sectionList[i])
+	for i, name := range f.sectionList {
+		sections[i] = f.sections[name]
 	}
 	return sections
 }

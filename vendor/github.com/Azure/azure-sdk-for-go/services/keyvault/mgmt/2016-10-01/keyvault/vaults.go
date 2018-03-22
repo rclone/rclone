@@ -41,6 +41,79 @@ func NewVaultsClientWithBaseURI(baseURI string, subscriptionID string) VaultsCli
 	return VaultsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
+// CheckNameAvailability checks that the vault name is valid and is not already in use.
+//
+// vaultName is the name of the vault.
+func (client VaultsClient) CheckNameAvailability(ctx context.Context, vaultName VaultCheckNameAvailabilityParameters) (result CheckNameAvailabilityResult, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: vaultName,
+			Constraints: []validation.Constraint{{Target: "vaultName.Name", Name: validation.Null, Rule: true, Chain: nil},
+				{Target: "vaultName.Type", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("keyvault.VaultsClient", "CheckNameAvailability", err.Error())
+	}
+
+	req, err := client.CheckNameAvailabilityPreparer(ctx, vaultName)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "CheckNameAvailability", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.CheckNameAvailabilitySender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "CheckNameAvailability", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.CheckNameAvailabilityResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "CheckNameAvailability", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// CheckNameAvailabilityPreparer prepares the CheckNameAvailability request.
+func (client VaultsClient) CheckNameAvailabilityPreparer(ctx context.Context, vaultName VaultCheckNameAvailabilityParameters) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2016-10-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsJSON(),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/checkNameAvailability", pathParameters),
+		autorest.WithJSON(vaultName),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// CheckNameAvailabilitySender sends the CheckNameAvailability request. The method will close the
+// http.Response Body if it receives an error.
+func (client VaultsClient) CheckNameAvailabilitySender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// CheckNameAvailabilityResponder handles the response to the CheckNameAvailability request. The method always
+// closes the http.Response Body.
+func (client VaultsClient) CheckNameAvailabilityResponder(resp *http.Response) (result CheckNameAvailabilityResult, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
 // CreateOrUpdate create or update a key vault in the specified subscription.
 //
 // resourceGroupName is the name of the Resource Group to which the server belongs. vaultName is name of the vault
@@ -55,10 +128,8 @@ func (client VaultsClient) CreateOrUpdate(ctx context.Context, resourceGroupName
 					Chain: []validation.Constraint{{Target: "parameters.Properties.TenantID", Name: validation.Null, Rule: true, Chain: nil},
 						{Target: "parameters.Properties.Sku", Name: validation.Null, Rule: true,
 							Chain: []validation.Constraint{{Target: "parameters.Properties.Sku.Family", Name: validation.Null, Rule: true, Chain: nil}}},
-						{Target: "parameters.Properties.AccessPolicies", Name: validation.Null, Rule: false,
-							Chain: []validation.Constraint{{Target: "parameters.Properties.AccessPolicies", Name: validation.MaxItems, Rule: 16, Chain: nil}}},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.VaultsClient", "CreateOrUpdate")
+		return result, validation.NewError("keyvault.VaultsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, vaultName, parameters)
@@ -127,8 +198,8 @@ func (client VaultsClient) CreateOrUpdateResponder(resp *http.Response) (result 
 
 // Delete deletes the specified Azure key vault.
 //
-// resourceGroupName is the name of the Resource Group to which the vault belongs. vaultName is the name of the vault
-// to delete
+// resourceGroupName is the name of the Resource Group to which the vault belongs. vaultName is the name of the
+// vault to delete
 func (client VaultsClient) Delete(ctx context.Context, resourceGroupName string, vaultName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, vaultName)
 	if err != nil {
@@ -193,7 +264,8 @@ func (client VaultsClient) DeleteResponder(resp *http.Response) (result autorest
 
 // Get gets the specified Azure key vault.
 //
-// resourceGroupName is the name of the Resource Group to which the vault belongs. vaultName is the name of the vault.
+// resourceGroupName is the name of the Resource Group to which the vault belongs. vaultName is the name of the
+// vault.
 func (client VaultsClient) Get(ctx context.Context, resourceGroupName string, vaultName string) (result Vault, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, vaultName)
 	if err != nil {
@@ -325,10 +397,10 @@ func (client VaultsClient) GetDeletedResponder(resp *http.Response) (result Dele
 
 // List the List operation gets information about the vaults associated with the subscription.
 //
-// filter is the filter to apply on the operation. top is maximum number of results to return.
-func (client VaultsClient) List(ctx context.Context, filter string, top *int32) (result ResourceListResultPage, err error) {
+// top is maximum number of results to return.
+func (client VaultsClient) List(ctx context.Context, top *int32) (result ResourceListResultPage, err error) {
 	result.fn = client.listNextResults
-	req, err := client.ListPreparer(ctx, filter, top)
+	req, err := client.ListPreparer(ctx, top)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "List", nil, "Failure preparing request")
 		return
@@ -350,14 +422,14 @@ func (client VaultsClient) List(ctx context.Context, filter string, top *int32) 
 }
 
 // ListPreparer prepares the List request.
-func (client VaultsClient) ListPreparer(ctx context.Context, filter string, top *int32) (*http.Request, error) {
+func (client VaultsClient) ListPreparer(ctx context.Context, top *int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
 	}
 
 	const APIVersion = "2015-11-01"
 	queryParameters := map[string]interface{}{
-		"$filter":     autorest.Encode("query", filter),
+		"$filter":     autorest.Encode("query", "resourceType eq 'Microsoft.KeyVault/vaults'"),
 		"api-version": APIVersion,
 	}
 	if top != nil {
@@ -414,16 +486,16 @@ func (client VaultsClient) listNextResults(lastResults ResourceListResult) (resu
 }
 
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
-func (client VaultsClient) ListComplete(ctx context.Context, filter string, top *int32) (result ResourceListResultIterator, err error) {
-	result.page, err = client.List(ctx, filter, top)
+func (client VaultsClient) ListComplete(ctx context.Context, top *int32) (result ResourceListResultIterator, err error) {
+	result.page, err = client.List(ctx, top)
 	return
 }
 
 // ListByResourceGroup the List operation gets information about the vaults associated with the subscription and within
 // the specified resource group.
 //
-// resourceGroupName is the name of the Resource Group to which the vault belongs. top is maximum number of results to
-// return.
+// resourceGroupName is the name of the Resource Group to which the vault belongs. top is maximum number of results
+// to return.
 func (client VaultsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, top *int32) (result VaultListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, top)
@@ -514,6 +586,101 @@ func (client VaultsClient) listByResourceGroupNextResults(lastResults VaultListR
 // ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
 func (client VaultsClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string, top *int32) (result VaultListResultIterator, err error) {
 	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName, top)
+	return
+}
+
+// ListBySubscription the List operation gets information about the vaults associated with the subscription.
+//
+// top is maximum number of results to return.
+func (client VaultsClient) ListBySubscription(ctx context.Context, top *int32) (result VaultListResultPage, err error) {
+	result.fn = client.listBySubscriptionNextResults
+	req, err := client.ListBySubscriptionPreparer(ctx, top)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "ListBySubscription", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ListBySubscriptionSender(req)
+	if err != nil {
+		result.vlr.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "ListBySubscription", resp, "Failure sending request")
+		return
+	}
+
+	result.vlr, err = client.ListBySubscriptionResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "ListBySubscription", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// ListBySubscriptionPreparer prepares the ListBySubscription request.
+func (client VaultsClient) ListBySubscriptionPreparer(ctx context.Context, top *int32) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2016-10-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+	if top != nil {
+		queryParameters["$top"] = autorest.Encode("query", *top)
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.KeyVault/vaults", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ListBySubscriptionSender sends the ListBySubscription request. The method will close the
+// http.Response Body if it receives an error.
+func (client VaultsClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
+// closes the http.Response Body.
+func (client VaultsClient) ListBySubscriptionResponder(resp *http.Response) (result VaultListResult, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// listBySubscriptionNextResults retrieves the next set of results, if any.
+func (client VaultsClient) listBySubscriptionNextResults(lastResults VaultListResult) (result VaultListResult, err error) {
+	req, err := lastResults.vaultListResultPreparer()
+	if err != nil {
+		return result, autorest.NewErrorWithError(err, "keyvault.VaultsClient", "listBySubscriptionNextResults", nil, "Failure preparing next results request")
+	}
+	if req == nil {
+		return
+	}
+	resp, err := client.ListBySubscriptionSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		return result, autorest.NewErrorWithError(err, "keyvault.VaultsClient", "listBySubscriptionNextResults", resp, "Failure sending next results request")
+	}
+	result, err = client.ListBySubscriptionResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "listBySubscriptionNextResults", resp, "Failure responding to next results request")
+	}
+	return
+}
+
+// ListBySubscriptionComplete enumerates all values, automatically crossing page boundaries as required.
+func (client VaultsClient) ListBySubscriptionComplete(ctx context.Context, top *int32) (result VaultListResultIterator, err error) {
+	result.page, err = client.ListBySubscription(ctx, top)
 	return
 }
 
@@ -671,5 +838,159 @@ func (client VaultsClient) PurgeDeletedResponder(resp *http.Response) (result au
 		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted),
 		autorest.ByClosing())
 	result.Response = resp
+	return
+}
+
+// Update update a key vault in the specified subscription.
+//
+// resourceGroupName is the name of the Resource Group to which the server belongs. vaultName is name of the vault
+// parameters is parameters to patch the vault
+func (client VaultsClient) Update(ctx context.Context, resourceGroupName string, vaultName string, parameters VaultPatchParameters) (result Vault, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: vaultName,
+			Constraints: []validation.Constraint{{Target: "vaultName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9-]{3,24}$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("keyvault.VaultsClient", "Update", err.Error())
+	}
+
+	req, err := client.UpdatePreparer(ctx, resourceGroupName, vaultName, parameters)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "Update", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.UpdateSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "Update", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.UpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "Update", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// UpdatePreparer prepares the Update request.
+func (client VaultsClient) UpdatePreparer(ctx context.Context, resourceGroupName string, vaultName string, parameters VaultPatchParameters) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+		"vaultName":         autorest.Encode("path", vaultName),
+	}
+
+	const APIVersion = "2016-10-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsJSON(),
+		autorest.AsPatch(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}", pathParameters),
+		autorest.WithJSON(parameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// UpdateSender sends the Update request. The method will close the
+// http.Response Body if it receives an error.
+func (client VaultsClient) UpdateSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// UpdateResponder handles the response to the Update request. The method always
+// closes the http.Response Body.
+func (client VaultsClient) UpdateResponder(resp *http.Response) (result Vault, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// UpdateAccessPolicy update access policies in a key vault in the specified subscription.
+//
+// resourceGroupName is the name of the Resource Group to which the vault belongs. vaultName is name of the vault
+// operationKind is name of the operation parameters is access policy to merge into the vault
+func (client VaultsClient) UpdateAccessPolicy(ctx context.Context, resourceGroupName string, vaultName string, operationKind AccessPolicyUpdateKind, parameters VaultAccessPolicyParameters) (result VaultAccessPolicyParameters, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: vaultName,
+			Constraints: []validation.Constraint{{Target: "vaultName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9-]{3,24}$`, Chain: nil}}},
+		{TargetValue: parameters,
+			Constraints: []validation.Constraint{{Target: "parameters.Properties", Name: validation.Null, Rule: true,
+				Chain: []validation.Constraint{{Target: "parameters.Properties.AccessPolicies", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
+		return result, validation.NewError("keyvault.VaultsClient", "UpdateAccessPolicy", err.Error())
+	}
+
+	req, err := client.UpdateAccessPolicyPreparer(ctx, resourceGroupName, vaultName, operationKind, parameters)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "UpdateAccessPolicy", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.UpdateAccessPolicySender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "UpdateAccessPolicy", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.UpdateAccessPolicyResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "UpdateAccessPolicy", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// UpdateAccessPolicyPreparer prepares the UpdateAccessPolicy request.
+func (client VaultsClient) UpdateAccessPolicyPreparer(ctx context.Context, resourceGroupName string, vaultName string, operationKind AccessPolicyUpdateKind, parameters VaultAccessPolicyParameters) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"operationKind":     autorest.Encode("path", operationKind),
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+		"vaultName":         autorest.Encode("path", vaultName),
+	}
+
+	const APIVersion = "2016-10-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsJSON(),
+		autorest.AsPut(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.KeyVault/vaults/{vaultName}/accessPolicies/{operationKind}", pathParameters),
+		autorest.WithJSON(parameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// UpdateAccessPolicySender sends the UpdateAccessPolicy request. The method will close the
+// http.Response Body if it receives an error.
+func (client VaultsClient) UpdateAccessPolicySender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// UpdateAccessPolicyResponder handles the response to the UpdateAccessPolicy request. The method always
+// closes the http.Response Body.
+func (client VaultsClient) UpdateAccessPolicyResponder(resp *http.Response) (result VaultAccessPolicyParameters, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
 	return
 }

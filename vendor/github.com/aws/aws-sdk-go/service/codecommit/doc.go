@@ -43,6 +43,11 @@
 //
 //    * UpdateDefaultBranch, which changes the default branch for a repository.
 //
+// Files, by calling the following:
+//
+//    * PutFile, which adds or modifies a file in a specified repository and
+//    branch.
+//
 // Information about committed code in a repository, by calling the following:
 //
 //    * GetBlob, which returns the base-64 encoded content of an individual

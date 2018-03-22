@@ -370,8 +370,8 @@ func (client Client) ListInResourceGroupComplete(ctx context.Context, resourceGr
 
 // Patch patch an existing Azure ML commitment plan resource.
 //
-// patchPayload is the payload to use to patch the Azure ML commitment plan. Only tags and SKU may be modified on an
-// existing commitment plan. resourceGroupName is the resource group name. commitmentPlanName is the Azure ML
+// patchPayload is the payload to use to patch the Azure ML commitment plan. Only tags and SKU may be modified on
+// an existing commitment plan. resourceGroupName is the resource group name. commitmentPlanName is the Azure ML
 // commitment plan name.
 func (client Client) Patch(ctx context.Context, patchPayload PatchPayload, resourceGroupName string, commitmentPlanName string) (result CommitmentPlan, err error) {
 	req, err := client.PatchPreparer(ctx, patchPayload, resourceGroupName, commitmentPlanName)

@@ -458,7 +458,7 @@ func (s *StorageEntitySuite) TestExecuteQueryNextResults(c *chk.C) {
 }
 
 func (s *StorageEntitySuite) Test_entityMarshalJSON(c *chk.C) {
-	expected := `{"Address":"Mountain View","Age":23,"AmountDue":200.23,"Binary":"abcd","Binary@odata.type":"Edm.Binary","CustomerCode":"c9da6455-213d-42c9-9a79-3e9149a57833","CustomerCode@odata.type":"Edm.Guid","CustomerSince":"1992-12-20T21:55:00Z","CustomerSince@odata.type":"Edm.DateTime","IsActive":true,"NumberOfOrders":"255","NumberOfOrders@odata.type":"Edm.Int64","PartitionKey":"mypartitionkey","RowKey":"myrowkey"}`
+	expected := `{"Address":"Mountain View","Age":23,"AmountDue":200.23,"Binary":"YWJjZA==","Binary@odata.type":"Edm.Binary","CustomerCode":"c9da6455-213d-42c9-9a79-3e9149a57833","CustomerCode@odata.type":"Edm.Guid","CustomerSince":"1992-12-20T21:55:00Z","CustomerSince@odata.type":"Edm.DateTime","IsActive":true,"NumberOfOrders":"255","NumberOfOrders@odata.type":"Edm.Int64","PartitionKey":"mypartitionkey","RowKey":"myrowkey"}`
 
 	entity := Entity{
 		PartitionKey: "mypartitionkey",
@@ -504,7 +504,7 @@ func (s *StorageEntitySuite) Test_entityUnmarshalJSON(c *chk.C) {
         "Age": 23,
         "AmountDue":200.23,
         "Binary@odata.type": "Edm.Binary",
-        "Binary": "abcd",
+        "Binary": "YWJjZA==",
         "CustomerCode@odata.type":"Edm.Guid",
         "CustomerCode":"c9da6455-213d-42c9-9a79-3e9149a57833",
         "CustomerSince@odata.type":"Edm.DateTime",

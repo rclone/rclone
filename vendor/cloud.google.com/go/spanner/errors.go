@@ -19,6 +19,7 @@ package spanner
 import (
 	"fmt"
 
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -74,10 +75,16 @@ func toSpannerErrorWithMetadata(err error, trailers metadata.MD) error {
 		}
 		return se
 	}
-	if grpc.Code(err) == codes.Unknown {
+	switch {
+	case err == context.DeadlineExceeded:
+		return &Error{codes.DeadlineExceeded, err.Error(), trailers}
+	case err == context.Canceled:
+		return &Error{codes.Canceled, err.Error(), trailers}
+	case grpc.Code(err) == codes.Unknown:
 		return &Error{codes.Unknown, err.Error(), trailers}
+	default:
+		return &Error{grpc.Code(err), grpc.ErrorDesc(err), trailers}
 	}
-	return &Error{grpc.Code(err), grpc.ErrorDesc(err), trailers}
 }
 
 // ErrCode extracts the canonical error code from a Go error.

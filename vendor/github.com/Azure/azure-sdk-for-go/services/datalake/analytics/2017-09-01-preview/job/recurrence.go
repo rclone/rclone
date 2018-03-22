@@ -38,10 +38,10 @@ func NewRecurrenceClient() RecurrenceClient {
 
 // Get gets the recurrence information for the specified recurrence ID.
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. recurrenceIdentity is recurrence
-// ID. startDateTime is the start date for when to get the recurrence and aggregate its data. The startDateTime and
-// endDateTime can be no more than 30 days apart. endDateTime is the end date for when to get recurrence and aggregate
-// its data. The startDateTime and endDateTime can be no more than 30 days apart.
+// accountName is the Azure Data Lake Analytics account to execute job operations on. recurrenceIdentity is
+// recurrence ID. startDateTime is the start date for when to get the recurrence and aggregate its data. The
+// startDateTime and endDateTime can be no more than 30 days apart. endDateTime is the end date for when to get
+// recurrence and aggregate its data. The startDateTime and endDateTime can be no more than 30 days apart.
 func (client RecurrenceClient) Get(ctx context.Context, accountName string, recurrenceIdentity uuid.UUID, startDateTime *date.Time, endDateTime *date.Time) (result RecurrenceInformation, err error) {
 	req, err := client.GetPreparer(ctx, accountName, recurrenceIdentity, startDateTime, endDateTime)
 	if err != nil {
@@ -116,10 +116,10 @@ func (client RecurrenceClient) GetResponder(resp *http.Response) (result Recurre
 
 // List lists all recurrences.
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. startDateTime is the start date
-// for when to get the list of recurrences. The startDateTime and endDateTime can be no more than 30 days apart.
-// endDateTime is the end date for when to get the list of recurrences. The startDateTime and endDateTime can be no
-// more than 30 days apart.
+// accountName is the Azure Data Lake Analytics account to execute job operations on. startDateTime is the start
+// date for when to get the list of recurrences. The startDateTime and endDateTime can be no more than 30 days
+// apart. endDateTime is the end date for when to get the list of recurrences. The startDateTime and endDateTime
+// can be no more than 30 days apart.
 func (client RecurrenceClient) List(ctx context.Context, accountName string, startDateTime *date.Time, endDateTime *date.Time) (result RecurrenceInformationListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, accountName, startDateTime, endDateTime)

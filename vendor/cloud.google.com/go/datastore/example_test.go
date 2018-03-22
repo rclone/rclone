@@ -396,6 +396,28 @@ func ExampleClient_GetAll() {
 	}
 }
 
+func ExampleClient_Mutate() {
+	ctx := context.Background()
+	client, err := datastore.NewClient(ctx, "project-id")
+	if err != nil {
+		// TODO: Handle error.
+	}
+
+	key1 := datastore.NameKey("Post", "post1", nil)
+	key2 := datastore.NameKey("Post", "post2", nil)
+	key3 := datastore.NameKey("Post", "post3", nil)
+	key4 := datastore.NameKey("Post", "post4", nil)
+
+	_, err = client.Mutate(ctx,
+		datastore.NewInsert(key1, Post{Title: "Post 1"}),
+		datastore.NewUpsert(key2, Post{Title: "Post 2"}),
+		datastore.NewUpdate(key3, Post{Title: "Post 3"}),
+		datastore.NewDelete(key4))
+	if err != nil {
+		// TODO: Handle error.
+	}
+}
+
 func ExampleCommit_Key() {
 	ctx := context.Background()
 	client, err := datastore.NewClient(ctx, "")

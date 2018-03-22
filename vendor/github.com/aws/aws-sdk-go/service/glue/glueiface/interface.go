@@ -76,6 +76,10 @@ type GlueAPI interface {
 	BatchDeleteTableWithContext(aws.Context, *glue.BatchDeleteTableInput, ...request.Option) (*glue.BatchDeleteTableOutput, error)
 	BatchDeleteTableRequest(*glue.BatchDeleteTableInput) (*request.Request, *glue.BatchDeleteTableOutput)
 
+	BatchDeleteTableVersion(*glue.BatchDeleteTableVersionInput) (*glue.BatchDeleteTableVersionOutput, error)
+	BatchDeleteTableVersionWithContext(aws.Context, *glue.BatchDeleteTableVersionInput, ...request.Option) (*glue.BatchDeleteTableVersionOutput, error)
+	BatchDeleteTableVersionRequest(*glue.BatchDeleteTableVersionInput) (*request.Request, *glue.BatchDeleteTableVersionOutput)
+
 	BatchGetPartition(*glue.BatchGetPartitionInput) (*glue.BatchGetPartitionOutput, error)
 	BatchGetPartitionWithContext(aws.Context, *glue.BatchGetPartitionInput, ...request.Option) (*glue.BatchGetPartitionOutput, error)
 	BatchGetPartitionRequest(*glue.BatchGetPartitionInput) (*request.Request, *glue.BatchGetPartitionOutput)
@@ -159,6 +163,10 @@ type GlueAPI interface {
 	DeleteTable(*glue.DeleteTableInput) (*glue.DeleteTableOutput, error)
 	DeleteTableWithContext(aws.Context, *glue.DeleteTableInput, ...request.Option) (*glue.DeleteTableOutput, error)
 	DeleteTableRequest(*glue.DeleteTableInput) (*request.Request, *glue.DeleteTableOutput)
+
+	DeleteTableVersion(*glue.DeleteTableVersionInput) (*glue.DeleteTableVersionOutput, error)
+	DeleteTableVersionWithContext(aws.Context, *glue.DeleteTableVersionInput, ...request.Option) (*glue.DeleteTableVersionOutput, error)
+	DeleteTableVersionRequest(*glue.DeleteTableVersionInput) (*request.Request, *glue.DeleteTableVersionOutput)
 
 	DeleteTrigger(*glue.DeleteTriggerInput) (*glue.DeleteTriggerOutput, error)
 	DeleteTriggerWithContext(aws.Context, *glue.DeleteTriggerInput, ...request.Option) (*glue.DeleteTriggerOutput, error)
@@ -282,6 +290,10 @@ type GlueAPI interface {
 	GetTable(*glue.GetTableInput) (*glue.GetTableOutput, error)
 	GetTableWithContext(aws.Context, *glue.GetTableInput, ...request.Option) (*glue.GetTableOutput, error)
 	GetTableRequest(*glue.GetTableInput) (*request.Request, *glue.GetTableOutput)
+
+	GetTableVersion(*glue.GetTableVersionInput) (*glue.GetTableVersionOutput, error)
+	GetTableVersionWithContext(aws.Context, *glue.GetTableVersionInput, ...request.Option) (*glue.GetTableVersionOutput, error)
+	GetTableVersionRequest(*glue.GetTableVersionInput) (*request.Request, *glue.GetTableVersionOutput)
 
 	GetTableVersions(*glue.GetTableVersionsInput) (*glue.GetTableVersionsOutput, error)
 	GetTableVersionsWithContext(aws.Context, *glue.GetTableVersionsInput, ...request.Option) (*glue.GetTableVersionsOutput, error)

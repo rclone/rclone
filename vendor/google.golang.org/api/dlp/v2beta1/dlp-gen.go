@@ -1,4 +1,4 @@
-// Package dlp provides access to the DLP API.
+// Package dlp provides access to the Cloud DLP API.
 //
 // See https://cloud.google.com/dlp/docs/
 //
@@ -368,6 +368,40 @@ type GooglePrivacyDlpV2beta1AuxiliaryTable struct {
 
 func (s *GooglePrivacyDlpV2beta1AuxiliaryTable) MarshalJSON() ([]byte, error) {
 	type NoMethod GooglePrivacyDlpV2beta1AuxiliaryTable
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta1BigQueryKey: LINT.IfChange
+// Row key for identifying a record in BigQuery table.
+type GooglePrivacyDlpV2beta1BigQueryKey struct {
+	// RowNumber: Absolute number of the row from the beginning of the table
+	// at the time
+	// of scanning.
+	RowNumber int64 `json:"rowNumber,omitempty,string"`
+
+	// TableReference: Complete BigQuery table reference.
+	TableReference *GooglePrivacyDlpV2beta1BigQueryTable `json:"tableReference,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "RowNumber") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "RowNumber") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta1BigQueryKey) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta1BigQueryKey
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -1845,7 +1879,10 @@ type GooglePrivacyDlpV2beta1Finding struct {
 	// Quote: The content that was found. Even if the content is not
 	// textual, it
 	// may be converted to a textual representation here.
-	// Provided if requested by the `InspectConfig`.
+	// Provided if requested by the `InspectConfig` and the finding is
+	// less than or equal to 4096 bytes long. If the finding exceeds 4096
+	// bytes
+	// in length, the quote may be omitted.
 	Quote string `json:"quote,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CreateTime") to
@@ -3795,11 +3832,13 @@ func (s *GooglePrivacyDlpV2beta1RecordCondition) MarshalJSON() ([]byte, error) {
 // GooglePrivacyDlpV2beta1RecordKey: Message for a unique key indicating
 // a record that contains a finding.
 type GooglePrivacyDlpV2beta1RecordKey struct {
+	BigQueryKey *GooglePrivacyDlpV2beta1BigQueryKey `json:"bigQueryKey,omitempty"`
+
 	CloudStorageKey *GooglePrivacyDlpV2beta1CloudStorageKey `json:"cloudStorageKey,omitempty"`
 
 	DatastoreKey *GooglePrivacyDlpV2beta1DatastoreKey `json:"datastoreKey,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "CloudStorageKey") to
+	// ForceSendFields is a list of field names (e.g. "BigQueryKey") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -3807,13 +3846,12 @@ type GooglePrivacyDlpV2beta1RecordKey struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "CloudStorageKey") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
+	// NullFields is a list of field names (e.g. "BigQueryKey") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
 }
 

@@ -179,8 +179,8 @@ func (client ServiceGroupsClient) RemoveResponder(resp *http.Response) (result S
 
 // Update update service groups
 //
-// applicationName is the name of the application serviceName is the name of the service updateServiceGroupDescription
-// is the description of the service group update
+// applicationName is the name of the application serviceName is the name of the service
+// updateServiceGroupDescription is the description of the service group update
 func (client ServiceGroupsClient) Update(ctx context.Context, applicationName string, serviceName string, updateServiceGroupDescription BasicUpdateServiceGroupDescription) (result String, err error) {
 	req, err := client.UpdatePreparer(ctx, applicationName, serviceName, updateServiceGroupDescription)
 	if err != nil {

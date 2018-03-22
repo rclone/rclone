@@ -536,7 +536,8 @@
     "BackupName":{
       "type":"string",
       "max":255,
-      "min":3
+      "min":3,
+      "pattern":"[a-zA-Z0-9_.-]+"
     },
     "BackupNotFoundException":{
       "type":"structure",
@@ -793,7 +794,8 @@
         "LocalSecondaryIndexes":{"shape":"LocalSecondaryIndexList"},
         "GlobalSecondaryIndexes":{"shape":"GlobalSecondaryIndexList"},
         "ProvisionedThroughput":{"shape":"ProvisionedThroughput"},
-        "StreamSpecification":{"shape":"StreamSpecification"}
+        "StreamSpecification":{"shape":"StreamSpecification"},
+        "SSESpecification":{"shape":"SSESpecification"}
       }
     },
     "CreateTableOutput":{
@@ -1631,6 +1633,29 @@
         "UPDATED_NEW"
       ]
     },
+    "SSEDescription":{
+      "type":"structure",
+      "members":{
+        "Status":{"shape":"SSEStatus"}
+      }
+    },
+    "SSEEnabled":{"type":"boolean"},
+    "SSESpecification":{
+      "type":"structure",
+      "required":["Enabled"],
+      "members":{
+        "Enabled":{"shape":"SSEEnabled"}
+      }
+    },
+    "SSEStatus":{
+      "type":"string",
+      "enum":[
+        "ENABLING",
+        "ENABLED",
+        "DISABLING",
+        "DISABLED"
+      ]
+    },
     "ScalarAttributeType":{
       "type":"string",
       "enum":[
@@ -1721,7 +1746,8 @@
         "LocalSecondaryIndexes":{"shape":"LocalSecondaryIndexes"},
         "GlobalSecondaryIndexes":{"shape":"GlobalSecondaryIndexes"},
         "StreamDescription":{"shape":"StreamSpecification"},
-        "TimeToLiveDescription":{"shape":"TimeToLiveDescription"}
+        "TimeToLiveDescription":{"shape":"TimeToLiveDescription"},
+        "SSEDescription":{"shape":"SSEDescription"}
       }
     },
     "StreamArn":{
@@ -1779,7 +1805,8 @@
         "StreamSpecification":{"shape":"StreamSpecification"},
         "LatestStreamLabel":{"shape":"String"},
         "LatestStreamArn":{"shape":"StreamArn"},
-        "RestoreSummary":{"shape":"RestoreSummary"}
+        "RestoreSummary":{"shape":"RestoreSummary"},
+        "SSEDescription":{"shape":"SSEDescription"}
       }
     },
     "TableId":{

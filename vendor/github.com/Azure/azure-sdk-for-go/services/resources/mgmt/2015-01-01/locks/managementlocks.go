@@ -50,7 +50,7 @@ func (client ManagementLocksClient) CreateOrUpdateAtResourceGroupLevel(ctx conte
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "CreateOrUpdateAtResourceGroupLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "CreateOrUpdateAtResourceGroupLevel", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateAtResourceGroupLevelPreparer(ctx, resourceGroupName, lockName, parameters)
@@ -128,7 +128,7 @@ func (client ManagementLocksClient) CreateOrUpdateAtResourceLevel(ctx context.Co
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "CreateOrUpdateAtResourceLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "CreateOrUpdateAtResourceLevel", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateAtResourceLevelPreparer(ctx, resourceGroupName, resourceProviderNamespace, parentResourcePath, resourceType, resourceName, lockName, parameters)
@@ -275,7 +275,7 @@ func (client ManagementLocksClient) DeleteAtResourceGroupLevel(ctx context.Conte
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "DeleteAtResourceGroupLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "DeleteAtResourceGroupLevel", err.Error())
 	}
 
 	req, err := client.DeleteAtResourceGroupLevelPreparer(ctx, resourceGroupName, lockName)
@@ -350,7 +350,7 @@ func (client ManagementLocksClient) DeleteAtResourceLevel(ctx context.Context, r
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "DeleteAtResourceLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "DeleteAtResourceLevel", err.Error())
 	}
 
 	req, err := client.DeleteAtResourceLevelPreparer(ctx, resourceGroupName, resourceProviderNamespace, parentResourcePath, resourceType, resourceName, lockName)
@@ -556,7 +556,7 @@ func (client ManagementLocksClient) GetAtResourceGroupLevel(ctx context.Context,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "GetAtResourceGroupLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "GetAtResourceGroupLevel", err.Error())
 	}
 
 	req, err := client.GetAtResourceGroupLevelPreparer(ctx, resourceGroupName, lockName)
@@ -630,7 +630,7 @@ func (client ManagementLocksClient) ListAtResourceGroupLevel(ctx context.Context
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "ListAtResourceGroupLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "ListAtResourceGroupLevel", err.Error())
 	}
 
 	result.fn = client.listAtResourceGroupLevelNextResults
@@ -736,7 +736,7 @@ func (client ManagementLocksClient) ListAtResourceLevel(ctx context.Context, res
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "ListAtResourceLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "ListAtResourceLevel", err.Error())
 	}
 
 	result.fn = client.listAtResourceLevelNextResults

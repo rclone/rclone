@@ -137,10 +137,10 @@ func TestEncodeValue(t *testing.T) {
 		if err != nil {
 			t.Fatalf("#%d: got error during encoding: %v, want nil", i, err)
 		}
-		if !reflect.DeepEqual(got, test.want) {
+		if !testEqual(got, test.want) {
 			t.Errorf("#%d: got encode result: %v, want %v", i, got, test.want)
 		}
-		if !reflect.DeepEqual(gotType, test.wantType) {
+		if !testEqual(gotType, test.wantType) {
 			t.Errorf("#%d: got encode type: %v, want %v", i, gotType, test.wantType)
 		}
 	}
@@ -415,7 +415,7 @@ func TestDecodeValue(t *testing.T) {
 			continue
 		}
 		got := reflect.Indirect(gotp).Interface()
-		if !reflect.DeepEqual(got, test.want) {
+		if !testEqual(got, test.want) {
 			t.Errorf("%d: unexpected decoding result - got %v, want %v", i, got, test.want)
 			continue
 		}
@@ -513,7 +513,7 @@ func TestGenericColumnValue(t *testing.T) {
 			t.Errorf("NewGenericColumnValue failed: %v", err)
 			continue
 		}
-		if !reflect.DeepEqual(*v, test.in) {
+		if !testEqual(*v, test.in) {
 			t.Errorf("unexpected encode result - got %v, want %v", v, test.in)
 		}
 	}

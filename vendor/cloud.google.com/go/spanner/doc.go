@@ -302,6 +302,12 @@ mutations, which will all be executed at the end of the transaction:
         return nil
     })
 
+Tracing
+
+This client has been instrumented to use OpenCensus tracing (http://opencensus.io).
+To enable tracing, see "Enabling Tracing for a Program" at
+https://godoc.org/go.opencensus.io/trace. OpenCensus tracing requires Go 1.8 or higher.
+
 Authentication
 
 See examples of authorization and authentication at

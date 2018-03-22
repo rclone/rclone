@@ -43,8 +43,8 @@ func NewWebhooksClientWithBaseURI(baseURI string, subscriptionID string) Webhook
 // Create creates a webhook for a container registry with the specified parameters.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
-// name of the container registry. webhookName is the name of the webhook. webhookCreateParameters is the parameters
-// for creating a webhook.
+// name of the container registry. webhookName is the name of the webhook. webhookCreateParameters is the
+// parameters for creating a webhook.
 func (client WebhooksClient) Create(ctx context.Context, resourceGroupName string, registryName string, webhookName string, webhookCreateParameters WebhookCreateParameters) (result WebhooksCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: registryName,
@@ -61,7 +61,7 @@ func (client WebhooksClient) Create(ctx context.Context, resourceGroupName strin
 					Chain: []validation.Constraint{{Target: "webhookCreateParameters.WebhookPropertiesCreateParameters.ServiceURI", Name: validation.Null, Rule: true, Chain: nil},
 						{Target: "webhookCreateParameters.WebhookPropertiesCreateParameters.Actions", Name: validation.Null, Rule: true, Chain: nil},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerregistry.WebhooksClient", "Create")
+		return result, validation.NewError("containerregistry.WebhooksClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, registryName, webhookName, webhookCreateParameters)
@@ -145,7 +145,7 @@ func (client WebhooksClient) Delete(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "webhookName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "webhookName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "webhookName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerregistry.WebhooksClient", "Delete")
+		return result, validation.NewError("containerregistry.WebhooksClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, registryName, webhookName)
@@ -226,7 +226,7 @@ func (client WebhooksClient) Get(ctx context.Context, resourceGroupName string, 
 			Constraints: []validation.Constraint{{Target: "webhookName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "webhookName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "webhookName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerregistry.WebhooksClient", "Get")
+		return result, validation.NewError("containerregistry.WebhooksClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, registryName, webhookName)
@@ -306,7 +306,7 @@ func (client WebhooksClient) GetCallbackConfig(ctx context.Context, resourceGrou
 			Constraints: []validation.Constraint{{Target: "webhookName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "webhookName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "webhookName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerregistry.WebhooksClient", "GetCallbackConfig")
+		return result, validation.NewError("containerregistry.WebhooksClient", "GetCallbackConfig", err.Error())
 	}
 
 	req, err := client.GetCallbackConfigPreparer(ctx, resourceGroupName, registryName, webhookName)
@@ -382,7 +382,7 @@ func (client WebhooksClient) List(ctx context.Context, resourceGroupName string,
 			Constraints: []validation.Constraint{{Target: "registryName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "registryName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "registryName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerregistry.WebhooksClient", "List")
+		return result, validation.NewError("containerregistry.WebhooksClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults
@@ -489,7 +489,7 @@ func (client WebhooksClient) ListEvents(ctx context.Context, resourceGroupName s
 			Constraints: []validation.Constraint{{Target: "webhookName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "webhookName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "webhookName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerregistry.WebhooksClient", "ListEvents")
+		return result, validation.NewError("containerregistry.WebhooksClient", "ListEvents", err.Error())
 	}
 
 	result.fn = client.listEventsNextResults
@@ -597,7 +597,7 @@ func (client WebhooksClient) Ping(ctx context.Context, resourceGroupName string,
 			Constraints: []validation.Constraint{{Target: "webhookName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "webhookName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "webhookName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerregistry.WebhooksClient", "Ping")
+		return result, validation.NewError("containerregistry.WebhooksClient", "Ping", err.Error())
 	}
 
 	req, err := client.PingPreparer(ctx, resourceGroupName, registryName, webhookName)
@@ -666,8 +666,8 @@ func (client WebhooksClient) PingResponder(resp *http.Response) (result EventInf
 // Update updates a webhook with the specified parameters.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
-// name of the container registry. webhookName is the name of the webhook. webhookUpdateParameters is the parameters
-// for updating a webhook.
+// name of the container registry. webhookName is the name of the webhook. webhookUpdateParameters is the
+// parameters for updating a webhook.
 func (client WebhooksClient) Update(ctx context.Context, resourceGroupName string, registryName string, webhookName string, webhookUpdateParameters WebhookUpdateParameters) (result WebhooksUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: registryName,
@@ -678,7 +678,7 @@ func (client WebhooksClient) Update(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "webhookName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "webhookName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "webhookName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerregistry.WebhooksClient", "Update")
+		return result, validation.NewError("containerregistry.WebhooksClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, registryName, webhookName, webhookUpdateParameters)

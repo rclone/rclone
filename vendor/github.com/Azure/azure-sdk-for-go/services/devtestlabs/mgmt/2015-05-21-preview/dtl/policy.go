@@ -41,8 +41,8 @@ func NewPolicyClientWithBaseURI(baseURI string, subscriptionID string) PolicyCli
 
 // CreateOrUpdateResource create or replace an existing policy.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name of
-// the policy set. name is the name of the policy.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
+// of the policy set. name is the name of the policy.
 func (client PolicyClient) CreateOrUpdateResource(ctx context.Context, resourceGroupName string, labName string, policySetName string, name string, policy Policy) (result Policy, err error) {
 	req, err := client.CreateOrUpdateResourcePreparer(ctx, resourceGroupName, labName, policySetName, name, policy)
 	if err != nil {
@@ -112,8 +112,8 @@ func (client PolicyClient) CreateOrUpdateResourceResponder(resp *http.Response) 
 
 // DeleteResource delete policy.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name of
-// the policy set. name is the name of the policy.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
+// of the policy set. name is the name of the policy.
 func (client PolicyClient) DeleteResource(ctx context.Context, resourceGroupName string, labName string, policySetName string, name string) (result autorest.Response, err error) {
 	req, err := client.DeleteResourcePreparer(ctx, resourceGroupName, labName, policySetName, name)
 	if err != nil {
@@ -180,8 +180,8 @@ func (client PolicyClient) DeleteResourceResponder(resp *http.Response) (result 
 
 // GetResource get policy.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name of
-// the policy set. name is the name of the policy.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
+// of the policy set. name is the name of the policy.
 func (client PolicyClient) GetResource(ctx context.Context, resourceGroupName string, labName string, policySetName string, name string) (result Policy, err error) {
 	req, err := client.GetResourcePreparer(ctx, resourceGroupName, labName, policySetName, name)
 	if err != nil {
@@ -249,8 +249,8 @@ func (client PolicyClient) GetResourceResponder(resp *http.Response) (result Pol
 
 // List list policies.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name of
-// the policy set. filter is the filter to apply on the operation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
+// of the policy set. filter is the filter to apply on the operation.
 func (client PolicyClient) List(ctx context.Context, resourceGroupName string, labName string, policySetName string, filter string, top *int32, orderBy string) (result ResponseWithContinuationPolicyPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, policySetName, filter, top, orderBy)
@@ -354,8 +354,8 @@ func (client PolicyClient) ListComplete(ctx context.Context, resourceGroupName s
 
 // PatchResource modify properties of policies.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name of
-// the policy set. name is the name of the policy.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. policySetName is the name
+// of the policy set. name is the name of the policy.
 func (client PolicyClient) PatchResource(ctx context.Context, resourceGroupName string, labName string, policySetName string, name string, policy Policy) (result Policy, err error) {
 	req, err := client.PatchResourcePreparer(ctx, resourceGroupName, labName, policySetName, name, policy)
 	if err != nil {

@@ -41,8 +41,8 @@ func NewWorkflowRunActionsClientWithBaseURI(baseURI string, subscriptionID strin
 
 // Get gets a workflow run action.
 //
-// resourceGroupName is the resource group name. workflowName is the workflow name. runName is the workflow run name.
-// actionName is the workflow action name.
+// resourceGroupName is the resource group name. workflowName is the workflow name. runName is the workflow run
+// name. actionName is the workflow action name.
 func (client WorkflowRunActionsClient) Get(ctx context.Context, resourceGroupName string, workflowName string, runName string, actionName string) (result WorkflowRunAction, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, workflowName, runName, actionName)
 	if err != nil {
@@ -110,8 +110,8 @@ func (client WorkflowRunActionsClient) GetResponder(resp *http.Response) (result
 
 // List gets a list of workflow run actions.
 //
-// resourceGroupName is the resource group name. workflowName is the workflow name. runName is the workflow run name.
-// top is the number of items to be included in the result. filter is the filter to apply on the operation.
+// resourceGroupName is the resource group name. workflowName is the workflow name. runName is the workflow run
+// name. top is the number of items to be included in the result. filter is the filter to apply on the operation.
 func (client WorkflowRunActionsClient) List(ctx context.Context, resourceGroupName string, workflowName string, runName string, top *int32, filter string) (result WorkflowRunActionListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, workflowName, runName, top, filter)

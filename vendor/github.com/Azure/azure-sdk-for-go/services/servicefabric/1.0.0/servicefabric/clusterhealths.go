@@ -41,8 +41,8 @@ func NewClusterHealthsClientWithBaseURI(baseURI string, timeout *int32) ClusterH
 
 // Get get cluster healths
 //
-// eventsHealthStateFilter is the filter of the events health state nodesHealthStateFilter is the filter of the nodes
-// health state applicationsHealthStateFilter is the filter of the applications health state
+// eventsHealthStateFilter is the filter of the events health state nodesHealthStateFilter is the filter of the
+// nodes health state applicationsHealthStateFilter is the filter of the applications health state
 func (client ClusterHealthsClient) Get(ctx context.Context, eventsHealthStateFilter string, nodesHealthStateFilter string, applicationsHealthStateFilter string) (result ClusterHealth, err error) {
 	req, err := client.GetPreparer(ctx, eventsHealthStateFilter, nodesHealthStateFilter, applicationsHealthStateFilter)
 	if err != nil {

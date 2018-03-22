@@ -23,15 +23,20 @@ import (
 	"time"
 
 	"cloud.google.com/go/iam"
+	"cloud.google.com/go/internal/optional"
+	"github.com/golang/protobuf/ptypes"
+	durpb "github.com/golang/protobuf/ptypes/duration"
 	"golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
+	pb "google.golang.org/genproto/googleapis/pubsub/v1"
+	fmpb "google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 )
 
 // Subscription is a reference to a PubSub subscription.
 type Subscription struct {
-	s service
+	c *Client
 
 	// The fully qualified identifier for the subscription, in the format "projects/<projid>/subscriptions/<name>"
 	name string
@@ -45,13 +50,14 @@ type Subscription struct {
 
 // Subscription creates a reference to a subscription.
 func (c *Client) Subscription(id string) *Subscription {
-	return newSubscription(c.s, fmt.Sprintf("projects/%s/subscriptions/%s", c.projectID, id))
+	return c.SubscriptionInProject(id, c.projectID)
 }
 
-func newSubscription(s service, name string) *Subscription {
+// SubscriptionInProject creates a reference to a subscription in a given project.
+func (c *Client) SubscriptionInProject(id, projectID string) *Subscription {
 	return &Subscription{
-		s:    s,
-		name: name,
+		c:    c,
+		name: fmt.Sprintf("projects/%s/subscriptions/%s", projectID, id),
 	}
 }
 
@@ -72,16 +78,25 @@ func (s *Subscription) ID() string {
 
 // Subscriptions returns an iterator which returns all of the subscriptions for the client's project.
 func (c *Client) Subscriptions(ctx context.Context) *SubscriptionIterator {
+	it := c.subc.ListSubscriptions(ctx, &pb.ListSubscriptionsRequest{
+		Project: c.fullyQualifiedProjectName(),
+	})
 	return &SubscriptionIterator{
-		s:    c.s,
-		next: c.s.listProjectSubscriptions(ctx, c.fullyQualifiedProjectName()),
+		c: c,
+		next: func() (string, error) {
+			sub, err := it.Next()
+			if err != nil {
+				return "", err
+			}
+			return sub.Name, nil
+		},
 	}
 }
 
 // SubscriptionIterator is an iterator that returns a series of subscriptions.
 type SubscriptionIterator struct {
-	s    service
-	next nextStringFunc
+	c    *Client
+	next func() (string, error)
 }
 
 // Next returns the next subscription. If there are no more subscriptions, iterator.Done will be returned.
@@ -90,7 +105,7 @@ func (subs *SubscriptionIterator) Next() (*Subscription, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newSubscription(subs.s, subName), nil
+	return &Subscription{c: subs.c, name: subName}, nil
 }
 
 // PushConfig contains configuration for subscriptions that operate in push mode.
@@ -100,6 +115,13 @@ type PushConfig struct {
 
 	// Endpoint configuration attributes. See https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.subscriptions#pushconfig for more details.
 	Attributes map[string]string
+}
+
+func (pc *PushConfig) toProto() *pb.PushConfig {
+	return &pb.PushConfig{
+		Attributes:   pc.Attributes,
+		PushEndpoint: pc.Endpoint,
+	}
 }
 
 // Subscription config contains the configuration of a subscription.
@@ -115,13 +137,56 @@ type SubscriptionConfig struct {
 
 	// Whether to retain acknowledged messages. If true, acknowledged messages
 	// will not be expunged until they fall out of the RetentionDuration window.
-	retainAckedMessages bool
+	RetainAckedMessages bool
 
-	// How long to retain messages in backlog, from the time of publish. If RetainAckedMessages is true,
-	// this duration affects the retention of acknowledged messages,
-	// otherwise only unacknowledged messages are retained.
+	// How long to retain messages in backlog, from the time of publish. If
+	// RetainAckedMessages is true, this duration affects the retention of
+	// acknowledged messages, otherwise only unacknowledged messages are retained.
 	// Defaults to 7 days. Cannot be longer than 7 days or shorter than 10 minutes.
-	retentionDuration time.Duration
+	RetentionDuration time.Duration
+}
+
+func (cfg *SubscriptionConfig) toProto(name string) *pb.Subscription {
+	var pbPushConfig *pb.PushConfig
+	if cfg.PushConfig.Endpoint != "" || len(cfg.PushConfig.Attributes) != 0 {
+		pbPushConfig = &pb.PushConfig{
+			Attributes:   cfg.PushConfig.Attributes,
+			PushEndpoint: cfg.PushConfig.Endpoint,
+		}
+	}
+	var retentionDuration *durpb.Duration
+	if cfg.RetentionDuration != 0 {
+		retentionDuration = ptypes.DurationProto(cfg.RetentionDuration)
+	}
+	return &pb.Subscription{
+		Name:                     name,
+		Topic:                    cfg.Topic.name,
+		PushConfig:               pbPushConfig,
+		AckDeadlineSeconds:       trunc32(int64(cfg.AckDeadline.Seconds())),
+		RetainAckedMessages:      cfg.RetainAckedMessages,
+		MessageRetentionDuration: retentionDuration,
+	}
+}
+
+func protoToSubscriptionConfig(pbSub *pb.Subscription, c *Client) (SubscriptionConfig, error) {
+	rd := time.Hour * 24 * 7
+	var err error
+	if pbSub.MessageRetentionDuration != nil {
+		rd, err = ptypes.Duration(pbSub.MessageRetentionDuration)
+		if err != nil {
+			return SubscriptionConfig{}, err
+		}
+	}
+	return SubscriptionConfig{
+		Topic:       newTopic(c, pbSub.Topic),
+		AckDeadline: time.Second * time.Duration(pbSub.AckDeadlineSeconds),
+		PushConfig: PushConfig{
+			Endpoint:   pbSub.PushConfig.PushEndpoint,
+			Attributes: pbSub.PushConfig.Attributes,
+		},
+		RetainAckedMessages: pbSub.RetainAckedMessages,
+		RetentionDuration:   rd,
+	}, nil
 }
 
 // ReceiveSettings configure the Receive method.
@@ -133,6 +198,10 @@ type ReceiveSettings struct {
 	// The Subscription will automatically extend the ack deadline of all
 	// fetched Messages for the duration specified. Automatic deadline
 	// extension may be disabled by specifying a duration less than 1.
+	//
+	// Connections may be terminated if they last longer than 30m, which
+	// effectively makes that the ceiling for this value. For longer message
+	// processing, see the example at https://godoc.org/cloud.google.com/go/pubsub/apiv1#example_SubscriberClient_Pull_lengthyClientProcessing
 	MaxExtension time.Duration
 
 	// MaxOutstandingMessages is the maximum number of unprocessed messages
@@ -171,31 +240,47 @@ var DefaultReceiveSettings = ReceiveSettings{
 
 // Delete deletes the subscription.
 func (s *Subscription) Delete(ctx context.Context) error {
-	return s.s.deleteSubscription(ctx, s.name)
+	return s.c.subc.DeleteSubscription(ctx, &pb.DeleteSubscriptionRequest{Subscription: s.name})
 }
 
 // Exists reports whether the subscription exists on the server.
 func (s *Subscription) Exists(ctx context.Context) (bool, error) {
-	return s.s.subscriptionExists(ctx, s.name)
+	_, err := s.c.subc.GetSubscription(ctx, &pb.GetSubscriptionRequest{Subscription: s.name})
+	if err == nil {
+		return true, nil
+	}
+	if grpc.Code(err) == codes.NotFound {
+		return false, nil
+	}
+	return false, err
 }
 
 // Config fetches the current configuration for the subscription.
 func (s *Subscription) Config(ctx context.Context) (SubscriptionConfig, error) {
-	conf, topicName, err := s.s.getSubscriptionConfig(ctx, s.name)
+	pbSub, err := s.c.subc.GetSubscription(ctx, &pb.GetSubscriptionRequest{Subscription: s.name})
 	if err != nil {
 		return SubscriptionConfig{}, err
 	}
-	conf.Topic = &Topic{
-		s:    s.s,
-		name: topicName,
+	cfg, err := protoToSubscriptionConfig(pbSub, s.c)
+	if err != nil {
+		return SubscriptionConfig{}, err
 	}
-	return conf, nil
+	return cfg, nil
 }
 
 // SubscriptionConfigToUpdate describes how to update a subscription.
 type SubscriptionConfigToUpdate struct {
 	// If non-nil, the push config is changed.
 	PushConfig *PushConfig
+
+	// If non-zero, the ack deadline is changed.
+	AckDeadline time.Duration
+
+	// If set, RetainAckedMessages is changed.
+	RetainAckedMessages optional.Bool
+
+	// If non-zero, RetentionDuration is changed.
+	RetentionDuration time.Duration
 }
 
 // Update changes an existing subscription according to the fields set in cfg.
@@ -203,17 +288,44 @@ type SubscriptionConfigToUpdate struct {
 //
 // Update returns an error if no fields were modified.
 func (s *Subscription) Update(ctx context.Context, cfg SubscriptionConfigToUpdate) (SubscriptionConfig, error) {
-	if cfg.PushConfig == nil {
+	req := s.updateRequest(&cfg)
+	if len(req.UpdateMask.Paths) == 0 {
 		return SubscriptionConfig{}, errors.New("pubsub: UpdateSubscription call with nothing to update")
 	}
-	if err := s.s.modifyPushConfig(ctx, s.name, *cfg.PushConfig); err != nil {
+	rpsub, err := s.c.subc.UpdateSubscription(ctx, req)
+	if err != nil {
 		return SubscriptionConfig{}, err
 	}
-	return s.Config(ctx)
+	return protoToSubscriptionConfig(rpsub, s.c)
+}
+
+func (s *Subscription) updateRequest(cfg *SubscriptionConfigToUpdate) *pb.UpdateSubscriptionRequest {
+	psub := &pb.Subscription{Name: s.name}
+	var paths []string
+	if cfg.PushConfig != nil {
+		psub.PushConfig = cfg.PushConfig.toProto()
+		paths = append(paths, "push_config")
+	}
+	if cfg.AckDeadline != 0 {
+		psub.AckDeadlineSeconds = trunc32(int64(cfg.AckDeadline.Seconds()))
+		paths = append(paths, "ack_deadline_seconds")
+	}
+	if cfg.RetainAckedMessages != nil {
+		psub.RetainAckedMessages = optional.ToBool(cfg.RetainAckedMessages)
+		paths = append(paths, "retain_acked_messages")
+	}
+	if cfg.RetentionDuration != 0 {
+		psub.MessageRetentionDuration = ptypes.DurationProto(cfg.RetentionDuration)
+		paths = append(paths, "message_retention_duration")
+	}
+	return &pb.UpdateSubscriptionRequest{
+		Subscription: psub,
+		UpdateMask:   &fmpb.FieldMask{Paths: paths},
+	}
 }
 
 func (s *Subscription) IAM() *iam.Handle {
-	return s.s.iamHandle(s.name)
+	return iam.InternalNewHandle(s.c.subc.Connection(), s.name)
 }
 
 // CreateSubscription creates a new subscription on a topic.
@@ -250,8 +362,11 @@ func (c *Client) CreateSubscription(ctx context.Context, id string, cfg Subscrip
 	}
 
 	sub := c.Subscription(id)
-	err := c.s.createSubscription(ctx, sub.name, cfg)
-	return sub, err
+	_, err := c.subc.CreateSubscription(ctx, cfg.toProto(sub.name))
+	if err != nil {
+		return nil, err
+	}
+	return sub, nil
 }
 
 var errReceiveInProgress = errors.New("pubsub: Receive already in progress for this subscription")
@@ -347,7 +462,7 @@ func (s *Subscription) receive(ctx context.Context, po *pullOptions, fc *flowCon
 	// The iterator does not use the context passed to Receive. If it did, canceling
 	// that context would immediately stop the iterator without waiting for unacked
 	// messages.
-	iter := newMessageIterator(context.Background(), s.s, s.name, po)
+	iter := newMessageIterator(context.Background(), s.c.subc, s.name, po)
 
 	// We cannot use errgroup from Receive here. Receive might already be calling group.Wait,
 	// and group.Wait cannot be called concurrently with group.Go. We give each receive() its
@@ -382,13 +497,15 @@ func (s *Subscription) receive(ctx context.Context, po *pullOptions, fc *flowCon
 				}
 				return nil
 			}
+			old := msg.doneFunc
+			msgLen := len(msg.Data)
+			msg.doneFunc = func(ackID string, ack bool) {
+				defer fc.release(msgLen)
+				old(ackID, ack)
+			}
 			wg.Add(1)
 			go func() {
-				// TODO(jba): call release when the message is available for GC.
-				// This considers the message to be released when
-				// f is finished, but f may ack early or not at all.
 				defer wg.Done()
-				defer fc.release(len(msg.Data))
 				f(ctx2, msg)
 			}()
 		}

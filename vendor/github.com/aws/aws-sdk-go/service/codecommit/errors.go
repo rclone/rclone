@@ -47,6 +47,14 @@ const (
 	// The specified branch name already exists.
 	ErrCodeBranchNameExistsException = "BranchNameExistsException"
 
+	// ErrCodeBranchNameIsTagNameException for service response error code
+	// "BranchNameIsTagNameException".
+	//
+	// The specified branch name is not valid because it is a tag name. Type the
+	// name of a current branch in the repository. For a list of valid branch names,
+	// use ListBranches.
+	ErrCodeBranchNameIsTagNameException = "BranchNameIsTagNameException"
+
 	// ErrCodeBranchNameRequiredException for service response error code
 	// "BranchNameRequiredException".
 	//
@@ -122,6 +130,12 @@ const (
 	// A commit ID was not specified.
 	ErrCodeCommitIdRequiredException = "CommitIdRequiredException"
 
+	// ErrCodeCommitMessageLengthExceededException for service response error code
+	// "CommitMessageLengthExceededException".
+	//
+	// The commit message is too long. Provide a shorter string.
+	ErrCodeCommitMessageLengthExceededException = "CommitMessageLengthExceededException"
+
 	// ErrCodeCommitRequiredException for service response error code
 	// "CommitRequiredException".
 	//
@@ -135,6 +149,15 @@ const (
 	// be deleted. To delete this branch, you must first set another branch as the
 	// default branch.
 	ErrCodeDefaultBranchCannotBeDeletedException = "DefaultBranchCannotBeDeletedException"
+
+	// ErrCodeDirectoryNameConflictsWithFileNameException for service response error code
+	// "DirectoryNameConflictsWithFileNameException".
+	//
+	// A file cannot be added to the repository because the specified path name
+	// has the same name as a file that already exists in this repository. Either
+	// provide a different name for the file, or specify a different path for the
+	// file.
+	ErrCodeDirectoryNameConflictsWithFileNameException = "DirectoryNameConflictsWithFileNameException"
 
 	// ErrCodeEncryptionIntegrityChecksFailedException for service response error code
 	// "EncryptionIntegrityChecksFailedException".
@@ -165,6 +188,30 @@ const (
 	//
 	// The encryption key is not available.
 	ErrCodeEncryptionKeyUnavailableException = "EncryptionKeyUnavailableException"
+
+	// ErrCodeFileContentRequiredException for service response error code
+	// "FileContentRequiredException".
+	//
+	// The file cannot be added because it is empty. Empty files cannot be added
+	// to the repository with this API.
+	ErrCodeFileContentRequiredException = "FileContentRequiredException"
+
+	// ErrCodeFileContentSizeLimitExceededException for service response error code
+	// "FileContentSizeLimitExceededException".
+	//
+	// The file cannot be added because it is too large. The maximum file size that
+	// can be added using PutFile is 6 MB. For files larger than 6 MB but smaller
+	// than 2 GB, add them using a Git client.
+	ErrCodeFileContentSizeLimitExceededException = "FileContentSizeLimitExceededException"
+
+	// ErrCodeFileNameConflictsWithDirectoryNameException for service response error code
+	// "FileNameConflictsWithDirectoryNameException".
+	//
+	// A file cannot be added to the repository because the specified file name
+	// has the same name as a directory in this repository. Either provide another
+	// name for the file, or add the file in a directory that does not match the
+	// file name.
+	ErrCodeFileNameConflictsWithDirectoryNameException = "FileNameConflictsWithDirectoryNameException"
 
 	// ErrCodeFileTooLargeException for service response error code
 	// "FileTooLargeException".
@@ -253,12 +300,27 @@ const (
 	// name, tag, or full commit ID.
 	ErrCodeInvalidDestinationCommitSpecifierException = "InvalidDestinationCommitSpecifierException"
 
+	// ErrCodeInvalidEmailException for service response error code
+	// "InvalidEmailException".
+	//
+	// The specified email address either contains one or more characters that are
+	// not allowed, or it exceeds the maximum number of characters allowed for an
+	// email address.
+	ErrCodeInvalidEmailException = "InvalidEmailException"
+
 	// ErrCodeInvalidFileLocationException for service response error code
 	// "InvalidFileLocationException".
 	//
 	// The location of the file is not valid. Make sure that you include the extension
 	// of the file as well as the file name.
 	ErrCodeInvalidFileLocationException = "InvalidFileLocationException"
+
+	// ErrCodeInvalidFileModeException for service response error code
+	// "InvalidFileModeException".
+	//
+	// The specified file mode permission is not valid. For a list of valid file
+	// mode permissions, see PutFile.
+	ErrCodeInvalidFileModeException = "InvalidFileModeException"
 
 	// ErrCodeInvalidFilePositionException for service response error code
 	// "InvalidFilePositionException".
@@ -284,6 +346,14 @@ const (
 	//
 	// The specified sort order is not valid.
 	ErrCodeInvalidOrderException = "InvalidOrderException"
+
+	// ErrCodeInvalidParentCommitIdException for service response error code
+	// "InvalidParentCommitIdException".
+	//
+	// The parent commit ID is not valid. The commit ID cannot be empty, and must
+	// match the head commit ID for the branch of the repository where you want
+	// to add or update a file.
+	ErrCodeInvalidParentCommitIdException = "InvalidParentCommitIdException"
 
 	// ErrCodeInvalidPathException for service response error code
 	// "InvalidPathException".
@@ -476,6 +546,37 @@ const (
 	// again.
 	ErrCodeMultipleRepositoriesInPullRequestException = "MultipleRepositoriesInPullRequestException"
 
+	// ErrCodeNameLengthExceededException for service response error code
+	// "NameLengthExceededException".
+	//
+	// The file name is not valid because it has exceeded the character limit for
+	// file names. File names, including the path to the file, cannot exceed the
+	// character limit.
+	ErrCodeNameLengthExceededException = "NameLengthExceededException"
+
+	// ErrCodeParentCommitDoesNotExistException for service response error code
+	// "ParentCommitDoesNotExistException".
+	//
+	// The parent commit ID is not valid. The specified parent commit ID does not
+	// exist in the specified branch of the repository.
+	ErrCodeParentCommitDoesNotExistException = "ParentCommitDoesNotExistException"
+
+	// ErrCodeParentCommitIdOutdatedException for service response error code
+	// "ParentCommitIdOutdatedException".
+	//
+	// The file could not be added because the provided parent commit ID is not
+	// the current tip of the specified branch. To view the full commit ID of the
+	// current head of the branch, use GetBranch.
+	ErrCodeParentCommitIdOutdatedException = "ParentCommitIdOutdatedException"
+
+	// ErrCodeParentCommitIdRequiredException for service response error code
+	// "ParentCommitIdRequiredException".
+	//
+	// A parent commit ID is required. To view the full commit ID of a branch in
+	// a repository, use GetBranch or a Git command (for example, git pull or git
+	// log).
+	ErrCodeParentCommitIdRequiredException = "ParentCommitIdRequiredException"
+
 	// ErrCodePathDoesNotExistException for service response error code
 	// "PathDoesNotExistException".
 	//
@@ -600,6 +701,14 @@ const (
 	//
 	// The list of triggers for the repository is required but was not specified.
 	ErrCodeRepositoryTriggersListRequiredException = "RepositoryTriggersListRequiredException"
+
+	// ErrCodeSameFileContentException for service response error code
+	// "SameFileContentException".
+	//
+	// The file was not added or updated because the content of the file is exactly
+	// the same as the content of that file in the repository and branch that you
+	// specified.
+	ErrCodeSameFileContentException = "SameFileContentException"
 
 	// ErrCodeSourceAndDestinationAreSameException for service response error code
 	// "SourceAndDestinationAreSameException".

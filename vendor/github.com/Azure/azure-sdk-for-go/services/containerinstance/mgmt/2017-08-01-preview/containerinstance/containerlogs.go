@@ -41,10 +41,10 @@ func NewContainerLogsClientWithBaseURI(baseURI string, subscriptionID string) Co
 
 // List get the logs for a specified container instance in a specified resource group and container group.
 //
-// resourceGroupName is the name of the resource group that contains the container instance. containerName is the name
-// of the container instance. containerGroupName is the name of the container group the container instance belongs to.
-// tail is the number of lines to show from the tail of the container instance log. If not provided, all available logs
-// are shown up to 4mb.
+// resourceGroupName is the name of the resource group that contains the container instance. containerName is the
+// name of the container instance. containerGroupName is the name of the container group the container instance
+// belongs to. tail is the number of lines to show from the tail of the container instance log. If not provided,
+// all available logs are shown up to 4mb.
 func (client ContainerLogsClient) List(ctx context.Context, resourceGroupName string, containerName string, containerGroupName string, tail *int32) (result Logs, err error) {
 	req, err := client.ListPreparer(ctx, resourceGroupName, containerName, containerGroupName, tail)
 	if err != nil {

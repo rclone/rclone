@@ -57,7 +57,7 @@ func (client ManagementLocksClient) CreateOrUpdateAtResourceGroupLevel(ctx conte
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ManagementLockProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "CreateOrUpdateAtResourceGroupLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "CreateOrUpdateAtResourceGroupLevel", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateAtResourceGroupLevelPreparer(ctx, resourceGroupName, lockName, parameters)
@@ -128,11 +128,11 @@ func (client ManagementLocksClient) CreateOrUpdateAtResourceGroupLevelResponder(
 // create management locks, you must have access to Microsoft.Authorization/* or Microsoft.Authorization/locks/*
 // actions. Of the built-in roles, only Owner and User Access Administrator are granted those actions.
 //
-// resourceGroupName is the name of the resource group containing the resource to lock. resourceProviderNamespace is
-// the resource provider namespace of the resource to lock. parentResourcePath is the parent resource identity.
+// resourceGroupName is the name of the resource group containing the resource to lock. resourceProviderNamespace
+// is the resource provider namespace of the resource to lock. parentResourcePath is the parent resource identity.
 // resourceType is the resource type of the resource to lock. resourceName is the name of the resource to lock.
-// lockName is the name of lock. The lock name can be a maximum of 260 characters. It cannot contain <, > %, &, :, \,
-// ?, /, or any control characters. parameters is parameters for creating or updating a  management lock.
+// lockName is the name of lock. The lock name can be a maximum of 260 characters. It cannot contain <, > %, &, :,
+// \, ?, /, or any control characters. parameters is parameters for creating or updating a  management lock.
 func (client ManagementLocksClient) CreateOrUpdateAtResourceLevel(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string, lockName string, parameters ManagementLockObject) (result ManagementLockObject, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -141,7 +141,7 @@ func (client ManagementLocksClient) CreateOrUpdateAtResourceLevel(ctx context.Co
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ManagementLockProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "CreateOrUpdateAtResourceLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "CreateOrUpdateAtResourceLevel", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateAtResourceLevelPreparer(ctx, resourceGroupName, resourceProviderNamespace, parentResourcePath, resourceType, resourceName, lockName, parameters)
@@ -217,13 +217,13 @@ func (client ManagementLocksClient) CreateOrUpdateAtResourceLevelResponder(resp 
 // Microsoft.Authorization/locks/* actions. Of the built-in roles, only Owner and User Access Administrator are granted
 // those actions.
 //
-// lockName is the name of lock. The lock name can be a maximum of 260 characters. It cannot contain <, > %, &, :, \,
-// ?, /, or any control characters. parameters is the management lock parameters.
+// lockName is the name of lock. The lock name can be a maximum of 260 characters. It cannot contain <, > %, &, :,
+// \, ?, /, or any control characters. parameters is the management lock parameters.
 func (client ManagementLocksClient) CreateOrUpdateAtSubscriptionLevel(ctx context.Context, lockName string, parameters ManagementLockObject) (result ManagementLockObject, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ManagementLockProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "CreateOrUpdateAtSubscriptionLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "CreateOrUpdateAtSubscriptionLevel", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateAtSubscriptionLevelPreparer(ctx, lockName, parameters)
@@ -291,15 +291,16 @@ func (client ManagementLocksClient) CreateOrUpdateAtSubscriptionLevelResponder(r
 
 // CreateOrUpdateByScope create or update a management lock by scope.
 //
-// scope is the scope for the lock. When providing a scope for the assignment, use '/subscriptions/{subscriptionId}'
-// for subscriptions, '/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}' for resource groups, and
+// scope is the scope for the lock. When providing a scope for the assignment, use
+// '/subscriptions/{subscriptionId}' for subscriptions,
+// '/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}' for resource groups, and
 // '/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{parentResourcePathIfPresent}/{resourceType}/{resourceName}'
 // for resources. lockName is the name of lock. parameters is create or update management lock parameters.
 func (client ManagementLocksClient) CreateOrUpdateByScope(ctx context.Context, scope string, lockName string, parameters ManagementLockObject) (result ManagementLockObject, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ManagementLockProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "CreateOrUpdateByScope")
+		return result, validation.NewError("locks.ManagementLocksClient", "CreateOrUpdateByScope", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateByScopePreparer(ctx, scope, lockName, parameters)
@@ -376,7 +377,7 @@ func (client ManagementLocksClient) DeleteAtResourceGroupLevel(ctx context.Conte
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "DeleteAtResourceGroupLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "DeleteAtResourceGroupLevel", err.Error())
 	}
 
 	req, err := client.DeleteAtResourceGroupLevelPreparer(ctx, resourceGroupName, lockName)
@@ -446,16 +447,16 @@ func (client ManagementLocksClient) DeleteAtResourceGroupLevelResponder(resp *ht
 //
 // resourceGroupName is the name of the resource group containing the resource with the lock to delete.
 // resourceProviderNamespace is the resource provider namespace of the resource with the lock to delete.
-// parentResourcePath is the parent resource identity. resourceType is the resource type of the resource with the lock
-// to delete. resourceName is the name of the resource with the lock to delete. lockName is the name of the lock to
-// delete.
+// parentResourcePath is the parent resource identity. resourceType is the resource type of the resource with the
+// lock to delete. resourceName is the name of the resource with the lock to delete. lockName is the name of the
+// lock to delete.
 func (client ManagementLocksClient) DeleteAtResourceLevel(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string, lockName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "DeleteAtResourceLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "DeleteAtResourceLevel", err.Error())
 	}
 
 	req, err := client.DeleteAtResourceLevelPreparer(ctx, resourceGroupName, resourceProviderNamespace, parentResourcePath, resourceType, resourceName, lockName)
@@ -662,7 +663,7 @@ func (client ManagementLocksClient) GetAtResourceGroupLevel(ctx context.Context,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "GetAtResourceGroupLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "GetAtResourceGroupLevel", err.Error())
 	}
 
 	req, err := client.GetAtResourceGroupLevelPreparer(ctx, resourceGroupName, lockName)
@@ -730,15 +731,16 @@ func (client ManagementLocksClient) GetAtResourceGroupLevelResponder(resp *http.
 // GetAtResourceLevel get the management lock of a resource or any level below resource.
 //
 // resourceGroupName is the name of the resource group. resourceProviderNamespace is the namespace of the resource
-// provider. parentResourcePath is an extra path parameter needed in some services, like SQL Databases. resourceType is
-// the type of the resource. resourceName is the name of the resource. lockName is the name of lock.
+// provider. parentResourcePath is an extra path parameter needed in some services, like SQL Databases.
+// resourceType is the type of the resource. resourceName is the name of the resource. lockName is the name of
+// lock.
 func (client ManagementLocksClient) GetAtResourceLevel(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string, lockName string) (result ManagementLockObject, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "GetAtResourceLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "GetAtResourceLevel", err.Error())
 	}
 
 	req, err := client.GetAtResourceLevelPreparer(ctx, resourceGroupName, resourceProviderNamespace, parentResourcePath, resourceType, resourceName, lockName)
@@ -939,15 +941,15 @@ func (client ManagementLocksClient) GetByScopeResponder(resp *http.Response) (re
 
 // ListAtResourceGroupLevel gets all the management locks for a resource group.
 //
-// resourceGroupName is the name of the resource group containing the locks to get. filter is the filter to apply on
-// the operation.
+// resourceGroupName is the name of the resource group containing the locks to get. filter is the filter to apply
+// on the operation.
 func (client ManagementLocksClient) ListAtResourceGroupLevel(ctx context.Context, resourceGroupName string, filter string) (result ManagementLockListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "ListAtResourceGroupLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "ListAtResourceGroupLevel", err.Error())
 	}
 
 	result.fn = client.listAtResourceGroupLevelNextResults
@@ -1044,17 +1046,17 @@ func (client ManagementLocksClient) ListAtResourceGroupLevelComplete(ctx context
 
 // ListAtResourceLevel gets all the management locks for a resource or any level below resource.
 //
-// resourceGroupName is the name of the resource group containing the locked resource. The name is case insensitive.
-// resourceProviderNamespace is the namespace of the resource provider. parentResourcePath is the parent resource
-// identity. resourceType is the resource type of the locked resource. resourceName is the name of the locked resource.
-// filter is the filter to apply on the operation.
+// resourceGroupName is the name of the resource group containing the locked resource. The name is case
+// insensitive. resourceProviderNamespace is the namespace of the resource provider. parentResourcePath is the
+// parent resource identity. resourceType is the resource type of the locked resource. resourceName is the name of
+// the locked resource. filter is the filter to apply on the operation.
 func (client ManagementLocksClient) ListAtResourceLevel(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string, filter string) (result ManagementLockListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "locks.ManagementLocksClient", "ListAtResourceLevel")
+		return result, validation.NewError("locks.ManagementLocksClient", "ListAtResourceLevel", err.Error())
 	}
 
 	result.fn = client.listAtResourceLevelNextResults

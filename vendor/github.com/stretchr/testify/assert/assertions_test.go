@@ -257,8 +257,8 @@ func TestEqualFormatting(t *testing.T) {
 		msgAndArgs []interface{}
 		want       string
 	}{
-		{equalWant: "want", equalGot: "got", want: "\tassertions.go:[0-9]+: \r                          \r\tError Trace:\t\n\t\t\r\tError:      \tNot equal: \n\t\t\r\t            \texpected: \"want\"\n\t\t\r\t            \tactual  : \"got\"\n"},
-		{equalWant: "want", equalGot: "got", msgAndArgs: []interface{}{"hello, %v!", "world"}, want: "\tassertions.go:[0-9]+: \r                          \r\tError Trace:\t\n\t\t\r\tError:      \tNot equal: \n\t\t\r\t            \texpected: \"want\"\n\t\t\r\t            \tactual  : \"got\"\n\t\t\r\tMessages:   \thello, world!\n"},
+		{equalWant: "want", equalGot: "got", want: "\tassertions.go:[0-9]+: \n\t\t\tError Trace:\t\n\t\t\tError:      \tNot equal: \n\t\t\t            \texpected: \"want\"\n\t\t\t            \tactual  : \"got\"\n"},
+		{equalWant: "want", equalGot: "got", msgAndArgs: []interface{}{"hello, %v!", "world"}, want: "\tassertions.go:[0-9]+: \n\t\t\tError Trace:\t\n\t\t\tError:      \tNot equal: \n\t\t\t            \texpected: \"want\"\n\t\t\t            \tactual  : \"got\"\n\t\t\tMessages:   \thello, world!\n"},
 	} {
 		mockT := &bufferT{}
 		Equal(mockT, currCase.equalWant, currCase.equalGot, currCase.msgAndArgs...)

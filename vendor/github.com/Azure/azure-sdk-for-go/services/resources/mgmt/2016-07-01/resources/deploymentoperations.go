@@ -42,15 +42,15 @@ func NewDeploymentOperationsClientWithBaseURI(baseURI string, subscriptionID str
 
 // Get get a list of deployments operations.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of the
-// deployment. operationID is operation Id.
+// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
+// the deployment. operationID is operation Id.
 func (client DeploymentOperationsClient) Get(ctx context.Context, resourceGroupName string, deploymentName string, operationID string) (result DeploymentOperation, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.DeploymentOperationsClient", "Get")
+		return result, validation.NewError("resources.DeploymentOperationsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, deploymentName, operationID)
@@ -118,15 +118,15 @@ func (client DeploymentOperationsClient) GetResponder(resp *http.Response) (resu
 
 // List gets a list of deployments operations.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of the
-// deployment. top is query parameters.
+// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
+// the deployment. top is query parameters.
 func (client DeploymentOperationsClient) List(ctx context.Context, resourceGroupName string, deploymentName string, top *int32) (result DeploymentOperationsListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.DeploymentOperationsClient", "List")
+		return result, validation.NewError("resources.DeploymentOperationsClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults

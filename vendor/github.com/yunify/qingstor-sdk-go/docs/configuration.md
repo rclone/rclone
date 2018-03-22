@@ -67,3 +67,16 @@ moreConfiguration.Protocol = "http"
 moreConfiguration.Host = "api.private.com"
 moreConfiguration.Port = 80
 ```
+
+Change http timeout
+
+``` go
+customConfiguration, _ := config.NewDefault().LoadUserConfig()
+// For the default value refers to DefaultHTTPClientSettings in config package
+// ReadTimeout affect each call to HTTPResponse.Body.Read()
+customConfiguration.HTTPSettings.ReadTimeout = 2 * time.Minute
+// WriteTimeout affect each write in io.Copy while sending HTTPRequest
+customConfiguration.HTTPSettings.WriteTimeout = 2 * time.Minute
+// Re-initialize the client to take effect
+customConfiguration.InitHTTPClient()
+```

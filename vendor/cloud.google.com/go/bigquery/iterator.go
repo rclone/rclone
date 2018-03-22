@@ -48,9 +48,14 @@ type RowIterator struct {
 	// is also set, StartIndex is ignored.
 	StartIndex uint64
 
-	rows [][]Value
+	// The schema of the table. Available after the first call to Next.
+	Schema Schema
 
-	schema       Schema       // populated on first call to fetch
+	// The total number of rows in the result. Available after the first call to Next.
+	// May be zero just after rows were inserted.
+	TotalRows uint64
+
+	rows         [][]Value
 	structLoader structLoader // used to populate a pointer to a struct
 }
 
@@ -88,8 +93,11 @@ type RowIterator struct {
 // type (RECORD or nested schema) corresponds to a nested struct or struct pointer.
 // All calls to Next on the same iterator must use the same struct type.
 //
-// It is an error to attempt to read a BigQuery NULL value into a struct field.
-// If your table contains NULLs, use a *[]Value or *map[string]Value.
+// It is an error to attempt to read a BigQuery NULL value into a struct field,
+// unless the field is of type []byte or is one of the special Null types: NullInt64,
+// NullFloat64, NullBool, NullString, NullTimestamp, NullDate, NullTime or
+// NullDateTime. You can also use a *[]Value or *map[string]Value to read from a
+// table with NULLs.
 func (it *RowIterator) Next(dst interface{}) error {
 	var vl ValueLoader
 	switch dst := dst.(type) {
@@ -113,12 +121,12 @@ func (it *RowIterator) Next(dst interface{}) error {
 	if vl == nil {
 		// This can only happen if dst is a pointer to a struct. We couldn't
 		// set vl above because we need the schema.
-		if err := it.structLoader.set(dst, it.schema); err != nil {
+		if err := it.structLoader.set(dst, it.Schema); err != nil {
 			return err
 		}
 		vl = &it.structLoader
 	}
-	return vl.Load(row, it.schema)
+	return vl.Load(row, it.Schema)
 }
 
 func isStructPtr(x interface{}) bool {
@@ -130,12 +138,13 @@ func isStructPtr(x interface{}) bool {
 func (it *RowIterator) PageInfo() *iterator.PageInfo { return it.pageInfo }
 
 func (it *RowIterator) fetch(pageSize int, pageToken string) (string, error) {
-	res, err := it.pf(it.ctx, it.table, it.schema, it.StartIndex, int64(pageSize), pageToken)
+	res, err := it.pf(it.ctx, it.table, it.Schema, it.StartIndex, int64(pageSize), pageToken)
 	if err != nil {
 		return "", err
 	}
 	it.rows = append(it.rows, res.rows...)
-	it.schema = res.schema
+	it.Schema = res.schema
+	it.TotalRows = res.totalRows
 	return res.pageToken, nil
 }
 

@@ -177,8 +177,8 @@ func (client ApplicationUpgradesClient) ResumeResponder(resp *http.Response) (re
 
 // Start start application upgrades
 //
-// applicationName is the name of the application startApplicationUpgrade is the description of the start application
-// upgrade
+// applicationName is the name of the application startApplicationUpgrade is the description of the start
+// application upgrade
 func (client ApplicationUpgradesClient) Start(ctx context.Context, applicationName string, startApplicationUpgrade StartApplicationUpgrade) (result String, err error) {
 	req, err := client.StartPreparer(ctx, applicationName, startApplicationUpgrade)
 	if err != nil {
@@ -247,8 +247,8 @@ func (client ApplicationUpgradesClient) StartResponder(resp *http.Response) (res
 
 // Update update application upgrades
 //
-// applicationName is the name of the application updateApplicationUpgrade is the description of the update application
-// upgrade
+// applicationName is the name of the application updateApplicationUpgrade is the description of the update
+// application upgrade
 func (client ApplicationUpgradesClient) Update(ctx context.Context, applicationName string, updateApplicationUpgrade UpdateApplicationUpgrade) (result String, err error) {
 	req, err := client.UpdatePreparer(ctx, applicationName, updateApplicationUpgrade)
 	if err != nil {

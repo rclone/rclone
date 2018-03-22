@@ -52,7 +52,7 @@ func (client ConnectionClient) CreateOrUpdate(ctx context.Context, automationAcc
 			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.ConnectionCreateOrUpdateProperties", Name: validation.Null, Rule: true,
 					Chain: []validation.Constraint{{Target: "parameters.ConnectionCreateOrUpdateProperties.ConnectionType", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ConnectionClient", "CreateOrUpdate")
+		return result, validation.NewError("automation.ConnectionClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, automationAccountName, connectionName, parameters)
@@ -127,7 +127,7 @@ func (client ConnectionClient) Delete(ctx context.Context, automationAccountName
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ConnectionClient", "Delete")
+		return result, validation.NewError("automation.ConnectionClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, automationAccountName, connectionName)
@@ -200,7 +200,7 @@ func (client ConnectionClient) Get(ctx context.Context, automationAccountName st
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ConnectionClient", "Get")
+		return result, validation.NewError("automation.ConnectionClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, connectionName)
@@ -273,7 +273,7 @@ func (client ConnectionClient) ListByAutomationAccount(ctx context.Context, auto
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ConnectionClient", "ListByAutomationAccount")
+		return result, validation.NewError("automation.ConnectionClient", "ListByAutomationAccount", err.Error())
 	}
 
 	result.fn = client.listByAutomationAccountNextResults
@@ -374,7 +374,7 @@ func (client ConnectionClient) Update(ctx context.Context, automationAccountName
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ConnectionClient", "Update")
+		return result, validation.NewError("automation.ConnectionClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, automationAccountName, connectionName, parameters)

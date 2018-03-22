@@ -118,8 +118,8 @@ func (client DeployedApplicationHealthsClient) GetResponder(resp *http.Response)
 
 // Send send deployed application health
 //
-// nodeName is the name of the node applicationName is the name of the application deployedApplicationHealthReport is
-// the report of the deployed application health
+// nodeName is the name of the node applicationName is the name of the application deployedApplicationHealthReport
+// is the report of the deployed application health
 func (client DeployedApplicationHealthsClient) Send(ctx context.Context, nodeName string, applicationName string, deployedApplicationHealthReport DeployedApplicationHealthReport) (result String, err error) {
 	req, err := client.SendPreparer(ctx, nodeName, applicationName, deployedApplicationHealthReport)
 	if err != nil {

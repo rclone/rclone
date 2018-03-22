@@ -42,8 +42,8 @@ func NewSubscriptionsClientWithBaseURI(baseURI string, subscriptionID string) Su
 
 // CreateOrUpdate creates or updates the subscription of specified user to the specified product.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid is
-// subscription entity Identifier. The entity represents the association between a user and a product in API
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid
+// is subscription entity Identifier. The entity represents the association between a user and a product in API
 // Management. parameters is create parameters.
 func (client SubscriptionsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, sid string, parameters SubscriptionCreateParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -69,7 +69,7 @@ func (client SubscriptionsClient) CreateOrUpdate(ctx context.Context, resourceGr
 					Chain: []validation.Constraint{{Target: "parameters.SecondaryKey", Name: validation.MaxLength, Rule: 256, Chain: nil},
 						{Target: "parameters.SecondaryKey", Name: validation.MinLength, Rule: 1, Chain: nil},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.SubscriptionsClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.SubscriptionsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, sid, parameters)
@@ -138,10 +138,10 @@ func (client SubscriptionsClient) CreateOrUpdateResponder(resp *http.Response) (
 
 // Delete deletes the specified subscription.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid is
-// subscription entity Identifier. The entity represents the association between a user and a product in API
-// Management. ifMatch is eTag of the Subscription Entity. ETag should match the current entity state from the header
-// response of the GET request or it should be * for unconditional update.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid
+// is subscription entity Identifier. The entity represents the association between a user and a product in API
+// Management. ifMatch is eTag of the Subscription Entity. ETag should match the current entity state from the
+// header response of the GET request or it should be * for unconditional update.
 func (client SubscriptionsClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, sid string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -151,7 +151,7 @@ func (client SubscriptionsClient) Delete(ctx context.Context, resourceGroupName 
 		{TargetValue: sid,
 			Constraints: []validation.Constraint{{Target: "sid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "sid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.SubscriptionsClient", "Delete")
+		return result, validation.NewError("apimanagement.SubscriptionsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, sid, ifMatch)
@@ -219,8 +219,8 @@ func (client SubscriptionsClient) DeleteResponder(resp *http.Response) (result a
 
 // Get gets the specified Subscription entity.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid is
-// subscription entity Identifier. The entity represents the association between a user and a product in API
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid
+// is subscription entity Identifier. The entity represents the association between a user and a product in API
 // Management.
 func (client SubscriptionsClient) Get(ctx context.Context, resourceGroupName string, serviceName string, sid string) (result SubscriptionContract, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -231,7 +231,7 @@ func (client SubscriptionsClient) Get(ctx context.Context, resourceGroupName str
 		{TargetValue: sid,
 			Constraints: []validation.Constraint{{Target: "sid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "sid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.SubscriptionsClient", "Get")
+		return result, validation.NewError("apimanagement.SubscriptionsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, sid)
@@ -299,16 +299,16 @@ func (client SubscriptionsClient) GetResponder(resp *http.Response) (result Subs
 
 // List lists all subscriptions of the API Management service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. filter
-// is | Field        | Supported operators    | Supported functions                         |
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// filter is | Field        | Supported operators    | Supported functions                         |
 // |--------------|------------------------|---------------------------------------------|
 // | id           | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | name         | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | stateComment | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | userId       | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | productId    | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | state        | eq                     |                                             | top is number of records to
-// return. skip is number of records to skip.
+// | state        | eq                     |                                             | top is number of records
+// to return. skip is number of records to skip.
 func (client SubscriptionsClient) List(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result SubscriptionCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -321,7 +321,7 @@ func (client SubscriptionsClient) List(ctx context.Context, resourceGroupName st
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.SubscriptionsClient", "List")
+		return result, validation.NewError("apimanagement.SubscriptionsClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults
@@ -425,8 +425,8 @@ func (client SubscriptionsClient) ListComplete(ctx context.Context, resourceGrou
 
 // RegeneratePrimaryKey regenerates primary key of existing subscription of the API Management service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid is
-// subscription entity Identifier. The entity represents the association between a user and a product in API
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid
+// is subscription entity Identifier. The entity represents the association between a user and a product in API
 // Management.
 func (client SubscriptionsClient) RegeneratePrimaryKey(ctx context.Context, resourceGroupName string, serviceName string, sid string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -437,7 +437,7 @@ func (client SubscriptionsClient) RegeneratePrimaryKey(ctx context.Context, reso
 		{TargetValue: sid,
 			Constraints: []validation.Constraint{{Target: "sid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "sid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.SubscriptionsClient", "RegeneratePrimaryKey")
+		return result, validation.NewError("apimanagement.SubscriptionsClient", "RegeneratePrimaryKey", err.Error())
 	}
 
 	req, err := client.RegeneratePrimaryKeyPreparer(ctx, resourceGroupName, serviceName, sid)
@@ -504,8 +504,8 @@ func (client SubscriptionsClient) RegeneratePrimaryKeyResponder(resp *http.Respo
 
 // RegenerateSecondaryKey regenerates secondary key of existing subscription of the API Management service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid is
-// subscription entity Identifier. The entity represents the association between a user and a product in API
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid
+// is subscription entity Identifier. The entity represents the association between a user and a product in API
 // Management.
 func (client SubscriptionsClient) RegenerateSecondaryKey(ctx context.Context, resourceGroupName string, serviceName string, sid string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -516,7 +516,7 @@ func (client SubscriptionsClient) RegenerateSecondaryKey(ctx context.Context, re
 		{TargetValue: sid,
 			Constraints: []validation.Constraint{{Target: "sid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "sid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.SubscriptionsClient", "RegenerateSecondaryKey")
+		return result, validation.NewError("apimanagement.SubscriptionsClient", "RegenerateSecondaryKey", err.Error())
 	}
 
 	req, err := client.RegenerateSecondaryKeyPreparer(ctx, resourceGroupName, serviceName, sid)
@@ -583,8 +583,8 @@ func (client SubscriptionsClient) RegenerateSecondaryKeyResponder(resp *http.Res
 
 // Update updates the details of a subscription specificied by its identifier.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid is
-// subscription entity Identifier. The entity represents the association between a user and a product in API
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. sid
+// is subscription entity Identifier. The entity represents the association between a user and a product in API
 // Management. parameters is update parameters. ifMatch is eTag of the Subscription Entity. ETag should match the
 // current entity state from the header response of the GET request or it should be * for unconditional update.
 func (client SubscriptionsClient) Update(ctx context.Context, resourceGroupName string, serviceName string, sid string, parameters SubscriptionUpdateParameters, ifMatch string) (result autorest.Response, err error) {
@@ -596,7 +596,7 @@ func (client SubscriptionsClient) Update(ctx context.Context, resourceGroupName 
 		{TargetValue: sid,
 			Constraints: []validation.Constraint{{Target: "sid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "sid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.SubscriptionsClient", "Update")
+		return result, validation.NewError("apimanagement.SubscriptionsClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serviceName, sid, parameters, ifMatch)

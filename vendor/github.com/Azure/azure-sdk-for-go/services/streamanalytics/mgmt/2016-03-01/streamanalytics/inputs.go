@@ -41,13 +41,13 @@ func NewInputsClientWithBaseURI(baseURI string, subscriptionID string) InputsCli
 
 // CreateOrReplace creates an input or replaces an already existing input under an existing streaming job.
 //
-// input is the definition of the input that will be used to create a new input or replace the existing one under the
-// streaming job. resourceGroupName is the name of the resource group that contains the resource. You can obtain this
-// value from the Azure Resource Manager API or the portal. jobName is the name of the streaming job. inputName is the
-// name of the input. ifMatch is the ETag of the input. Omit this value to always overwrite the current input. Specify
-// the last-seen ETag value to prevent accidentally overwritting concurrent changes. ifNoneMatch is set to '*' to allow
-// a new input to be created, but to prevent updating an existing input. Other values will result in a 412
-// Pre-condition Failed response.
+// input is the definition of the input that will be used to create a new input or replace the existing one under
+// the streaming job. resourceGroupName is the name of the resource group that contains the resource. You can
+// obtain this value from the Azure Resource Manager API or the portal. jobName is the name of the streaming job.
+// inputName is the name of the input. ifMatch is the ETag of the input. Omit this value to always overwrite the
+// current input. Specify the last-seen ETag value to prevent accidentally overwritting concurrent changes.
+// ifNoneMatch is set to '*' to allow a new input to be created, but to prevent updating an existing input. Other
+// values will result in a 412 Pre-condition Failed response.
 func (client InputsClient) CreateOrReplace(ctx context.Context, input Input, resourceGroupName string, jobName string, inputName string, ifMatch string, ifNoneMatch string) (result Input, err error) {
 	req, err := client.CreateOrReplacePreparer(ctx, input, resourceGroupName, jobName, inputName, ifMatch, ifNoneMatch)
 	if err != nil {
@@ -124,9 +124,9 @@ func (client InputsClient) CreateOrReplaceResponder(resp *http.Response) (result
 
 // Delete deletes an input from the streaming job.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. jobName is the name of the streaming job. inputName is the name of the
-// input.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. inputName is the name of
+// the input.
 func (client InputsClient) Delete(ctx context.Context, resourceGroupName string, jobName string, inputName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, jobName, inputName)
 	if err != nil {
@@ -192,9 +192,9 @@ func (client InputsClient) DeleteResponder(resp *http.Response) (result autorest
 
 // Get gets details about the specified input.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. jobName is the name of the streaming job. inputName is the name of the
-// input.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. inputName is the name of
+// the input.
 func (client InputsClient) Get(ctx context.Context, resourceGroupName string, jobName string, inputName string) (result Input, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, jobName, inputName)
 	if err != nil {
@@ -261,11 +261,11 @@ func (client InputsClient) GetResponder(resp *http.Response) (result Input, err 
 
 // ListByStreamingJob lists all of the inputs under the specified streaming job.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. jobName is the name of the streaming job. selectParameter is the $select
-// OData query parameter. This is a comma-separated list of structural properties to include in the response, or “*” to
-// include all properties. By default, all properties are returned except diagnostics. Currently only accepts '*' as a
-// valid value.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. selectParameter is the
+// $select OData query parameter. This is a comma-separated list of structural properties to include in the
+// response, or “*” to include all properties. By default, all properties are returned except diagnostics.
+// Currently only accepts '*' as a valid value.
 func (client InputsClient) ListByStreamingJob(ctx context.Context, resourceGroupName string, jobName string, selectParameter string) (result InputListResultPage, err error) {
 	result.fn = client.listByStreamingJobNextResults
 	req, err := client.ListByStreamingJobPreparer(ctx, resourceGroupName, jobName, selectParameter)
@@ -362,12 +362,12 @@ func (client InputsClient) ListByStreamingJobComplete(ctx context.Context, resou
 
 // Test tests whether an input’s datasource is reachable and usable by the Azure Stream Analytics service.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. jobName is the name of the streaming job. inputName is the name of the
-// input. input is if the input specified does not already exist, this parameter must contain the full input definition
-// intended to be tested. If the input specified already exists, this parameter can be left null to test the existing
-// input as is or if specified, the properties specified will overwrite the corresponding properties in the existing
-// input (exactly like a PATCH operation) and the resulting input will be tested.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. jobName is the name of the streaming job. inputName is the name of
+// the input. input is if the input specified does not already exist, this parameter must contain the full input
+// definition intended to be tested. If the input specified already exists, this parameter can be left null to test
+// the existing input as is or if specified, the properties specified will overwrite the corresponding properties
+// in the existing input (exactly like a PATCH operation) and the resulting input will be tested.
 func (client InputsClient) Test(ctx context.Context, resourceGroupName string, jobName string, inputName string, input *Input) (result InputsTestFuture, err error) {
 	req, err := client.TestPreparer(ctx, resourceGroupName, jobName, inputName, input)
 	if err != nil {
@@ -442,13 +442,13 @@ func (client InputsClient) TestResponder(resp *http.Response) (result ResourceTe
 // Update updates an existing input under an existing streaming job. This can be used to partially update (ie. update
 // one or two properties) an input without affecting the rest the job or input definition.
 //
-// input is an Input object. The properties specified here will overwrite the corresponding properties in the existing
-// input (ie. Those properties will be updated). Any properties that are set to null here will mean that the
-// corresponding property in the existing input will remain the same and not change as a result of this PATCH
-// operation. resourceGroupName is the name of the resource group that contains the resource. You can obtain this value
-// from the Azure Resource Manager API or the portal. jobName is the name of the streaming job. inputName is the name
-// of the input. ifMatch is the ETag of the input. Omit this value to always overwrite the current input. Specify the
-// last-seen ETag value to prevent accidentally overwritting concurrent changes.
+// input is an Input object. The properties specified here will overwrite the corresponding properties in the
+// existing input (ie. Those properties will be updated). Any properties that are set to null here will mean that
+// the corresponding property in the existing input will remain the same and not change as a result of this PATCH
+// operation. resourceGroupName is the name of the resource group that contains the resource. You can obtain this
+// value from the Azure Resource Manager API or the portal. jobName is the name of the streaming job. inputName is
+// the name of the input. ifMatch is the ETag of the input. Omit this value to always overwrite the current input.
+// Specify the last-seen ETag value to prevent accidentally overwritting concurrent changes.
 func (client InputsClient) Update(ctx context.Context, input Input, resourceGroupName string, jobName string, inputName string, ifMatch string) (result Input, err error) {
 	req, err := client.UpdatePreparer(ctx, input, resourceGroupName, jobName, inputName, ifMatch)
 	if err != nil {

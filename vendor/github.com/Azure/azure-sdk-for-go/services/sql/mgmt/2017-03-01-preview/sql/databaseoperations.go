@@ -44,9 +44,9 @@ func NewDatabaseOperationsClientWithBaseURI(baseURI string, subscriptionID strin
 
 // Cancel cancels the asynchronous operation on the database.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database. operationID is the operation identifier.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database. operationID is the operation identifier.
 func (client DatabaseOperationsClient) Cancel(ctx context.Context, resourceGroupName string, serverName string, databaseName string, operationID uuid.UUID) (result autorest.Response, err error) {
 	req, err := client.CancelPreparer(ctx, resourceGroupName, serverName, databaseName, operationID)
 	if err != nil {
@@ -113,9 +113,9 @@ func (client DatabaseOperationsClient) CancelResponder(resp *http.Response) (res
 
 // ListByDatabase gets a list of operations performed on the database.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database.
 func (client DatabaseOperationsClient) ListByDatabase(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result DatabaseOperationListResultPage, err error) {
 	result.fn = client.listByDatabaseNextResults
 	req, err := client.ListByDatabasePreparer(ctx, resourceGroupName, serverName, databaseName)

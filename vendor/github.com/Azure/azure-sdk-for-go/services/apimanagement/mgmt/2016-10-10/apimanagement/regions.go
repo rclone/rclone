@@ -49,7 +49,7 @@ func (client RegionsClient) ListByService(ctx context.Context, resourceGroupName
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.RegionsClient", "ListByService")
+		return result, validation.NewError("apimanagement.RegionsClient", "ListByService", err.Error())
 	}
 
 	req, err := client.ListByServicePreparer(ctx, resourceGroupName, serviceName)

@@ -86,8 +86,8 @@ const (
 	// ErrCodeInvalidTargetException for service response error code
 	// "InvalidTarget".
 	//
-	// The specified target does not exist or is not in the same VPC as the target
-	// group.
+	// The specified target does not exist, is not in the same VPC as the target
+	// group, or has an unsupported instance type.
 	ErrCodeInvalidTargetException = "InvalidTarget"
 
 	// ErrCodeListenerNotFoundException for service response error code

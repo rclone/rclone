@@ -370,8 +370,8 @@ func (client WorkflowsClient) GetResponder(resp *http.Response) (result Workflow
 
 // ListByResourceGroup gets a list of workflows by resource group.
 //
-// resourceGroupName is the resource group name. top is the number of items to be included in the result. filter is the
-// filter to apply on the operation.
+// resourceGroupName is the resource group name. top is the number of items to be included in the result. filter is
+// the filter to apply on the operation.
 func (client WorkflowsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, top *int32, filter string) (result WorkflowListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, top, filter)

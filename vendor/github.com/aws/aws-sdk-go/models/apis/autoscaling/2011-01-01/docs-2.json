@@ -1,13 +1,13 @@
 {
   "version": "2.0",
-  "service": "<fullname>Auto Scaling</fullname> <p>Auto Scaling is designed to automatically launch or terminate EC2 instances based on user-defined policies, schedules, and health checks. Use this service in conjunction with the Amazon CloudWatch and Elastic Load Balancing services.</p>",
+  "service": "<fullname>Amazon EC2 Auto Scaling</fullname> <p>Amazon EC2 Auto Scaling is designed to automatically launch or terminate EC2 instances based on user-defined policies, schedules, and health checks. Use this service in conjunction with the AWS Auto Scaling, Amazon CloudWatch, and Elastic Load Balancing services.</p>",
   "operations": {
     "AttachInstances": "<p>Attaches one or more EC2 instances to the specified Auto Scaling group.</p> <p>When you attach instances, Auto Scaling increases the desired capacity of the group by the number of instances being attached. If the number of instances being attached plus the desired capacity of the group exceeds the maximum size of the group, the operation fails.</p> <p>If there is a Classic Load Balancer attached to your Auto Scaling group, the instances are also registered with the load balancer. If there are target groups attached to your Auto Scaling group, the instances are also registered with the target groups.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/attach-instance-asg.html\">Attach EC2 Instances to Your Auto Scaling Group</a> in the <i>Auto Scaling User Guide</i>.</p>",
     "AttachLoadBalancerTargetGroups": "<p>Attaches one or more target groups to the specified Auto Scaling group.</p> <p>To describe the target groups for an Auto Scaling group, use <a>DescribeLoadBalancerTargetGroups</a>. To detach the target group from the Auto Scaling group, use <a>DetachLoadBalancerTargetGroups</a>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/attach-load-balancer-asg.html\">Attach a Load Balancer to Your Auto Scaling Group</a> in the <i>Auto Scaling User Guide</i>.</p>",
     "AttachLoadBalancers": "<p>Attaches one or more Classic Load Balancers to the specified Auto Scaling group.</p> <p>To attach an Application Load Balancer instead, see <a>AttachLoadBalancerTargetGroups</a>.</p> <p>To describe the load balancers for an Auto Scaling group, use <a>DescribeLoadBalancers</a>. To detach the load balancer from the Auto Scaling group, use <a>DetachLoadBalancers</a>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/attach-load-balancer-asg.html\">Attach a Load Balancer to Your Auto Scaling Group</a> in the <i>Auto Scaling User Guide</i>.</p>",
     "CompleteLifecycleAction": "<p>Completes the lifecycle action for the specified token or instance with the specified result.</p> <p>This step is a part of the procedure for adding a lifecycle hook to an Auto Scaling group:</p> <ol> <li> <p>(Optional) Create a Lambda function and a rule that allows CloudWatch Events to invoke your Lambda function when Auto Scaling launches or terminates instances.</p> </li> <li> <p>(Optional) Create a notification target and an IAM role. The target can be either an Amazon SQS queue or an Amazon SNS topic. The role allows Auto Scaling to publish lifecycle notifications to the target.</p> </li> <li> <p>Create the lifecycle hook. Specify whether the hook is used when the instances launch or terminate.</p> </li> <li> <p>If you need more time, record the lifecycle action heartbeat to keep the instance in a pending state.</p> </li> <li> <p> <b>If you finish before the timeout period ends, complete the lifecycle action.</b> </p> </li> </ol> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/AutoScalingGroupLifecycle.html\">Auto Scaling Lifecycle</a> in the <i>Auto Scaling User Guide</i>.</p>",
-    "CreateAutoScalingGroup": "<p>Creates an Auto Scaling group with the specified name and attributes.</p> <p>If you exceed your maximum limit of Auto Scaling groups, which by default is 20 per region, the call fails. For information about viewing and updating this limit, see <a>DescribeAccountLimits</a>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/AutoScalingGroup.html\">Auto Scaling Groups</a> in the <i>Auto Scaling User Guide</i>.</p>",
-    "CreateLaunchConfiguration": "<p>Creates a launch configuration.</p> <p>If you exceed your maximum limit of launch configurations, which by default is 100 per region, the call fails. For information about viewing and updating this limit, see <a>DescribeAccountLimits</a>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/LaunchConfiguration.html\">Launch Configurations</a> in the <i>Auto Scaling User Guide</i>.</p>",
+    "CreateAutoScalingGroup": "<p>Creates an Auto Scaling group with the specified name and attributes.</p> <p>If you exceed your maximum limit of Auto Scaling groups, the call fails. For information about viewing this limit, see <a>DescribeAccountLimits</a>. For information about updating this limit, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/as-account-limits.html\">Auto Scaling Limits</a> in the <i>Auto Scaling User Guide</i>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/AutoScalingGroup.html\">Auto Scaling Groups</a> in the <i>Auto Scaling User Guide</i>.</p>",
+    "CreateLaunchConfiguration": "<p>Creates a launch configuration.</p> <p>If you exceed your maximum limit of launch configurations, the call fails. For information about viewing this limit, see <a>DescribeAccountLimits</a>. For information about updating this limit, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/as-account-limits.html\">Auto Scaling Limits</a> in the <i>Auto Scaling User Guide</i>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/LaunchConfiguration.html\">Launch Configurations</a> in the <i>Auto Scaling User Guide</i>.</p>",
     "CreateOrUpdateTags": "<p>Creates or updates tags for the specified Auto Scaling group.</p> <p>When you specify a tag with a key that already exists, the operation overwrites the previous tag definition, and you do not get an error message.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/autoscaling-tagging.html\">Tagging Auto Scaling Groups and Instances</a> in the <i>Auto Scaling User Guide</i>.</p>",
     "DeleteAutoScalingGroup": "<p>Deletes the specified Auto Scaling group.</p> <p>If the group has instances or scaling activities in progress, you must specify the option to force the deletion in order for it to succeed.</p> <p>If the group has policies, deleting the group deletes the policies, the underlying alarm actions, and any alarm that no longer has an associated action.</p> <p>To remove instances from the Auto Scaling group before deleting it, call <a>DetachInstances</a> with the list of instances and the option to decrement the desired capacity so that Auto Scaling does not launch replacement instances.</p> <p>To terminate all instances before deleting the Auto Scaling group, call <a>UpdateAutoScalingGroup</a> and set the minimum size and desired capacity of the Auto Scaling group to zero.</p>",
     "DeleteLaunchConfiguration": "<p>Deletes the specified launch configuration.</p> <p>The launch configuration must not be attached to an Auto Scaling group. When this call completes, the launch configuration is no longer available for use.</p>",
@@ -16,7 +16,7 @@
     "DeletePolicy": "<p>Deletes the specified Auto Scaling policy.</p> <p>Deleting a policy deletes the underlying alarm action, but does not delete the alarm, even if it no longer has an associated action.</p>",
     "DeleteScheduledAction": "<p>Deletes the specified scheduled action.</p>",
     "DeleteTags": "<p>Deletes the specified tags.</p>",
-    "DescribeAccountLimits": "<p>Describes the current Auto Scaling resource limits for your AWS account.</p> <p>For information about requesting an increase in these limits, see <a href=\"http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html\">AWS Service Limits</a> in the <i>Amazon Web Services General Reference</i>.</p>",
+    "DescribeAccountLimits": "<p>Describes the current Auto Scaling resource limits for your AWS account.</p> <p>For information about requesting an increase in these limits, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/as-account-limits.html\">Auto Scaling Limits</a> in the <i>Auto Scaling User Guide</i>.</p>",
     "DescribeAdjustmentTypes": "<p>Describes the policy adjustment types for use with <a>PutScalingPolicy</a>.</p>",
     "DescribeAutoScalingGroups": "<p>Describes one or more Auto Scaling groups.</p>",
     "DescribeAutoScalingInstances": "<p>Describes one or more Auto Scaling instances.</p>",
@@ -133,7 +133,7 @@
     "AssociatePublicIpAddress": {
       "base": null,
       "refs": {
-        "CreateLaunchConfigurationType$AssociatePublicIpAddress": "<p>Used for groups that launch instances into a virtual private cloud (VPC). Specifies whether to assign a public IP address to each instance. For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/asg-in-vpc.html\">Launching Auto Scaling Instances in a VPC</a> in the <i>Auto Scaling User Guide</i>.</p> <p>If you specify this parameter, be sure to specify at least one subnet when you create your group.</p> <p>Default: If the instance is launched into a default subnet, the default is <code>true</code>. If the instance is launched into a nondefault subnet, the default is <code>false</code>. For more information, see <a href=\"http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-supported-platforms.html\">Supported Platforms</a> in the <i>Amazon Elastic Compute Cloud User Guide</i>.</p>",
+        "CreateLaunchConfigurationType$AssociatePublicIpAddress": "<p>Used for groups that launch instances into a virtual private cloud (VPC). Specifies whether to assign a public IP address to each instance. For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/asg-in-vpc.html\">Launching Auto Scaling Instances in a VPC</a> in the <i>Auto Scaling User Guide</i>.</p> <p>If you specify this parameter, be sure to specify at least one subnet when you create your group.</p> <p>Default: If the instance is launched into a default subnet, the default is to assign a public IP address. If the instance is launched into a nondefault subnet, the default is not to assign a public IP address.</p>",
         "LaunchConfiguration$AssociatePublicIpAddress": "<p>[EC2-VPC] Indicates whether to assign a public IP address to each instance.</p>"
       }
     },
@@ -258,7 +258,7 @@
     "BlockDeviceEbsDeleteOnTermination": {
       "base": null,
       "refs": {
-        "Ebs$DeleteOnTermination": "<p>Indicates whether the volume is deleted on instance termination.</p> <p>Default: <code>true</code> </p>"
+        "Ebs$DeleteOnTermination": "<p>Indicates whether the volume is deleted on instance termination. The default is <code>true</code>.</p>"
       }
     },
     "BlockDeviceEbsEncrypted": {
@@ -514,7 +514,7 @@
     "DisableScaleIn": {
       "base": null,
       "refs": {
-        "TargetTrackingConfiguration$DisableScaleIn": "<p>Indicates whether scale in by the target tracking policy is disabled. If the value is <code>true</code>, scale in is disabled and the target tracking policy won't remove instances from the Auto Scaling group. Otherwise, scale in is enabled and the target tracking policy can remove instances from the Auto Scaling group. The default value is <code>false</code>.</p>"
+        "TargetTrackingConfiguration$DisableScaleIn": "<p>Indicates whether scale in by the target tracking policy is disabled. If scale in is disabled, the target tracking policy won't remove instances from the Auto Scaling group. Otherwise, the target tracking policy can remove instances from the Auto Scaling group. The default is disabled.</p>"
       }
     },
     "Ebs": {
@@ -622,8 +622,8 @@
     "HonorCooldown": {
       "base": null,
       "refs": {
-        "ExecutePolicyType$HonorCooldown": "<p>If this parameter is true, Auto Scaling waits for the cooldown period to complete before executing the policy. Otherwise, Auto Scaling executes the policy without waiting for the cooldown period to complete.</p> <p>This parameter is not supported if the policy type is <code>StepScaling</code>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/Cooldown.html\">Auto Scaling Cooldowns</a> in the <i>Auto Scaling User Guide</i>.</p>",
-        "SetDesiredCapacityType$HonorCooldown": "<p>By default, <code>SetDesiredCapacity</code> overrides any cooldown period associated with the Auto Scaling group. Specify <code>True</code> to make Auto Scaling to wait for the cool-down period associated with the Auto Scaling group to complete before initiating a scaling activity to set your Auto Scaling group to its new capacity.</p>"
+        "ExecutePolicyType$HonorCooldown": "<p>Indicates whether Auto Scaling waits for the cooldown period to complete before executing the policy.</p> <p>This parameter is not supported if the policy type is <code>StepScaling</code>.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/Cooldown.html\">Auto Scaling Cooldowns</a> in the <i>Auto Scaling User Guide</i>.</p>",
+        "SetDesiredCapacityType$HonorCooldown": "<p>Indicates whether Auto Scaling waits for the cooldown period to complete before initiating a scaling activity to set your Auto Scaling group to its new capacity. By default, Auto Scaling does not honor the cooldown period during manual scaling activities.</p>"
       }
     },
     "Instance": {
@@ -635,11 +635,11 @@
     "InstanceIds": {
       "base": null,
       "refs": {
-        "AttachInstancesQuery$InstanceIds": "<p>One or more instance IDs.</p>",
+        "AttachInstancesQuery$InstanceIds": "<p>The IDs of the instances. You can specify up to 20 instances.</p>",
         "DescribeAutoScalingInstancesType$InstanceIds": "<p>The instances to describe; up to 50 instance IDs. If you omit this parameter, all Auto Scaling instances are described. If you specify an ID that does not exist, it is ignored with no error.</p>",
-        "DetachInstancesQuery$InstanceIds": "<p>One or more instance IDs.</p>",
-        "EnterStandbyQuery$InstanceIds": "<p>One or more instances to move into <code>Standby</code> mode. You must specify at least one instance ID.</p>",
-        "ExitStandbyQuery$InstanceIds": "<p>One or more instance IDs. You must specify at least one instance ID.</p>",
+        "DetachInstancesQuery$InstanceIds": "<p>The IDs of the instances. You can specify up to 20 instances.</p>",
+        "EnterStandbyQuery$InstanceIds": "<p>The IDs of the instances. You can specify up to 20 instances.</p>",
+        "ExitStandbyQuery$InstanceIds": "<p>The IDs of the instances. You can specify up to 20 instances.</p>",
         "SetInstanceProtectionQuery$InstanceIds": "<p>One or more instance IDs.</p>"
       }
     },
@@ -717,7 +717,7 @@
         "AutoScalingInstanceDetails$LaunchTemplate": "<p>The launch template for the instance.</p>",
         "CreateAutoScalingGroupType$LaunchTemplate": "<p>The launch template to use to launch instances. You must specify one of the following: a launch template, a launch configuration, or an EC2 instance.</p>",
         "Instance$LaunchTemplate": "<p>The launch template for the instance.</p>",
-        "UpdateAutoScalingGroupType$LaunchTemplate": "<p>The launch template to use to specify the updates. You must specify a launch configuration or a launch template.</p>"
+        "UpdateAutoScalingGroupType$LaunchTemplate": "<p>The launch template to use to specify the updates. If you specify a launch template, you can't specify a launch configuration.</p>"
       }
     },
     "LifecycleActionResult": {
@@ -788,10 +788,10 @@
     "LoadBalancerNames": {
       "base": null,
       "refs": {
-        "AttachLoadBalancersType$LoadBalancerNames": "<p>One or more load balancer names.</p>",
+        "AttachLoadBalancersType$LoadBalancerNames": "<p>The names of the load balancers. You can specify up to 10 load balancers.</p>",
         "AutoScalingGroup$LoadBalancerNames": "<p>One or more load balancers associated with the group.</p>",
         "CreateAutoScalingGroupType$LoadBalancerNames": "<p>One or more Classic Load Balancers. To specify an Application Load Balancer, use <code>TargetGroupARNs</code> instead.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/autoscaling/latest/userguide/create-asg-from-instance.html\">Using a Load Balancer With an Auto Scaling Group</a> in the <i>Auto Scaling User Guide</i>.</p>",
-        "DetachLoadBalancersType$LoadBalancerNames": "<p>One or more load balancer names.</p>"
+        "DetachLoadBalancersType$LoadBalancerNames": "<p>The names of the load balancers. You can specify up to 10 load balancers.</p>"
       }
     },
     "LoadBalancerState": {
@@ -834,12 +834,12 @@
       "base": null,
       "refs": {
         "AutoScalingGroupNamesType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>",
-        "DescribeAutoScalingInstancesType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>",
-        "DescribeLoadBalancerTargetGroupsRequest$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>",
-        "DescribeLoadBalancersRequest$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>",
+        "DescribeAutoScalingInstancesType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 50.</p>",
+        "DescribeLoadBalancerTargetGroupsRequest$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 100 and the maximum value is 100.</p>",
+        "DescribeLoadBalancersRequest$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 100 and the maximum value is 100.</p>",
         "DescribeNotificationConfigurationsType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>",
         "DescribePoliciesType$MaxRecords": "<p>The maximum number of items to be returned with each call. The default value is 50 and the maximum value is 100.</p>",
-        "DescribeScalingActivitiesType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 100.</p>",
+        "DescribeScalingActivitiesType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 100 and the maximum value is 100.</p>",
         "DescribeScheduledActionsType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>",
         "DescribeTagsType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>",
         "LaunchConfigurationNamesType$MaxRecords": "<p>The maximum number of items to return with this call. The default value is 50 and the maximum value is 100.</p>"
@@ -1128,9 +1128,11 @@
         "AttachLoadBalancerTargetGroupsType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "AttachLoadBalancersType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "AutoScalingGroup$AutoScalingGroupARN": "<p>The Amazon Resource Name (ARN) of the Auto Scaling group.</p>",
+        "AutoScalingGroup$ServiceLinkedRoleARN": "<p>The Amazon Resource Name (ARN) of the service-linked role that the Auto Scaling group uses to call other AWS services on your behalf.</p>",
         "AutoScalingGroupNames$member": null,
         "CompleteLifecycleActionType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "CreateAutoScalingGroupType$LaunchConfigurationName": "<p>The name of the launch configuration. You must specify one of the following: a launch configuration, a launch template, or an EC2 instance.</p>",
+        "CreateAutoScalingGroupType$ServiceLinkedRoleARN": "<p>The Amazon Resource Name (ARN) of the service-linked role that the Auto Scaling group uses to call other AWS services on your behalf. By default, Auto Scaling uses a service-linked role named AWSServiceRoleForAutoScaling, which it creates if it does not exist.</p>",
         "DeleteAutoScalingGroupType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "DeleteLifecycleHookType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "DeleteNotificationConfigurationType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
@@ -1179,7 +1181,8 @@
         "SetDesiredCapacityType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "SetInstanceProtectionQuery$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "UpdateAutoScalingGroupType$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
-        "UpdateAutoScalingGroupType$LaunchConfigurationName": "<p>The name of the launch configuration. You must specify either a launch configuration or a launch template.</p>"
+        "UpdateAutoScalingGroupType$LaunchConfigurationName": "<p>The name of the launch configuration. If you specify a launch configuration, you can't specify a launch template.</p>",
+        "UpdateAutoScalingGroupType$ServiceLinkedRoleARN": "<p>The Amazon Resource Name (ARN) of the service-linked role that the Auto Scaling group uses to call other AWS services on your behalf.</p>"
       }
     },
     "ScalingActivityInProgressFault": {
@@ -1240,6 +1243,11 @@
         "LaunchConfiguration$SecurityGroups": "<p>The security groups to associate with the instances.</p>"
       }
     },
+    "ServiceLinkedRoleFailure": {
+      "base": "<p>The service-linked role is not yet ready for use.</p>",
+      "refs": {
+      }
+    },
     "SetDesiredCapacityType": {
       "base": null,
       "refs": {
@@ -1263,9 +1271,9 @@
     "ShouldDecrementDesiredCapacity": {
       "base": null,
       "refs": {
-        "DetachInstancesQuery$ShouldDecrementDesiredCapacity": "<p>If <code>True</code>, the Auto Scaling group decrements the desired capacity value by the number of instances detached.</p>",
-        "EnterStandbyQuery$ShouldDecrementDesiredCapacity": "<p>Specifies whether the instances moved to <code>Standby</code> mode count as part of the Auto Scaling group's desired capacity. If set, the desired capacity for the Auto Scaling group decrements by the number of instances moved to <code>Standby</code> mode.</p>",
-        "TerminateInstanceInAutoScalingGroupType$ShouldDecrementDesiredCapacity": "<p>If <code>true</code>, terminating the instance also decrements the size of the Auto Scaling group.</p>"
+        "DetachInstancesQuery$ShouldDecrementDesiredCapacity": "<p>Indicates whether the Auto Scaling group decrements the desired capacity value by the number of instances detached.</p>",
+        "EnterStandbyQuery$ShouldDecrementDesiredCapacity": "<p>Indicates whether to decrement the desired capacity of the Auto Scaling group by the number of instances moved to <code>Standby</code> mode.</p>",
+        "TerminateInstanceInAutoScalingGroupType$ShouldDecrementDesiredCapacity": "<p>Indicates whether terminating the instance also decrements the size of the Auto Scaling group.</p>"
       }
     },
     "ShouldRespectGracePeriod": {
@@ -1355,10 +1363,10 @@
     "TargetGroupARNs": {
       "base": null,
       "refs": {
-        "AttachLoadBalancerTargetGroupsType$TargetGroupARNs": "<p>The Amazon Resource Names (ARN) of the target groups.</p>",
+        "AttachLoadBalancerTargetGroupsType$TargetGroupARNs": "<p>The Amazon Resource Names (ARN) of the target groups. You can specify up to 10 target groups.</p>",
         "AutoScalingGroup$TargetGroupARNs": "<p>The Amazon Resource Names (ARN) of the target groups for your load balancer.</p>",
         "CreateAutoScalingGroupType$TargetGroupARNs": "<p>The Amazon Resource Names (ARN) of the target groups.</p>",
-        "DetachLoadBalancerTargetGroupsType$TargetGroupARNs": "<p>The Amazon Resource Names (ARN) of the target groups.</p>"
+        "DetachLoadBalancerTargetGroupsType$TargetGroupARNs": "<p>The Amazon Resource Names (ARN) of the target groups. You can specify up to 10 target groups.</p>"
       }
     },
     "TargetTrackingConfiguration": {
@@ -1530,7 +1538,7 @@
         "LaunchConfiguration$KernelId": "<p>The ID of the kernel associated with the AMI.</p>",
         "LaunchConfiguration$RamdiskId": "<p>The ID of the RAM disk associated with the AMI.</p>",
         "LaunchTemplateSpecification$LaunchTemplateId": "<p>The ID of the launch template. You must specify either a template ID or a template name.</p>",
-        "LaunchTemplateSpecification$Version": "<p>The version number. By default, the default version of the launch template is used.</p>",
+        "LaunchTemplateSpecification$Version": "<p>The version number, <code>$Latest</code>, or <code>$Default</code>. If the value is <code>$Latest</code>, Auto Scaling selects the latest version of the launch template when launching instances. If the value is <code>$Default</code>, Auto Scaling selects the default version of the launch template when launching instances. The default value is <code>$Default</code>.</p>",
         "LimitExceededFault$message": "<p/>",
         "LoadBalancerNames$member": null,
         "LoadBalancerState$LoadBalancerName": "<p>The name of the load balancer.</p>",
@@ -1555,6 +1563,7 @@
         "ScheduledUpdateGroupAction$AutoScalingGroupName": "<p>The name of the Auto Scaling group.</p>",
         "ScheduledUpdateGroupAction$ScheduledActionName": "<p>The name of the scheduled action.</p>",
         "ScheduledUpdateGroupAction$Recurrence": "<p>The recurring schedule for the action.</p>",
+        "ServiceLinkedRoleFailure$message": null,
         "SuspendedProcess$ProcessName": "<p>The name of the suspended process.</p>",
         "SuspendedProcess$SuspensionReason": "<p>The reason that the process was suspended.</p>",
         "UpdateAutoScalingGroupType$PlacementGroup": "<p>The name of the placement group into which you'll launch your instances, if any. For more information, see <a href=\"http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html\">Placement Groups</a> in the <i>Amazon Elastic Compute Cloud User Guide</i>.</p>"

@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/internal/sdkio"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 )
@@ -71,12 +72,11 @@ func (c *EncryptionClient) PutObjectRequest(input *s3.PutObjectInput) (*request.
 	req, out := c.S3Client.PutObjectRequest(input)
 
 	// Get Size of file
-	n, err := input.Body.Seek(0, 2)
+	n, err := aws.SeekerLen(input.Body)
 	if err != nil {
 		req.Error = err
 		return req, out
 	}
-	input.Body.Seek(0, 0)
 
 	dst, err := getWriterStore(req, c.TempFolderPath, n >= c.MinFileSize)
 	if err != nil {
@@ -115,7 +115,7 @@ func (c *EncryptionClient) PutObjectRequest(input *s3.PutObjectInput) (*request.
 		shaHex := hex.EncodeToString(sha.GetValue())
 		req.HTTPRequest.Header.Set("X-Amz-Content-Sha256", shaHex)
 
-		dst.Seek(0, 0)
+		dst.Seek(0, sdkio.SeekStart)
 		input.Body = dst
 
 		err = c.SaveStrategy.Save(env, r)

@@ -277,13 +277,10 @@ const (
 	// Some of the reasons in the following list might not be applicable to this
 	// specific API or operation:
 	//
-	//    * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
-	//    organization, or email) as a party.
+	//    * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
+	//    cannot be modified.
 	//
-	//    * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
-	//    organization.
-	//
-	//    * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+	//    * INPUT_REQUIRED: You must include a value for all required parameters.
 	//
 	//    * INVALID_ENUM: You specified a value that is not valid for that parameter.
 	//
@@ -292,6 +289,29 @@ const (
 	//
 	//    * INVALID_LIST_MEMBER: You provided a list to a parameter that contains
 	//    at least one invalid value.
+	//
+	//    * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
+	//    organization, or email) as a party.
+	//
+	//    * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
+	//    from the response to a previous call of the operation.
+	//
+	//    * INVALID_PATTERN: You provided a value that doesn't match the required
+	//    pattern.
+	//
+	//    * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
+	//    match the required pattern.
+	//
+	//    * INVALID_ROLE_NAME: You provided a role name that is not valid. A role
+	//    name can’t begin with the reserved prefix 'AWSServiceRoleFor'.
+	//
+	//    * INVALID_SYNTAX_ORGANIZATION_ARN: You specified an invalid ARN for the
+	//    organization.
+	//
+	//    * INVALID_SYNTAX_POLICY_ID: You specified an invalid policy ID.
+	//
+	//    * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
+	//    for the operation.
 	//
 	//    * MAX_LENGTH_EXCEEDED: You provided a string parameter that is longer
 	//    than allowed.
@@ -304,23 +324,6 @@ const (
 	//
 	//    * MIN_VALUE_EXCEEDED: You provided a numeric parameter that has a smaller
 	//    value than allowed.
-	//
-	//    * IMMUTABLE_POLICY: You specified a policy that is managed by AWS and
-	//    cannot be modified.
-	//
-	//    * INVALID_PATTERN: You provided a value that doesn't match the required
-	//    pattern.
-	//
-	//    * INVALID_PATTERN_TARGET_ID: You specified a policy target ID that doesn't
-	//    match the required pattern.
-	//
-	//    * INPUT_REQUIRED: You must include a value for all required parameters.
-	//
-	//    * INVALID_PAGINATION_TOKEN: Get the value for the NextToken parameter
-	//    from the response to a previous call of the operation.
-	//
-	//    * MAX_FILTER_LIMIT_EXCEEDED: You can specify only one filter parameter
-	//    for the operation.
 	//
 	//    * MOVING_ACCOUNT_BETWEEN_DIFFERENT_ROOTS: You can move an account only
 	//    between entities in the same root.

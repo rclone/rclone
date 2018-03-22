@@ -27,6 +27,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/yunify/qingstor-sdk-go/logger"
+	"github.com/yunify/qingstor-sdk-go/utils"
 )
 
 // A Config stores a configuration of this sdk.
@@ -43,7 +44,53 @@ type Config struct {
 
 	LogLevel string `yaml:"log_level"`
 
+	HTTPSettings HTTPClientSettings
+
 	Connection *http.Client
+}
+
+// HTTPClientSettings is the http client settings.
+type HTTPClientSettings struct {
+
+	// ConnectTimeout affects making new socket connection
+	ConnectTimeout time.Duration `yaml:"connect_timeout"`
+
+	// ReadTimeout affect each call to HTTPResponse.Body.Read()
+	ReadTimeout time.Duration `yaml:"read_timeout"`
+
+	// WriteTimeout affect each write in io.Copy while sending HTTPRequest
+	WriteTimeout time.Duration `yaml:"write_timeout" `
+
+	// TLSHandshakeTimeout affects https hand shake timeout
+	TLSHandshakeTimeout time.Duration `yaml:"tls_timeout"`
+
+	// IdleConnTimeout affects the time limit to re-use http connections
+	IdleConnTimeout time.Duration `yaml:"idle_timeout"`
+
+	TCPKeepAlive    time.Duration `yaml:"tcp_keepalive_time"`
+
+	DualStack       bool          `yaml:"dual_stack"`
+
+	// MaxIdleConns affects the idle connections kept for re-use
+	MaxIdleConns          int           `yaml:"max_idle_conns"`
+
+	MaxIdleConnsPerHost   int           `yaml:"max_idle_conns_per_host"`
+
+	ExpectContinueTimeout time.Duration `yaml:"expect_continue_timeout"`
+}
+
+// DefaultHTTPClientSettings is the default http client settings.
+var DefaultHTTPClientSettings = HTTPClientSettings{
+	ConnectTimeout:        time.Second * 30,
+	ReadTimeout:           time.Second * 30,
+	WriteTimeout:          time.Second * 30,
+	TLSHandshakeTimeout:   time.Second * 10,
+	IdleConnTimeout:       time.Second * 20,
+	TCPKeepAlive:          0,
+	DualStack:             false,
+	MaxIdleConns:          100,
+	MaxIdleConnsPerHost:   10,
+	ExpectContinueTimeout: time.Second * 2,
 }
 
 // New create a Config with given AccessKeyID and SecretAccessKey.
@@ -53,13 +100,8 @@ func New(accessKeyID, secretAccessKey string) (c *Config, err error) {
 		c = nil
 		return
 	}
-
 	c.AccessKeyID = accessKeyID
 	c.SecretAccessKey = secretAccessKey
-
-	c.Connection = &http.Client{
-		Timeout: time.Minute,
-	}
 
 	return
 }
@@ -71,10 +113,6 @@ func NewDefault() (c *Config, err error) {
 	if err != nil {
 		c = nil
 		return
-	}
-
-	c.Connection = &http.Client{
-		Timeout: time.Minute,
 	}
 	return
 }
@@ -124,6 +162,9 @@ func (c *Config) Check() (err error) {
 // LoadDefaultConfig loads the default configuration for Config.
 // It returns error if yaml decode failed.
 func (c *Config) LoadDefaultConfig() (err error) {
+
+	c.HTTPSettings = DefaultHTTPClientSettings
+
 	err = yaml.Unmarshal([]byte(DefaultConfigFileContent), c)
 	if err != nil {
 		logger.Errorf(nil, "Config parse error, %v.", err)
@@ -131,6 +172,8 @@ func (c *Config) LoadDefaultConfig() (err error) {
 	}
 
 	logger.SetLevel(c.LogLevel)
+
+	c.InitHTTPClient()
 	return
 }
 
@@ -179,5 +222,54 @@ func (c *Config) LoadConfigFromContent(content []byte) (err error) {
 	}
 
 	logger.SetLevel(c.LogLevel)
+
+	c.InitHTTPClient()
 	return
+}
+
+// InitHTTPClient : After modifying Config.HTTPSettings, you should always call this to initialize the HTTP Client.
+func (c *Config) InitHTTPClient() {
+	var emptySettings HTTPClientSettings
+
+	if c.HTTPSettings == emptySettings { // User forgot to initialize the settings
+		c.HTTPSettings = DefaultHTTPClientSettings
+	} else {
+		if c.HTTPSettings.ConnectTimeout == 0 {
+			c.HTTPSettings.ConnectTimeout = DefaultHTTPClientSettings.ConnectTimeout
+		}
+		// If ReadTimeout and WriteTimeout is zero, means no read/write timeout
+		if c.HTTPSettings.TLSHandshakeTimeout == 0 {
+			c.HTTPSettings.TLSHandshakeTimeout = DefaultHTTPClientSettings.TLSHandshakeTimeout
+		}
+		if c.HTTPSettings.ExpectContinueTimeout == 0 {
+			c.HTTPSettings.ExpectContinueTimeout = DefaultHTTPClientSettings.ExpectContinueTimeout
+		}
+	}
+	dialer := utils.NewDialer(
+		c.HTTPSettings.ConnectTimeout,
+		c.HTTPSettings.ReadTimeout,
+		c.HTTPSettings.WriteTimeout,
+	)
+	dialer.KeepAlive = c.HTTPSettings.TCPKeepAlive
+	// XXX: DualStack enables RFC 6555-compliant "Happy Eyeballs" dialing
+	// when the network is "tcp" and the destination is a host name
+	// with both IPv4 and IPv6 addresses. This allows a client to
+	// tolerate networks where one address family is silently broken
+	dialer.DualStack = c.HTTPSettings.DualStack
+	c.Connection = &http.Client{
+		// We do not use the timeout in http client,
+		// because this timeout is for the whole http body read/write,
+		// it's unsuitable for various length of files and network condition.
+		// We provide a wraper in utils/conn.go of net.Dialer to make io timeout to the http connection
+		// for individual buffer I/O operation,
+		Timeout: 0,
+		Transport: &http.Transport{
+			DialContext:           dialer.DialContext,
+			MaxIdleConns:          c.HTTPSettings.MaxIdleConns,
+			MaxIdleConnsPerHost:   c.HTTPSettings.MaxIdleConnsPerHost,
+			IdleConnTimeout:       c.HTTPSettings.IdleConnTimeout,
+			TLSHandshakeTimeout:   c.HTTPSettings.TLSHandshakeTimeout,
+			ExpectContinueTimeout: c.HTTPSettings.ExpectContinueTimeout,
+		},
+	}
 }

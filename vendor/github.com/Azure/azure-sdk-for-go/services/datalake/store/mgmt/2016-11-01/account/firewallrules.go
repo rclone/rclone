@@ -43,17 +43,17 @@ func NewFirewallRulesClientWithBaseURI(baseURI string, subscriptionID string) Fi
 // CreateOrUpdate creates or updates the specified firewall rule. During update, the firewall rule with the specified
 // name will be replaced with this new firewall rule.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName is
-// the name of the Data Lake Store account to add or replace the firewall rule. firewallRuleName is the name of the
-// firewall rule to create or update. parameters is parameters supplied to create or update the firewall rule.
-func (client FirewallRulesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, accountName string, firewallRuleName string, parameters FirewallRule) (result FirewallRule, err error) {
+// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
+// account. firewallRuleName is the name of the firewall rule to create or update. parameters is parameters
+// supplied to create or update the firewall rule.
+func (client FirewallRulesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, accountName string, firewallRuleName string, parameters CreateOrUpdateFirewallRuleParameters) (result FirewallRule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
-			Constraints: []validation.Constraint{{Target: "parameters.FirewallRuleProperties", Name: validation.Null, Rule: true,
-				Chain: []validation.Constraint{{Target: "parameters.FirewallRuleProperties.StartIPAddress", Name: validation.Null, Rule: true, Chain: nil},
-					{Target: "parameters.FirewallRuleProperties.EndIPAddress", Name: validation.Null, Rule: true, Chain: nil},
+			Constraints: []validation.Constraint{{Target: "parameters.CreateOrUpdateFirewallRuleProperties", Name: validation.Null, Rule: true,
+				Chain: []validation.Constraint{{Target: "parameters.CreateOrUpdateFirewallRuleProperties.StartIPAddress", Name: validation.Null, Rule: true, Chain: nil},
+					{Target: "parameters.CreateOrUpdateFirewallRuleProperties.EndIPAddress", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "account.FirewallRulesClient", "CreateOrUpdate")
+		return result, validation.NewError("account.FirewallRulesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, accountName, firewallRuleName, parameters)
@@ -78,7 +78,7 @@ func (client FirewallRulesClient) CreateOrUpdate(ctx context.Context, resourceGr
 }
 
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
-func (client FirewallRulesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, accountName string, firewallRuleName string, parameters FirewallRule) (*http.Request, error) {
+func (client FirewallRulesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, accountName string, firewallRuleName string, parameters CreateOrUpdateFirewallRuleParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"accountName":       autorest.Encode("path", accountName),
 		"firewallRuleName":  autorest.Encode("path", firewallRuleName),
@@ -123,9 +123,8 @@ func (client FirewallRulesClient) CreateOrUpdateResponder(resp *http.Response) (
 
 // Delete deletes the specified firewall rule from the specified Data Lake Store account
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName is
-// the name of the Data Lake Store account from which to delete the firewall rule. firewallRuleName is the name of the
-// firewall rule to delete.
+// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
+// account. firewallRuleName is the name of the firewall rule to delete.
 func (client FirewallRulesClient) Delete(ctx context.Context, resourceGroupName string, accountName string, firewallRuleName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName, firewallRuleName)
 	if err != nil {
@@ -191,9 +190,8 @@ func (client FirewallRulesClient) DeleteResponder(resp *http.Response) (result a
 
 // Get gets the specified Data Lake Store firewall rule.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName is
-// the name of the Data Lake Store account from which to get the firewall rule. firewallRuleName is the name of the
-// firewall rule to retrieve.
+// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
+// account. firewallRuleName is the name of the firewall rule to retrieve.
 func (client FirewallRulesClient) Get(ctx context.Context, resourceGroupName string, accountName string, firewallRuleName string) (result FirewallRule, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountName, firewallRuleName)
 	if err != nil {
@@ -260,9 +258,9 @@ func (client FirewallRulesClient) GetResponder(resp *http.Response) (result Fire
 
 // ListByAccount lists the Data Lake Store firewall rules within the specified Data Lake Store account.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName is
-// the name of the Data Lake Store account from which to get the firewall rules.
-func (client FirewallRulesClient) ListByAccount(ctx context.Context, resourceGroupName string, accountName string) (result DataLakeStoreFirewallRuleListResultPage, err error) {
+// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
+// account.
+func (client FirewallRulesClient) ListByAccount(ctx context.Context, resourceGroupName string, accountName string) (result FirewallRuleListResultPage, err error) {
 	result.fn = client.listByAccountNextResults
 	req, err := client.ListByAccountPreparer(ctx, resourceGroupName, accountName)
 	if err != nil {
@@ -272,12 +270,12 @@ func (client FirewallRulesClient) ListByAccount(ctx context.Context, resourceGro
 
 	resp, err := client.ListByAccountSender(req)
 	if err != nil {
-		result.dlsfrlr.Response = autorest.Response{Response: resp}
+		result.frlr.Response = autorest.Response{Response: resp}
 		err = autorest.NewErrorWithError(err, "account.FirewallRulesClient", "ListByAccount", resp, "Failure sending request")
 		return
 	}
 
-	result.dlsfrlr, err = client.ListByAccountResponder(resp)
+	result.frlr, err = client.ListByAccountResponder(resp)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "account.FirewallRulesClient", "ListByAccount", resp, "Failure responding to request")
 	}
@@ -315,7 +313,7 @@ func (client FirewallRulesClient) ListByAccountSender(req *http.Request) (*http.
 
 // ListByAccountResponder handles the response to the ListByAccount request. The method always
 // closes the http.Response Body.
-func (client FirewallRulesClient) ListByAccountResponder(resp *http.Response) (result DataLakeStoreFirewallRuleListResult, err error) {
+func (client FirewallRulesClient) ListByAccountResponder(resp *http.Response) (result FirewallRuleListResult, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
@@ -327,8 +325,8 @@ func (client FirewallRulesClient) ListByAccountResponder(resp *http.Response) (r
 }
 
 // listByAccountNextResults retrieves the next set of results, if any.
-func (client FirewallRulesClient) listByAccountNextResults(lastResults DataLakeStoreFirewallRuleListResult) (result DataLakeStoreFirewallRuleListResult, err error) {
-	req, err := lastResults.dataLakeStoreFirewallRuleListResultPreparer()
+func (client FirewallRulesClient) listByAccountNextResults(lastResults FirewallRuleListResult) (result FirewallRuleListResult, err error) {
+	req, err := lastResults.firewallRuleListResultPreparer()
 	if err != nil {
 		return result, autorest.NewErrorWithError(err, "account.FirewallRulesClient", "listByAccountNextResults", nil, "Failure preparing next results request")
 	}
@@ -348,16 +346,16 @@ func (client FirewallRulesClient) listByAccountNextResults(lastResults DataLakeS
 }
 
 // ListByAccountComplete enumerates all values, automatically crossing page boundaries as required.
-func (client FirewallRulesClient) ListByAccountComplete(ctx context.Context, resourceGroupName string, accountName string) (result DataLakeStoreFirewallRuleListResultIterator, err error) {
+func (client FirewallRulesClient) ListByAccountComplete(ctx context.Context, resourceGroupName string, accountName string) (result FirewallRuleListResultIterator, err error) {
 	result.page, err = client.ListByAccount(ctx, resourceGroupName, accountName)
 	return
 }
 
 // Update updates the specified firewall rule.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Store account. accountName is
-// the name of the Data Lake Store account to which to update the firewall rule. firewallRuleName is the name of the
-// firewall rule to update. parameters is parameters supplied to update the firewall rule.
+// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Store
+// account. firewallRuleName is the name of the firewall rule to update. parameters is parameters supplied to
+// update the firewall rule.
 func (client FirewallRulesClient) Update(ctx context.Context, resourceGroupName string, accountName string, firewallRuleName string, parameters *UpdateFirewallRuleParameters) (result FirewallRule, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, firewallRuleName, parameters)
 	if err != nil {

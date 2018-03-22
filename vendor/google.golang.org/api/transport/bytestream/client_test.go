@@ -145,7 +145,7 @@ func TestClientRead(t *testing.T) {
 			doubleCheckBuf := make([]byte, bufSize)
 			n2, err2 := r.Read(doubleCheckBuf)
 			if err2 != io.EOF {
-				t.Errorf("%s: read and got EOF, double-check: read %d bytes got err=%v", n2, err2)
+				t.Errorf("%s: read and got EOF, double-check: read %d bytes got err=%v", tc.name, n2, err2)
 				continue
 			}
 		}

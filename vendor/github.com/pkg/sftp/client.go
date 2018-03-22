@@ -24,27 +24,55 @@ var InternalInconsistency = errors.New("internal inconsistency")
 // A ClientOption is a function which applies configuration to a Client.
 type ClientOption func(*Client) error
 
-// This is based on Openssh's max accepted size of 1<<18 - overhead
-const maxMaxPacket = (1 << 18) - 1024
-
-// MaxPacket sets the maximum size of the payload. The size param must be
-// between 32768 (1<<15) and 261120 ((1 << 18) - 1024). The minimum size is
-// given by the RFC, while the maximum size is a de-facto standard based on
-// Openssh's SFTP server which won't accept packets much larger than that.
+// MaxPacketChecked sets the maximum size of the payload, measured in bytes.
+// This option only accepts sizes servers should support, ie. <= 32768 bytes.
 //
-// Note if you aren't using Openssh's sftp server and get the error "failed to
-// send packet header: EOF" when copying a large file try lowering this number.
-func MaxPacket(size int) ClientOption {
+// If you get the error "failed to send packet header: EOF" when copying a
+// large file, try lowering this number.
+//
+// The default packet size is 32768 bytes.
+func MaxPacketChecked(size int) ClientOption {
 	return func(c *Client) error {
-		if size < 1<<15 {
-			return errors.Errorf("size must be greater or equal to 32k")
+		if size < 1 {
+			return errors.Errorf("size must be greater or equal to 1")
 		}
-		if size > maxMaxPacket {
-			return errors.Errorf("max packet size is too large (see docs)")
+		if size > 32768 {
+			return errors.Errorf("sizes larger than 32KB might not work with all servers")
 		}
 		c.maxPacket = size
 		return nil
 	}
+}
+
+// MaxPacketUnchecked sets the maximum size of the payload, measured in bytes.
+// It accepts sizes larger than the 32768 bytes all servers should support.
+// Only use a setting higher than 32768 if your application always connects to
+// the same server or after sufficiently broad testing.
+//
+// If you get the error "failed to send packet header: EOF" when copying a
+// large file, try lowering this number.
+//
+// The default packet size is 32768 bytes.
+func MaxPacketUnchecked(size int) ClientOption {
+	return func(c *Client) error {
+		if size < 1 {
+			return errors.Errorf("size must be greater or equal to 1")
+		}
+		c.maxPacket = size
+		return nil
+	}
+}
+
+// MaxPacket sets the maximum size of the payload, measured in bytes.
+// This option only accepts sizes servers should support, ie. <= 32768 bytes.
+// This is a synonym for MaxPacketChecked that provides backward compatibility.
+//
+// If you get the error "failed to send packet header: EOF" when copying a
+// large file, try lowering this number.
+//
+// The default packet size is 32768 bytes.
+func MaxPacket(size int) ClientOption {
+	return MaxPacketChecked(size)
 }
 
 // NewClient creates a new SFTP client on conn, using zero or more option
@@ -112,9 +140,10 @@ type Client struct {
 	nextid    uint32
 }
 
-// Create creates the named file mode 0666 (before umask), truncating it if
-// it already exists. If successful, methods on the returned File can be
-// used for I/O; the associated file descriptor has mode O_RDWR.
+// Create creates the named file mode 0666 (before umask), truncating it if it
+// already exists. If successful, methods on the returned File can be used for
+// I/O; the associated file descriptor has mode O_RDWR. If you need more
+// control over the flags/mode used to open the file see client.OpenFile.
 func (c *Client) Create(path string) (*File, error) {
 	return c.open(path, flags(os.O_RDWR|os.O_CREATE|os.O_TRUNC))
 }
@@ -697,7 +726,7 @@ func (f *File) Read(b []byte) (int, error) {
 	offset := f.offset
 	// maxConcurrentRequests buffer to deal with broadcastErr() floods
 	// also must have a buffer of max value of (desiredInFlight - inFlight)
-	ch := make(chan result, maxConcurrentRequests)
+	ch := make(chan result, maxConcurrentRequests+1)
 	type inflightRead struct {
 		b      []byte
 		offset uint64
@@ -793,7 +822,7 @@ func (f *File) WriteTo(w io.Writer) (int64, error) {
 	writeOffset := offset
 	fileSize := uint64(fi.Size())
 	// see comment on same line in Read() above
-	ch := make(chan result, maxConcurrentRequests)
+	ch := make(chan result, maxConcurrentRequests+1)
 	type inflightRead struct {
 		b      []byte
 		offset uint64
@@ -936,7 +965,7 @@ func (f *File) Write(b []byte) (int, error) {
 	desiredInFlight := 1
 	offset := f.offset
 	// see comment on same line in Read() above
-	ch := make(chan result, maxConcurrentRequests)
+	ch := make(chan result, maxConcurrentRequests+1)
 	var firstErr error
 	written := len(b)
 	for len(b) > 0 || inFlight > 0 {
@@ -997,7 +1026,7 @@ func (f *File) ReadFrom(r io.Reader) (int64, error) {
 	desiredInFlight := 1
 	offset := f.offset
 	// see comment on same line in Read() above
-	ch := make(chan result, maxConcurrentRequests)
+	ch := make(chan result, maxConcurrentRequests+1)
 	var firstErr error
 	read := int64(0)
 	b := make([]byte, f.c.maxPacket)
@@ -1061,11 +1090,11 @@ func (f *File) ReadFrom(r io.Reader) (int64, error) {
 // the file is undefined. Seeking relative to the end calls Stat.
 func (f *File) Seek(offset int64, whence int) (int64, error) {
 	switch whence {
-	case os.SEEK_SET:
+	case io.SeekStart:
 		f.offset = uint64(offset)
-	case os.SEEK_CUR:
+	case io.SeekCurrent:
 		f.offset = uint64(int64(f.offset) + offset)
-	case os.SEEK_END:
+	case io.SeekEnd:
 		fi, err := f.Stat()
 		if err != nil {
 			return int64(f.offset), err

@@ -43,8 +43,8 @@ func NewReplicationsClientWithBaseURI(baseURI string, subscriptionID string) Rep
 // Create creates a replication for a container registry with the specified parameters.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
-// name of the container registry. replicationName is the name of the replication. replication is the parameters for
-// creating a replication.
+// name of the container registry. replicationName is the name of the replication. replication is the parameters
+// for creating a replication.
 func (client ReplicationsClient) Create(ctx context.Context, resourceGroupName string, registryName string, replicationName string, replication Replication) (result ReplicationsCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: registryName,
@@ -55,7 +55,7 @@ func (client ReplicationsClient) Create(ctx context.Context, resourceGroupName s
 			Constraints: []validation.Constraint{{Target: "replicationName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "replicationName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "replicationName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerregistry.ReplicationsClient", "Create")
+		return result, validation.NewError("containerregistry.ReplicationsClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, registryName, replicationName, replication)
@@ -139,7 +139,7 @@ func (client ReplicationsClient) Delete(ctx context.Context, resourceGroupName s
 			Constraints: []validation.Constraint{{Target: "replicationName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "replicationName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "replicationName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerregistry.ReplicationsClient", "Delete")
+		return result, validation.NewError("containerregistry.ReplicationsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, registryName, replicationName)
@@ -220,7 +220,7 @@ func (client ReplicationsClient) Get(ctx context.Context, resourceGroupName stri
 			Constraints: []validation.Constraint{{Target: "replicationName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "replicationName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "replicationName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerregistry.ReplicationsClient", "Get")
+		return result, validation.NewError("containerregistry.ReplicationsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, registryName, replicationName)
@@ -296,7 +296,7 @@ func (client ReplicationsClient) List(ctx context.Context, resourceGroupName str
 			Constraints: []validation.Constraint{{Target: "registryName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "registryName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "registryName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerregistry.ReplicationsClient", "List")
+		return result, validation.NewError("containerregistry.ReplicationsClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults
@@ -392,8 +392,8 @@ func (client ReplicationsClient) ListComplete(ctx context.Context, resourceGroup
 // Update updates a replication for a container registry with the specified parameters.
 //
 // resourceGroupName is the name of the resource group to which the container registry belongs. registryName is the
-// name of the container registry. replicationName is the name of the replication. replicationUpdateParameters is the
-// parameters for updating a replication.
+// name of the container registry. replicationName is the name of the replication. replicationUpdateParameters is
+// the parameters for updating a replication.
 func (client ReplicationsClient) Update(ctx context.Context, resourceGroupName string, registryName string, replicationName string, replicationUpdateParameters ReplicationUpdateParameters) (result ReplicationsUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: registryName,
@@ -404,7 +404,7 @@ func (client ReplicationsClient) Update(ctx context.Context, resourceGroupName s
 			Constraints: []validation.Constraint{{Target: "replicationName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "replicationName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "replicationName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerregistry.ReplicationsClient", "Update")
+		return result, validation.NewError("containerregistry.ReplicationsClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, registryName, replicationName, replicationUpdateParameters)

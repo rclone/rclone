@@ -89,10 +89,11 @@ func TestLoad(t *testing.T) {
 			dst:   c.Dataset("dataset-id").Table("table-id"),
 			jobID: "ajob",
 			config: LoadConfig{
-				CreateDisposition: CreateNever,
-				WriteDisposition:  WriteTruncate,
-				Labels:            map[string]string{"a": "b"},
-				TimePartitioning:  &TimePartitioning{Expiration: 1234 * time.Millisecond},
+				CreateDisposition:           CreateNever,
+				WriteDisposition:            WriteTruncate,
+				Labels:                      map[string]string{"a": "b"},
+				TimePartitioning:            &TimePartitioning{Expiration: 1234 * time.Millisecond},
+				DestinationEncryptionConfig: &EncryptionConfig{KMSKeyName: "keyName"},
 			},
 			src: NewGCSReference("uri"),
 			want: func() *bq.Job {
@@ -104,6 +105,7 @@ func TestLoad(t *testing.T) {
 					Type:         "DAY",
 					ExpirationMs: 1234,
 				}
+				j.Configuration.Load.DestinationEncryptionConfiguration = &bq.EncryptionConfiguration{KmsKeyName: "keyName"}
 				j.JobReference = &bq.JobReference{
 					JobId:     "ajob",
 					ProjectId: "client-project-id",

@@ -44,8 +44,8 @@ func NewConnectorMappingsClientWithBaseURI(baseURI string, subscriptionID string
 
 // CreateOrUpdate creates a connector mapping or updates an existing connector mapping in the connector.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. connectorName is the name of
-// the connector. mappingName is the name of the connector mapping. parameters is parameters supplied to the
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. connectorName is the name
+// of the connector. mappingName is the name of the connector mapping. parameters is parameters supplied to the
 // CreateOrUpdate Connector Mapping operation.
 func (client ConnectorMappingsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, connectorName string, mappingName string, parameters ConnectorMappingResourceFormat) (result ConnectorMappingResourceFormat, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -66,7 +66,7 @@ func (client ConnectorMappingsClient) CreateOrUpdate(ctx context.Context, resour
 							{Target: "parameters.ConnectorMapping.MappingProperties.CompleteOperation", Name: validation.Null, Rule: true, Chain: nil},
 						}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "customerinsights.ConnectorMappingsClient", "CreateOrUpdate")
+		return result, validation.NewError("customerinsights.ConnectorMappingsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, hubName, connectorName, mappingName, parameters)
@@ -137,8 +137,8 @@ func (client ConnectorMappingsClient) CreateOrUpdateResponder(resp *http.Respons
 
 // Delete deletes a connector mapping in the connector.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. connectorName is the name of
-// the connector. mappingName is the name of the connector mapping.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. connectorName is the name
+// of the connector. mappingName is the name of the connector mapping.
 func (client ConnectorMappingsClient) Delete(ctx context.Context, resourceGroupName string, hubName string, connectorName string, mappingName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, hubName, connectorName, mappingName)
 	if err != nil {
@@ -205,8 +205,8 @@ func (client ConnectorMappingsClient) DeleteResponder(resp *http.Response) (resu
 
 // Get gets a connector mapping in the connector.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. connectorName is the name of
-// the connector. mappingName is the name of the connector mapping.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. connectorName is the name
+// of the connector. mappingName is the name of the connector mapping.
 func (client ConnectorMappingsClient) Get(ctx context.Context, resourceGroupName string, hubName string, connectorName string, mappingName string) (result ConnectorMappingResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, connectorName, mappingName)
 	if err != nil {
@@ -274,8 +274,8 @@ func (client ConnectorMappingsClient) GetResponder(resp *http.Response) (result 
 
 // ListByConnector gets all the connector mappings in the specified connector.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. connectorName is the name of
-// the connector.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. connectorName is the name
+// of the connector.
 func (client ConnectorMappingsClient) ListByConnector(ctx context.Context, resourceGroupName string, hubName string, connectorName string) (result ConnectorMappingListResultPage, err error) {
 	result.fn = client.listByConnectorNextResults
 	req, err := client.ListByConnectorPreparer(ctx, resourceGroupName, hubName, connectorName)

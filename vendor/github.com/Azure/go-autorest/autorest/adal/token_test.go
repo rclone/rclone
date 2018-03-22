@@ -445,12 +445,12 @@ func TestServicePrincipalTokenRefreshUnmarshals(t *testing.T) {
 	err := spt.Refresh()
 	if err != nil {
 		t.Fatalf("adal: ServicePrincipalToken#Refresh returned an unexpected error (%v)", err)
-	} else if spt.AccessToken != "accessToken" ||
-		spt.ExpiresIn != "3600" ||
-		spt.ExpiresOn != expiresOn ||
-		spt.NotBefore != expiresOn ||
-		spt.Resource != "resource" ||
-		spt.Type != "Bearer" {
+	} else if spt.token.AccessToken != "accessToken" ||
+		spt.token.ExpiresIn != "3600" ||
+		spt.token.ExpiresOn != expiresOn ||
+		spt.token.NotBefore != expiresOn ||
+		spt.token.Resource != "resource" ||
+		spt.token.Type != "Bearer" {
 		t.Fatalf("adal: ServicePrincipalToken#Refresh failed correctly unmarshal the JSON -- expected %v, received %v",
 			j, *spt)
 	}
@@ -458,7 +458,7 @@ func TestServicePrincipalTokenRefreshUnmarshals(t *testing.T) {
 
 func TestServicePrincipalTokenEnsureFreshRefreshes(t *testing.T) {
 	spt := newServicePrincipalToken()
-	expireToken(&spt.Token)
+	expireToken(&spt.token)
 
 	body := mocks.NewBody(newTokenJSON("test", "test"))
 	resp := mocks.NewResponseWithBodyAndStatus(body, http.StatusOK, "OK")
@@ -486,7 +486,7 @@ func TestServicePrincipalTokenEnsureFreshRefreshes(t *testing.T) {
 
 func TestServicePrincipalTokenEnsureFreshSkipsIfFresh(t *testing.T) {
 	spt := newServicePrincipalToken()
-	setTokenToExpireIn(&spt.Token, 1000*time.Second)
+	setTokenToExpireIn(&spt.token, 1000*time.Second)
 
 	f := false
 	c := mocks.NewSender()
@@ -553,7 +553,7 @@ func TestRefreshCallbackErrorPropagates(t *testing.T) {
 // This demonstrates the danger of manual token without a refresh token
 func TestServicePrincipalTokenManualRefreshFailsWithoutRefresh(t *testing.T) {
 	spt := newServicePrincipalTokenManual()
-	spt.RefreshToken = ""
+	spt.token.RefreshToken = ""
 	err := spt.Refresh()
 	if err == nil {
 		t.Fatalf("adal: ServicePrincipalToken#Refresh should have failed with a ManualTokenSecret without a refresh token")

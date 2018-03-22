@@ -3,21 +3,30 @@ package ec2metadata_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/awstesting"
 	"github.com/aws/aws-sdk-go/awstesting/unit"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestClientOverrideDefaultHTTPClientTimeout(t *testing.T) {
 	svc := ec2metadata.New(unit.Session)
 
-	assert.NotEqual(t, http.DefaultClient, svc.Config.HTTPClient)
-	assert.Equal(t, 5*time.Second, svc.Config.HTTPClient.Timeout)
+	if e, a := http.DefaultClient, svc.Config.HTTPClient; e == a {
+		t.Errorf("expect %v, not to equal %v", e, a)
+	}
+
+	if e, a := 5*time.Second, svc.Config.HTTPClient.Timeout; e != a {
+		t.Errorf("expect %v to be %v", e, a)
+	}
 }
 
 func TestClientNotOverrideDefaultHTTPClientTimeout(t *testing.T) {
@@ -28,18 +37,25 @@ func TestClientNotOverrideDefaultHTTPClientTimeout(t *testing.T) {
 
 	svc := ec2metadata.New(unit.Session)
 
-	assert.Equal(t, http.DefaultClient, svc.Config.HTTPClient)
+	if e, a := http.DefaultClient, svc.Config.HTTPClient; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 
-	tr, ok := svc.Config.HTTPClient.Transport.(*http.Transport)
-	assert.True(t, ok)
-	assert.NotNil(t, tr)
-	assert.Nil(t, tr.Dial)
+	tr := svc.Config.HTTPClient.Transport.(*http.Transport)
+	if tr == nil {
+		t.Fatalf("expect transport not to be nil")
+	}
+	if tr.Dial != nil {
+		t.Errorf("expect dial to be nil, was not")
+	}
 }
 
 func TestClientDisableOverrideDefaultHTTPClientTimeout(t *testing.T) {
 	svc := ec2metadata.New(unit.Session, aws.NewConfig().WithEC2MetadataDisableTimeoutOverride(true))
 
-	assert.Equal(t, http.DefaultClient, svc.Config.HTTPClient)
+	if e, a := http.DefaultClient, svc.Config.HTTPClient; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestClientOverrideDefaultHTTPClientTimeoutRace(t *testing.T) {
@@ -63,6 +79,30 @@ func TestClientOverrideDefaultHTTPClientTimeoutRaceWithTransport(t *testing.T) {
 	runEC2MetadataClients(t, cfg, 100)
 }
 
+func TestClientDisableIMDS(t *testing.T) {
+	env := awstesting.StashEnv()
+	defer awstesting.PopEnv(env)
+
+	os.Setenv("AWS_EC2_METADATA_DISABLED", "true")
+
+	svc := ec2metadata.New(unit.Session)
+	resp, err := svc.Region()
+	if err == nil {
+		t.Fatalf("expect error, got none")
+	}
+	if len(resp) != 0 {
+		t.Errorf("expect no response, got %v", resp)
+	}
+
+	aerr := err.(awserr.Error)
+	if e, a := request.CanceledErrorCode, aerr.Code(); e != a {
+		t.Errorf("expect %v error code, got %v", e, a)
+	}
+	if e, a := "AWS_EC2_METADATA_DISABLED", aerr.Message(); !strings.Contains(a, e) {
+		t.Errorf("expect %v in error message, got %v", e, a)
+	}
+}
+
 func runEC2MetadataClients(t *testing.T, cfg *aws.Config, atOnce int) {
 	var wg sync.WaitGroup
 	wg.Add(atOnce)
@@ -70,7 +110,9 @@ func runEC2MetadataClients(t *testing.T, cfg *aws.Config, atOnce int) {
 		go func() {
 			svc := ec2metadata.New(unit.Session, cfg)
 			_, err := svc.Region()
-			assert.NoError(t, err)
+			if err != nil {
+				t.Fatalf("expect no error, got %v", err)
+			}
 			wg.Done()
 		}()
 	}

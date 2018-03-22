@@ -414,7 +414,7 @@ func (db *hostKeyDB) Read(r io.Reader, filename string) error {
 
 // New creates a host key callback from the given OpenSSH host key
 // files. The returned callback is for use in
-// ssh.ClientConfig.HostKeyCallback. Hashed hostnames are not supported.
+// ssh.ClientConfig.HostKeyCallback.
 func New(files ...string) (ssh.HostKeyCallback, error) {
 	db := newHostKeyDB()
 	for _, fn := range files {

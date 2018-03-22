@@ -18,9 +18,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 	"sort"
 	"strings"
+
+	"cloud.google.com/go/internal/atomiccache"
+	"cloud.google.com/go/internal/fields"
+	pb "google.golang.org/genproto/googleapis/firestore/v1beta1"
 )
 
 // A FieldPath is a non-empty sequence of non-empty fields that reference a value.
@@ -106,6 +111,14 @@ func (fp FieldPath) with(k string) FieldPath {
 	return append(r, k)
 }
 
+// concat creates a new FieldPath consisting of fp1 followed by fp2.
+func (fp1 FieldPath) concat(fp2 FieldPath) FieldPath {
+	r := make(FieldPath, len(fp1)+len(fp2))
+	copy(r, fp1)
+	copy(r[len(fp1):], fp2)
+	return r
+}
+
 // in reports whether fp is equal to one of the fps.
 func (fp FieldPath) in(fps []FieldPath) bool {
 	for _, e := range fps {
@@ -137,37 +150,89 @@ func (b byPath) Len() int           { return len(b) }
 func (b byPath) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
 func (b byPath) Less(i, j int) bool { return b[i].less(b[j]) }
 
-// createMapFromUpdates uses a list of updates to construct a valid
-// Firestore data value in the form of a map. It assumes the FieldPaths in the updates
-// already been validated and checked for prefixes. If any field path is associated
-// with the Delete value, it is not stored in the map.
-func createMapFromUpdates(fpvs []fpv) map[string]interface{} {
-	m := map[string]interface{}{}
-	for _, v := range fpvs {
-		if v.value != Delete {
-			setAtPath(m, v.fieldPath, v.value)
-		}
-	}
-	return m
-}
-
 // setAtPath sets val at the location in m specified by fp, creating sub-maps as
 // needed. m must not be nil. fp is assumed to be valid.
-func setAtPath(m map[string]interface{}, fp FieldPath, val interface{}) {
+func setAtPath(m map[string]*pb.Value, fp FieldPath, val *pb.Value) {
+	if val == nil {
+		return
+	}
 	if len(fp) == 1 {
 		m[fp[0]] = val
 	} else {
 		v, ok := m[fp[0]]
 		if !ok {
-			v = map[string]interface{}{}
+			v = &pb.Value{&pb.Value_MapValue{&pb.MapValue{map[string]*pb.Value{}}}}
 			m[fp[0]] = v
 		}
 		// The type assertion below cannot fail, because setAtPath is only called
 		// with either an empty map or one filled by setAtPath itself, and the
 		// set of FieldPaths it is called with has been checked to make sure that
 		// no path is the prefix of any other.
-		setAtPath(v.(map[string]interface{}), fp[1:], val)
+		setAtPath(v.GetMapValue().Fields, fp[1:], val)
 	}
+}
+
+// getAtPath gets the value in data referred to by fp. The data argument can
+// be a map or a struct.
+// Compare with valueAtPath, which does the same thing for a document.
+func getAtPath(v reflect.Value, fp FieldPath) (interface{}, error) {
+	var err error
+	for _, k := range fp {
+		v, err = getAtField(v, k)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return v.Interface(), nil
+}
+
+// getAtField returns the equivalent of v[k], if v is a map, or v.k if v is a struct.
+func getAtField(v reflect.Value, k string) (reflect.Value, error) {
+	switch v.Kind() {
+	case reflect.Map:
+		if r := v.MapIndex(reflect.ValueOf(k)); r.IsValid() {
+			return r, nil
+		}
+
+	case reflect.Struct:
+		fm, err := fieldMap(v.Type())
+		if err != nil {
+			return reflect.Value{}, err
+		}
+		if f, ok := fm[k]; ok {
+			return v.FieldByIndex(f.Index), nil
+		}
+
+	case reflect.Interface:
+		return getAtField(v.Elem(), k)
+
+	case reflect.Ptr:
+		return getAtField(v.Elem(), k)
+	}
+	return reflect.Value{}, fmt.Errorf("firestore: no field %q for value %#v", k, v)
+}
+
+// fieldMapCache holds maps from from Firestore field name to struct field,
+// keyed by struct type.
+// TODO(jba): replace with sync.Map for Go 1.9.
+var fieldMapCache atomiccache.Cache
+
+func fieldMap(t reflect.Type) (map[string]fields.Field, error) {
+	x := fieldMapCache.Get(t, func() interface{} {
+		fieldList, err := fieldCache.Fields(t)
+		if err != nil {
+			return err
+		}
+		m := map[string]fields.Field{}
+		for _, f := range fieldList {
+			m[f.Name] = f
+		}
+		return m
+	})
+	if err, ok := x.(error); ok {
+		return nil, err
+	}
+	return x.(map[string]fields.Field), nil
 }
 
 // toServiceFieldPath converts fp the form required by the Firestore service.

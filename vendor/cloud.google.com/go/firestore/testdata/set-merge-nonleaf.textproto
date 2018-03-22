@@ -12,7 +12,7 @@ set: <
       field: "h"
     >
   >
-  json_data: "{\"h\": {\"g\": 5, \"f\": 6}, \"e\": 7}"
+  json_data: "{\"h\": {\"f\": 5, \"g\": 6}, \"e\": 7}"
   request: <
     database: "projects/projectID/databases/(default)"
     writes: <
@@ -25,13 +25,13 @@ set: <
               fields: <
                 key: "f"
                 value: <
-                  integer_value: 6
+                  integer_value: 5
                 >
               >
               fields: <
                 key: "g"
                 value: <
-                  integer_value: 5
+                  integer_value: 6
                 >
               >
             >

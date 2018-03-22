@@ -251,6 +251,8 @@ const (
 // Account contains information about an Azure Batch account.
 type Account struct {
 	autorest.Response `json:"-"`
+	// AccountProperties - The properties associated with the account.
+	*AccountProperties `json:"properties,omitempty"`
 	// ID - The ID of the resource.
 	ID *string `json:"id,omitempty"`
 	// Name - The name of the resource.
@@ -260,9 +262,31 @@ type Account struct {
 	// Location - The location of the resource.
 	Location *string `json:"location,omitempty"`
 	// Tags - The tags of the resource.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// AccountProperties - The properties associated with the account.
-	*AccountProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Account.
+func (a Account) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if a.AccountProperties != nil {
+		objectMap["properties"] = a.AccountProperties
+	}
+	if a.ID != nil {
+		objectMap["id"] = a.ID
+	}
+	if a.Name != nil {
+		objectMap["name"] = a.Name
+	}
+	if a.Type != nil {
+		objectMap["type"] = a.Type
+	}
+	if a.Location != nil {
+		objectMap["location"] = a.Location
+	}
+	if a.Tags != nil {
+		objectMap["tags"] = a.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Account struct.
@@ -272,66 +296,63 @@ func (a *Account) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties AccountProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var accountProperties AccountProperties
+				err = json.Unmarshal(*v, &accountProperties)
+				if err != nil {
+					return err
+				}
+				a.AccountProperties = &accountProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				a.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				a.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				a.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				a.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				a.Tags = tags
+			}
 		}
-		a.AccountProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		a.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		a.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		a.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		a.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		a.Tags = &tags
 	}
 
 	return nil
@@ -349,22 +370,39 @@ func (future AccountCreateFuture) Result(client AccountClient) (a Account, err e
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.AccountCreateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return a, autorest.NewError("batch.AccountCreateFuture", "Result", "asynchronous operation has not completed")
+		return a, azure.NewAsyncOpIncompleteError("batch.AccountCreateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		a, err = client.CreateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "batch.AccountCreateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.AccountCreateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	a, err = client.CreateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.AccountCreateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -373,9 +411,24 @@ type AccountCreateParameters struct {
 	// Location - The region in which to create the account.
 	Location *string `json:"location,omitempty"`
 	// Tags - The user-specified tags associated with the account.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// AccountCreateProperties - The properties of the Batch account.
 	*AccountCreateProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AccountCreateParameters.
+func (acp AccountCreateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if acp.Location != nil {
+		objectMap["location"] = acp.Location
+	}
+	if acp.Tags != nil {
+		objectMap["tags"] = acp.Tags
+	}
+	if acp.AccountCreateProperties != nil {
+		objectMap["properties"] = acp.AccountCreateProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AccountCreateParameters struct.
@@ -385,36 +438,36 @@ func (acp *AccountCreateParameters) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				acp.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				acp.Tags = tags
+			}
+		case "properties":
+			if v != nil {
+				var accountCreateProperties AccountCreateProperties
+				err = json.Unmarshal(*v, &accountCreateProperties)
+				if err != nil {
+					return err
+				}
+				acp.AccountCreateProperties = &accountCreateProperties
+			}
 		}
-		acp.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		acp.Tags = &tags
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties AccountCreateProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		acp.AccountCreateProperties = &properties
 	}
 
 	return nil
@@ -442,22 +495,39 @@ func (future AccountDeleteFuture) Result(client AccountClient) (ar autorest.Resp
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.AccountDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("batch.AccountDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("batch.AccountDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "batch.AccountDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.AccountDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.AccountDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -599,9 +669,21 @@ type AccountRegenerateKeyParameters struct {
 // AccountUpdateParameters parameters for updating an Azure Batch account.
 type AccountUpdateParameters struct {
 	// Tags - The user-specified tags associated with the account.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// AccountUpdateProperties - The properties of the account.
 	*AccountUpdateProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AccountUpdateParameters.
+func (aup AccountUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if aup.Tags != nil {
+		objectMap["tags"] = aup.Tags
+	}
+	if aup.AccountUpdateProperties != nil {
+		objectMap["properties"] = aup.AccountUpdateProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AccountUpdateParameters struct.
@@ -611,26 +693,27 @@ func (aup *AccountUpdateParameters) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				aup.Tags = tags
+			}
+		case "properties":
+			if v != nil {
+				var accountUpdateProperties AccountUpdateProperties
+				err = json.Unmarshal(*v, &accountUpdateProperties)
+				if err != nil {
+					return err
+				}
+				aup.AccountUpdateProperties = &accountUpdateProperties
+			}
 		}
-		aup.Tags = &tags
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties AccountUpdateProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		aup.AccountUpdateProperties = &properties
 	}
 
 	return nil
@@ -739,10 +822,10 @@ type AutoStorageBaseProperties struct {
 
 // AutoStorageProperties contains information about the auto-storage account associated with a Batch account.
 type AutoStorageProperties struct {
-	// StorageAccountID - The resource ID of the storage account to be used for auto-storage account.
-	StorageAccountID *string `json:"storageAccountId,omitempty"`
 	// LastKeySync - The UTC time at which storage keys were last synchronized with the Batch account.
 	LastKeySync *date.Time `json:"lastKeySync,omitempty"`
+	// StorageAccountID - The resource ID of the storage account to be used for auto-storage account.
+	StorageAccountID *string `json:"storageAccountId,omitempty"`
 }
 
 // AutoUserSpecification ...
@@ -756,6 +839,8 @@ type AutoUserSpecification struct {
 // Certificate contains information about a certificate.
 type Certificate struct {
 	autorest.Response `json:"-"`
+	// CertificateProperties - The properties associated with the certificate.
+	*CertificateProperties `json:"properties,omitempty"`
 	// ID - The ID of the resource.
 	ID *string `json:"id,omitempty"`
 	// Name - The name of the resource.
@@ -764,8 +849,6 @@ type Certificate struct {
 	Type *string `json:"type,omitempty"`
 	// Etag - The ETag of the resource, used for concurrency statements.
 	Etag *string `json:"etag,omitempty"`
-	// CertificateProperties - The properties associated with the certificate.
-	*CertificateProperties `json:"properties,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for Certificate struct.
@@ -775,56 +858,54 @@ func (c *Certificate) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties CertificateProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var certificateProperties CertificateProperties
+				err = json.Unmarshal(*v, &certificateProperties)
+				if err != nil {
+					return err
+				}
+				c.CertificateProperties = &certificateProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				c.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				c.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				c.Type = &typeVar
+			}
+		case "etag":
+			if v != nil {
+				var etag string
+				err = json.Unmarshal(*v, &etag)
+				if err != nil {
+					return err
+				}
+				c.Etag = &etag
+			}
 		}
-		c.CertificateProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		c.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		c.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		c.Type = &typeVar
-	}
-
-	v = m["etag"]
-	if v != nil {
-		var etag string
-		err = json.Unmarshal(*m["etag"], &etag)
-		if err != nil {
-			return err
-		}
-		c.Etag = &etag
 	}
 
 	return nil
@@ -852,27 +933,46 @@ func (future CertificateCreateFuture) Result(client CertificateClient) (c Certif
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.CertificateCreateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return c, autorest.NewError("batch.CertificateCreateFuture", "Result", "asynchronous operation has not completed")
+		return c, azure.NewAsyncOpIncompleteError("batch.CertificateCreateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		c, err = client.CreateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "batch.CertificateCreateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.CertificateCreateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	c, err = client.CreateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.CertificateCreateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
 // CertificateCreateOrUpdateParameters contains information about a certificate.
 type CertificateCreateOrUpdateParameters struct {
+	// CertificateCreateOrUpdateProperties - The properties associated with the certificate.
+	*CertificateCreateOrUpdateProperties `json:"properties,omitempty"`
 	// ID - The ID of the resource.
 	ID *string `json:"id,omitempty"`
 	// Name - The name of the resource.
@@ -881,8 +981,6 @@ type CertificateCreateOrUpdateParameters struct {
 	Type *string `json:"type,omitempty"`
 	// Etag - The ETag of the resource, used for concurrency statements.
 	Etag *string `json:"etag,omitempty"`
-	// CertificateCreateOrUpdateProperties - The properties associated with the certificate.
-	*CertificateCreateOrUpdateProperties `json:"properties,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for CertificateCreateOrUpdateParameters struct.
@@ -892,56 +990,54 @@ func (ccoup *CertificateCreateOrUpdateParameters) UnmarshalJSON(body []byte) err
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties CertificateCreateOrUpdateProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var certificateCreateOrUpdateProperties CertificateCreateOrUpdateProperties
+				err = json.Unmarshal(*v, &certificateCreateOrUpdateProperties)
+				if err != nil {
+					return err
+				}
+				ccoup.CertificateCreateOrUpdateProperties = &certificateCreateOrUpdateProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ccoup.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ccoup.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ccoup.Type = &typeVar
+			}
+		case "etag":
+			if v != nil {
+				var etag string
+				err = json.Unmarshal(*v, &etag)
+				if err != nil {
+					return err
+				}
+				ccoup.Etag = &etag
+			}
 		}
-		ccoup.CertificateCreateOrUpdateProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		ccoup.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ccoup.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		ccoup.Type = &typeVar
-	}
-
-	v = m["etag"]
-	if v != nil {
-		var etag string
-		err = json.Unmarshal(*m["etag"], &etag)
-		if err != nil {
-			return err
-		}
-		ccoup.Etag = &etag
 	}
 
 	return nil
@@ -949,16 +1045,16 @@ func (ccoup *CertificateCreateOrUpdateParameters) UnmarshalJSON(body []byte) err
 
 // CertificateCreateOrUpdateProperties certificate properties for create operations
 type CertificateCreateOrUpdateProperties struct {
+	// Data - The maximum size is 10KB.
+	Data *string `json:"data,omitempty"`
+	// Password - This is required if the certificate format is pfx and must be omitted if the certificate format is cer.
+	Password *string `json:"password,omitempty"`
 	// ThumbprintAlgorithm - This must match the first portion of the certificate name. Currently required to be 'SHA1'.
 	ThumbprintAlgorithm *string `json:"thumbprintAlgorithm,omitempty"`
 	// Thumbprint - This must match the thumbprint from the name.
 	Thumbprint *string `json:"thumbprint,omitempty"`
 	// Format - The format of the certificate - either Pfx or Cer. If omitted, the default is Pfx. Possible values include: 'Pfx', 'Cer'
 	Format CertificateFormat `json:"format,omitempty"`
-	// Data - The maximum size is 10KB.
-	Data *string `json:"data,omitempty"`
-	// Password - This is required if the certificate format is pfx and must be omitted if the certificate format is cer.
-	Password *string `json:"password,omitempty"`
 }
 
 // CertificateDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
@@ -973,33 +1069,44 @@ func (future CertificateDeleteFuture) Result(client CertificateClient) (ar autor
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.CertificateDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("batch.CertificateDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("batch.CertificateDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "batch.CertificateDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.CertificateDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.CertificateDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
 // CertificateProperties certificate properties.
 type CertificateProperties struct {
-	// ThumbprintAlgorithm - This must match the first portion of the certificate name. Currently required to be 'SHA1'.
-	ThumbprintAlgorithm *string `json:"thumbprintAlgorithm,omitempty"`
-	// Thumbprint - This must match the thumbprint from the name.
-	Thumbprint *string `json:"thumbprint,omitempty"`
-	// Format - The format of the certificate - either Pfx or Cer. If omitted, the default is Pfx. Possible values include: 'Pfx', 'Cer'
-	Format CertificateFormat `json:"format,omitempty"`
 	// ProvisioningState - Values are:
 	//  Succeeded - The certificate is available for use in pools.
 	//  Deleting - The user has requested that the certificate be deleted, but the delete operation has not yet completed. You may not reference the certificate when creating or updating pools.
@@ -1013,6 +1120,12 @@ type CertificateProperties struct {
 	PublicData *string `json:"publicData,omitempty"`
 	// DeleteCertificateError - This is only returned when the certificate provisioningState is 'Failed'.
 	DeleteCertificateError *DeleteCertificateError `json:"deleteCertificateError,omitempty"`
+	// ThumbprintAlgorithm - This must match the first portion of the certificate name. Currently required to be 'SHA1'.
+	ThumbprintAlgorithm *string `json:"thumbprintAlgorithm,omitempty"`
+	// Thumbprint - This must match the thumbprint from the name.
+	Thumbprint *string `json:"thumbprint,omitempty"`
+	// Format - The format of the certificate - either Pfx or Cer. If omitted, the default is Pfx. Possible values include: 'Pfx', 'Cer'
+	Format CertificateFormat `json:"format,omitempty"`
 }
 
 // CertificateReference ...
@@ -1492,7 +1605,8 @@ type LocationQuota struct {
 	AccountQuota *int32 `json:"accountQuota,omitempty"`
 }
 
-// MetadataItem the Batch service does not assign any meaning to this metadata; it is solely for the use of user code.
+// MetadataItem the Batch service does not assign any meaning to this metadata; it is solely for the use of user
+// code.
 type MetadataItem struct {
 	Name  *string `json:"name,omitempty"`
 	Value *string `json:"value,omitempty"`
@@ -1519,10 +1633,10 @@ type NetworkSecurityGroupRule struct {
 // Operation ...
 type Operation struct {
 	// Name - This is of the format {provider}/{resource}/{operation}
-	Name       *string                 `json:"name,omitempty"`
-	Display    *OperationDisplay       `json:"display,omitempty"`
-	Origin     *string                 `json:"origin,omitempty"`
-	Properties *map[string]interface{} `json:"properties,omitempty"`
+	Name       *string           `json:"name,omitempty"`
+	Display    *OperationDisplay `json:"display,omitempty"`
+	Origin     *string           `json:"origin,omitempty"`
+	Properties interface{}       `json:"properties,omitempty"`
 }
 
 // OperationDisplay ...
@@ -1643,6 +1757,8 @@ type OSDisk struct {
 // Pool contains information about a pool.
 type Pool struct {
 	autorest.Response `json:"-"`
+	// PoolProperties - The properties associated with the pool.
+	*PoolProperties `json:"properties,omitempty"`
 	// ID - The ID of the resource.
 	ID *string `json:"id,omitempty"`
 	// Name - The name of the resource.
@@ -1651,8 +1767,6 @@ type Pool struct {
 	Type *string `json:"type,omitempty"`
 	// Etag - The ETag of the resource, used for concurrency statements.
 	Etag *string `json:"etag,omitempty"`
-	// PoolProperties - The properties associated with the pool.
-	*PoolProperties `json:"properties,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for Pool struct.
@@ -1662,56 +1776,54 @@ func (p *Pool) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties PoolProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var poolProperties PoolProperties
+				err = json.Unmarshal(*v, &poolProperties)
+				if err != nil {
+					return err
+				}
+				p.PoolProperties = &poolProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				p.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				p.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				p.Type = &typeVar
+			}
+		case "etag":
+			if v != nil {
+				var etag string
+				err = json.Unmarshal(*v, &etag)
+				if err != nil {
+					return err
+				}
+				p.Etag = &etag
+			}
 		}
-		p.PoolProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		p.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		p.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		p.Type = &typeVar
-	}
-
-	v = m["etag"]
-	if v != nil {
-		var etag string
-		err = json.Unmarshal(*m["etag"], &etag)
-		if err != nil {
-			return err
-		}
-		p.Etag = &etag
 	}
 
 	return nil
@@ -1729,22 +1841,39 @@ func (future PoolCreateFuture) Result(client PoolClient) (p Pool, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.PoolCreateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return p, autorest.NewError("batch.PoolCreateFuture", "Result", "asynchronous operation has not completed")
+		return p, azure.NewAsyncOpIncompleteError("batch.PoolCreateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		p, err = client.CreateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "batch.PoolCreateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.PoolCreateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	p, err = client.CreateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.PoolCreateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -1760,22 +1889,39 @@ func (future PoolDeleteFuture) Result(client PoolClient) (ar autorest.Response, 
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.PoolDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("batch.PoolDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("batch.PoolDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "batch.PoolDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.PoolDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.PoolDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -1877,7 +2023,28 @@ type Resource struct {
 	// Location - The location of the resource.
 	Location *string `json:"location,omitempty"`
 	// Tags - The tags of the resource.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // ResourceFile ...
@@ -1890,8 +2057,8 @@ type ResourceFile struct {
 }
 
 // ScaleSettings defines the desired size of the pool. This can either be 'fixedScale' where the requested
-// targetDedicatedNodes is specified, or 'autoScale' which defines a formula which is periodically reevaluated. If this
-// property is not specified, the pool will have a fixed scale with 0 targetDedicatedNodes.
+// targetDedicatedNodes is specified, or 'autoScale' which defines a formula which is periodically reevaluated. If
+// this property is not specified, the pool will have a fixed scale with 0 targetDedicatedNodes.
 type ScaleSettings struct {
 	// FixedScale - This property and autoScale are mutually exclusive and one of the properties must be specified.
 	FixedScale *FixedScaleSettings `json:"fixedScale,omitempty"`

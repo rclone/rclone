@@ -42,13 +42,13 @@ func NewHybridRunbookWorkerGroupClientWithBaseURI(baseURI string, subscriptionID
 
 // Delete delete a hybrid runbook worker group.
 //
-// automationAccountName is automation account name. hybridRunbookWorkerGroupName is the hybrid runbook worker group
-// name
+// automationAccountName is automation account name. hybridRunbookWorkerGroupName is the hybrid runbook worker
+// group name
 func (client HybridRunbookWorkerGroupClient) Delete(ctx context.Context, automationAccountName string, hybridRunbookWorkerGroupName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.HybridRunbookWorkerGroupClient", "Delete")
+		return result, validation.NewError("automation.HybridRunbookWorkerGroupClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, automationAccountName, hybridRunbookWorkerGroupName)
@@ -121,7 +121,7 @@ func (client HybridRunbookWorkerGroupClient) Get(ctx context.Context, automation
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.HybridRunbookWorkerGroupClient", "Get")
+		return result, validation.NewError("automation.HybridRunbookWorkerGroupClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, hybridRunbookWorkerGroupName)
@@ -194,7 +194,7 @@ func (client HybridRunbookWorkerGroupClient) ListByAutomationAccount(ctx context
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.HybridRunbookWorkerGroupClient", "ListByAutomationAccount")
+		return result, validation.NewError("automation.HybridRunbookWorkerGroupClient", "ListByAutomationAccount", err.Error())
 	}
 
 	result.fn = client.listByAutomationAccountNextResults
@@ -295,7 +295,7 @@ func (client HybridRunbookWorkerGroupClient) Update(ctx context.Context, automat
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.HybridRunbookWorkerGroupClient", "Update")
+		return result, validation.NewError("automation.HybridRunbookWorkerGroupClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, automationAccountName, hybridRunbookWorkerGroupName, parameters)

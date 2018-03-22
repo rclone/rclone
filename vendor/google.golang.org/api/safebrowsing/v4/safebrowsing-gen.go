@@ -216,6 +216,16 @@ func (s *ClientInfo) MarshalJSON() ([]byte, error) {
 
 // Constraints: The constraints for this update.
 type Constraints struct {
+	// DeviceLocation: A client's physical location, expressed as a ISO
+	// 31166-1 alpha-2
+	// region code.
+	DeviceLocation string `json:"deviceLocation,omitempty"`
+
+	// Language: Requests the lists for a specific language. Expects ISO 639
+	// alpha-2
+	// format.
+	Language string `json:"language,omitempty"`
+
 	// MaxDatabaseEntries: Sets the maximum number of entries that the
 	// client is willing to have
 	// in the local database. This should be a power of 2 between 2**10
@@ -245,15 +255,15 @@ type Constraints struct {
 	//   "RICE" - Rice-Golomb encoded data.
 	SupportedCompressions []string `json:"supportedCompressions,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "MaxDatabaseEntries")
-	// to unconditionally include in API requests. By default, fields with
+	// ForceSendFields is a list of field names (e.g. "DeviceLocation") to
+	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "MaxDatabaseEntries") to
+	// NullFields is a list of field names (e.g. "DeviceLocation") to
 	// include in API requests with the JSON null value. By default, fields
 	// with empty values are omitted from API requests. However, any field
 	// with an empty value appearing in NullFields will be sent to the
@@ -862,7 +872,9 @@ type RiceDeltaEncoding struct {
 
 	// FirstValue: The offset of the first entry in the encoded data, or, if
 	// only a single
-	// integer was encoded, that single integer's value.
+	// integer was encoded, that single integer's value. If the field is
+	// empty or
+	// missing, assume zero.
 	FirstValue int64 `json:"firstValue,omitempty,string"`
 
 	// NumEntries: The number of entries that are delta encoded in the

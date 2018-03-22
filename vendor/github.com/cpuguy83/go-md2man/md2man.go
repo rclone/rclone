@@ -24,7 +24,7 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	defer inFile.Close()
+	defer inFile.Close() // nolint: errcheck
 
 	doc, err := ioutil.ReadAll(inFile)
 	if err != nil {
@@ -41,7 +41,7 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		defer outFile.Close()
+		defer outFile.Close() // nolint: errcheck
 	}
 	_, err = outFile.Write(out)
 	if err != nil {

@@ -42,9 +42,9 @@ func NewGatewayClientWithBaseURI(baseURI string, subscriptionID string) GatewayC
 
 // Create creates or updates a ManagementService gateway.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// gatewayName is the gateway name (256 characters maximum). gatewayParameters is parameters supplied to the
-// CreateOrUpdate operation.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. gatewayName is the gateway name (256 characters maximum). gatewayParameters is parameters
+// supplied to the CreateOrUpdate operation.
 func (client GatewayClient) Create(ctx context.Context, resourceGroupName string, gatewayName string, gatewayParameters GatewayParameters) (result GatewayCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -54,7 +54,7 @@ func (client GatewayClient) Create(ctx context.Context, resourceGroupName string
 			Constraints: []validation.Constraint{{Target: "gatewayName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "gatewayName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "gatewayName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.GatewayClient", "Create")
+		return result, validation.NewError("servermanagement.GatewayClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, gatewayName, gatewayParameters)
@@ -125,8 +125,8 @@ func (client GatewayClient) CreateResponder(resp *http.Response) (result Gateway
 
 // Delete deletes a gateway from a resource group.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// gatewayName is the gateway name (256 characters maximum).
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. gatewayName is the gateway name (256 characters maximum).
 func (client GatewayClient) Delete(ctx context.Context, resourceGroupName string, gatewayName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -136,7 +136,7 @@ func (client GatewayClient) Delete(ctx context.Context, resourceGroupName string
 			Constraints: []validation.Constraint{{Target: "gatewayName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "gatewayName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "gatewayName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.GatewayClient", "Delete")
+		return result, validation.NewError("servermanagement.GatewayClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, gatewayName)
@@ -202,9 +202,10 @@ func (client GatewayClient) DeleteResponder(resp *http.Response) (result autores
 
 // Get gets a gateway.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// gatewayName is the gateway name (256 characters maximum) expand is gets subscription credentials which uniquely
-// identify Microsoft Azure subscription. The subscription ID forms part of the URI for every service call.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. gatewayName is the gateway name (256 characters maximum) expand is gets subscription credentials
+// which uniquely identify Microsoft Azure subscription. The subscription ID forms part of the URI for every
+// service call.
 func (client GatewayClient) Get(ctx context.Context, resourceGroupName string, gatewayName string, expand GatewayExpandOption) (result GatewayResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -214,7 +215,7 @@ func (client GatewayClient) Get(ctx context.Context, resourceGroupName string, g
 			Constraints: []validation.Constraint{{Target: "gatewayName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "gatewayName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "gatewayName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.GatewayClient", "Get")
+		return result, validation.NewError("servermanagement.GatewayClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, gatewayName, expand)
@@ -284,8 +285,8 @@ func (client GatewayClient) GetResponder(resp *http.Response) (result GatewayRes
 
 // GetProfile gets a gateway profile.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// gatewayName is the gateway name (256 characters maximum).
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. gatewayName is the gateway name (256 characters maximum).
 func (client GatewayClient) GetProfile(ctx context.Context, resourceGroupName string, gatewayName string) (result GatewayGetProfileFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -295,7 +296,7 @@ func (client GatewayClient) GetProfile(ctx context.Context, resourceGroupName st
 			Constraints: []validation.Constraint{{Target: "gatewayName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "gatewayName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "gatewayName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.GatewayClient", "GetProfile")
+		return result, validation.NewError("servermanagement.GatewayClient", "GetProfile", err.Error())
 	}
 
 	req, err := client.GetProfilePreparer(ctx, resourceGroupName, gatewayName)
@@ -454,13 +455,14 @@ func (client GatewayClient) ListComplete(ctx context.Context) (result GatewayRes
 
 // ListForResourceGroup returns gateways in a resource group.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId.
 func (client GatewayClient) ListForResourceGroup(ctx context.Context, resourceGroupName string) (result GatewayResourcesPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `[a-zA-Z0-9]+`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.GatewayClient", "ListForResourceGroup")
+		return result, validation.NewError("servermanagement.GatewayClient", "ListForResourceGroup", err.Error())
 	}
 
 	result.fn = client.listForResourceGroupNextResults
@@ -554,8 +556,8 @@ func (client GatewayClient) ListForResourceGroupComplete(ctx context.Context, re
 
 // RegenerateProfile regenerate a gateway's profile
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// gatewayName is the gateway name (256 characters maximum).
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. gatewayName is the gateway name (256 characters maximum).
 func (client GatewayClient) RegenerateProfile(ctx context.Context, resourceGroupName string, gatewayName string) (result GatewayRegenerateProfileFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -565,7 +567,7 @@ func (client GatewayClient) RegenerateProfile(ctx context.Context, resourceGroup
 			Constraints: []validation.Constraint{{Target: "gatewayName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "gatewayName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "gatewayName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.GatewayClient", "RegenerateProfile")
+		return result, validation.NewError("servermanagement.GatewayClient", "RegenerateProfile", err.Error())
 	}
 
 	req, err := client.RegenerateProfilePreparer(ctx, resourceGroupName, gatewayName)
@@ -633,9 +635,9 @@ func (client GatewayClient) RegenerateProfileResponder(resp *http.Response) (res
 
 // Update updates a gateway belonging to a resource group.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// gatewayName is the gateway name (256 characters maximum). gatewayParameters is parameters supplied to the Update
-// operation.
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. gatewayName is the gateway name (256 characters maximum). gatewayParameters is parameters
+// supplied to the Update operation.
 func (client GatewayClient) Update(ctx context.Context, resourceGroupName string, gatewayName string, gatewayParameters GatewayParameters) (result GatewayUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -645,7 +647,7 @@ func (client GatewayClient) Update(ctx context.Context, resourceGroupName string
 			Constraints: []validation.Constraint{{Target: "gatewayName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "gatewayName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "gatewayName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.GatewayClient", "Update")
+		return result, validation.NewError("servermanagement.GatewayClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, gatewayName, gatewayParameters)
@@ -716,8 +718,8 @@ func (client GatewayClient) UpdateResponder(resp *http.Response) (result Gateway
 
 // Upgrade upgrades a gateway.
 //
-// resourceGroupName is the resource group name uniquely identifies the resource group within the user subscriptionId.
-// gatewayName is the gateway name (256 characters maximum).
+// resourceGroupName is the resource group name uniquely identifies the resource group within the user
+// subscriptionId. gatewayName is the gateway name (256 characters maximum).
 func (client GatewayClient) Upgrade(ctx context.Context, resourceGroupName string, gatewayName string) (result GatewayUpgradeFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -727,7 +729,7 @@ func (client GatewayClient) Upgrade(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "gatewayName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "gatewayName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "gatewayName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servermanagement.GatewayClient", "Upgrade")
+		return result, validation.NewError("servermanagement.GatewayClient", "Upgrade", err.Error())
 	}
 
 	req, err := client.UpgradePreparer(ctx, resourceGroupName, gatewayName)

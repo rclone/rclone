@@ -3751,6 +3751,9 @@ func ExampleEC2_RequestSpotFleet_shared00() {
 			IamFleetRole: aws.String("arn:aws:iam::123456789012:role/my-spot-fleet-role"),
 			LaunchSpecifications: []*ec2.SpotFleetLaunchSpecification{
 				{
+					IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
+						Arn: aws.String("arn:aws:iam::123456789012:instance-profile/my-iam-role"),
+					},
 					ImageId:      aws.String("ami-1a2b3c4d"),
 					InstanceType: aws.String("m3.medium"),
 					KeyName:      aws.String("my-key-pair"),
@@ -3800,9 +3803,15 @@ func ExampleEC2_RequestSpotFleet_shared01() {
 			IamFleetRole: aws.String("arn:aws:iam::123456789012:role/my-spot-fleet-role"),
 			LaunchSpecifications: []*ec2.SpotFleetLaunchSpecification{
 				{
+					IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
+						Arn: aws.String("arn:aws:iam::123456789012:instance-profile/my-iam-role"),
+					},
 					ImageId:      aws.String("ami-1a2b3c4d"),
 					InstanceType: aws.String("m3.medium"),
 					KeyName:      aws.String("my-key-pair"),
+					Placement: &ec2.SpotPlacement{
+						AvailabilityZone: aws.String("us-west-2a, us-west-2b"),
+					},
 					SecurityGroups: []*ec2.GroupIdentifier{
 						{
 							GroupId: aws.String("sg-1a2b3c4d"),
@@ -3845,6 +3854,9 @@ func ExampleEC2_RequestSpotFleet_shared02() {
 			IamFleetRole: aws.String("arn:aws:iam::123456789012:role/my-spot-fleet-role"),
 			LaunchSpecifications: []*ec2.SpotFleetLaunchSpecification{
 				{
+					IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
+						Arn: aws.String("arn:aws:iam::880185128111:instance-profile/my-iam-role"),
+					},
 					ImageId:      aws.String("ami-1a2b3c4d"),
 					InstanceType: aws.String("m3.medium"),
 					KeyName:      aws.String("my-key-pair"),

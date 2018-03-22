@@ -264,6 +264,10 @@ type GameLiftAPI interface {
 	StartGameSessionPlacementWithContext(aws.Context, *gamelift.StartGameSessionPlacementInput, ...request.Option) (*gamelift.StartGameSessionPlacementOutput, error)
 	StartGameSessionPlacementRequest(*gamelift.StartGameSessionPlacementInput) (*request.Request, *gamelift.StartGameSessionPlacementOutput)
 
+	StartMatchBackfill(*gamelift.StartMatchBackfillInput) (*gamelift.StartMatchBackfillOutput, error)
+	StartMatchBackfillWithContext(aws.Context, *gamelift.StartMatchBackfillInput, ...request.Option) (*gamelift.StartMatchBackfillOutput, error)
+	StartMatchBackfillRequest(*gamelift.StartMatchBackfillInput) (*request.Request, *gamelift.StartMatchBackfillOutput)
+
 	StartMatchmaking(*gamelift.StartMatchmakingInput) (*gamelift.StartMatchmakingOutput, error)
 	StartMatchmakingWithContext(aws.Context, *gamelift.StartMatchmakingInput, ...request.Option) (*gamelift.StartMatchmakingOutput, error)
 	StartMatchmakingRequest(*gamelift.StartMatchmakingInput) (*request.Request, *gamelift.StartMatchmakingOutput)

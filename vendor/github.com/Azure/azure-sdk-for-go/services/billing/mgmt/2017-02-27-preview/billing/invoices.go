@@ -175,13 +175,13 @@ func (client InvoicesClient) GetLatestResponder(resp *http.Response) (result Inv
 // invoice. In preview, invoices are available via this API only for invoice periods which end December 1, 2016 or
 // later
 //
-// expand is may be used to expand the downloadUrl property within a list of invoices. This enables download links to
-// be generated for multiple invoices at once. By default, downloadURLs are not included when listing invoices. filter
-// is may be used to filter invoices by invoicePeriodEndDate. The filter supports 'eq', 'lt', 'gt', 'le', 'ge', and
-// 'and'. It does not currently support 'ne', 'or', or 'not' skiptoken is skiptoken is only used if a previous
-// operation returned a partial result. If a previous response contains a nextLink element, the value of the nextLink
-// element will include a skiptoken parameter that specifies a starting point to use for subsequent calls. top is may
-// be used to limit the number of results to the most recent N invoices.
+// expand is may be used to expand the downloadUrl property within a list of invoices. This enables download links
+// to be generated for multiple invoices at once. By default, downloadURLs are not included when listing invoices.
+// filter is may be used to filter invoices by invoicePeriodEndDate. The filter supports 'eq', 'lt', 'gt', 'le',
+// 'ge', and 'and'. It does not currently support 'ne', 'or', or 'not' skiptoken is skiptoken is only used if a
+// previous operation returned a partial result. If a previous response contains a nextLink element, the value of
+// the nextLink element will include a skiptoken parameter that specifies a starting point to use for subsequent
+// calls. top is may be used to limit the number of results to the most recent N invoices.
 func (client InvoicesClient) List(ctx context.Context, expand string, filter string, skiptoken string, top *int32) (result InvoicesListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: top,
@@ -189,7 +189,7 @@ func (client InvoicesClient) List(ctx context.Context, expand string, filter str
 				Chain: []validation.Constraint{{Target: "top", Name: validation.InclusiveMaximum, Rule: 100, Chain: nil},
 					{Target: "top", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "billing.InvoicesClient", "List")
+		return result, validation.NewError("billing.InvoicesClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults

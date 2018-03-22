@@ -44,15 +44,15 @@ func NewVirtualNetworkRulesClientWithBaseURI(baseURI string, subscriptionID stri
 
 // CreateOrUpdate creates or updates an existing virtual network rule.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. virtualNetworkRuleName is the name
-// of the virtual network rule. parameters is the requested virtual Network Rule Resource state.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. virtualNetworkRuleName is
+// the name of the virtual network rule. parameters is the requested virtual Network Rule Resource state.
 func (client VirtualNetworkRulesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, virtualNetworkRuleName string, parameters VirtualNetworkRule) (result VirtualNetworkRulesCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.VirtualNetworkRuleProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.VirtualNetworkRuleProperties.VirtualNetworkSubnetID", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "sql.VirtualNetworkRulesClient", "CreateOrUpdate")
+		return result, validation.NewError("sql.VirtualNetworkRulesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, virtualNetworkRuleName, parameters)
@@ -124,9 +124,9 @@ func (client VirtualNetworkRulesClient) CreateOrUpdateResponder(resp *http.Respo
 
 // Delete deletes the virtual network rule with the given name.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. virtualNetworkRuleName is the name
-// of the virtual network rule.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. virtualNetworkRuleName is
+// the name of the virtual network rule.
 func (client VirtualNetworkRulesClient) Delete(ctx context.Context, resourceGroupName string, serverName string, virtualNetworkRuleName string) (result VirtualNetworkRulesDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName, virtualNetworkRuleName)
 	if err != nil {
@@ -194,9 +194,9 @@ func (client VirtualNetworkRulesClient) DeleteResponder(resp *http.Response) (re
 
 // Get gets a virtual network rule.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. virtualNetworkRuleName is the name
-// of the virtual network rule.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. virtualNetworkRuleName is
+// the name of the virtual network rule.
 func (client VirtualNetworkRulesClient) Get(ctx context.Context, resourceGroupName string, serverName string, virtualNetworkRuleName string) (result VirtualNetworkRule, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, virtualNetworkRuleName)
 	if err != nil {
@@ -263,8 +263,8 @@ func (client VirtualNetworkRulesClient) GetResponder(resp *http.Response) (resul
 
 // ListByServer gets a list of virtual network rules in a server.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
 func (client VirtualNetworkRulesClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result VirtualNetworkRuleListResultPage, err error) {
 	result.fn = client.listByServerNextResults
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)

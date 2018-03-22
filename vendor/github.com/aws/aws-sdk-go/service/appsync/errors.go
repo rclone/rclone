@@ -10,6 +10,12 @@ const (
 	// The API key exceeded a limit. Try your request again.
 	ErrCodeApiKeyLimitExceededException = "ApiKeyLimitExceededException"
 
+	// ErrCodeApiKeyValidityOutOfBoundsException for service response error code
+	// "ApiKeyValidityOutOfBoundsException".
+	//
+	// The API key expiration must be set to a value between 1 and 365 days.
+	ErrCodeApiKeyValidityOutOfBoundsException = "ApiKeyValidityOutOfBoundsException"
+
 	// ErrCodeApiLimitExceededException for service response error code
 	// "ApiLimitExceededException".
 	//

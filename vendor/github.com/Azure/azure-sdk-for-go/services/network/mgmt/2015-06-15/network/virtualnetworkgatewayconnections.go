@@ -42,9 +42,9 @@ func NewVirtualNetworkGatewayConnectionsClientWithBaseURI(baseURI string, subscr
 
 // CreateOrUpdate creates or updates a virtual network gateway connection in the specified resource group.
 //
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayConnectionName is the name of the virtual
-// network gateway connection. parameters is parameters supplied to the create or update virtual network gateway
-// connection operation.
+// resourceGroupName is the name of the resource group. virtualNetworkGatewayConnectionName is the name of the
+// virtual network gateway connection. parameters is parameters supplied to the create or update virtual network
+// gateway connection operation.
 func (client VirtualNetworkGatewayConnectionsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, virtualNetworkGatewayConnectionName string, parameters VirtualNetworkGatewayConnection) (result VirtualNetworkGatewayConnectionsCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, virtualNetworkGatewayConnectionName, parameters)
 	if err != nil {
@@ -114,8 +114,8 @@ func (client VirtualNetworkGatewayConnectionsClient) CreateOrUpdateResponder(res
 
 // Delete deletes the specified virtual network Gateway connection.
 //
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayConnectionName is the name of the virtual
-// network gateway connection.
+// resourceGroupName is the name of the resource group. virtualNetworkGatewayConnectionName is the name of the
+// virtual network gateway connection.
 func (client VirtualNetworkGatewayConnectionsClient) Delete(ctx context.Context, resourceGroupName string, virtualNetworkGatewayConnectionName string) (result VirtualNetworkGatewayConnectionsDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, virtualNetworkGatewayConnectionName)
 	if err != nil {
@@ -182,8 +182,8 @@ func (client VirtualNetworkGatewayConnectionsClient) DeleteResponder(resp *http.
 
 // Get gets the specified virtual network gateway connection by resource group.
 //
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayConnectionName is the name of the virtual
-// network gateway connection.
+// resourceGroupName is the name of the resource group. virtualNetworkGatewayConnectionName is the name of the
+// virtual network gateway connection.
 func (client VirtualNetworkGatewayConnectionsClient) Get(ctx context.Context, resourceGroupName string, virtualNetworkGatewayConnectionName string) (result VirtualNetworkGatewayConnection, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, virtualNetworkGatewayConnectionName)
 	if err != nil {
@@ -488,8 +488,8 @@ func (client VirtualNetworkGatewayConnectionsClient) ResetSharedKeyResponder(res
 // provider.
 //
 // resourceGroupName is the name of the resource group. virtualNetworkGatewayConnectionName is the virtual network
-// gateway connection name. parameters is parameters supplied to the Begin Set Virtual Network Gateway conection Shared
-// key operation throughNetwork resource provider.
+// gateway connection name. parameters is parameters supplied to the Begin Set Virtual Network Gateway conection
+// Shared key operation throughNetwork resource provider.
 func (client VirtualNetworkGatewayConnectionsClient) SetSharedKey(ctx context.Context, resourceGroupName string, virtualNetworkGatewayConnectionName string, parameters ConnectionSharedKey) (result VirtualNetworkGatewayConnectionsSetSharedKeyFuture, err error) {
 	req, err := client.SetSharedKeyPreparer(ctx, resourceGroupName, virtualNetworkGatewayConnectionName, parameters)
 	if err != nil {

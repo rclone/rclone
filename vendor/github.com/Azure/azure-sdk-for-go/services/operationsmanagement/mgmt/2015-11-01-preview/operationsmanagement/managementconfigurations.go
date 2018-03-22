@@ -43,8 +43,8 @@ func NewManagementConfigurationsClientWithBaseURI(baseURI string, subscriptionID
 // CreateOrUpdate creates or updates the ManagementConfiguration.
 //
 // resourceGroupName is the name of the resource group to get. The name is case insensitive.
-// managementConfigurationName is user Management Configuration Name. parameters is the parameters required to create
-// OMS Solution.
+// managementConfigurationName is user Management Configuration Name. parameters is the parameters required to
+// create OMS Solution.
 func (client ManagementConfigurationsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, managementConfigurationName string, parameters ManagementConfiguration) (result ManagementConfiguration, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -57,7 +57,7 @@ func (client ManagementConfigurationsClient) CreateOrUpdate(ctx context.Context,
 					{Target: "parameters.Properties.Parameters", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "parameters.Properties.Template", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationsmanagement.ManagementConfigurationsClient", "CreateOrUpdate")
+		return result, validation.NewError("operationsmanagement.ManagementConfigurationsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, managementConfigurationName, parameters)
@@ -134,7 +134,7 @@ func (client ManagementConfigurationsClient) Delete(ctx context.Context, resourc
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationsmanagement.ManagementConfigurationsClient", "Delete")
+		return result, validation.NewError("operationsmanagement.ManagementConfigurationsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, managementConfigurationName)
@@ -208,7 +208,7 @@ func (client ManagementConfigurationsClient) Get(ctx context.Context, resourceGr
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationsmanagement.ManagementConfigurationsClient", "Get")
+		return result, validation.NewError("operationsmanagement.ManagementConfigurationsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, managementConfigurationName)

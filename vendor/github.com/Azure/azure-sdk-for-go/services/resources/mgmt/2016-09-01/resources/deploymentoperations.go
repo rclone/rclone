@@ -42,8 +42,8 @@ func NewDeploymentOperationsClientWithBaseURI(baseURI string, subscriptionID str
 
 // Get gets a deployments operation.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of the
-// deployment. operationID is the ID of the operation to get.
+// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
+// the deployment. operationID is the ID of the operation to get.
 func (client DeploymentOperationsClient) Get(ctx context.Context, resourceGroupName string, deploymentName string, operationID string) (result DeploymentOperation, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -54,7 +54,7 @@ func (client DeploymentOperationsClient) Get(ctx context.Context, resourceGroupN
 			Constraints: []validation.Constraint{{Target: "deploymentName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "deploymentName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "deploymentName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.DeploymentOperationsClient", "Get")
+		return result, validation.NewError("resources.DeploymentOperationsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, deploymentName, operationID)
@@ -122,8 +122,8 @@ func (client DeploymentOperationsClient) GetResponder(resp *http.Response) (resu
 
 // List gets all deployments operations for a deployment.
 //
-// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of the
-// deployment with the operation to get. top is the number of results to return.
+// resourceGroupName is the name of the resource group. The name is case insensitive. deploymentName is the name of
+// the deployment with the operation to get. top is the number of results to return.
 func (client DeploymentOperationsClient) List(ctx context.Context, resourceGroupName string, deploymentName string, top *int32) (result DeploymentOperationsListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -134,7 +134,7 @@ func (client DeploymentOperationsClient) List(ctx context.Context, resourceGroup
 			Constraints: []validation.Constraint{{Target: "deploymentName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "deploymentName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "deploymentName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.DeploymentOperationsClient", "List")
+		return result, validation.NewError("resources.DeploymentOperationsClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults

@@ -120,8 +120,8 @@ func (client ZonesClient) CreateOrUpdateResponder(resp *http.Response) (result Z
 // Delete removes a DNS zone from a resource group.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the zone without a terminating dot.
-// ifMatch is defines the If-Match condition. The delete operation will be performed only if the ETag of the zone on
-// the server matches this value.
+// ifMatch is defines the If-Match condition. The delete operation will be performed only if the ETag of the zone
+// on the server matches this value.
 func (client ZonesClient) Delete(ctx context.Context, resourceGroupName string, zoneName string, ifMatch string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, zoneName, ifMatch)
 	if err != nil {
@@ -256,8 +256,8 @@ func (client ZonesClient) GetResponder(resp *http.Response) (result Zone, err er
 
 // ListZonesInResourceGroup lists the DNS zones within a resource group.
 //
-// resourceGroupName is the name of the resource group. top is query parameters. If null is passed returns the default
-// number of zones. filter is the filter to apply on the operation.
+// resourceGroupName is the name of the resource group. top is query parameters. If null is passed returns the
+// default number of zones. filter is the filter to apply on the operation.
 func (client ZonesClient) ListZonesInResourceGroup(ctx context.Context, resourceGroupName string, top string, filter string) (result ZoneListResultPage, err error) {
 	result.fn = client.listZonesInResourceGroupNextResults
 	req, err := client.ListZonesInResourceGroupPreparer(ctx, resourceGroupName, top, filter)
@@ -356,8 +356,8 @@ func (client ZonesClient) ListZonesInResourceGroupComplete(ctx context.Context, 
 
 // ListZonesInSubscription lists the DNS zones within a resource group.
 //
-// top is query parameters. If null is passed returns the default number of zones. filter is the filter to apply on the
-// operation.
+// top is query parameters. If null is passed returns the default number of zones. filter is the filter to apply on
+// the operation.
 func (client ZonesClient) ListZonesInSubscription(ctx context.Context, top string, filter string) (result ZoneListResultPage, err error) {
 	result.fn = client.listZonesInSubscriptionNextResults
 	req, err := client.ListZonesInSubscriptionPreparer(ctx, top, filter)

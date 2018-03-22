@@ -93,7 +93,7 @@ type idmarshaler interface {
 }
 
 func (c *clientConn) sendPacket(p idmarshaler) (byte, []byte, error) {
-	ch := make(chan result, 1)
+	ch := make(chan result, 2)
 	c.dispatchRequest(ch, p)
 	s := <-ch
 	return s.typ, s.data, s.err

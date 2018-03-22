@@ -312,8 +312,8 @@ func (client ServicesClient) RemoveResponder(resp *http.Response) (result String
 
 // Resolve resolve services
 //
-// serviceName is the name of the service partitionKeyType is the type of the partition key partitionKeyValue is the
-// value of the partition key previousRspVersion is the version of the previous rsp
+// serviceName is the name of the service partitionKeyType is the type of the partition key partitionKeyValue is
+// the value of the partition key previousRspVersion is the version of the previous rsp
 func (client ServicesClient) Resolve(ctx context.Context, serviceName string, partitionKeyType *int32, partitionKeyValue string, previousRspVersion string) (result ResolvedServicePartition, err error) {
 	req, err := client.ResolvePreparer(ctx, serviceName, partitionKeyType, partitionKeyValue, previousRspVersion)
 	if err != nil {

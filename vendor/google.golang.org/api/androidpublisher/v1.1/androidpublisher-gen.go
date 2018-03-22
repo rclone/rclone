@@ -120,7 +120,7 @@ type InappPurchase struct {
 	// PurchaseState: The purchase state of the order. Possible values are:
 	//
 	// - Purchased
-	// - Cancelled
+	// - Canceled
 	PurchaseState int64 `json:"purchaseState,omitempty"`
 
 	// PurchaseTime: The time the product was purchased, in milliseconds
@@ -131,6 +131,7 @@ type InappPurchase struct {
 	// is only set if this purchase was not made using the standard in-app
 	// billing flow. Possible values are:
 	// - Test (i.e. purchased from a license testing account)
+	// - Promo (i.e. purchased using a promo code)
 	PurchaseType int64 `json:"purchaseType,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the

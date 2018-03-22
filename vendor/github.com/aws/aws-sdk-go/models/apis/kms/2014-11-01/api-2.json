@@ -491,6 +491,7 @@
       },
       "input":{"shape":"RetireGrantRequest"},
       "errors":[
+        {"shape":"InvalidArnException"},
         {"shape":"InvalidGrantTokenException"},
         {"shape":"InvalidGrantIdException"},
         {"shape":"NotFoundException"},

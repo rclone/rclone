@@ -15,6 +15,7 @@
 package logging_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -105,6 +106,35 @@ func ExampleLogger_Log() {
 	}
 	lg := client.Logger("my-log")
 	lg.Log(logging.Entry{Payload: "something happened"})
+}
+
+// An Entry payload can be anything that marshals to a
+// JSON object, like a struct.
+func ExampleLogger_Log_struct() {
+	type MyEntry struct {
+		Name  string
+		Count int
+	}
+
+	ctx := context.Background()
+	client, err := logging.NewClient(ctx, "my-project")
+	if err != nil {
+		// TODO: Handle error.
+	}
+	lg := client.Logger("my-log")
+	lg.Log(logging.Entry{Payload: MyEntry{Name: "Bob", Count: 3}})
+}
+
+// To log a JSON value, wrap it in json.RawMessage.
+func ExampleLogger_Log_json() {
+	ctx := context.Background()
+	client, err := logging.NewClient(ctx, "my-project")
+	if err != nil {
+		// TODO: Handle error.
+	}
+	lg := client.Logger("my-log")
+	j := []byte(`{"Name": "Bob", "Count": 3}`)
+	lg.Log(logging.Entry{Payload: json.RawMessage(j)})
 }
 
 func ExampleLogger_Flush() {

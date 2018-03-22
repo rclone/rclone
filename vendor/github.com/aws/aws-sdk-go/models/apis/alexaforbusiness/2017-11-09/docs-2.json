@@ -276,8 +276,33 @@
     "DeviceStatus": {
       "base": null,
       "refs": {
-        "Device$DeviceStatus": "<p>The status of a device.</p>",
+        "Device$DeviceStatus": "<p>The status of a device. If the status is not READY, check the DeviceStatusInfo for details.</p>",
         "DeviceData$DeviceStatus": "<p>The status of a device.</p>"
+      }
+    },
+    "DeviceStatusDetail": {
+      "base": "<p>Details of a device’s status.</p>",
+      "refs": {
+        "DeviceStatusDetails$member": null
+      }
+    },
+    "DeviceStatusDetailCode": {
+      "base": null,
+      "refs": {
+        "DeviceStatusDetail$Code": "<p>The device status detail code.</p>"
+      }
+    },
+    "DeviceStatusDetails": {
+      "base": null,
+      "refs": {
+        "DeviceStatusInfo$DeviceStatusDetails": "<p>One or more device status detail descriptions.</p>"
+      }
+    },
+    "DeviceStatusInfo": {
+      "base": "<p>Detailed information about a device's status.</p>",
+      "refs": {
+        "Device$DeviceStatusInfo": "<p>Detailed information about a device's status.</p>",
+        "DeviceData$DeviceStatusInfo": "<p>Detailed information about a device's status.</p>"
       }
     },
     "DeviceType": {
@@ -375,7 +400,7 @@
     "FilterList": {
       "base": null,
       "refs": {
-        "SearchDevicesRequest$Filters": "<p>The filters to use to list a specified set of devices. Supported filter keys are DeviceName, DeviceStatus, RoomName, DeviceType, DeviceSerialNumber, and UnassociatedOnly.</p>",
+        "SearchDevicesRequest$Filters": "<p>The filters to use to list a specified set of devices. Supported filter keys are DeviceName, DeviceStatus, DeviceStatusDetailCode, RoomName, DeviceType, DeviceSerialNumber, and UnassociatedOnly.</p>",
         "SearchProfilesRequest$Filters": "<p>The filters to use to list a specified set of room profiles. Supported filter keys are ProfileName and Address. Required. </p>",
         "SearchRoomsRequest$Filters": "<p>The filters to use to list a specified set of rooms. The supported filter keys are RoomName and ProfileName.</p>",
         "SearchSkillGroupsRequest$Filters": "<p>The filters to use to list a specified set of skill groups. The supported filter key is SkillGroupName. </p>",

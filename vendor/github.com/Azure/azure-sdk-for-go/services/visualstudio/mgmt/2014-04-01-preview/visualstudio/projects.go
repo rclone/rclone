@@ -49,8 +49,8 @@ func NewProjectsClientWithBaseURI(baseURI string, subscriptionID string) Project
 // 27450541-8E31-4150-9947-DC59F998FC01 (these IDs correspond to Scrum, Agile, and CMMI process templates).
 //
 // body is the request data. resourceGroupName is name of the resource group within the Azure subscription.
-// rootResourceName is name of the Team Services account. resourceName is name of the Team Services project. validating
-// is this parameter is ignored and should be set to an empty string.
+// rootResourceName is name of the Team Services account. resourceName is name of the Team Services project.
+// validating is this parameter is ignored and should be set to an empty string.
 func (client ProjectsClient) Create(ctx context.Context, body ProjectResource, resourceGroupName string, rootResourceName string, resourceName string, validating string) (result ProjectsCreateFuture, err error) {
 	req, err := client.CreatePreparer(ctx, body, resourceGroupName, rootResourceName, resourceName, validating)
 	if err != nil {
@@ -124,8 +124,8 @@ func (client ProjectsClient) CreateResponder(resp *http.Response) (result Projec
 
 // Get gets the details of a Team Services project resource.
 //
-// resourceGroupName is name of the resource group within the Azure subscription. rootResourceName is name of the Team
-// Services account. resourceName is name of the Team Services project.
+// resourceGroupName is name of the resource group within the Azure subscription. rootResourceName is name of the
+// Team Services account. resourceName is name of the Team Services project.
 func (client ProjectsClient) Get(ctx context.Context, resourceGroupName string, rootResourceName string, resourceName string) (result ProjectResource, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, rootResourceName, resourceName)
 	if err != nil {
@@ -192,10 +192,10 @@ func (client ProjectsClient) GetResponder(resp *http.Response) (result ProjectRe
 
 // GetJobStatus gets the status of the project resource creation job.
 //
-// resourceGroupName is name of the resource group within the Azure subscription. rootResourceName is name of the Team
-// Services account. resourceName is name of the Team Services project. subContainerName is this parameter should be
-// set to the resourceName. operation is the operation type. The only supported value is 'put'. jobID is the job
-// identifier.
+// resourceGroupName is name of the resource group within the Azure subscription. rootResourceName is name of the
+// Team Services account. resourceName is name of the Team Services project. subContainerName is this parameter
+// should be set to the resourceName. operation is the operation type. The only supported value is 'put'. jobID is
+// the job identifier.
 func (client ProjectsClient) GetJobStatus(ctx context.Context, resourceGroupName string, rootResourceName string, resourceName string, subContainerName string, operation string, jobID *uuid.UUID) (result ProjectResource, err error) {
 	req, err := client.GetJobStatusPreparer(ctx, resourceGroupName, rootResourceName, resourceName, subContainerName, operation, jobID)
 	if err != nil {
@@ -268,8 +268,8 @@ func (client ProjectsClient) GetJobStatusResponder(resp *http.Response) (result 
 // ListByResourceGroup gets all Visual Studio Team Services project resources created in the specified Team Services
 // account.
 //
-// resourceGroupName is name of the resource group within the Azure subscription. rootResourceName is name of the Team
-// Services account.
+// resourceGroupName is name of the resource group within the Azure subscription. rootResourceName is name of the
+// Team Services account.
 func (client ProjectsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, rootResourceName string) (result ProjectResourceListResult, err error) {
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, rootResourceName)
 	if err != nil {

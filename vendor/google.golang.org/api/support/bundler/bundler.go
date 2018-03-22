@@ -23,6 +23,7 @@ package bundler
 
 import (
 	"errors"
+	"math"
 	"reflect"
 	"sync"
 	"time"
@@ -71,6 +72,10 @@ type Bundler struct {
 	// returning ErrOverflow. The default is DefaultBufferedByteLimit.
 	BufferedByteLimit int
 
+	// The maximum number of handler invocations that can be running at once.
+	// The default is 1.
+	HandlerLimit int
+
 	handler       func(interface{}) // called to handle a bundle
 	itemSliceZero reflect.Value     // nil (zero value) for slice of items
 	flushTimer    *time.Timer       // implements DelayThreshold
@@ -78,8 +83,22 @@ type Bundler struct {
 	mu        sync.Mutex
 	sem       *semaphore.Weighted // enforces BufferedByteLimit
 	semOnce   sync.Once
-	curBundle bundle          // incoming items added to this bundle
-	handlingc <-chan struct{} // set to non-nil while a handler is running; closed when it returns
+	curBundle bundle // incoming items added to this bundle
+
+	// Each bundle is assigned a unique ticket that determines the order in which the
+	// handler is called. The ticket is assigned with mu locked, but waiting for tickets
+	// to be handled is done via mu2 and cond, below.
+	nextTicket uint64 // next ticket to be assigned
+
+	mu2         sync.Mutex
+	cond        *sync.Cond
+	nextHandled uint64 // next ticket to be handled
+
+	// In this implementation, active uses space proportional to HandlerLimit, and
+	// waitUntilAllHandled takes time proportional to HandlerLimit each time an acquire
+	// or release occurs, so large values of HandlerLimit max may cause performance
+	// issues.
+	active map[uint64]bool // tickets of bundles actively being handled
 }
 
 type bundle struct {
@@ -104,21 +123,23 @@ func NewBundler(itemExample interface{}, handler func(interface{})) *Bundler {
 		BundleCountThreshold: DefaultBundleCountThreshold,
 		BundleByteThreshold:  DefaultBundleByteThreshold,
 		BufferedByteLimit:    DefaultBufferedByteLimit,
+		HandlerLimit:         1,
 
 		handler:       handler,
 		itemSliceZero: reflect.Zero(reflect.SliceOf(reflect.TypeOf(itemExample))),
+		active:        map[uint64]bool{},
 	}
 	b.curBundle.items = b.itemSliceZero
+	b.cond = sync.NewCond(&b.mu2)
 	return b
 }
 
-func (b *Bundler) sema() *semaphore.Weighted {
-	// Create the semaphore lazily, because the user may set BufferedByteLimit
+func (b *Bundler) initSemaphores() {
+	// Create the semaphores lazily, because the user may set limits
 	// after NewBundler.
 	b.semOnce.Do(func() {
 		b.sem = semaphore.NewWeighted(int64(b.BufferedByteLimit))
 	})
-	return b.sem
 }
 
 // Add adds item to the current bundle. It marks the bundle for handling and
@@ -142,7 +163,8 @@ func (b *Bundler) Add(item interface{}, size int) error {
 	// footprint, we can't accept it.
 	// (TryAcquire also returns false if anything is waiting on the semaphore,
 	// so calls to Add and AddWait shouldn't be mixed.)
-	if !b.sema().TryAcquire(int64(size)) {
+	b.initSemaphores()
+	if !b.sem.TryAcquire(int64(size)) {
 		return ErrOverflow
 	}
 	b.add(item, size)
@@ -202,7 +224,8 @@ func (b *Bundler) AddWait(ctx context.Context, item interface{}, size int) error
 	// If adding this item would exceed our allotted memory footprint, block
 	// until space is available. The semaphore is FIFO, so there will be no
 	// starvation.
-	if err := b.sema().Acquire(ctx, int64(size)); err != nil {
+	b.initSemaphores()
+	if err := b.sem.Acquire(ctx, int64(size)); err != nil {
 		return err
 	}
 	// Here, we've reserved space for item. Other goroutines can call AddWait
@@ -218,12 +241,13 @@ func (b *Bundler) AddWait(ctx context.Context, item interface{}, size int) error
 func (b *Bundler) Flush() {
 	b.mu.Lock()
 	b.startFlushLocked()
-	done := b.handlingc
+	// Here, all bundles with tickets < b.nextTicket are
+	// either finished or active. Those are the ones
+	// we want to wait for.
+	t := b.nextTicket
 	b.mu.Unlock()
-
-	if done != nil {
-		<-done
-	}
+	b.initSemaphores()
+	b.waitUntilAllHandled(t)
 }
 
 func (b *Bundler) startFlushLocked() {
@@ -231,28 +255,95 @@ func (b *Bundler) startFlushLocked() {
 		b.flushTimer.Stop()
 		b.flushTimer = nil
 	}
-
 	if b.curBundle.items.Len() == 0 {
 		return
 	}
+	// Here, both semaphores must have been initialized.
 	bun := b.curBundle
 	b.curBundle = bundle{items: b.itemSliceZero}
-
-	done := make(chan struct{})
-	var running <-chan struct{}
-	running, b.handlingc = b.handlingc, done
-
+	ticket := b.nextTicket
+	b.nextTicket++
 	go func() {
 		defer func() {
 			b.sem.Release(int64(bun.size))
-			close(done)
+			b.release(ticket)
 		}()
-
-		if running != nil {
-			// Wait for our turn to call the handler.
-			<-running
-		}
-
+		b.acquire(ticket)
 		b.handler(bun.items.Interface())
 	}()
+}
+
+// acquire blocks until ticket is the next to be served, then returns. In order for N
+// acquire calls to return, the tickets must be in the range [0, N). A ticket must
+// not be presented to acquire more than once.
+func (b *Bundler) acquire(ticket uint64) {
+	b.mu2.Lock()
+	defer b.mu2.Unlock()
+	if ticket < b.nextHandled {
+		panic("bundler: acquire: arg too small")
+	}
+	for !(ticket == b.nextHandled && len(b.active) < b.HandlerLimit) {
+		b.cond.Wait()
+	}
+	// Here,
+	// ticket == b.nextHandled: the caller is the next one to be handled;
+	// and len(b.active) < b.HandlerLimit: there is space available.
+	b.active[ticket] = true
+	b.nextHandled++
+	// Broadcast, not Signal: although at most one acquire waiter can make progress,
+	// there might be waiters in waitUntilAllHandled.
+	b.cond.Broadcast()
+}
+
+// If a ticket is used for a call to acquire, it must later be passed to release. A
+// ticket must not be presented to release more than once.
+func (b *Bundler) release(ticket uint64) {
+	b.mu2.Lock()
+	defer b.mu2.Unlock()
+	if !b.active[ticket] {
+		panic("bundler: release: not an active ticket")
+	}
+	delete(b.active, ticket)
+	b.cond.Broadcast()
+}
+
+// waitUntilAllHandled blocks until all tickets < n have called release, meaning
+// all bundles with tickets < n have been handled.
+func (b *Bundler) waitUntilAllHandled(n uint64) {
+	// Proof of correctness of this function.
+	// "N is acquired" means acquire(N) has returned.
+	// "N is released" means release(N) has returned.
+	// 1. If N is acquired, N-1 is acquired.
+	//    Follows from the loop test in acquire, and the fact
+	//    that nextHandled is incremented by 1.
+	// 2. If nextHandled >= N, then N-1 is acquired.
+	//    Because we only increment nextHandled to N after N-1 is acquired.
+	// 3. If nextHandled >= N, then all n < N is acquired.
+	//    Follows from #1 and #2.
+	// 4. If N is acquired and N is not in active, then N is released.
+	//    Because we put N in active before acquire returns, and only
+	//    remove it when it is released.
+	// Let min(active) be the smallest member of active, or infinity if active is empty.
+	// 5. If nextHandled >= N and N <= min(active), then all n < N is released.
+	//    From nextHandled >= N and #3, all n < N is acquired.
+	//    N <= min(active) implies n < min(active) for all n < N. So all n < N is not in active.
+	//    So from #4, all n < N is released.
+	// The loop test below is the antecedent of #5.
+	b.mu2.Lock()
+	defer b.mu2.Unlock()
+	for !(b.nextHandled >= n && n <= min(b.active)) {
+		b.cond.Wait()
+	}
+}
+
+// min returns the minimum value of the set s, or the largest uint64 if
+// s is empty.
+func min(s map[uint64]bool) uint64 {
+	var m uint64 = math.MaxUint64
+	for n := range s {
+		if n < m {
+			m = n
+		}
+	}
+	return m
 }

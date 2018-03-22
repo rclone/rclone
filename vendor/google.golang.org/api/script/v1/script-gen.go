@@ -1,6 +1,6 @@
 // Package script provides access to the Google Apps Script API.
 //
-// See https://developers.google.com/apps-script/api
+// See https://developers.google.com/apps-script/api/
 //
 // Usage example:
 //
@@ -833,6 +833,8 @@ type GoogleAppsScriptTypeProcess struct {
 	//   "CANCELED" - The process was cancelled.
 	//   "FAILED" - The process failed.
 	//   "TIMED_OUT" - The process timed out.
+	//   "UNKNOWN" - Process status unknown.
+	//   "DELAYED" - The process is delayed, waiting for quota.
 	ProcessStatus string `json:"processStatus,omitempty"`
 
 	// ProcessType: The executions type.
@@ -1683,6 +1685,8 @@ func (c *ProcessesListCall) UserProcessFilterStartTime(userProcessFilterStartTim
 //   "CANCELED"
 //   "FAILED"
 //   "TIMED_OUT"
+//   "UNKNOWN"
+//   "DELAYED"
 func (c *ProcessesListCall) UserProcessFilterStatuses(userProcessFilterStatuses ...string) *ProcessesListCall {
 	c.urlParams_.SetMulti("userProcessFilter.statuses", append([]string{}, userProcessFilterStatuses...))
 	return c
@@ -1871,7 +1875,9 @@ func (c *ProcessesListCall) Do(opts ...googleapi.CallOption) (*ListUserProcesses
 	//         "COMPLETED",
 	//         "CANCELED",
 	//         "FAILED",
-	//         "TIMED_OUT"
+	//         "TIMED_OUT",
+	//         "UNKNOWN",
+	//         "DELAYED"
 	//       ],
 	//       "location": "query",
 	//       "repeated": true,
@@ -2026,6 +2032,8 @@ func (c *ProcessesListScriptProcessesCall) ScriptProcessFilterStartTime(scriptPr
 //   "CANCELED"
 //   "FAILED"
 //   "TIMED_OUT"
+//   "UNKNOWN"
+//   "DELAYED"
 func (c *ProcessesListScriptProcessesCall) ScriptProcessFilterStatuses(scriptProcessFilterStatuses ...string) *ProcessesListScriptProcessesCall {
 	c.urlParams_.SetMulti("scriptProcessFilter.statuses", append([]string{}, scriptProcessFilterStatuses...))
 	return c
@@ -2209,7 +2217,9 @@ func (c *ProcessesListScriptProcessesCall) Do(opts ...googleapi.CallOption) (*Li
 	//         "COMPLETED",
 	//         "CANCELED",
 	//         "FAILED",
-	//         "TIMED_OUT"
+	//         "TIMED_OUT",
+	//         "UNKNOWN",
+	//         "DELAYED"
 	//       ],
 	//       "location": "query",
 	//       "repeated": true,

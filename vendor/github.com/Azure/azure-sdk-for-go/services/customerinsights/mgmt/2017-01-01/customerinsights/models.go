@@ -286,7 +286,22 @@ type AssignmentPrincipal struct {
 	// PrincipalType - The Type of the principal ID.
 	PrincipalType *string `json:"principalType,omitempty"`
 	// PrincipalMetadata - Other metadata for the principal.
-	PrincipalMetadata *map[string]*string `json:"principalMetadata,omitempty"`
+	PrincipalMetadata map[string]*string `json:"principalMetadata"`
+}
+
+// MarshalJSON is the custom marshaler for AssignmentPrincipal.
+func (ap AssignmentPrincipal) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ap.PrincipalID != nil {
+		objectMap["principalId"] = ap.PrincipalID
+	}
+	if ap.PrincipalType != nil {
+		objectMap["principalType"] = ap.PrincipalType
+	}
+	if ap.PrincipalMetadata != nil {
+		objectMap["principalMetadata"] = ap.PrincipalMetadata
+	}
+	return json.Marshal(objectMap)
 }
 
 // AuthorizationPolicy the authorization policy.
@@ -407,14 +422,14 @@ func (page AuthorizationPolicyListResultPage) Values() []AuthorizationPolicyReso
 
 // AuthorizationPolicyResourceFormat the authorization policy resource format.
 type AuthorizationPolicyResourceFormat struct {
-	autorest.Response `json:"-"`
+	autorest.Response    `json:"-"`
+	*AuthorizationPolicy `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
-	Type                 *string `json:"type,omitempty"`
-	*AuthorizationPolicy `json:"properties,omitempty"`
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for AuthorizationPolicyResourceFormat struct.
@@ -424,46 +439,45 @@ func (aprf *AuthorizationPolicyResourceFormat) UnmarshalJSON(body []byte) error 
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties AuthorizationPolicy
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var authorizationPolicy AuthorizationPolicy
+				err = json.Unmarshal(*v, &authorizationPolicy)
+				if err != nil {
+					return err
+				}
+				aprf.AuthorizationPolicy = &authorizationPolicy
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				aprf.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				aprf.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				aprf.Type = &typeVar
+			}
 		}
-		aprf.AuthorizationPolicy = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		aprf.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		aprf.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		aprf.Type = &typeVar
 	}
 
 	return nil
@@ -488,7 +502,7 @@ type Connector struct {
 	// Description - Description of the connector.
 	Description *string `json:"description,omitempty"`
 	// ConnectorProperties - The connector properties.
-	ConnectorProperties *map[string]*map[string]interface{} `json:"connectorProperties,omitempty"`
+	ConnectorProperties map[string]interface{} `json:"connectorProperties"`
 	// Created - The created time.
 	Created *date.Time `json:"created,omitempty"`
 	// LastModified - The last monified time.
@@ -499,6 +513,41 @@ type Connector struct {
 	TenantID *string `json:"tenantId,omitempty"`
 	// IsInternal - If this is an internal connector.
 	IsInternal *bool `json:"isInternal,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Connector.
+func (c Connector) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if c.ConnectorID != nil {
+		objectMap["connectorId"] = c.ConnectorID
+	}
+	if c.ConnectorName != nil {
+		objectMap["connectorName"] = c.ConnectorName
+	}
+	objectMap["connectorType"] = c.ConnectorType
+	if c.DisplayName != nil {
+		objectMap["displayName"] = c.DisplayName
+	}
+	if c.Description != nil {
+		objectMap["description"] = c.Description
+	}
+	if c.ConnectorProperties != nil {
+		objectMap["connectorProperties"] = c.ConnectorProperties
+	}
+	if c.Created != nil {
+		objectMap["created"] = c.Created
+	}
+	if c.LastModified != nil {
+		objectMap["lastModified"] = c.LastModified
+	}
+	objectMap["state"] = c.State
+	if c.TenantID != nil {
+		objectMap["tenantId"] = c.TenantID
+	}
+	if c.IsInternal != nil {
+		objectMap["isInternal"] = c.IsInternal
+	}
+	return json.Marshal(objectMap)
 }
 
 // ConnectorListResult the response of list connector operation.
@@ -686,7 +735,8 @@ type ConnectorMappingListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
-// ConnectorMappingListResultIterator provides access to a complete listing of ConnectorMappingResourceFormat values.
+// ConnectorMappingListResultIterator provides access to a complete listing of ConnectorMappingResourceFormat
+// values.
 type ConnectorMappingListResultIterator struct {
 	i    int
 	page ConnectorMappingListResultPage
@@ -802,13 +852,13 @@ type ConnectorMappingProperties struct {
 // ConnectorMappingResourceFormat the c onnector mapping resource format.
 type ConnectorMappingResourceFormat struct {
 	autorest.Response `json:"-"`
+	*ConnectorMapping `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
-	Type              *string `json:"type,omitempty"`
-	*ConnectorMapping `json:"properties,omitempty"`
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for ConnectorMappingResourceFormat struct.
@@ -818,46 +868,45 @@ func (cmrf *ConnectorMappingResourceFormat) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ConnectorMapping
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var connectorMapping ConnectorMapping
+				err = json.Unmarshal(*v, &connectorMapping)
+				if err != nil {
+					return err
+				}
+				cmrf.ConnectorMapping = &connectorMapping
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				cmrf.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				cmrf.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				cmrf.Type = &typeVar
+			}
 		}
-		cmrf.ConnectorMapping = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		cmrf.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		cmrf.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		cmrf.Type = &typeVar
 	}
 
 	return nil
@@ -878,13 +927,13 @@ type ConnectorMappingStructure struct {
 // ConnectorResourceFormat the connector resource format.
 type ConnectorResourceFormat struct {
 	autorest.Response `json:"-"`
+	*Connector        `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
-	Type       *string `json:"type,omitempty"`
-	*Connector `json:"properties,omitempty"`
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for ConnectorResourceFormat struct.
@@ -894,52 +943,52 @@ func (crf *ConnectorResourceFormat) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties Connector
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var connector Connector
+				err = json.Unmarshal(*v, &connector)
+				if err != nil {
+					return err
+				}
+				crf.Connector = &connector
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				crf.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				crf.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				crf.Type = &typeVar
+			}
 		}
-		crf.Connector = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		crf.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		crf.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		crf.Type = &typeVar
 	}
 
 	return nil
 }
 
-// ConnectorsCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+// ConnectorsCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
+// operation.
 type ConnectorsCreateOrUpdateFuture struct {
 	azure.Future
 	req *http.Request
@@ -951,22 +1000,39 @@ func (future ConnectorsCreateOrUpdateFuture) Result(client ConnectorsClient) (cr
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return crf, autorest.NewError("customerinsights.ConnectorsCreateOrUpdateFuture", "Result", "asynchronous operation has not completed")
+		return crf, azure.NewAsyncOpIncompleteError("customerinsights.ConnectorsCreateOrUpdateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		crf, err = client.CreateOrUpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	crf, err = client.CreateOrUpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -982,22 +1048,39 @@ func (future ConnectorsDeleteFuture) Result(client ConnectorsClient) (ar autores
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("customerinsights.ConnectorsDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("customerinsights.ConnectorsDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -1025,8 +1108,8 @@ type CrmConnectorProperties struct {
 	AccessToken *string `json:"accessToken,omitempty"`
 }
 
-// DataSource data Source is a way for us to know the source of instances. A single type can have data coming in from
-// multiple places. In activities we use this to determine precedence rules.
+// DataSource data Source is a way for us to know the source of instances. A single type can have data coming in
+// from multiple places. In activities we use this to determine precedence rules.
 type DataSource struct {
 	// Name - The data source name
 	Name *string `json:"name,omitempty"`
@@ -1054,26 +1137,27 @@ func (dsp *DataSourcePrecedence) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["dataSource"]
-	if v != nil {
-		var dataSource DataSource
-		err = json.Unmarshal(*m["dataSource"], &dataSource)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "dataSource":
+			if v != nil {
+				var dataSource DataSource
+				err = json.Unmarshal(*v, &dataSource)
+				if err != nil {
+					return err
+				}
+				dsp.DataSource = &dataSource
+			}
+		case "precedence":
+			if v != nil {
+				var precedence int32
+				err = json.Unmarshal(*v, &precedence)
+				if err != nil {
+					return err
+				}
+				dsp.Precedence = &precedence
+			}
 		}
-		dsp.DataSource = &dataSource
-	}
-
-	v = m["precedence"]
-	if v != nil {
-		var precedence int32
-		err = json.Unmarshal(*m["precedence"], &precedence)
-		if err != nil {
-			return err
-		}
-		dsp.Precedence = &precedence
 	}
 
 	return nil
@@ -1090,9 +1174,9 @@ type EnrichingKpi struct {
 	// KpiName - The KPI name.
 	KpiName *string `json:"kpiName,omitempty"`
 	// DisplayName - Localized display name for the KPI.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
+	DisplayName map[string]*string `json:"displayName"`
 	// Description - Localized description for the KPI.
-	Description *map[string]*string `json:"description,omitempty"`
+	Description map[string]*string `json:"description"`
 	// CalculationWindow - The calculation window. Possible values include: 'Lifetime', 'Hour', 'Day', 'Week', 'Month'
 	CalculationWindow CalculationWindowTypes `json:"calculationWindow,omitempty"`
 	// CalculationWindowFieldName - Name of calculation window field.
@@ -1121,22 +1205,63 @@ type EnrichingKpi struct {
 	Extracts *[]KpiExtract `json:"extracts,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for EnrichingKpi.
+func (ek EnrichingKpi) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	objectMap["entityType"] = ek.EntityType
+	if ek.EntityTypeName != nil {
+		objectMap["entityTypeName"] = ek.EntityTypeName
+	}
+	if ek.TenantID != nil {
+		objectMap["tenantId"] = ek.TenantID
+	}
+	if ek.KpiName != nil {
+		objectMap["kpiName"] = ek.KpiName
+	}
+	if ek.DisplayName != nil {
+		objectMap["displayName"] = ek.DisplayName
+	}
+	if ek.Description != nil {
+		objectMap["description"] = ek.Description
+	}
+	objectMap["calculationWindow"] = ek.CalculationWindow
+	if ek.CalculationWindowFieldName != nil {
+		objectMap["calculationWindowFieldName"] = ek.CalculationWindowFieldName
+	}
+	objectMap["function"] = ek.Function
+	if ek.Expression != nil {
+		objectMap["expression"] = ek.Expression
+	}
+	if ek.Unit != nil {
+		objectMap["unit"] = ek.Unit
+	}
+	if ek.Filter != nil {
+		objectMap["filter"] = ek.Filter
+	}
+	if ek.GroupBy != nil {
+		objectMap["groupBy"] = ek.GroupBy
+	}
+	if ek.GroupByMetadata != nil {
+		objectMap["groupByMetadata"] = ek.GroupByMetadata
+	}
+	if ek.ParticipantProfilesMetadata != nil {
+		objectMap["participantProfilesMetadata"] = ek.ParticipantProfilesMetadata
+	}
+	objectMap["provisioningState"] = ek.ProvisioningState
+	if ek.ThresHolds != nil {
+		objectMap["thresHolds"] = ek.ThresHolds
+	}
+	if ek.Aliases != nil {
+		objectMap["aliases"] = ek.Aliases
+	}
+	if ek.Extracts != nil {
+		objectMap["extracts"] = ek.Extracts
+	}
+	return json.Marshal(objectMap)
+}
+
 // EntityTypeDefinition describes an entity.
 type EntityTypeDefinition struct {
-	// Attributes - The attributes for the Type.
-	Attributes *map[string][]string `json:"attributes,omitempty"`
-	// Description - Localized descriptions for the property.
-	Description *map[string]*string `json:"description,omitempty"`
-	// DisplayName - Localized display names for the property.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
-	// LocalizedAttributes - Any custom localized attributes for the Type.
-	LocalizedAttributes *map[string]map[string]*string `json:"localizedAttributes,omitempty"`
-	// SmallImage - Small Image associated with the Property or EntityType.
-	SmallImage *string `json:"smallImage,omitempty"`
-	// MediumImage - Medium Image associated with the Property or EntityType.
-	MediumImage *string `json:"mediumImage,omitempty"`
-	// LargeImage - Large Image associated with the Property or EntityType.
-	LargeImage *string `json:"largeImage,omitempty"`
 	// APIEntitySetName - The api entity set name. This becomes the odata entity set name for the entity Type being refered in this object.
 	APIEntitySetName *string `json:"apiEntitySetName,omitempty"`
 	// EntityType - Type of entity. Possible values include: 'EntityTypesNone', 'EntityTypesProfile', 'EntityTypesInteraction', 'EntityTypesRelationship'
@@ -1157,6 +1282,73 @@ type EntityTypeDefinition struct {
 	TimestampFieldName *string `json:"timestampFieldName,omitempty"`
 	// TypeName - The name of the entity.
 	TypeName *string `json:"typeName,omitempty"`
+	// Attributes - The attributes for the Type.
+	Attributes map[string][]string `json:"attributes"`
+	// Description - Localized descriptions for the property.
+	Description map[string]*string `json:"description"`
+	// DisplayName - Localized display names for the property.
+	DisplayName map[string]*string `json:"displayName"`
+	// LocalizedAttributes - Any custom localized attributes for the Type.
+	LocalizedAttributes map[string]map[string]*string `json:"localizedAttributes"`
+	// SmallImage - Small Image associated with the Property or EntityType.
+	SmallImage *string `json:"smallImage,omitempty"`
+	// MediumImage - Medium Image associated with the Property or EntityType.
+	MediumImage *string `json:"mediumImage,omitempty"`
+	// LargeImage - Large Image associated with the Property or EntityType.
+	LargeImage *string `json:"largeImage,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for EntityTypeDefinition.
+func (etd EntityTypeDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if etd.APIEntitySetName != nil {
+		objectMap["apiEntitySetName"] = etd.APIEntitySetName
+	}
+	objectMap["entityType"] = etd.EntityType
+	if etd.Fields != nil {
+		objectMap["fields"] = etd.Fields
+	}
+	if etd.InstancesCount != nil {
+		objectMap["instancesCount"] = etd.InstancesCount
+	}
+	if etd.LastChangedUtc != nil {
+		objectMap["lastChangedUtc"] = etd.LastChangedUtc
+	}
+	objectMap["provisioningState"] = etd.ProvisioningState
+	if etd.SchemaItemTypeLink != nil {
+		objectMap["schemaItemTypeLink"] = etd.SchemaItemTypeLink
+	}
+	if etd.TenantID != nil {
+		objectMap["tenantId"] = etd.TenantID
+	}
+	if etd.TimestampFieldName != nil {
+		objectMap["timestampFieldName"] = etd.TimestampFieldName
+	}
+	if etd.TypeName != nil {
+		objectMap["typeName"] = etd.TypeName
+	}
+	if etd.Attributes != nil {
+		objectMap["attributes"] = etd.Attributes
+	}
+	if etd.Description != nil {
+		objectMap["description"] = etd.Description
+	}
+	if etd.DisplayName != nil {
+		objectMap["displayName"] = etd.DisplayName
+	}
+	if etd.LocalizedAttributes != nil {
+		objectMap["localizedAttributes"] = etd.LocalizedAttributes
+	}
+	if etd.SmallImage != nil {
+		objectMap["smallImage"] = etd.SmallImage
+	}
+	if etd.MediumImage != nil {
+		objectMap["mediumImage"] = etd.MediumImage
+	}
+	if etd.LargeImage != nil {
+		objectMap["largeImage"] = etd.LargeImage
+	}
+	return json.Marshal(objectMap)
 }
 
 // GetImageUploadURLInput input type for getting image upload url.
@@ -1171,7 +1363,8 @@ type GetImageUploadURLInput struct {
 
 // Hub hub resource.
 type Hub struct {
-	autorest.Response `json:"-"`
+	autorest.Response    `json:"-"`
+	*HubPropertiesFormat `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
@@ -1181,8 +1374,31 @@ type Hub struct {
 	// Location - Resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags.
-	Tags                 *map[string]*string `json:"tags,omitempty"`
-	*HubPropertiesFormat `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Hub.
+func (h Hub) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if h.HubPropertiesFormat != nil {
+		objectMap["properties"] = h.HubPropertiesFormat
+	}
+	if h.ID != nil {
+		objectMap["id"] = h.ID
+	}
+	if h.Name != nil {
+		objectMap["name"] = h.Name
+	}
+	if h.Type != nil {
+		objectMap["type"] = h.Type
+	}
+	if h.Location != nil {
+		objectMap["location"] = h.Location
+	}
+	if h.Tags != nil {
+		objectMap["tags"] = h.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Hub struct.
@@ -1192,66 +1408,63 @@ func (h *Hub) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties HubPropertiesFormat
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var hubPropertiesFormat HubPropertiesFormat
+				err = json.Unmarshal(*v, &hubPropertiesFormat)
+				if err != nil {
+					return err
+				}
+				h.HubPropertiesFormat = &hubPropertiesFormat
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				h.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				h.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				h.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				h.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				h.Tags = tags
+			}
 		}
-		h.HubPropertiesFormat = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		h.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		h.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		h.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		h.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		h.Tags = &tags
 	}
 
 	return nil
@@ -1395,22 +1608,39 @@ func (future HubsDeleteFuture) Result(client HubsClient) (ar autorest.Response, 
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.HubsDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("customerinsights.HubsDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("customerinsights.HubsDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "customerinsights.HubsDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.HubsDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.HubsDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -1529,14 +1759,14 @@ func (page InteractionListResultPage) Values() []InteractionResourceFormat {
 
 // InteractionResourceFormat the interaction resource format.
 type InteractionResourceFormat struct {
-	autorest.Response `json:"-"`
+	autorest.Response          `json:"-"`
+	*InteractionTypeDefinition `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
-	Type                       *string `json:"type,omitempty"`
-	*InteractionTypeDefinition `json:"properties,omitempty"`
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for InteractionResourceFormat struct.
@@ -1546,46 +1776,45 @@ func (irf *InteractionResourceFormat) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties InteractionTypeDefinition
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var interactionTypeDefinition InteractionTypeDefinition
+				err = json.Unmarshal(*v, &interactionTypeDefinition)
+				if err != nil {
+					return err
+				}
+				irf.InteractionTypeDefinition = &interactionTypeDefinition
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				irf.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				irf.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				irf.Type = &typeVar
+			}
 		}
-		irf.InteractionTypeDefinition = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		irf.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		irf.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		irf.Type = &typeVar
 	}
 
 	return nil
@@ -1604,41 +1833,56 @@ func (future InteractionsCreateOrUpdateFuture) Result(client InteractionsClient)
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.InteractionsCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return irf, autorest.NewError("customerinsights.InteractionsCreateOrUpdateFuture", "Result", "asynchronous operation has not completed")
+		return irf, azure.NewAsyncOpIncompleteError("customerinsights.InteractionsCreateOrUpdateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		irf, err = client.CreateOrUpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "customerinsights.InteractionsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.InteractionsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	irf, err = client.CreateOrUpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.InteractionsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
 // InteractionTypeDefinition the Interaction Type Definition
 type InteractionTypeDefinition struct {
-	// Attributes - The attributes for the Type.
-	Attributes *map[string][]string `json:"attributes,omitempty"`
-	// Description - Localized descriptions for the property.
-	Description *map[string]*string `json:"description,omitempty"`
-	// DisplayName - Localized display names for the property.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
-	// LocalizedAttributes - Any custom localized attributes for the Type.
-	LocalizedAttributes *map[string]map[string]*string `json:"localizedAttributes,omitempty"`
-	// SmallImage - Small Image associated with the Property or EntityType.
-	SmallImage *string `json:"smallImage,omitempty"`
-	// MediumImage - Medium Image associated with the Property or EntityType.
-	MediumImage *string `json:"mediumImage,omitempty"`
-	// LargeImage - Large Image associated with the Property or EntityType.
-	LargeImage *string `json:"largeImage,omitempty"`
+	// IDPropertyNames - The id property names. Properties which uniquely identify an interaction instance.
+	IDPropertyNames *[]string `json:"idPropertyNames,omitempty"`
+	// ParticipantProfiles - Profiles that participated in the interaction.
+	ParticipantProfiles *[]Participant `json:"participantProfiles,omitempty"`
+	// PrimaryParticipantProfilePropertyName - The primary participant property name for an interaction ,This is used to logically represent the agent of the interaction, Specify the participant name here from ParticipantName.
+	PrimaryParticipantProfilePropertyName *string `json:"primaryParticipantProfilePropertyName,omitempty"`
+	// DataSourcePrecedenceRules - This is specific to interactions modeled as activities. Data sources are used to determine where data is stored and also in precedence rules.
+	DataSourcePrecedenceRules *[]DataSourcePrecedence `json:"dataSourcePrecedenceRules,omitempty"`
+	// DataSource - Default data source is specifically used in cases where data source is not specified in an instance.
+	*DataSource `json:"defaultDataSource,omitempty"`
+	// IsActivity - An interaction can be tagged as an activity only during create. This enables the interaction to be editable and can enable merging of properties from multiple data sources based on precedence, which is defined at a link level.
+	IsActivity *bool `json:"isActivity,omitempty"`
 	// APIEntitySetName - The api entity set name. This becomes the odata entity set name for the entity Type being refered in this object.
 	APIEntitySetName *string `json:"apiEntitySetName,omitempty"`
 	// EntityType - Type of entity. Possible values include: 'EntityTypesNone', 'EntityTypesProfile', 'EntityTypesInteraction', 'EntityTypesRelationship'
@@ -1659,18 +1903,91 @@ type InteractionTypeDefinition struct {
 	TimestampFieldName *string `json:"timestampFieldName,omitempty"`
 	// TypeName - The name of the entity.
 	TypeName *string `json:"typeName,omitempty"`
-	// IDPropertyNames - The id property names. Properties which uniquely identify an interaction instance.
-	IDPropertyNames *[]string `json:"idPropertyNames,omitempty"`
-	// ParticipantProfiles - Profiles that participated in the interaction.
-	ParticipantProfiles *[]Participant `json:"participantProfiles,omitempty"`
-	// PrimaryParticipantProfilePropertyName - The primary participant property name for an interaction ,This is used to logically represent the agent of the interaction, Specify the participant name here from ParticipantName.
-	PrimaryParticipantProfilePropertyName *string `json:"primaryParticipantProfilePropertyName,omitempty"`
-	// DataSourcePrecedenceRules - This is specific to interactions modeled as activities. Data sources are used to determine where data is stored and also in precedence rules.
-	DataSourcePrecedenceRules *[]DataSourcePrecedence `json:"dataSourcePrecedenceRules,omitempty"`
-	// DataSource - Default data source is specifically used in cases where data source is not specified in an instance.
-	*DataSource `json:"defaultDataSource,omitempty"`
-	// IsActivity - An interaction can be tagged as an activity only during create. This enables the interaction to be editable and can enable merging of properties from multiple data sources based on precedence, which is defined at a link level.
-	IsActivity *bool `json:"isActivity,omitempty"`
+	// Attributes - The attributes for the Type.
+	Attributes map[string][]string `json:"attributes"`
+	// Description - Localized descriptions for the property.
+	Description map[string]*string `json:"description"`
+	// DisplayName - Localized display names for the property.
+	DisplayName map[string]*string `json:"displayName"`
+	// LocalizedAttributes - Any custom localized attributes for the Type.
+	LocalizedAttributes map[string]map[string]*string `json:"localizedAttributes"`
+	// SmallImage - Small Image associated with the Property or EntityType.
+	SmallImage *string `json:"smallImage,omitempty"`
+	// MediumImage - Medium Image associated with the Property or EntityType.
+	MediumImage *string `json:"mediumImage,omitempty"`
+	// LargeImage - Large Image associated with the Property or EntityType.
+	LargeImage *string `json:"largeImage,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for InteractionTypeDefinition.
+func (itd InteractionTypeDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if itd.IDPropertyNames != nil {
+		objectMap["idPropertyNames"] = itd.IDPropertyNames
+	}
+	if itd.ParticipantProfiles != nil {
+		objectMap["participantProfiles"] = itd.ParticipantProfiles
+	}
+	if itd.PrimaryParticipantProfilePropertyName != nil {
+		objectMap["primaryParticipantProfilePropertyName"] = itd.PrimaryParticipantProfilePropertyName
+	}
+	if itd.DataSourcePrecedenceRules != nil {
+		objectMap["dataSourcePrecedenceRules"] = itd.DataSourcePrecedenceRules
+	}
+	if itd.DataSource != nil {
+		objectMap["defaultDataSource"] = itd.DataSource
+	}
+	if itd.IsActivity != nil {
+		objectMap["isActivity"] = itd.IsActivity
+	}
+	if itd.APIEntitySetName != nil {
+		objectMap["apiEntitySetName"] = itd.APIEntitySetName
+	}
+	objectMap["entityType"] = itd.EntityType
+	if itd.Fields != nil {
+		objectMap["fields"] = itd.Fields
+	}
+	if itd.InstancesCount != nil {
+		objectMap["instancesCount"] = itd.InstancesCount
+	}
+	if itd.LastChangedUtc != nil {
+		objectMap["lastChangedUtc"] = itd.LastChangedUtc
+	}
+	objectMap["provisioningState"] = itd.ProvisioningState
+	if itd.SchemaItemTypeLink != nil {
+		objectMap["schemaItemTypeLink"] = itd.SchemaItemTypeLink
+	}
+	if itd.TenantID != nil {
+		objectMap["tenantId"] = itd.TenantID
+	}
+	if itd.TimestampFieldName != nil {
+		objectMap["timestampFieldName"] = itd.TimestampFieldName
+	}
+	if itd.TypeName != nil {
+		objectMap["typeName"] = itd.TypeName
+	}
+	if itd.Attributes != nil {
+		objectMap["attributes"] = itd.Attributes
+	}
+	if itd.Description != nil {
+		objectMap["description"] = itd.Description
+	}
+	if itd.DisplayName != nil {
+		objectMap["displayName"] = itd.DisplayName
+	}
+	if itd.LocalizedAttributes != nil {
+		objectMap["localizedAttributes"] = itd.LocalizedAttributes
+	}
+	if itd.SmallImage != nil {
+		objectMap["smallImage"] = itd.SmallImage
+	}
+	if itd.MediumImage != nil {
+		objectMap["mediumImage"] = itd.MediumImage
+	}
+	if itd.LargeImage != nil {
+		objectMap["largeImage"] = itd.LargeImage
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for InteractionTypeDefinition struct.
@@ -1680,236 +1997,216 @@ func (itd *InteractionTypeDefinition) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["idPropertyNames"]
-	if v != nil {
-		var IDPropertyNames []string
-		err = json.Unmarshal(*m["idPropertyNames"], &IDPropertyNames)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "idPropertyNames":
+			if v != nil {
+				var IDPropertyNames []string
+				err = json.Unmarshal(*v, &IDPropertyNames)
+				if err != nil {
+					return err
+				}
+				itd.IDPropertyNames = &IDPropertyNames
+			}
+		case "participantProfiles":
+			if v != nil {
+				var participantProfiles []Participant
+				err = json.Unmarshal(*v, &participantProfiles)
+				if err != nil {
+					return err
+				}
+				itd.ParticipantProfiles = &participantProfiles
+			}
+		case "primaryParticipantProfilePropertyName":
+			if v != nil {
+				var primaryParticipantProfilePropertyName string
+				err = json.Unmarshal(*v, &primaryParticipantProfilePropertyName)
+				if err != nil {
+					return err
+				}
+				itd.PrimaryParticipantProfilePropertyName = &primaryParticipantProfilePropertyName
+			}
+		case "dataSourcePrecedenceRules":
+			if v != nil {
+				var dataSourcePrecedenceRules []DataSourcePrecedence
+				err = json.Unmarshal(*v, &dataSourcePrecedenceRules)
+				if err != nil {
+					return err
+				}
+				itd.DataSourcePrecedenceRules = &dataSourcePrecedenceRules
+			}
+		case "defaultDataSource":
+			if v != nil {
+				var dataSource DataSource
+				err = json.Unmarshal(*v, &dataSource)
+				if err != nil {
+					return err
+				}
+				itd.DataSource = &dataSource
+			}
+		case "isActivity":
+			if v != nil {
+				var isActivity bool
+				err = json.Unmarshal(*v, &isActivity)
+				if err != nil {
+					return err
+				}
+				itd.IsActivity = &isActivity
+			}
+		case "apiEntitySetName":
+			if v != nil {
+				var APIEntitySetName string
+				err = json.Unmarshal(*v, &APIEntitySetName)
+				if err != nil {
+					return err
+				}
+				itd.APIEntitySetName = &APIEntitySetName
+			}
+		case "entityType":
+			if v != nil {
+				var entityType EntityTypes
+				err = json.Unmarshal(*v, &entityType)
+				if err != nil {
+					return err
+				}
+				itd.EntityType = entityType
+			}
+		case "fields":
+			if v != nil {
+				var fields []PropertyDefinition
+				err = json.Unmarshal(*v, &fields)
+				if err != nil {
+					return err
+				}
+				itd.Fields = &fields
+			}
+		case "instancesCount":
+			if v != nil {
+				var instancesCount int32
+				err = json.Unmarshal(*v, &instancesCount)
+				if err != nil {
+					return err
+				}
+				itd.InstancesCount = &instancesCount
+			}
+		case "lastChangedUtc":
+			if v != nil {
+				var lastChangedUtc date.Time
+				err = json.Unmarshal(*v, &lastChangedUtc)
+				if err != nil {
+					return err
+				}
+				itd.LastChangedUtc = &lastChangedUtc
+			}
+		case "provisioningState":
+			if v != nil {
+				var provisioningState ProvisioningStates
+				err = json.Unmarshal(*v, &provisioningState)
+				if err != nil {
+					return err
+				}
+				itd.ProvisioningState = provisioningState
+			}
+		case "schemaItemTypeLink":
+			if v != nil {
+				var schemaItemTypeLink string
+				err = json.Unmarshal(*v, &schemaItemTypeLink)
+				if err != nil {
+					return err
+				}
+				itd.SchemaItemTypeLink = &schemaItemTypeLink
+			}
+		case "tenantId":
+			if v != nil {
+				var tenantID string
+				err = json.Unmarshal(*v, &tenantID)
+				if err != nil {
+					return err
+				}
+				itd.TenantID = &tenantID
+			}
+		case "timestampFieldName":
+			if v != nil {
+				var timestampFieldName string
+				err = json.Unmarshal(*v, &timestampFieldName)
+				if err != nil {
+					return err
+				}
+				itd.TimestampFieldName = &timestampFieldName
+			}
+		case "typeName":
+			if v != nil {
+				var typeName string
+				err = json.Unmarshal(*v, &typeName)
+				if err != nil {
+					return err
+				}
+				itd.TypeName = &typeName
+			}
+		case "attributes":
+			if v != nil {
+				var attributes map[string][]string
+				err = json.Unmarshal(*v, &attributes)
+				if err != nil {
+					return err
+				}
+				itd.Attributes = attributes
+			}
+		case "description":
+			if v != nil {
+				var description map[string]*string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				itd.Description = description
+			}
+		case "displayName":
+			if v != nil {
+				var displayName map[string]*string
+				err = json.Unmarshal(*v, &displayName)
+				if err != nil {
+					return err
+				}
+				itd.DisplayName = displayName
+			}
+		case "localizedAttributes":
+			if v != nil {
+				var localizedAttributes map[string]map[string]*string
+				err = json.Unmarshal(*v, &localizedAttributes)
+				if err != nil {
+					return err
+				}
+				itd.LocalizedAttributes = localizedAttributes
+			}
+		case "smallImage":
+			if v != nil {
+				var smallImage string
+				err = json.Unmarshal(*v, &smallImage)
+				if err != nil {
+					return err
+				}
+				itd.SmallImage = &smallImage
+			}
+		case "mediumImage":
+			if v != nil {
+				var mediumImage string
+				err = json.Unmarshal(*v, &mediumImage)
+				if err != nil {
+					return err
+				}
+				itd.MediumImage = &mediumImage
+			}
+		case "largeImage":
+			if v != nil {
+				var largeImage string
+				err = json.Unmarshal(*v, &largeImage)
+				if err != nil {
+					return err
+				}
+				itd.LargeImage = &largeImage
+			}
 		}
-		itd.IDPropertyNames = &IDPropertyNames
-	}
-
-	v = m["participantProfiles"]
-	if v != nil {
-		var participantProfiles []Participant
-		err = json.Unmarshal(*m["participantProfiles"], &participantProfiles)
-		if err != nil {
-			return err
-		}
-		itd.ParticipantProfiles = &participantProfiles
-	}
-
-	v = m["primaryParticipantProfilePropertyName"]
-	if v != nil {
-		var primaryParticipantProfilePropertyName string
-		err = json.Unmarshal(*m["primaryParticipantProfilePropertyName"], &primaryParticipantProfilePropertyName)
-		if err != nil {
-			return err
-		}
-		itd.PrimaryParticipantProfilePropertyName = &primaryParticipantProfilePropertyName
-	}
-
-	v = m["dataSourcePrecedenceRules"]
-	if v != nil {
-		var dataSourcePrecedenceRules []DataSourcePrecedence
-		err = json.Unmarshal(*m["dataSourcePrecedenceRules"], &dataSourcePrecedenceRules)
-		if err != nil {
-			return err
-		}
-		itd.DataSourcePrecedenceRules = &dataSourcePrecedenceRules
-	}
-
-	v = m["defaultDataSource"]
-	if v != nil {
-		var defaultDataSource DataSource
-		err = json.Unmarshal(*m["defaultDataSource"], &defaultDataSource)
-		if err != nil {
-			return err
-		}
-		itd.DataSource = &defaultDataSource
-	}
-
-	v = m["isActivity"]
-	if v != nil {
-		var isActivity bool
-		err = json.Unmarshal(*m["isActivity"], &isActivity)
-		if err != nil {
-			return err
-		}
-		itd.IsActivity = &isActivity
-	}
-
-	v = m["apiEntitySetName"]
-	if v != nil {
-		var APIEntitySetName string
-		err = json.Unmarshal(*m["apiEntitySetName"], &APIEntitySetName)
-		if err != nil {
-			return err
-		}
-		itd.APIEntitySetName = &APIEntitySetName
-	}
-
-	v = m["entityType"]
-	if v != nil {
-		var entityType EntityTypes
-		err = json.Unmarshal(*m["entityType"], &entityType)
-		if err != nil {
-			return err
-		}
-		itd.EntityType = entityType
-	}
-
-	v = m["fields"]
-	if v != nil {
-		var fields []PropertyDefinition
-		err = json.Unmarshal(*m["fields"], &fields)
-		if err != nil {
-			return err
-		}
-		itd.Fields = &fields
-	}
-
-	v = m["instancesCount"]
-	if v != nil {
-		var instancesCount int32
-		err = json.Unmarshal(*m["instancesCount"], &instancesCount)
-		if err != nil {
-			return err
-		}
-		itd.InstancesCount = &instancesCount
-	}
-
-	v = m["lastChangedUtc"]
-	if v != nil {
-		var lastChangedUtc date.Time
-		err = json.Unmarshal(*m["lastChangedUtc"], &lastChangedUtc)
-		if err != nil {
-			return err
-		}
-		itd.LastChangedUtc = &lastChangedUtc
-	}
-
-	v = m["provisioningState"]
-	if v != nil {
-		var provisioningState ProvisioningStates
-		err = json.Unmarshal(*m["provisioningState"], &provisioningState)
-		if err != nil {
-			return err
-		}
-		itd.ProvisioningState = provisioningState
-	}
-
-	v = m["schemaItemTypeLink"]
-	if v != nil {
-		var schemaItemTypeLink string
-		err = json.Unmarshal(*m["schemaItemTypeLink"], &schemaItemTypeLink)
-		if err != nil {
-			return err
-		}
-		itd.SchemaItemTypeLink = &schemaItemTypeLink
-	}
-
-	v = m["tenantId"]
-	if v != nil {
-		var tenantID string
-		err = json.Unmarshal(*m["tenantId"], &tenantID)
-		if err != nil {
-			return err
-		}
-		itd.TenantID = &tenantID
-	}
-
-	v = m["timestampFieldName"]
-	if v != nil {
-		var timestampFieldName string
-		err = json.Unmarshal(*m["timestampFieldName"], &timestampFieldName)
-		if err != nil {
-			return err
-		}
-		itd.TimestampFieldName = &timestampFieldName
-	}
-
-	v = m["typeName"]
-	if v != nil {
-		var typeName string
-		err = json.Unmarshal(*m["typeName"], &typeName)
-		if err != nil {
-			return err
-		}
-		itd.TypeName = &typeName
-	}
-
-	v = m["attributes"]
-	if v != nil {
-		var attributes map[string][]string
-		err = json.Unmarshal(*m["attributes"], &attributes)
-		if err != nil {
-			return err
-		}
-		itd.Attributes = &attributes
-	}
-
-	v = m["description"]
-	if v != nil {
-		var description map[string]*string
-		err = json.Unmarshal(*m["description"], &description)
-		if err != nil {
-			return err
-		}
-		itd.Description = &description
-	}
-
-	v = m["displayName"]
-	if v != nil {
-		var displayName map[string]*string
-		err = json.Unmarshal(*m["displayName"], &displayName)
-		if err != nil {
-			return err
-		}
-		itd.DisplayName = &displayName
-	}
-
-	v = m["localizedAttributes"]
-	if v != nil {
-		var localizedAttributes map[string]map[string]*string
-		err = json.Unmarshal(*m["localizedAttributes"], &localizedAttributes)
-		if err != nil {
-			return err
-		}
-		itd.LocalizedAttributes = &localizedAttributes
-	}
-
-	v = m["smallImage"]
-	if v != nil {
-		var smallImage string
-		err = json.Unmarshal(*m["smallImage"], &smallImage)
-		if err != nil {
-			return err
-		}
-		itd.SmallImage = &smallImage
-	}
-
-	v = m["mediumImage"]
-	if v != nil {
-		var mediumImage string
-		err = json.Unmarshal(*m["mediumImage"], &mediumImage)
-		if err != nil {
-			return err
-		}
-		itd.MediumImage = &mediumImage
-	}
-
-	v = m["largeImage"]
-	if v != nil {
-		var largeImage string
-		err = json.Unmarshal(*m["largeImage"], &largeImage)
-		if err != nil {
-			return err
-		}
-		itd.LargeImage = &largeImage
 	}
 
 	return nil
@@ -1935,22 +2232,39 @@ func (future KpiCreateOrUpdateFuture) Result(client KpiClient) (krf KpiResourceF
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.KpiCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return krf, autorest.NewError("customerinsights.KpiCreateOrUpdateFuture", "Result", "asynchronous operation has not completed")
+		return krf, azure.NewAsyncOpIncompleteError("customerinsights.KpiCreateOrUpdateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		krf, err = client.CreateOrUpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "customerinsights.KpiCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.KpiCreateOrUpdateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	krf, err = client.CreateOrUpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.KpiCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -1965,9 +2279,9 @@ type KpiDefinition struct {
 	// KpiName - The KPI name.
 	KpiName *string `json:"kpiName,omitempty"`
 	// DisplayName - Localized display name for the KPI.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
+	DisplayName map[string]*string `json:"displayName"`
 	// Description - Localized description for the KPI.
-	Description *map[string]*string `json:"description,omitempty"`
+	Description map[string]*string `json:"description"`
 	// CalculationWindow - The calculation window. Possible values include: 'Lifetime', 'Hour', 'Day', 'Week', 'Month'
 	CalculationWindow CalculationWindowTypes `json:"calculationWindow,omitempty"`
 	// CalculationWindowFieldName - Name of calculation window field.
@@ -1996,6 +2310,61 @@ type KpiDefinition struct {
 	Extracts *[]KpiExtract `json:"extracts,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for KpiDefinition.
+func (kd KpiDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	objectMap["entityType"] = kd.EntityType
+	if kd.EntityTypeName != nil {
+		objectMap["entityTypeName"] = kd.EntityTypeName
+	}
+	if kd.TenantID != nil {
+		objectMap["tenantId"] = kd.TenantID
+	}
+	if kd.KpiName != nil {
+		objectMap["kpiName"] = kd.KpiName
+	}
+	if kd.DisplayName != nil {
+		objectMap["displayName"] = kd.DisplayName
+	}
+	if kd.Description != nil {
+		objectMap["description"] = kd.Description
+	}
+	objectMap["calculationWindow"] = kd.CalculationWindow
+	if kd.CalculationWindowFieldName != nil {
+		objectMap["calculationWindowFieldName"] = kd.CalculationWindowFieldName
+	}
+	objectMap["function"] = kd.Function
+	if kd.Expression != nil {
+		objectMap["expression"] = kd.Expression
+	}
+	if kd.Unit != nil {
+		objectMap["unit"] = kd.Unit
+	}
+	if kd.Filter != nil {
+		objectMap["filter"] = kd.Filter
+	}
+	if kd.GroupBy != nil {
+		objectMap["groupBy"] = kd.GroupBy
+	}
+	if kd.GroupByMetadata != nil {
+		objectMap["groupByMetadata"] = kd.GroupByMetadata
+	}
+	if kd.ParticipantProfilesMetadata != nil {
+		objectMap["participantProfilesMetadata"] = kd.ParticipantProfilesMetadata
+	}
+	objectMap["provisioningState"] = kd.ProvisioningState
+	if kd.ThresHolds != nil {
+		objectMap["thresHolds"] = kd.ThresHolds
+	}
+	if kd.Aliases != nil {
+		objectMap["aliases"] = kd.Aliases
+	}
+	if kd.Extracts != nil {
+		objectMap["extracts"] = kd.Extracts
+	}
+	return json.Marshal(objectMap)
+}
+
 // KpiDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type KpiDeleteFuture struct {
 	azure.Future
@@ -2008,22 +2377,39 @@ func (future KpiDeleteFuture) Result(client KpiClient) (ar autorest.Response, er
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.KpiDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("customerinsights.KpiDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("customerinsights.KpiDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "customerinsights.KpiDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.KpiDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.KpiDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -2038,11 +2424,26 @@ type KpiExtract struct {
 // KpiGroupByMetadata the KPI GroupBy field metadata.
 type KpiGroupByMetadata struct {
 	// DisplayName - The display name.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
+	DisplayName map[string]*string `json:"displayName"`
 	// FieldName - The name of the field.
 	FieldName *string `json:"fieldName,omitempty"`
 	// FieldType - The type of the field.
 	FieldType *string `json:"fieldType,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for KpiGroupByMetadata.
+func (kgbm KpiGroupByMetadata) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if kgbm.DisplayName != nil {
+		objectMap["displayName"] = kgbm.DisplayName
+	}
+	if kgbm.FieldName != nil {
+		objectMap["fieldName"] = kgbm.FieldName
+	}
+	if kgbm.FieldType != nil {
+		objectMap["fieldType"] = kgbm.FieldType
+	}
+	return json.Marshal(objectMap)
 }
 
 // KpiListResult the response of list KPI operation.
@@ -2156,13 +2557,13 @@ type KpiParticipantProfilesMetadata struct {
 // KpiResourceFormat the KPI resource format.
 type KpiResourceFormat struct {
 	autorest.Response `json:"-"`
+	*KpiDefinition    `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
-	Type           *string `json:"type,omitempty"`
-	*KpiDefinition `json:"properties,omitempty"`
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for KpiResourceFormat struct.
@@ -2172,46 +2573,45 @@ func (krf *KpiResourceFormat) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties KpiDefinition
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var kpiDefinition KpiDefinition
+				err = json.Unmarshal(*v, &kpiDefinition)
+				if err != nil {
+					return err
+				}
+				krf.KpiDefinition = &kpiDefinition
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				krf.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				krf.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				krf.Type = &typeVar
+			}
 		}
-		krf.KpiDefinition = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		krf.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		krf.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		krf.Type = &typeVar
 	}
 
 	return nil
@@ -2238,9 +2638,9 @@ type LinkDefinition struct {
 	// TargetProfileType - Name of the target Profile Type.
 	TargetProfileType *string `json:"targetProfileType,omitempty"`
 	// DisplayName - Localized display name for the Link.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
+	DisplayName map[string]*string `json:"displayName"`
 	// Description - Localized descriptions for the Link.
-	Description *map[string]*string `json:"description,omitempty"`
+	Description map[string]*string `json:"description"`
 	// Mappings - The set of properties mappings between the source and target Types.
 	Mappings *[]TypePropertiesMapping `json:"mappings,omitempty"`
 	// ParticipantPropertyReferences - The properties that represent the participating profile.
@@ -2251,6 +2651,41 @@ type LinkDefinition struct {
 	ReferenceOnly *bool `json:"referenceOnly,omitempty"`
 	// OperationType - Determines whether this link is supposed to create or delete instances if Link is NOT Reference Only. Possible values include: 'Upsert', 'Delete'
 	OperationType InstanceOperationType `json:"operationType,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for LinkDefinition.
+func (ld LinkDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ld.TenantID != nil {
+		objectMap["tenantId"] = ld.TenantID
+	}
+	if ld.LinkName != nil {
+		objectMap["linkName"] = ld.LinkName
+	}
+	if ld.SourceInteractionType != nil {
+		objectMap["sourceInteractionType"] = ld.SourceInteractionType
+	}
+	if ld.TargetProfileType != nil {
+		objectMap["targetProfileType"] = ld.TargetProfileType
+	}
+	if ld.DisplayName != nil {
+		objectMap["displayName"] = ld.DisplayName
+	}
+	if ld.Description != nil {
+		objectMap["description"] = ld.Description
+	}
+	if ld.Mappings != nil {
+		objectMap["mappings"] = ld.Mappings
+	}
+	if ld.ParticipantPropertyReferences != nil {
+		objectMap["participantPropertyReferences"] = ld.ParticipantPropertyReferences
+	}
+	objectMap["provisioningState"] = ld.ProvisioningState
+	if ld.ReferenceOnly != nil {
+		objectMap["referenceOnly"] = ld.ReferenceOnly
+	}
+	objectMap["operationType"] = ld.OperationType
+	return json.Marshal(objectMap)
 }
 
 // LinkListResult the response of list link operation.
@@ -2358,13 +2793,13 @@ func (page LinkListResultPage) Values() []LinkResourceFormat {
 // LinkResourceFormat the link resource format.
 type LinkResourceFormat struct {
 	autorest.Response `json:"-"`
+	*LinkDefinition   `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
-	Type            *string `json:"type,omitempty"`
-	*LinkDefinition `json:"properties,omitempty"`
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for LinkResourceFormat struct.
@@ -2374,46 +2809,45 @@ func (lrf *LinkResourceFormat) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties LinkDefinition
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var linkDefinition LinkDefinition
+				err = json.Unmarshal(*v, &linkDefinition)
+				if err != nil {
+					return err
+				}
+				lrf.LinkDefinition = &linkDefinition
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				lrf.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				lrf.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				lrf.Type = &typeVar
+			}
 		}
-		lrf.LinkDefinition = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		lrf.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		lrf.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		lrf.Type = &typeVar
 	}
 
 	return nil
@@ -2431,22 +2865,39 @@ func (future LinksCreateOrUpdateFuture) Result(client LinksClient) (lrf LinkReso
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.LinksCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return lrf, autorest.NewError("customerinsights.LinksCreateOrUpdateFuture", "Result", "asynchronous operation has not completed")
+		return lrf, azure.NewAsyncOpIncompleteError("customerinsights.LinksCreateOrUpdateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		lrf, err = client.CreateOrUpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "customerinsights.LinksCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.LinksCreateOrUpdateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	lrf, err = client.CreateOrUpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.LinksCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -2459,19 +2910,46 @@ type ListKpiDefinition struct {
 // MetadataDefinitionBase the Metadata definition base.
 type MetadataDefinitionBase struct {
 	// Attributes - The attributes for the Type.
-	Attributes *map[string][]string `json:"attributes,omitempty"`
+	Attributes map[string][]string `json:"attributes"`
 	// Description - Localized descriptions for the property.
-	Description *map[string]*string `json:"description,omitempty"`
+	Description map[string]*string `json:"description"`
 	// DisplayName - Localized display names for the property.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
+	DisplayName map[string]*string `json:"displayName"`
 	// LocalizedAttributes - Any custom localized attributes for the Type.
-	LocalizedAttributes *map[string]map[string]*string `json:"localizedAttributes,omitempty"`
+	LocalizedAttributes map[string]map[string]*string `json:"localizedAttributes"`
 	// SmallImage - Small Image associated with the Property or EntityType.
 	SmallImage *string `json:"smallImage,omitempty"`
 	// MediumImage - Medium Image associated with the Property or EntityType.
 	MediumImage *string `json:"mediumImage,omitempty"`
 	// LargeImage - Large Image associated with the Property or EntityType.
 	LargeImage *string `json:"largeImage,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for MetadataDefinitionBase.
+func (mdb MetadataDefinitionBase) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if mdb.Attributes != nil {
+		objectMap["attributes"] = mdb.Attributes
+	}
+	if mdb.Description != nil {
+		objectMap["description"] = mdb.Description
+	}
+	if mdb.DisplayName != nil {
+		objectMap["displayName"] = mdb.DisplayName
+	}
+	if mdb.LocalizedAttributes != nil {
+		objectMap["localizedAttributes"] = mdb.LocalizedAttributes
+	}
+	if mdb.SmallImage != nil {
+		objectMap["smallImage"] = mdb.SmallImage
+	}
+	if mdb.MediumImage != nil {
+		objectMap["mediumImage"] = mdb.MediumImage
+	}
+	if mdb.LargeImage != nil {
+		objectMap["largeImage"] = mdb.LargeImage
+	}
+	return json.Marshal(objectMap)
 }
 
 // Operation a Customer Insights REST API operation
@@ -2492,8 +2970,8 @@ type OperationDisplay struct {
 	Operation *string `json:"operation,omitempty"`
 }
 
-// OperationListResult result of the request to list Customer Insights operations. It contains a list of operations and
-// a URL link to get the next set of results.
+// OperationListResult result of the request to list Customer Insights operations. It contains a list of operations
+// and a URL link to get the next set of results.
 type OperationListResult struct {
 	autorest.Response `json:"-"`
 	// Value - List of Customer Insights operations supported by the Microsoft.CustomerInsights resource provider.
@@ -2604,11 +3082,35 @@ type Participant struct {
 	// ParticipantName - Participant name.
 	ParticipantName *string `json:"participantName,omitempty"`
 	// DisplayName - Localized display name.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
+	DisplayName map[string]*string `json:"displayName"`
 	// Description - Localized descriptions.
-	Description *map[string]*string `json:"description,omitempty"`
+	Description map[string]*string `json:"description"`
 	// Role - The role that the participant is playing in the interaction.
 	Role *string `json:"role,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Participant.
+func (p Participant) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if p.ProfileTypeName != nil {
+		objectMap["profileTypeName"] = p.ProfileTypeName
+	}
+	if p.ParticipantPropertyReferences != nil {
+		objectMap["participantPropertyReferences"] = p.ParticipantPropertyReferences
+	}
+	if p.ParticipantName != nil {
+		objectMap["participantName"] = p.ParticipantName
+	}
+	if p.DisplayName != nil {
+		objectMap["displayName"] = p.DisplayName
+	}
+	if p.Description != nil {
+		objectMap["description"] = p.Description
+	}
+	if p.Role != nil {
+		objectMap["role"] = p.Role
+	}
+	return json.Marshal(objectMap)
 }
 
 // ParticipantPropertyReference the participant property reference.
@@ -2624,7 +3126,19 @@ type ProfileEnumValidValuesFormat struct {
 	// Value - The integer value of the enum member.
 	Value *int32 `json:"value,omitempty"`
 	// LocalizedValueNames - Localized names of the enum member.
-	LocalizedValueNames *map[string]*string `json:"localizedValueNames,omitempty"`
+	LocalizedValueNames map[string]*string `json:"localizedValueNames"`
+}
+
+// MarshalJSON is the custom marshaler for ProfileEnumValidValuesFormat.
+func (pevvf ProfileEnumValidValuesFormat) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if pevvf.Value != nil {
+		objectMap["value"] = pevvf.Value
+	}
+	if pevvf.LocalizedValueNames != nil {
+		objectMap["localizedValueNames"] = pevvf.LocalizedValueNames
+	}
+	return json.Marshal(objectMap)
 }
 
 // ProfileListResult the response of list profile operation.
@@ -2731,14 +3245,14 @@ func (page ProfileListResultPage) Values() []ProfileResourceFormat {
 
 // ProfileResourceFormat the profile resource format.
 type ProfileResourceFormat struct {
-	autorest.Response `json:"-"`
+	autorest.Response      `json:"-"`
+	*ProfileTypeDefinition `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
-	Type                   *string `json:"type,omitempty"`
-	*ProfileTypeDefinition `json:"properties,omitempty"`
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for ProfileResourceFormat struct.
@@ -2748,52 +3262,52 @@ func (prf *ProfileResourceFormat) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ProfileTypeDefinition
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var profileTypeDefinition ProfileTypeDefinition
+				err = json.Unmarshal(*v, &profileTypeDefinition)
+				if err != nil {
+					return err
+				}
+				prf.ProfileTypeDefinition = &profileTypeDefinition
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				prf.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				prf.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				prf.Type = &typeVar
+			}
 		}
-		prf.ProfileTypeDefinition = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		prf.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		prf.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		prf.Type = &typeVar
 	}
 
 	return nil
 }
 
-// ProfilesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+// ProfilesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
+// operation.
 type ProfilesCreateOrUpdateFuture struct {
 	azure.Future
 	req *http.Request
@@ -2805,22 +3319,39 @@ func (future ProfilesCreateOrUpdateFuture) Result(client ProfilesClient) (prf Pr
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.ProfilesCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return prf, autorest.NewError("customerinsights.ProfilesCreateOrUpdateFuture", "Result", "asynchronous operation has not completed")
+		return prf, azure.NewAsyncOpIncompleteError("customerinsights.ProfilesCreateOrUpdateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		prf, err = client.CreateOrUpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "customerinsights.ProfilesCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.ProfilesCreateOrUpdateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	prf, err = client.CreateOrUpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.ProfilesCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -2836,41 +3367,46 @@ func (future ProfilesDeleteFuture) Result(client ProfilesClient) (ar autorest.Re
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.ProfilesDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("customerinsights.ProfilesDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("customerinsights.ProfilesDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "customerinsights.ProfilesDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.ProfilesDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.ProfilesDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
 // ProfileTypeDefinition the profile type definition.
 type ProfileTypeDefinition struct {
-	// Attributes - The attributes for the Type.
-	Attributes *map[string][]string `json:"attributes,omitempty"`
-	// Description - Localized descriptions for the property.
-	Description *map[string]*string `json:"description,omitempty"`
-	// DisplayName - Localized display names for the property.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
-	// LocalizedAttributes - Any custom localized attributes for the Type.
-	LocalizedAttributes *map[string]map[string]*string `json:"localizedAttributes,omitempty"`
-	// SmallImage - Small Image associated with the Property or EntityType.
-	SmallImage *string `json:"smallImage,omitempty"`
-	// MediumImage - Medium Image associated with the Property or EntityType.
-	MediumImage *string `json:"mediumImage,omitempty"`
-	// LargeImage - Large Image associated with the Property or EntityType.
-	LargeImage *string `json:"largeImage,omitempty"`
+	// StrongIds - The strong IDs.
+	StrongIds *[]StrongID `json:"strongIds,omitempty"`
 	// APIEntitySetName - The api entity set name. This becomes the odata entity set name for the entity Type being refered in this object.
 	APIEntitySetName *string `json:"apiEntitySetName,omitempty"`
 	// EntityType - Type of entity. Possible values include: 'EntityTypesNone', 'EntityTypesProfile', 'EntityTypesInteraction', 'EntityTypesRelationship'
@@ -2891,8 +3427,76 @@ type ProfileTypeDefinition struct {
 	TimestampFieldName *string `json:"timestampFieldName,omitempty"`
 	// TypeName - The name of the entity.
 	TypeName *string `json:"typeName,omitempty"`
-	// StrongIds - The strong IDs.
-	StrongIds *[]StrongID `json:"strongIds,omitempty"`
+	// Attributes - The attributes for the Type.
+	Attributes map[string][]string `json:"attributes"`
+	// Description - Localized descriptions for the property.
+	Description map[string]*string `json:"description"`
+	// DisplayName - Localized display names for the property.
+	DisplayName map[string]*string `json:"displayName"`
+	// LocalizedAttributes - Any custom localized attributes for the Type.
+	LocalizedAttributes map[string]map[string]*string `json:"localizedAttributes"`
+	// SmallImage - Small Image associated with the Property or EntityType.
+	SmallImage *string `json:"smallImage,omitempty"`
+	// MediumImage - Medium Image associated with the Property or EntityType.
+	MediumImage *string `json:"mediumImage,omitempty"`
+	// LargeImage - Large Image associated with the Property or EntityType.
+	LargeImage *string `json:"largeImage,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ProfileTypeDefinition.
+func (ptd ProfileTypeDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ptd.StrongIds != nil {
+		objectMap["strongIds"] = ptd.StrongIds
+	}
+	if ptd.APIEntitySetName != nil {
+		objectMap["apiEntitySetName"] = ptd.APIEntitySetName
+	}
+	objectMap["entityType"] = ptd.EntityType
+	if ptd.Fields != nil {
+		objectMap["fields"] = ptd.Fields
+	}
+	if ptd.InstancesCount != nil {
+		objectMap["instancesCount"] = ptd.InstancesCount
+	}
+	if ptd.LastChangedUtc != nil {
+		objectMap["lastChangedUtc"] = ptd.LastChangedUtc
+	}
+	objectMap["provisioningState"] = ptd.ProvisioningState
+	if ptd.SchemaItemTypeLink != nil {
+		objectMap["schemaItemTypeLink"] = ptd.SchemaItemTypeLink
+	}
+	if ptd.TenantID != nil {
+		objectMap["tenantId"] = ptd.TenantID
+	}
+	if ptd.TimestampFieldName != nil {
+		objectMap["timestampFieldName"] = ptd.TimestampFieldName
+	}
+	if ptd.TypeName != nil {
+		objectMap["typeName"] = ptd.TypeName
+	}
+	if ptd.Attributes != nil {
+		objectMap["attributes"] = ptd.Attributes
+	}
+	if ptd.Description != nil {
+		objectMap["description"] = ptd.Description
+	}
+	if ptd.DisplayName != nil {
+		objectMap["displayName"] = ptd.DisplayName
+	}
+	if ptd.LocalizedAttributes != nil {
+		objectMap["localizedAttributes"] = ptd.LocalizedAttributes
+	}
+	if ptd.SmallImage != nil {
+		objectMap["smallImage"] = ptd.SmallImage
+	}
+	if ptd.MediumImage != nil {
+		objectMap["mediumImage"] = ptd.MediumImage
+	}
+	if ptd.LargeImage != nil {
+		objectMap["largeImage"] = ptd.LargeImage
+	}
+	return json.Marshal(objectMap)
 }
 
 // PropertyDefinition property definition.
@@ -2946,9 +3550,9 @@ type RelationshipDefinition struct {
 	// Cardinality - The Relationship Cardinality. Possible values include: 'OneToOne', 'OneToMany', 'ManyToMany'
 	Cardinality CardinalityTypes `json:"cardinality,omitempty"`
 	// DisplayName - Localized display name for the Relationship.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
+	DisplayName map[string]*string `json:"displayName"`
 	// Description - Localized descriptions for the Relationship.
-	Description *map[string]*string `json:"description,omitempty"`
+	Description map[string]*string `json:"description"`
 	// ExpiryDateTimeUtc - The expiry date time in UTC.
 	ExpiryDateTimeUtc *date.Time `json:"expiryDateTimeUtc,omitempty"`
 	// Fields - The properties of the Relationship.
@@ -2969,12 +3573,50 @@ type RelationshipDefinition struct {
 	TenantID *string `json:"tenantId,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for RelationshipDefinition.
+func (rd RelationshipDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	objectMap["cardinality"] = rd.Cardinality
+	if rd.DisplayName != nil {
+		objectMap["displayName"] = rd.DisplayName
+	}
+	if rd.Description != nil {
+		objectMap["description"] = rd.Description
+	}
+	if rd.ExpiryDateTimeUtc != nil {
+		objectMap["expiryDateTimeUtc"] = rd.ExpiryDateTimeUtc
+	}
+	if rd.Fields != nil {
+		objectMap["fields"] = rd.Fields
+	}
+	if rd.LookupMappings != nil {
+		objectMap["lookupMappings"] = rd.LookupMappings
+	}
+	if rd.ProfileType != nil {
+		objectMap["profileType"] = rd.ProfileType
+	}
+	objectMap["provisioningState"] = rd.ProvisioningState
+	if rd.RelationshipName != nil {
+		objectMap["relationshipName"] = rd.RelationshipName
+	}
+	if rd.RelatedProfileType != nil {
+		objectMap["relatedProfileType"] = rd.RelatedProfileType
+	}
+	if rd.RelationshipGUIDID != nil {
+		objectMap["relationshipGuidId"] = rd.RelationshipGUIDID
+	}
+	if rd.TenantID != nil {
+		objectMap["tenantId"] = rd.TenantID
+	}
+	return json.Marshal(objectMap)
+}
+
 // RelationshipLinkDefinition the definition of relationship link.
 type RelationshipLinkDefinition struct {
 	// DisplayName - Localized display name for the Relationship Link.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
+	DisplayName map[string]*string `json:"displayName"`
 	// Description - Localized descriptions for the Relationship Link.
-	Description *map[string]*string `json:"description,omitempty"`
+	Description map[string]*string `json:"description"`
 	// InteractionType - The InteractionType associated with the Relationship Link.
 	InteractionType *string `json:"interactionType,omitempty"`
 	// LinkName - The name of the Relationship Link.
@@ -2993,6 +3635,43 @@ type RelationshipLinkDefinition struct {
 	RelationshipGUIDID *string `json:"relationshipGuidId,omitempty"`
 	// TenantID - The hub name.
 	TenantID *string `json:"tenantId,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for RelationshipLinkDefinition.
+func (rld RelationshipLinkDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rld.DisplayName != nil {
+		objectMap["displayName"] = rld.DisplayName
+	}
+	if rld.Description != nil {
+		objectMap["description"] = rld.Description
+	}
+	if rld.InteractionType != nil {
+		objectMap["interactionType"] = rld.InteractionType
+	}
+	if rld.LinkName != nil {
+		objectMap["linkName"] = rld.LinkName
+	}
+	if rld.Mappings != nil {
+		objectMap["mappings"] = rld.Mappings
+	}
+	if rld.ProfilePropertyReferences != nil {
+		objectMap["profilePropertyReferences"] = rld.ProfilePropertyReferences
+	}
+	objectMap["provisioningState"] = rld.ProvisioningState
+	if rld.RelatedProfilePropertyReferences != nil {
+		objectMap["relatedProfilePropertyReferences"] = rld.RelatedProfilePropertyReferences
+	}
+	if rld.RelationshipName != nil {
+		objectMap["relationshipName"] = rld.RelationshipName
+	}
+	if rld.RelationshipGUIDID != nil {
+		objectMap["relationshipGuidId"] = rld.RelationshipGUIDID
+	}
+	if rld.TenantID != nil {
+		objectMap["tenantId"] = rld.TenantID
+	}
+	return json.Marshal(objectMap)
 }
 
 // RelationshipLinkFieldMapping the fields mapping for Relationships.
@@ -3014,7 +3693,8 @@ type RelationshipLinkListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
-// RelationshipLinkListResultIterator provides access to a complete listing of RelationshipLinkResourceFormat values.
+// RelationshipLinkListResultIterator provides access to a complete listing of RelationshipLinkResourceFormat
+// values.
 type RelationshipLinkListResultIterator struct {
 	i    int
 	page RelationshipLinkListResultPage
@@ -3109,14 +3789,14 @@ func (page RelationshipLinkListResultPage) Values() []RelationshipLinkResourceFo
 
 // RelationshipLinkResourceFormat the relationship link resource format.
 type RelationshipLinkResourceFormat struct {
-	autorest.Response `json:"-"`
+	autorest.Response           `json:"-"`
+	*RelationshipLinkDefinition `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
-	Type                        *string `json:"type,omitempty"`
-	*RelationshipLinkDefinition `json:"properties,omitempty"`
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for RelationshipLinkResourceFormat struct.
@@ -3126,46 +3806,45 @@ func (rlrf *RelationshipLinkResourceFormat) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties RelationshipLinkDefinition
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var relationshipLinkDefinition RelationshipLinkDefinition
+				err = json.Unmarshal(*v, &relationshipLinkDefinition)
+				if err != nil {
+					return err
+				}
+				rlrf.RelationshipLinkDefinition = &relationshipLinkDefinition
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				rlrf.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				rlrf.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				rlrf.Type = &typeVar
+			}
 		}
-		rlrf.RelationshipLinkDefinition = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		rlrf.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		rlrf.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		rlrf.Type = &typeVar
 	}
 
 	return nil
@@ -3184,26 +3863,44 @@ func (future RelationshipLinksCreateOrUpdateFuture) Result(client RelationshipLi
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return rlrf, autorest.NewError("customerinsights.RelationshipLinksCreateOrUpdateFuture", "Result", "asynchronous operation has not completed")
+		return rlrf, azure.NewAsyncOpIncompleteError("customerinsights.RelationshipLinksCreateOrUpdateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		rlrf, err = client.CreateOrUpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksCreateOrUpdateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	rlrf, err = client.CreateOrUpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
-// RelationshipLinksDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+// RelationshipLinksDeleteFuture an abstraction for monitoring and retrieving the results of a long-running
+// operation.
 type RelationshipLinksDeleteFuture struct {
 	azure.Future
 	req *http.Request
@@ -3215,22 +3912,39 @@ func (future RelationshipLinksDeleteFuture) Result(client RelationshipLinksClien
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("customerinsights.RelationshipLinksDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("customerinsights.RelationshipLinksDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -3338,14 +4052,14 @@ func (page RelationshipListResultPage) Values() []RelationshipResourceFormat {
 
 // RelationshipResourceFormat the relationship resource format.
 type RelationshipResourceFormat struct {
-	autorest.Response `json:"-"`
+	autorest.Response       `json:"-"`
+	*RelationshipDefinition `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
-	Type                    *string `json:"type,omitempty"`
-	*RelationshipDefinition `json:"properties,omitempty"`
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for RelationshipResourceFormat struct.
@@ -3355,46 +4069,45 @@ func (rrf *RelationshipResourceFormat) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties RelationshipDefinition
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var relationshipDefinition RelationshipDefinition
+				err = json.Unmarshal(*v, &relationshipDefinition)
+				if err != nil {
+					return err
+				}
+				rrf.RelationshipDefinition = &relationshipDefinition
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				rrf.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				rrf.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				rrf.Type = &typeVar
+			}
 		}
-		rrf.RelationshipDefinition = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		rrf.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		rrf.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		rrf.Type = &typeVar
 	}
 
 	return nil
@@ -3413,22 +4126,39 @@ func (future RelationshipsCreateOrUpdateFuture) Result(client RelationshipsClien
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return rrf, autorest.NewError("customerinsights.RelationshipsCreateOrUpdateFuture", "Result", "asynchronous operation has not completed")
+		return rrf, azure.NewAsyncOpIncompleteError("customerinsights.RelationshipsCreateOrUpdateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		rrf, err = client.CreateOrUpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	rrf, err = client.CreateOrUpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -3444,22 +4174,39 @@ func (future RelationshipsDeleteFuture) Result(client RelationshipsClient) (ar a
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("customerinsights.RelationshipsDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("customerinsights.RelationshipsDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -3502,7 +4249,28 @@ type Resource struct {
 	// Location - Resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // ResourceSetDescription the resource set description.
@@ -3528,9 +4296,9 @@ type RoleAssignment struct {
 	// AssignmentName - The name of the metadata object.
 	AssignmentName *string `json:"assignmentName,omitempty"`
 	// DisplayName - Localized display names for the metadata.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
+	DisplayName map[string]*string `json:"displayName"`
 	// Description - Localized description for the metadata.
-	Description *map[string]*string `json:"description,omitempty"`
+	Description map[string]*string `json:"description"`
 	// ProvisioningState - Provisioning state. Possible values include: 'ProvisioningStatesProvisioning', 'ProvisioningStatesSucceeded', 'ProvisioningStatesExpiring', 'ProvisioningStatesDeleting', 'ProvisioningStatesHumanIntervention', 'ProvisioningStatesFailed'
 	ProvisioningState ProvisioningStates `json:"provisioningState,omitempty"`
 	// Role - Type of roles. Possible values include: 'Admin', 'Reader', 'ManageAdmin', 'ManageReader', 'DataAdmin', 'DataReader'
@@ -3563,6 +4331,68 @@ type RoleAssignment struct {
 	ConflationPolicies *ResourceSetDescription `json:"conflationPolicies,omitempty"`
 	// Segments - The Role assignments set for the assignment.
 	Segments *ResourceSetDescription `json:"segments,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for RoleAssignment.
+func (ra RoleAssignment) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ra.TenantID != nil {
+		objectMap["tenantId"] = ra.TenantID
+	}
+	if ra.AssignmentName != nil {
+		objectMap["assignmentName"] = ra.AssignmentName
+	}
+	if ra.DisplayName != nil {
+		objectMap["displayName"] = ra.DisplayName
+	}
+	if ra.Description != nil {
+		objectMap["description"] = ra.Description
+	}
+	objectMap["provisioningState"] = ra.ProvisioningState
+	objectMap["role"] = ra.Role
+	if ra.Principals != nil {
+		objectMap["principals"] = ra.Principals
+	}
+	if ra.Profiles != nil {
+		objectMap["profiles"] = ra.Profiles
+	}
+	if ra.Interactions != nil {
+		objectMap["interactions"] = ra.Interactions
+	}
+	if ra.Links != nil {
+		objectMap["links"] = ra.Links
+	}
+	if ra.Kpis != nil {
+		objectMap["kpis"] = ra.Kpis
+	}
+	if ra.SasPolicies != nil {
+		objectMap["sasPolicies"] = ra.SasPolicies
+	}
+	if ra.Connectors != nil {
+		objectMap["connectors"] = ra.Connectors
+	}
+	if ra.Views != nil {
+		objectMap["views"] = ra.Views
+	}
+	if ra.RelationshipLinks != nil {
+		objectMap["relationshipLinks"] = ra.RelationshipLinks
+	}
+	if ra.Relationships != nil {
+		objectMap["relationships"] = ra.Relationships
+	}
+	if ra.WidgetTypes != nil {
+		objectMap["widgetTypes"] = ra.WidgetTypes
+	}
+	if ra.RoleAssignments != nil {
+		objectMap["roleAssignments"] = ra.RoleAssignments
+	}
+	if ra.ConflationPolicies != nil {
+		objectMap["conflationPolicies"] = ra.ConflationPolicies
+	}
+	if ra.Segments != nil {
+		objectMap["segments"] = ra.Segments
+	}
+	return json.Marshal(objectMap)
 }
 
 // RoleAssignmentListResult the response of list role assignment operation.
@@ -3670,13 +4500,13 @@ func (page RoleAssignmentListResultPage) Values() []RoleAssignmentResourceFormat
 // RoleAssignmentResourceFormat the Role Assignment resource format.
 type RoleAssignmentResourceFormat struct {
 	autorest.Response `json:"-"`
+	*RoleAssignment   `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
-	Type            *string `json:"type,omitempty"`
-	*RoleAssignment `json:"properties,omitempty"`
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for RoleAssignmentResourceFormat struct.
@@ -3686,46 +4516,45 @@ func (rarf *RoleAssignmentResourceFormat) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties RoleAssignment
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var roleAssignment RoleAssignment
+				err = json.Unmarshal(*v, &roleAssignment)
+				if err != nil {
+					return err
+				}
+				rarf.RoleAssignment = &roleAssignment
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				rarf.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				rarf.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				rarf.Type = &typeVar
+			}
 		}
-		rarf.RoleAssignment = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		rarf.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		rarf.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		rarf.Type = &typeVar
 	}
 
 	return nil
@@ -3744,22 +4573,39 @@ func (future RoleAssignmentsCreateOrUpdateFuture) Result(client RoleAssignmentsC
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RoleAssignmentsCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return rarf, autorest.NewError("customerinsights.RoleAssignmentsCreateOrUpdateFuture", "Result", "asynchronous operation has not completed")
+		return rarf, azure.NewAsyncOpIncompleteError("customerinsights.RoleAssignmentsCreateOrUpdateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		rarf, err = client.CreateOrUpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "customerinsights.RoleAssignmentsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RoleAssignmentsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	rarf, err = client.CreateOrUpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "customerinsights.RoleAssignmentsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -3867,13 +4713,13 @@ func (page RoleListResultPage) Values() []RoleResourceFormat {
 
 // RoleResourceFormat the role resource format.
 type RoleResourceFormat struct {
+	*Role `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
-	Type  *string `json:"type,omitempty"`
-	*Role `json:"properties,omitempty"`
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for RoleResourceFormat struct.
@@ -3883,46 +4729,45 @@ func (rrf *RoleResourceFormat) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties Role
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var role Role
+				err = json.Unmarshal(*v, &role)
+				if err != nil {
+					return err
+				}
+				rrf.Role = &role
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				rrf.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				rrf.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				rrf.Type = &typeVar
+			}
 		}
-		rrf.Role = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		rrf.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		rrf.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		rrf.Type = &typeVar
 	}
 
 	return nil
@@ -3963,9 +4808,27 @@ type StrongID struct {
 	// StrongIDName - The Name identifying the strong ID.
 	StrongIDName *string `json:"strongIdName,omitempty"`
 	// DisplayName - Localized display name.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
+	DisplayName map[string]*string `json:"displayName"`
 	// Description - Localized descriptions.
-	Description *map[string]*string `json:"description,omitempty"`
+	Description map[string]*string `json:"description"`
+}
+
+// MarshalJSON is the custom marshaler for StrongID.
+func (si StrongID) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if si.KeyPropertyNames != nil {
+		objectMap["keyPropertyNames"] = si.KeyPropertyNames
+	}
+	if si.StrongIDName != nil {
+		objectMap["strongIdName"] = si.StrongIDName
+	}
+	if si.DisplayName != nil {
+		objectMap["displayName"] = si.DisplayName
+	}
+	if si.Description != nil {
+		objectMap["description"] = si.Description
+	}
+	return json.Marshal(objectMap)
 }
 
 // SuggestRelationshipLinksResponse the response of suggest relationship links operation.
@@ -3998,13 +4861,40 @@ type View struct {
 	// TenantID - the hub name.
 	TenantID *string `json:"tenantId,omitempty"`
 	// DisplayName - Localized display name for the view.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
+	DisplayName map[string]*string `json:"displayName"`
 	// Definition - View definition.
 	Definition *string `json:"definition,omitempty"`
 	// Changed - Date time when view was last modified.
 	Changed *date.Time `json:"changed,omitempty"`
 	// Created - Date time when view was created.
 	Created *date.Time `json:"created,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for View.
+func (vVar View) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vVar.ViewName != nil {
+		objectMap["viewName"] = vVar.ViewName
+	}
+	if vVar.UserID != nil {
+		objectMap["userId"] = vVar.UserID
+	}
+	if vVar.TenantID != nil {
+		objectMap["tenantId"] = vVar.TenantID
+	}
+	if vVar.DisplayName != nil {
+		objectMap["displayName"] = vVar.DisplayName
+	}
+	if vVar.Definition != nil {
+		objectMap["definition"] = vVar.Definition
+	}
+	if vVar.Changed != nil {
+		objectMap["changed"] = vVar.Changed
+	}
+	if vVar.Created != nil {
+		objectMap["created"] = vVar.Created
+	}
+	return json.Marshal(objectMap)
 }
 
 // ViewListResult the response of list view operation.
@@ -4112,13 +5002,13 @@ func (page ViewListResultPage) Values() []ViewResourceFormat {
 // ViewResourceFormat the view resource format.
 type ViewResourceFormat struct {
 	autorest.Response `json:"-"`
+	*View             `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
-	Type  *string `json:"type,omitempty"`
-	*View `json:"properties,omitempty"`
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for ViewResourceFormat struct.
@@ -4128,46 +5018,45 @@ func (vrf *ViewResourceFormat) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties View
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var view View
+				err = json.Unmarshal(*v, &view)
+				if err != nil {
+					return err
+				}
+				vrf.View = &view
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				vrf.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				vrf.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				vrf.Type = &typeVar
+			}
 		}
-		vrf.View = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		vrf.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		vrf.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		vrf.Type = &typeVar
 	}
 
 	return nil
@@ -4182,7 +5071,7 @@ type WidgetType struct {
 	// Description - Description for widget type.
 	Description *string `json:"description,omitempty"`
 	// DisplayName - Localized display name for the widget type.
-	DisplayName *map[string]*string `json:"displayName,omitempty"`
+	DisplayName map[string]*string `json:"displayName"`
 	// ImageURL - The image URL.
 	ImageURL *string `json:"imageUrl,omitempty"`
 	// TenantID - The hub name.
@@ -4193,6 +5082,39 @@ type WidgetType struct {
 	Changed *date.Time `json:"changed,omitempty"`
 	// Created - Date time when widget type was created.
 	Created *date.Time `json:"created,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for WidgetType.
+func (wt WidgetType) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if wt.WidgetTypeName != nil {
+		objectMap["widgetTypeName"] = wt.WidgetTypeName
+	}
+	if wt.Definition != nil {
+		objectMap["definition"] = wt.Definition
+	}
+	if wt.Description != nil {
+		objectMap["description"] = wt.Description
+	}
+	if wt.DisplayName != nil {
+		objectMap["displayName"] = wt.DisplayName
+	}
+	if wt.ImageURL != nil {
+		objectMap["imageUrl"] = wt.ImageURL
+	}
+	if wt.TenantID != nil {
+		objectMap["tenantId"] = wt.TenantID
+	}
+	if wt.WidgetVersion != nil {
+		objectMap["widgetVersion"] = wt.WidgetVersion
+	}
+	if wt.Changed != nil {
+		objectMap["changed"] = wt.Changed
+	}
+	if wt.Created != nil {
+		objectMap["created"] = wt.Created
+	}
+	return json.Marshal(objectMap)
 }
 
 // WidgetTypeListResult the response of list widget type operation.
@@ -4300,13 +5222,13 @@ func (page WidgetTypeListResultPage) Values() []WidgetTypeResourceFormat {
 // WidgetTypeResourceFormat the WidgetTypeResourceFormat
 type WidgetTypeResourceFormat struct {
 	autorest.Response `json:"-"`
+	*WidgetType       `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
 	Name *string `json:"name,omitempty"`
 	// Type - Resource type.
-	Type        *string `json:"type,omitempty"`
-	*WidgetType `json:"properties,omitempty"`
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for WidgetTypeResourceFormat struct.
@@ -4316,46 +5238,45 @@ func (wtrf *WidgetTypeResourceFormat) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties WidgetType
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var widgetType WidgetType
+				err = json.Unmarshal(*v, &widgetType)
+				if err != nil {
+					return err
+				}
+				wtrf.WidgetType = &widgetType
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				wtrf.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				wtrf.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				wtrf.Type = &typeVar
+			}
 		}
-		wtrf.WidgetType = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		wtrf.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		wtrf.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		wtrf.Type = &typeVar
 	}
 
 	return nil

@@ -1,4 +1,4 @@
-// +build darwin linux,!gccgo
+// +build darwin linux
 
 // fill in statvfs structure with OS specific values
 // Statfs_t is different per-kernel, and only exists on some unixes (not Solaris for instance)

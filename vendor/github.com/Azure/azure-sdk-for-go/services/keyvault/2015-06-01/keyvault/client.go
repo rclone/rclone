@@ -116,8 +116,8 @@ func (client BaseClient) BackupKeyResponder(resp *http.Response) (result BackupK
 // CreateCertificate creates a new certificate version. If this is the first version, the certificate resource is
 // created.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the certificate
-// parameters is the parameters to create certificate.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the
+// certificate parameters is the parameters to create certificate.
 func (client BaseClient) CreateCertificate(ctx context.Context, vaultBaseURL string, certificateName string, parameters CertificateCreateParameters) (result CertificateOperation, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: certificateName,
@@ -129,7 +129,7 @@ func (client BaseClient) CreateCertificate(ctx context.Context, vaultBaseURL str
 						Chain: []validation.Constraint{{Target: "parameters.CertificatePolicy.X509CertificateProperties.ValidityInMonths", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}},
 					}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "CreateCertificate")
+		return result, validation.NewError("keyvault.BaseClient", "CreateCertificate", err.Error())
 	}
 
 	req, err := client.CreateCertificatePreparer(ctx, vaultBaseURL, certificateName, parameters)
@@ -200,13 +200,13 @@ func (client BaseClient) CreateCertificateResponder(resp *http.Response) (result
 
 // CreateKey creates a new, named, key in the specified vault.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key parameters is
-// the parameters to create key.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key parameters
+// is the parameters to create key.
 func (client BaseClient) CreateKey(ctx context.Context, vaultBaseURL string, keyName string, parameters KeyCreateParameters) (result KeyBundle, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: keyName,
 			Constraints: []validation.Constraint{{Target: "keyName", Name: validation.Pattern, Rule: `^[0-9a-zA-Z-]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "CreateKey")
+		return result, validation.NewError("keyvault.BaseClient", "CreateKey", err.Error())
 	}
 
 	req, err := client.CreateKeyPreparer(ctx, vaultBaseURL, keyName, parameters)
@@ -277,13 +277,13 @@ func (client BaseClient) CreateKeyResponder(resp *http.Response) (result KeyBund
 
 // Decrypt decrypts a single block of encrypted data
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion is
-// the version of the key parameters is the parameters for key operations.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion
+// is the version of the key parameters is the parameters for key operations.
 func (client BaseClient) Decrypt(ctx context.Context, vaultBaseURL string, keyName string, keyVersion string, parameters KeyOperationsParameters) (result KeyOperationResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Value", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "Decrypt")
+		return result, validation.NewError("keyvault.BaseClient", "Decrypt", err.Error())
 	}
 
 	req, err := client.DecryptPreparer(ctx, vaultBaseURL, keyName, keyVersion, parameters)
@@ -355,8 +355,8 @@ func (client BaseClient) DecryptResponder(resp *http.Response) (result KeyOperat
 
 // DeleteCertificate deletes a certificate from the specified vault.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the certificate
-// in the given vault
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the
+// certificate in the given vault
 func (client BaseClient) DeleteCertificate(ctx context.Context, vaultBaseURL string, certificateName string) (result CertificateBundle, err error) {
 	req, err := client.DeleteCertificatePreparer(ctx, vaultBaseURL, certificateName)
 	if err != nil {
@@ -556,7 +556,8 @@ func (client BaseClient) DeleteCertificateIssuerResponder(resp *http.Response) (
 
 // DeleteCertificateOperation deletes the certificate operation.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the certificate
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the
+// certificate
 func (client BaseClient) DeleteCertificateOperation(ctx context.Context, vaultBaseURL string, certificateName string) (result CertificateOperation, err error) {
 	req, err := client.DeleteCertificateOperationPreparer(ctx, vaultBaseURL, certificateName)
 	if err != nil {
@@ -761,13 +762,13 @@ func (client BaseClient) DeleteSecretResponder(resp *http.Response) (result Secr
 
 // Encrypt encrypts an arbitrary sequence of bytes using an encryption key that is stored in Azure Key Vault.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion is
-// the version of the key parameters is the parameters for key operations.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion
+// is the version of the key parameters is the parameters for key operations.
 func (client BaseClient) Encrypt(ctx context.Context, vaultBaseURL string, keyName string, keyVersion string, parameters KeyOperationsParameters) (result KeyOperationResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Value", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "Encrypt")
+		return result, validation.NewError("keyvault.BaseClient", "Encrypt", err.Error())
 	}
 
 	req, err := client.EncryptPreparer(ctx, vaultBaseURL, keyName, keyVersion, parameters)
@@ -839,8 +840,8 @@ func (client BaseClient) EncryptResponder(resp *http.Response) (result KeyOperat
 
 // GetCertificate gets a Certificate.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the certificate
-// in the given vault certificateVersion is the version of the certificate
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the
+// certificate in the given vault certificateVersion is the version of the certificate
 func (client BaseClient) GetCertificate(ctx context.Context, vaultBaseURL string, certificateName string, certificateVersion string) (result CertificateBundle, err error) {
 	req, err := client.GetCertificatePreparer(ctx, vaultBaseURL, certificateName, certificateVersion)
 	if err != nil {
@@ -1050,7 +1051,7 @@ func (client BaseClient) GetCertificateIssuers(ctx context.Context, vaultBaseURL
 				Chain: []validation.Constraint{{Target: "maxresults", Name: validation.InclusiveMaximum, Rule: 25, Chain: nil},
 					{Target: "maxresults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "GetCertificateIssuers")
+		return result, validation.NewError("keyvault.BaseClient", "GetCertificateIssuers", err.Error())
 	}
 
 	result.fn = client.getCertificateIssuersNextResults
@@ -1146,7 +1147,8 @@ func (client BaseClient) GetCertificateIssuersComplete(ctx context.Context, vaul
 
 // GetCertificateOperation gets the certificate operation response.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the certificate
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the
+// certificate
 func (client BaseClient) GetCertificateOperation(ctx context.Context, vaultBaseURL string, certificateName string) (result CertificateOperation, err error) {
 	req, err := client.GetCertificateOperationPreparer(ctx, vaultBaseURL, certificateName)
 	if err != nil {
@@ -1214,8 +1216,8 @@ func (client BaseClient) GetCertificateOperationResponder(resp *http.Response) (
 
 // GetCertificatePolicy gets the policy for a certificate.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the certificate
-// in the given vault.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the
+// certificate in the given vault.
 func (client BaseClient) GetCertificatePolicy(ctx context.Context, vaultBaseURL string, certificateName string) (result CertificatePolicy, err error) {
 	req, err := client.GetCertificatePolicyPreparer(ctx, vaultBaseURL, certificateName)
 	if err != nil {
@@ -1292,7 +1294,7 @@ func (client BaseClient) GetCertificates(ctx context.Context, vaultBaseURL strin
 				Chain: []validation.Constraint{{Target: "maxresults", Name: validation.InclusiveMaximum, Rule: 25, Chain: nil},
 					{Target: "maxresults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "GetCertificates")
+		return result, validation.NewError("keyvault.BaseClient", "GetCertificates", err.Error())
 	}
 
 	result.fn = client.getCertificatesNextResults
@@ -1388,9 +1390,9 @@ func (client BaseClient) GetCertificatesComplete(ctx context.Context, vaultBaseU
 
 // GetCertificateVersions list the versions of a certificate.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the certificate
-// maxresults is maximum number of results to return in a page. If not specified the service will return up to 25
-// results.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the
+// certificate maxresults is maximum number of results to return in a page. If not specified the service will
+// return up to 25 results.
 func (client BaseClient) GetCertificateVersions(ctx context.Context, vaultBaseURL string, certificateName string, maxresults *int32) (result CertificateListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxresults,
@@ -1398,7 +1400,7 @@ func (client BaseClient) GetCertificateVersions(ctx context.Context, vaultBaseUR
 				Chain: []validation.Constraint{{Target: "maxresults", Name: validation.InclusiveMaximum, Rule: 25, Chain: nil},
 					{Target: "maxresults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "GetCertificateVersions")
+		return result, validation.NewError("keyvault.BaseClient", "GetCertificateVersions", err.Error())
 	}
 
 	result.fn = client.getCertificateVersionsNextResults
@@ -1498,8 +1500,8 @@ func (client BaseClient) GetCertificateVersionsComplete(ctx context.Context, vau
 
 // GetKey retrieves the public portion of a key plus its attributes
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion is
-// the version of the key
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion
+// is the version of the key
 func (client BaseClient) GetKey(ctx context.Context, vaultBaseURL string, keyName string, keyVersion string) (result KeyBundle, err error) {
 	req, err := client.GetKeyPreparer(ctx, vaultBaseURL, keyName, keyVersion)
 	if err != nil {
@@ -1577,7 +1579,7 @@ func (client BaseClient) GetKeys(ctx context.Context, vaultBaseURL string, maxre
 				Chain: []validation.Constraint{{Target: "maxresults", Name: validation.InclusiveMaximum, Rule: 25, Chain: nil},
 					{Target: "maxresults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "GetKeys")
+		return result, validation.NewError("keyvault.BaseClient", "GetKeys", err.Error())
 	}
 
 	result.fn = client.getKeysNextResults
@@ -1673,8 +1675,8 @@ func (client BaseClient) GetKeysComplete(ctx context.Context, vaultBaseURL strin
 
 // GetKeyVersions list the versions of the specified key
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key maxresults is
-// maximum number of results to return in a page. If not specified the service will return up to 25 results.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key maxresults
+// is maximum number of results to return in a page. If not specified the service will return up to 25 results.
 func (client BaseClient) GetKeyVersions(ctx context.Context, vaultBaseURL string, keyName string, maxresults *int32) (result KeyListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxresults,
@@ -1682,7 +1684,7 @@ func (client BaseClient) GetKeyVersions(ctx context.Context, vaultBaseURL string
 				Chain: []validation.Constraint{{Target: "maxresults", Name: validation.InclusiveMaximum, Rule: 25, Chain: nil},
 					{Target: "maxresults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "GetKeyVersions")
+		return result, validation.NewError("keyvault.BaseClient", "GetKeyVersions", err.Error())
 	}
 
 	result.fn = client.getKeyVersionsNextResults
@@ -1861,7 +1863,7 @@ func (client BaseClient) GetSecrets(ctx context.Context, vaultBaseURL string, ma
 				Chain: []validation.Constraint{{Target: "maxresults", Name: validation.InclusiveMaximum, Rule: 25, Chain: nil},
 					{Target: "maxresults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "GetSecrets")
+		return result, validation.NewError("keyvault.BaseClient", "GetSecrets", err.Error())
 	}
 
 	result.fn = client.getSecretsNextResults
@@ -1958,8 +1960,8 @@ func (client BaseClient) GetSecretsComplete(ctx context.Context, vaultBaseURL st
 // GetSecretVersions list the versions of the specified secret
 //
 // vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net secretName is the name of the secret in the
-// given vault maxresults is maximum number of results to return in a page. If not specified the service will return up
-// to 25 results.
+// given vault maxresults is maximum number of results to return in a page. If not specified the service will
+// return up to 25 results.
 func (client BaseClient) GetSecretVersions(ctx context.Context, vaultBaseURL string, secretName string, maxresults *int32) (result SecretListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxresults,
@@ -1967,7 +1969,7 @@ func (client BaseClient) GetSecretVersions(ctx context.Context, vaultBaseURL str
 				Chain: []validation.Constraint{{Target: "maxresults", Name: validation.InclusiveMaximum, Rule: 25, Chain: nil},
 					{Target: "maxresults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "GetSecretVersions")
+		return result, validation.NewError("keyvault.BaseClient", "GetSecretVersions", err.Error())
 	}
 
 	result.fn = client.getSecretVersionsNextResults
@@ -2067,8 +2069,8 @@ func (client BaseClient) GetSecretVersionsComplete(ctx context.Context, vaultBas
 
 // ImportCertificate imports a certificate into the specified vault
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the certificate
-// parameters is the parameters to import certificate.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the
+// certificate parameters is the parameters to import certificate.
 func (client BaseClient) ImportCertificate(ctx context.Context, vaultBaseURL string, certificateName string, parameters CertificateImportParameters) (result CertificateBundle, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: certificateName,
@@ -2081,7 +2083,7 @@ func (client BaseClient) ImportCertificate(ctx context.Context, vaultBaseURL str
 							Chain: []validation.Constraint{{Target: "parameters.CertificatePolicy.X509CertificateProperties.ValidityInMonths", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}},
 						}},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "ImportCertificate")
+		return result, validation.NewError("keyvault.BaseClient", "ImportCertificate", err.Error())
 	}
 
 	req, err := client.ImportCertificatePreparer(ctx, vaultBaseURL, certificateName, parameters)
@@ -2152,15 +2154,15 @@ func (client BaseClient) ImportCertificateResponder(resp *http.Response) (result
 
 // ImportKey imports a key into the specified vault
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key parameters is
-// the parameters to import key.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key parameters
+// is the parameters to import key.
 func (client BaseClient) ImportKey(ctx context.Context, vaultBaseURL string, keyName string, parameters KeyImportParameters) (result KeyBundle, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: keyName,
 			Constraints: []validation.Constraint{{Target: "keyName", Name: validation.Pattern, Rule: `^[0-9a-zA-Z-]+$`, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Key", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "ImportKey")
+		return result, validation.NewError("keyvault.BaseClient", "ImportKey", err.Error())
 	}
 
 	req, err := client.ImportKeyPreparer(ctx, vaultBaseURL, keyName, parameters)
@@ -2231,13 +2233,13 @@ func (client BaseClient) ImportKeyResponder(resp *http.Response) (result KeyBund
 
 // MergeCertificate merges a certificate or a certificate chain with a key pair existing on the server.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the certificate
-// parameters is the parameters to merge certificate.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the
+// certificate parameters is the parameters to merge certificate.
 func (client BaseClient) MergeCertificate(ctx context.Context, vaultBaseURL string, certificateName string, parameters CertificateMergeParameters) (result CertificateBundle, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.X509Certificates", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "MergeCertificate")
+		return result, validation.NewError("keyvault.BaseClient", "MergeCertificate", err.Error())
 	}
 
 	req, err := client.MergeCertificatePreparer(ctx, vaultBaseURL, certificateName, parameters)
@@ -2313,7 +2315,7 @@ func (client BaseClient) RestoreKey(ctx context.Context, vaultBaseURL string, pa
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.KeyBundleBackup", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "RestoreKey")
+		return result, validation.NewError("keyvault.BaseClient", "RestoreKey", err.Error())
 	}
 
 	req, err := client.RestoreKeyPreparer(ctx, vaultBaseURL, parameters)
@@ -2447,13 +2449,13 @@ func (client BaseClient) SetCertificateContactsResponder(resp *http.Response) (r
 
 // SetCertificateIssuer sets the specified certificate issuer.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net issuerName is the name of the issuer. parameter
-// is certificate issuer set parameter.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net issuerName is the name of the issuer.
+// parameter is certificate issuer set parameter.
 func (client BaseClient) SetCertificateIssuer(ctx context.Context, vaultBaseURL string, issuerName string, parameter CertificateIssuerSetParameters) (result IssuerBundle, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameter,
 			Constraints: []validation.Constraint{{Target: "parameter.Provider", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "SetCertificateIssuer")
+		return result, validation.NewError("keyvault.BaseClient", "SetCertificateIssuer", err.Error())
 	}
 
 	req, err := client.SetCertificateIssuerPreparer(ctx, vaultBaseURL, issuerName, parameter)
@@ -2532,7 +2534,7 @@ func (client BaseClient) SetSecret(ctx context.Context, vaultBaseURL string, sec
 			Constraints: []validation.Constraint{{Target: "secretName", Name: validation.Pattern, Rule: `^[0-9a-zA-Z-]+$`, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Value", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "SetSecret")
+		return result, validation.NewError("keyvault.BaseClient", "SetSecret", err.Error())
 	}
 
 	req, err := client.SetSecretPreparer(ctx, vaultBaseURL, secretName, parameters)
@@ -2603,13 +2605,13 @@ func (client BaseClient) SetSecretResponder(resp *http.Response) (result SecretB
 
 // Sign creates a signature from a digest using the specified key in the vault
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion is
-// the version of the key parameters is the parameters for key operations.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion
+// is the version of the key parameters is the parameters for key operations.
 func (client BaseClient) Sign(ctx context.Context, vaultBaseURL string, keyName string, keyVersion string, parameters KeySignParameters) (result KeyOperationResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Value", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "Sign")
+		return result, validation.NewError("keyvault.BaseClient", "Sign", err.Error())
 	}
 
 	req, err := client.SignPreparer(ctx, vaultBaseURL, keyName, keyVersion, parameters)
@@ -2682,13 +2684,13 @@ func (client BaseClient) SignResponder(resp *http.Response) (result KeyOperation
 // UnwrapKey unwraps a symmetric key using the specified key in the vault that has initially been used for wrapping the
 // key.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion is
-// the version of the key parameters is the parameters for key operations.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion
+// is the version of the key parameters is the parameters for key operations.
 func (client BaseClient) UnwrapKey(ctx context.Context, vaultBaseURL string, keyName string, keyVersion string, parameters KeyOperationsParameters) (result KeyOperationResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Value", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "UnwrapKey")
+		return result, validation.NewError("keyvault.BaseClient", "UnwrapKey", err.Error())
 	}
 
 	req, err := client.UnwrapKeyPreparer(ctx, vaultBaseURL, keyName, keyVersion, parameters)
@@ -2760,8 +2762,8 @@ func (client BaseClient) UnwrapKeyResponder(resp *http.Response) (result KeyOper
 
 // UpdateCertificate updates the attributes associated with the specified certificate
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the certificate
-// in the given vault certificateVersion is the version of the certificate
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the
+// certificate in the given vault certificateVersion is the version of the certificate
 func (client BaseClient) UpdateCertificate(ctx context.Context, vaultBaseURL string, certificateName string, certificateVersion string, parameters CertificateUpdateParameters) (result CertificateBundle, err error) {
 	req, err := client.UpdateCertificatePreparer(ctx, vaultBaseURL, certificateName, certificateVersion, parameters)
 	if err != nil {
@@ -2832,8 +2834,8 @@ func (client BaseClient) UpdateCertificateResponder(resp *http.Response) (result
 
 // UpdateCertificateIssuer updates the specified certificate issuer.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net issuerName is the name of the issuer. parameter
-// is certificate issuer update parameter.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net issuerName is the name of the issuer.
+// parameter is certificate issuer update parameter.
 func (client BaseClient) UpdateCertificateIssuer(ctx context.Context, vaultBaseURL string, issuerName string, parameter CertificateIssuerUpdateParameters) (result IssuerBundle, err error) {
 	req, err := client.UpdateCertificateIssuerPreparer(ctx, vaultBaseURL, issuerName, parameter)
 	if err != nil {
@@ -2903,8 +2905,8 @@ func (client BaseClient) UpdateCertificateIssuerResponder(resp *http.Response) (
 
 // UpdateCertificateOperation updates a certificate operation.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the certificate
-// certificateOperation is the certificate operation response.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the
+// certificate certificateOperation is the certificate operation response.
 func (client BaseClient) UpdateCertificateOperation(ctx context.Context, vaultBaseURL string, certificateName string, certificateOperation CertificateOperationUpdateParameter) (result CertificateOperation, err error) {
 	req, err := client.UpdateCertificateOperationPreparer(ctx, vaultBaseURL, certificateName, certificateOperation)
 	if err != nil {
@@ -2975,8 +2977,8 @@ func (client BaseClient) UpdateCertificateOperationResponder(resp *http.Response
 // UpdateCertificatePolicy updates the policy for a certificate. Set appropriate members in the certificatePolicy that
 // must be updated. Leave others as null.
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the certificate
-// in the given vault. certificatePolicy is the policy for the certificate.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net certificateName is the name of the
+// certificate in the given vault. certificatePolicy is the policy for the certificate.
 func (client BaseClient) UpdateCertificatePolicy(ctx context.Context, vaultBaseURL string, certificateName string, certificatePolicy CertificatePolicy) (result CertificatePolicy, err error) {
 	req, err := client.UpdateCertificatePolicyPreparer(ctx, vaultBaseURL, certificateName, certificatePolicy)
 	if err != nil {
@@ -3046,8 +3048,8 @@ func (client BaseClient) UpdateCertificatePolicyResponder(resp *http.Response) (
 
 // UpdateKey updates the Key Attributes associated with the specified key
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion is
-// the version of the key parameters is the parameters to update key.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion
+// is the version of the key parameters is the parameters to update key.
 func (client BaseClient) UpdateKey(ctx context.Context, vaultBaseURL string, keyName string, keyVersion string, parameters KeyUpdateParameters) (result KeyBundle, err error) {
 	req, err := client.UpdateKeyPreparer(ctx, vaultBaseURL, keyName, keyVersion, parameters)
 	if err != nil {
@@ -3190,14 +3192,14 @@ func (client BaseClient) UpdateSecretResponder(resp *http.Response) (result Secr
 
 // Verify verifies a signature using the specified key
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion is
-// the version of the key parameters is the parameters for key operations.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion
+// is the version of the key parameters is the parameters for key operations.
 func (client BaseClient) Verify(ctx context.Context, vaultBaseURL string, keyName string, keyVersion string, parameters KeyVerifyParameters) (result KeyVerifyResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Digest", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.Signature", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "Verify")
+		return result, validation.NewError("keyvault.BaseClient", "Verify", err.Error())
 	}
 
 	req, err := client.VerifyPreparer(ctx, vaultBaseURL, keyName, keyVersion, parameters)
@@ -3269,13 +3271,13 @@ func (client BaseClient) VerifyResponder(resp *http.Response) (result KeyVerifyR
 
 // WrapKey wraps a symmetric key using the specified key
 //
-// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion is
-// the version of the key parameters is the parameters for key operations.
+// vaultBaseURL is the vault name, e.g. https://myvault.vault.azure.net keyName is the name of the key keyVersion
+// is the version of the key parameters is the parameters for key operations.
 func (client BaseClient) WrapKey(ctx context.Context, vaultBaseURL string, keyName string, keyVersion string, parameters KeyOperationsParameters) (result KeyOperationResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Value", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.BaseClient", "WrapKey")
+		return result, validation.NewError("keyvault.BaseClient", "WrapKey", err.Error())
 	}
 
 	req, err := client.WrapKeyPreparer(ctx, vaultBaseURL, keyName, keyVersion, parameters)

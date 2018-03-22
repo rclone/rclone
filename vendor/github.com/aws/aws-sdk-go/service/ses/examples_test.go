@@ -105,7 +105,12 @@ func ExampleSES_CreateReceiptRule_shared00() {
 		After: aws.String(""),
 		Rule: &ses.ReceiptRule{
 			Actions: []*ses.ReceiptAction{
-				{},
+				{
+					S3Action: &ses.S3Action{
+						BucketName:      aws.String("MyBucket"),
+						ObjectKeyPrefix: aws.String("email"),
+					},
+				},
 			},
 			Enabled:     aws.Bool(true),
 			Name:        aws.String("MyRule"),
@@ -1277,7 +1282,12 @@ func ExampleSES_UpdateReceiptRule_shared00() {
 	input := &ses.UpdateReceiptRuleInput{
 		Rule: &ses.ReceiptRule{
 			Actions: []*ses.ReceiptAction{
-				{},
+				{
+					S3Action: &ses.S3Action{
+						BucketName:      aws.String("MyBucket"),
+						ObjectKeyPrefix: aws.String("email"),
+					},
+				},
 			},
 			Enabled:     aws.Bool(true),
 			Name:        aws.String("MyRule"),

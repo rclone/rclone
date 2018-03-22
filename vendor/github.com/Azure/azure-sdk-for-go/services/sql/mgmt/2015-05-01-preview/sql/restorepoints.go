@@ -43,9 +43,9 @@ func NewRestorePointsClientWithBaseURI(baseURI string, subscriptionID string) Re
 
 // ListByDatabase gets a list of database restore points.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database to get available restore points.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database to get available restore points.
 func (client RestorePointsClient) ListByDatabase(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result RestorePointListResult, err error) {
 	req, err := client.ListByDatabasePreparer(ctx, resourceGroupName, serverName, databaseName)
 	if err != nil {

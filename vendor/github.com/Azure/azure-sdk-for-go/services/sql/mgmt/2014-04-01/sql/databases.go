@@ -45,19 +45,18 @@ func NewDatabasesClientWithBaseURI(baseURI string, subscriptionID string) Databa
 // CreateImportOperation creates an import operation that imports a bacpac into an existing database. The existing
 // database must be empty.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database to import into extensionName is the name of the operation to perform parameters is the required parameters
-// for importing a Bacpac into a database.
-func (client DatabasesClient) CreateImportOperation(ctx context.Context, resourceGroupName string, serverName string, databaseName string, extensionName string, parameters ImportExtensionRequest) (result DatabasesCreateImportOperationFuture, err error) {
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database to import into parameters is the required parameters for importing a Bacpac into a database.
+func (client DatabasesClient) CreateImportOperation(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters ImportExtensionRequest) (result DatabasesCreateImportOperationFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ImportExtensionProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.ImportExtensionProperties.OperationMode", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "sql.DatabasesClient", "CreateImportOperation")
+		return result, validation.NewError("sql.DatabasesClient", "CreateImportOperation", err.Error())
 	}
 
-	req, err := client.CreateImportOperationPreparer(ctx, resourceGroupName, serverName, databaseName, extensionName, parameters)
+	req, err := client.CreateImportOperationPreparer(ctx, resourceGroupName, serverName, databaseName, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.DatabasesClient", "CreateImportOperation", nil, "Failure preparing request")
 		return
@@ -73,10 +72,10 @@ func (client DatabasesClient) CreateImportOperation(ctx context.Context, resourc
 }
 
 // CreateImportOperationPreparer prepares the CreateImportOperation request.
-func (client DatabasesClient) CreateImportOperationPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, extensionName string, parameters ImportExtensionRequest) (*http.Request, error) {
+func (client DatabasesClient) CreateImportOperationPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters ImportExtensionRequest) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"databaseName":      autorest.Encode("path", databaseName),
-		"extensionName":     autorest.Encode("path", extensionName),
+		"extensionName":     autorest.Encode("path", "import"),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
 		"serverName":        autorest.Encode("path", serverName),
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
@@ -127,10 +126,10 @@ func (client DatabasesClient) CreateImportOperationResponder(resp *http.Response
 
 // CreateOrUpdate creates a new database or updates an existing database.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database to be operated on (updated or created). parameters is the required parameters for creating or updating a
-// database.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database to be operated on (updated or created). parameters is the required parameters for creating or
+// updating a database.
 func (client DatabasesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters Database) (result DatabasesCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, databaseName, parameters)
 	if err != nil {
@@ -201,9 +200,9 @@ func (client DatabasesClient) CreateOrUpdateResponder(resp *http.Response) (resu
 
 // Delete deletes a database.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database to be deleted.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database to be deleted.
 func (client DatabasesClient) Delete(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName, databaseName)
 	if err != nil {
@@ -269,9 +268,9 @@ func (client DatabasesClient) DeleteResponder(resp *http.Response) (result autor
 
 // Export exports a database to a bacpac.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database to be exported. parameters is the required parameters for exporting a database.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database to be exported. parameters is the required parameters for exporting a database.
 func (client DatabasesClient) Export(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters ExportRequest) (result DatabasesExportFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -279,7 +278,7 @@ func (client DatabasesClient) Export(ctx context.Context, resourceGroupName stri
 				{Target: "parameters.StorageURI", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.AdministratorLogin", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.AdministratorLoginPassword", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "sql.DatabasesClient", "Export")
+		return result, validation.NewError("sql.DatabasesClient", "Export", err.Error())
 	}
 
 	req, err := client.ExportPreparer(ctx, resourceGroupName, serverName, databaseName, parameters)
@@ -351,10 +350,10 @@ func (client DatabasesClient) ExportResponder(resp *http.Response) (result Impor
 
 // Get gets a database.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database to be retrieved. expand is a comma separated list of child objects to expand in the response. Possible
-// properties: serviceTierAdvisors, transparentDataEncryption.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database to be retrieved. expand is a comma separated list of child objects to expand in the response.
+// Possible properties: serviceTierAdvisors, transparentDataEncryption.
 func (client DatabasesClient) Get(ctx context.Context, resourceGroupName string, serverName string, databaseName string, expand string) (result Database, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, databaseName, expand)
 	if err != nil {
@@ -424,9 +423,9 @@ func (client DatabasesClient) GetResponder(resp *http.Response) (result Database
 
 // GetByElasticPool gets a database inside of an elastic pool.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. elasticPoolName is the name of the
-// elastic pool to be retrieved. databaseName is the name of the database to be retrieved.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. elasticPoolName is the name
+// of the elastic pool to be retrieved. databaseName is the name of the database to be retrieved.
 func (client DatabasesClient) GetByElasticPool(ctx context.Context, resourceGroupName string, serverName string, elasticPoolName string, databaseName string) (result Database, err error) {
 	req, err := client.GetByElasticPoolPreparer(ctx, resourceGroupName, serverName, elasticPoolName, databaseName)
 	if err != nil {
@@ -494,9 +493,9 @@ func (client DatabasesClient) GetByElasticPoolResponder(resp *http.Response) (re
 
 // GetByRecommendedElasticPool gets a database inside of a recommented elastic pool.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. recommendedElasticPoolName is the
-// name of the elastic pool to be retrieved. databaseName is the name of the database to be retrieved.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. recommendedElasticPoolName
+// is the name of the elastic pool to be retrieved. databaseName is the name of the database to be retrieved.
 func (client DatabasesClient) GetByRecommendedElasticPool(ctx context.Context, resourceGroupName string, serverName string, recommendedElasticPoolName string, databaseName string) (result Database, err error) {
 	req, err := client.GetByRecommendedElasticPoolPreparer(ctx, resourceGroupName, serverName, recommendedElasticPoolName, databaseName)
 	if err != nil {
@@ -564,15 +563,15 @@ func (client DatabasesClient) GetByRecommendedElasticPoolResponder(resp *http.Re
 
 // Import imports a bacpac into a new database.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. parameters is the required
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. parameters is the required
 // parameters for importing a Bacpac into a database.
 func (client DatabasesClient) Import(ctx context.Context, resourceGroupName string, serverName string, parameters ImportRequest) (result DatabasesImportFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.DatabaseName", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.MaxSizeBytes", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "sql.DatabasesClient", "Import")
+		return result, validation.NewError("sql.DatabasesClient", "Import", err.Error())
 	}
 
 	req, err := client.ImportPreparer(ctx, resourceGroupName, serverName, parameters)
@@ -643,9 +642,9 @@ func (client DatabasesClient) ImportResponder(resp *http.Response) (result Impor
 
 // ListByElasticPool returns a list of databases in an elastic pool.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. elasticPoolName is the name of the
-// elastic pool to be retrieved.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. elasticPoolName is the name
+// of the elastic pool to be retrieved.
 func (client DatabasesClient) ListByElasticPool(ctx context.Context, resourceGroupName string, serverName string, elasticPoolName string) (result DatabaseListResult, err error) {
 	req, err := client.ListByElasticPoolPreparer(ctx, resourceGroupName, serverName, elasticPoolName)
 	if err != nil {
@@ -712,9 +711,9 @@ func (client DatabasesClient) ListByElasticPoolResponder(resp *http.Response) (r
 
 // ListByRecommendedElasticPool returns a list of databases inside a recommented elastic pool.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. recommendedElasticPoolName is the
-// name of the recommended elastic pool to be retrieved.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. recommendedElasticPoolName
+// is the name of the recommended elastic pool to be retrieved.
 func (client DatabasesClient) ListByRecommendedElasticPool(ctx context.Context, resourceGroupName string, serverName string, recommendedElasticPoolName string) (result DatabaseListResult, err error) {
 	req, err := client.ListByRecommendedElasticPoolPreparer(ctx, resourceGroupName, serverName, recommendedElasticPoolName)
 	if err != nil {
@@ -781,10 +780,10 @@ func (client DatabasesClient) ListByRecommendedElasticPoolResponder(resp *http.R
 
 // ListByServer returns a list of databases in a server.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. expand is a comma separated list of
-// child objects to expand in the response. Possible properties: serviceTierAdvisors, transparentDataEncryption. filter
-// is an OData filter expression that describes a subset of databases to return.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. expand is a comma separated
+// list of child objects to expand in the response. Possible properties: serviceTierAdvisors,
+// transparentDataEncryption. filter is an OData filter expression that describes a subset of databases to return.
 func (client DatabasesClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string, expand string, filter string) (result DatabaseListResult, err error) {
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName, expand, filter)
 	if err != nil {
@@ -856,9 +855,9 @@ func (client DatabasesClient) ListByServerResponder(resp *http.Response) (result
 
 // Pause pauses a data warehouse.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the data
-// warehouse to pause.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the data warehouse to pause.
 func (client DatabasesClient) Pause(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result DatabasesPauseFuture, err error) {
 	req, err := client.PausePreparer(ctx, resourceGroupName, serverName, databaseName)
 	if err != nil {
@@ -926,9 +925,9 @@ func (client DatabasesClient) PauseResponder(resp *http.Response) (result autore
 
 // Resume resumes a data warehouse.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the data
-// warehouse to resume.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the data warehouse to resume.
 func (client DatabasesClient) Resume(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result DatabasesResumeFuture, err error) {
 	req, err := client.ResumePreparer(ctx, resourceGroupName, serverName, databaseName)
 	if err != nil {
@@ -996,9 +995,9 @@ func (client DatabasesClient) ResumeResponder(resp *http.Response) (result autor
 
 // Update updates an existing database.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database to be updated. parameters is the required parameters for updating a database.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database to be updated. parameters is the required parameters for updating a database.
 func (client DatabasesClient) Update(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters DatabaseUpdate) (result DatabasesUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serverName, databaseName, parameters)
 	if err != nil {

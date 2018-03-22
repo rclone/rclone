@@ -43,7 +43,8 @@ func NewSubscriptionUsagesClientWithBaseURI(baseURI string, subscriptionID strin
 
 // Get gets a subscription usage metric.
 //
-// locationName is the name of the region where the resource is located. usageName is name of usage metric to return.
+// locationName is the name of the region where the resource is located. usageName is name of usage metric to
+// return.
 func (client SubscriptionUsagesClient) Get(ctx context.Context, locationName string, usageName string) (result SubscriptionUsage, err error) {
 	req, err := client.GetPreparer(ctx, locationName, usageName)
 	if err != nil {

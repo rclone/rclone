@@ -58,7 +58,7 @@ func (client VaultsClient) CreateOrUpdate(ctx context.Context, resourceGroupName
 						{Target: "parameters.Properties.AccessPolicies", Name: validation.Null, Rule: true,
 							Chain: []validation.Constraint{{Target: "parameters.Properties.AccessPolicies", Name: validation.MaxItems, Rule: 16, Chain: nil}}},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "keyvault.VaultsClient", "CreateOrUpdate")
+		return result, validation.NewError("keyvault.VaultsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, vaultName, parameters)
@@ -127,8 +127,8 @@ func (client VaultsClient) CreateOrUpdateResponder(resp *http.Response) (result 
 
 // Delete deletes the specified Azure key vault.
 //
-// resourceGroupName is the name of the Resource Group to which the vault belongs. vaultName is the name of the vault
-// to delete
+// resourceGroupName is the name of the Resource Group to which the vault belongs. vaultName is the name of the
+// vault to delete
 func (client VaultsClient) Delete(ctx context.Context, resourceGroupName string, vaultName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, vaultName)
 	if err != nil {
@@ -193,7 +193,8 @@ func (client VaultsClient) DeleteResponder(resp *http.Response) (result autorest
 
 // Get gets the specified Azure key vault.
 //
-// resourceGroupName is the name of the Resource Group to which the vault belongs. vaultName is the name of the vault.
+// resourceGroupName is the name of the Resource Group to which the vault belongs. vaultName is the name of the
+// vault.
 func (client VaultsClient) Get(ctx context.Context, resourceGroupName string, vaultName string) (result Vault, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, vaultName)
 	if err != nil {
@@ -259,10 +260,10 @@ func (client VaultsClient) GetResponder(resp *http.Response) (result Vault, err 
 
 // List the List operation gets information about the vaults associated with the subscription.
 //
-// filter is the filter to apply on the operation. top is maximum number of results to return.
-func (client VaultsClient) List(ctx context.Context, filter string, top *int32) (result ResourceListResultPage, err error) {
+// top is maximum number of results to return.
+func (client VaultsClient) List(ctx context.Context, top *int32) (result ResourceListResultPage, err error) {
 	result.fn = client.listNextResults
-	req, err := client.ListPreparer(ctx, filter, top)
+	req, err := client.ListPreparer(ctx, top)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "keyvault.VaultsClient", "List", nil, "Failure preparing request")
 		return
@@ -284,14 +285,14 @@ func (client VaultsClient) List(ctx context.Context, filter string, top *int32) 
 }
 
 // ListPreparer prepares the List request.
-func (client VaultsClient) ListPreparer(ctx context.Context, filter string, top *int32) (*http.Request, error) {
+func (client VaultsClient) ListPreparer(ctx context.Context, top *int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
 	}
 
 	const APIVersion = "2015-11-01"
 	queryParameters := map[string]interface{}{
-		"$filter":     autorest.Encode("query", filter),
+		"$filter":     autorest.Encode("query", "resourceType eq 'Microsoft.KeyVault/vaults'"),
 		"api-version": APIVersion,
 	}
 	if top != nil {
@@ -348,16 +349,16 @@ func (client VaultsClient) listNextResults(lastResults ResourceListResult) (resu
 }
 
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
-func (client VaultsClient) ListComplete(ctx context.Context, filter string, top *int32) (result ResourceListResultIterator, err error) {
-	result.page, err = client.List(ctx, filter, top)
+func (client VaultsClient) ListComplete(ctx context.Context, top *int32) (result ResourceListResultIterator, err error) {
+	result.page, err = client.List(ctx, top)
 	return
 }
 
 // ListByResourceGroup the List operation gets information about the vaults associated with the subscription and within
 // the specified resource group.
 //
-// resourceGroupName is the name of the Resource Group to which the vault belongs. top is maximum number of results to
-// return.
+// resourceGroupName is the name of the Resource Group to which the vault belongs. top is maximum number of results
+// to return.
 func (client VaultsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, top *int32) (result VaultListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, top)

@@ -43,14 +43,15 @@ func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 // AddDataLakeStoreAccount updates the specified Data Lake Analytics account to include the additional Data Lake Store
 // account.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account to which to add the Data Lake Store account. dataLakeStoreAccountName
-// is the name of the Data Lake Store account to add. parameters is the details of the Data Lake Store account.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
+// accountName is the name of the Data Lake Analytics account to which to add the Data Lake Store account.
+// dataLakeStoreAccountName is the name of the Data Lake Store account to add. parameters is the details of the
+// Data Lake Store account.
 func (client Client) AddDataLakeStoreAccount(ctx context.Context, resourceGroupName string, accountName string, dataLakeStoreAccountName string, parameters AddDataLakeStoreParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Properties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "account.Client", "AddDataLakeStoreAccount")
+		return result, validation.NewError("account.Client", "AddDataLakeStoreAccount", err.Error())
 	}
 
 	req, err := client.AddDataLakeStoreAccountPreparer(ctx, resourceGroupName, accountName, dataLakeStoreAccountName, parameters)
@@ -119,16 +120,16 @@ func (client Client) AddDataLakeStoreAccountResponder(resp *http.Response) (resu
 
 // AddStorageAccount updates the specified Data Lake Analytics account to add an Azure Storage account.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account to which to add the Azure Storage account. storageAccountName is the
-// name of the Azure Storage account to add parameters is the parameters containing the access key and optional suffix
-// for the Azure Storage Account.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
+// accountName is the name of the Data Lake Analytics account to which to add the Azure Storage account.
+// storageAccountName is the name of the Azure Storage account to add parameters is the parameters containing the
+// access key and optional suffix for the Azure Storage Account.
 func (client Client) AddStorageAccount(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string, parameters AddStorageAccountParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Properties", Name: validation.Null, Rule: true,
 				Chain: []validation.Constraint{{Target: "parameters.Properties.AccessKey", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "account.Client", "AddStorageAccount")
+		return result, validation.NewError("account.Client", "AddStorageAccount", err.Error())
 	}
 
 	req, err := client.AddStorageAccountPreparer(ctx, resourceGroupName, accountName, storageAccountName, parameters)
@@ -198,10 +199,10 @@ func (client Client) AddStorageAccountResponder(resp *http.Response) (result aut
 // Create creates the specified Data Lake Analytics account. This supplies the user with computation services for Data
 // Lake Analytics workloads
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.the account
-// will be associated with. name is the name of the Data Lake Analytics account to create. parameters is parameters
-// supplied to the create Data Lake Analytics account operation.
-func (client Client) Create(ctx context.Context, resourceGroupName string, name string, parameters DataLakeAnalyticsAccount) (result AccountCreateFuture, err error) {
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.the
+// account will be associated with. name is the name of the Data Lake Analytics account to create. parameters is
+// parameters supplied to the create Data Lake Analytics account operation.
+func (client Client) Create(ctx context.Context, resourceGroupName string, name string, parameters DataLakeAnalyticsAccount) (result CreateFuture, err error) {
 	req, err := client.CreatePreparer(ctx, resourceGroupName, name, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "account.Client", "Create", nil, "Failure preparing request")
@@ -242,7 +243,7 @@ func (client Client) CreatePreparer(ctx context.Context, resourceGroupName strin
 
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) CreateSender(req *http.Request) (future AccountCreateFuture, err error) {
+func (client Client) CreateSender(req *http.Request) (future CreateFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -270,9 +271,9 @@ func (client Client) CreateResponder(resp *http.Response) (result DataLakeAnalyt
 
 // Delete begins the delete delete process for the Data Lake Analytics account object specified by the account name.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account to delete
-func (client Client) Delete(ctx context.Context, resourceGroupName string, accountName string) (result AccountDeleteFuture, err error) {
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
+// accountName is the name of the Data Lake Analytics account to delete
+func (client Client) Delete(ctx context.Context, resourceGroupName string, accountName string) (result DeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "account.Client", "Delete", nil, "Failure preparing request")
@@ -311,7 +312,7 @@ func (client Client) DeletePreparer(ctx context.Context, resourceGroupName strin
 
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) DeleteSender(req *http.Request) (future AccountDeleteFuture, err error) {
+func (client Client) DeleteSender(req *http.Request) (future DeleteFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -339,8 +340,8 @@ func (client Client) DeleteResponder(resp *http.Response) (result autorest.Respo
 // DeleteDataLakeStoreAccount updates the Data Lake Analytics account specified to remove the specified Data Lake Store
 // account.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account from which to remove the Data Lake Store account.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
+// accountName is the name of the Data Lake Analytics account from which to remove the Data Lake Store account.
 // dataLakeStoreAccountName is the name of the Data Lake Store account to remove
 func (client Client) DeleteDataLakeStoreAccount(ctx context.Context, resourceGroupName string, accountName string, dataLakeStoreAccountName string) (result autorest.Response, err error) {
 	req, err := client.DeleteDataLakeStoreAccountPreparer(ctx, resourceGroupName, accountName, dataLakeStoreAccountName)
@@ -407,9 +408,9 @@ func (client Client) DeleteDataLakeStoreAccountResponder(resp *http.Response) (r
 
 // DeleteStorageAccount updates the specified Data Lake Analytics account to remove an Azure Storage account.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account from which to remove the Azure Storage account. storageAccountName is
-// the name of the Azure Storage account to remove
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
+// accountName is the name of the Data Lake Analytics account from which to remove the Azure Storage account.
+// storageAccountName is the name of the Azure Storage account to remove
 func (client Client) DeleteStorageAccount(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string) (result autorest.Response, err error) {
 	req, err := client.DeleteStorageAccountPreparer(ctx, resourceGroupName, accountName, storageAccountName)
 	if err != nil {
@@ -475,8 +476,8 @@ func (client Client) DeleteStorageAccountResponder(resp *http.Response) (result 
 
 // Get gets details of the specified Data Lake Analytics account.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account to retrieve.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
+// accountName is the name of the Data Lake Analytics account to retrieve.
 func (client Client) Get(ctx context.Context, resourceGroupName string, accountName string) (result DataLakeAnalyticsAccount, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountName)
 	if err != nil {
@@ -543,9 +544,9 @@ func (client Client) GetResponder(resp *http.Response) (result DataLakeAnalytics
 // GetDataLakeStoreAccount gets the specified Data Lake Store account details in the specified Data Lake Analytics
 // account.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account from which to retrieve the Data Lake Store account details.
-// dataLakeStoreAccountName is the name of the Data Lake Store account to retrieve
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
+// accountName is the name of the Data Lake Analytics account from which to retrieve the Data Lake Store account
+// details. dataLakeStoreAccountName is the name of the Data Lake Store account to retrieve
 func (client Client) GetDataLakeStoreAccount(ctx context.Context, resourceGroupName string, accountName string, dataLakeStoreAccountName string) (result DataLakeStoreAccountInfo, err error) {
 	req, err := client.GetDataLakeStoreAccountPreparer(ctx, resourceGroupName, accountName, dataLakeStoreAccountName)
 	if err != nil {
@@ -612,8 +613,8 @@ func (client Client) GetDataLakeStoreAccountResponder(resp *http.Response) (resu
 
 // GetStorageAccount gets the specified Azure Storage account linked to the given Data Lake Analytics account.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account from which to retrieve Azure storage account details.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
+// accountName is the name of the Data Lake Analytics account from which to retrieve Azure storage account details.
 // storageAccountName is the name of the Azure Storage account for which to retrieve the details.
 func (client Client) GetStorageAccount(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string) (result StorageAccountInfo, err error) {
 	req, err := client.GetStorageAccountPreparer(ctx, resourceGroupName, accountName, storageAccountName)
@@ -682,10 +683,10 @@ func (client Client) GetStorageAccountResponder(resp *http.Response) (result Sto
 // GetStorageContainer gets the specified Azure Storage container associated with the given Data Lake Analytics and
 // Azure Storage accounts.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account for which to retrieve blob container. storageAccountName is the name
-// of the Azure storage account from which to retrieve the blob container. containerName is the name of the Azure
-// storage container to retrieve
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
+// accountName is the name of the Data Lake Analytics account for which to retrieve blob container.
+// storageAccountName is the name of the Azure storage account from which to retrieve the blob container.
+// containerName is the name of the Azure storage container to retrieve
 func (client Client) GetStorageContainer(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string, containerName string) (result BlobContainer, err error) {
 	req, err := client.GetStorageContainerPreparer(ctx, resourceGroupName, accountName, storageAccountName, containerName)
 	if err != nil {
@@ -755,17 +756,17 @@ func (client Client) GetStorageContainerResponder(resp *http.Response) (result B
 // link to the next page, if any.
 //
 // filter is oData filter. Optional. top is the number of items to return. Optional. skip is the number of items to
-// skip over before returning elements. Optional. expand is oData expansion. Expand related resources in line with the
-// retrieved resources, e.g. Categories/$expand=Products would expand Product data in line with each Category entry.
-// Optional. selectParameter is oData Select statement. Limits the properties on each entry to just those requested,
-// e.g. Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more comma-separated
-// expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g.
-// Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true or false to request a count of
-// the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional. search is
-// a free form search. A free-text search expression to match for whether a particular entry should be included in the
-// feed, e.g. Categories?$search=blue OR green. Optional. formatParameter is the desired return format. Return the
-// response in particular formatxii without access to request headers for standard content-type negotiation (e.g
-// Orders?$format=json). Optional.
+// skip over before returning elements. Optional. expand is oData expansion. Expand related resources in line with
+// the retrieved resources, e.g. Categories/$expand=Products would expand Product data in line with each Category
+// entry. Optional. selectParameter is oData Select statement. Limits the properties on each entry to just those
+// requested, e.g. Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more
+// comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the
+// values sorted, e.g. Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true or false
+// to request a count of the matching resources included with the resources in the response, e.g.
+// Categories?$count=true. Optional. search is a free form search. A free-text search expression to match for
+// whether a particular entry should be included in the feed, e.g. Categories?$search=blue OR green. Optional.
+// formatParameter is the desired return format. Return the response in particular formatxii without access to
+// request headers for standard content-type negotiation (e.g Orders?$format=json). Optional.
 func (client Client) List(ctx context.Context, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (result DataLakeAnalyticsAccountListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, filter, top, skip, expand, selectParameter, orderby, count, search, formatParameter)
@@ -885,19 +886,19 @@ func (client Client) ListComplete(ctx context.Context, filter string, top *int32
 // ListByResourceGroup gets the first page of Data Lake Analytics accounts, if any, within a specific resource group.
 // This includes a link to the next page, if any.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. filter is
-// oData filter. Optional. top is the number of items to return. Optional. skip is the number of items to skip over
-// before returning elements. Optional. expand is oData expansion. Expand related resources in line with the retrieved
-// resources, e.g. Categories/$expand=Products would expand Product data in line with each Category entry. Optional.
-// selectParameter is oData Select statement. Limits the properties on each entry to just those requested, e.g.
-// Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more comma-separated
-// expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g.
-// Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true or false to request a count of
-// the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional. search is
-// a free form search. A free-text search expression to match for whether a particular entry should be included in the
-// feed, e.g. Categories?$search=blue OR green. Optional. formatParameter is the return format. Return the response in
-// particular formatxii without access to request headers for standard content-type negotiation (e.g
-// Orders?$format=json). Optional.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. filter
+// is oData filter. Optional. top is the number of items to return. Optional. skip is the number of items to skip
+// over before returning elements. Optional. expand is oData expansion. Expand related resources in line with the
+// retrieved resources, e.g. Categories/$expand=Products would expand Product data in line with each Category
+// entry. Optional. selectParameter is oData Select statement. Limits the properties on each entry to just those
+// requested, e.g. Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more
+// comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the
+// values sorted, e.g. Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true or false
+// to request a count of the matching resources included with the resources in the response, e.g.
+// Categories?$count=true. Optional. search is a free form search. A free-text search expression to match for
+// whether a particular entry should be included in the feed, e.g. Categories?$search=blue OR green. Optional.
+// formatParameter is the return format. Return the response in particular formatxii without access to request
+// headers for standard content-type negotiation (e.g Orders?$format=json). Optional.
 func (client Client) ListByResourceGroup(ctx context.Context, resourceGroupName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (result DataLakeAnalyticsAccountListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, filter, top, skip, expand, selectParameter, orderby, count, search, formatParameter)
@@ -1018,20 +1019,20 @@ func (client Client) ListByResourceGroupComplete(ctx context.Context, resourceGr
 // ListDataLakeStoreAccounts gets the first page of Data Lake Store accounts linked to the specified Data Lake
 // Analytics account. The response includes a link to the next page, if any.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account for which to list Data Lake Store accounts. filter is oData filter.
-// Optional. top is the number of items to return. Optional. skip is the number of items to skip over before returning
-// elements. Optional. expand is oData expansion. Expand related resources in line with the retrieved resources, e.g.
-// Categories/$expand=Products would expand Product data in line with each Category entry. Optional. selectParameter is
-// oData Select statement. Limits the properties on each entry to just those requested, e.g.
-// Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more comma-separated
-// expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g.
-// Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true or false to request a count of
-// the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional. search is
-// a free form search. A free-text search expression to match for whether a particular entry should be included in the
-// feed, e.g. Categories?$search=blue OR green. Optional. formatParameter is the desired return format. Return the
-// response in particular formatxii without access to request headers for standard content-type negotiation (e.g
-// Orders?$format=json). Optional.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
+// accountName is the name of the Data Lake Analytics account for which to list Data Lake Store accounts. filter is
+// oData filter. Optional. top is the number of items to return. Optional. skip is the number of items to skip over
+// before returning elements. Optional. expand is oData expansion. Expand related resources in line with the
+// retrieved resources, e.g. Categories/$expand=Products would expand Product data in line with each Category
+// entry. Optional. selectParameter is oData Select statement. Limits the properties on each entry to just those
+// requested, e.g. Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more
+// comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the
+// values sorted, e.g. Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true or false
+// to request a count of the matching resources included with the resources in the response, e.g.
+// Categories?$count=true. Optional. search is a free form search. A free-text search expression to match for
+// whether a particular entry should be included in the feed, e.g. Categories?$search=blue OR green. Optional.
+// formatParameter is the desired return format. Return the response in particular formatxii without access to
+// request headers for standard content-type negotiation (e.g Orders?$format=json). Optional.
 func (client Client) ListDataLakeStoreAccounts(ctx context.Context, resourceGroupName string, accountName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (result DataLakeAnalyticsAccountListDataLakeStoreResultPage, err error) {
 	result.fn = client.listDataLakeStoreAccountsNextResults
 	req, err := client.ListDataLakeStoreAccountsPreparer(ctx, resourceGroupName, accountName, filter, top, skip, expand, selectParameter, orderby, count, search, formatParameter)
@@ -1153,10 +1154,10 @@ func (client Client) ListDataLakeStoreAccountsComplete(ctx context.Context, reso
 // ListSasTokens gets the SAS token associated with the specified Data Lake Analytics and Azure Storage account and
 // container combination.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account from which an Azure Storage account's SAS token is being requested.
-// storageAccountName is the name of the Azure storage account for which the SAS token is being requested.
-// containerName is the name of the Azure storage container for which the SAS token is being requested.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
+// accountName is the name of the Data Lake Analytics account from which an Azure Storage account's SAS token is
+// being requested. storageAccountName is the name of the Azure storage account for which the SAS token is being
+// requested. containerName is the name of the Azure storage container for which the SAS token is being requested.
 func (client Client) ListSasTokens(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string, containerName string) (result ListSasTokensResultPage, err error) {
 	result.fn = client.listSasTokensNextResults
 	req, err := client.ListSasTokensPreparer(ctx, resourceGroupName, accountName, storageAccountName, containerName)
@@ -1253,20 +1254,20 @@ func (client Client) ListSasTokensComplete(ctx context.Context, resourceGroupNam
 // ListStorageAccounts gets the first page of Azure Storage accounts, if any, linked to the specified Data Lake
 // Analytics account. The response includes a link to the next page, if any.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account for which to list Azure Storage accounts. filter is the OData filter.
-// Optional. top is the number of items to return. Optional. skip is the number of items to skip over before returning
-// elements. Optional. expand is oData expansion. Expand related resources in line with the retrieved resources, e.g.
-// Categories/$expand=Products would expand Product data in line with each Category entry. Optional. selectParameter is
-// oData Select statement. Limits the properties on each entry to just those requested, e.g.
-// Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more comma-separated
-// expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g.
-// Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true or false to request a count of
-// the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional. search is
-// a free form search. A free-text search expression to match for whether a particular entry should be included in the
-// feed, e.g. Categories?$search=blue OR green. Optional. formatParameter is the desired return format. Return the
-// response in particular formatxii without access to request headers for standard content-type negotiation (e.g
-// Orders?$format=json). Optional.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
+// accountName is the name of the Data Lake Analytics account for which to list Azure Storage accounts. filter is
+// the OData filter. Optional. top is the number of items to return. Optional. skip is the number of items to skip
+// over before returning elements. Optional. expand is oData expansion. Expand related resources in line with the
+// retrieved resources, e.g. Categories/$expand=Products would expand Product data in line with each Category
+// entry. Optional. selectParameter is oData Select statement. Limits the properties on each entry to just those
+// requested, e.g. Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more
+// comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the
+// values sorted, e.g. Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true or false
+// to request a count of the matching resources included with the resources in the response, e.g.
+// Categories?$count=true. Optional. search is a free form search. A free-text search expression to match for
+// whether a particular entry should be included in the feed, e.g. Categories?$search=blue OR green. Optional.
+// formatParameter is the desired return format. Return the response in particular formatxii without access to
+// request headers for standard content-type negotiation (e.g Orders?$format=json). Optional.
 func (client Client) ListStorageAccounts(ctx context.Context, resourceGroupName string, accountName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (result DataLakeAnalyticsAccountListStorageAccountsResultPage, err error) {
 	result.fn = client.listStorageAccountsNextResults
 	req, err := client.ListStorageAccountsPreparer(ctx, resourceGroupName, accountName, filter, top, skip, expand, selectParameter, orderby, count, search, formatParameter)
@@ -1388,9 +1389,9 @@ func (client Client) ListStorageAccountsComplete(ctx context.Context, resourceGr
 // ListStorageContainers lists the Azure Storage containers, if any, associated with the specified Data Lake Analytics
 // and Azure Storage account combination. The response includes a link to the next page of results, if any.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account for which to list Azure Storage blob containers. storageAccountName
-// is the name of the Azure storage account from which to list blob containers.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
+// accountName is the name of the Data Lake Analytics account for which to list Azure Storage blob containers.
+// storageAccountName is the name of the Azure storage account from which to list blob containers.
 func (client Client) ListStorageContainers(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string) (result ListBlobContainersResultPage, err error) {
 	result.fn = client.listStorageContainersNextResults
 	req, err := client.ListStorageContainersPreparer(ctx, resourceGroupName, accountName, storageAccountName)
@@ -1486,10 +1487,10 @@ func (client Client) ListStorageContainersComplete(ctx context.Context, resource
 // Update updates the Data Lake Analytics account object specified by the accountName with the contents of the account
 // object.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. name is the
-// name of the Data Lake Analytics account to update. parameters is parameters supplied to the update Data Lake
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. name is
+// the name of the Data Lake Analytics account to update. parameters is parameters supplied to the update Data Lake
 // Analytics account operation.
-func (client Client) Update(ctx context.Context, resourceGroupName string, name string, parameters DataLakeAnalyticsAccount) (result AccountUpdateFuture, err error) {
+func (client Client) Update(ctx context.Context, resourceGroupName string, name string, parameters DataLakeAnalyticsAccount) (result UpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, name, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "account.Client", "Update", nil, "Failure preparing request")
@@ -1530,7 +1531,7 @@ func (client Client) UpdatePreparer(ctx context.Context, resourceGroupName strin
 
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) UpdateSender(req *http.Request) (future AccountUpdateFuture, err error) {
+func (client Client) UpdateSender(req *http.Request) (future UpdateFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -1559,10 +1560,10 @@ func (client Client) UpdateResponder(resp *http.Response) (result DataLakeAnalyt
 // UpdateStorageAccount updates the Data Lake Analytics account to replace Azure Storage blob account details, such as
 // the access key and/or suffix.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account to modify storage accounts in storageAccountName is the Azure Storage
-// account to modify parameters is the parameters containing the access key and suffix to update the storage account
-// with.
+// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account.
+// accountName is the name of the Data Lake Analytics account to modify storage accounts in storageAccountName is
+// the Azure Storage account to modify parameters is the parameters containing the access key and suffix to update
+// the storage account with.
 func (client Client) UpdateStorageAccount(ctx context.Context, resourceGroupName string, accountName string, storageAccountName string, parameters AddStorageAccountParameters) (result autorest.Response, err error) {
 	req, err := client.UpdateStorageAccountPreparer(ctx, resourceGroupName, accountName, storageAccountName, parameters)
 	if err != nil {

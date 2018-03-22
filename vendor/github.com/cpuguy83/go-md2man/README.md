@@ -12,7 +12,10 @@ Uses blackfriday to process markdown into man pages.
 
 ### How to contribute
 
-We use [govend](https://github.com/govend/govend) for vendoring Go packages.
+We use [dep](https://github.com/golang/dep/) for vendoring Go packages.
+See dep documentation for how to update.
 
-How to update dependencies: `govend -v -u --prune`
+### TODO
 
+- Needs oh so much testing love
+- Look into blackfriday's 2.0 API

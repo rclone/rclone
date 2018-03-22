@@ -4007,7 +4007,6 @@ func (c *DirectConnect) UpdateLagWithContext(ctx aws.Context, input *UpdateLagIn
 }
 
 // Container for the parameters to the AllocateConnectionOnInterconnect operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocateConnectionOnInterconnectRequest
 type AllocateConnectionOnInterconnectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4125,7 +4124,6 @@ func (s *AllocateConnectionOnInterconnectInput) SetVlan(v int64) *AllocateConnec
 }
 
 // Container for the parameters to theHostedConnection operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocateHostedConnectionRequest
 type AllocateHostedConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4243,7 +4241,6 @@ func (s *AllocateHostedConnectionInput) SetVlan(v int64) *AllocateHostedConnecti
 }
 
 // Container for the parameters to the AllocatePrivateVirtualInterface operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocatePrivateVirtualInterfaceRequest
 type AllocatePrivateVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4322,7 +4319,6 @@ func (s *AllocatePrivateVirtualInterfaceInput) SetOwnerAccount(v string) *Alloca
 }
 
 // Container for the parameters to the AllocatePublicVirtualInterface operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AllocatePublicVirtualInterfaceRequest
 type AllocatePublicVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4401,7 +4397,6 @@ func (s *AllocatePublicVirtualInterfaceInput) SetOwnerAccount(v string) *Allocat
 }
 
 // Container for the parameters to the AssociateConnectionWithLag operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateConnectionWithLagRequest
 type AssociateConnectionWithLagInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4463,7 +4458,6 @@ func (s *AssociateConnectionWithLagInput) SetLagId(v string) *AssociateConnectio
 }
 
 // Container for the parameters to the AssociateHostedConnection operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateHostedConnectionRequest
 type AssociateHostedConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4525,7 +4519,6 @@ func (s *AssociateHostedConnectionInput) SetParentConnectionId(v string) *Associ
 }
 
 // Container for the parameters to the AssociateVirtualInterface operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/AssociateVirtualInterfaceRequest
 type AssociateVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4587,7 +4580,6 @@ func (s *AssociateVirtualInterfaceInput) SetVirtualInterfaceId(v string) *Associ
 }
 
 // A structure containing information about a BGP peer.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/BGPPeer
 type BGPPeer struct {
 	_ struct{} `type:"structure"`
 
@@ -4695,7 +4687,6 @@ func (s *BGPPeer) SetCustomerAddress(v string) *BGPPeer {
 }
 
 // Container for the parameters to the ConfirmConnection operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmConnectionRequest
 type ConfirmConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4740,7 +4731,6 @@ func (s *ConfirmConnectionInput) SetConnectionId(v string) *ConfirmConnectionInp
 }
 
 // The response received when ConfirmConnection is called.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmConnectionResponse
 type ConfirmConnectionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4786,7 +4776,6 @@ func (s *ConfirmConnectionOutput) SetConnectionState(v string) *ConfirmConnectio
 }
 
 // Container for the parameters to the ConfirmPrivateVirtualInterface operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPrivateVirtualInterfaceRequest
 type ConfirmPrivateVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4859,7 +4848,6 @@ func (s *ConfirmPrivateVirtualInterfaceInput) SetVirtualInterfaceId(v string) *C
 }
 
 // The response received when ConfirmPrivateVirtualInterface is called.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPrivateVirtualInterfaceResponse
 type ConfirmPrivateVirtualInterfaceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4911,7 +4899,6 @@ func (s *ConfirmPrivateVirtualInterfaceOutput) SetVirtualInterfaceState(v string
 }
 
 // Container for the parameters to the ConfirmPublicVirtualInterface operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPublicVirtualInterfaceRequest
 type ConfirmPublicVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4955,7 +4942,6 @@ func (s *ConfirmPublicVirtualInterfaceInput) SetVirtualInterfaceId(v string) *Co
 }
 
 // The response received when ConfirmPublicVirtualInterface is called.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ConfirmPublicVirtualInterfaceResponse
 type ConfirmPublicVirtualInterfaceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5008,7 +4994,6 @@ func (s *ConfirmPublicVirtualInterfaceOutput) SetVirtualInterfaceState(v string)
 
 // A connection represents the physical network connection between the AWS Direct
 // Connect location and the customer.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Connection
 type Connection struct {
 	_ struct{} `type:"structure"`
 
@@ -5178,7 +5163,6 @@ func (s *Connection) SetVlan(v int64) *Connection {
 }
 
 // A structure containing a list of connections.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Connections
 type Connections struct {
 	_ struct{} `type:"structure"`
 
@@ -5203,7 +5187,6 @@ func (s *Connections) SetConnections(v []*Connection) *Connections {
 }
 
 // Container for the parameters to the CreateBGPPeer operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateBGPPeerRequest
 type CreateBGPPeerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5243,7 +5226,6 @@ func (s *CreateBGPPeerInput) SetVirtualInterfaceId(v string) *CreateBGPPeerInput
 }
 
 // The response received when CreateBGPPeer is called.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateBGPPeerResponse
 type CreateBGPPeerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5269,7 +5251,6 @@ func (s *CreateBGPPeerOutput) SetVirtualInterface(v *VirtualInterface) *CreateBG
 }
 
 // Container for the parameters to the CreateConnection operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateConnectionRequest
 type CreateConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5361,7 +5342,6 @@ func (s *CreateConnectionInput) SetLocation(v string) *CreateConnectionInput {
 
 // Container for the parameters to the CreateDirectConnectGatewayAssociation
 // operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateDirectConnectGatewayAssociationRequest
 type CreateDirectConnectGatewayAssociationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5424,7 +5404,6 @@ func (s *CreateDirectConnectGatewayAssociationInput) SetVirtualGatewayId(v strin
 
 // Container for the response from the CreateDirectConnectGatewayAssociation
 // API call
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateDirectConnectGatewayAssociationResult
 type CreateDirectConnectGatewayAssociationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5449,7 +5428,6 @@ func (s *CreateDirectConnectGatewayAssociationOutput) SetDirectConnectGatewayAss
 }
 
 // Container for the parameters to the CreateDirectConnectGateway operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateDirectConnectGatewayRequest
 type CreateDirectConnectGatewayInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5508,7 +5486,6 @@ func (s *CreateDirectConnectGatewayInput) SetDirectConnectGatewayName(v string) 
 }
 
 // Container for the response from the CreateDirectConnectGateway API call
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateDirectConnectGatewayResult
 type CreateDirectConnectGatewayOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5533,7 +5510,6 @@ func (s *CreateDirectConnectGatewayOutput) SetDirectConnectGateway(v *Gateway) *
 }
 
 // Container for the parameters to the CreateInterconnect operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateInterconnectRequest
 type CreateInterconnectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5626,7 +5602,6 @@ func (s *CreateInterconnectInput) SetLocation(v string) *CreateInterconnectInput
 }
 
 // Container for the parameters to the CreateLag operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreateLagRequest
 type CreateLagInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5734,7 +5709,6 @@ func (s *CreateLagInput) SetNumberOfConnections(v int64) *CreateLagInput {
 }
 
 // Container for the parameters to the CreatePrivateVirtualInterface operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreatePrivateVirtualInterfaceRequest
 type CreatePrivateVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5800,7 +5774,6 @@ func (s *CreatePrivateVirtualInterfaceInput) SetNewPrivateVirtualInterface(v *Ne
 }
 
 // Container for the parameters to the CreatePublicVirtualInterface operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/CreatePublicVirtualInterfaceRequest
 type CreatePublicVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5866,7 +5839,6 @@ func (s *CreatePublicVirtualInterfaceInput) SetNewPublicVirtualInterface(v *NewP
 }
 
 // Container for the parameters to the DeleteBGPPeer operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteBGPPeerRequest
 type DeleteBGPPeerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5917,7 +5889,6 @@ func (s *DeleteBGPPeerInput) SetVirtualInterfaceId(v string) *DeleteBGPPeerInput
 }
 
 // The response received when DeleteBGPPeer is called.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteBGPPeerResponse
 type DeleteBGPPeerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5943,7 +5914,6 @@ func (s *DeleteBGPPeerOutput) SetVirtualInterface(v *VirtualInterface) *DeleteBG
 }
 
 // Container for the parameters to the DeleteConnection operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteConnectionRequest
 type DeleteConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5989,7 +5959,6 @@ func (s *DeleteConnectionInput) SetConnectionId(v string) *DeleteConnectionInput
 
 // Container for the parameters to the DeleteDirectConnectGatewayAssociation
 // operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteDirectConnectGatewayAssociationRequest
 type DeleteDirectConnectGatewayAssociationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6052,7 +6021,6 @@ func (s *DeleteDirectConnectGatewayAssociationInput) SetVirtualGatewayId(v strin
 
 // Container for the response from the DeleteDirectConnectGatewayAssociation
 // API call
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteDirectConnectGatewayAssociationResult
 type DeleteDirectConnectGatewayAssociationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6077,7 +6045,6 @@ func (s *DeleteDirectConnectGatewayAssociationOutput) SetDirectConnectGatewayAss
 }
 
 // Container for the parameters to the DeleteDirectConnectGateway operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteDirectConnectGatewayRequest
 type DeleteDirectConnectGatewayInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6121,7 +6088,6 @@ func (s *DeleteDirectConnectGatewayInput) SetDirectConnectGatewayId(v string) *D
 }
 
 // Container for the response from the DeleteDirectConnectGateway API call
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteDirectConnectGatewayResult
 type DeleteDirectConnectGatewayOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6146,7 +6112,6 @@ func (s *DeleteDirectConnectGatewayOutput) SetDirectConnectGateway(v *Gateway) *
 }
 
 // Container for the parameters to the DeleteInterconnect operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteInterconnectRequest
 type DeleteInterconnectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6188,7 +6153,6 @@ func (s *DeleteInterconnectInput) SetInterconnectId(v string) *DeleteInterconnec
 }
 
 // The response received when DeleteInterconnect is called.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteInterconnectResponse
 type DeleteInterconnectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6228,7 +6192,6 @@ func (s *DeleteInterconnectOutput) SetInterconnectState(v string) *DeleteInterco
 }
 
 // Container for the parameters to the DeleteLag operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteLagRequest
 type DeleteLagInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6272,7 +6235,6 @@ func (s *DeleteLagInput) SetLagId(v string) *DeleteLagInput {
 }
 
 // Container for the parameters to the DeleteVirtualInterface operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteVirtualInterfaceRequest
 type DeleteVirtualInterfaceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6316,7 +6278,6 @@ func (s *DeleteVirtualInterfaceInput) SetVirtualInterfaceId(v string) *DeleteVir
 }
 
 // The response received when DeleteVirtualInterface is called.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DeleteVirtualInterfaceResponse
 type DeleteVirtualInterfaceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6368,7 +6329,6 @@ func (s *DeleteVirtualInterfaceOutput) SetVirtualInterfaceState(v string) *Delet
 }
 
 // Container for the parameters to the DescribeConnectionLoa operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionLoaRequest
 type DescribeConnectionLoaInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6438,7 +6398,6 @@ func (s *DescribeConnectionLoaInput) SetProviderName(v string) *DescribeConnecti
 }
 
 // The response received when DescribeConnectionLoa is called.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionLoaResponse
 type DescribeConnectionLoaOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6464,7 +6423,6 @@ func (s *DescribeConnectionLoaOutput) SetLoa(v *Loa) *DescribeConnectionLoaOutpu
 }
 
 // Container for the parameters to the DescribeConnections operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionsRequest
 type DescribeConnectionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6494,7 +6452,6 @@ func (s *DescribeConnectionsInput) SetConnectionId(v string) *DescribeConnection
 }
 
 // Container for the parameters to the DescribeConnectionsOnInterconnect operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeConnectionsOnInterconnectRequest
 type DescribeConnectionsOnInterconnectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6539,7 +6496,6 @@ func (s *DescribeConnectionsOnInterconnectInput) SetInterconnectId(v string) *De
 
 // Container for the parameters to the DescribeDirectConnectGatewayAssociations
 // operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewayAssociationsRequest
 type DescribeDirectConnectGatewayAssociationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6607,7 +6563,6 @@ func (s *DescribeDirectConnectGatewayAssociationsInput) SetVirtualGatewayId(v st
 
 // Container for the response from the DescribeDirectConnectGatewayAssociations
 // API call
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewayAssociationsResult
 type DescribeDirectConnectGatewayAssociationsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6642,7 +6597,6 @@ func (s *DescribeDirectConnectGatewayAssociationsOutput) SetNextToken(v string) 
 
 // Container for the parameters to the DescribeDirectConnectGatewayAttachments
 // operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewayAttachmentsRequest
 type DescribeDirectConnectGatewayAttachmentsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6710,7 +6664,6 @@ func (s *DescribeDirectConnectGatewayAttachmentsInput) SetVirtualInterfaceId(v s
 
 // Container for the response from the DescribeDirectConnectGatewayAttachments
 // API call
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewayAttachmentsResult
 type DescribeDirectConnectGatewayAttachmentsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6744,7 +6697,6 @@ func (s *DescribeDirectConnectGatewayAttachmentsOutput) SetNextToken(v string) *
 }
 
 // Container for the parameters to the DescribeDirectConnectGateways operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewaysRequest
 type DescribeDirectConnectGatewaysInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6798,7 +6750,6 @@ func (s *DescribeDirectConnectGatewaysInput) SetNextToken(v string) *DescribeDir
 }
 
 // Container for the response from the DescribeDirectConnectGateways API call
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeDirectConnectGatewaysResult
 type DescribeDirectConnectGatewaysOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6832,7 +6783,6 @@ func (s *DescribeDirectConnectGatewaysOutput) SetNextToken(v string) *DescribeDi
 }
 
 // Container for the parameters to the DescribeHostedConnections operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeHostedConnectionsRequest
 type DescribeHostedConnectionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6876,7 +6826,6 @@ func (s *DescribeHostedConnectionsInput) SetConnectionId(v string) *DescribeHost
 }
 
 // Container for the parameters to the DescribeInterconnectLoa operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnectLoaRequest
 type DescribeInterconnectLoaInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6943,7 +6892,6 @@ func (s *DescribeInterconnectLoaInput) SetProviderName(v string) *DescribeInterc
 }
 
 // The response received when DescribeInterconnectLoa is called.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnectLoaResponse
 type DescribeInterconnectLoaOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6969,7 +6917,6 @@ func (s *DescribeInterconnectLoaOutput) SetLoa(v *Loa) *DescribeInterconnectLoaO
 }
 
 // Container for the parameters to the DescribeInterconnects operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeInterconnectsRequest
 type DescribeInterconnectsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6996,7 +6943,6 @@ func (s *DescribeInterconnectsInput) SetInterconnectId(v string) *DescribeInterc
 }
 
 // A structure containing a list of interconnects.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Interconnects
 type DescribeInterconnectsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7021,7 +6967,6 @@ func (s *DescribeInterconnectsOutput) SetInterconnects(v []*Interconnect) *Descr
 }
 
 // Container for the parameters to the DescribeLags operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLagsRequest
 type DescribeLagsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7050,7 +6995,6 @@ func (s *DescribeLagsInput) SetLagId(v string) *DescribeLagsInput {
 }
 
 // A structure containing a list of LAGs.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Lags
 type DescribeLagsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7075,7 +7019,6 @@ func (s *DescribeLagsOutput) SetLags(v []*Lag) *DescribeLagsOutput {
 }
 
 // Container for the parameters to the DescribeLoa operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLoaRequest
 type DescribeLoaInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7144,7 +7087,6 @@ func (s *DescribeLoaInput) SetProviderName(v string) *DescribeLoaInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeLocationsInput
 type DescribeLocationsInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -7163,7 +7105,6 @@ func (s DescribeLocationsInput) GoString() string {
 // to be connected. Generally, these are colocation hubs where many network
 // providers have equipment, and where cross connects can be delivered. Locations
 // include a name and facility code, and must be provided when creating a connection.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Locations
 type DescribeLocationsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7189,7 +7130,6 @@ func (s *DescribeLocationsOutput) SetLocations(v []*Location) *DescribeLocations
 }
 
 // Container for the parameters to the DescribeTags operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeTagsRequest
 type DescribeTagsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7229,7 +7169,6 @@ func (s *DescribeTagsInput) SetResourceArns(v []*string) *DescribeTagsInput {
 }
 
 // The response received when DescribeTags is called.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeTagsResponse
 type DescribeTagsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7253,7 +7192,6 @@ func (s *DescribeTagsOutput) SetResourceTags(v []*ResourceTag) *DescribeTagsOutp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeVirtualGatewaysInput
 type DescribeVirtualGatewaysInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -7269,7 +7207,6 @@ func (s DescribeVirtualGatewaysInput) GoString() string {
 }
 
 // A structure containing a list of virtual private gateways.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/VirtualGateways
 type DescribeVirtualGatewaysOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7294,7 +7231,6 @@ func (s *DescribeVirtualGatewaysOutput) SetVirtualGateways(v []*VirtualGateway) 
 }
 
 // Container for the parameters to the DescribeVirtualInterfaces operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DescribeVirtualInterfacesRequest
 type DescribeVirtualInterfacesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7337,7 +7273,6 @@ func (s *DescribeVirtualInterfacesInput) SetVirtualInterfaceId(v string) *Descri
 }
 
 // A structure containing a list of virtual interfaces.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/VirtualInterfaces
 type DescribeVirtualInterfacesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7362,7 +7297,6 @@ func (s *DescribeVirtualInterfacesOutput) SetVirtualInterfaces(v []*VirtualInter
 }
 
 // Container for the parameters to the DisassociateConnectionFromLag operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DisassociateConnectionFromLagRequest
 type DisassociateConnectionFromLagInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7425,7 +7359,6 @@ func (s *DisassociateConnectionFromLagInput) SetLagId(v string) *DisassociateCon
 
 // A direct connect gateway is an intermediate object that enables you to connect
 // virtual interfaces and virtual private gateways.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DirectConnectGateway
 type Gateway struct {
 	_ struct{} `type:"structure"`
 
@@ -7509,7 +7442,6 @@ func (s *Gateway) SetStateChangeError(v string) *Gateway {
 }
 
 // The association between a direct connect gateway and virtual private gateway.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DirectConnectGatewayAssociation
 type GatewayAssociation struct {
 	_ struct{} `type:"structure"`
 
@@ -7597,7 +7529,6 @@ func (s *GatewayAssociation) SetVirtualGatewayRegion(v string) *GatewayAssociati
 }
 
 // The association between a direct connect gateway and virtual interface.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/DirectConnectGatewayAttachment
 type GatewayAttachment struct {
 	_ struct{} `type:"structure"`
 
@@ -7699,7 +7630,6 @@ func (s *GatewayAttachment) SetVirtualInterfaceRegion(v string) *GatewayAttachme
 // The resources of the interconnect, including bandwidth and VLAN numbers,
 // are shared by all of the hosted connections on the interconnect, and the
 // owner of the interconnect determines how these resources are assigned.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Interconnect
 type Interconnect struct {
 	_ struct{} `type:"structure"`
 
@@ -7833,7 +7763,6 @@ func (s *Interconnect) SetRegion(v string) *Interconnect {
 // of physical connections. Like an interconnect, it can host other connections.
 // All connections in a LAG must terminate on the same physical AWS Direct Connect
 // endpoint, and must be the same bandwidth.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Lag
 type Lag struct {
 	_ struct{} `type:"structure"`
 
@@ -7991,7 +7920,6 @@ func (s *Lag) SetRegion(v string) *Lag {
 
 // A structure containing the Letter of Authorization - Connecting Facility
 // Assignment (LOA-CFA) for a connection.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Loa
 type Loa struct {
 	_ struct{} `type:"structure"`
 
@@ -8031,7 +7959,6 @@ func (s *Loa) SetLoaContentType(v string) *Loa {
 
 // An AWS Direct Connect location where connections and interconnects can be
 // requested.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Location
 type Location struct {
 	_ struct{} `type:"structure"`
 
@@ -8066,7 +7993,6 @@ func (s *Location) SetLocationName(v string) *Location {
 }
 
 // A structure containing information about a new BGP peer.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewBGPPeer
 type NewBGPPeer struct {
 	_ struct{} `type:"structure"`
 
@@ -8139,7 +8065,6 @@ func (s *NewBGPPeer) SetCustomerAddress(v string) *NewBGPPeer {
 }
 
 // A structure containing information about a new private virtual interface.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewPrivateVirtualInterface
 type NewPrivateVirtualInterface struct {
 	_ struct{} `type:"structure"`
 
@@ -8283,7 +8208,6 @@ func (s *NewPrivateVirtualInterface) SetVlan(v int64) *NewPrivateVirtualInterfac
 
 // A structure containing information about a private virtual interface that
 // will be provisioned on a connection.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewPrivateVirtualInterfaceAllocation
 type NewPrivateVirtualInterfaceAllocation struct {
 	_ struct{} `type:"structure"`
 
@@ -8403,7 +8327,6 @@ func (s *NewPrivateVirtualInterfaceAllocation) SetVlan(v int64) *NewPrivateVirtu
 }
 
 // A structure containing information about a new public virtual interface.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewPublicVirtualInterface
 type NewPublicVirtualInterface struct {
 	_ struct{} `type:"structure"`
 
@@ -8534,7 +8457,6 @@ func (s *NewPublicVirtualInterface) SetVlan(v int64) *NewPublicVirtualInterface 
 
 // A structure containing information about a public virtual interface that
 // will be provisioned on a connection.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/NewPublicVirtualInterfaceAllocation
 type NewPublicVirtualInterfaceAllocation struct {
 	_ struct{} `type:"structure"`
 
@@ -8664,7 +8586,6 @@ func (s *NewPublicVirtualInterfaceAllocation) SetVlan(v int64) *NewPublicVirtual
 }
 
 // The tags associated with a Direct Connect resource.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/ResourceTag
 type ResourceTag struct {
 	_ struct{} `type:"structure"`
 
@@ -8699,7 +8620,6 @@ func (s *ResourceTag) SetTags(v []*Tag) *ResourceTag {
 
 // A route filter prefix that the customer can advertise through Border Gateway
 // Protocol (BGP) over a public virtual interface.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/RouteFilterPrefix
 type RouteFilterPrefix struct {
 	_ struct{} `type:"structure"`
 
@@ -8729,7 +8649,6 @@ func (s *RouteFilterPrefix) SetCidr(v string) *RouteFilterPrefix {
 }
 
 // Information about a tag.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/Tag
 type Tag struct {
 	_ struct{} `type:"structure"`
 
@@ -8781,7 +8700,6 @@ func (s *Tag) SetValue(v string) *Tag {
 }
 
 // Container for the parameters to the TagResource operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/TagResourceRequest
 type TagResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8850,7 +8768,6 @@ func (s *TagResourceInput) SetTags(v []*Tag) *TagResourceInput {
 }
 
 // The response received when TagResource is called.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/TagResourceResponse
 type TagResourceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -8866,7 +8783,6 @@ func (s TagResourceOutput) GoString() string {
 }
 
 // Container for the parameters to the UntagResource operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UntagResourceRequest
 type UntagResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8920,7 +8836,6 @@ func (s *UntagResourceInput) SetTagKeys(v []*string) *UntagResourceInput {
 }
 
 // The response received when UntagResource is called.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UntagResourceResponse
 type UntagResourceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -8936,7 +8851,6 @@ func (s UntagResourceOutput) GoString() string {
 }
 
 // Container for the parameters to the UpdateLag operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/UpdateLagRequest
 type UpdateLagInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9009,7 +8923,6 @@ func (s *UpdateLagInput) SetMinimumLinks(v int64) *UpdateLagInput {
 //
 // Virtual private gateways can be managed using the Amazon Virtual Private
 // Cloud (Amazon VPC) console or the Amazon EC2 CreateVpnGateway action (http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-query-CreateVpnGateway.html).
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/VirtualGateway
 type VirtualGateway struct {
 	_ struct{} `type:"structure"`
 
@@ -9056,7 +8969,6 @@ func (s *VirtualGateway) SetVirtualGatewayState(v string) *VirtualGateway {
 
 // A virtual interface (VLAN) transmits the traffic between the AWS Direct Connect
 // location and the customer.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/directconnect-2012-10-25/VirtualInterface
 type VirtualInterface struct {
 	_ struct{} `type:"structure"`
 

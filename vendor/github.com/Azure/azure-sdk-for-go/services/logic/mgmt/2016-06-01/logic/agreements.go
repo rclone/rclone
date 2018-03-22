@@ -42,8 +42,8 @@ func NewAgreementsClientWithBaseURI(baseURI string, subscriptionID string) Agree
 
 // CreateOrUpdate creates or updates an integration account agreement.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. agreementName
-// is the integration account agreement name. agreement is the integration account agreement.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
+// agreementName is the integration account agreement name. agreement is the integration account agreement.
 func (client AgreementsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, integrationAccountName string, agreementName string, agreement IntegrationAccountAgreement) (result IntegrationAccountAgreement, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: agreement,
@@ -477,7 +477,7 @@ func (client AgreementsClient) CreateOrUpdate(ctx context.Context, resourceGroup
 								}},
 						}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "logic.AgreementsClient", "CreateOrUpdate")
+		return result, validation.NewError("logic.AgreementsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, integrationAccountName, agreementName, agreement)
@@ -547,8 +547,8 @@ func (client AgreementsClient) CreateOrUpdateResponder(resp *http.Response) (res
 
 // Delete deletes an integration account agreement.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. agreementName
-// is the integration account agreement name.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
+// agreementName is the integration account agreement name.
 func (client AgreementsClient) Delete(ctx context.Context, resourceGroupName string, integrationAccountName string, agreementName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, integrationAccountName, agreementName)
 	if err != nil {
@@ -614,8 +614,8 @@ func (client AgreementsClient) DeleteResponder(resp *http.Response) (result auto
 
 // Get gets an integration account agreement.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. agreementName
-// is the integration account agreement name.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
+// agreementName is the integration account agreement name.
 func (client AgreementsClient) Get(ctx context.Context, resourceGroupName string, integrationAccountName string, agreementName string) (result IntegrationAccountAgreement, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, integrationAccountName, agreementName)
 	if err != nil {

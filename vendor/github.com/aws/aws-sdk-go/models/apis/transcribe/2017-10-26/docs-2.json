@@ -1,0 +1,184 @@
+{
+  "version": "2.0",
+  "service": "<p>Operations and objects for transcribing speech to text.</p>",
+  "operations": {
+    "GetTranscriptionJob": "<p>Returns information about a transcription job. To see the status of the job, check the <code>Status</code> field. If the status is <code>COMPLETE</code>, the job is finished and you can find the results at the location specified in the <code>TranscriptionFileUri</code> field.</p>",
+    "ListTranscriptionJobs": "<p>Lists transcription jobs with the specified status.</p>",
+    "StartTranscriptionJob": "<p>Starts an asynchronous job to transcribe speech to text.</p>"
+  },
+  "shapes": {
+    "BadRequestException": {
+      "base": "<p>There is a problem with one of the input fields. Check the S3 bucket name, make sure that the job name is not a duplicate, and confirm that you are using the correct file format. Then resend your request.</p>",
+      "refs": {
+      }
+    },
+    "ConflictException": {
+      "base": "<p>The <code>JobName</code> field is a duplicate of a previously entered job name. Resend your request with a different name.</p>",
+      "refs": {
+      }
+    },
+    "DateTime": {
+      "base": null,
+      "refs": {
+        "TranscriptionJob$CreationTime": "<p>Timestamp of the date and time that the job was created.</p>",
+        "TranscriptionJob$CompletionTime": "<p>Timestamp of the date and time that the job completed.</p>",
+        "TranscriptionJobSummary$CreationTime": "<p>Timestamp of the date and time that the job was created.</p>",
+        "TranscriptionJobSummary$CompletionTime": "<p>Timestamp of the date and time that the job completed.</p>"
+      }
+    },
+    "FailureReason": {
+      "base": null,
+      "refs": {
+        "BadRequestException$Message": null,
+        "TranscriptionJob$FailureReason": "<p>If the <code>TranscriptionJobStatus</code> field is <code>FAILED</code>, this field contains information about why the job failed.</p>",
+        "TranscriptionJobSummary$FailureReason": "<p>If the <code>TranscriptionJobStatus</code> field is <code>FAILED</code>, this field contains a description of the error.</p>"
+      }
+    },
+    "GetTranscriptionJobRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetTranscriptionJobResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "InternalFailureException": {
+      "base": "<p>There was an internal error. Check the error message and try your request again.</p>",
+      "refs": {
+      }
+    },
+    "LanguageCode": {
+      "base": null,
+      "refs": {
+        "StartTranscriptionJobRequest$LanguageCode": "<p>The language code for the language used in the input media file.</p>",
+        "TranscriptionJob$LanguageCode": "<p>The language code for the input speech.</p>",
+        "TranscriptionJobSummary$LanguageCode": "<p>The language code for the input speech.</p>"
+      }
+    },
+    "LimitExceededException": {
+      "base": "<p>Either you have sent too many requests or your input file is longer than 2 hours. Wait before you resend your request, or use a smaller file and resend the request.</p>",
+      "refs": {
+      }
+    },
+    "ListTranscriptionJobsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListTranscriptionJobsResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "MaxResults": {
+      "base": null,
+      "refs": {
+        "ListTranscriptionJobsRequest$MaxResults": "<p>The maximum number of jobs to return in the response.</p>"
+      }
+    },
+    "Media": {
+      "base": "<p>Describes the input media file in a transcription request.</p>",
+      "refs": {
+        "StartTranscriptionJobRequest$Media": "<p>An object that describes the input media for a transcription job.</p>",
+        "TranscriptionJob$Media": "<p>An object that describes the input media for a transcription job.</p>"
+      }
+    },
+    "MediaFormat": {
+      "base": null,
+      "refs": {
+        "StartTranscriptionJobRequest$MediaFormat": "<p>The format of the input media file.</p>",
+        "TranscriptionJob$MediaFormat": "<p>The format of the input media file.</p>"
+      }
+    },
+    "MediaSampleRateHertz": {
+      "base": null,
+      "refs": {
+        "StartTranscriptionJobRequest$MediaSampleRateHertz": "<p>The sample rate, in Hertz, of the audio track in the input media file. </p>",
+        "TranscriptionJob$MediaSampleRateHertz": "<p>The sample rate, in Hertz, of the audio track in the input media file. </p>"
+      }
+    },
+    "NextToken": {
+      "base": null,
+      "refs": {
+        "ListTranscriptionJobsRequest$NextToken": "<p>If the result of the previous request to <code>ListTranscriptionJobs</code> was truncated, include the <code>NextToken</code> to fetch the next set of jobs.</p>",
+        "ListTranscriptionJobsResponse$NextToken": "<p>The <code>ListTranscriptionJobs</code> operation returns a page of jobs at a time. The size of the page is set by the <code>MaxResults</code> parameter. If there are more jobs in the list than the page size, Amazon Transcribe returns the <code>NextPage</code> token. Include the token in the next request to the <code>ListTranscriptionJobs</code> operation to return in the next page of jobs.</p>"
+      }
+    },
+    "NotFoundException": {
+      "base": "<p>We can't find the requested job. Check the job name and try your request again.</p>",
+      "refs": {
+      }
+    },
+    "StartTranscriptionJobRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "StartTranscriptionJobResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "String": {
+      "base": null,
+      "refs": {
+        "ConflictException$Message": null,
+        "InternalFailureException$Message": null,
+        "LimitExceededException$Message": null,
+        "NotFoundException$Message": null
+      }
+    },
+    "Transcript": {
+      "base": "<p>Describes the output of a transcription job.</p>",
+      "refs": {
+        "TranscriptionJob$Transcript": "<p>An object that describes the output of the transcription job.</p>"
+      }
+    },
+    "TranscriptionJob": {
+      "base": "<p>Describes an asynchronous transcription job that was created with the <code>StartTranscriptionJob</code> operation.</p>",
+      "refs": {
+        "GetTranscriptionJobResponse$TranscriptionJob": "<p>An object that contains the results of the transcription job.</p>",
+        "StartTranscriptionJobResponse$TranscriptionJob": "<p>An object containing details of the asynchronous transcription job.</p>"
+      }
+    },
+    "TranscriptionJobName": {
+      "base": null,
+      "refs": {
+        "GetTranscriptionJobRequest$TranscriptionJobName": "<p>The name of the job.</p>",
+        "StartTranscriptionJobRequest$TranscriptionJobName": "<p>The name of the job. The name must be unique within an AWS account.</p>",
+        "TranscriptionJob$TranscriptionJobName": "<p>A name to identify the transcription job.</p>",
+        "TranscriptionJobSummary$TranscriptionJobName": "<p>The name assigned to the transcription job when it was created.</p>"
+      }
+    },
+    "TranscriptionJobStatus": {
+      "base": null,
+      "refs": {
+        "ListTranscriptionJobsRequest$Status": "<p>When specified, returns only transcription jobs with the specified status.</p>",
+        "ListTranscriptionJobsResponse$Status": "<p>The requested status of the jobs returned.</p>",
+        "TranscriptionJob$TranscriptionJobStatus": "<p>The identifier assigned to the job when it was created.</p>",
+        "TranscriptionJobSummary$TranscriptionJobStatus": "<p>The status of the transcription job. When the status is <code>COMPLETED</code>, use the <code>GetTranscriptionJob</code> operation to get the results of the transcription.</p>"
+      }
+    },
+    "TranscriptionJobSummaries": {
+      "base": null,
+      "refs": {
+        "ListTranscriptionJobsResponse$TranscriptionJobSummaries": "<p>A list of objects containing summary information for a transcription job.</p>"
+      }
+    },
+    "TranscriptionJobSummary": {
+      "base": "<p>Provides a summary of information about a transcription job.</p>",
+      "refs": {
+        "TranscriptionJobSummaries$member": null
+      }
+    },
+    "Uri": {
+      "base": null,
+      "refs": {
+        "Media$MediaFileUri": "<p>The S3 location of the input media file. The general form is:</p> <p> <code> https://&lt;aws-region&gt;.amazonaws.com/&lt;bucket-name&gt;/&lt;keyprefix&gt;/&lt;objectkey&gt; </code> </p> <p>For example:</p> <p> <code>https://s3-us-west-2.amazonaws.com/examplebucket/example.mp4</code> </p> <p> <code>https://s3-us-west-2.amazonaws.com/examplebucket/mediadocs/example.mp4</code> </p>",
+        "Transcript$TranscriptFileUri": "<p>The S3 location where the transcription result is stored. The general form of this Uri is:</p> <p> <code> https://&lt;aws-region&gt;.amazonaws.com/&lt;bucket-name&gt;/&lt;keyprefix&gt;/&lt;objectkey&gt; </code> </p> <p>For example:</p> <p> <code>https://s3-us-west-2.amazonaws.com/examplebucket/example.json</code> </p> <p> <code>https://s3-us-west-2.amazonaws.com/examplebucket/mediadocs/example.json</code> </p>"
+      }
+    }
+  }
+}

@@ -75,52 +75,52 @@ func TestClientMethods(t *testing.T) {
 		},
 		{
 			func() (interface{}, error) { return c.DetectFaces(ctx, img, ictx, 2) },
-			[]*pb.Feature{{pb.Feature_FACE_DETECTION, 2}},
+			[]*pb.Feature{{Type: pb.Feature_FACE_DETECTION, MaxResults: 2}},
 			batchResponse.Responses[0].FaceAnnotations,
 		},
 		{
 			func() (interface{}, error) { return c.DetectLandmarks(ctx, img, ictx, 2) },
-			[]*pb.Feature{{pb.Feature_LANDMARK_DETECTION, 2}},
+			[]*pb.Feature{{Type: pb.Feature_LANDMARK_DETECTION, MaxResults: 2}},
 			batchResponse.Responses[0].LandmarkAnnotations,
 		},
 		{
 			func() (interface{}, error) { return c.DetectLogos(ctx, img, ictx, 2) },
-			[]*pb.Feature{{pb.Feature_LOGO_DETECTION, 2}},
+			[]*pb.Feature{{Type: pb.Feature_LOGO_DETECTION, MaxResults: 2}},
 			batchResponse.Responses[0].LogoAnnotations,
 		},
 		{
 			func() (interface{}, error) { return c.DetectLabels(ctx, img, ictx, 2) },
-			[]*pb.Feature{{pb.Feature_LABEL_DETECTION, 2}},
+			[]*pb.Feature{{Type: pb.Feature_LABEL_DETECTION, MaxResults: 2}},
 			batchResponse.Responses[0].LabelAnnotations,
 		},
 		{
 			func() (interface{}, error) { return c.DetectTexts(ctx, img, ictx, 2) },
-			[]*pb.Feature{{pb.Feature_TEXT_DETECTION, 2}},
+			[]*pb.Feature{{Type: pb.Feature_TEXT_DETECTION, MaxResults: 2}},
 			batchResponse.Responses[0].TextAnnotations,
 		},
 		{
 			func() (interface{}, error) { return c.DetectDocumentText(ctx, img, ictx) },
-			[]*pb.Feature{{pb.Feature_DOCUMENT_TEXT_DETECTION, 0}},
+			[]*pb.Feature{{Type: pb.Feature_DOCUMENT_TEXT_DETECTION, MaxResults: 0}},
 			batchResponse.Responses[0].FullTextAnnotation,
 		},
 		{
 			func() (interface{}, error) { return c.DetectSafeSearch(ctx, img, ictx) },
-			[]*pb.Feature{{pb.Feature_SAFE_SEARCH_DETECTION, 0}},
+			[]*pb.Feature{{Type: pb.Feature_SAFE_SEARCH_DETECTION, MaxResults: 0}},
 			batchResponse.Responses[0].SafeSearchAnnotation,
 		},
 		{
 			func() (interface{}, error) { return c.DetectImageProperties(ctx, img, ictx) },
-			[]*pb.Feature{{pb.Feature_IMAGE_PROPERTIES, 0}},
+			[]*pb.Feature{{Type: pb.Feature_IMAGE_PROPERTIES, MaxResults: 0}},
 			batchResponse.Responses[0].ImagePropertiesAnnotation,
 		},
 		{
 			func() (interface{}, error) { return c.DetectWeb(ctx, img, ictx) },
-			[]*pb.Feature{{pb.Feature_WEB_DETECTION, 0}},
+			[]*pb.Feature{{Type: pb.Feature_WEB_DETECTION, MaxResults: 0}},
 			batchResponse.Responses[0].WebDetection,
 		},
 		{
 			func() (interface{}, error) { return c.CropHints(ctx, img, ictx) },
-			[]*pb.Feature{{pb.Feature_CROP_HINTS, 0}},
+			[]*pb.Feature{{Type: pb.Feature_CROP_HINTS, MaxResults: 0}},
 			batchResponse.Responses[0].CropHintsAnnotation,
 		},
 	} {

@@ -44,10 +44,10 @@ func NewActivityRunsClientWithBaseURI(baseURI string, subscriptionID string) Act
 
 // ListByPipelineRun list activity runs based on input filter conditions.
 //
-// resourceGroupName is the resource group name. factoryName is the factory name. runID is the pipeline run identifier.
-// startTime is the start time of activity runs in ISO8601 format. endTime is the end time of activity runs in ISO8601
-// format. status is the status of the pipeline run. activityName is the name of the activity. linkedServiceName is the
-// linked service name.
+// resourceGroupName is the resource group name. factoryName is the factory name. runID is the pipeline run
+// identifier. startTime is the start time of activity runs in ISO8601 format. endTime is the end time of activity
+// runs in ISO8601 format. status is the status of the pipeline run. activityName is the name of the activity.
+// linkedServiceName is the linked service name.
 func (client ActivityRunsClient) ListByPipelineRun(ctx context.Context, resourceGroupName string, factoryName string, runID string, startTime date.Time, endTime date.Time, status string, activityName string, linkedServiceName string) (result ActivityRunsListResponsePage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -62,7 +62,7 @@ func (client ActivityRunsClient) ListByPipelineRun(ctx context.Context, resource
 			Constraints: []validation.Constraint{{Target: "linkedServiceName", Name: validation.MaxLength, Rule: 260, Chain: nil},
 				{Target: "linkedServiceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "linkedServiceName", Name: validation.Pattern, Rule: `^[A-Za-z0-9_][^<>*#.%&:\\+?/]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.ActivityRunsClient", "ListByPipelineRun")
+		return result, validation.NewError("datafactory.ActivityRunsClient", "ListByPipelineRun", err.Error())
 	}
 
 	result.fn = client.listByPipelineRunNextResults

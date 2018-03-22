@@ -120,7 +120,7 @@ func (client WorkspaceCollectionsClient) Create(ctx context.Context, resourceGro
 				Chain: []validation.Constraint{{Target: "body.Sku.Name", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "body.Sku.Tier", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "powerbiembedded.WorkspaceCollectionsClient", "Create")
+		return result, validation.NewError("powerbiembedded.WorkspaceCollectionsClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, workspaceCollectionName, body)

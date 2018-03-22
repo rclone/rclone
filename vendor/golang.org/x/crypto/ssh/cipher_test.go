@@ -7,7 +7,6 @@ package ssh
 import (
 	"bytes"
 	"crypto"
-	"crypto/aes"
 	"crypto/rand"
 	"testing"
 )
@@ -15,7 +14,12 @@ import (
 func TestDefaultCiphersExist(t *testing.T) {
 	for _, cipherAlgo := range supportedCiphers {
 		if _, ok := cipherModes[cipherAlgo]; !ok {
-			t.Errorf("default cipher %q is unknown", cipherAlgo)
+			t.Errorf("supported cipher %q is unknown", cipherAlgo)
+		}
+	}
+	for _, cipherAlgo := range preferredCiphers {
+		if _, ok := cipherModes[cipherAlgo]; !ok {
+			t.Errorf("preferred cipher %q is unknown", cipherAlgo)
 		}
 	}
 }
@@ -67,9 +71,6 @@ func testPacketCipher(t *testing.T, cipher, mac string) {
 }
 
 func TestCBCOracleCounterMeasure(t *testing.T) {
-	cipherModes[aes128cbcID] = &streamCipherMode{16, aes.BlockSize, 0, nil}
-	defer delete(cipherModes, aes128cbcID)
-
 	kr := &kexResult{Hash: crypto.SHA1}
 	algs := directionAlgorithms{
 		Cipher:      aes128cbcID,

@@ -42,14 +42,15 @@ func NewCertificatesClientWithBaseURI(baseURI string, subscriptionID string) Cer
 
 // CreateOrUpdate adds new or replaces existing certificate.
 //
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the IoT
-// hub. certificateName is the name of the certificate certificateDescription is the certificate body. ifMatch is eTag
-// of the Certificate. Do not specify for creating a brand new certificate. Required to update an existing certificate.
+// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
+// IoT hub. certificateName is the name of the certificate certificateDescription is the certificate body. ifMatch
+// is eTag of the Certificate. Do not specify for creating a brand new certificate. Required to update an existing
+// certificate.
 func (client CertificatesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, resourceName string, certificateName string, certificateDescription CertificateBodyDescription, ifMatch string) (result CertificateDescription, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: certificateName,
 			Constraints: []validation.Constraint{{Target: "certificateName", Name: validation.Pattern, Rule: `^[A-Za-z0-9-._]{1,64}$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "devices.CertificatesClient", "CreateOrUpdate")
+		return result, validation.NewError("devices.CertificatesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, resourceName, certificateName, certificateDescription, ifMatch)
@@ -123,13 +124,13 @@ func (client CertificatesClient) CreateOrUpdateResponder(resp *http.Response) (r
 
 // Delete deletes an existing X509 certificate or does nothing if it does not exist.
 //
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the IoT
-// hub. certificateName is the name of the certificate ifMatch is eTag of the Certificate.
+// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
+// IoT hub. certificateName is the name of the certificate ifMatch is eTag of the Certificate.
 func (client CertificatesClient) Delete(ctx context.Context, resourceGroupName string, resourceName string, certificateName string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: certificateName,
 			Constraints: []validation.Constraint{{Target: "certificateName", Name: validation.Pattern, Rule: `^[A-Za-z0-9-._]{1,64}$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "devices.CertificatesClient", "Delete")
+		return result, validation.NewError("devices.CertificatesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, resourceName, certificateName, ifMatch)
@@ -198,13 +199,13 @@ func (client CertificatesClient) DeleteResponder(resp *http.Response) (result au
 // GenerateVerificationCode generates verification code for proof of possession flow. The verification code will be
 // used to generate a leaf certificate.
 //
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the IoT
-// hub. certificateName is the name of the certificate ifMatch is eTag of the Certificate.
+// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
+// IoT hub. certificateName is the name of the certificate ifMatch is eTag of the Certificate.
 func (client CertificatesClient) GenerateVerificationCode(ctx context.Context, resourceGroupName string, resourceName string, certificateName string, ifMatch string) (result CertificateWithNonceDescription, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: certificateName,
 			Constraints: []validation.Constraint{{Target: "certificateName", Name: validation.Pattern, Rule: `^[A-Za-z0-9-._]{1,64}$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "devices.CertificatesClient", "GenerateVerificationCode")
+		return result, validation.NewError("devices.CertificatesClient", "GenerateVerificationCode", err.Error())
 	}
 
 	req, err := client.GenerateVerificationCodePreparer(ctx, resourceGroupName, resourceName, certificateName, ifMatch)
@@ -273,13 +274,13 @@ func (client CertificatesClient) GenerateVerificationCodeResponder(resp *http.Re
 
 // Get returns the certificate.
 //
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the IoT
-// hub. certificateName is the name of the certificate
+// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
+// IoT hub. certificateName is the name of the certificate
 func (client CertificatesClient) Get(ctx context.Context, resourceGroupName string, resourceName string, certificateName string) (result CertificateDescription, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: certificateName,
 			Constraints: []validation.Constraint{{Target: "certificateName", Name: validation.Pattern, Rule: `^[A-Za-z0-9-._]{1,64}$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "devices.CertificatesClient", "Get")
+		return result, validation.NewError("devices.CertificatesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, resourceName, certificateName)
@@ -347,8 +348,8 @@ func (client CertificatesClient) GetResponder(resp *http.Response) (result Certi
 
 // ListByIotHub returns the list of certificates.
 //
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the IoT
-// hub.
+// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
+// IoT hub.
 func (client CertificatesClient) ListByIotHub(ctx context.Context, resourceGroupName string, resourceName string) (result CertificateListDescription, err error) {
 	req, err := client.ListByIotHubPreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
@@ -415,14 +416,14 @@ func (client CertificatesClient) ListByIotHubResponder(resp *http.Response) (res
 // Verify verifies the certificate's private key possession by providing the leaf cert issued by the verifying pre
 // uploaded certificate.
 //
-// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the IoT
-// hub. certificateName is the name of the certificate certificateVerificationBody is the name of the certificate
-// ifMatch is eTag of the Certificate.
+// resourceGroupName is the name of the resource group that contains the IoT hub. resourceName is the name of the
+// IoT hub. certificateName is the name of the certificate certificateVerificationBody is the name of the
+// certificate ifMatch is eTag of the Certificate.
 func (client CertificatesClient) Verify(ctx context.Context, resourceGroupName string, resourceName string, certificateName string, certificateVerificationBody CertificateVerificationDescription, ifMatch string) (result CertificateDescription, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: certificateName,
 			Constraints: []validation.Constraint{{Target: "certificateName", Name: validation.Pattern, Rule: `^[A-Za-z0-9-._]{1,64}$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "devices.CertificatesClient", "Verify")
+		return result, validation.NewError("devices.CertificatesClient", "Verify", err.Error())
 	}
 
 	req, err := client.VerifyPreparer(ctx, resourceGroupName, resourceName, certificateName, certificateVerificationBody, ifMatch)

@@ -241,8 +241,8 @@ func (client IntegrationAccountsClient) GetResponder(resp *http.Response) (resul
 
 // GetCallbackURL gets the integration account callback URL.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. parameters is
-// the callback URL parameters.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name. parameters
+// is the callback URL parameters.
 func (client IntegrationAccountsClient) GetCallbackURL(ctx context.Context, resourceGroupName string, integrationAccountName string, parameters GetCallbackURLParameters) (result CallbackURL, err error) {
 	req, err := client.GetCallbackURLPreparer(ctx, resourceGroupName, integrationAccountName, parameters)
 	if err != nil {

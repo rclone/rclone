@@ -1,4 +1,4 @@
-// Package dlp provides access to the DLP API.
+// Package dlp provides access to the Cloud DLP API.
 //
 // See https://cloud.google.com/dlp/docs/
 //
@@ -131,6 +131,7 @@ func NewProjectsService(s *Service) *ProjectsService {
 	rs.DlpJobs = NewProjectsDlpJobsService(s)
 	rs.Image = NewProjectsImageService(s)
 	rs.InspectTemplates = NewProjectsInspectTemplatesService(s)
+	rs.JobTriggers = NewProjectsJobTriggersService(s)
 	return rs
 }
 
@@ -148,6 +149,8 @@ type ProjectsService struct {
 	Image *ProjectsImageService
 
 	InspectTemplates *ProjectsInspectTemplatesService
+
+	JobTriggers *ProjectsJobTriggersService
 }
 
 func NewProjectsContentService(s *Service) *ProjectsContentService {
@@ -201,6 +204,15 @@ func NewProjectsInspectTemplatesService(s *Service) *ProjectsInspectTemplatesSer
 }
 
 type ProjectsInspectTemplatesService struct {
+	s *Service
+}
+
+func NewProjectsJobTriggersService(s *Service) *ProjectsJobTriggersService {
+	rs := &ProjectsJobTriggersService{s: s}
+	return rs
+}
+
+type ProjectsJobTriggersService struct {
 	s *Service
 }
 
@@ -2140,6 +2152,38 @@ func (s *GooglePrivacyDlpV2beta1WordList) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GooglePrivacyDlpV2beta2Action: A task to execute on the completion of
+// a job.
+type GooglePrivacyDlpV2beta2Action struct {
+	// PubSub: Publish a notification to a pubsub topic.
+	PubSub *GooglePrivacyDlpV2beta2PublishToPubSub `json:"pubSub,omitempty"`
+
+	// SaveFindings: Save resulting findings in a provided location.
+	SaveFindings *GooglePrivacyDlpV2beta2SaveFindings `json:"saveFindings,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "PubSub") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "PubSub") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2Action) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2Action
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GooglePrivacyDlpV2beta2AnalyzeDataSourceRiskDetails: Result of a risk
 // analysis operation request.
 type GooglePrivacyDlpV2beta2AnalyzeDataSourceRiskDetails struct {
@@ -2189,6 +2233,17 @@ func (s *GooglePrivacyDlpV2beta2AnalyzeDataSourceRiskDetails) MarshalJSON() ([]b
 type GooglePrivacyDlpV2beta2AnalyzeDataSourceRiskRequest struct {
 	// JobConfig: Configuration for this risk analysis job.
 	JobConfig *GooglePrivacyDlpV2beta2RiskAnalysisJobConfig `json:"jobConfig,omitempty"`
+
+	// JobId: Optional job ID to use for the created job. If not provided, a
+	// job ID will
+	// automatically be generated. Must be unique within the project. The
+	// job ID
+	// can contain uppercase and lowercase letters, numbers, and hyphens;
+	// that is,
+	// it must match the regular expression: `[a-zA-Z\\d-]+`. The maximum
+	// length
+	// is 100 characters. Can be empty to allow the system to generate one.
+	JobId string `json:"jobId,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "JobConfig") to
 	// unconditionally include in API requests. By default, fields with
@@ -2258,6 +2313,40 @@ type GooglePrivacyDlpV2beta2AuxiliaryTable struct {
 
 func (s *GooglePrivacyDlpV2beta2AuxiliaryTable) MarshalJSON() ([]byte, error) {
 	type NoMethod GooglePrivacyDlpV2beta2AuxiliaryTable
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta2BigQueryKey: Row key for identifying a record
+// in BigQuery table.
+type GooglePrivacyDlpV2beta2BigQueryKey struct {
+	// RowNumber: Absolute number of the row from the beginning of the table
+	// at the time
+	// of scanning.
+	RowNumber int64 `json:"rowNumber,omitempty,string"`
+
+	// TableReference: Complete BigQuery table reference.
+	TableReference *GooglePrivacyDlpV2beta2BigQueryTable `json:"tableReference,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "RowNumber") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "RowNumber") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2BigQueryKey) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2BigQueryKey
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2464,6 +2553,9 @@ func (s *GooglePrivacyDlpV2beta2CategoricalStatsConfig) MarshalJSON() ([]byte, e
 type GooglePrivacyDlpV2beta2CategoricalStatsHistogramBucket struct {
 	// BucketSize: Total number of values in this bucket.
 	BucketSize int64 `json:"bucketSize,omitempty,string"`
+
+	// BucketValueCount: Total number of distinct values in this bucket.
+	BucketValueCount int64 `json:"bucketValueCount,omitempty,string"`
 
 	// BucketValues: Sample of value frequencies in this bucket. The total
 	// number of
@@ -2676,22 +2768,28 @@ func (s *GooglePrivacyDlpV2beta2CloudStorageKey) MarshalJSON() ([]byte, error) {
 // or a set of files (path ending with *) within
 // a Google Cloud Storage bucket.
 type GooglePrivacyDlpV2beta2CloudStorageOptions struct {
+	// BytesLimitPerFile: Max number of bytes to scan from a file. If a
+	// scanned file's size is bigger
+	// than this value then the rest of the bytes are omitted.
+	BytesLimitPerFile int64 `json:"bytesLimitPerFile,omitempty,string"`
+
 	FileSet *GooglePrivacyDlpV2beta2FileSet `json:"fileSet,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "FileSet") to
-	// unconditionally include in API requests. By default, fields with
+	// ForceSendFields is a list of field names (e.g. "BytesLimitPerFile")
+	// to unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "FileSet") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "BytesLimitPerFile") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
@@ -2970,6 +3068,42 @@ func (s *GooglePrivacyDlpV2beta2CreateInspectTemplateRequest) MarshalJSON() ([]b
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GooglePrivacyDlpV2beta2CreateJobTriggerRequest: Request message for
+// CreateJobTrigger.
+type GooglePrivacyDlpV2beta2CreateJobTriggerRequest struct {
+	// JobTrigger: The JobTrigger to create.
+	JobTrigger *GooglePrivacyDlpV2beta2JobTrigger `json:"jobTrigger,omitempty"`
+
+	// TriggerId: The trigger id can contain uppercase and lowercase
+	// letters,
+	// numbers, and hyphens; that is, it must match the regular
+	// expression: `[a-zA-Z\\d-]+`. The maximum length is 100
+	// characters. Can be empty to allow the system to generate one.
+	TriggerId string `json:"triggerId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "JobTrigger") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "JobTrigger") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2CreateJobTriggerRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2CreateJobTriggerRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GooglePrivacyDlpV2beta2CryptoHashConfig: Pseudonymization method that
 // generates surrogates via cryptographic hashing.
 // Uses SHA-256.
@@ -3055,6 +3189,7 @@ func (s *GooglePrivacyDlpV2beta2CryptoKey) MarshalJSON() ([]byte, error) {
 // Identifiers must be at least two characters long.
 // In the case that the identifier is the empty string, it will be
 // skipped.
+// See [Pseudonymization](/dlp/docs/pseudonymization) for example usage.
 type GooglePrivacyDlpV2beta2CryptoReplaceFfxFpeConfig struct {
 	// Possible values:
 	//   "FFX_COMMON_NATIVE_ALPHABET_UNSPECIFIED"
@@ -3183,6 +3318,13 @@ func (s *GooglePrivacyDlpV2beta2CryptoReplaceFfxFpeConfig) MarshalJSON() ([]byte
 // provided by the user. Used to find domain-specific
 // sensitive information configurable to the data in question.
 type GooglePrivacyDlpV2beta2CustomInfoType struct {
+	// DetectionRules: Set of detection rules to apply to all findings of
+	// this custom info type.
+	// Rules are applied in order that they are specified. Not supported for
+	// the
+	// `surrogate_type` custom info type.
+	DetectionRules []*GooglePrivacyDlpV2beta2DetectionRule `json:"detectionRules,omitempty"`
+
 	// Dictionary: Dictionary-based custom info type.
 	Dictionary *GooglePrivacyDlpV2beta2Dictionary `json:"dictionary,omitempty"`
 
@@ -3192,10 +3334,29 @@ type GooglePrivacyDlpV2beta2CustomInfoType struct {
 	// types.
 	InfoType *GooglePrivacyDlpV2beta2InfoType `json:"infoType,omitempty"`
 
+	// Likelihood: Likelihood to return for this custom info type. This base
+	// value can be
+	// altered by a detection rule if the finding meets the criteria
+	// specified by
+	// the rule. Defaults to `VERY_LIKELY` if not specified.
+	//
+	// Possible values:
+	//   "LIKELIHOOD_UNSPECIFIED" - Default value; information with all
+	// likelihoods is included.
+	//   "VERY_UNLIKELY" - Few matching elements.
+	//   "UNLIKELY"
+	//   "POSSIBLE" - Some matching elements.
+	//   "LIKELY"
+	//   "VERY_LIKELY" - Many matching elements.
+	Likelihood string `json:"likelihood,omitempty"`
+
+	// Regex: Regex-based custom info type.
+	Regex *GooglePrivacyDlpV2beta2Regex `json:"regex,omitempty"`
+
 	// SurrogateType: Surrogate info type.
 	SurrogateType *GooglePrivacyDlpV2beta2SurrogateType `json:"surrogateType,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Dictionary") to
+	// ForceSendFields is a list of field names (e.g. "DetectionRules") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -3203,12 +3364,13 @@ type GooglePrivacyDlpV2beta2CustomInfoType struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Dictionary") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "DetectionRules") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
@@ -3277,6 +3439,106 @@ type GooglePrivacyDlpV2beta2DatastoreOptions struct {
 
 func (s *GooglePrivacyDlpV2beta2DatastoreOptions) MarshalJSON() ([]byte, error) {
 	type NoMethod GooglePrivacyDlpV2beta2DatastoreOptions
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta2DateShiftConfig: Shifts dates by random number
+// of days, with option to be consistent for the
+// same context.
+type GooglePrivacyDlpV2beta2DateShiftConfig struct {
+	// Context: Points to the field that contains the context, for example,
+	// an entity id.
+	// If set, must also set method. If set, shift will be consistent for
+	// the
+	// given context.
+	Context *GooglePrivacyDlpV2beta2FieldId `json:"context,omitempty"`
+
+	// CryptoKey: Causes the shift to be computed based on this key and the
+	// context. This
+	// results in the same shift for the same context and crypto_key.
+	CryptoKey *GooglePrivacyDlpV2beta2CryptoKey `json:"cryptoKey,omitempty"`
+
+	// LowerBoundDays: For example, -5 means shift date to at most 5 days
+	// back in the past.
+	// [Required]
+	LowerBoundDays int64 `json:"lowerBoundDays,omitempty"`
+
+	// UpperBoundDays: Range of shift in days. Actual shift will be selected
+	// at random within this
+	// range (inclusive ends). Negative means shift to earlier in time. Must
+	// not
+	// be more than 365250 days (1000 years) each direction.
+	//
+	// For example, 3 means shift date to at most 3 days into the
+	// future.
+	// [Required]
+	UpperBoundDays int64 `json:"upperBoundDays,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Context") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Context") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2DateShiftConfig) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2DateShiftConfig
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta2DateTime: Message for a date time object.
+type GooglePrivacyDlpV2beta2DateTime struct {
+	// Date: One or more of the following must be set. All fields are
+	// optional, but
+	// when set must be valid date or time values.
+	Date *GoogleTypeDate `json:"date,omitempty"`
+
+	// Possible values:
+	//   "DAY_OF_WEEK_UNSPECIFIED" - The unspecified day-of-week.
+	//   "MONDAY" - The day-of-week of Monday.
+	//   "TUESDAY" - The day-of-week of Tuesday.
+	//   "WEDNESDAY" - The day-of-week of Wednesday.
+	//   "THURSDAY" - The day-of-week of Thursday.
+	//   "FRIDAY" - The day-of-week of Friday.
+	//   "SATURDAY" - The day-of-week of Saturday.
+	//   "SUNDAY" - The day-of-week of Sunday.
+	DayOfWeek string `json:"dayOfWeek,omitempty"`
+
+	Time *GoogleTypeTimeOfDay `json:"time,omitempty"`
+
+	TimeZone *GooglePrivacyDlpV2beta2TimeZone `json:"timeZone,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Date") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Date") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2DateTime) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2DateTime
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3478,6 +3740,38 @@ func (s *GooglePrivacyDlpV2beta2DeidentifyTemplate) MarshalJSON() ([]byte, error
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GooglePrivacyDlpV2beta2DetectionRule: Rule for modifying a custom
+// info type to alter behavior under certain
+// circumstances, depending on the specific details of the rule. Not
+// supported
+// for the `surrogate_type` custom info type.
+type GooglePrivacyDlpV2beta2DetectionRule struct {
+	// HotwordRule: Hotword-based detection rule.
+	HotwordRule *GooglePrivacyDlpV2beta2HotwordRule `json:"hotwordRule,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "HotwordRule") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "HotwordRule") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2DetectionRule) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2DetectionRule
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GooglePrivacyDlpV2beta2Dictionary: Custom information type based on a
 // dictionary of words or phrases. This can
 // be used to match sensitive information specific to the data, such as
@@ -3552,6 +3846,11 @@ type GooglePrivacyDlpV2beta2DlpJob struct {
 
 	// InspectDetails: Results from inspecting a data source.
 	InspectDetails *GooglePrivacyDlpV2beta2InspectDataSourceDetails `json:"inspectDetails,omitempty"`
+
+	// JobTriggerName: If created by a job trigger, the resource name of the
+	// trigger that
+	// instantiated the job.
+	JobTriggerName string `json:"jobTriggerName,omitempty"`
 
 	// Name: The server-assigned name.
 	Name string `json:"name,omitempty"`
@@ -3641,6 +3940,37 @@ type GooglePrivacyDlpV2beta2EntityId struct {
 
 func (s *GooglePrivacyDlpV2beta2EntityId) MarshalJSON() ([]byte, error) {
 	type NoMethod GooglePrivacyDlpV2beta2EntityId
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta2Error: The results of an unsuccessful
+// activation of the JobTrigger.
+type GooglePrivacyDlpV2beta2Error struct {
+	Details *GoogleRpcStatus `json:"details,omitempty"`
+
+	// Timestamps: The times the error occurred.
+	Timestamps []string `json:"timestamps,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Details") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Details") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2Error) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2Error
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3822,8 +4152,18 @@ type GooglePrivacyDlpV2beta2Finding struct {
 	// Quote: The content that was found. Even if the content is not
 	// textual, it
 	// may be converted to a textual representation here.
-	// Provided if requested by the `InspectConfig`.
+	// Provided if requested by the `InspectConfig` and the finding is
+	// less than or equal to 4096 bytes long. If the finding exceeds 4096
+	// bytes
+	// in length, the quote may be omitted.
 	Quote string `json:"quote,omitempty"`
+
+	// QuoteInfo: Contains data parsed from quotes. Only populated if
+	// include_quote was set
+	// to true and a supported infoType was requested. Currently
+	// supported
+	// infoTypes: DATE, DATE_OF_BIRTH and TIME.
+	QuoteInfo *GooglePrivacyDlpV2beta2QuoteInfo `json:"quoteInfo,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CreateTime") to
 	// unconditionally include in API requests. By default, fields with
@@ -3855,10 +4195,16 @@ type GooglePrivacyDlpV2beta2FindingLimits struct {
 
 	// MaxFindingsPerItem: Max number of findings that will be returned for
 	// each item scanned.
+	// When set within `InspectDataSourceRequest`,
+	// the maximum returned is 1000 regardless if this is set higher.
+	// When set within `InspectContentRequest`, this field is ignored.
 	MaxFindingsPerItem int64 `json:"maxFindingsPerItem,omitempty"`
 
-	// MaxFindingsPerRequest: Max total number of findings that will be
-	// returned per request/job.
+	// MaxFindingsPerRequest: Max number of findings that will be returned
+	// per request/job.
+	// When set within `InspectContentRequest`, the maximum returned is
+	// 1000
+	// regardless if this is set higher.
 	MaxFindingsPerRequest int64 `json:"maxFindingsPerRequest,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g.
@@ -3969,6 +4315,56 @@ func (s *GooglePrivacyDlpV2beta2FixedSizeBucketingConfig) UnmarshalJSON(data []b
 	}
 	s.BucketSize = float64(s1.BucketSize)
 	return nil
+}
+
+// GooglePrivacyDlpV2beta2HotwordRule: Detection rule that adjusts the
+// likelihood of findings within a certain
+// proximity of hotwords.
+type GooglePrivacyDlpV2beta2HotwordRule struct {
+	// HotwordRegex: Regex pattern defining what qualifies as a hotword.
+	HotwordRegex *GooglePrivacyDlpV2beta2Regex `json:"hotwordRegex,omitempty"`
+
+	// LikelihoodAdjustment: Likelihood adjustment to apply to all matching
+	// findings.
+	LikelihoodAdjustment *GooglePrivacyDlpV2beta2LikelihoodAdjustment `json:"likelihoodAdjustment,omitempty"`
+
+	// Proximity: Proximity of the finding within which the entire hotword
+	// must reside.
+	// The total length of the window cannot exceed 1000 characters. Note
+	// that
+	// the finding itself will be included in the window, so that hotwords
+	// may
+	// be used to match substrings of the finding itself. For example,
+	// the
+	// certainty of a phone number regex "\(\d{3}\) \d{3}-\d{4}" could
+	// be
+	// adjusted upwards if the area code is known to be the local area code
+	// of
+	// a company office using the hotword regex "\(xxx\)", where "xxx"
+	// is the area code in question.
+	Proximity *GooglePrivacyDlpV2beta2Proximity `json:"proximity,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "HotwordRegex") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "HotwordRegex") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2HotwordRule) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2HotwordRule
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // GooglePrivacyDlpV2beta2ImageLocation: Bounding box encompassing
@@ -4450,6 +4846,17 @@ type GooglePrivacyDlpV2beta2InspectDataSourceRequest struct {
 	// JobConfig: A configuration for the job.
 	JobConfig *GooglePrivacyDlpV2beta2InspectJobConfig `json:"jobConfig,omitempty"`
 
+	// JobId: Optional job ID to use for the created job. If not provided, a
+	// job ID will
+	// automatically be generated. Must be unique within the project. The
+	// job ID
+	// can contain uppercase and lowercase letters, numbers, and hyphens;
+	// that is,
+	// it must match the regular expression: `[a-zA-Z\\d-]+`. The maximum
+	// length
+	// is 100 characters. Can be empty to allow the system to generate one.
+	JobId string `json:"jobId,omitempty"`
+
 	// ForceSendFields is a list of field names (e.g. "JobConfig") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
@@ -4474,6 +4881,11 @@ func (s *GooglePrivacyDlpV2beta2InspectDataSourceRequest) MarshalJSON() ([]byte,
 }
 
 type GooglePrivacyDlpV2beta2InspectJobConfig struct {
+	// Actions: Actions to execute at the completion of the job. Are
+	// executed in the order
+	// provided.
+	Actions []*GooglePrivacyDlpV2beta2Action `json:"actions,omitempty"`
+
 	// InspectConfig: How and what to scan for.
 	InspectConfig *GooglePrivacyDlpV2beta2InspectConfig `json:"inspectConfig,omitempty"`
 
@@ -4490,7 +4902,7 @@ type GooglePrivacyDlpV2beta2InspectJobConfig struct {
 	// StorageConfig: The data to scan.
 	StorageConfig *GooglePrivacyDlpV2beta2StorageConfig `json:"storageConfig,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "InspectConfig") to
+	// ForceSendFields is a list of field names (e.g. "Actions") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -4498,10 +4910,10 @@ type GooglePrivacyDlpV2beta2InspectJobConfig struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "InspectConfig") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
+	// NullFields is a list of field names (e.g. "Actions") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
 	// null. It is an error if a field in this list has a non-empty value.
 	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
@@ -4615,6 +5027,85 @@ func (s *GooglePrivacyDlpV2beta2InspectTemplate) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GooglePrivacyDlpV2beta2JobTrigger: Contains a configuration to make
+// dlp api calls on a repeating basis.
+type GooglePrivacyDlpV2beta2JobTrigger struct {
+	// CreateTime: The creation timestamp of a triggeredJob, output only
+	// field.
+	CreateTime string `json:"createTime,omitempty"`
+
+	// Description: User provided description (max 256 chars)
+	Description string `json:"description,omitempty"`
+
+	// DisplayName: Display name (max 100 chars)
+	DisplayName string `json:"displayName,omitempty"`
+
+	// Errors: A stream of errors encountered when the trigger was
+	// activated. Repeated
+	// errors may result in the JobTrigger automaticaly being paused.
+	// Will return the last 100 errors. Whenever the JobTrigger is
+	// modified
+	// this list will be cleared. Output only field.
+	Errors []*GooglePrivacyDlpV2beta2Error `json:"errors,omitempty"`
+
+	InspectJob *GooglePrivacyDlpV2beta2InspectJobConfig `json:"inspectJob,omitempty"`
+
+	// LastRunTime: The timestamp of the last time this trigger executed.
+	LastRunTime string `json:"lastRunTime,omitempty"`
+
+	// Name: Unique resource name for the triggeredJob, assigned by the
+	// service when the
+	// triggeredJob is created, for
+	// example
+	// `projects/dlp-test-project/triggeredJobs/53234423`.
+	Name string `json:"name,omitempty"`
+
+	// Status: A status for this trigger. [required]
+	//
+	// Possible values:
+	//   "STATUS_UNSPECIFIED"
+	//   "HEALTHY" - Trigger is healthy.
+	//   "PAUSED" - Trigger is temporarily paused.
+	//   "CANCELLED" - Trigger is cancelled and can not be resumed.
+	Status string `json:"status,omitempty"`
+
+	// Triggers: A list of triggers which will be OR'ed together. Only one
+	// in the list
+	// needs to trigger for a job to be started. The list may contain only
+	// a single Schedule trigger and must have at least one object.
+	Triggers []*GooglePrivacyDlpV2beta2Trigger `json:"triggers,omitempty"`
+
+	// UpdateTime: The last update timestamp of a triggeredJob, output only
+	// field.
+	UpdateTime string `json:"updateTime,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "CreateTime") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CreateTime") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2JobTrigger) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2JobTrigger
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GooglePrivacyDlpV2beta2KAnonymityConfig: k-anonymity metric, used for
 // analysis of reidentification risk.
 type GooglePrivacyDlpV2beta2KAnonymityConfig struct {
@@ -4716,6 +5207,10 @@ func (s *GooglePrivacyDlpV2beta2KAnonymityEquivalenceClass) MarshalJSON() ([]byt
 type GooglePrivacyDlpV2beta2KAnonymityHistogramBucket struct {
 	// BucketSize: Total number of equivalence classes in this bucket.
 	BucketSize int64 `json:"bucketSize,omitempty,string"`
+
+	// BucketValueCount: Total number of distinct equivalence classes in
+	// this bucket.
+	BucketValueCount int64 `json:"bucketValueCount,omitempty,string"`
 
 	// BucketValues: Sample of equivalence classes in this bucket. The total
 	// number of
@@ -4855,6 +5350,10 @@ func (s *GooglePrivacyDlpV2beta2KMapEstimationConfig) MarshalJSON() ([]byte, err
 type GooglePrivacyDlpV2beta2KMapEstimationHistogramBucket struct {
 	// BucketSize: Number of records within these anonymity bounds.
 	BucketSize int64 `json:"bucketSize,omitempty,string"`
+
+	// BucketValueCount: Total number of distinct quasi-identifier tuple
+	// values in this bucket.
+	BucketValueCount int64 `json:"bucketValueCount,omitempty,string"`
 
 	// BucketValues: Sample of quasi-identifier tuple values in this bucket.
 	// The total
@@ -5168,6 +5667,10 @@ type GooglePrivacyDlpV2beta2LDiversityHistogramBucket struct {
 	// BucketSize: Total number of equivalence classes in this bucket.
 	BucketSize int64 `json:"bucketSize,omitempty,string"`
 
+	// BucketValueCount: Total number of distinct equivalence classes in
+	// this bucket.
+	BucketValueCount int64 `json:"bucketValueCount,omitempty,string"`
+
 	// BucketValues: Sample of equivalence classes in this bucket. The total
 	// number of
 	// classes returned per bucket is capped at 20.
@@ -5234,6 +5737,63 @@ type GooglePrivacyDlpV2beta2LDiversityResult struct {
 
 func (s *GooglePrivacyDlpV2beta2LDiversityResult) MarshalJSON() ([]byte, error) {
 	type NoMethod GooglePrivacyDlpV2beta2LDiversityResult
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta2LikelihoodAdjustment: Message for specifying
+// an adjustment to the likelihood of a finding as
+// part of a detection rule.
+type GooglePrivacyDlpV2beta2LikelihoodAdjustment struct {
+	// FixedLikelihood: Set the likelihood of a finding to a fixed value.
+	//
+	// Possible values:
+	//   "LIKELIHOOD_UNSPECIFIED" - Default value; information with all
+	// likelihoods is included.
+	//   "VERY_UNLIKELY" - Few matching elements.
+	//   "UNLIKELY"
+	//   "POSSIBLE" - Some matching elements.
+	//   "LIKELY"
+	//   "VERY_LIKELY" - Many matching elements.
+	FixedLikelihood string `json:"fixedLikelihood,omitempty"`
+
+	// RelativeLikelihood: Increase or decrease the likelihood by the
+	// specified number of
+	// levels. For example, if a finding would be `POSSIBLE` without
+	// the
+	// detection rule and `relative_likelihood` is 1, then it is upgraded
+	// to
+	// `LIKELY`, while a value of -1 would downgrade it to
+	// `UNLIKELY`.
+	// Likelihood may never drop below `VERY_UNLIKELY` or
+	// exceed
+	// `VERY_LIKELY`, so applying an adjustment of 1 followed by
+	// an
+	// adjustment of -1 when base likelihood is `VERY_LIKELY` will result
+	// in
+	// a final likelihood of `LIKELY`.
+	RelativeLikelihood int64 `json:"relativeLikelihood,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "FixedLikelihood") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "FixedLikelihood") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2LikelihoodAdjustment) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2LikelihoodAdjustment
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -5389,6 +5949,45 @@ func (s *GooglePrivacyDlpV2beta2ListInspectTemplatesResponse) MarshalJSON() ([]b
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GooglePrivacyDlpV2beta2ListJobTriggersResponse: Response message for
+// ListJobTriggers.
+type GooglePrivacyDlpV2beta2ListJobTriggersResponse struct {
+	// JobTriggers: List of triggeredJobs, up to page_size in
+	// ListJobTriggersRequest.
+	JobTriggers []*GooglePrivacyDlpV2beta2JobTrigger `json:"jobTriggers,omitempty"`
+
+	// NextPageToken: If the next page is available then the next page token
+	// to be used
+	// in following ListJobTriggers request.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "JobTriggers") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "JobTriggers") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2ListJobTriggersResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2ListJobTriggersResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GooglePrivacyDlpV2beta2Location: Specifies the location of the
 // finding.
 type GooglePrivacyDlpV2beta2Location struct {
@@ -5524,16 +6123,46 @@ func (s *GooglePrivacyDlpV2beta2NumericalStatsResult) MarshalJSON() ([]byte, err
 // GooglePrivacyDlpV2beta2OutputStorageConfig: Cloud repository for
 // storing output.
 type GooglePrivacyDlpV2beta2OutputStorageConfig struct {
-	// Table: Store findings in a new table in an existing dataset. If
-	// table_id is not
-	// set a new one will be generated for you with the following
+	// OutputSchema: Schema used for writing the findings. Columns are
+	// derived from the
+	// `Finding` object. If appending to an existing table, any columns from
+	// the
+	// predefined schema that are missing will be added. No columns in
+	// the
+	// existing table will be deleted.
+	//
+	// If unspecified, then all available columns will be used for a new
+	// table,
+	// and no changes will be made to an existing table.
+	//
+	// Possible values:
+	//   "OUTPUT_SCHEMA_UNSPECIFIED"
+	//   "BASIC_COLUMNS" - Basic schema including only `info_type`, `quote`,
+	// `certainty`, and
+	// `timestamp`.
+	//   "GCS_COLUMNS" - Schema tailored to findings from scanning Google
+	// Cloud Storage.
+	//   "DATASTORE_COLUMNS" - Schema tailored to findings from scanning
+	// Google Datastore.
+	//   "BIG_QUERY_COLUMNS" - Schema tailored to findings from scanning
+	// Google BigQuery.
+	//   "ALL_COLUMNS" - Schema containing all columns.
+	OutputSchema string `json:"outputSchema,omitempty"`
+
+	// Table: Store findings in an existing table or a new table in an
+	// existing
+	// dataset. Each column in an existing table must have the same name,
+	// type,
+	// and mode of a field in the `Finding` object. If table_id is not set a
+	// new
+	// one will be generated for you with the following
 	// format:
 	// dlp_googleapis_yyyy_mm_dd_[dlp_job_id]. Pacific timezone will be used
 	// for
 	// generating the date details.
 	Table *GooglePrivacyDlpV2beta2BigQueryTable `json:"table,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Table") to
+	// ForceSendFields is a list of field names (e.g. "OutputSchema") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -5541,10 +6170,10 @@ type GooglePrivacyDlpV2beta2OutputStorageConfig struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Table") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
+	// NullFields is a list of field names (e.g. "OutputSchema") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
 	// null. It is an error if a field in this list has a non-empty value.
 	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
@@ -5653,6 +6282,8 @@ type GooglePrivacyDlpV2beta2PrimitiveTransformation struct {
 
 	CryptoReplaceFfxFpeConfig *GooglePrivacyDlpV2beta2CryptoReplaceFfxFpeConfig `json:"cryptoReplaceFfxFpeConfig,omitempty"`
 
+	DateShiftConfig *GooglePrivacyDlpV2beta2DateShiftConfig `json:"dateShiftConfig,omitempty"`
+
 	FixedSizeBucketingConfig *GooglePrivacyDlpV2beta2FixedSizeBucketingConfig `json:"fixedSizeBucketingConfig,omitempty"`
 
 	RedactConfig *GooglePrivacyDlpV2beta2RedactConfig `json:"redactConfig,omitempty"`
@@ -5725,6 +6356,73 @@ func (s *GooglePrivacyDlpV2beta2PrivacyMetric) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GooglePrivacyDlpV2beta2Proximity: Message for specifying a window
+// around a finding to apply a detection
+// rule.
+type GooglePrivacyDlpV2beta2Proximity struct {
+	// WindowAfter: Number of characters after the finding to consider.
+	WindowAfter int64 `json:"windowAfter,omitempty"`
+
+	// WindowBefore: Number of characters before the finding to consider.
+	WindowBefore int64 `json:"windowBefore,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "WindowAfter") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "WindowAfter") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2Proximity) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2Proximity
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta2PublishToPubSub: Publish the results of a
+// DlpJob to a pub sub channel.
+// Compatible with: Inpect, Risk
+type GooglePrivacyDlpV2beta2PublishToPubSub struct {
+	// Topic: Cloud Pub/Sub topic to send notifications to. The topic must
+	// have given
+	// publishing access rights to the DLP API service account executing
+	// the long running DlpJob sending the notifications.
+	// Format is projects/{project}/topics/{topic}.
+	Topic string `json:"topic,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Topic") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Topic") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2PublishToPubSub) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2PublishToPubSub
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GooglePrivacyDlpV2beta2QuasiIdField: A quasi-identifier column has a
 // custom_tag, used to know which column
 // in the data corresponds to which column in the statistical model.
@@ -5752,6 +6450,34 @@ type GooglePrivacyDlpV2beta2QuasiIdField struct {
 
 func (s *GooglePrivacyDlpV2beta2QuasiIdField) MarshalJSON() ([]byte, error) {
 	type NoMethod GooglePrivacyDlpV2beta2QuasiIdField
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta2QuoteInfo: Message for infoType-dependent
+// details parsed from quote.
+type GooglePrivacyDlpV2beta2QuoteInfo struct {
+	DateTime *GooglePrivacyDlpV2beta2DateTime `json:"dateTime,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "DateTime") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DateTime") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2QuoteInfo) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2QuoteInfo
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -5820,11 +6546,13 @@ func (s *GooglePrivacyDlpV2beta2RecordCondition) MarshalJSON() ([]byte, error) {
 // GooglePrivacyDlpV2beta2RecordKey: Message for a unique key indicating
 // a record that contains a finding.
 type GooglePrivacyDlpV2beta2RecordKey struct {
+	BigQueryKey *GooglePrivacyDlpV2beta2BigQueryKey `json:"bigQueryKey,omitempty"`
+
 	CloudStorageKey *GooglePrivacyDlpV2beta2CloudStorageKey `json:"cloudStorageKey,omitempty"`
 
 	DatastoreKey *GooglePrivacyDlpV2beta2DatastoreKey `json:"datastoreKey,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "CloudStorageKey") to
+	// ForceSendFields is a list of field names (e.g. "BigQueryKey") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -5832,13 +6560,12 @@ type GooglePrivacyDlpV2beta2RecordKey struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "CloudStorageKey") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
+	// NullFields is a list of field names (e.g. "BigQueryKey") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
 }
 
@@ -6005,6 +6732,35 @@ type GooglePrivacyDlpV2beta2RedactImageResponse struct {
 
 func (s *GooglePrivacyDlpV2beta2RedactImageResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod GooglePrivacyDlpV2beta2RedactImageResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta2Regex: Message defining a custom regular
+// expression.
+type GooglePrivacyDlpV2beta2Regex struct {
+	// Pattern: Pattern defining the regular expression.
+	Pattern string `json:"pattern,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Pattern") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Pattern") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2Regex) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2Regex
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -6220,13 +6976,18 @@ func (s *GooglePrivacyDlpV2beta2Result) MarshalJSON() ([]byte, error) {
 // GooglePrivacyDlpV2beta2RiskAnalysisJobConfig: Configuration for a
 // risk analysis job.
 type GooglePrivacyDlpV2beta2RiskAnalysisJobConfig struct {
+	// Actions: Actions to execute at the completion of the job. Are
+	// executed in the order
+	// provided.
+	Actions []*GooglePrivacyDlpV2beta2Action `json:"actions,omitempty"`
+
 	// PrivacyMetric: Privacy metric to compute.
 	PrivacyMetric *GooglePrivacyDlpV2beta2PrivacyMetric `json:"privacyMetric,omitempty"`
 
 	// SourceTable: Input dataset to compute metrics over.
 	SourceTable *GooglePrivacyDlpV2beta2BigQueryTable `json:"sourceTable,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "PrivacyMetric") to
+	// ForceSendFields is a list of field names (e.g. "Actions") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -6234,10 +6995,10 @@ type GooglePrivacyDlpV2beta2RiskAnalysisJobConfig struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "PrivacyMetric") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
+	// NullFields is a list of field names (e.g. "Actions") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
 	// null. It is an error if a field in this list has a non-empty value.
 	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
@@ -6275,6 +7036,73 @@ func (s *GooglePrivacyDlpV2beta2Row) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GooglePrivacyDlpV2beta2SaveFindings: If set, the detailed findings
+// will be persisted to the specified
+// OutputStorageConfig. Compatible with: Inspect
+type GooglePrivacyDlpV2beta2SaveFindings struct {
+	OutputConfig *GooglePrivacyDlpV2beta2OutputStorageConfig `json:"outputConfig,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "OutputConfig") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "OutputConfig") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2SaveFindings) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2SaveFindings
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta2Schedule: Schedule for triggeredJobs.
+type GooglePrivacyDlpV2beta2Schedule struct {
+	// ReccurrencePeriodDuration: With this option a job is started a
+	// regular periodic basis. For
+	// example: every 10 minutes.
+	//
+	// A scheduled start time will be skipped if the previous
+	// execution has not ended when its scheduled time occurs.
+	//
+	// This value must be set to a time duration greater than or equal
+	// to 60 minutes and can be no longer than 60 days.
+	ReccurrencePeriodDuration string `json:"reccurrencePeriodDuration,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "ReccurrencePeriodDuration") to unconditionally include in API
+	// requests. By default, fields with empty values are omitted from API
+	// requests. However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g.
+	// "ReccurrencePeriodDuration") to include in API requests with the JSON
+	// null value. By default, fields with empty values are omitted from API
+	// requests. However, any field with an empty value appearing in
+	// NullFields will be sent to the server as null. It is an error if a
+	// field in this list has a non-empty value. This may be used to include
+	// null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2Schedule) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2Schedule
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GooglePrivacyDlpV2beta2StorageConfig: Shared message indicating Cloud
 // storage type.
 type GooglePrivacyDlpV2beta2StorageConfig struct {
@@ -6286,6 +7114,8 @@ type GooglePrivacyDlpV2beta2StorageConfig struct {
 
 	// DatastoreOptions: Google Cloud Datastore options specification.
 	DatastoreOptions *GooglePrivacyDlpV2beta2DatastoreOptions `json:"datastoreOptions,omitempty"`
+
+	TimespanConfig *GooglePrivacyDlpV2beta2TimespanConfig `json:"timespanConfig,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "BigQueryOptions") to
 	// unconditionally include in API requests. By default, fields with
@@ -6451,6 +7281,9 @@ type GooglePrivacyDlpV2beta2TaggedField struct {
 	// dataset as a statistical model of population, if available.
 	// We
 	// currently support US ZIP codes, region codes, ages and genders.
+	// To programmatically obtain the list of supported InfoTypes,
+	// use
+	// ListInfoTypes with the supported_by=RISK_ANALYSIS filter.
 	InfoType *GooglePrivacyDlpV2beta2InfoType `json:"infoType,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CustomTag") to
@@ -6509,6 +7342,81 @@ type GooglePrivacyDlpV2beta2TimePartConfig struct {
 
 func (s *GooglePrivacyDlpV2beta2TimePartConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod GooglePrivacyDlpV2beta2TimePartConfig
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type GooglePrivacyDlpV2beta2TimeZone struct {
+	// OffsetMinutes: Set only if the offset can be determined. Positive for
+	// time ahead of UTC.
+	// E.g. For "UTC-9", this value is -540.
+	OffsetMinutes int64 `json:"offsetMinutes,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "OffsetMinutes") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "OffsetMinutes") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2TimeZone) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2TimeZone
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GooglePrivacyDlpV2beta2TimespanConfig: Configuration of the timespan
+// of the items to include in scanning.
+// Currently only supported when inspecting Google Cloud Storage and
+// BigQuery.
+type GooglePrivacyDlpV2beta2TimespanConfig struct {
+	// EnableAutoPopulationOfTimespanConfig: When the job is started by a
+	// JobTrigger we will automatically figure out
+	// a valid start_time to avoid scanning files that have not been
+	// modified
+	// since the last time the JobTrigger executed. This will be based on
+	// the
+	// time of the execution of the last run of the JobTrigger.
+	EnableAutoPopulationOfTimespanConfig bool `json:"enableAutoPopulationOfTimespanConfig,omitempty"`
+
+	// EndTime: Exclude files newer than this value.
+	// If set to zero, no upper time limit is applied.
+	EndTime string `json:"endTime,omitempty"`
+
+	// StartTime: Exclude files older than this value.
+	StartTime string `json:"startTime,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "EnableAutoPopulationOfTimespanConfig") to unconditionally include in
+	// API requests. By default, fields with empty values are omitted from
+	// API requests. However, any non-pointer, non-interface field appearing
+	// in ForceSendFields will be sent to the server regardless of whether
+	// the field is empty or not. This may be used to include empty fields
+	// in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g.
+	// "EnableAutoPopulationOfTimespanConfig") to include in API requests
+	// with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. However, any field with an empty value
+	// appearing in NullFields will be sent to the server as null. It is an
+	// error if a field in this list has a non-empty value. This may be used
+	// to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2TimespanConfig) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2TimespanConfig
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -6640,6 +7548,36 @@ func (s *GooglePrivacyDlpV2beta2TransientCryptoKey) MarshalJSON() ([]byte, error
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GooglePrivacyDlpV2beta2Trigger: What event needs to occur for a new
+// job to be started.
+type GooglePrivacyDlpV2beta2Trigger struct {
+	// Schedule: Create a job on a repeating basis based on the elapse of
+	// time.
+	Schedule *GooglePrivacyDlpV2beta2Schedule `json:"schedule,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Schedule") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Schedule") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2Trigger) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2Trigger
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GooglePrivacyDlpV2beta2UnwrappedCryptoKey: Using raw keys is prone to
 // security risks due to accidentally
 // leaking the key. Choose another type of key if possible.
@@ -6736,6 +7674,38 @@ func (s *GooglePrivacyDlpV2beta2UpdateInspectTemplateRequest) MarshalJSON() ([]b
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GooglePrivacyDlpV2beta2UpdateJobTriggerRequest: Request message for
+// UpdateJobTrigger.
+type GooglePrivacyDlpV2beta2UpdateJobTriggerRequest struct {
+	// JobTrigger: New JobTrigger value.
+	JobTrigger *GooglePrivacyDlpV2beta2JobTrigger `json:"jobTrigger,omitempty"`
+
+	// UpdateMask: Mask to control which fields get updated.
+	UpdateMask string `json:"updateMask,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "JobTrigger") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "JobTrigger") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GooglePrivacyDlpV2beta2UpdateJobTriggerRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod GooglePrivacyDlpV2beta2UpdateJobTriggerRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GooglePrivacyDlpV2beta2Value: Set of primitive values supported by
 // the system.
 // Note that for the purposes of inspection or transformation, the
@@ -6751,6 +7721,17 @@ type GooglePrivacyDlpV2beta2Value struct {
 	BooleanValue bool `json:"booleanValue,omitempty"`
 
 	DateValue *GoogleTypeDate `json:"dateValue,omitempty"`
+
+	// Possible values:
+	//   "DAY_OF_WEEK_UNSPECIFIED" - The unspecified day-of-week.
+	//   "MONDAY" - The day-of-week of Monday.
+	//   "TUESDAY" - The day-of-week of Tuesday.
+	//   "WEDNESDAY" - The day-of-week of Wednesday.
+	//   "THURSDAY" - The day-of-week of Thursday.
+	//   "FRIDAY" - The day-of-week of Friday.
+	//   "SATURDAY" - The day-of-week of Saturday.
+	//   "SUNDAY" - The day-of-week of Sunday.
+	DayOfWeekValue string `json:"dayOfWeekValue,omitempty"`
 
 	FloatValue float64 `json:"floatValue,omitempty"`
 
@@ -7498,7 +8479,7 @@ func (c *OrganizationsDeidentifyTemplatesDeleteCall) Do(opts ...googleapi.CallOp
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Resource name of the organization and deidentify template to be deleted,\nfor example `organizations/433245324/deidentifyTemplates/432452342`.",
+	//       "description": "Resource name of the organization and deidentify template to be deleted,\nfor example `organizations/433245324/deidentifyTemplates/432452342` or\nprojects/project-id/deidentifyTemplates/432452342.",
 	//       "location": "path",
 	//       "pattern": "^organizations/[^/]+/deidentifyTemplates/[^/]+$",
 	//       "required": true,
@@ -7639,7 +8620,7 @@ func (c *OrganizationsDeidentifyTemplatesGetCall) Do(opts ...googleapi.CallOptio
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Resource name of the organization and deidentify template to be read, for\nexample `organizations/433245324/deidentifyTemplates/432452342`.",
+	//       "description": "Resource name of the organization and deidentify template to be read, for\nexample `organizations/433245324/deidentifyTemplates/432452342` or\nprojects/project-id/deidentifyTemplates/432452342.",
 	//       "location": "path",
 	//       "pattern": "^organizations/[^/]+/deidentifyTemplates/[^/]+$",
 	//       "required": true,
@@ -7963,7 +8944,7 @@ func (c *OrganizationsDeidentifyTemplatesPatchCall) Do(opts ...googleapi.CallOpt
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Resource name of organization and deidentify template to be updated, for\nexample `organizations/433245324/deidentifyTemplates/432452342`.",
+	//       "description": "Resource name of organization and deidentify template to be updated, for\nexample `organizations/433245324/deidentifyTemplates/432452342` or\nprojects/project-id/deidentifyTemplates/432452342.",
 	//       "location": "path",
 	//       "pattern": "^organizations/[^/]+/deidentifyTemplates/[^/]+$",
 	//       "required": true,
@@ -8229,7 +9210,7 @@ func (c *OrganizationsInspectTemplatesDeleteCall) Do(opts ...googleapi.CallOptio
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Resource name of the organization and inspectTemplate to be deleted, for\nexample `organizations/433245324/inspectTemplates/432452342`.",
+	//       "description": "Resource name of the organization and inspectTemplate to be deleted, for\nexample `organizations/433245324/inspectTemplates/432452342` or\nprojects/project-id/inspectTemplates/432452342.",
 	//       "location": "path",
 	//       "pattern": "^organizations/[^/]+/inspectTemplates/[^/]+$",
 	//       "required": true,
@@ -8369,7 +9350,7 @@ func (c *OrganizationsInspectTemplatesGetCall) Do(opts ...googleapi.CallOption) 
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Resource name of the organization and inspectTemplate to be read, for\nexample `organizations/433245324/inspectTemplates/432452342`.",
+	//       "description": "Resource name of the organization and inspectTemplate to be read, for\nexample `organizations/433245324/inspectTemplates/432452342` or\nprojects/project-id/inspectTemplates/432452342.",
 	//       "location": "path",
 	//       "pattern": "^organizations/[^/]+/inspectTemplates/[^/]+$",
 	//       "required": true,
@@ -8691,7 +9672,7 @@ func (c *OrganizationsInspectTemplatesPatchCall) Do(opts ...googleapi.CallOption
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Resource name of organization and inspectTemplate to be updated, for\nexample `organizations/433245324/inspectTemplates/432452342`.",
+	//       "description": "Resource name of organization and inspectTemplate to be updated, for\nexample `organizations/433245324/inspectTemplates/432452342` or\nprojects/project-id/inspectTemplates/432452342.",
 	//       "location": "path",
 	//       "pattern": "^organizations/[^/]+/inspectTemplates/[^/]+$",
 	//       "required": true,
@@ -9145,7 +10126,7 @@ type ProjectsDataSourceAnalyzeCall struct {
 // Analyze: Schedules a job to compute risk analysis metrics over
 // content in a Google
 // Cloud Platform repository. [How-to
-// guide}(/dlp/docs/compute-risk-analysis)
+// guide](/dlp/docs/compute-risk-analysis)
 func (r *ProjectsDataSourceService) Analyze(parent string, googleprivacydlpv2beta2analyzedatasourceriskrequest *GooglePrivacyDlpV2beta2AnalyzeDataSourceRiskRequest) *ProjectsDataSourceAnalyzeCall {
 	c := &ProjectsDataSourceAnalyzeCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -9239,7 +10220,7 @@ func (c *ProjectsDataSourceAnalyzeCall) Do(opts ...googleapi.CallOption) (*Googl
 	}
 	return ret, nil
 	// {
-	//   "description": "Schedules a job to compute risk analysis metrics over content in a Google\nCloud Platform repository. [How-to guide}(/dlp/docs/compute-risk-analysis)",
+	//   "description": "Schedules a job to compute risk analysis metrics over content in a Google\nCloud Platform repository. [How-to guide](/dlp/docs/compute-risk-analysis)",
 	//   "flatPath": "v2beta2/projects/{projectsId}/dataSource:analyze",
 	//   "httpMethod": "POST",
 	//   "id": "dlp.projects.dataSource.analyze",
@@ -9652,7 +10633,7 @@ func (c *ProjectsDeidentifyTemplatesDeleteCall) Do(opts ...googleapi.CallOption)
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Resource name of the organization and deidentify template to be deleted,\nfor example `organizations/433245324/deidentifyTemplates/432452342`.",
+	//       "description": "Resource name of the organization and deidentify template to be deleted,\nfor example `organizations/433245324/deidentifyTemplates/432452342` or\nprojects/project-id/deidentifyTemplates/432452342.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/deidentifyTemplates/[^/]+$",
 	//       "required": true,
@@ -9793,7 +10774,7 @@ func (c *ProjectsDeidentifyTemplatesGetCall) Do(opts ...googleapi.CallOption) (*
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Resource name of the organization and deidentify template to be read, for\nexample `organizations/433245324/deidentifyTemplates/432452342`.",
+	//       "description": "Resource name of the organization and deidentify template to be read, for\nexample `organizations/433245324/deidentifyTemplates/432452342` or\nprojects/project-id/deidentifyTemplates/432452342.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/deidentifyTemplates/[^/]+$",
 	//       "required": true,
@@ -10117,7 +11098,7 @@ func (c *ProjectsDeidentifyTemplatesPatchCall) Do(opts ...googleapi.CallOption) 
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Resource name of organization and deidentify template to be updated, for\nexample `organizations/433245324/deidentifyTemplates/432452342`.",
+	//       "description": "Resource name of organization and deidentify template to be updated, for\nexample `organizations/433245324/deidentifyTemplates/432452342` or\nprojects/project-id/deidentifyTemplates/432452342.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/deidentifyTemplates/[^/]+$",
 	//       "required": true,
@@ -10576,6 +11557,8 @@ func (r *ProjectsDlpJobsService) List(parent string) *ProjectsDlpJobsListCall {
 // * Supported fields/values for inspect jobs:
 //     - `state` - PENDING|RUNNING|CANCELED|FINISHED|FAILED
 //     - `inspected_storage` - DATASTORE|CLOUD_STORAGE|BIGQUERY
+//     - `trigger_name` - The resource name of the trigger that created
+// job.
 // * Supported fields for risk analysis jobs:
 //     - `state` - RUNNING|CANCELED|FINISHED|FAILED
 // * The operator must be `=` or `!=`.
@@ -10724,7 +11707,7 @@ func (c *ProjectsDlpJobsListCall) Do(opts ...googleapi.CallOption) (*GooglePriva
 	//   ],
 	//   "parameters": {
 	//     "filter": {
-	//       "description": "Optional. Allows filtering.\n\nSupported syntax:\n\n* Filter expressions are made up of one or more restrictions.\n* Restrictions can be combined by `AND` or `OR` logical operators. A\nsequence of restrictions implicitly uses `AND`.\n* A restriction has the form of `\u003cfield\u003e \u003coperator\u003e \u003cvalue\u003e`.\n* Supported fields/values for inspect jobs:\n    - `state` - PENDING|RUNNING|CANCELED|FINISHED|FAILED\n    - `inspected_storage` - DATASTORE|CLOUD_STORAGE|BIGQUERY\n* Supported fields for risk analysis jobs:\n    - `state` - RUNNING|CANCELED|FINISHED|FAILED\n* The operator must be `=` or `!=`.\n\nExamples:\n\n* inspected_storage = cloud_storage AND state = done\n* inspected_storage = cloud_storage OR inspected_storage = bigquery\n* inspected_storage = cloud_storage AND (state = done OR state = canceled)\n\nThe length of this field should be no more than 500 characters.",
+	//       "description": "Optional. Allows filtering.\n\nSupported syntax:\n\n* Filter expressions are made up of one or more restrictions.\n* Restrictions can be combined by `AND` or `OR` logical operators. A\nsequence of restrictions implicitly uses `AND`.\n* A restriction has the form of `\u003cfield\u003e \u003coperator\u003e \u003cvalue\u003e`.\n* Supported fields/values for inspect jobs:\n    - `state` - PENDING|RUNNING|CANCELED|FINISHED|FAILED\n    - `inspected_storage` - DATASTORE|CLOUD_STORAGE|BIGQUERY\n    - `trigger_name` - The resource name of the trigger that created job.\n* Supported fields for risk analysis jobs:\n    - `state` - RUNNING|CANCELED|FINISHED|FAILED\n* The operator must be `=` or `!=`.\n\nExamples:\n\n* inspected_storage = cloud_storage AND state = done\n* inspected_storage = cloud_storage OR inspected_storage = bigquery\n* inspected_storage = cloud_storage AND (state = done OR state = canceled)\n\nThe length of this field should be no more than 500 characters.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -11174,7 +12157,7 @@ func (c *ProjectsInspectTemplatesDeleteCall) Do(opts ...googleapi.CallOption) (*
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Resource name of the organization and inspectTemplate to be deleted, for\nexample `organizations/433245324/inspectTemplates/432452342`.",
+	//       "description": "Resource name of the organization and inspectTemplate to be deleted, for\nexample `organizations/433245324/inspectTemplates/432452342` or\nprojects/project-id/inspectTemplates/432452342.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/inspectTemplates/[^/]+$",
 	//       "required": true,
@@ -11314,7 +12297,7 @@ func (c *ProjectsInspectTemplatesGetCall) Do(opts ...googleapi.CallOption) (*Goo
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Resource name of the organization and inspectTemplate to be read, for\nexample `organizations/433245324/inspectTemplates/432452342`.",
+	//       "description": "Resource name of the organization and inspectTemplate to be read, for\nexample `organizations/433245324/inspectTemplates/432452342` or\nprojects/project-id/inspectTemplates/432452342.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/inspectTemplates/[^/]+$",
 	//       "required": true,
@@ -11636,7 +12619,7 @@ func (c *ProjectsInspectTemplatesPatchCall) Do(opts ...googleapi.CallOption) (*G
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Resource name of organization and inspectTemplate to be updated, for\nexample `organizations/433245324/inspectTemplates/432452342`.",
+	//       "description": "Resource name of organization and inspectTemplate to be updated, for\nexample `organizations/433245324/inspectTemplates/432452342` or\nprojects/project-id/inspectTemplates/432452342.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/inspectTemplates/[^/]+$",
 	//       "required": true,
@@ -11649,6 +12632,761 @@ func (c *ProjectsInspectTemplatesPatchCall) Do(opts ...googleapi.CallOption) (*G
 	//   },
 	//   "response": {
 	//     "$ref": "GooglePrivacyDlpV2beta2InspectTemplate"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "dlp.projects.jobTriggers.create":
+
+type ProjectsJobTriggersCreateCall struct {
+	s                                              *Service
+	parent                                         string
+	googleprivacydlpv2beta2createjobtriggerrequest *GooglePrivacyDlpV2beta2CreateJobTriggerRequest
+	urlParams_                                     gensupport.URLParams
+	ctx_                                           context.Context
+	header_                                        http.Header
+}
+
+// Create: Creates a job to run DLP actions such as scanning storage for
+// sensitive
+// information on a set schedule.
+func (r *ProjectsJobTriggersService) Create(parent string, googleprivacydlpv2beta2createjobtriggerrequest *GooglePrivacyDlpV2beta2CreateJobTriggerRequest) *ProjectsJobTriggersCreateCall {
+	c := &ProjectsJobTriggersCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	c.googleprivacydlpv2beta2createjobtriggerrequest = googleprivacydlpv2beta2createjobtriggerrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsJobTriggersCreateCall) Fields(s ...googleapi.Field) *ProjectsJobTriggersCreateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsJobTriggersCreateCall) Context(ctx context.Context) *ProjectsJobTriggersCreateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsJobTriggersCreateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsJobTriggersCreateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.googleprivacydlpv2beta2createjobtriggerrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta2/{+parent}/jobTriggers")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "dlp.projects.jobTriggers.create" call.
+// Exactly one of *GooglePrivacyDlpV2beta2JobTrigger or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *GooglePrivacyDlpV2beta2JobTrigger.ServerResponse.Header or
+// (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *ProjectsJobTriggersCreateCall) Do(opts ...googleapi.CallOption) (*GooglePrivacyDlpV2beta2JobTrigger, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &GooglePrivacyDlpV2beta2JobTrigger{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Creates a job to run DLP actions such as scanning storage for sensitive\ninformation on a set schedule.",
+	//   "flatPath": "v2beta2/projects/{projectsId}/jobTriggers",
+	//   "httpMethod": "POST",
+	//   "id": "dlp.projects.jobTriggers.create",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "parent": {
+	//       "description": "The parent resource name, for example projects/my-project-id.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta2/{+parent}/jobTriggers",
+	//   "request": {
+	//     "$ref": "GooglePrivacyDlpV2beta2CreateJobTriggerRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "GooglePrivacyDlpV2beta2JobTrigger"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "dlp.projects.jobTriggers.delete":
+
+type ProjectsJobTriggersDeleteCall struct {
+	s          *Service
+	name       string
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Delete: Deletes a job trigger.
+func (r *ProjectsJobTriggersService) Delete(name string) *ProjectsJobTriggersDeleteCall {
+	c := &ProjectsJobTriggersDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsJobTriggersDeleteCall) Fields(s ...googleapi.Field) *ProjectsJobTriggersDeleteCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsJobTriggersDeleteCall) Context(ctx context.Context) *ProjectsJobTriggersDeleteCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsJobTriggersDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsJobTriggersDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta2/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("DELETE", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "dlp.projects.jobTriggers.delete" call.
+// Exactly one of *GoogleProtobufEmpty or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *GoogleProtobufEmpty.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProjectsJobTriggersDeleteCall) Do(opts ...googleapi.CallOption) (*GoogleProtobufEmpty, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &GoogleProtobufEmpty{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Deletes a job trigger.",
+	//   "flatPath": "v2beta2/projects/{projectsId}/jobTriggers/{jobTriggersId}",
+	//   "httpMethod": "DELETE",
+	//   "id": "dlp.projects.jobTriggers.delete",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Resource name of the project and the triggeredJob, for example\n`projects/dlp-test-project/jobTriggers/53234423`.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/jobTriggers/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta2/{+name}",
+	//   "response": {
+	//     "$ref": "GoogleProtobufEmpty"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "dlp.projects.jobTriggers.get":
+
+type ProjectsJobTriggersGetCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Gets a job trigger.
+func (r *ProjectsJobTriggersService) Get(name string) *ProjectsJobTriggersGetCall {
+	c := &ProjectsJobTriggersGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsJobTriggersGetCall) Fields(s ...googleapi.Field) *ProjectsJobTriggersGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ProjectsJobTriggersGetCall) IfNoneMatch(entityTag string) *ProjectsJobTriggersGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsJobTriggersGetCall) Context(ctx context.Context) *ProjectsJobTriggersGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsJobTriggersGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsJobTriggersGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta2/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "dlp.projects.jobTriggers.get" call.
+// Exactly one of *GooglePrivacyDlpV2beta2JobTrigger or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *GooglePrivacyDlpV2beta2JobTrigger.ServerResponse.Header or
+// (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *ProjectsJobTriggersGetCall) Do(opts ...googleapi.CallOption) (*GooglePrivacyDlpV2beta2JobTrigger, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &GooglePrivacyDlpV2beta2JobTrigger{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Gets a job trigger.",
+	//   "flatPath": "v2beta2/projects/{projectsId}/jobTriggers/{jobTriggersId}",
+	//   "httpMethod": "GET",
+	//   "id": "dlp.projects.jobTriggers.get",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Resource name of the project and the triggeredJob, for example\n`projects/dlp-test-project/jobTriggers/53234423`.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/jobTriggers/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta2/{+name}",
+	//   "response": {
+	//     "$ref": "GooglePrivacyDlpV2beta2JobTrigger"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "dlp.projects.jobTriggers.list":
+
+type ProjectsJobTriggersListCall struct {
+	s            *Service
+	parent       string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists job triggers.
+func (r *ProjectsJobTriggersService) List(parent string) *ProjectsJobTriggersListCall {
+	c := &ProjectsJobTriggersListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	return c
+}
+
+// OrderBy sets the optional parameter "orderBy": Optional comma
+// separated list of triggeredJob fields to order by,
+// followed by 'asc/desc' postfix, i.e.
+// "create_time asc,name desc,schedule_mode asc". This list
+// is
+// case-insensitive.
+//
+// Example: "name asc,schedule_mode desc, status desc"
+//
+// Supported filters keys and values are:
+//
+// - `create_time`: corresponds to time the triggeredJob was created.
+// - `update_time`: corresponds to time the triggeredJob was last
+// updated.
+// - `name`: corresponds to JobTrigger's display name.
+// - `status`: corresponds to the triggeredJob status.
+func (c *ProjectsJobTriggersListCall) OrderBy(orderBy string) *ProjectsJobTriggersListCall {
+	c.urlParams_.Set("orderBy", orderBy)
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": Optional size of the
+// page, can be limited by a server.
+func (c *ProjectsJobTriggersListCall) PageSize(pageSize int64) *ProjectsJobTriggersListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": Optional page
+// token to continue retrieval. Comes from previous call
+// to ListJobTriggers. `order_by` and `filter` should not change
+// for
+// subsequent calls, but can be omitted if token is specified.
+func (c *ProjectsJobTriggersListCall) PageToken(pageToken string) *ProjectsJobTriggersListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsJobTriggersListCall) Fields(s ...googleapi.Field) *ProjectsJobTriggersListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ProjectsJobTriggersListCall) IfNoneMatch(entityTag string) *ProjectsJobTriggersListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsJobTriggersListCall) Context(ctx context.Context) *ProjectsJobTriggersListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsJobTriggersListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsJobTriggersListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta2/{+parent}/jobTriggers")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "dlp.projects.jobTriggers.list" call.
+// Exactly one of *GooglePrivacyDlpV2beta2ListJobTriggersResponse or
+// error will be non-nil. Any non-2xx status code is an error. Response
+// headers are in either
+// *GooglePrivacyDlpV2beta2ListJobTriggersResponse.ServerResponse.Header
+// or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *ProjectsJobTriggersListCall) Do(opts ...googleapi.CallOption) (*GooglePrivacyDlpV2beta2ListJobTriggersResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &GooglePrivacyDlpV2beta2ListJobTriggersResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Lists job triggers.",
+	//   "flatPath": "v2beta2/projects/{projectsId}/jobTriggers",
+	//   "httpMethod": "GET",
+	//   "id": "dlp.projects.jobTriggers.list",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "orderBy": {
+	//       "description": "Optional comma separated list of triggeredJob fields to order by,\nfollowed by 'asc/desc' postfix, i.e.\n`\"create_time asc,name desc,schedule_mode asc\"`. This list is\ncase-insensitive.\n\nExample: `\"name asc,schedule_mode desc, status desc\"`\n\nSupported filters keys and values are:\n\n- `create_time`: corresponds to time the triggeredJob was created.\n- `update_time`: corresponds to time the triggeredJob was last updated.\n- `name`: corresponds to JobTrigger's display name.\n- `status`: corresponds to the triggeredJob status.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Optional size of the page, can be limited by a server.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "Optional page token to continue retrieval. Comes from previous call\nto ListJobTriggers. `order_by` and `filter` should not change for\nsubsequent calls, but can be omitted if token is specified.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "parent": {
+	//       "description": "The parent resource name, for example projects/my-project-id.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta2/{+parent}/jobTriggers",
+	//   "response": {
+	//     "$ref": "GooglePrivacyDlpV2beta2ListJobTriggersResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *ProjectsJobTriggersListCall) Pages(ctx context.Context, f func(*GooglePrivacyDlpV2beta2ListJobTriggersResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "dlp.projects.jobTriggers.patch":
+
+type ProjectsJobTriggersPatchCall struct {
+	s                                              *Service
+	name                                           string
+	googleprivacydlpv2beta2updatejobtriggerrequest *GooglePrivacyDlpV2beta2UpdateJobTriggerRequest
+	urlParams_                                     gensupport.URLParams
+	ctx_                                           context.Context
+	header_                                        http.Header
+}
+
+// Patch: Updates a job trigger.
+func (r *ProjectsJobTriggersService) Patch(name string, googleprivacydlpv2beta2updatejobtriggerrequest *GooglePrivacyDlpV2beta2UpdateJobTriggerRequest) *ProjectsJobTriggersPatchCall {
+	c := &ProjectsJobTriggersPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.googleprivacydlpv2beta2updatejobtriggerrequest = googleprivacydlpv2beta2updatejobtriggerrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsJobTriggersPatchCall) Fields(s ...googleapi.Field) *ProjectsJobTriggersPatchCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsJobTriggersPatchCall) Context(ctx context.Context) *ProjectsJobTriggersPatchCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsJobTriggersPatchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsJobTriggersPatchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.googleprivacydlpv2beta2updatejobtriggerrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2beta2/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("PATCH", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "dlp.projects.jobTriggers.patch" call.
+// Exactly one of *GooglePrivacyDlpV2beta2JobTrigger or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *GooglePrivacyDlpV2beta2JobTrigger.ServerResponse.Header or
+// (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *ProjectsJobTriggersPatchCall) Do(opts ...googleapi.CallOption) (*GooglePrivacyDlpV2beta2JobTrigger, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &GooglePrivacyDlpV2beta2JobTrigger{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Updates a job trigger.",
+	//   "flatPath": "v2beta2/projects/{projectsId}/jobTriggers/{jobTriggersId}",
+	//   "httpMethod": "PATCH",
+	//   "id": "dlp.projects.jobTriggers.patch",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Resource name of the project and the triggeredJob, for example\n`projects/dlp-test-project/jobTriggers/53234423`.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/jobTriggers/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2beta2/{+name}",
+	//   "request": {
+	//     "$ref": "GooglePrivacyDlpV2beta2UpdateJobTriggerRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "GooglePrivacyDlpV2beta2JobTrigger"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform"

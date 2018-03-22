@@ -95,7 +95,7 @@ const (
 	// The operation did not succeed because it would have exceeded a service limit
 	// for your account. For more information, see Amazon ECR Default Service Limits
 	// (http://docs.aws.amazon.com/AmazonECR/latest/userguide/service_limits.html)
-	// in the Amazon EC2 Container Registry User Guide.
+	// in the Amazon Elastic Container Registry User Guide.
 	ErrCodeLimitExceededException = "LimitExceededException"
 
 	// ErrCodeRepositoryAlreadyExistsException for service response error code

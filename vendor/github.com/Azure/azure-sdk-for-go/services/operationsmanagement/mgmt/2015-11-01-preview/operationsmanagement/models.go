@@ -87,8 +87,8 @@ type ManagementConfiguration struct {
 	Properties *ManagementConfigurationProperties `json:"properties,omitempty"`
 }
 
-// ManagementConfigurationProperties managementConfiguration properties supported by the OperationsManagement resource
-// provider.
+// ManagementConfigurationProperties managementConfiguration properties supported by the OperationsManagement
+// resource provider.
 type ManagementConfigurationProperties struct {
 	// ApplicationID - The applicationId of the appliance for this Management.
 	ApplicationID *string `json:"applicationId,omitempty"`
@@ -99,7 +99,7 @@ type ManagementConfigurationProperties struct {
 	// ProvisioningState - The provisioning state for the ManagementConfiguration.
 	ProvisioningState *string `json:"provisioningState,omitempty"`
 	// Template - The Json object containing the ARM template to deploy
-	Template *map[string]interface{} `json:"template,omitempty"`
+	Template interface{} `json:"template,omitempty"`
 }
 
 // ManagementConfigurationPropertiesList the list of ManagementConfiguration response

@@ -1693,7 +1693,7 @@ func TestTransportChecksResponseHeaderListSize(t *testing.T) {
 	ct.run()
 }
 
-// Test that the the Transport returns a typed error from Response.Body.Read calls
+// Test that the Transport returns a typed error from Response.Body.Read calls
 // when the server sends an error. (here we use a panic, since that should generate
 // a stream error, but others like cancel should be similar)
 func TestTransportBodyReadErrorType(t *testing.T) {

@@ -41,8 +41,8 @@ func NewConfigurationsClientWithBaseURI(baseURI string, subscriptionID string) C
 
 // CreateInResourceGroup sends the create in resource group request.
 //
-// configContract is the Azure Advisor configuration data structure. resourceGroup is the name of the Azure resource
-// group.
+// configContract is the Azure Advisor configuration data structure. resourceGroup is the name of the Azure
+// resource group.
 func (client ConfigurationsClient) CreateInResourceGroup(ctx context.Context, configContract ConfigData, resourceGroup string) (result ARMErrorResponseBody, err error) {
 	req, err := client.CreateInResourceGroupPreparer(ctx, configContract, resourceGroup)
 	if err != nil {

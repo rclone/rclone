@@ -549,6 +549,18 @@ func (f *Fs) list(dir string, recurse bool, fn listFn) error {
 				continue
 			}
 			remote := key[rootLength:]
+			// is this a directory marker?
+			if (strings.HasSuffix(remote, "/") || remote == "") && *object.Size == 0 {
+				if recurse {
+					// add a directory in if --fast-list since will have no prefixes
+					remote = remote[:len(remote)-1]
+					err = fn(remote, &s3.Object{Key: &remote}, true)
+					if err != nil {
+						return err
+					}
+				}
+				continue // skip directory marker
+			}
 			err = fn(remote, object, false)
 			if err != nil {
 				return err

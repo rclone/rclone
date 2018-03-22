@@ -470,6 +470,8 @@ type CheckError struct {
 	// `ACTIVE` in LoquatV2.
 	//   "SECURITY_POLICY_VIOLATED" - Request is not allowed as per security
 	// policies defined in Org Policy.
+	//   "INVALID_CREDENTIAL" - The credential in the request can not be
+	// verified.
 	//   "NAMESPACE_LOOKUP_UNAVAILABLE" - The backend server for looking up
 	// project id/number is unavailable.
 	//   "SERVICE_STATUS_UNAVAILABLE" - The backend server for checking
@@ -1365,7 +1367,9 @@ type Operation struct {
 	//        used to handle the API request (e.g. ESP),
 	//     - `servicecontrol.googleapis.com/platform` describing the
 	// platform
-	//        where the API is served (e.g. GAE, GCE, GKE).
+	//        where the API is served, such as App Engine, Compute Engine,
+	// or
+	//        Kubernetes Engine.
 	Labels map[string]string `json:"labels,omitempty"`
 
 	// LogEntries: Represents information to be logged.
@@ -2529,24 +2533,29 @@ type ServicesCheckCall struct {
 	header_      http.Header
 }
 
-// Check: Checks an operation with Google Service Control to decide
-// whether
-// the given operation should proceed. It should be called before
-// the
-// operation is executed.
+// Check: Checks whether an operation on a service should be allowed to
+// proceed
+// based on the configuration of the service and related policies. It
+// must be
+// called before the operation is executed.
 //
 // If feasible, the client should cache the check results and reuse them
 // for
-// 60 seconds. In case of server errors, the client can rely on the
-// cached
-// results for longer time.
+// 60 seconds. In case of any server errors, the client should rely on
+// the
+// cached results for much longer time to avoid outage.
+// WARNING: There is general 60s delay for the configuration and
+// policy
+// propagation, therefore callers MUST NOT depend on the `Check` method
+// having
+// the latest policy information.
 //
 // NOTE: the CheckRequest has the size limit of 64KB.
 //
 // This method requires the `servicemanagement.services.check`
 // permission
 // on the specified service. For more information, see
-// [Google Cloud IAM](https://cloud.google.com/iam).
+// [Cloud IAM](https://cloud.google.com/iam).
 func (r *ServicesService) Check(serviceName string, checkrequest *CheckRequest) *ServicesCheckCall {
 	c := &ServicesCheckCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.serviceName = serviceName
@@ -2640,7 +2649,7 @@ func (c *ServicesCheckCall) Do(opts ...googleapi.CallOption) (*CheckResponse, er
 	}
 	return ret, nil
 	// {
-	//   "description": "Checks an operation with Google Service Control to decide whether\nthe given operation should proceed. It should be called before the\noperation is executed.\n\nIf feasible, the client should cache the check results and reuse them for\n60 seconds. In case of server errors, the client can rely on the cached\nresults for longer time.\n\nNOTE: the CheckRequest has the size limit of 64KB.\n\nThis method requires the `servicemanagement.services.check` permission\non the specified service. For more information, see\n[Google Cloud IAM](https://cloud.google.com/iam).",
+	//   "description": "Checks whether an operation on a service should be allowed to proceed\nbased on the configuration of the service and related policies. It must be\ncalled before the operation is executed.\n\nIf feasible, the client should cache the check results and reuse them for\n60 seconds. In case of any server errors, the client should rely on the\ncached results for much longer time to avoid outage.\nWARNING: There is general 60s delay for the configuration and policy\npropagation, therefore callers MUST NOT depend on the `Check` method having\nthe latest policy information.\n\nNOTE: the CheckRequest has the size limit of 64KB.\n\nThis method requires the `servicemanagement.services.check` permission\non the specified service. For more information, see\n[Cloud IAM](https://cloud.google.com/iam).",
 	//   "flatPath": "v1/services/{serviceName}:check",
 	//   "httpMethod": "POST",
 	//   "id": "servicecontrol.services.check",

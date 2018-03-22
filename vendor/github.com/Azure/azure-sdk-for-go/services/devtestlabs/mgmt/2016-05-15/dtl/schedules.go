@@ -48,7 +48,7 @@ func (client SchedulesClient) CreateOrUpdate(ctx context.Context, resourceGroupN
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: schedule,
 			Constraints: []validation.Constraint{{Target: "schedule.ScheduleProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "dtl.SchedulesClient", "CreateOrUpdate")
+		return result, validation.NewError("dtl.SchedulesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, labName, name, schedule)
@@ -325,10 +325,10 @@ func (client SchedulesClient) GetResponder(resp *http.Response) (result Schedule
 
 // List list schedules in a given lab.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. expand is specify the $expand
-// query. Example: 'properties($select=status)' filter is the filter to apply to the operation. top is the maximum
-// number of resources to return from the operation. orderby is the ordering expression for the results, using OData
-// notation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. expand is specify the
+// $expand query. Example: 'properties($select=status)' filter is the filter to apply to the operation. top is the
+// maximum number of resources to return from the operation. orderby is the ordering expression for the results,
+// using OData notation.
 func (client SchedulesClient) List(ctx context.Context, resourceGroupName string, labName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationSchedulePage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, expand, filter, top, orderby)

@@ -118,38 +118,38 @@ const (
 type Type string
 
 const (
-	// Hive ...
-	Hive Type = "Hive"
-	// USQL ...
-	USQL Type = "USql"
+	// TypeHive ...
+	TypeHive Type = "Hive"
+	// TypeJobProperties ...
+	TypeJobProperties Type = "JobProperties"
+	// TypeUSQL ...
+	TypeUSQL Type = "USql"
 )
 
 // TypeBasicCreateJobProperties enumerates the values for type basic create job properties.
 type TypeBasicCreateJobProperties string
 
 const (
-	// TypeCreateJobProperties ...
-	TypeCreateJobProperties TypeBasicCreateJobProperties = "CreateJobProperties"
-	// TypeUSQL ...
-	TypeUSQL TypeBasicCreateJobProperties = "USql"
+	// TypeBasicCreateJobPropertiesTypeCreateJobProperties ...
+	TypeBasicCreateJobPropertiesTypeCreateJobProperties TypeBasicCreateJobProperties = "CreateJobProperties"
+	// TypeBasicCreateJobPropertiesTypeUSQL ...
+	TypeBasicCreateJobPropertiesTypeUSQL TypeBasicCreateJobProperties = "USql"
 )
 
-// TypeBasicProperties enumerates the values for type basic properties.
-type TypeBasicProperties string
+// TypeEnum enumerates the values for type enum.
+type TypeEnum string
 
 const (
-	// TypeBasicPropertiesTypeHive ...
-	TypeBasicPropertiesTypeHive TypeBasicProperties = "Hive"
-	// TypeBasicPropertiesTypeJobProperties ...
-	TypeBasicPropertiesTypeJobProperties TypeBasicProperties = "JobProperties"
-	// TypeBasicPropertiesTypeUSQL ...
-	TypeBasicPropertiesTypeUSQL TypeBasicProperties = "USql"
+	// Hive ...
+	Hive TypeEnum = "Hive"
+	// USQL ...
+	USQL TypeEnum = "USql"
 )
 
 // BaseJobParameters data Lake Analytics Job Parameters base class for build and submit.
 type BaseJobParameters struct {
 	// Type - the job type of the current job (Hive or USql). Possible values include: 'USQL', 'Hive'
-	Type Type `json:"type,omitempty"`
+	Type TypeEnum `json:"type,omitempty"`
 	// Properties - the job specific properties.
 	Properties BasicCreateJobProperties `json:"properties,omitempty"`
 }
@@ -161,25 +161,26 @@ func (bjp *BaseJobParameters) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["type"]
-	if v != nil {
-		var typeVar Type
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "type":
+			if v != nil {
+				var typeVar TypeEnum
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				bjp.Type = typeVar
+			}
+		case "properties":
+			if v != nil {
+				properties, err := unmarshalBasicCreateJobProperties(*v)
+				if err != nil {
+					return err
+				}
+				bjp.Properties = properties
+			}
 		}
-		bjp.Type = typeVar
-	}
-
-	v = m["properties"]
-	if v != nil {
-		properties, err := unmarshalBasicCreateJobProperties(*m["properties"])
-		if err != nil {
-			return err
-		}
-		bjp.Properties = properties
 	}
 
 	return nil
@@ -187,12 +188,12 @@ func (bjp *BaseJobParameters) UnmarshalJSON(body []byte) error {
 
 // BuildJobParameters the parameters used to build a new Data Lake Analytics job.
 type BuildJobParameters struct {
-	// Type - the job type of the current job (Hive or USql). Possible values include: 'USQL', 'Hive'
-	Type Type `json:"type,omitempty"`
-	// Properties - the job specific properties.
-	Properties BasicCreateJobProperties `json:"properties,omitempty"`
 	// Name - the friendly name of the job to build.
 	Name *string `json:"name,omitempty"`
+	// Type - the job type of the current job (Hive or USql). Possible values include: 'USQL', 'Hive'
+	Type TypeEnum `json:"type,omitempty"`
+	// Properties - the job specific properties.
+	Properties BasicCreateJobProperties `json:"properties,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for BuildJobParameters struct.
@@ -202,35 +203,35 @@ func (bjp *BuildJobParameters) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				bjp.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar TypeEnum
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				bjp.Type = typeVar
+			}
+		case "properties":
+			if v != nil {
+				properties, err := unmarshalBasicCreateJobProperties(*v)
+				if err != nil {
+					return err
+				}
+				bjp.Properties = properties
+			}
 		}
-		bjp.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar Type
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		bjp.Type = typeVar
-	}
-
-	v = m["properties"]
-	if v != nil {
-		properties, err := unmarshalBasicCreateJobProperties(*m["properties"])
-		if err != nil {
-			return err
-		}
-		bjp.Properties = properties
 	}
 
 	return nil
@@ -238,10 +239,6 @@ func (bjp *BuildJobParameters) UnmarshalJSON(body []byte) error {
 
 // CreateJobParameters the parameters used to submit a new Data Lake Analytics job.
 type CreateJobParameters struct {
-	// Type - the job type of the current job (Hive or USql). Possible values include: 'USQL', 'Hive'
-	Type Type `json:"type,omitempty"`
-	// Properties - the job specific properties.
-	Properties BasicCreateJobProperties `json:"properties,omitempty"`
 	// Name - the friendly name of the job to submit.
 	Name *string `json:"name,omitempty"`
 	// DegreeOfParallelism - the degree of parallelism to use for this job. This must be greater than 0, if set to less than 0 it will default to 1.
@@ -252,6 +249,10 @@ type CreateJobParameters struct {
 	LogFilePatterns *[]string `json:"logFilePatterns,omitempty"`
 	// Related - the recurring job relationship information properties.
 	Related *RelationshipProperties `json:"related,omitempty"`
+	// Type - the job type of the current job (Hive or USql). Possible values include: 'USQL', 'Hive'
+	Type TypeEnum `json:"type,omitempty"`
+	// Properties - the job specific properties.
+	Properties BasicCreateJobProperties `json:"properties,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for CreateJobParameters struct.
@@ -261,75 +262,71 @@ func (cjp *CreateJobParameters) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				cjp.Name = &name
+			}
+		case "degreeOfParallelism":
+			if v != nil {
+				var degreeOfParallelism int32
+				err = json.Unmarshal(*v, &degreeOfParallelism)
+				if err != nil {
+					return err
+				}
+				cjp.DegreeOfParallelism = &degreeOfParallelism
+			}
+		case "priority":
+			if v != nil {
+				var priority int32
+				err = json.Unmarshal(*v, &priority)
+				if err != nil {
+					return err
+				}
+				cjp.Priority = &priority
+			}
+		case "logFilePatterns":
+			if v != nil {
+				var logFilePatterns []string
+				err = json.Unmarshal(*v, &logFilePatterns)
+				if err != nil {
+					return err
+				}
+				cjp.LogFilePatterns = &logFilePatterns
+			}
+		case "related":
+			if v != nil {
+				var related RelationshipProperties
+				err = json.Unmarshal(*v, &related)
+				if err != nil {
+					return err
+				}
+				cjp.Related = &related
+			}
+		case "type":
+			if v != nil {
+				var typeVar TypeEnum
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				cjp.Type = typeVar
+			}
+		case "properties":
+			if v != nil {
+				properties, err := unmarshalBasicCreateJobProperties(*v)
+				if err != nil {
+					return err
+				}
+				cjp.Properties = properties
+			}
 		}
-		cjp.Name = &name
-	}
-
-	v = m["degreeOfParallelism"]
-	if v != nil {
-		var degreeOfParallelism int32
-		err = json.Unmarshal(*m["degreeOfParallelism"], &degreeOfParallelism)
-		if err != nil {
-			return err
-		}
-		cjp.DegreeOfParallelism = &degreeOfParallelism
-	}
-
-	v = m["priority"]
-	if v != nil {
-		var priority int32
-		err = json.Unmarshal(*m["priority"], &priority)
-		if err != nil {
-			return err
-		}
-		cjp.Priority = &priority
-	}
-
-	v = m["logFilePatterns"]
-	if v != nil {
-		var logFilePatterns []string
-		err = json.Unmarshal(*m["logFilePatterns"], &logFilePatterns)
-		if err != nil {
-			return err
-		}
-		cjp.LogFilePatterns = &logFilePatterns
-	}
-
-	v = m["related"]
-	if v != nil {
-		var related RelationshipProperties
-		err = json.Unmarshal(*m["related"], &related)
-		if err != nil {
-			return err
-		}
-		cjp.Related = &related
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar Type
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		cjp.Type = typeVar
-	}
-
-	v = m["properties"]
-	if v != nil {
-		properties, err := unmarshalBasicCreateJobProperties(*m["properties"])
-		if err != nil {
-			return err
-		}
-		cjp.Properties = properties
 	}
 
 	return nil
@@ -347,7 +344,7 @@ type CreateJobProperties struct {
 	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
 	// Script - the script to run. Please note that the maximum script size is 3 MB.
 	Script *string `json:"script,omitempty"`
-	// Type - Possible values include: 'TypeCreateJobProperties', 'TypeUSQL'
+	// Type - Possible values include: 'TypeBasicCreateJobPropertiesTypeCreateJobProperties', 'TypeBasicCreateJobPropertiesTypeUSQL'
 	Type TypeBasicCreateJobProperties `json:"type,omitempty"`
 }
 
@@ -359,7 +356,7 @@ func unmarshalBasicCreateJobProperties(body []byte) (BasicCreateJobProperties, e
 	}
 
 	switch m["type"] {
-	case string(TypeUSQL):
+	case string(TypeBasicCreateJobPropertiesTypeUSQL):
 		var cusjp CreateUSQLJobProperties
 		err := json.Unmarshal(body, &cusjp)
 		return cusjp, err
@@ -390,13 +387,16 @@ func unmarshalBasicCreateJobPropertiesArray(body []byte) ([]BasicCreateJobProper
 
 // MarshalJSON is the custom marshaler for CreateJobProperties.
 func (cjp CreateJobProperties) MarshalJSON() ([]byte, error) {
-	cjp.Type = TypeCreateJobProperties
-	type Alias CreateJobProperties
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(cjp),
-	})
+	cjp.Type = TypeBasicCreateJobPropertiesTypeCreateJobProperties
+	objectMap := make(map[string]interface{})
+	if cjp.RuntimeVersion != nil {
+		objectMap["runtimeVersion"] = cjp.RuntimeVersion
+	}
+	if cjp.Script != nil {
+		objectMap["script"] = cjp.Script
+	}
+	objectMap["type"] = cjp.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCreateUSQLJobProperties is the BasicCreateJobProperties implementation for CreateJobProperties.
@@ -416,25 +416,29 @@ func (cjp CreateJobProperties) AsBasicCreateJobProperties() (BasicCreateJobPrope
 
 // CreateUSQLJobProperties u-SQL job properties used when submitting U-SQL jobs.
 type CreateUSQLJobProperties struct {
+	// CompileMode - the specific compilation mode for the job used during execution. If this is not specified during submission, the server will determine the optimal compilation mode. Possible values include: 'Semantic', 'Full', 'SingleBox'
+	CompileMode CompileMode `json:"compileMode,omitempty"`
 	// RuntimeVersion - the runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
 	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
 	// Script - the script to run. Please note that the maximum script size is 3 MB.
 	Script *string `json:"script,omitempty"`
-	// Type - Possible values include: 'TypeCreateJobProperties', 'TypeUSQL'
+	// Type - Possible values include: 'TypeBasicCreateJobPropertiesTypeCreateJobProperties', 'TypeBasicCreateJobPropertiesTypeUSQL'
 	Type TypeBasicCreateJobProperties `json:"type,omitempty"`
-	// CompileMode - the specific compilation mode for the job used during execution. If this is not specified during submission, the server will determine the optimal compilation mode. Possible values include: 'Semantic', 'Full', 'SingleBox'
-	CompileMode CompileMode `json:"compileMode,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for CreateUSQLJobProperties.
 func (cusjp CreateUSQLJobProperties) MarshalJSON() ([]byte, error) {
-	cusjp.Type = TypeUSQL
-	type Alias CreateUSQLJobProperties
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(cusjp),
-	})
+	cusjp.Type = TypeBasicCreateJobPropertiesTypeUSQL
+	objectMap := make(map[string]interface{})
+	objectMap["compileMode"] = cusjp.CompileMode
+	if cusjp.RuntimeVersion != nil {
+		objectMap["runtimeVersion"] = cusjp.RuntimeVersion
+	}
+	if cusjp.Script != nil {
+		objectMap["script"] = cusjp.Script
+	}
+	objectMap["type"] = cusjp.Type
+	return json.Marshal(objectMap)
 }
 
 // AsCreateUSQLJobProperties is the BasicCreateJobProperties implementation for CreateUSQLJobProperties.
@@ -513,12 +517,6 @@ type ErrorDetails struct {
 
 // HiveJobProperties hive job properties used when retrieving Hive jobs.
 type HiveJobProperties struct {
-	// RuntimeVersion - the runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
-	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
-	// Script - the script to run. Please note that the maximum script size is 3 MB.
-	Script *string `json:"script,omitempty"`
-	// Type - Possible values include: 'TypeBasicPropertiesTypeJobProperties', 'TypeBasicPropertiesTypeUSQL', 'TypeBasicPropertiesTypeHive'
-	Type TypeBasicProperties `json:"type,omitempty"`
 	// LogsLocation - the Hive logs location
 	LogsLocation *string `json:"logsLocation,omitempty"`
 	// OutputLocation - the location of Hive job output files (both execution output and results)
@@ -527,17 +525,38 @@ type HiveJobProperties struct {
 	StatementCount *int32 `json:"statementCount,omitempty"`
 	// ExecutedStatementCount - the number of statements that have been run based on the script
 	ExecutedStatementCount *int32 `json:"executedStatementCount,omitempty"`
+	// RuntimeVersion - the runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
+	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
+	// Script - the script to run. Please note that the maximum script size is 3 MB.
+	Script *string `json:"script,omitempty"`
+	// Type - Possible values include: 'TypeJobProperties', 'TypeUSQL', 'TypeHive'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for HiveJobProperties.
 func (hjp HiveJobProperties) MarshalJSON() ([]byte, error) {
-	hjp.Type = TypeBasicPropertiesTypeHive
-	type Alias HiveJobProperties
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(hjp),
-	})
+	hjp.Type = TypeHive
+	objectMap := make(map[string]interface{})
+	if hjp.LogsLocation != nil {
+		objectMap["logsLocation"] = hjp.LogsLocation
+	}
+	if hjp.OutputLocation != nil {
+		objectMap["outputLocation"] = hjp.OutputLocation
+	}
+	if hjp.StatementCount != nil {
+		objectMap["statementCount"] = hjp.StatementCount
+	}
+	if hjp.ExecutedStatementCount != nil {
+		objectMap["executedStatementCount"] = hjp.ExecutedStatementCount
+	}
+	if hjp.RuntimeVersion != nil {
+		objectMap["runtimeVersion"] = hjp.RuntimeVersion
+	}
+	if hjp.Script != nil {
+		objectMap["script"] = hjp.Script
+	}
+	objectMap["type"] = hjp.Type
+	return json.Marshal(objectMap)
 }
 
 // AsUSQLJobProperties is the BasicProperties implementation for HiveJobProperties.
@@ -665,12 +684,18 @@ func (page InfoListResultPage) Values() []InformationBasic {
 // Information the extended Data Lake Analytics job information properties returned when retrieving a specific job.
 type Information struct {
 	autorest.Response `json:"-"`
+	// ErrorMessage - the error message details for the job, if the job failed.
+	ErrorMessage *[]ErrorDetails `json:"errorMessage,omitempty"`
+	// StateAuditRecords - the job state audit records, indicating when various operations have been performed on this job.
+	StateAuditRecords *[]StateAuditRecord `json:"stateAuditRecords,omitempty"`
+	// Properties - the job specific properties.
+	Properties BasicProperties `json:"properties,omitempty"`
 	// JobID - the job's unique identifier (a GUID).
 	JobID *uuid.UUID `json:"jobId,omitempty"`
 	// Name - the friendly name of the job.
 	Name *string `json:"name,omitempty"`
 	// Type - the job type of the current job (Hive or USql). Possible values include: 'USQL', 'Hive'
-	Type Type `json:"type,omitempty"`
+	Type TypeEnum `json:"type,omitempty"`
 	// Submitter - the user or account that submitted the job.
 	Submitter *string `json:"submitter,omitempty"`
 	// DegreeOfParallelism - the degree of parallelism used for this job. This must be greater than 0, if set to less than 0 it will default to 1.
@@ -693,12 +718,6 @@ type Information struct {
 	LogFilePatterns *[]string `json:"logFilePatterns,omitempty"`
 	// Related - the recurring job relationship information properties.
 	Related *RelationshipProperties `json:"related,omitempty"`
-	// ErrorMessage - the error message details for the job, if the job failed.
-	ErrorMessage *[]ErrorDetails `json:"errorMessage,omitempty"`
-	// StateAuditRecords - the job state audit records, indicating when various operations have been performed on this job.
-	StateAuditRecords *[]StateAuditRecord `json:"stateAuditRecords,omitempty"`
-	// Properties - the job specific properties.
-	Properties BasicProperties `json:"properties,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for Information struct.
@@ -708,175 +727,161 @@ func (i *Information) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["errorMessage"]
-	if v != nil {
-		var errorMessage []ErrorDetails
-		err = json.Unmarshal(*m["errorMessage"], &errorMessage)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "errorMessage":
+			if v != nil {
+				var errorMessage []ErrorDetails
+				err = json.Unmarshal(*v, &errorMessage)
+				if err != nil {
+					return err
+				}
+				i.ErrorMessage = &errorMessage
+			}
+		case "stateAuditRecords":
+			if v != nil {
+				var stateAuditRecords []StateAuditRecord
+				err = json.Unmarshal(*v, &stateAuditRecords)
+				if err != nil {
+					return err
+				}
+				i.StateAuditRecords = &stateAuditRecords
+			}
+		case "properties":
+			if v != nil {
+				properties, err := unmarshalBasicProperties(*v)
+				if err != nil {
+					return err
+				}
+				i.Properties = properties
+			}
+		case "jobId":
+			if v != nil {
+				var jobID uuid.UUID
+				err = json.Unmarshal(*v, &jobID)
+				if err != nil {
+					return err
+				}
+				i.JobID = &jobID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				i.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar TypeEnum
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				i.Type = typeVar
+			}
+		case "submitter":
+			if v != nil {
+				var submitter string
+				err = json.Unmarshal(*v, &submitter)
+				if err != nil {
+					return err
+				}
+				i.Submitter = &submitter
+			}
+		case "degreeOfParallelism":
+			if v != nil {
+				var degreeOfParallelism int32
+				err = json.Unmarshal(*v, &degreeOfParallelism)
+				if err != nil {
+					return err
+				}
+				i.DegreeOfParallelism = &degreeOfParallelism
+			}
+		case "priority":
+			if v != nil {
+				var priority int32
+				err = json.Unmarshal(*v, &priority)
+				if err != nil {
+					return err
+				}
+				i.Priority = &priority
+			}
+		case "submitTime":
+			if v != nil {
+				var submitTime date.Time
+				err = json.Unmarshal(*v, &submitTime)
+				if err != nil {
+					return err
+				}
+				i.SubmitTime = &submitTime
+			}
+		case "startTime":
+			if v != nil {
+				var startTime date.Time
+				err = json.Unmarshal(*v, &startTime)
+				if err != nil {
+					return err
+				}
+				i.StartTime = &startTime
+			}
+		case "endTime":
+			if v != nil {
+				var endTime date.Time
+				err = json.Unmarshal(*v, &endTime)
+				if err != nil {
+					return err
+				}
+				i.EndTime = &endTime
+			}
+		case "state":
+			if v != nil {
+				var state State
+				err = json.Unmarshal(*v, &state)
+				if err != nil {
+					return err
+				}
+				i.State = state
+			}
+		case "result":
+			if v != nil {
+				var resultVar Result
+				err = json.Unmarshal(*v, &resultVar)
+				if err != nil {
+					return err
+				}
+				i.Result = resultVar
+			}
+		case "logFolder":
+			if v != nil {
+				var logFolder string
+				err = json.Unmarshal(*v, &logFolder)
+				if err != nil {
+					return err
+				}
+				i.LogFolder = &logFolder
+			}
+		case "logFilePatterns":
+			if v != nil {
+				var logFilePatterns []string
+				err = json.Unmarshal(*v, &logFilePatterns)
+				if err != nil {
+					return err
+				}
+				i.LogFilePatterns = &logFilePatterns
+			}
+		case "related":
+			if v != nil {
+				var related RelationshipProperties
+				err = json.Unmarshal(*v, &related)
+				if err != nil {
+					return err
+				}
+				i.Related = &related
+			}
 		}
-		i.ErrorMessage = &errorMessage
-	}
-
-	v = m["stateAuditRecords"]
-	if v != nil {
-		var stateAuditRecords []StateAuditRecord
-		err = json.Unmarshal(*m["stateAuditRecords"], &stateAuditRecords)
-		if err != nil {
-			return err
-		}
-		i.StateAuditRecords = &stateAuditRecords
-	}
-
-	v = m["properties"]
-	if v != nil {
-		properties, err := unmarshalBasicProperties(*m["properties"])
-		if err != nil {
-			return err
-		}
-		i.Properties = properties
-	}
-
-	v = m["jobId"]
-	if v != nil {
-		var jobID uuid.UUID
-		err = json.Unmarshal(*m["jobId"], &jobID)
-		if err != nil {
-			return err
-		}
-		i.JobID = &jobID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		i.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar Type
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		i.Type = typeVar
-	}
-
-	v = m["submitter"]
-	if v != nil {
-		var submitter string
-		err = json.Unmarshal(*m["submitter"], &submitter)
-		if err != nil {
-			return err
-		}
-		i.Submitter = &submitter
-	}
-
-	v = m["degreeOfParallelism"]
-	if v != nil {
-		var degreeOfParallelism int32
-		err = json.Unmarshal(*m["degreeOfParallelism"], &degreeOfParallelism)
-		if err != nil {
-			return err
-		}
-		i.DegreeOfParallelism = &degreeOfParallelism
-	}
-
-	v = m["priority"]
-	if v != nil {
-		var priority int32
-		err = json.Unmarshal(*m["priority"], &priority)
-		if err != nil {
-			return err
-		}
-		i.Priority = &priority
-	}
-
-	v = m["submitTime"]
-	if v != nil {
-		var submitTime date.Time
-		err = json.Unmarshal(*m["submitTime"], &submitTime)
-		if err != nil {
-			return err
-		}
-		i.SubmitTime = &submitTime
-	}
-
-	v = m["startTime"]
-	if v != nil {
-		var startTime date.Time
-		err = json.Unmarshal(*m["startTime"], &startTime)
-		if err != nil {
-			return err
-		}
-		i.StartTime = &startTime
-	}
-
-	v = m["endTime"]
-	if v != nil {
-		var endTime date.Time
-		err = json.Unmarshal(*m["endTime"], &endTime)
-		if err != nil {
-			return err
-		}
-		i.EndTime = &endTime
-	}
-
-	v = m["state"]
-	if v != nil {
-		var state State
-		err = json.Unmarshal(*m["state"], &state)
-		if err != nil {
-			return err
-		}
-		i.State = state
-	}
-
-	v = m["result"]
-	if v != nil {
-		var resultVar Result
-		err = json.Unmarshal(*m["result"], &resultVar)
-		if err != nil {
-			return err
-		}
-		i.Result = resultVar
-	}
-
-	v = m["logFolder"]
-	if v != nil {
-		var logFolder string
-		err = json.Unmarshal(*m["logFolder"], &logFolder)
-		if err != nil {
-			return err
-		}
-		i.LogFolder = &logFolder
-	}
-
-	v = m["logFilePatterns"]
-	if v != nil {
-		var logFilePatterns []string
-		err = json.Unmarshal(*m["logFilePatterns"], &logFilePatterns)
-		if err != nil {
-			return err
-		}
-		i.LogFilePatterns = &logFilePatterns
-	}
-
-	v = m["related"]
-	if v != nil {
-		var related RelationshipProperties
-		err = json.Unmarshal(*m["related"], &related)
-		if err != nil {
-			return err
-		}
-		i.Related = &related
 	}
 
 	return nil
@@ -889,7 +894,7 @@ type InformationBasic struct {
 	// Name - the friendly name of the job.
 	Name *string `json:"name,omitempty"`
 	// Type - the job type of the current job (Hive or USql). Possible values include: 'USQL', 'Hive'
-	Type Type `json:"type,omitempty"`
+	Type TypeEnum `json:"type,omitempty"`
 	// Submitter - the user or account that submitted the job.
 	Submitter *string `json:"submitter,omitempty"`
 	// DegreeOfParallelism - the degree of parallelism used for this job. This must be greater than 0, if set to less than 0 it will default to 1.
@@ -942,8 +947,8 @@ type InnerError struct {
 	InnerError *InnerError `json:"innerError,omitempty"`
 }
 
-// PipelineInformation job Pipeline Information, showing the relationship of jobs and recurrences of those jobs in a
-// pipeline.
+// PipelineInformation job Pipeline Information, showing the relationship of jobs and recurrences of those jobs in
+// a pipeline.
 type PipelineInformation struct {
 	autorest.Response `json:"-"`
 	// PipelineID - the job relationship pipeline identifier (a GUID).
@@ -1095,8 +1100,8 @@ type Properties struct {
 	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
 	// Script - the script to run. Please note that the maximum script size is 3 MB.
 	Script *string `json:"script,omitempty"`
-	// Type - Possible values include: 'TypeBasicPropertiesTypeJobProperties', 'TypeBasicPropertiesTypeUSQL', 'TypeBasicPropertiesTypeHive'
-	Type TypeBasicProperties `json:"type,omitempty"`
+	// Type - Possible values include: 'TypeJobProperties', 'TypeUSQL', 'TypeHive'
+	Type Type `json:"type,omitempty"`
 }
 
 func unmarshalBasicProperties(body []byte) (BasicProperties, error) {
@@ -1107,11 +1112,11 @@ func unmarshalBasicProperties(body []byte) (BasicProperties, error) {
 	}
 
 	switch m["type"] {
-	case string(TypeBasicPropertiesTypeUSQL):
+	case string(TypeUSQL):
 		var usjp USQLJobProperties
 		err := json.Unmarshal(body, &usjp)
 		return usjp, err
-	case string(TypeBasicPropertiesTypeHive):
+	case string(TypeHive):
 		var hjp HiveJobProperties
 		err := json.Unmarshal(body, &hjp)
 		return hjp, err
@@ -1142,13 +1147,16 @@ func unmarshalBasicPropertiesArray(body []byte) ([]BasicProperties, error) {
 
 // MarshalJSON is the custom marshaler for Properties.
 func (p Properties) MarshalJSON() ([]byte, error) {
-	p.Type = TypeBasicPropertiesTypeJobProperties
-	type Alias Properties
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(p),
-	})
+	p.Type = TypeJobProperties
+	objectMap := make(map[string]interface{})
+	if p.RuntimeVersion != nil {
+		objectMap["runtimeVersion"] = p.RuntimeVersion
+	}
+	if p.Script != nil {
+		objectMap["script"] = p.Script
+	}
+	objectMap["type"] = p.Type
+	return json.Marshal(objectMap)
 }
 
 // AsUSQLJobProperties is the BasicProperties implementation for Properties.
@@ -1392,12 +1400,6 @@ type StatisticsVertexStage struct {
 
 // USQLJobProperties u-SQL job properties used when retrieving U-SQL jobs.
 type USQLJobProperties struct {
-	// RuntimeVersion - the runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
-	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
-	// Script - the script to run. Please note that the maximum script size is 3 MB.
-	Script *string `json:"script,omitempty"`
-	// Type - Possible values include: 'TypeBasicPropertiesTypeJobProperties', 'TypeBasicPropertiesTypeUSQL', 'TypeBasicPropertiesTypeHive'
-	Type TypeBasicProperties `json:"type,omitempty"`
 	// Resources - the list of resources that are required by the job
 	Resources *[]Resource `json:"resources,omitempty"`
 	// Statistics - the job specific statistics.
@@ -1424,17 +1426,63 @@ type USQLJobProperties struct {
 	YarnApplicationTimeStamp *int64 `json:"yarnApplicationTimeStamp,omitempty"`
 	// CompileMode - the specific compilation mode for the job used during execution. If this is not specified during submission, the server will determine the optimal compilation mode. Possible values include: 'Semantic', 'Full', 'SingleBox'
 	CompileMode CompileMode `json:"compileMode,omitempty"`
+	// RuntimeVersion - the runtime version of the Data Lake Analytics engine to use for the specific type of job being run.
+	RuntimeVersion *string `json:"runtimeVersion,omitempty"`
+	// Script - the script to run. Please note that the maximum script size is 3 MB.
+	Script *string `json:"script,omitempty"`
+	// Type - Possible values include: 'TypeJobProperties', 'TypeUSQL', 'TypeHive'
+	Type Type `json:"type,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for USQLJobProperties.
 func (usjp USQLJobProperties) MarshalJSON() ([]byte, error) {
-	usjp.Type = TypeBasicPropertiesTypeUSQL
-	type Alias USQLJobProperties
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(usjp),
-	})
+	usjp.Type = TypeUSQL
+	objectMap := make(map[string]interface{})
+	if usjp.Resources != nil {
+		objectMap["resources"] = usjp.Resources
+	}
+	if usjp.Statistics != nil {
+		objectMap["statistics"] = usjp.Statistics
+	}
+	if usjp.DebugData != nil {
+		objectMap["debugData"] = usjp.DebugData
+	}
+	if usjp.Diagnostics != nil {
+		objectMap["diagnostics"] = usjp.Diagnostics
+	}
+	if usjp.AlgebraFilePath != nil {
+		objectMap["algebraFilePath"] = usjp.AlgebraFilePath
+	}
+	if usjp.TotalCompilationTime != nil {
+		objectMap["totalCompilationTime"] = usjp.TotalCompilationTime
+	}
+	if usjp.TotalPauseTime != nil {
+		objectMap["totalPauseTime"] = usjp.TotalPauseTime
+	}
+	if usjp.TotalQueuedTime != nil {
+		objectMap["totalQueuedTime"] = usjp.TotalQueuedTime
+	}
+	if usjp.TotalRunningTime != nil {
+		objectMap["totalRunningTime"] = usjp.TotalRunningTime
+	}
+	if usjp.RootProcessNodeID != nil {
+		objectMap["rootProcessNodeId"] = usjp.RootProcessNodeID
+	}
+	if usjp.YarnApplicationID != nil {
+		objectMap["yarnApplicationId"] = usjp.YarnApplicationID
+	}
+	if usjp.YarnApplicationTimeStamp != nil {
+		objectMap["yarnApplicationTimeStamp"] = usjp.YarnApplicationTimeStamp
+	}
+	objectMap["compileMode"] = usjp.CompileMode
+	if usjp.RuntimeVersion != nil {
+		objectMap["runtimeVersion"] = usjp.RuntimeVersion
+	}
+	if usjp.Script != nil {
+		objectMap["script"] = usjp.Script
+	}
+	objectMap["type"] = usjp.Type
+	return json.Marshal(objectMap)
 }
 
 // AsUSQLJobProperties is the BasicProperties implementation for USQLJobProperties.

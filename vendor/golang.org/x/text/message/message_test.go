@@ -128,7 +128,7 @@ func TestLocalization(t *testing.T) {
 			{"und", "hello %-42%%s ", joeAndMary, "hello %Joe %!(EXTRA string=Mary)"},
 		},
 	}, {
-		desc: "number formatting", // work around limitation of fmt
+		desc: "number formatting",
 		cat: []entry{
 			{"und", "files", "%d files left"},
 			{"und", "meters", "%.2f meters"},
@@ -140,6 +140,17 @@ func TestLocalization(t *testing.T) {
 			{"de", "files", args(1234), "1.234 Dateien übrig"},
 			{"de-CH", "files", args(1234), "1’234 Dateien übrig"},
 			{"de-CH-u-nu-mong", "files", args(1234), "᠑’᠒᠓᠔ Dateien übrig"},
+		},
+	}, {
+		desc: "substitute translation",
+		cat: []entry{
+			{"en", "google", "Google"},
+			{"en", "sub", "%s"},
+			{"en", "visit", "Lookup: %m."},
+		},
+		test: []test{
+			{"en", "visit", args("google"), "Lookup: Google."},
+			{"en", "visit", args("sub"), "Lookup: %s."},
 		},
 	}}
 

@@ -43,9 +43,10 @@ func NewReplicationLinksClientWithBaseURI(baseURI string, subscriptionID string)
 
 // Delete deletes a database replication link. Cannot be done during failover.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database that has the replication link to be dropped. linkID is the ID of the replication link to be deleted.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database that has the replication link to be dropped. linkID is the ID of the replication link to be
+// deleted.
 func (client ReplicationLinksClient) Delete(ctx context.Context, resourceGroupName string, serverName string, databaseName string, linkID string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName, databaseName, linkID)
 	if err != nil {
@@ -112,10 +113,10 @@ func (client ReplicationLinksClient) DeleteResponder(resp *http.Response) (resul
 
 // Failover sets which replica database is primary by failing over from the current primary replica database.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database that has the replication link to be failed over. linkID is the ID of the replication link to be failed
-// over.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database that has the replication link to be failed over. linkID is the ID of the replication link to be
+// failed over.
 func (client ReplicationLinksClient) Failover(ctx context.Context, resourceGroupName string, serverName string, databaseName string, linkID string) (result ReplicationLinksFailoverFuture, err error) {
 	req, err := client.FailoverPreparer(ctx, resourceGroupName, serverName, databaseName, linkID)
 	if err != nil {
@@ -185,10 +186,10 @@ func (client ReplicationLinksClient) FailoverResponder(resp *http.Response) (res
 // FailoverAllowDataLoss sets which replica database is primary by failing over from the current primary replica
 // database. This operation might result in data loss.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database that has the replication link to be failed over. linkID is the ID of the replication link to be failed
-// over.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database that has the replication link to be failed over. linkID is the ID of the replication link to be
+// failed over.
 func (client ReplicationLinksClient) FailoverAllowDataLoss(ctx context.Context, resourceGroupName string, serverName string, databaseName string, linkID string) (result ReplicationLinksFailoverAllowDataLossFuture, err error) {
 	req, err := client.FailoverAllowDataLossPreparer(ctx, resourceGroupName, serverName, databaseName, linkID)
 	if err != nil {
@@ -257,9 +258,9 @@ func (client ReplicationLinksClient) FailoverAllowDataLossResponder(resp *http.R
 
 // Get gets a database replication link.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database to get the link for. linkID is the replication link ID to be retrieved.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database to get the link for. linkID is the replication link ID to be retrieved.
 func (client ReplicationLinksClient) Get(ctx context.Context, resourceGroupName string, serverName string, databaseName string, linkID string) (result ReplicationLink, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, databaseName, linkID)
 	if err != nil {
@@ -327,9 +328,9 @@ func (client ReplicationLinksClient) GetResponder(resp *http.Response) (result R
 
 // ListByDatabase lists a database's replication links.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database to retrieve links for.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database to retrieve links for.
 func (client ReplicationLinksClient) ListByDatabase(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result ReplicationLinkListResult, err error) {
 	req, err := client.ListByDatabasePreparer(ctx, resourceGroupName, serverName, databaseName)
 	if err != nil {

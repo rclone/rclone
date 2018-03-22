@@ -51,7 +51,7 @@ func (client DeviceSettingsClient) CreateOrUpdateAlertSettings(ctx context.Conte
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DeviceSettingsClient", "CreateOrUpdateAlertSettings")
+		return result, validation.NewError("storsimple.DeviceSettingsClient", "CreateOrUpdateAlertSettings", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateAlertSettingsPreparer(ctx, deviceName, parameters, resourceGroupName, managerName)
@@ -133,7 +133,7 @@ func (client DeviceSettingsClient) CreateOrUpdateTimeSettings(ctx context.Contex
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DeviceSettingsClient", "CreateOrUpdateTimeSettings")
+		return result, validation.NewError("storsimple.DeviceSettingsClient", "CreateOrUpdateTimeSettings", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateTimeSettingsPreparer(ctx, deviceName, parameters, resourceGroupName, managerName)
@@ -211,7 +211,7 @@ func (client DeviceSettingsClient) GetAlertSettings(ctx context.Context, deviceN
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DeviceSettingsClient", "GetAlertSettings")
+		return result, validation.NewError("storsimple.DeviceSettingsClient", "GetAlertSettings", err.Error())
 	}
 
 	req, err := client.GetAlertSettingsPreparer(ctx, deviceName, resourceGroupName, managerName)
@@ -285,7 +285,7 @@ func (client DeviceSettingsClient) GetNetworkSettings(ctx context.Context, devic
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DeviceSettingsClient", "GetNetworkSettings")
+		return result, validation.NewError("storsimple.DeviceSettingsClient", "GetNetworkSettings", err.Error())
 	}
 
 	req, err := client.GetNetworkSettingsPreparer(ctx, deviceName, resourceGroupName, managerName)
@@ -359,7 +359,7 @@ func (client DeviceSettingsClient) GetSecuritySettings(ctx context.Context, devi
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DeviceSettingsClient", "GetSecuritySettings")
+		return result, validation.NewError("storsimple.DeviceSettingsClient", "GetSecuritySettings", err.Error())
 	}
 
 	req, err := client.GetSecuritySettingsPreparer(ctx, deviceName, resourceGroupName, managerName)
@@ -433,7 +433,7 @@ func (client DeviceSettingsClient) GetTimeSettings(ctx context.Context, deviceNa
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DeviceSettingsClient", "GetTimeSettings")
+		return result, validation.NewError("storsimple.DeviceSettingsClient", "GetTimeSettings", err.Error())
 	}
 
 	req, err := client.GetTimeSettingsPreparer(ctx, deviceName, resourceGroupName, managerName)
@@ -507,7 +507,7 @@ func (client DeviceSettingsClient) SyncRemotemanagementCertificate(ctx context.C
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DeviceSettingsClient", "SyncRemotemanagementCertificate")
+		return result, validation.NewError("storsimple.DeviceSettingsClient", "SyncRemotemanagementCertificate", err.Error())
 	}
 
 	req, err := client.SyncRemotemanagementCertificatePreparer(ctx, deviceName, resourceGroupName, managerName)
@@ -576,14 +576,14 @@ func (client DeviceSettingsClient) SyncRemotemanagementCertificateResponder(resp
 
 // UpdateNetworkSettings updates the network settings on the specified device.
 //
-// deviceName is the device name parameters is the network settings to be updated. resourceGroupName is the resource
-// group name managerName is the manager name
+// deviceName is the device name parameters is the network settings to be updated. resourceGroupName is the
+// resource group name managerName is the manager name
 func (client DeviceSettingsClient) UpdateNetworkSettings(ctx context.Context, deviceName string, parameters NetworkSettingsPatch, resourceGroupName string, managerName string) (result DeviceSettingsUpdateNetworkSettingsFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DeviceSettingsClient", "UpdateNetworkSettings")
+		return result, validation.NewError("storsimple.DeviceSettingsClient", "UpdateNetworkSettings", err.Error())
 	}
 
 	req, err := client.UpdateNetworkSettingsPreparer(ctx, deviceName, parameters, resourceGroupName, managerName)
@@ -655,14 +655,14 @@ func (client DeviceSettingsClient) UpdateNetworkSettingsResponder(resp *http.Res
 
 // UpdateSecuritySettings patch Security properties of the specified device name.
 //
-// deviceName is the device name parameters is the security settings properties to be patched. resourceGroupName is the
-// resource group name managerName is the manager name
+// deviceName is the device name parameters is the security settings properties to be patched. resourceGroupName is
+// the resource group name managerName is the manager name
 func (client DeviceSettingsClient) UpdateSecuritySettings(ctx context.Context, deviceName string, parameters SecuritySettingsPatch, resourceGroupName string, managerName string) (result DeviceSettingsUpdateSecuritySettingsFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.DeviceSettingsClient", "UpdateSecuritySettings")
+		return result, validation.NewError("storsimple.DeviceSettingsClient", "UpdateSecuritySettings", err.Error())
 	}
 
 	req, err := client.UpdateSecuritySettingsPreparer(ctx, deviceName, parameters, resourceGroupName, managerName)

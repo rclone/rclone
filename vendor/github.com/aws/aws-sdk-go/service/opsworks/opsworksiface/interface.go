@@ -191,6 +191,10 @@ type OpsWorksAPI interface {
 	DescribeMyUserProfileWithContext(aws.Context, *opsworks.DescribeMyUserProfileInput, ...request.Option) (*opsworks.DescribeMyUserProfileOutput, error)
 	DescribeMyUserProfileRequest(*opsworks.DescribeMyUserProfileInput) (*request.Request, *opsworks.DescribeMyUserProfileOutput)
 
+	DescribeOperatingSystems(*opsworks.DescribeOperatingSystemsInput) (*opsworks.DescribeOperatingSystemsOutput, error)
+	DescribeOperatingSystemsWithContext(aws.Context, *opsworks.DescribeOperatingSystemsInput, ...request.Option) (*opsworks.DescribeOperatingSystemsOutput, error)
+	DescribeOperatingSystemsRequest(*opsworks.DescribeOperatingSystemsInput) (*request.Request, *opsworks.DescribeOperatingSystemsOutput)
+
 	DescribePermissions(*opsworks.DescribePermissionsInput) (*opsworks.DescribePermissionsOutput, error)
 	DescribePermissionsWithContext(aws.Context, *opsworks.DescribePermissionsInput, ...request.Option) (*opsworks.DescribePermissionsOutput, error)
 	DescribePermissionsRequest(*opsworks.DescribePermissionsInput) (*request.Request, *opsworks.DescribePermissionsOutput)

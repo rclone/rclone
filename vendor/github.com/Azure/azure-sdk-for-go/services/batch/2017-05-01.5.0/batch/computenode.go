@@ -1,4 +1,4 @@
-package xpackagex
+package batch
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
 //
@@ -44,36 +44,36 @@ func NewComputeNodeClientWithBaseURI(baseURI string) ComputeNodeClient {
 
 // AddUser you can add a user account to a node only when it is in the idle or running state.
 //
-// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the machine on which you want to
-// create a user account. userParameter is the user account to be created. timeout is the maximum time that the server
-// can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated
-// request identity, in the form of a GUID with no decoration such as curly braces, e.g.
+// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the machine on which you want
+// to create a user account. userParameter is the user account to be created. timeout is the maximum time that the
+// server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
+// caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
 // 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly.
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client ComputeNodeClient) AddUser(ctx context.Context, poolID string, nodeID string, userParameter ComputeNodeUser, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: userParameter,
 			Constraints: []validation.Constraint{{Target: "userParameter.Name", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "xpackagex.ComputeNodeClient", "AddUser")
+		return result, validation.NewError("batch.ComputeNodeClient", "AddUser", err.Error())
 	}
 
 	req, err := client.AddUserPreparer(ctx, poolID, nodeID, userParameter, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "AddUser", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "AddUser", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.AddUserSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "AddUser", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "AddUser", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.AddUserResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "AddUser", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "AddUser", resp, "Failure responding to request")
 	}
 
 	return
@@ -92,6 +92,8 @@ func (client ComputeNodeClient) AddUserPreparer(ctx context.Context, poolID stri
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -108,6 +110,9 @@ func (client ComputeNodeClient) AddUserPreparer(ctx context.Context, poolID stri
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -137,30 +142,30 @@ func (client ComputeNodeClient) AddUserResponder(resp *http.Response) (result au
 
 // DeleteUser you can delete a user account to a node only when it is in the idle or running state.
 //
-// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the machine on which you want to
-// delete a user account. userName is the name of the user account to delete. timeout is the maximum time that the
-// server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
+// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the machine on which you want
+// to delete a user account. userName is the name of the user account to delete. timeout is the maximum time that
+// the server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
 // caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
 // 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly.
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client ComputeNodeClient) DeleteUser(ctx context.Context, poolID string, nodeID string, userName string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.DeleteUserPreparer(ctx, poolID, nodeID, userName, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "DeleteUser", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "DeleteUser", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.DeleteUserSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "DeleteUser", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "DeleteUser", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.DeleteUserResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "DeleteUser", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "DeleteUser", resp, "Failure responding to request")
 	}
 
 	return
@@ -180,6 +185,8 @@ func (client ComputeNodeClient) DeleteUserPreparer(ctx context.Context, poolID s
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -194,6 +201,9 @@ func (client ComputeNodeClient) DeleteUserPreparer(ctx context.Context, poolID s
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -223,30 +233,30 @@ func (client ComputeNodeClient) DeleteUserResponder(resp *http.Response) (result
 
 // DisableScheduling sends the disable scheduling request.
 //
-// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node on which you want
-// to disable task scheduling. nodeDisableSchedulingParameter is the parameters for the request. timeout is the maximum
-// time that the server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
-// caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
-// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly.
+// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node on which you
+// want to disable task scheduling. nodeDisableSchedulingParameter is the parameters for the request. timeout is
+// the maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
+// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
+// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client ComputeNodeClient) DisableScheduling(ctx context.Context, poolID string, nodeID string, nodeDisableSchedulingParameter *NodeDisableSchedulingParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.DisableSchedulingPreparer(ctx, poolID, nodeID, nodeDisableSchedulingParameter, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "DisableScheduling", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "DisableScheduling", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.DisableSchedulingSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "DisableScheduling", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "DisableScheduling", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.DisableSchedulingResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "DisableScheduling", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "DisableScheduling", resp, "Failure responding to request")
 	}
 
 	return
@@ -265,6 +275,8 @@ func (client ComputeNodeClient) DisableSchedulingPreparer(ctx context.Context, p
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -284,6 +296,9 @@ func (client ComputeNodeClient) DisableSchedulingPreparer(ctx context.Context, p
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -313,30 +328,30 @@ func (client ComputeNodeClient) DisableSchedulingResponder(resp *http.Response) 
 
 // EnableScheduling sends the enable scheduling request.
 //
-// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node on which you want
-// to enable task scheduling. timeout is the maximum time that the server can spend processing the request, in seconds.
-// The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no
-// decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the
-// server should return the client-request-id in the response. ocpDate is the time the request was issued. Client
-// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
-// directly.
+// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node on which you
+// want to enable task scheduling. timeout is the maximum time that the server can spend processing the request, in
+// seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a
+// GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID
+// is whether the server should return the client-request-id in the response. ocpDate is the time the request was
+// issued. Client libraries typically set this to the current system clock time; set it explicitly if you are
+// calling the REST API directly.
 func (client ComputeNodeClient) EnableScheduling(ctx context.Context, poolID string, nodeID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.EnableSchedulingPreparer(ctx, poolID, nodeID, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "EnableScheduling", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "EnableScheduling", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.EnableSchedulingSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "EnableScheduling", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "EnableScheduling", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.EnableSchedulingResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "EnableScheduling", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "EnableScheduling", resp, "Failure responding to request")
 	}
 
 	return
@@ -355,6 +370,8 @@ func (client ComputeNodeClient) EnableSchedulingPreparer(ctx context.Context, po
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -369,6 +386,9 @@ func (client ComputeNodeClient) EnableSchedulingPreparer(ctx context.Context, po
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -398,30 +418,30 @@ func (client ComputeNodeClient) EnableSchedulingResponder(resp *http.Response) (
 
 // Get sends the get request.
 //
-// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node that you want to
-// get information about. selectParameter is an OData $select clause. timeout is the maximum time that the server can
-// spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request
-// identity, in the form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the time
-// the request was issued. Client libraries typically set this to the current system clock time; set it explicitly if
-// you are calling the REST API directly.
+// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node that you want
+// to get information about. selectParameter is an OData $select clause. timeout is the maximum time that the
+// server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
+// caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
+// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client ComputeNodeClient) Get(ctx context.Context, poolID string, nodeID string, selectParameter string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result ComputeNode, err error) {
 	req, err := client.GetPreparer(ctx, poolID, nodeID, selectParameter, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "Get", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "Get", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.GetSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "Get", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "Get", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.GetResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "Get", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "Get", resp, "Failure responding to request")
 	}
 
 	return
@@ -443,6 +463,8 @@ func (client ComputeNodeClient) GetPreparer(ctx context.Context, poolID string, 
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -457,6 +479,9 @@ func (client ComputeNodeClient) GetPreparer(ctx context.Context, poolID string, 
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -488,30 +513,30 @@ func (client ComputeNodeClient) GetResponder(resp *http.Response) (result Comput
 // GetRemoteDesktop before you can access a node by using the RDP file, you must create a user account on the node.
 // This API can only be invoked on pools created with the cloud service configuration property.
 //
-// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node for which you want
-// to get the Remote Desktop Protocol file. timeout is the maximum time that the server can spend processing the
-// request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the
-// form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the time
-// the request was issued. Client libraries typically set this to the current system clock time; set it explicitly if
-// you are calling the REST API directly.
+// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node for which you
+// want to get the Remote Desktop Protocol file. timeout is the maximum time that the server can spend processing
+// the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in
+// the form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the
+// time the request was issued. Client libraries typically set this to the current system clock time; set it
+// explicitly if you are calling the REST API directly.
 func (client ComputeNodeClient) GetRemoteDesktop(ctx context.Context, poolID string, nodeID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result ReadCloser, err error) {
 	req, err := client.GetRemoteDesktopPreparer(ctx, poolID, nodeID, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "GetRemoteDesktop", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "GetRemoteDesktop", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.GetRemoteDesktopSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "GetRemoteDesktop", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "GetRemoteDesktop", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.GetRemoteDesktopResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "GetRemoteDesktop", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "GetRemoteDesktop", resp, "Failure responding to request")
 	}
 
 	return
@@ -530,6 +555,8 @@ func (client ComputeNodeClient) GetRemoteDesktopPreparer(ctx context.Context, po
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -544,6 +571,9 @@ func (client ComputeNodeClient) GetRemoteDesktopPreparer(ctx context.Context, po
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -576,29 +606,29 @@ func (client ComputeNodeClient) GetRemoteDesktopResponder(resp *http.Response) (
 // property.
 //
 // poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node for which to
-// obtain the remote login settings. timeout is the maximum time that the server can spend processing the request, in
-// seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID
-// with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether
-// the server should return the client-request-id in the response. ocpDate is the time the request was issued. Client
-// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
-// directly.
+// obtain the remote login settings. timeout is the maximum time that the server can spend processing the request,
+// in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of
+// a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID
+// is whether the server should return the client-request-id in the response. ocpDate is the time the request was
+// issued. Client libraries typically set this to the current system clock time; set it explicitly if you are
+// calling the REST API directly.
 func (client ComputeNodeClient) GetRemoteLoginSettings(ctx context.Context, poolID string, nodeID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result ComputeNodeGetRemoteLoginSettingsResult, err error) {
 	req, err := client.GetRemoteLoginSettingsPreparer(ctx, poolID, nodeID, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "GetRemoteLoginSettings", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "GetRemoteLoginSettings", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.GetRemoteLoginSettingsSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "GetRemoteLoginSettings", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "GetRemoteLoginSettings", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.GetRemoteLoginSettingsResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "GetRemoteLoginSettings", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "GetRemoteLoginSettings", resp, "Failure responding to request")
 	}
 
 	return
@@ -617,6 +647,8 @@ func (client ComputeNodeClient) GetRemoteLoginSettingsPreparer(ctx context.Conte
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -631,6 +663,9 @@ func (client ComputeNodeClient) GetRemoteLoginSettingsPreparer(ctx context.Conte
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -661,14 +696,14 @@ func (client ComputeNodeClient) GetRemoteLoginSettingsResponder(resp *http.Respo
 
 // List sends the list request.
 //
-// poolID is the ID of the pool from which you want to list nodes. filter is an OData $filter clause.. selectParameter
-// is an OData $select clause. maxResults is the maximum number of items to return in the response. A maximum of 1000
-// nodes can be returned. timeout is the maximum time that the server can spend processing the request, in seconds. The
-// default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no
-// decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the
-// server should return the client-request-id in the response. ocpDate is the time the request was issued. Client
-// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
-// directly.
+// poolID is the ID of the pool from which you want to list nodes. filter is an OData $filter clause..
+// selectParameter is an OData $select clause. maxResults is the maximum number of items to return in the response.
+// A maximum of 1000 nodes can be returned. timeout is the maximum time that the server can spend processing the
+// request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the
+// form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the
+// time the request was issued. Client libraries typically set this to the current system clock time; set it
+// explicitly if you are calling the REST API directly.
 func (client ComputeNodeClient) List(ctx context.Context, poolID string, filter string, selectParameter string, maxResults *int32, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result ComputeNodeListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxResults,
@@ -676,26 +711,26 @@ func (client ComputeNodeClient) List(ctx context.Context, poolID string, filter 
 				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
 					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "xpackagex.ComputeNodeClient", "List")
+		return result, validation.NewError("batch.ComputeNodeClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, poolID, filter, selectParameter, maxResults, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "List", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "List", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.ListSender(req)
 	if err != nil {
 		result.cnlr.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "List", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "List", resp, "Failure sending request")
 		return
 	}
 
 	result.cnlr, err = client.ListResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "List", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "List", resp, "Failure responding to request")
 	}
 
 	return
@@ -719,9 +754,13 @@ func (client ComputeNodeClient) ListPreparer(ctx context.Context, poolID string,
 	}
 	if maxResults != nil {
 		queryParameters["maxresults"] = autorest.Encode("query", *maxResults)
+	} else {
+		queryParameters["maxresults"] = autorest.Encode("query", 1000)
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -736,6 +775,9 @@ func (client ComputeNodeClient) ListPreparer(ctx context.Context, poolID string,
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -768,7 +810,7 @@ func (client ComputeNodeClient) ListResponder(resp *http.Response) (result Compu
 func (client ComputeNodeClient) listNextResults(lastResults ComputeNodeListResult) (result ComputeNodeListResult, err error) {
 	req, err := lastResults.computeNodeListResultPreparer()
 	if err != nil {
-		return result, autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "listNextResults", nil, "Failure preparing next results request")
+		return result, autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "listNextResults", nil, "Failure preparing next results request")
 	}
 	if req == nil {
 		return
@@ -776,11 +818,11 @@ func (client ComputeNodeClient) listNextResults(lastResults ComputeNodeListResul
 	resp, err := client.ListSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		return result, autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "listNextResults", resp, "Failure sending next results request")
+		return result, autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "listNextResults", resp, "Failure sending next results request")
 	}
 	result, err = client.ListResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "listNextResults", resp, "Failure responding to next results request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "listNextResults", resp, "Failure responding to next results request")
 	}
 	return
 }
@@ -793,30 +835,30 @@ func (client ComputeNodeClient) ListComplete(ctx context.Context, poolID string,
 
 // Reboot you can restart a node only if it is in an idle or running state.
 //
-// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node that you want to
-// restart. nodeRebootParameter is the parameters for the request. timeout is the maximum time that the server can
-// spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request
-// identity, in the form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the time
-// the request was issued. Client libraries typically set this to the current system clock time; set it explicitly if
-// you are calling the REST API directly.
+// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node that you want
+// to restart. nodeRebootParameter is the parameters for the request. timeout is the maximum time that the server
+// can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated
+// request identity, in the form of a GUID with no decoration such as curly braces, e.g.
+// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client ComputeNodeClient) Reboot(ctx context.Context, poolID string, nodeID string, nodeRebootParameter *NodeRebootParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.RebootPreparer(ctx, poolID, nodeID, nodeRebootParameter, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "Reboot", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "Reboot", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.RebootSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "Reboot", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "Reboot", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.RebootResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "Reboot", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "Reboot", resp, "Failure responding to request")
 	}
 
 	return
@@ -835,6 +877,8 @@ func (client ComputeNodeClient) RebootPreparer(ctx context.Context, poolID strin
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -854,6 +898,9 @@ func (client ComputeNodeClient) RebootPreparer(ctx context.Context, poolID strin
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -884,30 +931,30 @@ func (client ComputeNodeClient) RebootResponder(resp *http.Response) (result aut
 // Reimage you can reinstall the operating system on a node only if it is in an idle or running state. This API can be
 // invoked only on pools created with the cloud service configuration property.
 //
-// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node that you want to
-// restart. nodeReimageParameter is the parameters for the request. timeout is the maximum time that the server can
-// spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request
-// identity, in the form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the time
-// the request was issued. Client libraries typically set this to the current system clock time; set it explicitly if
-// you are calling the REST API directly.
+// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node that you want
+// to restart. nodeReimageParameter is the parameters for the request. timeout is the maximum time that the server
+// can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated
+// request identity, in the form of a GUID with no decoration such as curly braces, e.g.
+// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client ComputeNodeClient) Reimage(ctx context.Context, poolID string, nodeID string, nodeReimageParameter *NodeReimageParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.ReimagePreparer(ctx, poolID, nodeID, nodeReimageParameter, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "Reimage", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "Reimage", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.ReimageSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "Reimage", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "Reimage", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.ReimageResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "Reimage", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "Reimage", resp, "Failure responding to request")
 	}
 
 	return
@@ -926,6 +973,8 @@ func (client ComputeNodeClient) ReimagePreparer(ctx context.Context, poolID stri
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -945,6 +994,9 @@ func (client ComputeNodeClient) ReimagePreparer(ctx context.Context, poolID stri
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -976,31 +1028,31 @@ func (client ComputeNodeClient) ReimageResponder(resp *http.Response) (result au
 // element is not specified, the current value is replaced with the default value, not left unmodified. You can update
 // a user account on a node only when it is in the idle or running state.
 //
-// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the machine on which you want to
-// update a user account. userName is the name of the user account to update. nodeUpdateUserParameter is the parameters
-// for the request. timeout is the maximum time that the server can spend processing the request, in seconds. The
-// default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no
-// decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the
-// server should return the client-request-id in the response. ocpDate is the time the request was issued. Client
-// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
-// directly.
+// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the machine on which you want
+// to update a user account. userName is the name of the user account to update. nodeUpdateUserParameter is the
+// parameters for the request. timeout is the maximum time that the server can spend processing the request, in
+// seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a
+// GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID
+// is whether the server should return the client-request-id in the response. ocpDate is the time the request was
+// issued. Client libraries typically set this to the current system clock time; set it explicitly if you are
+// calling the REST API directly.
 func (client ComputeNodeClient) UpdateUser(ctx context.Context, poolID string, nodeID string, userName string, nodeUpdateUserParameter NodeUpdateUserParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.UpdateUserPreparer(ctx, poolID, nodeID, userName, nodeUpdateUserParameter, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "UpdateUser", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "UpdateUser", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.UpdateUserSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "UpdateUser", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "UpdateUser", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.UpdateUserResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.ComputeNodeClient", "UpdateUser", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.ComputeNodeClient", "UpdateUser", resp, "Failure responding to request")
 	}
 
 	return
@@ -1020,6 +1072,8 @@ func (client ComputeNodeClient) UpdateUserPreparer(ctx context.Context, poolID s
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1036,6 +1090,9 @@ func (client ComputeNodeClient) UpdateUserPreparer(ctx context.Context, poolID s
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,

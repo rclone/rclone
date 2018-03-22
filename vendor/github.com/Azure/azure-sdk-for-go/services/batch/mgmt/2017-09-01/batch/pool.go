@@ -42,12 +42,12 @@ func NewPoolClientWithBaseURI(baseURI string, subscriptionID string) PoolClient 
 
 // Create creates a new pool inside the specified account.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account. poolName is the pool name. This must be unique within the account. parameters is additional
-// parameters for pool creation. ifMatch is the entity state (ETag) version of the pool to update. A value of "*" can
-// be used to apply the operation only if the pool already exists. If omitted, this operation will always be applied.
-// ifNoneMatch is set to '*' to allow a new pool to be created, but to prevent updating an existing pool. Other values
-// will be ignored.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account. poolName is the pool name. This must be unique within the account. parameters is additional
+// parameters for pool creation. ifMatch is the entity state (ETag) version of the pool to update. A value of "*"
+// can be used to apply the operation only if the pool already exists. If omitted, this operation will always be
+// applied. ifNoneMatch is set to '*' to allow a new pool to be created, but to prevent updating an existing pool.
+// Other values will be ignored.
 func (client PoolClient) Create(ctx context.Context, resourceGroupName string, accountName string, poolName string, parameters Pool, ifMatch string, ifNoneMatch string) (result PoolCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -84,7 +84,7 @@ func (client PoolClient) Create(ctx context.Context, resourceGroupName string, a
 							Chain: []validation.Constraint{{Target: "parameters.PoolProperties.NetworkConfiguration.EndpointConfiguration.InboundNatPools", Name: validation.Null, Rule: true, Chain: nil}}},
 						}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.PoolClient", "Create")
+		return result, validation.NewError("batch.PoolClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, accountName, poolName, parameters, ifMatch, ifNoneMatch)
@@ -164,8 +164,8 @@ func (client PoolClient) CreateResponder(resp *http.Response) (result Pool, err 
 
 // Delete deletes the specified pool.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account. poolName is the pool name. This must be unique within the account.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account. poolName is the pool name. This must be unique within the account.
 func (client PoolClient) Delete(ctx context.Context, resourceGroupName string, accountName string, poolName string) (result PoolDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -176,7 +176,7 @@ func (client PoolClient) Delete(ctx context.Context, resourceGroupName string, a
 			Constraints: []validation.Constraint{{Target: "poolName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "poolName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "poolName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9_-]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.PoolClient", "Delete")
+		return result, validation.NewError("batch.PoolClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName, poolName)
@@ -245,8 +245,8 @@ func (client PoolClient) DeleteResponder(resp *http.Response) (result autorest.R
 
 // DisableAutoScale disables automatic scaling for a pool.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account. poolName is the pool name. This must be unique within the account.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account. poolName is the pool name. This must be unique within the account.
 func (client PoolClient) DisableAutoScale(ctx context.Context, resourceGroupName string, accountName string, poolName string) (result Pool, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -257,7 +257,7 @@ func (client PoolClient) DisableAutoScale(ctx context.Context, resourceGroupName
 			Constraints: []validation.Constraint{{Target: "poolName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "poolName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "poolName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9_-]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.PoolClient", "DisableAutoScale")
+		return result, validation.NewError("batch.PoolClient", "DisableAutoScale", err.Error())
 	}
 
 	req, err := client.DisableAutoScalePreparer(ctx, resourceGroupName, accountName, poolName)
@@ -325,8 +325,8 @@ func (client PoolClient) DisableAutoScaleResponder(resp *http.Response) (result 
 
 // Get gets information about the specified pool.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account. poolName is the pool name. This must be unique within the account.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account. poolName is the pool name. This must be unique within the account.
 func (client PoolClient) Get(ctx context.Context, resourceGroupName string, accountName string, poolName string) (result Pool, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -337,7 +337,7 @@ func (client PoolClient) Get(ctx context.Context, resourceGroupName string, acco
 			Constraints: []validation.Constraint{{Target: "poolName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "poolName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "poolName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9_-]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.PoolClient", "Get")
+		return result, validation.NewError("batch.PoolClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountName, poolName)
@@ -405,10 +405,11 @@ func (client PoolClient) GetResponder(resp *http.Response) (result Pool, err err
 
 // ListByBatchAccount lists all of the pools in the specified account.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account. maxresults is the maximum number of items to return in the response. selectParameter is comma
-// separated list of properties that should be returned. e.g. "properties/provisioningState". Only top level properties
-// under properties/ are valid for selection. filter is oData filter expression. Valid properties for filtering are:
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account. maxresults is the maximum number of items to return in the response. selectParameter is comma
+// separated list of properties that should be returned. e.g. "properties/provisioningState". Only top level
+// properties under properties/ are valid for selection. filter is oData filter expression. Valid properties for
+// filtering are:
 //
 // name
 // properties/allocationState
@@ -427,7 +428,7 @@ func (client PoolClient) ListByBatchAccount(ctx context.Context, resourceGroupNa
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.PoolClient", "ListByBatchAccount")
+		return result, validation.NewError("batch.PoolClient", "ListByBatchAccount", err.Error())
 	}
 
 	result.fn = client.listByBatchAccountNextResults
@@ -535,8 +536,8 @@ func (client PoolClient) ListByBatchAccountComplete(ctx context.Context, resourc
 // changes first to stopping and then to steady. A resize operation need not be an explicit resize pool request; this
 // API can also be used to halt the initial sizing of the pool when it is created.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account. poolName is the pool name. This must be unique within the account.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account. poolName is the pool name. This must be unique within the account.
 func (client PoolClient) StopResize(ctx context.Context, resourceGroupName string, accountName string, poolName string) (result Pool, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -547,7 +548,7 @@ func (client PoolClient) StopResize(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "poolName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "poolName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "poolName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9_-]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.PoolClient", "StopResize")
+		return result, validation.NewError("batch.PoolClient", "StopResize", err.Error())
 	}
 
 	req, err := client.StopResizePreparer(ctx, resourceGroupName, accountName, poolName)
@@ -615,11 +616,11 @@ func (client PoolClient) StopResizeResponder(resp *http.Response) (result Pool, 
 
 // Update updates the properties of an existing pool.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account. poolName is the pool name. This must be unique within the account. parameters is pool properties that
-// should be updated. Properties that are supplied will be updated, any property not supplied will be unchanged.
-// ifMatch is the entity state (ETag) version of the pool to update. This value can be omitted or set to "*" to apply
-// the operation unconditionally.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account. poolName is the pool name. This must be unique within the account. parameters is pool
+// properties that should be updated. Properties that are supplied will be updated, any property not supplied will
+// be unchanged. ifMatch is the entity state (ETag) version of the pool to update. This value can be omitted or set
+// to "*" to apply the operation unconditionally.
 func (client PoolClient) Update(ctx context.Context, resourceGroupName string, accountName string, poolName string, parameters Pool, ifMatch string) (result Pool, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -630,7 +631,7 @@ func (client PoolClient) Update(ctx context.Context, resourceGroupName string, a
 			Constraints: []validation.Constraint{{Target: "poolName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "poolName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "poolName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9_-]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.PoolClient", "Update")
+		return result, validation.NewError("batch.PoolClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, poolName, parameters, ifMatch)

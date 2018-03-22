@@ -222,6 +222,11 @@ type BackupConfiguration struct {
 	// Kind: This is always sql#backupConfiguration.
 	Kind string `json:"kind,omitempty"`
 
+	// ReplicationLogArchivingEnabled: Whether replication log archiving is
+	// enabled. Replication log archiving is required for the point-in-time
+	// recovery (PITR) feature. PostgreSQL instances only.
+	ReplicationLogArchivingEnabled bool `json:"replicationLogArchivingEnabled,omitempty"`
+
 	// StartTime: Start time for the daily backup configuration in UTC
 	// timezone in the 24 hour format - HH:MM.
 	StartTime string `json:"startTime,omitempty"`
@@ -414,6 +419,12 @@ type CloneContext struct {
 	// Kind: This is always sql#cloneContext.
 	Kind string `json:"kind,omitempty"`
 
+	// PitrTimestampMs: The epoch timestamp, in milliseconds, of the time to
+	// which a point-in-time recovery (PITR) is performed. PostgreSQL
+	// instances only. For MySQL instances, use the binLogCoordinates
+	// property.
+	PitrTimestampMs int64 `json:"pitrTimestampMs,omitempty,string"`
+
 	// ForceSendFields is a list of field names (e.g. "BinLogCoordinates")
 	// to unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
@@ -567,9 +578,10 @@ type DatabaseInstance struct {
 	// property is applicable only to Second Generation instances.
 	FailoverReplica *DatabaseInstanceFailoverReplica `json:"failoverReplica,omitempty"`
 
-	// GceZone: The GCE zone that the instance is serving from. In case when
-	// the instance is failed over to standby zone, this value may be
-	// different with what user specified in the settings.
+	// GceZone: The Compute Engine zone that the instance is currently
+	// serving from. This value could be different from the zone that was
+	// specified when the instance was created if the instance has failed
+	// over to its secondary zone.
 	GceZone string `json:"gceZone,omitempty"`
 
 	// InstanceType: The instance type. This can be one of the
@@ -806,6 +818,16 @@ type DemoteMasterContext struct {
 	// replicating from the on-premises master.
 	ReplicaConfiguration *DemoteMasterConfiguration `json:"replicaConfiguration,omitempty"`
 
+	// VerifyGtidConsistency: Verify GTID consistency for demote operation.
+	// Default value: True. Second Generation instances only. Setting this
+	// flag to false enables you to bypass GTID consistency check between
+	// on-premises master and Cloud SQL instance during the demotion
+	// operation but also exposes you to the risk of future replication
+	// failures. Change the value only if you know the reason for the GTID
+	// divergence and are confident that doing so will not cause any
+	// replication issues.
+	VerifyGtidConsistency bool `json:"verifyGtidConsistency,omitempty"`
+
 	// ForceSendFields is a list of field names (e.g. "Kind") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
@@ -903,8 +925,9 @@ type ExportContext struct {
 
 	// Uri: The path to the file in Google Cloud Storage where the export
 	// will be stored. The URI is in the form gs://bucketName/fileName. If
-	// the file already exists, the operation fails. If fileType is SQL and
-	// the filename ends with .gz, the contents are compressed.
+	// the file already exists, the requests succeeds, but the operation
+	// fails. If fileType is SQL and the filename ends with .gz, the
+	// contents are compressed.
 	Uri string `json:"uri,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CsvExportOptions") to
@@ -1580,6 +1603,9 @@ type MaintenanceWindow struct {
 	// Kind: This is always sql#maintenanceWindow.
 	Kind string `json:"kind,omitempty"`
 
+	// UpdateTrack: Maintenance timing setting: canary (Earlier) or stable
+	// (Later).
+	//  Learn more.
 	UpdateTrack string `json:"updateTrack,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Day") to
@@ -1985,16 +2011,16 @@ func (s *RestoreBackupContext) MarshalJSON() ([]byte, error) {
 type Settings struct {
 	// ActivationPolicy: The activation policy specifies when the instance
 	// is activated; it is applicable only when the instance state is
-	// RUNNABLE. The activation policy cannot be updated together with other
-	// settings for Second Generation instances. Valid values:
-	// ALWAYS: The instance is on; it is not deactivated by
-	// inactivity.
+	// RUNNABLE. Valid values:
+	// ALWAYS: The instance is on, and remains so even in the absence of
+	// connection requests.
 	// NEVER: The instance is off; it is not activated, even if a connection
 	// request arrives.
-	// ON_DEMAND: The instance responds to incoming requests, and turns
-	// itself off when not in use. Instances with PER_USE pricing turn off
-	// after 15 minutes of inactivity. Instances with PER_PACKAGE pricing
-	// turn off after 12 hours of inactivity.
+	// ON_DEMAND: First Generation instances only. The instance responds to
+	// incoming requests, and turns itself off when not in use. Instances
+	// with PER_USE pricing turn off after 15 minutes of inactivity.
+	// Instances with PER_PACKAGE pricing turn off after 12 hours of
+	// inactivity.
 	ActivationPolicy string `json:"activationPolicy,omitempty"`
 
 	// AuthorizedGaeApplications: The App Engine app IDs that can access
@@ -2002,7 +2028,14 @@ type Settings struct {
 	// instances.
 	AuthorizedGaeApplications []string `json:"authorizedGaeApplications,omitempty"`
 
-	// AvailabilityType: Reserved for future use.
+	// AvailabilityType: Availability type (PostgreSQL instances only).
+	// Potential values:
+	// ZONAL: The instance serves data from only one zone. Outages in that
+	// zone affect data accessibility.
+	// REGIONAL: The instance can serve data from more than one zone in a
+	// region (it is highly available).
+	// For more information, see Overview of the High Availability
+	// Configuration.
 	AvailabilityType string `json:"availabilityType,omitempty"`
 
 	// BackupConfiguration: The daily backup configuration for the instance.
@@ -2041,8 +2074,8 @@ type Settings struct {
 
 	// LocationPreference: The location preference settings. This allows the
 	// instance to be located as near as possible to either an App Engine
-	// app or GCE zone for better performance. App Engine co-location is
-	// only applicable to First Generation instances.
+	// app or Compute Engine zone for better performance. App Engine
+	// co-location is only applicable to First Generation instances.
 	LocationPreference *LocationPreference `json:"locationPreference,omitempty"`
 
 	// MaintenanceWindow: The maintenance window for this instance. This
@@ -2261,9 +2294,9 @@ func (s *SslCertsInsertRequest) MarshalJSON() ([]byte, error) {
 
 // SslCertsInsertResponse: SslCert insert response.
 type SslCertsInsertResponse struct {
-	// ClientCert: The new client certificate and private key. The new
-	// certificate will not work until the instance is restarted for First
-	// Generation instances.
+	// ClientCert: The new client certificate and private key. For First
+	// Generation instances, the new certificate does not take effect until
+	// the instance is restarted.
 	ClientCert *SslCertDetail `json:"clientCert,omitempty"`
 
 	// Kind: This is always sql#sslCertsInsert.
@@ -4522,8 +4555,7 @@ type InstancesDemoteMasterCall struct {
 	header_                      http.Header
 }
 
-// DemoteMaster: Demotes the standalone instance to be a read replica
-// Cloud SQL instance of an on-premises master.
+// DemoteMaster: Reserved for future use.
 func (r *InstancesService) DemoteMaster(project string, instance string, instancesdemotemasterrequest *InstancesDemoteMasterRequest) *InstancesDemoteMasterCall {
 	c := &InstancesDemoteMasterCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
@@ -4619,7 +4651,7 @@ func (c *InstancesDemoteMasterCall) Do(opts ...googleapi.CallOption) (*Operation
 	}
 	return ret, nil
 	// {
-	//   "description": "Demotes the standalone instance to be a read replica Cloud SQL instance of an on-premises master.",
+	//   "description": "Reserved for future use.",
 	//   "httpMethod": "POST",
 	//   "id": "sql.instances.demoteMaster",
 	//   "parameterOrder": [

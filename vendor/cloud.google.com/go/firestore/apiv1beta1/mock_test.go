@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -293,7 +293,7 @@ func TestFirestoreGetDocument(t *testing.T) {
 
 	mockFirestore.resps = append(mockFirestore.resps[:0], expectedResponse)
 
-	var formattedName string = AnyPathPath("[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
+	var formattedName string = fmt.Sprintf("projects/%s/databases/%s/documents/%s/%s", "[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
 	var request = &firestorepb.GetDocumentRequest{
 		Name: formattedName,
 	}
@@ -322,7 +322,7 @@ func TestFirestoreGetDocumentError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockFirestore.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = AnyPathPath("[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
+	var formattedName string = fmt.Sprintf("projects/%s/databases/%s/documents/%s/%s", "[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
 	var request = &firestorepb.GetDocumentRequest{
 		Name: formattedName,
 	}
@@ -355,7 +355,7 @@ func TestFirestoreListDocuments(t *testing.T) {
 
 	mockFirestore.resps = append(mockFirestore.resps[:0], expectedResponse)
 
-	var formattedParent string = AnyPathPath("[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
+	var formattedParent string = fmt.Sprintf("projects/%s/databases/%s/documents/%s/%s", "[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
 	var collectionId string = "collectionId-821242276"
 	var request = &firestorepb.ListDocumentsRequest{
 		Parent:       formattedParent,
@@ -396,7 +396,7 @@ func TestFirestoreListDocumentsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockFirestore.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = AnyPathPath("[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
+	var formattedParent string = fmt.Sprintf("projects/%s/databases/%s/documents/%s/%s", "[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
 	var collectionId string = "collectionId-821242276"
 	var request = &firestorepb.ListDocumentsRequest{
 		Parent:       formattedParent,
@@ -428,7 +428,7 @@ func TestFirestoreCreateDocument(t *testing.T) {
 
 	mockFirestore.resps = append(mockFirestore.resps[:0], expectedResponse)
 
-	var formattedParent string = AnyPathPath("[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
+	var formattedParent string = fmt.Sprintf("projects/%s/databases/%s/documents/%s/%s", "[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
 	var collectionId string = "collectionId-821242276"
 	var documentId string = "documentId506676927"
 	var document *firestorepb.Document = &firestorepb.Document{}
@@ -463,7 +463,7 @@ func TestFirestoreCreateDocumentError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockFirestore.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = AnyPathPath("[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
+	var formattedParent string = fmt.Sprintf("projects/%s/databases/%s/documents/%s/%s", "[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
 	var collectionId string = "collectionId-821242276"
 	var documentId string = "documentId506676927"
 	var document *firestorepb.Document = &firestorepb.Document{}
@@ -559,7 +559,7 @@ func TestFirestoreDeleteDocument(t *testing.T) {
 
 	mockFirestore.resps = append(mockFirestore.resps[:0], expectedResponse)
 
-	var formattedName string = AnyPathPath("[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
+	var formattedName string = fmt.Sprintf("projects/%s/databases/%s/documents/%s/%s", "[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
 	var request = &firestorepb.DeleteDocumentRequest{
 		Name: formattedName,
 	}
@@ -585,7 +585,7 @@ func TestFirestoreDeleteDocumentError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockFirestore.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = AnyPathPath("[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
+	var formattedName string = fmt.Sprintf("projects/%s/databases/%s/documents/%s/%s", "[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
 	var request = &firestorepb.DeleteDocumentRequest{
 		Name: formattedName,
 	}
@@ -618,7 +618,7 @@ func TestFirestoreBatchGetDocuments(t *testing.T) {
 
 	mockFirestore.resps = append(mockFirestore.resps[:0], expectedResponse)
 
-	var formattedDatabase string = DatabaseRootPath("[PROJECT]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/databases/%s", "[PROJECT]", "[DATABASE]")
 	var documents []string = nil
 	var request = &firestorepb.BatchGetDocumentsRequest{
 		Database:  formattedDatabase,
@@ -653,7 +653,7 @@ func TestFirestoreBatchGetDocumentsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockFirestore.err = gstatus.Error(errCode, "test error")
 
-	var formattedDatabase string = DatabaseRootPath("[PROJECT]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/databases/%s", "[PROJECT]", "[DATABASE]")
 	var documents []string = nil
 	var request = &firestorepb.BatchGetDocumentsRequest{
 		Database:  formattedDatabase,
@@ -689,7 +689,7 @@ func TestFirestoreBeginTransaction(t *testing.T) {
 
 	mockFirestore.resps = append(mockFirestore.resps[:0], expectedResponse)
 
-	var formattedDatabase string = DatabaseRootPath("[PROJECT]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/databases/%s", "[PROJECT]", "[DATABASE]")
 	var request = &firestorepb.BeginTransactionRequest{
 		Database: formattedDatabase,
 	}
@@ -718,7 +718,7 @@ func TestFirestoreBeginTransactionError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockFirestore.err = gstatus.Error(errCode, "test error")
 
-	var formattedDatabase string = DatabaseRootPath("[PROJECT]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/databases/%s", "[PROJECT]", "[DATABASE]")
 	var request = &firestorepb.BeginTransactionRequest{
 		Database: formattedDatabase,
 	}
@@ -745,7 +745,7 @@ func TestFirestoreCommit(t *testing.T) {
 
 	mockFirestore.resps = append(mockFirestore.resps[:0], expectedResponse)
 
-	var formattedDatabase string = DatabaseRootPath("[PROJECT]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/databases/%s", "[PROJECT]", "[DATABASE]")
 	var writes []*firestorepb.Write = nil
 	var request = &firestorepb.CommitRequest{
 		Database: formattedDatabase,
@@ -776,7 +776,7 @@ func TestFirestoreCommitError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockFirestore.err = gstatus.Error(errCode, "test error")
 
-	var formattedDatabase string = DatabaseRootPath("[PROJECT]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/databases/%s", "[PROJECT]", "[DATABASE]")
 	var writes []*firestorepb.Write = nil
 	var request = &firestorepb.CommitRequest{
 		Database: formattedDatabase,
@@ -805,7 +805,7 @@ func TestFirestoreRollback(t *testing.T) {
 
 	mockFirestore.resps = append(mockFirestore.resps[:0], expectedResponse)
 
-	var formattedDatabase string = DatabaseRootPath("[PROJECT]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/databases/%s", "[PROJECT]", "[DATABASE]")
 	var transaction []byte = []byte("-34")
 	var request = &firestorepb.RollbackRequest{
 		Database:    formattedDatabase,
@@ -833,7 +833,7 @@ func TestFirestoreRollbackError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockFirestore.err = gstatus.Error(errCode, "test error")
 
-	var formattedDatabase string = DatabaseRootPath("[PROJECT]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/databases/%s", "[PROJECT]", "[DATABASE]")
 	var transaction []byte = []byte("-34")
 	var request = &firestorepb.RollbackRequest{
 		Database:    formattedDatabase,
@@ -866,7 +866,7 @@ func TestFirestoreRunQuery(t *testing.T) {
 
 	mockFirestore.resps = append(mockFirestore.resps[:0], expectedResponse)
 
-	var formattedParent string = AnyPathPath("[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
+	var formattedParent string = fmt.Sprintf("projects/%s/databases/%s/documents/%s/%s", "[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
 	var request = &firestorepb.RunQueryRequest{
 		Parent: formattedParent,
 	}
@@ -899,7 +899,7 @@ func TestFirestoreRunQueryError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockFirestore.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = AnyPathPath("[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
+	var formattedParent string = fmt.Sprintf("projects/%s/databases/%s/documents/%s/%s", "[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
 	var request = &firestorepb.RunQueryRequest{
 		Parent: formattedParent,
 	}
@@ -935,7 +935,7 @@ func TestFirestoreWrite(t *testing.T) {
 
 	mockFirestore.resps = append(mockFirestore.resps[:0], expectedResponse)
 
-	var formattedDatabase string = DatabaseRootPath("[PROJECT]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/databases/%s", "[PROJECT]", "[DATABASE]")
 	var request = &firestorepb.WriteRequest{
 		Database: formattedDatabase,
 	}
@@ -974,7 +974,7 @@ func TestFirestoreWriteError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockFirestore.err = gstatus.Error(errCode, "test error")
 
-	var formattedDatabase string = DatabaseRootPath("[PROJECT]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/databases/%s", "[PROJECT]", "[DATABASE]")
 	var request = &firestorepb.WriteRequest{
 		Database: formattedDatabase,
 	}
@@ -1011,7 +1011,7 @@ func TestFirestoreListen(t *testing.T) {
 
 	mockFirestore.resps = append(mockFirestore.resps[:0], expectedResponse)
 
-	var formattedDatabase string = DatabaseRootPath("[PROJECT]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/databases/%s", "[PROJECT]", "[DATABASE]")
 	var request = &firestorepb.ListenRequest{
 		Database: formattedDatabase,
 	}
@@ -1050,7 +1050,7 @@ func TestFirestoreListenError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockFirestore.err = gstatus.Error(errCode, "test error")
 
-	var formattedDatabase string = DatabaseRootPath("[PROJECT]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/databases/%s", "[PROJECT]", "[DATABASE]")
 	var request = &firestorepb.ListenRequest{
 		Database: formattedDatabase,
 	}
@@ -1093,7 +1093,7 @@ func TestFirestoreListCollectionIds(t *testing.T) {
 
 	mockFirestore.resps = append(mockFirestore.resps[:0], expectedResponse)
 
-	var formattedParent string = AnyPathPath("[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
+	var formattedParent string = fmt.Sprintf("projects/%s/databases/%s/documents/%s/%s", "[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
 	var request = &firestorepb.ListCollectionIdsRequest{
 		Parent: formattedParent,
 	}
@@ -1132,7 +1132,7 @@ func TestFirestoreListCollectionIdsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockFirestore.err = gstatus.Error(errCode, "test error")
 
-	var formattedParent string = AnyPathPath("[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
+	var formattedParent string = fmt.Sprintf("projects/%s/databases/%s/documents/%s/%s", "[PROJECT]", "[DATABASE]", "[DOCUMENT]", "[ANY_PATH]")
 	var request = &firestorepb.ListCollectionIdsRequest{
 		Parent: formattedParent,
 	}

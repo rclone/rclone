@@ -18,17 +18,20 @@ package storage
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
+	"encoding/json"
 	"github.com/Azure/go-autorest/autorest"
+	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/date"
+	"net/http"
 )
 
 // AccessTier enumerates the values for access tier.
 type AccessTier string
 
 const (
-	// Cool specifies the cool state for access tier.
+	// Cool ...
 	Cool AccessTier = "Cool"
-	// Hot specifies the hot state for access tier.
+	// Hot ...
 	Hot AccessTier = "Hot"
 )
 
@@ -36,9 +39,9 @@ const (
 type AccountStatus string
 
 const (
-	// Available specifies the available state for account status.
+	// Available ...
 	Available AccountStatus = "available"
-	// Unavailable specifies the unavailable state for account status.
+	// Unavailable ...
 	Unavailable AccountStatus = "unavailable"
 )
 
@@ -46,7 +49,7 @@ const (
 type Action string
 
 const (
-	// Allow specifies the allow state for action.
+	// Allow ...
 	Allow Action = "Allow"
 )
 
@@ -54,13 +57,13 @@ const (
 type Bypass string
 
 const (
-	// AzureServices specifies the azure services state for bypass.
+	// AzureServices ...
 	AzureServices Bypass = "AzureServices"
-	// Logging specifies the logging state for bypass.
+	// Logging ...
 	Logging Bypass = "Logging"
-	// Metrics specifies the metrics state for bypass.
+	// Metrics ...
 	Metrics Bypass = "Metrics"
-	// None specifies the none state for bypass.
+	// None ...
 	None Bypass = "None"
 )
 
@@ -68,9 +71,9 @@ const (
 type DefaultAction string
 
 const (
-	// DefaultActionAllow specifies the default action allow state for default action.
+	// DefaultActionAllow ...
 	DefaultActionAllow DefaultAction = "Allow"
-	// DefaultActionDeny specifies the default action deny state for default action.
+	// DefaultActionDeny ...
 	DefaultActionDeny DefaultAction = "Deny"
 )
 
@@ -78,9 +81,9 @@ const (
 type HTTPProtocol string
 
 const (
-	// HTTPS specifies the https state for http protocol.
+	// HTTPS ...
 	HTTPS HTTPProtocol = "https"
-	// Httpshttp specifies the httpshttp state for http protocol.
+	// Httpshttp ...
 	Httpshttp HTTPProtocol = "https,http"
 )
 
@@ -88,9 +91,9 @@ const (
 type KeyPermission string
 
 const (
-	// Full specifies the full state for key permission.
+	// Full ...
 	Full KeyPermission = "Full"
-	// Read specifies the read state for key permission.
+	// Read ...
 	Read KeyPermission = "Read"
 )
 
@@ -98,9 +101,9 @@ const (
 type KeySource string
 
 const (
-	// MicrosoftKeyvault specifies the microsoft keyvault state for key source.
+	// MicrosoftKeyvault ...
 	MicrosoftKeyvault KeySource = "Microsoft.Keyvault"
-	// MicrosoftStorage specifies the microsoft storage state for key source.
+	// MicrosoftStorage ...
 	MicrosoftStorage KeySource = "Microsoft.Storage"
 )
 
@@ -108,11 +111,11 @@ const (
 type Kind string
 
 const (
-	// BlobStorage specifies the blob storage state for kind.
+	// BlobStorage ...
 	BlobStorage Kind = "BlobStorage"
-	// Storage specifies the storage state for kind.
+	// Storage ...
 	Storage Kind = "Storage"
-	// StorageV2 specifies the storage v2 state for kind.
+	// StorageV2 ...
 	StorageV2 Kind = "StorageV2"
 )
 
@@ -120,21 +123,21 @@ const (
 type Permissions string
 
 const (
-	// A specifies the a state for permissions.
+	// A ...
 	A Permissions = "a"
-	// C specifies the c state for permissions.
+	// C ...
 	C Permissions = "c"
-	// D specifies the d state for permissions.
+	// D ...
 	D Permissions = "d"
-	// L specifies the l state for permissions.
+	// L ...
 	L Permissions = "l"
-	// P specifies the p state for permissions.
+	// P ...
 	P Permissions = "p"
-	// R specifies the r state for permissions.
+	// R ...
 	R Permissions = "r"
-	// U specifies the u state for permissions.
+	// U ...
 	U Permissions = "u"
-	// W specifies the w state for permissions.
+	// W ...
 	W Permissions = "w"
 )
 
@@ -142,11 +145,11 @@ const (
 type ProvisioningState string
 
 const (
-	// Creating specifies the creating state for provisioning state.
+	// Creating ...
 	Creating ProvisioningState = "Creating"
-	// ResolvingDNS specifies the resolving dns state for provisioning state.
+	// ResolvingDNS ...
 	ResolvingDNS ProvisioningState = "ResolvingDNS"
-	// Succeeded specifies the succeeded state for provisioning state.
+	// Succeeded ...
 	Succeeded ProvisioningState = "Succeeded"
 )
 
@@ -154,9 +157,9 @@ const (
 type Reason string
 
 const (
-	// AccountNameInvalid specifies the account name invalid state for reason.
+	// AccountNameInvalid ...
 	AccountNameInvalid Reason = "AccountNameInvalid"
-	// AlreadyExists specifies the already exists state for reason.
+	// AlreadyExists ...
 	AlreadyExists Reason = "AlreadyExists"
 )
 
@@ -164,9 +167,9 @@ const (
 type ReasonCode string
 
 const (
-	// NotAvailableForSubscription specifies the not available for subscription state for reason code.
+	// NotAvailableForSubscription ...
 	NotAvailableForSubscription ReasonCode = "NotAvailableForSubscription"
-	// QuotaID specifies the quota id state for reason code.
+	// QuotaID ...
 	QuotaID ReasonCode = "QuotaId"
 )
 
@@ -174,13 +177,13 @@ const (
 type Services string
 
 const (
-	// B specifies the b state for services.
+	// B ...
 	B Services = "b"
-	// F specifies the f state for services.
+	// F ...
 	F Services = "f"
-	// Q specifies the q state for services.
+	// Q ...
 	Q Services = "q"
-	// T specifies the t state for services.
+	// T ...
 	T Services = "t"
 )
 
@@ -188,13 +191,13 @@ const (
 type SignedResource string
 
 const (
-	// SignedResourceB specifies the signed resource b state for signed resource.
+	// SignedResourceB ...
 	SignedResourceB SignedResource = "b"
-	// SignedResourceC specifies the signed resource c state for signed resource.
+	// SignedResourceC ...
 	SignedResourceC SignedResource = "c"
-	// SignedResourceF specifies the signed resource f state for signed resource.
+	// SignedResourceF ...
 	SignedResourceF SignedResource = "f"
-	// SignedResourceS specifies the signed resource s state for signed resource.
+	// SignedResourceS ...
 	SignedResourceS SignedResource = "s"
 )
 
@@ -202,11 +205,11 @@ const (
 type SignedResourceTypes string
 
 const (
-	// SignedResourceTypesC specifies the signed resource types c state for signed resource types.
+	// SignedResourceTypesC ...
 	SignedResourceTypesC SignedResourceTypes = "c"
-	// SignedResourceTypesO specifies the signed resource types o state for signed resource types.
+	// SignedResourceTypesO ...
 	SignedResourceTypesO SignedResourceTypes = "o"
-	// SignedResourceTypesS specifies the signed resource types s state for signed resource types.
+	// SignedResourceTypesS ...
 	SignedResourceTypesS SignedResourceTypes = "s"
 )
 
@@ -214,15 +217,15 @@ const (
 type SkuName string
 
 const (
-	// PremiumLRS specifies the premium lrs state for sku name.
+	// PremiumLRS ...
 	PremiumLRS SkuName = "Premium_LRS"
-	// StandardGRS specifies the standard grs state for sku name.
+	// StandardGRS ...
 	StandardGRS SkuName = "Standard_GRS"
-	// StandardLRS specifies the standard lrs state for sku name.
+	// StandardLRS ...
 	StandardLRS SkuName = "Standard_LRS"
-	// StandardRAGRS specifies the standard ragrs state for sku name.
+	// StandardRAGRS ...
 	StandardRAGRS SkuName = "Standard_RAGRS"
-	// StandardZRS specifies the standard zrs state for sku name.
+	// StandardZRS ...
 	StandardZRS SkuName = "Standard_ZRS"
 )
 
@@ -230,9 +233,9 @@ const (
 type SkuTier string
 
 const (
-	// Premium specifies the premium state for sku tier.
+	// Premium ...
 	Premium SkuTier = "Premium"
-	// Standard specifies the standard state for sku tier.
+	// Standard ...
 	Standard SkuTier = "Standard"
 )
 
@@ -240,15 +243,15 @@ const (
 type State string
 
 const (
-	// StateDeprovisioning specifies the state deprovisioning state for state.
+	// StateDeprovisioning ...
 	StateDeprovisioning State = "deprovisioning"
-	// StateFailed specifies the state failed state for state.
+	// StateFailed ...
 	StateFailed State = "failed"
-	// StateNetworkSourceDeleted specifies the state network source deleted state for state.
+	// StateNetworkSourceDeleted ...
 	StateNetworkSourceDeleted State = "networkSourceDeleted"
-	// StateProvisioning specifies the state provisioning state for state.
+	// StateProvisioning ...
 	StateProvisioning State = "provisioning"
-	// StateSucceeded specifies the state succeeded state for state.
+	// StateSucceeded ...
 	StateSucceeded State = "succeeded"
 )
 
@@ -256,350 +259,926 @@ const (
 type UsageUnit string
 
 const (
-	// Bytes specifies the bytes state for usage unit.
+	// Bytes ...
 	Bytes UsageUnit = "Bytes"
-	// BytesPerSecond specifies the bytes per second state for usage unit.
+	// BytesPerSecond ...
 	BytesPerSecond UsageUnit = "BytesPerSecond"
-	// Count specifies the count state for usage unit.
+	// Count ...
 	Count UsageUnit = "Count"
-	// CountsPerSecond specifies the counts per second state for usage unit.
+	// CountsPerSecond ...
 	CountsPerSecond UsageUnit = "CountsPerSecond"
-	// Percent specifies the percent state for usage unit.
+	// Percent ...
 	Percent UsageUnit = "Percent"
-	// Seconds specifies the seconds state for usage unit.
+	// Seconds ...
 	Seconds UsageUnit = "Seconds"
 )
 
-// Account is the storage account.
+// Account the storage account.
 type Account struct {
-	autorest.Response  `json:"-"`
-	ID                 *string             `json:"id,omitempty"`
-	Name               *string             `json:"name,omitempty"`
-	Type               *string             `json:"type,omitempty"`
-	Location           *string             `json:"location,omitempty"`
-	Tags               *map[string]*string `json:"tags,omitempty"`
-	Sku                *Sku                `json:"sku,omitempty"`
-	Kind               Kind                `json:"kind,omitempty"`
-	Identity           *Identity           `json:"identity,omitempty"`
+	autorest.Response `json:"-"`
+	// Sku - Gets the SKU.
+	Sku *Sku `json:"sku,omitempty"`
+	// Kind - Gets the Kind. Possible values include: 'Storage', 'StorageV2', 'BlobStorage'
+	Kind Kind `json:"kind,omitempty"`
+	// Identity - The identity of the resource.
+	Identity *Identity `json:"identity,omitempty"`
+	// AccountProperties - Properties of the storage account.
 	*AccountProperties `json:"properties,omitempty"`
+	// ID - Resource Id
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type
+	Type *string `json:"type,omitempty"`
+	// Location - Resource location
+	Location *string `json:"location,omitempty"`
+	// Tags - Tags assigned to a resource; can be used for viewing and grouping a resource (across resource groups).
+	Tags map[string]*string `json:"tags"`
 }
 
-// AccountCheckNameAvailabilityParameters is the parameters used to check the availabity of the storage account name.
+// MarshalJSON is the custom marshaler for Account.
+func (a Account) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if a.Sku != nil {
+		objectMap["sku"] = a.Sku
+	}
+	objectMap["kind"] = a.Kind
+	if a.Identity != nil {
+		objectMap["identity"] = a.Identity
+	}
+	if a.AccountProperties != nil {
+		objectMap["properties"] = a.AccountProperties
+	}
+	if a.ID != nil {
+		objectMap["id"] = a.ID
+	}
+	if a.Name != nil {
+		objectMap["name"] = a.Name
+	}
+	if a.Type != nil {
+		objectMap["type"] = a.Type
+	}
+	if a.Location != nil {
+		objectMap["location"] = a.Location
+	}
+	if a.Tags != nil {
+		objectMap["tags"] = a.Tags
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for Account struct.
+func (a *Account) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "sku":
+			if v != nil {
+				var sku Sku
+				err = json.Unmarshal(*v, &sku)
+				if err != nil {
+					return err
+				}
+				a.Sku = &sku
+			}
+		case "kind":
+			if v != nil {
+				var kind Kind
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				a.Kind = kind
+			}
+		case "identity":
+			if v != nil {
+				var identity Identity
+				err = json.Unmarshal(*v, &identity)
+				if err != nil {
+					return err
+				}
+				a.Identity = &identity
+			}
+		case "properties":
+			if v != nil {
+				var accountProperties AccountProperties
+				err = json.Unmarshal(*v, &accountProperties)
+				if err != nil {
+					return err
+				}
+				a.AccountProperties = &accountProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				a.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				a.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				a.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				a.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				a.Tags = tags
+			}
+		}
+	}
+
+	return nil
+}
+
+// AccountCheckNameAvailabilityParameters the parameters used to check the availabity of the storage account name.
 type AccountCheckNameAvailabilityParameters struct {
+	// Name - The storage account name.
 	Name *string `json:"name,omitempty"`
+	// Type - The type of resource, Microsoft.Storage/storageAccounts
 	Type *string `json:"type,omitempty"`
 }
 
-// AccountCreateParameters is the parameters used when creating a storage account.
+// AccountCreateParameters the parameters used when creating a storage account.
 type AccountCreateParameters struct {
-	Sku                                *Sku                `json:"sku,omitempty"`
-	Kind                               Kind                `json:"kind,omitempty"`
-	Location                           *string             `json:"location,omitempty"`
-	Tags                               *map[string]*string `json:"tags,omitempty"`
-	Identity                           *Identity           `json:"identity,omitempty"`
+	// Sku - Required. Gets or sets the sku name.
+	Sku *Sku `json:"sku,omitempty"`
+	// Kind - Required. Indicates the type of storage account. Possible values include: 'Storage', 'StorageV2', 'BlobStorage'
+	Kind Kind `json:"kind,omitempty"`
+	// Location - Required. Gets or sets the location of the resource. This will be one of the supported and registered Azure Geo Regions (e.g. West US, East US, Southeast Asia, etc.). The geo region of a resource cannot be changed once it is created, but if an identical geo region is specified on update, the request will succeed.
+	Location *string `json:"location,omitempty"`
+	// Tags - Gets or sets a list of key value pairs that describe the resource. These tags can be used for viewing and grouping this resource (across resource groups). A maximum of 15 tags can be provided for a resource. Each tag must have a key with a length no greater than 128 characters and a value with a length no greater than 256 characters.
+	Tags map[string]*string `json:"tags"`
+	// Identity - The identity of the resource.
+	Identity *Identity `json:"identity,omitempty"`
+	// AccountPropertiesCreateParameters - The parameters used to create the storage account.
 	*AccountPropertiesCreateParameters `json:"properties,omitempty"`
 }
 
-// AccountKey is an access key for the storage account.
+// MarshalJSON is the custom marshaler for AccountCreateParameters.
+func (acp AccountCreateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if acp.Sku != nil {
+		objectMap["sku"] = acp.Sku
+	}
+	objectMap["kind"] = acp.Kind
+	if acp.Location != nil {
+		objectMap["location"] = acp.Location
+	}
+	if acp.Tags != nil {
+		objectMap["tags"] = acp.Tags
+	}
+	if acp.Identity != nil {
+		objectMap["identity"] = acp.Identity
+	}
+	if acp.AccountPropertiesCreateParameters != nil {
+		objectMap["properties"] = acp.AccountPropertiesCreateParameters
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for AccountCreateParameters struct.
+func (acp *AccountCreateParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "sku":
+			if v != nil {
+				var sku Sku
+				err = json.Unmarshal(*v, &sku)
+				if err != nil {
+					return err
+				}
+				acp.Sku = &sku
+			}
+		case "kind":
+			if v != nil {
+				var kind Kind
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				acp.Kind = kind
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				acp.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				acp.Tags = tags
+			}
+		case "identity":
+			if v != nil {
+				var identity Identity
+				err = json.Unmarshal(*v, &identity)
+				if err != nil {
+					return err
+				}
+				acp.Identity = &identity
+			}
+		case "properties":
+			if v != nil {
+				var accountPropertiesCreateParameters AccountPropertiesCreateParameters
+				err = json.Unmarshal(*v, &accountPropertiesCreateParameters)
+				if err != nil {
+					return err
+				}
+				acp.AccountPropertiesCreateParameters = &accountPropertiesCreateParameters
+			}
+		}
+	}
+
+	return nil
+}
+
+// AccountKey an access key for the storage account.
 type AccountKey struct {
-	KeyName     *string       `json:"keyName,omitempty"`
-	Value       *string       `json:"value,omitempty"`
+	// KeyName - Name of the key.
+	KeyName *string `json:"keyName,omitempty"`
+	// Value - Base 64-encoded value of the key.
+	Value *string `json:"value,omitempty"`
+	// Permissions - Permissions for the key -- read-only or full permissions. Possible values include: 'Read', 'Full'
 	Permissions KeyPermission `json:"permissions,omitempty"`
 }
 
-// AccountListKeysResult is the response from the ListKeys operation.
+// AccountListKeysResult the response from the ListKeys operation.
 type AccountListKeysResult struct {
 	autorest.Response `json:"-"`
-	Keys              *[]AccountKey `json:"keys,omitempty"`
+	// Keys - Gets the list of storage account keys and their properties for the specified storage account.
+	Keys *[]AccountKey `json:"keys,omitempty"`
 }
 
-// AccountListResult is the response from the List Storage Accounts operation.
+// AccountListResult the response from the List Storage Accounts operation.
 type AccountListResult struct {
 	autorest.Response `json:"-"`
-	Value             *[]Account `json:"value,omitempty"`
+	// Value - Gets the list of storage accounts and their properties.
+	Value *[]Account `json:"value,omitempty"`
 }
 
-// AccountProperties is properties of the storage account.
+// AccountProperties properties of the storage account.
 type AccountProperties struct {
-	ProvisioningState      ProvisioningState `json:"provisioningState,omitempty"`
-	PrimaryEndpoints       *Endpoints        `json:"primaryEndpoints,omitempty"`
-	PrimaryLocation        *string           `json:"primaryLocation,omitempty"`
-	StatusOfPrimary        AccountStatus     `json:"statusOfPrimary,omitempty"`
-	LastGeoFailoverTime    *date.Time        `json:"lastGeoFailoverTime,omitempty"`
-	SecondaryLocation      *string           `json:"secondaryLocation,omitempty"`
-	StatusOfSecondary      AccountStatus     `json:"statusOfSecondary,omitempty"`
-	CreationTime           *date.Time        `json:"creationTime,omitempty"`
-	CustomDomain           *CustomDomain     `json:"customDomain,omitempty"`
-	SecondaryEndpoints     *Endpoints        `json:"secondaryEndpoints,omitempty"`
-	Encryption             *Encryption       `json:"encryption,omitempty"`
-	AccessTier             AccessTier        `json:"accessTier,omitempty"`
-	EnableHTTPSTrafficOnly *bool             `json:"supportsHttpsTrafficOnly,omitempty"`
-	NetworkRuleSet         *NetworkRuleSet   `json:"networkAcls,omitempty"`
+	// ProvisioningState - Gets the status of the storage account at the time the operation was called. Possible values include: 'Creating', 'ResolvingDNS', 'Succeeded'
+	ProvisioningState ProvisioningState `json:"provisioningState,omitempty"`
+	// PrimaryEndpoints - Gets the URLs that are used to perform a retrieval of a public blob, queue, or table object. Note that Standard_ZRS and Premium_LRS accounts only return the blob endpoint.
+	PrimaryEndpoints *Endpoints `json:"primaryEndpoints,omitempty"`
+	// PrimaryLocation - Gets the location of the primary data center for the storage account.
+	PrimaryLocation *string `json:"primaryLocation,omitempty"`
+	// StatusOfPrimary - Gets the status indicating whether the primary location of the storage account is available or unavailable. Possible values include: 'Available', 'Unavailable'
+	StatusOfPrimary AccountStatus `json:"statusOfPrimary,omitempty"`
+	// LastGeoFailoverTime - Gets the timestamp of the most recent instance of a failover to the secondary location. Only the most recent timestamp is retained. This element is not returned if there has never been a failover instance. Only available if the accountType is Standard_GRS or Standard_RAGRS.
+	LastGeoFailoverTime *date.Time `json:"lastGeoFailoverTime,omitempty"`
+	// SecondaryLocation - Gets the location of the geo-replicated secondary for the storage account. Only available if the accountType is Standard_GRS or Standard_RAGRS.
+	SecondaryLocation *string `json:"secondaryLocation,omitempty"`
+	// StatusOfSecondary - Gets the status indicating whether the secondary location of the storage account is available or unavailable. Only available if the SKU name is Standard_GRS or Standard_RAGRS. Possible values include: 'Available', 'Unavailable'
+	StatusOfSecondary AccountStatus `json:"statusOfSecondary,omitempty"`
+	// CreationTime - Gets the creation date and time of the storage account in UTC.
+	CreationTime *date.Time `json:"creationTime,omitempty"`
+	// CustomDomain - Gets the custom domain the user assigned to this storage account.
+	CustomDomain *CustomDomain `json:"customDomain,omitempty"`
+	// SecondaryEndpoints - Gets the URLs that are used to perform a retrieval of a public blob, queue, or table object from the secondary location of the storage account. Only available if the SKU name is Standard_RAGRS.
+	SecondaryEndpoints *Endpoints `json:"secondaryEndpoints,omitempty"`
+	// Encryption - Gets the encryption settings on the account. If unspecified, the account is unencrypted.
+	Encryption *Encryption `json:"encryption,omitempty"`
+	// AccessTier - Required for storage accounts where kind = BlobStorage. The access tier used for billing. Possible values include: 'Hot', 'Cool'
+	AccessTier AccessTier `json:"accessTier,omitempty"`
+	// EnableHTTPSTrafficOnly - Allows https traffic only to storage service if sets to true.
+	EnableHTTPSTrafficOnly *bool `json:"supportsHttpsTrafficOnly,omitempty"`
+	// NetworkRuleSet - Network rule set
+	NetworkRuleSet *NetworkRuleSet `json:"networkAcls,omitempty"`
 }
 
-// AccountPropertiesCreateParameters is the parameters used to create the storage account.
+// AccountPropertiesCreateParameters the parameters used to create the storage account.
 type AccountPropertiesCreateParameters struct {
-	CustomDomain           *CustomDomain   `json:"customDomain,omitempty"`
-	Encryption             *Encryption     `json:"encryption,omitempty"`
-	NetworkRuleSet         *NetworkRuleSet `json:"networkAcls,omitempty"`
-	AccessTier             AccessTier      `json:"accessTier,omitempty"`
-	EnableHTTPSTrafficOnly *bool           `json:"supportsHttpsTrafficOnly,omitempty"`
+	// CustomDomain - User domain assigned to the storage account. Name is the CNAME source. Only one custom domain is supported per storage account at this time. To clear the existing custom domain, use an empty string for the custom domain name property.
+	CustomDomain *CustomDomain `json:"customDomain,omitempty"`
+	// Encryption - Provides the encryption settings on the account. If left unspecified the account encryption settings will remain the same. The default setting is unencrypted.
+	Encryption *Encryption `json:"encryption,omitempty"`
+	// NetworkRuleSet - Network rule set
+	NetworkRuleSet *NetworkRuleSet `json:"networkAcls,omitempty"`
+	// AccessTier - Required for storage accounts where kind = BlobStorage. The access tier used for billing. Possible values include: 'Hot', 'Cool'
+	AccessTier AccessTier `json:"accessTier,omitempty"`
+	// EnableHTTPSTrafficOnly - Allows https traffic only to storage service if sets to true.
+	EnableHTTPSTrafficOnly *bool `json:"supportsHttpsTrafficOnly,omitempty"`
 }
 
-// AccountPropertiesUpdateParameters is the parameters used when updating a storage account.
+// AccountPropertiesUpdateParameters the parameters used when updating a storage account.
 type AccountPropertiesUpdateParameters struct {
-	CustomDomain           *CustomDomain   `json:"customDomain,omitempty"`
-	Encryption             *Encryption     `json:"encryption,omitempty"`
-	AccessTier             AccessTier      `json:"accessTier,omitempty"`
-	EnableHTTPSTrafficOnly *bool           `json:"supportsHttpsTrafficOnly,omitempty"`
-	NetworkRuleSet         *NetworkRuleSet `json:"networkAcls,omitempty"`
+	// CustomDomain - Custom domain assigned to the storage account by the user. Name is the CNAME source. Only one custom domain is supported per storage account at this time. To clear the existing custom domain, use an empty string for the custom domain name property.
+	CustomDomain *CustomDomain `json:"customDomain,omitempty"`
+	// Encryption - Provides the encryption settings on the account. The default setting is unencrypted.
+	Encryption *Encryption `json:"encryption,omitempty"`
+	// AccessTier - Required for storage accounts where kind = BlobStorage. The access tier used for billing. Possible values include: 'Hot', 'Cool'
+	AccessTier AccessTier `json:"accessTier,omitempty"`
+	// EnableHTTPSTrafficOnly - Allows https traffic only to storage service if sets to true.
+	EnableHTTPSTrafficOnly *bool `json:"supportsHttpsTrafficOnly,omitempty"`
+	// NetworkRuleSet - Network rule set
+	NetworkRuleSet *NetworkRuleSet `json:"networkAcls,omitempty"`
 }
 
-// AccountRegenerateKeyParameters is the parameters used to regenerate the storage account key.
+// AccountRegenerateKeyParameters the parameters used to regenerate the storage account key.
 type AccountRegenerateKeyParameters struct {
+	// KeyName - The name of storage keys that want to be regenerated, possible vaules are key1, key2.
 	KeyName *string `json:"keyName,omitempty"`
 }
 
-// AccountSasParameters is the parameters to list SAS credentials of a storage account.
+// AccountSasParameters the parameters to list SAS credentials of a storage account.
 type AccountSasParameters struct {
-	Services               Services            `json:"signedServices,omitempty"`
-	ResourceTypes          SignedResourceTypes `json:"signedResourceTypes,omitempty"`
-	Permissions            Permissions         `json:"signedPermission,omitempty"`
-	IPAddressOrRange       *string             `json:"signedIp,omitempty"`
-	Protocols              HTTPProtocol        `json:"signedProtocol,omitempty"`
-	SharedAccessStartTime  *date.Time          `json:"signedStart,omitempty"`
-	SharedAccessExpiryTime *date.Time          `json:"signedExpiry,omitempty"`
-	KeyToSign              *string             `json:"keyToSign,omitempty"`
+	// Services - The signed services accessible with the account SAS. Possible values include: Blob (b), Queue (q), Table (t), File (f). Possible values include: 'B', 'Q', 'T', 'F'
+	Services Services `json:"signedServices,omitempty"`
+	// ResourceTypes - The signed resource types that are accessible with the account SAS. Service (s): Access to service-level APIs; Container (c): Access to container-level APIs; Object (o): Access to object-level APIs for blobs, queue messages, table entities, and files. Possible values include: 'SignedResourceTypesS', 'SignedResourceTypesC', 'SignedResourceTypesO'
+	ResourceTypes SignedResourceTypes `json:"signedResourceTypes,omitempty"`
+	// Permissions - The signed permissions for the account SAS. Possible values include: Read (r), Write (w), Delete (d), List (l), Add (a), Create (c), Update (u) and Process (p). Possible values include: 'R', 'D', 'W', 'L', 'A', 'C', 'U', 'P'
+	Permissions Permissions `json:"signedPermission,omitempty"`
+	// IPAddressOrRange - An IP address or a range of IP addresses from which to accept requests.
+	IPAddressOrRange *string `json:"signedIp,omitempty"`
+	// Protocols - The protocol permitted for a request made with the account SAS. Possible values include: 'Httpshttp', 'HTTPS'
+	Protocols HTTPProtocol `json:"signedProtocol,omitempty"`
+	// SharedAccessStartTime - The time at which the SAS becomes valid.
+	SharedAccessStartTime *date.Time `json:"signedStart,omitempty"`
+	// SharedAccessExpiryTime - The time at which the shared access signature becomes invalid.
+	SharedAccessExpiryTime *date.Time `json:"signedExpiry,omitempty"`
+	// KeyToSign - The key to sign the account SAS token with.
+	KeyToSign *string `json:"keyToSign,omitempty"`
 }
 
-// AccountUpdateParameters is the parameters that can be provided when updating the storage account properties.
+// AccountsCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+type AccountsCreateFuture struct {
+	azure.Future
+	req *http.Request
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future AccountsCreateFuture) Result(client AccountsClient) (a Account, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "storage.AccountsCreateFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		return a, azure.NewAsyncOpIncompleteError("storage.AccountsCreateFuture")
+	}
+	if future.PollingMethod() == azure.PollingLocation {
+		a, err = client.CreateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "storage.AccountsCreateFuture", "Result", future.Response(), "Failure responding to request")
+		}
+		return
+	}
+	var req *http.Request
+	var resp *http.Response
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "storage.AccountsCreateFuture", "Result", resp, "Failure sending request")
+		return
+	}
+	a, err = client.CreateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "storage.AccountsCreateFuture", "Result", resp, "Failure responding to request")
+	}
+	return
+}
+
+// AccountUpdateParameters the parameters that can be provided when updating the storage account properties.
 type AccountUpdateParameters struct {
-	Sku                                *Sku                `json:"sku,omitempty"`
-	Tags                               *map[string]*string `json:"tags,omitempty"`
-	Identity                           *Identity           `json:"identity,omitempty"`
+	// Sku - Gets or sets the SKU name. Note that the SKU name cannot be updated to Standard_ZRS or Premium_LRS, nor can accounts of those sku names be updated to any other value.
+	Sku *Sku `json:"sku,omitempty"`
+	// Tags - Gets or sets a list of key value pairs that describe the resource. These tags can be used in viewing and grouping this resource (across resource groups). A maximum of 15 tags can be provided for a resource. Each tag must have a key no greater in length than 128 characters and a value no greater in length than 256 characters.
+	Tags map[string]*string `json:"tags"`
+	// Identity - The identity of the resource.
+	Identity *Identity `json:"identity,omitempty"`
+	// AccountPropertiesUpdateParameters - The parameters used when updating a storage account.
 	*AccountPropertiesUpdateParameters `json:"properties,omitempty"`
-	Kind                               Kind `json:"kind,omitempty"`
+	// Kind - Optional. Indicates the type of storage account. Currently only StorageV2 value supported by server. Possible values include: 'Storage', 'StorageV2', 'BlobStorage'
+	Kind Kind `json:"kind,omitempty"`
 }
 
-// CheckNameAvailabilityResult is the CheckNameAvailability operation response.
+// MarshalJSON is the custom marshaler for AccountUpdateParameters.
+func (aup AccountUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if aup.Sku != nil {
+		objectMap["sku"] = aup.Sku
+	}
+	if aup.Tags != nil {
+		objectMap["tags"] = aup.Tags
+	}
+	if aup.Identity != nil {
+		objectMap["identity"] = aup.Identity
+	}
+	if aup.AccountPropertiesUpdateParameters != nil {
+		objectMap["properties"] = aup.AccountPropertiesUpdateParameters
+	}
+	objectMap["kind"] = aup.Kind
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for AccountUpdateParameters struct.
+func (aup *AccountUpdateParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "sku":
+			if v != nil {
+				var sku Sku
+				err = json.Unmarshal(*v, &sku)
+				if err != nil {
+					return err
+				}
+				aup.Sku = &sku
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				aup.Tags = tags
+			}
+		case "identity":
+			if v != nil {
+				var identity Identity
+				err = json.Unmarshal(*v, &identity)
+				if err != nil {
+					return err
+				}
+				aup.Identity = &identity
+			}
+		case "properties":
+			if v != nil {
+				var accountPropertiesUpdateParameters AccountPropertiesUpdateParameters
+				err = json.Unmarshal(*v, &accountPropertiesUpdateParameters)
+				if err != nil {
+					return err
+				}
+				aup.AccountPropertiesUpdateParameters = &accountPropertiesUpdateParameters
+			}
+		case "kind":
+			if v != nil {
+				var kind Kind
+				err = json.Unmarshal(*v, &kind)
+				if err != nil {
+					return err
+				}
+				aup.Kind = kind
+			}
+		}
+	}
+
+	return nil
+}
+
+// CheckNameAvailabilityResult the CheckNameAvailability operation response.
 type CheckNameAvailabilityResult struct {
 	autorest.Response `json:"-"`
-	NameAvailable     *bool   `json:"nameAvailable,omitempty"`
-	Reason            Reason  `json:"reason,omitempty"`
-	Message           *string `json:"message,omitempty"`
+	// NameAvailable - Gets a boolean value that indicates whether the name is available for you to use. If true, the name is available. If false, the name has already been taken or is invalid and cannot be used.
+	NameAvailable *bool `json:"nameAvailable,omitempty"`
+	// Reason - Gets the reason that a storage account name could not be used. The Reason element is only returned if NameAvailable is false. Possible values include: 'AccountNameInvalid', 'AlreadyExists'
+	Reason Reason `json:"reason,omitempty"`
+	// Message - Gets an error message explaining the Reason value in more detail.
+	Message *string `json:"message,omitempty"`
 }
 
-// CustomDomain is the custom domain assigned to this storage account. This can be set via Update.
+// CustomDomain the custom domain assigned to this storage account. This can be set via Update.
 type CustomDomain struct {
-	Name         *string `json:"name,omitempty"`
-	UseSubDomain *bool   `json:"useSubDomain,omitempty"`
+	// Name - Gets or sets the custom domain name assigned to the storage account. Name is the CNAME source.
+	Name *string `json:"name,omitempty"`
+	// UseSubDomain - Indicates whether indirect CName validation is enabled. Default value is false. This should only be set on updates.
+	UseSubDomain *bool `json:"useSubDomain,omitempty"`
 }
 
-// Dimension is dimension of blobs, possiblly be blob type or access tier.
+// Dimension dimension of blobs, possiblly be blob type or access tier.
 type Dimension struct {
-	Name        *string `json:"name,omitempty"`
+	// Name - Display name of dimension.
+	Name *string `json:"name,omitempty"`
+	// DisplayName - Display name of dimension.
 	DisplayName *string `json:"displayName,omitempty"`
 }
 
-// Encryption is the encryption settings on the storage account.
+// Encryption the encryption settings on the storage account.
 type Encryption struct {
-	Services           *EncryptionServices `json:"services,omitempty"`
-	KeySource          KeySource           `json:"keySource,omitempty"`
+	// Services - List of services which support encryption.
+	Services *EncryptionServices `json:"services,omitempty"`
+	// KeySource - The encryption keySource (provider). Possible values (case-insensitive):  Microsoft.Storage, Microsoft.Keyvault. Possible values include: 'MicrosoftStorage', 'MicrosoftKeyvault'
+	KeySource KeySource `json:"keySource,omitempty"`
+	// KeyVaultProperties - Properties provided by key vault.
 	KeyVaultProperties *KeyVaultProperties `json:"keyvaultproperties,omitempty"`
 }
 
-// EncryptionService is a service that allows server-side encryption to be used.
+// EncryptionService a service that allows server-side encryption to be used.
 type EncryptionService struct {
-	Enabled         *bool      `json:"enabled,omitempty"`
+	// Enabled - A boolean indicating whether or not the service encrypts the data as it is stored.
+	Enabled *bool `json:"enabled,omitempty"`
+	// LastEnabledTime - Gets a rough estimate of the date/time when the encryption was last enabled by the user. Only returned when encryption is enabled. There might be some unencrypted blobs which were written after this time, as it is just a rough estimate.
 	LastEnabledTime *date.Time `json:"lastEnabledTime,omitempty"`
 }
 
-// EncryptionServices is a list of services that support encryption.
+// EncryptionServices a list of services that support encryption.
 type EncryptionServices struct {
-	Blob  *EncryptionService `json:"blob,omitempty"`
-	File  *EncryptionService `json:"file,omitempty"`
+	// Blob - The encryption function of the blob storage service.
+	Blob *EncryptionService `json:"blob,omitempty"`
+	// File - The encryption function of the file storage service.
+	File *EncryptionService `json:"file,omitempty"`
+	// Table - The encryption function of the table storage service.
 	Table *EncryptionService `json:"table,omitempty"`
+	// Queue - The encryption function of the queue storage service.
 	Queue *EncryptionService `json:"queue,omitempty"`
 }
 
-// Endpoints is the URIs that are used to perform a retrieval of a public blob, queue, or table object.
+// Endpoints the URIs that are used to perform a retrieval of a public blob, queue, or table object.
 type Endpoints struct {
-	Blob  *string `json:"blob,omitempty"`
+	// Blob - Gets the blob endpoint.
+	Blob *string `json:"blob,omitempty"`
+	// Queue - Gets the queue endpoint.
 	Queue *string `json:"queue,omitempty"`
+	// Table - Gets the table endpoint.
 	Table *string `json:"table,omitempty"`
-	File  *string `json:"file,omitempty"`
+	// File - Gets the file endpoint.
+	File *string `json:"file,omitempty"`
 }
 
-// Identity is identity for the resource.
+// Identity identity for the resource.
 type Identity struct {
+	// PrincipalID - The principal ID of resource identity.
 	PrincipalID *string `json:"principalId,omitempty"`
-	TenantID    *string `json:"tenantId,omitempty"`
-	Type        *string `json:"type,omitempty"`
+	// TenantID - The tenant ID of resource.
+	TenantID *string `json:"tenantId,omitempty"`
+	// Type - The identity type.
+	Type *string `json:"type,omitempty"`
 }
 
-// IPRule is IP rule with specific IP or IP range in CIDR format.
+// IPRule IP rule with specific IP or IP range in CIDR format.
 type IPRule struct {
+	// IPAddressOrRange - Specifies the IP or IP range in CIDR format. Only IPV4 address is allowed.
 	IPAddressOrRange *string `json:"value,omitempty"`
-	Action           Action  `json:"action,omitempty"`
+	// Action - The action of IP ACL rule. Possible values include: 'Allow'
+	Action Action `json:"action,omitempty"`
 }
 
-// KeyVaultProperties is properties of key vault.
+// KeyVaultProperties properties of key vault.
 type KeyVaultProperties struct {
-	KeyName     *string `json:"keyname,omitempty"`
-	KeyVersion  *string `json:"keyversion,omitempty"`
+	// KeyName - The name of KeyVault key.
+	KeyName *string `json:"keyname,omitempty"`
+	// KeyVersion - The version of KeyVault key.
+	KeyVersion *string `json:"keyversion,omitempty"`
+	// KeyVaultURI - The Uri of KeyVault.
 	KeyVaultURI *string `json:"keyvaulturi,omitempty"`
 }
 
-// ListAccountSasResponse is the List SAS credentials operation response.
+// ListAccountSasResponse the List SAS credentials operation response.
 type ListAccountSasResponse struct {
 	autorest.Response `json:"-"`
-	AccountSasToken   *string `json:"accountSasToken,omitempty"`
+	// AccountSasToken - List SAS credentials of storage account.
+	AccountSasToken *string `json:"accountSasToken,omitempty"`
 }
 
-// ListServiceSasResponse is the List service SAS credentials operation response.
+// ListServiceSasResponse the List service SAS credentials operation response.
 type ListServiceSasResponse struct {
 	autorest.Response `json:"-"`
-	ServiceSasToken   *string `json:"serviceSasToken,omitempty"`
+	// ServiceSasToken - List service SAS credentials of speicific resource.
+	ServiceSasToken *string `json:"serviceSasToken,omitempty"`
 }
 
-// MetricSpecification is metric specification of operation.
+// MetricSpecification metric specification of operation.
 type MetricSpecification struct {
-	Name                            *string      `json:"name,omitempty"`
-	DisplayName                     *string      `json:"displayName,omitempty"`
-	DisplayDescription              *string      `json:"displayDescription,omitempty"`
-	Unit                            *string      `json:"unit,omitempty"`
-	Dimensions                      *[]Dimension `json:"dimensions,omitempty"`
-	AggregationType                 *string      `json:"aggregationType,omitempty"`
-	FillGapWithZero                 *bool        `json:"fillGapWithZero,omitempty"`
-	Category                        *string      `json:"category,omitempty"`
-	ResourceIDDimensionNameOverride *string      `json:"resourceIdDimensionNameOverride,omitempty"`
+	// Name - Name of metric specification.
+	Name *string `json:"name,omitempty"`
+	// DisplayName - Display name of metric specification.
+	DisplayName *string `json:"displayName,omitempty"`
+	// DisplayDescription - Display description of metric specification.
+	DisplayDescription *string `json:"displayDescription,omitempty"`
+	// Unit - Unit could be Bytes or Count.
+	Unit *string `json:"unit,omitempty"`
+	// Dimensions - Dimensions of blobs, including blob type and access tier.
+	Dimensions *[]Dimension `json:"dimensions,omitempty"`
+	// AggregationType - Aggregation type could be Average.
+	AggregationType *string `json:"aggregationType,omitempty"`
+	// FillGapWithZero - The property to decide fill gap with zero or not.
+	FillGapWithZero *bool `json:"fillGapWithZero,omitempty"`
+	// Category - The category this metric specification belong to, could be Capacity.
+	Category *string `json:"category,omitempty"`
+	// ResourceIDDimensionNameOverride - Account Resource Id.
+	ResourceIDDimensionNameOverride *string `json:"resourceIdDimensionNameOverride,omitempty"`
 }
 
-// NetworkRuleSet is network rule set
+// NetworkRuleSet network rule set
 type NetworkRuleSet struct {
-	Bypass              Bypass                `json:"bypass,omitempty"`
+	// Bypass - Specifies whether traffic is bypassed for Logging/Metrics/AzureServices. Possible values are any combination of Logging|Metrics|AzureServices (For example, "Logging, Metrics"), or None to bypass none of those traffics. Possible values include: 'None', 'Logging', 'Metrics', 'AzureServices'
+	Bypass Bypass `json:"bypass,omitempty"`
+	// VirtualNetworkRules - Sets the virtual network rules
 	VirtualNetworkRules *[]VirtualNetworkRule `json:"virtualNetworkRules,omitempty"`
-	IPRules             *[]IPRule             `json:"ipRules,omitempty"`
-	DefaultAction       DefaultAction         `json:"defaultAction,omitempty"`
+	// IPRules - Sets the IP ACL rules
+	IPRules *[]IPRule `json:"ipRules,omitempty"`
+	// DefaultAction - Specifies the default action of allow or deny when no other rules match. Possible values include: 'DefaultActionAllow', 'DefaultActionDeny'
+	DefaultAction DefaultAction `json:"defaultAction,omitempty"`
 }
 
-// Operation is storage REST API operation definition.
+// Operation storage REST API operation definition.
 type Operation struct {
-	Name                 *string           `json:"name,omitempty"`
-	Display              *OperationDisplay `json:"display,omitempty"`
-	Origin               *string           `json:"origin,omitempty"`
+	// Name - Operation name: {provider}/{resource}/{operation}
+	Name *string `json:"name,omitempty"`
+	// Display - Display metadata associated with the operation.
+	Display *OperationDisplay `json:"display,omitempty"`
+	// Origin - The origin of operations.
+	Origin *string `json:"origin,omitempty"`
+	// OperationProperties - Properties of operation, include metric specifications.
 	*OperationProperties `json:"properties,omitempty"`
 }
 
-// OperationDisplay is display metadata associated with the operation.
+// UnmarshalJSON is the custom unmarshaler for Operation struct.
+func (o *Operation) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				o.Name = &name
+			}
+		case "display":
+			if v != nil {
+				var display OperationDisplay
+				err = json.Unmarshal(*v, &display)
+				if err != nil {
+					return err
+				}
+				o.Display = &display
+			}
+		case "origin":
+			if v != nil {
+				var origin string
+				err = json.Unmarshal(*v, &origin)
+				if err != nil {
+					return err
+				}
+				o.Origin = &origin
+			}
+		case "properties":
+			if v != nil {
+				var operationProperties OperationProperties
+				err = json.Unmarshal(*v, &operationProperties)
+				if err != nil {
+					return err
+				}
+				o.OperationProperties = &operationProperties
+			}
+		}
+	}
+
+	return nil
+}
+
+// OperationDisplay display metadata associated with the operation.
 type OperationDisplay struct {
-	Provider  *string `json:"provider,omitempty"`
-	Resource  *string `json:"resource,omitempty"`
+	// Provider - Service provider: Microsoft Storage.
+	Provider *string `json:"provider,omitempty"`
+	// Resource - Resource on which the operation is performed etc.
+	Resource *string `json:"resource,omitempty"`
+	// Operation - Type of operation: get, read, delete, etc.
 	Operation *string `json:"operation,omitempty"`
 }
 
-// OperationListResult is result of the request to list Storage operations. It contains a list of operations and a URL
+// OperationListResult result of the request to list Storage operations. It contains a list of operations and a URL
 // link to get the next set of results.
 type OperationListResult struct {
 	autorest.Response `json:"-"`
-	Value             *[]Operation `json:"value,omitempty"`
+	// Value - List of Storage operations supported by the Storage resource provider.
+	Value *[]Operation `json:"value,omitempty"`
 }
 
-// OperationProperties is properties of operation, include metric specifications.
+// OperationProperties properties of operation, include metric specifications.
 type OperationProperties struct {
+	// ServiceSpecification - One property of operation, include metric specifications.
 	ServiceSpecification *ServiceSpecification `json:"serviceSpecification,omitempty"`
 }
 
-// Resource is describes a storage resource.
+// Resource describes a storage resource.
 type Resource struct {
-	ID       *string             `json:"id,omitempty"`
-	Name     *string             `json:"name,omitempty"`
-	Type     *string             `json:"type,omitempty"`
-	Location *string             `json:"location,omitempty"`
-	Tags     *map[string]*string `json:"tags,omitempty"`
+	// ID - Resource Id
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type
+	Type *string `json:"type,omitempty"`
+	// Location - Resource location
+	Location *string `json:"location,omitempty"`
+	// Tags - Tags assigned to a resource; can be used for viewing and grouping a resource (across resource groups).
+	Tags map[string]*string `json:"tags"`
 }
 
-// Restriction is the restriction because of which SKU cannot be used.
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
+}
+
+// Restriction the restriction because of which SKU cannot be used.
 type Restriction struct {
-	Type       *string    `json:"type,omitempty"`
-	Values     *[]string  `json:"values,omitempty"`
+	// Type - The type of restrictions. As of now only possible value for this is location.
+	Type *string `json:"type,omitempty"`
+	// Values - The value of restrictions. If the restriction type is set to location. This would be different locations where the SKU is restricted.
+	Values *[]string `json:"values,omitempty"`
+	// ReasonCode - The reason for the restriction. As of now this can be “QuotaId” or “NotAvailableForSubscription”. Quota Id is set when the SKU has requiredQuotas parameter as the subscription does not belong to that quota. The “NotAvailableForSubscription” is related to capacity at DC. Possible values include: 'QuotaID', 'NotAvailableForSubscription'
 	ReasonCode ReasonCode `json:"reasonCode,omitempty"`
 }
 
-// ServiceSasParameters is the parameters to list service SAS credentials of a speicific resource.
+// ServiceSasParameters the parameters to list service SAS credentials of a speicific resource.
 type ServiceSasParameters struct {
-	CanonicalizedResource  *string        `json:"canonicalizedResource,omitempty"`
-	Resource               SignedResource `json:"signedResource,omitempty"`
-	Permissions            Permissions    `json:"signedPermission,omitempty"`
-	IPAddressOrRange       *string        `json:"signedIp,omitempty"`
-	Protocols              HTTPProtocol   `json:"signedProtocol,omitempty"`
-	SharedAccessStartTime  *date.Time     `json:"signedStart,omitempty"`
-	SharedAccessExpiryTime *date.Time     `json:"signedExpiry,omitempty"`
-	Identifier             *string        `json:"signedIdentifier,omitempty"`
-	PartitionKeyStart      *string        `json:"startPk,omitempty"`
-	PartitionKeyEnd        *string        `json:"endPk,omitempty"`
-	RowKeyStart            *string        `json:"startRk,omitempty"`
-	RowKeyEnd              *string        `json:"endRk,omitempty"`
-	KeyToSign              *string        `json:"keyToSign,omitempty"`
-	CacheControl           *string        `json:"rscc,omitempty"`
-	ContentDisposition     *string        `json:"rscd,omitempty"`
-	ContentEncoding        *string        `json:"rsce,omitempty"`
-	ContentLanguage        *string        `json:"rscl,omitempty"`
-	ContentType            *string        `json:"rsct,omitempty"`
+	// CanonicalizedResource - The canonical path to the signed resource.
+	CanonicalizedResource *string `json:"canonicalizedResource,omitempty"`
+	// Resource - The signed services accessible with the service SAS. Possible values include: Blob (b), Container (c), File (f), Share (s). Possible values include: 'SignedResourceB', 'SignedResourceC', 'SignedResourceF', 'SignedResourceS'
+	Resource SignedResource `json:"signedResource,omitempty"`
+	// Permissions - The signed permissions for the service SAS. Possible values include: Read (r), Write (w), Delete (d), List (l), Add (a), Create (c), Update (u) and Process (p). Possible values include: 'R', 'D', 'W', 'L', 'A', 'C', 'U', 'P'
+	Permissions Permissions `json:"signedPermission,omitempty"`
+	// IPAddressOrRange - An IP address or a range of IP addresses from which to accept requests.
+	IPAddressOrRange *string `json:"signedIp,omitempty"`
+	// Protocols - The protocol permitted for a request made with the account SAS. Possible values include: 'Httpshttp', 'HTTPS'
+	Protocols HTTPProtocol `json:"signedProtocol,omitempty"`
+	// SharedAccessStartTime - The time at which the SAS becomes valid.
+	SharedAccessStartTime *date.Time `json:"signedStart,omitempty"`
+	// SharedAccessExpiryTime - The time at which the shared access signature becomes invalid.
+	SharedAccessExpiryTime *date.Time `json:"signedExpiry,omitempty"`
+	// Identifier - A unique value up to 64 characters in length that correlates to an access policy specified for the container, queue, or table.
+	Identifier *string `json:"signedIdentifier,omitempty"`
+	// PartitionKeyStart - The start of partition key.
+	PartitionKeyStart *string `json:"startPk,omitempty"`
+	// PartitionKeyEnd - The end of partition key.
+	PartitionKeyEnd *string `json:"endPk,omitempty"`
+	// RowKeyStart - The start of row key.
+	RowKeyStart *string `json:"startRk,omitempty"`
+	// RowKeyEnd - The end of row key.
+	RowKeyEnd *string `json:"endRk,omitempty"`
+	// KeyToSign - The key to sign the account SAS token with.
+	KeyToSign *string `json:"keyToSign,omitempty"`
+	// CacheControl - The response header override for cache control.
+	CacheControl *string `json:"rscc,omitempty"`
+	// ContentDisposition - The response header override for content disposition.
+	ContentDisposition *string `json:"rscd,omitempty"`
+	// ContentEncoding - The response header override for content encoding.
+	ContentEncoding *string `json:"rsce,omitempty"`
+	// ContentLanguage - The response header override for content language.
+	ContentLanguage *string `json:"rscl,omitempty"`
+	// ContentType - The response header override for content type.
+	ContentType *string `json:"rsct,omitempty"`
 }
 
-// ServiceSpecification is one property of operation, include metric specifications.
+// ServiceSpecification one property of operation, include metric specifications.
 type ServiceSpecification struct {
+	// MetricSpecifications - Metric specifications of operation.
 	MetricSpecifications *[]MetricSpecification `json:"metricSpecifications,omitempty"`
 }
 
-// Sku is the SKU of the storage account.
+// Sku the SKU of the storage account.
 type Sku struct {
-	Name         SkuName          `json:"name,omitempty"`
-	Tier         SkuTier          `json:"tier,omitempty"`
-	ResourceType *string          `json:"resourceType,omitempty"`
-	Kind         Kind             `json:"kind,omitempty"`
-	Locations    *[]string        `json:"locations,omitempty"`
+	// Name - Gets or sets the sku name. Required for account creation; optional for update. Note that in older versions, sku name was called accountType. Possible values include: 'StandardLRS', 'StandardGRS', 'StandardRAGRS', 'StandardZRS', 'PremiumLRS'
+	Name SkuName `json:"name,omitempty"`
+	// Tier - Gets the sku tier. This is based on the SKU name. Possible values include: 'Standard', 'Premium'
+	Tier SkuTier `json:"tier,omitempty"`
+	// ResourceType - The type of the resource, usually it is 'storageAccounts'.
+	ResourceType *string `json:"resourceType,omitempty"`
+	// Kind - Indicates the type of storage account. Possible values include: 'Storage', 'StorageV2', 'BlobStorage'
+	Kind Kind `json:"kind,omitempty"`
+	// Locations - The set of locations that the SKU is available. This will be supported and registered Azure Geo Regions (e.g. West US, East US, Southeast Asia, etc.).
+	Locations *[]string `json:"locations,omitempty"`
+	// Capabilities - The capability information in the specified sku, including file encryption, network acls, change notification, etc.
 	Capabilities *[]SKUCapability `json:"capabilities,omitempty"`
-	Restrictions *[]Restriction   `json:"restrictions,omitempty"`
+	// Restrictions - The restrictions because of which SKU cannot be used. This is empty if there are no restrictions.
+	Restrictions *[]Restriction `json:"restrictions,omitempty"`
 }
 
-// SKUCapability is the capability information in the specified sku, including file encryption, network acls, change
+// SKUCapability the capability information in the specified sku, including file encryption, network acls, change
 // notification, etc.
 type SKUCapability struct {
-	Name  *string `json:"name,omitempty"`
+	// Name - The name of capability, The capability information in the specified sku, including file encryption, network acls, change notification, etc.
+	Name *string `json:"name,omitempty"`
+	// Value - A string value to indicate states of given capability. Possibly 'true' or 'false'.
 	Value *string `json:"value,omitempty"`
 }
 
-// SkuListResult is the response from the List Storage SKUs operation.
+// SkuListResult the response from the List Storage SKUs operation.
 type SkuListResult struct {
 	autorest.Response `json:"-"`
-	Value             *[]Sku `json:"value,omitempty"`
+	// Value - Get the list result of storage SKUs and their properties.
+	Value *[]Sku `json:"value,omitempty"`
 }
 
-// Usage is describes Storage Resource Usage.
+// Usage describes Storage Resource Usage.
 type Usage struct {
-	Unit         UsageUnit  `json:"unit,omitempty"`
-	CurrentValue *int32     `json:"currentValue,omitempty"`
-	Limit        *int32     `json:"limit,omitempty"`
-	Name         *UsageName `json:"name,omitempty"`
+	// Unit - Gets the unit of measurement. Possible values include: 'Count', 'Bytes', 'Seconds', 'Percent', 'CountsPerSecond', 'BytesPerSecond'
+	Unit UsageUnit `json:"unit,omitempty"`
+	// CurrentValue - Gets the current count of the allocated resources in the subscription.
+	CurrentValue *int32 `json:"currentValue,omitempty"`
+	// Limit - Gets the maximum count of the resources that can be allocated in the subscription.
+	Limit *int32 `json:"limit,omitempty"`
+	// Name - Gets the name of the type of usage.
+	Name *UsageName `json:"name,omitempty"`
 }
 
-// UsageListResult is the response from the List Usages operation.
+// UsageListResult the response from the List Usages operation.
 type UsageListResult struct {
 	autorest.Response `json:"-"`
-	Value             *[]Usage `json:"value,omitempty"`
+	// Value - Gets or sets the list of Storage Resource Usages.
+	Value *[]Usage `json:"value,omitempty"`
 }
 
-// UsageName is the usage names that can be used; currently limited to StorageAccount.
+// UsageName the usage names that can be used; currently limited to StorageAccount.
 type UsageName struct {
-	Value          *string `json:"value,omitempty"`
+	// Value - Gets a string describing the resource name.
+	Value *string `json:"value,omitempty"`
+	// LocalizedValue - Gets a localized string describing the resource name.
 	LocalizedValue *string `json:"localizedValue,omitempty"`
 }
 
-// VirtualNetworkRule is virtual Network rule.
+// VirtualNetworkRule virtual Network rule.
 type VirtualNetworkRule struct {
+	// VirtualNetworkResourceID - Resource ID of a subnet, for example: /subscriptions/{subscriptionId}/resourceGroups/{groupName}/providers/Microsoft.Network/virtualNetworks/{vnetName}/subnets/{subnetName}.
 	VirtualNetworkResourceID *string `json:"id,omitempty"`
-	Action                   Action  `json:"action,omitempty"`
-	State                    State   `json:"state,omitempty"`
+	// Action - The action of virtual network rule. Possible values include: 'Allow'
+	Action Action `json:"action,omitempty"`
+	// State - Gets the state of virtual network rule. Possible values include: 'StateProvisioning', 'StateDeprovisioning', 'StateSucceeded', 'StateFailed', 'StateNetworkSourceDeleted'
+	State State `json:"state,omitempty"`
 }

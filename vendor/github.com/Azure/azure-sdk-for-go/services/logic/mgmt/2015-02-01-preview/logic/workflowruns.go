@@ -41,7 +41,8 @@ func NewWorkflowRunsClientWithBaseURI(baseURI string, subscriptionID string) Wor
 
 // Cancel cancels a workflow run.
 //
-// resourceGroupName is the resource group name. workflowName is the workflow name. runName is the workflow run name.
+// resourceGroupName is the resource group name. workflowName is the workflow name. runName is the workflow run
+// name.
 func (client WorkflowRunsClient) Cancel(ctx context.Context, resourceGroupName string, workflowName string, runName string) (result autorest.Response, err error) {
 	req, err := client.CancelPreparer(ctx, resourceGroupName, workflowName, runName)
 	if err != nil {
@@ -107,7 +108,8 @@ func (client WorkflowRunsClient) CancelResponder(resp *http.Response) (result au
 
 // Get gets a workflow run.
 //
-// resourceGroupName is the resource group name. workflowName is the workflow name. runName is the workflow run name.
+// resourceGroupName is the resource group name. workflowName is the workflow name. runName is the workflow run
+// name.
 func (client WorkflowRunsClient) Get(ctx context.Context, resourceGroupName string, workflowName string, runName string) (result WorkflowRun, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, workflowName, runName)
 	if err != nil {
@@ -174,8 +176,8 @@ func (client WorkflowRunsClient) GetResponder(resp *http.Response) (result Workf
 
 // List gets a list of workflow runs.
 //
-// resourceGroupName is the resource group name. workflowName is the workflow name. top is the number of items to be
-// included in the result. filter is the filter to apply on the operation.
+// resourceGroupName is the resource group name. workflowName is the workflow name. top is the number of items to
+// be included in the result. filter is the filter to apply on the operation.
 func (client WorkflowRunsClient) List(ctx context.Context, resourceGroupName string, workflowName string, top *int32, filter string) (result WorkflowRunListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, workflowName, top, filter)

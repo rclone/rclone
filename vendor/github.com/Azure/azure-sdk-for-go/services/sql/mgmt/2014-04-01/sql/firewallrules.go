@@ -44,9 +44,9 @@ func NewFirewallRulesClientWithBaseURI(baseURI string, subscriptionID string) Fi
 
 // CreateOrUpdate creates or updates a firewall rule.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. firewallRuleName is the name of the
-// firewall rule. parameters is the required parameters for creating or updating a firewall rule.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. firewallRuleName is the name
+// of the firewall rule. parameters is the required parameters for creating or updating a firewall rule.
 func (client FirewallRulesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, firewallRuleName string, parameters FirewallRule) (result FirewallRule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -54,7 +54,7 @@ func (client FirewallRulesClient) CreateOrUpdate(ctx context.Context, resourceGr
 				Chain: []validation.Constraint{{Target: "parameters.FirewallRuleProperties.StartIPAddress", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "parameters.FirewallRuleProperties.EndIPAddress", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "sql.FirewallRulesClient", "CreateOrUpdate")
+		return result, validation.NewError("sql.FirewallRulesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, firewallRuleName, parameters)
@@ -124,9 +124,9 @@ func (client FirewallRulesClient) CreateOrUpdateResponder(resp *http.Response) (
 
 // Delete deletes a firewall rule.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. firewallRuleName is the name of the
-// firewall rule.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. firewallRuleName is the name
+// of the firewall rule.
 func (client FirewallRulesClient) Delete(ctx context.Context, resourceGroupName string, serverName string, firewallRuleName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName, firewallRuleName)
 	if err != nil {
@@ -192,9 +192,9 @@ func (client FirewallRulesClient) DeleteResponder(resp *http.Response) (result a
 
 // Get gets a firewall rule.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. firewallRuleName is the name of the
-// firewall rule.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. firewallRuleName is the name
+// of the firewall rule.
 func (client FirewallRulesClient) Get(ctx context.Context, resourceGroupName string, serverName string, firewallRuleName string) (result FirewallRule, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, firewallRuleName)
 	if err != nil {
@@ -261,8 +261,8 @@ func (client FirewallRulesClient) GetResponder(resp *http.Response) (result Fire
 
 // ListByServer returns a list of firewall rules.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
 func (client FirewallRulesClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result FirewallRuleListResult, err error) {
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)
 	if err != nil {

@@ -69,6 +69,8 @@ const (
 // Account contains information about an Azure Batch account.
 type Account struct {
 	autorest.Response `json:"-"`
+	// AccountProperties - The properties associated with the account.
+	*AccountProperties `json:"properties,omitempty"`
 	// ID - The ID of the resource
 	ID *string `json:"id,omitempty"`
 	// Name - The name of the resource
@@ -78,9 +80,31 @@ type Account struct {
 	// Location - The location of the resource
 	Location *string `json:"location,omitempty"`
 	// Tags - The tags of the resource
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// AccountProperties - The properties associated with the account.
-	*AccountProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Account.
+func (a Account) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if a.AccountProperties != nil {
+		objectMap["properties"] = a.AccountProperties
+	}
+	if a.ID != nil {
+		objectMap["id"] = a.ID
+	}
+	if a.Name != nil {
+		objectMap["name"] = a.Name
+	}
+	if a.Type != nil {
+		objectMap["type"] = a.Type
+	}
+	if a.Location != nil {
+		objectMap["location"] = a.Location
+	}
+	if a.Tags != nil {
+		objectMap["tags"] = a.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Account struct.
@@ -90,66 +114,63 @@ func (a *Account) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties AccountProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var accountProperties AccountProperties
+				err = json.Unmarshal(*v, &accountProperties)
+				if err != nil {
+					return err
+				}
+				a.AccountProperties = &accountProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				a.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				a.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				a.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				a.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				a.Tags = tags
+			}
 		}
-		a.AccountProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		a.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		a.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		a.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		a.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		a.Tags = &tags
 	}
 
 	return nil
@@ -173,22 +194,39 @@ func (future AccountCreateFuture) Result(client AccountClient) (a Account, err e
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.AccountCreateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return a, autorest.NewError("batch.AccountCreateFuture", "Result", "asynchronous operation has not completed")
+		return a, azure.NewAsyncOpIncompleteError("batch.AccountCreateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		a, err = client.CreateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "batch.AccountCreateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.AccountCreateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	a, err = client.CreateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.AccountCreateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -197,9 +235,24 @@ type AccountCreateParameters struct {
 	// Location - The region in which to create the account.
 	Location *string `json:"location,omitempty"`
 	// Tags - The user specified tags associated with the account.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// AccountBaseProperties - The properties of the account.
 	*AccountBaseProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AccountCreateParameters.
+func (acp AccountCreateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if acp.Location != nil {
+		objectMap["location"] = acp.Location
+	}
+	if acp.Tags != nil {
+		objectMap["tags"] = acp.Tags
+	}
+	if acp.AccountBaseProperties != nil {
+		objectMap["properties"] = acp.AccountBaseProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AccountCreateParameters struct.
@@ -209,36 +262,36 @@ func (acp *AccountCreateParameters) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				acp.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				acp.Tags = tags
+			}
+		case "properties":
+			if v != nil {
+				var accountBaseProperties AccountBaseProperties
+				err = json.Unmarshal(*v, &accountBaseProperties)
+				if err != nil {
+					return err
+				}
+				acp.AccountBaseProperties = &accountBaseProperties
+			}
 		}
-		acp.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		acp.Tags = &tags
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties AccountBaseProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		acp.AccountBaseProperties = &properties
 	}
 
 	return nil
@@ -256,22 +309,39 @@ func (future AccountDeleteFuture) Result(client AccountClient) (ar autorest.Resp
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.AccountDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("batch.AccountDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("batch.AccountDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "batch.AccountDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.AccountDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "batch.AccountDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -411,9 +481,21 @@ type AccountRegenerateKeyParameters struct {
 // AccountUpdateParameters parameters supplied to the Update operation.
 type AccountUpdateParameters struct {
 	// Tags - The user specified tags associated with the account.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// AccountBaseProperties - The properties of the account.
 	*AccountBaseProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AccountUpdateParameters.
+func (aup AccountUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if aup.Tags != nil {
+		objectMap["tags"] = aup.Tags
+	}
+	if aup.AccountBaseProperties != nil {
+		objectMap["properties"] = aup.AccountBaseProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for AccountUpdateParameters struct.
@@ -423,26 +505,27 @@ func (aup *AccountUpdateParameters) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				aup.Tags = tags
+			}
+		case "properties":
+			if v != nil {
+				var accountBaseProperties AccountBaseProperties
+				err = json.Unmarshal(*v, &accountBaseProperties)
+				if err != nil {
+					return err
+				}
+				aup.AccountBaseProperties = &accountBaseProperties
+			}
 		}
-		aup.Tags = &tags
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties AccountBaseProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		aup.AccountBaseProperties = &properties
 	}
 
 	return nil
@@ -642,7 +725,28 @@ type Resource struct {
 	// Location - The location of the resource
 	Location *string `json:"location,omitempty"`
 	// Tags - The tags of the resource
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UpdateApplicationParameters parameters for an ApplicationOperations.UpdateApplication request.

@@ -151,11 +151,16 @@ func setup_term() (err error) {
 		return
 	}
 
+	number_sec_len := int16(2)
+	if header[0] == 542 { // doc says it should be octal 0542, but what I see it terminfo files is 542, learn to program please... thank you..
+		number_sec_len = 4
+	}
+
 	if (header[1]+header[2])%2 != 0 {
 		// old quirk to align everything on word boundaries
 		header[2] += 1
 	}
-	str_offset = ti_header_length + header[1] + header[2] + 2*header[3]
+	str_offset = ti_header_length + header[1] + header[2] + number_sec_len*header[3]
 	table_offset = str_offset + 2*header[4]
 
 	keys = make([]string, 0xFFFF-key_min)

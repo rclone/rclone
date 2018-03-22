@@ -39,8 +39,8 @@ func NewClient() Client {
 // Build builds (compiles) the specified job in the specified Data Lake Analytics account for job correctness and
 // validation.
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. parameters is the parameters to
-// build a job.
+// accountName is the Azure Data Lake Analytics account to execute job operations on. parameters is the parameters
+// to build a job.
 func (client Client) Build(ctx context.Context, accountName string, parameters BuildJobParameters) (result Information, err error) {
 	req, err := client.BuildPreparer(ctx, accountName, parameters)
 	if err != nil {
@@ -79,7 +79,7 @@ func (client Client) BuildPreparer(ctx context.Context, accountName string, para
 		autorest.AsJSON(),
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlaJobDnsSuffix}", urlParameters),
-		autorest.WithPath("/BuildJob"),
+		autorest.WithPath("/buildJob"),
 		autorest.WithJSON(parameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
@@ -107,9 +107,9 @@ func (client Client) BuildResponder(resp *http.Response) (result Information, er
 
 // Cancel cancels the running job specified by the job ID.
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job identifier.
-// Uniquely identifies the job across all jobs submitted to the service.
-func (client Client) Cancel(ctx context.Context, accountName string, jobIdentity uuid.UUID) (result JobCancelFuture, err error) {
+// accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job
+// identifier. Uniquely identifies the job across all jobs submitted to the service.
+func (client Client) Cancel(ctx context.Context, accountName string, jobIdentity uuid.UUID) (result CancelFuture, err error) {
 	req, err := client.CancelPreparer(ctx, accountName, jobIdentity)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "job.Client", "Cancel", nil, "Failure preparing request")
@@ -144,14 +144,14 @@ func (client Client) CancelPreparer(ctx context.Context, accountName string, job
 	preparer := autorest.CreatePreparer(
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlaJobDnsSuffix}", urlParameters),
-		autorest.WithPathParameters("/Jobs/{jobIdentity}/CancelJob", pathParameters),
+		autorest.WithPathParameters("/jobs/{jobIdentity}/CancelJob", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
 // CancelSender sends the Cancel request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) CancelSender(req *http.Request) (future JobCancelFuture, err error) {
+func (client Client) CancelSender(req *http.Request) (future CancelFuture, err error) {
 	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -178,8 +178,9 @@ func (client Client) CancelResponder(resp *http.Response) (result autorest.Respo
 
 // Create submits a job to the specified Data Lake Analytics account.
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job identifier.
-// Uniquely identifies the job across all jobs submitted to the service. parameters is the parameters to submit a job.
+// accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job
+// identifier. Uniquely identifies the job across all jobs submitted to the service. parameters is the parameters
+// to submit a job.
 func (client Client) Create(ctx context.Context, accountName string, jobIdentity uuid.UUID, parameters CreateJobParameters) (result Information, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -191,7 +192,7 @@ func (client Client) Create(ctx context.Context, accountName string, jobIdentity
 						{Target: "parameters.Related.RecurrenceName", Name: validation.Null, Rule: false,
 							Chain: []validation.Constraint{{Target: "parameters.Related.RecurrenceName", Name: validation.MaxLength, Rule: 260, Chain: nil}}},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "job.Client", "Create")
+		return result, validation.NewError("job.Client", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, accountName, jobIdentity, parameters)
@@ -235,7 +236,7 @@ func (client Client) CreatePreparer(ctx context.Context, accountName string, job
 		autorest.AsJSON(),
 		autorest.AsPut(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlaJobDnsSuffix}", urlParameters),
-		autorest.WithPathParameters("/Jobs/{jobIdentity}", pathParameters),
+		autorest.WithPathParameters("/jobs/{jobIdentity}", pathParameters),
 		autorest.WithJSON(parameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
@@ -305,7 +306,7 @@ func (client Client) GetPreparer(ctx context.Context, accountName string, jobIde
 	preparer := autorest.CreatePreparer(
 		autorest.AsGet(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlaJobDnsSuffix}", urlParameters),
-		autorest.WithPathParameters("/Jobs/{jobIdentity}", pathParameters),
+		autorest.WithPathParameters("/jobs/{jobIdentity}", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
@@ -332,8 +333,8 @@ func (client Client) GetResponder(resp *http.Response) (result Information, err 
 
 // GetDebugDataPath gets the job debug data information specified by the job ID.
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job identifier.
-// Uniquely identifies the job across all jobs submitted to the service.
+// accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job
+// identifier. Uniquely identifies the job across all jobs submitted to the service.
 func (client Client) GetDebugDataPath(ctx context.Context, accountName string, jobIdentity uuid.UUID) (result DataPath, err error) {
 	req, err := client.GetDebugDataPathPreparer(ctx, accountName, jobIdentity)
 	if err != nil {
@@ -375,7 +376,7 @@ func (client Client) GetDebugDataPathPreparer(ctx context.Context, accountName s
 	preparer := autorest.CreatePreparer(
 		autorest.AsGet(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlaJobDnsSuffix}", urlParameters),
-		autorest.WithPathParameters("/Jobs/{jobIdentity}/GetDebugDataPath", pathParameters),
+		autorest.WithPathParameters("/jobs/{jobIdentity}/GetDebugDataPath", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
@@ -402,8 +403,8 @@ func (client Client) GetDebugDataPathResponder(resp *http.Response) (result Data
 
 // GetStatistics gets statistics of the specified job.
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job Information
-// ID.
+// accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job
+// Information ID.
 func (client Client) GetStatistics(ctx context.Context, accountName string, jobIdentity uuid.UUID) (result Statistics, err error) {
 	req, err := client.GetStatisticsPreparer(ctx, accountName, jobIdentity)
 	if err != nil {
@@ -445,7 +446,7 @@ func (client Client) GetStatisticsPreparer(ctx context.Context, accountName stri
 	preparer := autorest.CreatePreparer(
 		autorest.AsGet(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlaJobDnsSuffix}", urlParameters),
-		autorest.WithPathParameters("/Jobs/{jobIdentity}/GetStatistics", pathParameters),
+		autorest.WithPathParameters("/jobs/{jobIdentity}/GetStatistics", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
@@ -473,13 +474,14 @@ func (client Client) GetStatisticsResponder(resp *http.Response) (result Statist
 // List lists the jobs, if any, associated with the specified Data Lake Analytics account. The response includes a link
 // to the next page of results, if any.
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. filter is oData filter. Optional.
-// top is the number of items to return. Optional. skip is the number of items to skip over before returning elements.
-// Optional. selectParameter is oData Select statement. Limits the properties on each entry to just those requested,
-// e.g. Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more comma-separated
-// expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g.
-// Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true or false to request a count of
-// the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional.
+// accountName is the Azure Data Lake Analytics account to execute job operations on. filter is oData filter.
+// Optional. top is the number of items to return. Optional. skip is the number of items to skip over before
+// returning elements. Optional. selectParameter is oData Select statement. Limits the properties on each entry to
+// just those requested, e.g. Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One
+// or more comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd
+// like the values sorted, e.g. Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true
+// or false to request a count of the matching resources included with the resources in the response, e.g.
+// Categories?$count=true. Optional.
 func (client Client) List(ctx context.Context, accountName string, filter string, top *int32, skip *int32, selectParameter string, orderby string, count *bool) (result InfoListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: top,
@@ -488,7 +490,7 @@ func (client Client) List(ctx context.Context, accountName string, filter string
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "job.Client", "List")
+		return result, validation.NewError("job.Client", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults
@@ -546,7 +548,7 @@ func (client Client) ListPreparer(ctx context.Context, accountName string, filte
 	preparer := autorest.CreatePreparer(
 		autorest.AsGet(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlaJobDnsSuffix}", urlParameters),
-		autorest.WithPath("/Jobs"),
+		autorest.WithPath("/jobs"),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
@@ -600,9 +602,10 @@ func (client Client) ListComplete(ctx context.Context, accountName string, filte
 
 // Update updates the job information for the specified job ID. (Only for use internally with Scope job type.)
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job identifier.
-// Uniquely identifies the job across all jobs submitted to the service. parameters is the parameters to update a job.
-func (client Client) Update(ctx context.Context, accountName string, jobIdentity uuid.UUID, parameters *UpdateJobParameters) (result JobUpdateFuture, err error) {
+// accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job
+// identifier. Uniquely identifies the job across all jobs submitted to the service. parameters is the parameters
+// to update a job.
+func (client Client) Update(ctx context.Context, accountName string, jobIdentity uuid.UUID, parameters *UpdateJobParameters) (result UpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, accountName, jobIdentity, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "job.Client", "Update", nil, "Failure preparing request")
@@ -638,7 +641,7 @@ func (client Client) UpdatePreparer(ctx context.Context, accountName string, job
 		autorest.AsJSON(),
 		autorest.AsPatch(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlaJobDnsSuffix}", urlParameters),
-		autorest.WithPathParameters("/Jobs/{jobIdentity}", pathParameters),
+		autorest.WithPathParameters("/jobs/{jobIdentity}", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	if parameters != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -649,7 +652,7 @@ func (client Client) UpdatePreparer(ctx context.Context, accountName string, job
 
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) UpdateSender(req *http.Request) (future JobUpdateFuture, err error) {
+func (client Client) UpdateSender(req *http.Request) (future UpdateFuture, err error) {
 	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -678,9 +681,9 @@ func (client Client) UpdateResponder(resp *http.Response) (result Information, e
 // Yield pauses the specified job and places it back in the job queue, behind other jobs of equal or higher importance,
 // based on priority. (Only for use internally with Scope job type.)
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job identifier.
-// Uniquely identifies the job across all jobs submitted to the service.
-func (client Client) Yield(ctx context.Context, accountName string, jobIdentity uuid.UUID) (result JobYieldFuture, err error) {
+// accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job
+// identifier. Uniquely identifies the job across all jobs submitted to the service.
+func (client Client) Yield(ctx context.Context, accountName string, jobIdentity uuid.UUID) (result YieldFuture, err error) {
 	req, err := client.YieldPreparer(ctx, accountName, jobIdentity)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "job.Client", "Yield", nil, "Failure preparing request")
@@ -715,14 +718,14 @@ func (client Client) YieldPreparer(ctx context.Context, accountName string, jobI
 	preparer := autorest.CreatePreparer(
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{accountName}.{adlaJobDnsSuffix}", urlParameters),
-		autorest.WithPathParameters("/Jobs/{jobIdentity}/YieldJob", pathParameters),
+		autorest.WithPathParameters("/jobs/{jobIdentity}/YieldJob", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
 // YieldSender sends the Yield request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) YieldSender(req *http.Request) (future JobYieldFuture, err error) {
+func (client Client) YieldSender(req *http.Request) (future YieldFuture, err error) {
 	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	future.Future = azure.NewFuture(req)
 	future.req = req

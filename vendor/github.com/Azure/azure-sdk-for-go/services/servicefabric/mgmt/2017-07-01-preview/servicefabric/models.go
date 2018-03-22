@@ -170,7 +170,8 @@ const (
 	ServiceKindStateless ServiceKind = "Stateless"
 )
 
-// ServiceKindBasicServiceUpdateProperties enumerates the values for service kind basic service update properties.
+// ServiceKindBasicServiceUpdateProperties enumerates the values for service kind basic service update
+// properties.
 type ServiceKindBasicServiceUpdateProperties string
 
 const (
@@ -258,27 +259,44 @@ func (future ApplicationDeleteFuture) Result(client ApplicationClient) (ar autor
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ApplicationDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("servicefabric.ApplicationDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("servicefabric.ApplicationDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "servicefabric.ApplicationDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ApplicationDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ApplicationDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
-// ApplicationHealthPolicy defines a health policy used to evaluate the health of an application or one of its children
-// entities.
+// ApplicationHealthPolicy defines a health policy used to evaluate the health of an application or one of its
+// children entities.
 type ApplicationHealthPolicy struct {
 	// ConsiderWarningAsError - Indicates whether warnings are treated with the same severity as errors.
 	ConsiderWarningAsError *bool `json:"ConsiderWarningAsError,omitempty"`
@@ -291,8 +309,8 @@ type ApplicationHealthPolicy struct {
 	ServiceTypeHealthPolicyMap              *[]ServiceTypeHealthPolicyMapItem `json:"ServiceTypeHealthPolicyMap,omitempty"`
 }
 
-// ApplicationMetricDescription describes capacity information for a custom resource balancing metric. This can be used
-// to limit the total consumption of this metric by the services of this application.
+// ApplicationMetricDescription describes capacity information for a custom resource balancing metric. This can be
+// used to limit the total consumption of this metric by the services of this application.
 type ApplicationMetricDescription struct {
 	// Name - The name of the metric.
 	Name *string `json:"Name,omitempty"`
@@ -335,30 +353,50 @@ func (future ApplicationPatchFuture) Result(client ApplicationClient) (aru Appli
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ApplicationPatchFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return aru, autorest.NewError("servicefabric.ApplicationPatchFuture", "Result", "asynchronous operation has not completed")
+		return aru, azure.NewAsyncOpIncompleteError("servicefabric.ApplicationPatchFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		aru, err = client.PatchResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "servicefabric.ApplicationPatchFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ApplicationPatchFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	aru, err = client.PatchResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ApplicationPatchFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
 // ApplicationProperties the application resource properties.
 type ApplicationProperties struct {
-	TypeVersion   *string                   `json:"typeVersion,omitempty"`
-	Parameters    *[]ApplicationParameter   `json:"parameters,omitempty"`
-	UpgradePolicy *ApplicationUpgradePolicy `json:"upgradePolicy,omitempty"`
+	// ProvisioningState - The current deployment or provisioning state, which only appears in the response
+	ProvisioningState *string                   `json:"provisioningState,omitempty"`
+	TypeName          *string                   `json:"typeName,omitempty"`
+	TypeVersion       *string                   `json:"typeVersion,omitempty"`
+	Parameters        *[]ApplicationParameter   `json:"parameters,omitempty"`
+	UpgradePolicy     *ApplicationUpgradePolicy `json:"upgradePolicy,omitempty"`
 	// MinimumNodes - The minimum number of nodes where Service Fabric will reserve capacity for this application. Note that this does not mean that the services of this application will be placed on all of those nodes. If this property is set to zero, no capacity will be reserved. The value of this property cannot be more than the value of the MaximumNodes property.
 	MinimumNodes *int64 `json:"minimumNodes,omitempty"`
 	// MaximumNodes - The maximum number of nodes where Service Fabric will reserve capacity for this application. Note that this does not mean that the services of this application will be placed on all of those nodes. By default, the value of this property is zero and it means that the services can be placed on any node.
@@ -366,9 +404,6 @@ type ApplicationProperties struct {
 	// RemoveApplicationCapacity - The version of the application type
 	RemoveApplicationCapacity *bool                           `json:"removeApplicationCapacity,omitempty"`
 	Metrics                   *[]ApplicationMetricDescription `json:"metrics,omitempty"`
-	// ProvisioningState - The current deployment or provisioning state, which only appears in the response
-	ProvisioningState *string `json:"provisioningState,omitempty"`
-	TypeName          *string `json:"typeName,omitempty"`
 }
 
 // ApplicationPutFuture an abstraction for monitoring and retrieving the results of a long-running operation.
@@ -383,28 +418,46 @@ func (future ApplicationPutFuture) Result(client ApplicationClient) (ar Applicat
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ApplicationPutFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("servicefabric.ApplicationPutFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("servicefabric.ApplicationPutFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.PutResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "servicefabric.ApplicationPutFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ApplicationPutFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.PutResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ApplicationPutFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
 // ApplicationResource the application resource.
 type ApplicationResource struct {
-	autorest.Response `json:"-"`
+	autorest.Response      `json:"-"`
+	*ApplicationProperties `json:"properties,omitempty"`
 	// ID - Azure resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Azure resource name.
@@ -412,8 +465,7 @@ type ApplicationResource struct {
 	// Type - Azure resource type.
 	Type *string `json:"type,omitempty"`
 	// Location - Resource location.
-	Location               *string `json:"location,omitempty"`
-	*ApplicationProperties `json:"properties,omitempty"`
+	Location *string `json:"location,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for ApplicationResource struct.
@@ -423,56 +475,54 @@ func (ar *ApplicationResource) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ApplicationProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var applicationProperties ApplicationProperties
+				err = json.Unmarshal(*v, &applicationProperties)
+				if err != nil {
+					return err
+				}
+				ar.ApplicationProperties = &applicationProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ar.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ar.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ar.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				ar.Location = &location
+			}
 		}
-		ar.ApplicationProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		ar.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ar.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		ar.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		ar.Location = &location
 	}
 
 	return nil
@@ -486,7 +536,8 @@ type ApplicationResourceList struct {
 
 // ApplicationResourceUpdate the application resource for patch operations.
 type ApplicationResourceUpdate struct {
-	autorest.Response `json:"-"`
+	autorest.Response            `json:"-"`
+	*ApplicationUpdateProperties `json:"properties,omitempty"`
 	// ID - Azure resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Azure resource name.
@@ -494,8 +545,7 @@ type ApplicationResourceUpdate struct {
 	// Type - Azure resource type.
 	Type *string `json:"type,omitempty"`
 	// Location - Resource location.
-	Location                     *string `json:"location,omitempty"`
-	*ApplicationUpdateProperties `json:"properties,omitempty"`
+	Location *string `json:"location,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for ApplicationResourceUpdate struct.
@@ -505,62 +555,61 @@ func (aru *ApplicationResourceUpdate) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ApplicationUpdateProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var applicationUpdateProperties ApplicationUpdateProperties
+				err = json.Unmarshal(*v, &applicationUpdateProperties)
+				if err != nil {
+					return err
+				}
+				aru.ApplicationUpdateProperties = &applicationUpdateProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				aru.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				aru.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				aru.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				aru.Location = &location
+			}
 		}
-		aru.ApplicationUpdateProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		aru.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		aru.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		aru.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		aru.Location = &location
 	}
 
 	return nil
 }
 
-// ApplicationTypeDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+// ApplicationTypeDeleteFuture an abstraction for monitoring and retrieving the results of a long-running
+// operation.
 type ApplicationTypeDeleteFuture struct {
 	azure.Future
 	req *http.Request
@@ -572,22 +621,39 @@ func (future ApplicationTypeDeleteFuture) Result(client ApplicationTypeClient) (
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ApplicationTypeDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("servicefabric.ApplicationTypeDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("servicefabric.ApplicationTypeDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "servicefabric.ApplicationTypeDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ApplicationTypeDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ApplicationTypeDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -599,7 +665,8 @@ type ApplicationTypeProperties struct {
 
 // ApplicationTypeResource the application type name resource
 type ApplicationTypeResource struct {
-	autorest.Response `json:"-"`
+	autorest.Response          `json:"-"`
+	*ApplicationTypeProperties `json:"properties,omitempty"`
 	// ID - Azure resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Azure resource name.
@@ -607,8 +674,7 @@ type ApplicationTypeResource struct {
 	// Type - Azure resource type.
 	Type *string `json:"type,omitempty"`
 	// Location - Resource location.
-	Location                   *string `json:"location,omitempty"`
-	*ApplicationTypeProperties `json:"properties,omitempty"`
+	Location *string `json:"location,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for ApplicationTypeResource struct.
@@ -618,56 +684,54 @@ func (atr *ApplicationTypeResource) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ApplicationTypeProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var applicationTypeProperties ApplicationTypeProperties
+				err = json.Unmarshal(*v, &applicationTypeProperties)
+				if err != nil {
+					return err
+				}
+				atr.ApplicationTypeProperties = &applicationTypeProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				atr.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				atr.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				atr.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				atr.Location = &location
+			}
 		}
-		atr.ApplicationTypeProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		atr.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		atr.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		atr.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		atr.Location = &location
 	}
 
 	return nil
@@ -754,6 +818,8 @@ type ClientCertificateThumbprint struct {
 // Cluster the cluster resource
 type Cluster struct {
 	autorest.Response `json:"-"`
+	// ClusterProperties - The cluster resource properties
+	*ClusterProperties `json:"properties,omitempty"`
 	// ID - Azure resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Azure resource name.
@@ -763,9 +829,31 @@ type Cluster struct {
 	// Location - Resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// ClusterProperties - The cluster resource properties
-	*ClusterProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Cluster.
+func (c Cluster) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if c.ClusterProperties != nil {
+		objectMap["properties"] = c.ClusterProperties
+	}
+	if c.ID != nil {
+		objectMap["id"] = c.ID
+	}
+	if c.Name != nil {
+		objectMap["name"] = c.Name
+	}
+	if c.Type != nil {
+		objectMap["type"] = c.Type
+	}
+	if c.Location != nil {
+		objectMap["location"] = c.Location
+	}
+	if c.Tags != nil {
+		objectMap["tags"] = c.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Cluster struct.
@@ -775,66 +863,63 @@ func (c *Cluster) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ClusterProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var clusterProperties ClusterProperties
+				err = json.Unmarshal(*v, &clusterProperties)
+				if err != nil {
+					return err
+				}
+				c.ClusterProperties = &clusterProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				c.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				c.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				c.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				c.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				c.Tags = tags
+			}
 		}
-		c.ClusterProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		c.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		c.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		c.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		c.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		c.Tags = &tags
 	}
 
 	return nil
@@ -866,46 +951,45 @@ func (ccvr *ClusterCodeVersionsResult) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ccvr.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ccvr.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ccvr.Type = &typeVar
+			}
+		case "properties":
+			if v != nil {
+				var clusterVersionDetails ClusterVersionDetails
+				err = json.Unmarshal(*v, &clusterVersionDetails)
+				if err != nil {
+					return err
+				}
+				ccvr.ClusterVersionDetails = &clusterVersionDetails
+			}
 		}
-		ccvr.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ccvr.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		ccvr.Type = &typeVar
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties ClusterVersionDetails
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		ccvr.ClusterVersionDetails = &properties
 	}
 
 	return nil
@@ -975,9 +1059,9 @@ type ClusterProperties struct {
 // operation.
 type ClusterPropertiesUpdateParameters struct {
 	// ReliabilityLevel - The reliability level sets the replica set size of system services. Learn about [ReliabilityLevel](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-cluster-capacity). Possible values include: 'ReliabilityLevel1Bronze', 'ReliabilityLevel1Silver', 'ReliabilityLevel1Gold'
-	ReliabilityLevel ReliabilityLevel `json:"reliabilityLevel,omitempty"`
+	ReliabilityLevel ReliabilityLevel1 `json:"reliabilityLevel,omitempty"`
 	// UpgradeMode - The upgrade mode of the cluster. This indicates if the cluster should be automatically upgraded when new Service Fabric runtime version is available. Possible values include: 'UpgradeMode1Automatic', 'UpgradeMode1Manual'
-	UpgradeMode UpgradeMode `json:"upgradeMode,omitempty"`
+	UpgradeMode UpgradeMode1 `json:"upgradeMode,omitempty"`
 	// ClusterCodeVersion - The Service Fabric runtime version of the cluster. This property can only by set the user when **upgradeMode** is set to 'Manual'. To get list of available Service Fabric versions for new clusters use [ClusterVersion API](./ClusterVersion.md). To get the list of available version for existing clusters use **availableClusterVersions**.
 	ClusterCodeVersion *string `json:"clusterCodeVersion,omitempty"`
 	// Certificate - The certificate to use for securing the cluster. The certificate provided will be used for  node to node security within the cluster, SSL certificate for cluster management endpoint and default  admin client.
@@ -1010,22 +1094,39 @@ func (future ClustersCreateFuture) Result(client ClustersClient) (c Cluster, err
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ClustersCreateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return c, autorest.NewError("servicefabric.ClustersCreateFuture", "Result", "asynchronous operation has not completed")
+		return c, azure.NewAsyncOpIncompleteError("servicefabric.ClustersCreateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		c, err = client.CreateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "servicefabric.ClustersCreateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ClustersCreateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	c, err = client.CreateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ClustersCreateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -1041,22 +1142,39 @@ func (future ClustersUpdateFuture) Result(client ClustersClient) (c Cluster, err
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ClustersUpdateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return c, autorest.NewError("servicefabric.ClustersUpdateFuture", "Result", "asynchronous operation has not completed")
+		return c, azure.NewAsyncOpIncompleteError("servicefabric.ClustersUpdateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		c, err = client.UpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "servicefabric.ClustersUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ClustersUpdateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	c, err = client.UpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ClustersUpdateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -1064,7 +1182,19 @@ func (future ClustersUpdateFuture) Result(client ClustersClient) (c Cluster, err
 type ClusterUpdateParameters struct {
 	*ClusterPropertiesUpdateParameters `json:"properties,omitempty"`
 	// Tags - Cluster update parameters
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for ClusterUpdateParameters.
+func (cup ClusterUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cup.ClusterPropertiesUpdateParameters != nil {
+		objectMap["properties"] = cup.ClusterPropertiesUpdateParameters
+	}
+	if cup.Tags != nil {
+		objectMap["tags"] = cup.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ClusterUpdateParameters struct.
@@ -1074,26 +1204,27 @@ func (cup *ClusterUpdateParameters) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ClusterPropertiesUpdateParameters
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var clusterPropertiesUpdateParameters ClusterPropertiesUpdateParameters
+				err = json.Unmarshal(*v, &clusterPropertiesUpdateParameters)
+				if err != nil {
+					return err
+				}
+				cup.ClusterPropertiesUpdateParameters = &clusterPropertiesUpdateParameters
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				cup.Tags = tags
+			}
 		}
-		cup.ClusterPropertiesUpdateParameters = &properties
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		cup.Tags = &tags
 	}
 
 	return nil
@@ -1173,23 +1304,26 @@ type ErrorModel struct {
 
 // NamedPartitionSchemeDescription describes the named partition scheme of the service.
 type NamedPartitionSchemeDescription struct {
-	// PartitionScheme - Possible values include: 'PartitionSchemePartitionSchemeDescription', 'PartitionSchemeNamed', 'PartitionSchemeSingleton', 'PartitionSchemeUniformInt64Range'
-	PartitionScheme PartitionScheme `json:"PartitionScheme,omitempty"`
 	// Count - The number of partitions.
 	Count *int32 `json:"Count,omitempty"`
 	// Names - Array of size specified by the ‘Count’ parameter, for the names of the partitions.
 	Names *[]string `json:"Names,omitempty"`
+	// PartitionScheme - Possible values include: 'PartitionSchemePartitionSchemeDescription', 'PartitionSchemeNamed', 'PartitionSchemeSingleton', 'PartitionSchemeUniformInt64Range'
+	PartitionScheme PartitionScheme `json:"PartitionScheme,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for NamedPartitionSchemeDescription.
 func (npsd NamedPartitionSchemeDescription) MarshalJSON() ([]byte, error) {
 	npsd.PartitionScheme = PartitionSchemeNamed
-	type Alias NamedPartitionSchemeDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(npsd),
-	})
+	objectMap := make(map[string]interface{})
+	if npsd.Count != nil {
+		objectMap["Count"] = npsd.Count
+	}
+	if npsd.Names != nil {
+		objectMap["Names"] = npsd.Names
+	}
+	objectMap["PartitionScheme"] = npsd.PartitionScheme
+	return json.Marshal(objectMap)
 }
 
 // AsNamedPartitionSchemeDescription is the BasicPartitionSchemeDescription implementation for NamedPartitionSchemeDescription.
@@ -1217,14 +1351,15 @@ func (npsd NamedPartitionSchemeDescription) AsBasicPartitionSchemeDescription() 
 	return &npsd, true
 }
 
-// NodeTypeDescription describes a node type in the cluster, each node type represents sub set of nodes in the cluster.
+// NodeTypeDescription describes a node type in the cluster, each node type represents sub set of nodes in the
+// cluster.
 type NodeTypeDescription struct {
 	// Name - The name of the node type.
 	Name *string `json:"name,omitempty"`
 	// PlacementProperties - The placement tags applied to nodes in the node type, which can be used to indicate where certain services (workload) should run.
-	PlacementProperties *map[string]*string `json:"placementProperties,omitempty"`
+	PlacementProperties map[string]*string `json:"placementProperties"`
 	// Capacities - The capacity tags applied to the nodes in the node type, the cluster resource manager uses these tags to understand how much resource a node has.
-	Capacities *map[string]*string `json:"capacities,omitempty"`
+	Capacities map[string]*string `json:"capacities"`
 	// ClientConnectionEndpointPort - The TCP cluster management endpoint port.
 	ClientConnectionEndpointPort *int32 `json:"clientConnectionEndpointPort,omitempty"`
 	// HTTPGatewayEndpointPort - The HTTP cluster management endpoint port.
@@ -1241,6 +1376,43 @@ type NodeTypeDescription struct {
 	VMInstanceCount *int32 `json:"vmInstanceCount,omitempty"`
 	// ReverseProxyEndpointPort - The endpoint used by reverse proxy.
 	ReverseProxyEndpointPort *int32 `json:"reverseProxyEndpointPort,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for NodeTypeDescription.
+func (ntd NodeTypeDescription) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ntd.Name != nil {
+		objectMap["name"] = ntd.Name
+	}
+	if ntd.PlacementProperties != nil {
+		objectMap["placementProperties"] = ntd.PlacementProperties
+	}
+	if ntd.Capacities != nil {
+		objectMap["capacities"] = ntd.Capacities
+	}
+	if ntd.ClientConnectionEndpointPort != nil {
+		objectMap["clientConnectionEndpointPort"] = ntd.ClientConnectionEndpointPort
+	}
+	if ntd.HTTPGatewayEndpointPort != nil {
+		objectMap["httpGatewayEndpointPort"] = ntd.HTTPGatewayEndpointPort
+	}
+	objectMap["durabilityLevel"] = ntd.DurabilityLevel
+	if ntd.ApplicationPorts != nil {
+		objectMap["applicationPorts"] = ntd.ApplicationPorts
+	}
+	if ntd.EphemeralPorts != nil {
+		objectMap["ephemeralPorts"] = ntd.EphemeralPorts
+	}
+	if ntd.IsPrimary != nil {
+		objectMap["isPrimary"] = ntd.IsPrimary
+	}
+	if ntd.VMInstanceCount != nil {
+		objectMap["vmInstanceCount"] = ntd.VMInstanceCount
+	}
+	if ntd.ReverseProxyEndpointPort != nil {
+		objectMap["reverseProxyEndpointPort"] = ntd.ReverseProxyEndpointPort
+	}
+	return json.Marshal(objectMap)
 }
 
 // OperationListResult describes the result of the request to list Service Fabric operations.
@@ -1419,12 +1591,9 @@ func unmarshalBasicPartitionSchemeDescriptionArray(body []byte) ([]BasicPartitio
 // MarshalJSON is the custom marshaler for PartitionSchemeDescription.
 func (psd PartitionSchemeDescription) MarshalJSON() ([]byte, error) {
 	psd.PartitionScheme = PartitionSchemePartitionSchemeDescription
-	type Alias PartitionSchemeDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(psd),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["PartitionScheme"] = psd.PartitionScheme
+	return json.Marshal(objectMap)
 }
 
 // AsNamedPartitionSchemeDescription is the BasicPartitionSchemeDescription implementation for PartitionSchemeDescription.
@@ -1475,7 +1644,28 @@ type Resource struct {
 	// Location - Resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // RollingUpgradeMonitoringPolicy the policy used for monitoring the application upgrade
@@ -1506,22 +1696,39 @@ func (future ServiceDeleteFuture) Result(client ServiceClient) (ar autorest.Resp
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ServiceDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("servicefabric.ServiceDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("servicefabric.ServiceDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "servicefabric.ServiceDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ServiceDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ServiceDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -1551,22 +1758,39 @@ func (future ServicePatchFuture) Result(client ServiceClient) (sru ServiceResour
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ServicePatchFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return sru, autorest.NewError("servicefabric.ServicePatchFuture", "Result", "asynchronous operation has not completed")
+		return sru, azure.NewAsyncOpIncompleteError("servicefabric.ServicePatchFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		sru, err = client.PatchResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "servicefabric.ServicePatchFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ServicePatchFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	sru, err = client.PatchResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ServicePatchFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -1617,12 +1841,9 @@ func unmarshalBasicServicePlacementPolicyDescriptionArray(body []byte) ([]BasicS
 // MarshalJSON is the custom marshaler for ServicePlacementPolicyDescription.
 func (sppd ServicePlacementPolicyDescription) MarshalJSON() ([]byte, error) {
 	sppd.Type = TypeServicePlacementPolicyDescription
-	type Alias ServicePlacementPolicyDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sppd),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["Type"] = sppd.Type
+	return json.Marshal(objectMap)
 }
 
 // AsServicePlacementPolicyDescription is the BasicServicePlacementPolicyDescription implementation for ServicePlacementPolicyDescription.
@@ -1644,13 +1865,6 @@ type BasicServiceProperties interface {
 
 // ServiceProperties the service resource properties.
 type ServiceProperties struct {
-	// PlacementConstraints - The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)".
-	PlacementConstraints     *string                                   `json:"placementConstraints,omitempty"`
-	CorrelationScheme        *[]ServiceCorrelationDescription          `json:"correlationScheme,omitempty"`
-	ServiceLoadMetrics       *[]ServiceLoadMetricDescription           `json:"serviceLoadMetrics,omitempty"`
-	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"servicePlacementPolicies,omitempty"`
-	// DefaultMoveCost - Possible values include: 'Zero', 'Low', 'Medium', 'High'
-	DefaultMoveCost DefaultMoveCost `json:"defaultMoveCost,omitempty"`
 	// ProvisioningState - The current deployment or provisioning state, which only appears in the response
 	ProvisioningState *string `json:"provisioningState,omitempty"`
 	// ServiceTypeName - The name of the service type
@@ -1658,6 +1872,13 @@ type ServiceProperties struct {
 	PartitionDescription BasicPartitionSchemeDescription `json:"partitionDescription,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindServiceProperties', 'ServiceKindStateless', 'ServiceKindStateful'
 	ServiceKind ServiceKind `json:"serviceKind,omitempty"`
+	// PlacementConstraints - The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)".
+	PlacementConstraints     *string                                   `json:"placementConstraints,omitempty"`
+	CorrelationScheme        *[]ServiceCorrelationDescription          `json:"correlationScheme,omitempty"`
+	ServiceLoadMetrics       *[]ServiceLoadMetricDescription           `json:"serviceLoadMetrics,omitempty"`
+	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"servicePlacementPolicies,omitempty"`
+	// DefaultMoveCost - Possible values include: 'Zero', 'Low', 'Medium', 'High'
+	DefaultMoveCost DefaultMoveCost `json:"defaultMoveCost,omitempty"`
 }
 
 func unmarshalBasicServiceProperties(body []byte) (BasicServiceProperties, error) {
@@ -1704,12 +1925,29 @@ func unmarshalBasicServicePropertiesArray(body []byte) ([]BasicServiceProperties
 // MarshalJSON is the custom marshaler for ServiceProperties.
 func (sp ServiceProperties) MarshalJSON() ([]byte, error) {
 	sp.ServiceKind = ServiceKindServiceProperties
-	type Alias ServiceProperties
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sp),
-	})
+	objectMap := make(map[string]interface{})
+	if sp.ProvisioningState != nil {
+		objectMap["provisioningState"] = sp.ProvisioningState
+	}
+	if sp.ServiceTypeName != nil {
+		objectMap["serviceTypeName"] = sp.ServiceTypeName
+	}
+	objectMap["partitionDescription"] = sp.PartitionDescription
+	objectMap["serviceKind"] = sp.ServiceKind
+	if sp.PlacementConstraints != nil {
+		objectMap["placementConstraints"] = sp.PlacementConstraints
+	}
+	if sp.CorrelationScheme != nil {
+		objectMap["correlationScheme"] = sp.CorrelationScheme
+	}
+	if sp.ServiceLoadMetrics != nil {
+		objectMap["serviceLoadMetrics"] = sp.ServiceLoadMetrics
+	}
+	if sp.ServicePlacementPolicies != nil {
+		objectMap["servicePlacementPolicies"] = sp.ServicePlacementPolicies
+	}
+	objectMap["defaultMoveCost"] = sp.DefaultMoveCost
+	return json.Marshal(objectMap)
 }
 
 // AsServiceProperties is the BasicServicePropertiesBase implementation for ServiceProperties.
@@ -1759,94 +1997,88 @@ func (sp *ServiceProperties) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["provisioningState"]
-	if v != nil {
-		var provisioningState string
-		err = json.Unmarshal(*m["provisioningState"], &provisioningState)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "provisioningState":
+			if v != nil {
+				var provisioningState string
+				err = json.Unmarshal(*v, &provisioningState)
+				if err != nil {
+					return err
+				}
+				sp.ProvisioningState = &provisioningState
+			}
+		case "serviceTypeName":
+			if v != nil {
+				var serviceTypeName string
+				err = json.Unmarshal(*v, &serviceTypeName)
+				if err != nil {
+					return err
+				}
+				sp.ServiceTypeName = &serviceTypeName
+			}
+		case "partitionDescription":
+			if v != nil {
+				partitionDescription, err := unmarshalBasicPartitionSchemeDescription(*v)
+				if err != nil {
+					return err
+				}
+				sp.PartitionDescription = partitionDescription
+			}
+		case "serviceKind":
+			if v != nil {
+				var serviceKind ServiceKind
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				sp.ServiceKind = serviceKind
+			}
+		case "placementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				sp.PlacementConstraints = &placementConstraints
+			}
+		case "correlationScheme":
+			if v != nil {
+				var correlationScheme []ServiceCorrelationDescription
+				err = json.Unmarshal(*v, &correlationScheme)
+				if err != nil {
+					return err
+				}
+				sp.CorrelationScheme = &correlationScheme
+			}
+		case "serviceLoadMetrics":
+			if v != nil {
+				var serviceLoadMetrics []ServiceLoadMetricDescription
+				err = json.Unmarshal(*v, &serviceLoadMetrics)
+				if err != nil {
+					return err
+				}
+				sp.ServiceLoadMetrics = &serviceLoadMetrics
+			}
+		case "servicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				sp.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "defaultMoveCost":
+			if v != nil {
+				var defaultMoveCost DefaultMoveCost
+				err = json.Unmarshal(*v, &defaultMoveCost)
+				if err != nil {
+					return err
+				}
+				sp.DefaultMoveCost = defaultMoveCost
+			}
 		}
-		sp.ProvisioningState = &provisioningState
-	}
-
-	v = m["serviceTypeName"]
-	if v != nil {
-		var serviceTypeName string
-		err = json.Unmarshal(*m["serviceTypeName"], &serviceTypeName)
-		if err != nil {
-			return err
-		}
-		sp.ServiceTypeName = &serviceTypeName
-	}
-
-	v = m["partitionDescription"]
-	if v != nil {
-		partitionDescription, err := unmarshalBasicPartitionSchemeDescription(*m["partitionDescription"])
-		if err != nil {
-			return err
-		}
-		sp.PartitionDescription = partitionDescription
-	}
-
-	v = m["serviceKind"]
-	if v != nil {
-		var serviceKind ServiceKind
-		err = json.Unmarshal(*m["serviceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		sp.ServiceKind = serviceKind
-	}
-
-	v = m["placementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["placementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		sp.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["correlationScheme"]
-	if v != nil {
-		var correlationScheme []ServiceCorrelationDescription
-		err = json.Unmarshal(*m["correlationScheme"], &correlationScheme)
-		if err != nil {
-			return err
-		}
-		sp.CorrelationScheme = &correlationScheme
-	}
-
-	v = m["serviceLoadMetrics"]
-	if v != nil {
-		var serviceLoadMetrics []ServiceLoadMetricDescription
-		err = json.Unmarshal(*m["serviceLoadMetrics"], &serviceLoadMetrics)
-		if err != nil {
-			return err
-		}
-		sp.ServiceLoadMetrics = &serviceLoadMetrics
-	}
-
-	v = m["servicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["servicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		sp.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["defaultMoveCost"]
-	if v != nil {
-		var defaultMoveCost DefaultMoveCost
-		err = json.Unmarshal(*m["defaultMoveCost"], &defaultMoveCost)
-		if err != nil {
-			return err
-		}
-		sp.DefaultMoveCost = defaultMoveCost
 	}
 
 	return nil
@@ -1870,55 +2102,53 @@ func (spb *ServicePropertiesBase) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["placementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["placementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "placementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				spb.PlacementConstraints = &placementConstraints
+			}
+		case "correlationScheme":
+			if v != nil {
+				var correlationScheme []ServiceCorrelationDescription
+				err = json.Unmarshal(*v, &correlationScheme)
+				if err != nil {
+					return err
+				}
+				spb.CorrelationScheme = &correlationScheme
+			}
+		case "serviceLoadMetrics":
+			if v != nil {
+				var serviceLoadMetrics []ServiceLoadMetricDescription
+				err = json.Unmarshal(*v, &serviceLoadMetrics)
+				if err != nil {
+					return err
+				}
+				spb.ServiceLoadMetrics = &serviceLoadMetrics
+			}
+		case "servicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				spb.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "defaultMoveCost":
+			if v != nil {
+				var defaultMoveCost DefaultMoveCost
+				err = json.Unmarshal(*v, &defaultMoveCost)
+				if err != nil {
+					return err
+				}
+				spb.DefaultMoveCost = defaultMoveCost
+			}
 		}
-		spb.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["correlationScheme"]
-	if v != nil {
-		var correlationScheme []ServiceCorrelationDescription
-		err = json.Unmarshal(*m["correlationScheme"], &correlationScheme)
-		if err != nil {
-			return err
-		}
-		spb.CorrelationScheme = &correlationScheme
-	}
-
-	v = m["serviceLoadMetrics"]
-	if v != nil {
-		var serviceLoadMetrics []ServiceLoadMetricDescription
-		err = json.Unmarshal(*m["serviceLoadMetrics"], &serviceLoadMetrics)
-		if err != nil {
-			return err
-		}
-		spb.ServiceLoadMetrics = &serviceLoadMetrics
-	}
-
-	v = m["servicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["servicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		spb.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["defaultMoveCost"]
-	if v != nil {
-		var defaultMoveCost DefaultMoveCost
-		err = json.Unmarshal(*m["defaultMoveCost"], &defaultMoveCost)
-		if err != nil {
-			return err
-		}
-		spb.DefaultMoveCost = defaultMoveCost
 	}
 
 	return nil
@@ -1936,28 +2166,46 @@ func (future ServicePutFuture) Result(client ServiceClient) (sr ServiceResource,
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ServicePutFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return sr, autorest.NewError("servicefabric.ServicePutFuture", "Result", "asynchronous operation has not completed")
+		return sr, azure.NewAsyncOpIncompleteError("servicefabric.ServicePutFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		sr, err = client.PutResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "servicefabric.ServicePutFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ServicePutFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	sr, err = client.PutResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.ServicePutFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
 // ServiceResource the service resource.
 type ServiceResource struct {
-	autorest.Response `json:"-"`
+	autorest.Response      `json:"-"`
+	BasicServiceProperties `json:"properties,omitempty"`
 	// ID - Azure resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Azure resource name.
@@ -1965,8 +2213,7 @@ type ServiceResource struct {
 	// Type - Azure resource type.
 	Type *string `json:"type,omitempty"`
 	// Location - Resource location.
-	Location               *string `json:"location,omitempty"`
-	BasicServiceProperties `json:"properties,omitempty"`
+	Location *string `json:"location,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for ServiceResource struct.
@@ -1976,55 +2223,53 @@ func (sr *ServiceResource) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		properties, err := unmarshalBasicServiceProperties(*m["properties"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				basicServiceProperties, err := unmarshalBasicServiceProperties(*v)
+				if err != nil {
+					return err
+				}
+				sr.BasicServiceProperties = basicServiceProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				sr.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				sr.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				sr.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				sr.Location = &location
+			}
 		}
-		sr.BasicServiceProperties = properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		sr.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		sr.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		sr.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		sr.Location = &location
 	}
 
 	return nil
@@ -2038,7 +2283,8 @@ type ServiceResourceList struct {
 
 // ServiceResourceUpdate the service resource for patch operations.
 type ServiceResourceUpdate struct {
-	autorest.Response `json:"-"`
+	autorest.Response            `json:"-"`
+	BasicServiceUpdateProperties `json:"properties,omitempty"`
 	// ID - Azure resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Azure resource name.
@@ -2046,8 +2292,7 @@ type ServiceResourceUpdate struct {
 	// Type - Azure resource type.
 	Type *string `json:"type,omitempty"`
 	// Location - Resource location.
-	Location                     *string `json:"location,omitempty"`
-	BasicServiceUpdateProperties `json:"properties,omitempty"`
+	Location *string `json:"location,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for ServiceResourceUpdate struct.
@@ -2057,55 +2302,53 @@ func (sru *ServiceResourceUpdate) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		properties, err := unmarshalBasicServiceUpdateProperties(*m["properties"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				basicServiceUpdateProperties, err := unmarshalBasicServiceUpdateProperties(*v)
+				if err != nil {
+					return err
+				}
+				sru.BasicServiceUpdateProperties = basicServiceUpdateProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				sru.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				sru.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				sru.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				sru.Location = &location
+			}
 		}
-		sru.BasicServiceUpdateProperties = properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		sru.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		sru.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		sru.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		sru.Location = &location
 	}
 
 	return nil
@@ -2117,8 +2360,8 @@ type ServiceTypeDeltaHealthPolicy struct {
 	MaxPercentDeltaUnhealthyServices *int32 `json:"maxPercentDeltaUnhealthyServices,omitempty"`
 }
 
-// ServiceTypeHealthPolicy represents the health policy used to evaluate the health of services belonging to a service
-// type.
+// ServiceTypeHealthPolicy represents the health policy used to evaluate the health of services belonging to a
+// service type.
 type ServiceTypeHealthPolicy struct {
 	// MaxPercentUnhealthyPartitionsPerService - The maximum allowed percentage of unhealthy partitions per service. Allowed values are Byte values from zero to 100
 	// The percentage represents the maximum tolerated percentage of partitions that can be unhealthy before the service is considered in error.
@@ -2156,6 +2399,8 @@ type BasicServiceUpdateProperties interface {
 
 // ServiceUpdateProperties the service resource properties for patch operations.
 type ServiceUpdateProperties struct {
+	// ServiceKind - Possible values include: 'ServiceKindBasicServiceUpdatePropertiesServiceKindServiceUpdateProperties', 'ServiceKindBasicServiceUpdatePropertiesServiceKindStateless', 'ServiceKindBasicServiceUpdatePropertiesServiceKindStateful'
+	ServiceKind ServiceKindBasicServiceUpdateProperties `json:"serviceKind,omitempty"`
 	// PlacementConstraints - The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)".
 	PlacementConstraints     *string                                   `json:"placementConstraints,omitempty"`
 	CorrelationScheme        *[]ServiceCorrelationDescription          `json:"correlationScheme,omitempty"`
@@ -2163,8 +2408,6 @@ type ServiceUpdateProperties struct {
 	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"servicePlacementPolicies,omitempty"`
 	// DefaultMoveCost - Possible values include: 'Zero', 'Low', 'Medium', 'High'
 	DefaultMoveCost DefaultMoveCost `json:"defaultMoveCost,omitempty"`
-	// ServiceKind - Possible values include: 'ServiceKindBasicServiceUpdatePropertiesServiceKindServiceUpdateProperties', 'ServiceKindBasicServiceUpdatePropertiesServiceKindStateless', 'ServiceKindBasicServiceUpdatePropertiesServiceKindStateful'
-	ServiceKind ServiceKindBasicServiceUpdateProperties `json:"serviceKind,omitempty"`
 }
 
 func unmarshalBasicServiceUpdateProperties(body []byte) (BasicServiceUpdateProperties, error) {
@@ -2211,12 +2454,22 @@ func unmarshalBasicServiceUpdatePropertiesArray(body []byte) ([]BasicServiceUpda
 // MarshalJSON is the custom marshaler for ServiceUpdateProperties.
 func (sup ServiceUpdateProperties) MarshalJSON() ([]byte, error) {
 	sup.ServiceKind = ServiceKindBasicServiceUpdatePropertiesServiceKindServiceUpdateProperties
-	type Alias ServiceUpdateProperties
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(sup),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["serviceKind"] = sup.ServiceKind
+	if sup.PlacementConstraints != nil {
+		objectMap["placementConstraints"] = sup.PlacementConstraints
+	}
+	if sup.CorrelationScheme != nil {
+		objectMap["correlationScheme"] = sup.CorrelationScheme
+	}
+	if sup.ServiceLoadMetrics != nil {
+		objectMap["serviceLoadMetrics"] = sup.ServiceLoadMetrics
+	}
+	if sup.ServicePlacementPolicies != nil {
+		objectMap["servicePlacementPolicies"] = sup.ServicePlacementPolicies
+	}
+	objectMap["defaultMoveCost"] = sup.DefaultMoveCost
+	return json.Marshal(objectMap)
 }
 
 // AsServiceProperties is the BasicServicePropertiesBase implementation for ServiceUpdateProperties.
@@ -2266,65 +2519,62 @@ func (sup *ServiceUpdateProperties) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["serviceKind"]
-	if v != nil {
-		var serviceKind ServiceKindBasicServiceUpdateProperties
-		err = json.Unmarshal(*m["serviceKind"], &serviceKind)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "serviceKind":
+			if v != nil {
+				var serviceKind ServiceKindBasicServiceUpdateProperties
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				sup.ServiceKind = serviceKind
+			}
+		case "placementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				sup.PlacementConstraints = &placementConstraints
+			}
+		case "correlationScheme":
+			if v != nil {
+				var correlationScheme []ServiceCorrelationDescription
+				err = json.Unmarshal(*v, &correlationScheme)
+				if err != nil {
+					return err
+				}
+				sup.CorrelationScheme = &correlationScheme
+			}
+		case "serviceLoadMetrics":
+			if v != nil {
+				var serviceLoadMetrics []ServiceLoadMetricDescription
+				err = json.Unmarshal(*v, &serviceLoadMetrics)
+				if err != nil {
+					return err
+				}
+				sup.ServiceLoadMetrics = &serviceLoadMetrics
+			}
+		case "servicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				sup.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "defaultMoveCost":
+			if v != nil {
+				var defaultMoveCost DefaultMoveCost
+				err = json.Unmarshal(*v, &defaultMoveCost)
+				if err != nil {
+					return err
+				}
+				sup.DefaultMoveCost = defaultMoveCost
+			}
 		}
-		sup.ServiceKind = serviceKind
-	}
-
-	v = m["placementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["placementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		sup.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["correlationScheme"]
-	if v != nil {
-		var correlationScheme []ServiceCorrelationDescription
-		err = json.Unmarshal(*m["correlationScheme"], &correlationScheme)
-		if err != nil {
-			return err
-		}
-		sup.CorrelationScheme = &correlationScheme
-	}
-
-	v = m["serviceLoadMetrics"]
-	if v != nil {
-		var serviceLoadMetrics []ServiceLoadMetricDescription
-		err = json.Unmarshal(*m["serviceLoadMetrics"], &serviceLoadMetrics)
-		if err != nil {
-			return err
-		}
-		sup.ServiceLoadMetrics = &serviceLoadMetrics
-	}
-
-	v = m["servicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["servicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		sup.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["defaultMoveCost"]
-	if v != nil {
-		var defaultMoveCost DefaultMoveCost
-		err = json.Unmarshal(*m["defaultMoveCost"], &defaultMoveCost)
-		if err != nil {
-			return err
-		}
-		sup.DefaultMoveCost = defaultMoveCost
 	}
 
 	return nil
@@ -2346,8 +2596,8 @@ type SettingsSectionDescription struct {
 	Parameters *[]SettingsParameterDescription `json:"parameters,omitempty"`
 }
 
-// SingletonPartitionSchemeDescription describes the partition scheme of a singleton-partitioned, or non-partitioned
-// service.
+// SingletonPartitionSchemeDescription describes the partition scheme of a singleton-partitioned, or
+// non-partitioned service.
 type SingletonPartitionSchemeDescription struct {
 	// PartitionScheme - Possible values include: 'PartitionSchemePartitionSchemeDescription', 'PartitionSchemeNamed', 'PartitionSchemeSingleton', 'PartitionSchemeUniformInt64Range'
 	PartitionScheme PartitionScheme `json:"PartitionScheme,omitempty"`
@@ -2356,12 +2606,9 @@ type SingletonPartitionSchemeDescription struct {
 // MarshalJSON is the custom marshaler for SingletonPartitionSchemeDescription.
 func (spsd SingletonPartitionSchemeDescription) MarshalJSON() ([]byte, error) {
 	spsd.PartitionScheme = PartitionSchemeSingleton
-	type Alias SingletonPartitionSchemeDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(spsd),
-	})
+	objectMap := make(map[string]interface{})
+	objectMap["PartitionScheme"] = spsd.PartitionScheme
+	return json.Marshal(objectMap)
 }
 
 // AsNamedPartitionSchemeDescription is the BasicPartitionSchemeDescription implementation for SingletonPartitionSchemeDescription.
@@ -2391,20 +2638,6 @@ func (spsd SingletonPartitionSchemeDescription) AsBasicPartitionSchemeDescriptio
 
 // StatefulServiceProperties the properties of a stateful service resource.
 type StatefulServiceProperties struct {
-	// PlacementConstraints - The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)".
-	PlacementConstraints     *string                                   `json:"placementConstraints,omitempty"`
-	CorrelationScheme        *[]ServiceCorrelationDescription          `json:"correlationScheme,omitempty"`
-	ServiceLoadMetrics       *[]ServiceLoadMetricDescription           `json:"serviceLoadMetrics,omitempty"`
-	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"servicePlacementPolicies,omitempty"`
-	// DefaultMoveCost - Possible values include: 'Zero', 'Low', 'Medium', 'High'
-	DefaultMoveCost DefaultMoveCost `json:"defaultMoveCost,omitempty"`
-	// ProvisioningState - The current deployment or provisioning state, which only appears in the response
-	ProvisioningState *string `json:"provisioningState,omitempty"`
-	// ServiceTypeName - The name of the service type
-	ServiceTypeName      *string                         `json:"serviceTypeName,omitempty"`
-	PartitionDescription BasicPartitionSchemeDescription `json:"partitionDescription,omitempty"`
-	// ServiceKind - Possible values include: 'ServiceKindServiceProperties', 'ServiceKindStateless', 'ServiceKindStateful'
-	ServiceKind ServiceKind `json:"serviceKind,omitempty"`
 	// HasPersistedState - A flag indicating whether this is a persistent service which stores states on the local disk. If it is then the value of this property is true, if not it is false.
 	HasPersistedState *bool `json:"hasPersistedState,omitempty"`
 	// TargetReplicaSetSize - The target replica set size as a number.
@@ -2417,17 +2650,66 @@ type StatefulServiceProperties struct {
 	QuorumLossWaitDuration *date.Time `json:"quorumLossWaitDuration,omitempty"`
 	// StandByReplicaKeepDuration - The definition on how long StandBy replicas should be maintained before being removed, represented in ISO 8601 format (hh:mm:ss.s).
 	StandByReplicaKeepDuration *date.Time `json:"standByReplicaKeepDuration,omitempty"`
+	// ProvisioningState - The current deployment or provisioning state, which only appears in the response
+	ProvisioningState *string `json:"provisioningState,omitempty"`
+	// ServiceTypeName - The name of the service type
+	ServiceTypeName      *string                         `json:"serviceTypeName,omitempty"`
+	PartitionDescription BasicPartitionSchemeDescription `json:"partitionDescription,omitempty"`
+	// ServiceKind - Possible values include: 'ServiceKindServiceProperties', 'ServiceKindStateless', 'ServiceKindStateful'
+	ServiceKind ServiceKind `json:"serviceKind,omitempty"`
+	// PlacementConstraints - The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)".
+	PlacementConstraints     *string                                   `json:"placementConstraints,omitempty"`
+	CorrelationScheme        *[]ServiceCorrelationDescription          `json:"correlationScheme,omitempty"`
+	ServiceLoadMetrics       *[]ServiceLoadMetricDescription           `json:"serviceLoadMetrics,omitempty"`
+	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"servicePlacementPolicies,omitempty"`
+	// DefaultMoveCost - Possible values include: 'Zero', 'Low', 'Medium', 'High'
+	DefaultMoveCost DefaultMoveCost `json:"defaultMoveCost,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatefulServiceProperties.
 func (ssp StatefulServiceProperties) MarshalJSON() ([]byte, error) {
 	ssp.ServiceKind = ServiceKindStateful
-	type Alias StatefulServiceProperties
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssp),
-	})
+	objectMap := make(map[string]interface{})
+	if ssp.HasPersistedState != nil {
+		objectMap["hasPersistedState"] = ssp.HasPersistedState
+	}
+	if ssp.TargetReplicaSetSize != nil {
+		objectMap["targetReplicaSetSize"] = ssp.TargetReplicaSetSize
+	}
+	if ssp.MinReplicaSetSize != nil {
+		objectMap["minReplicaSetSize"] = ssp.MinReplicaSetSize
+	}
+	if ssp.ReplicaRestartWaitDuration != nil {
+		objectMap["replicaRestartWaitDuration"] = ssp.ReplicaRestartWaitDuration
+	}
+	if ssp.QuorumLossWaitDuration != nil {
+		objectMap["quorumLossWaitDuration"] = ssp.QuorumLossWaitDuration
+	}
+	if ssp.StandByReplicaKeepDuration != nil {
+		objectMap["standByReplicaKeepDuration"] = ssp.StandByReplicaKeepDuration
+	}
+	if ssp.ProvisioningState != nil {
+		objectMap["provisioningState"] = ssp.ProvisioningState
+	}
+	if ssp.ServiceTypeName != nil {
+		objectMap["serviceTypeName"] = ssp.ServiceTypeName
+	}
+	objectMap["partitionDescription"] = ssp.PartitionDescription
+	objectMap["serviceKind"] = ssp.ServiceKind
+	if ssp.PlacementConstraints != nil {
+		objectMap["placementConstraints"] = ssp.PlacementConstraints
+	}
+	if ssp.CorrelationScheme != nil {
+		objectMap["correlationScheme"] = ssp.CorrelationScheme
+	}
+	if ssp.ServiceLoadMetrics != nil {
+		objectMap["serviceLoadMetrics"] = ssp.ServiceLoadMetrics
+	}
+	if ssp.ServicePlacementPolicies != nil {
+		objectMap["servicePlacementPolicies"] = ssp.ServicePlacementPolicies
+	}
+	objectMap["defaultMoveCost"] = ssp.DefaultMoveCost
+	return json.Marshal(objectMap)
 }
 
 // AsServiceProperties is the BasicServicePropertiesBase implementation for StatefulServiceProperties.
@@ -2477,154 +2759,142 @@ func (ssp *StatefulServiceProperties) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["hasPersistedState"]
-	if v != nil {
-		var hasPersistedState bool
-		err = json.Unmarshal(*m["hasPersistedState"], &hasPersistedState)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "hasPersistedState":
+			if v != nil {
+				var hasPersistedState bool
+				err = json.Unmarshal(*v, &hasPersistedState)
+				if err != nil {
+					return err
+				}
+				ssp.HasPersistedState = &hasPersistedState
+			}
+		case "targetReplicaSetSize":
+			if v != nil {
+				var targetReplicaSetSize int32
+				err = json.Unmarshal(*v, &targetReplicaSetSize)
+				if err != nil {
+					return err
+				}
+				ssp.TargetReplicaSetSize = &targetReplicaSetSize
+			}
+		case "minReplicaSetSize":
+			if v != nil {
+				var minReplicaSetSize int32
+				err = json.Unmarshal(*v, &minReplicaSetSize)
+				if err != nil {
+					return err
+				}
+				ssp.MinReplicaSetSize = &minReplicaSetSize
+			}
+		case "replicaRestartWaitDuration":
+			if v != nil {
+				var replicaRestartWaitDuration date.Time
+				err = json.Unmarshal(*v, &replicaRestartWaitDuration)
+				if err != nil {
+					return err
+				}
+				ssp.ReplicaRestartWaitDuration = &replicaRestartWaitDuration
+			}
+		case "quorumLossWaitDuration":
+			if v != nil {
+				var quorumLossWaitDuration date.Time
+				err = json.Unmarshal(*v, &quorumLossWaitDuration)
+				if err != nil {
+					return err
+				}
+				ssp.QuorumLossWaitDuration = &quorumLossWaitDuration
+			}
+		case "standByReplicaKeepDuration":
+			if v != nil {
+				var standByReplicaKeepDuration date.Time
+				err = json.Unmarshal(*v, &standByReplicaKeepDuration)
+				if err != nil {
+					return err
+				}
+				ssp.StandByReplicaKeepDuration = &standByReplicaKeepDuration
+			}
+		case "provisioningState":
+			if v != nil {
+				var provisioningState string
+				err = json.Unmarshal(*v, &provisioningState)
+				if err != nil {
+					return err
+				}
+				ssp.ProvisioningState = &provisioningState
+			}
+		case "serviceTypeName":
+			if v != nil {
+				var serviceTypeName string
+				err = json.Unmarshal(*v, &serviceTypeName)
+				if err != nil {
+					return err
+				}
+				ssp.ServiceTypeName = &serviceTypeName
+			}
+		case "partitionDescription":
+			if v != nil {
+				partitionDescription, err := unmarshalBasicPartitionSchemeDescription(*v)
+				if err != nil {
+					return err
+				}
+				ssp.PartitionDescription = partitionDescription
+			}
+		case "serviceKind":
+			if v != nil {
+				var serviceKind ServiceKind
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				ssp.ServiceKind = serviceKind
+			}
+		case "placementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				ssp.PlacementConstraints = &placementConstraints
+			}
+		case "correlationScheme":
+			if v != nil {
+				var correlationScheme []ServiceCorrelationDescription
+				err = json.Unmarshal(*v, &correlationScheme)
+				if err != nil {
+					return err
+				}
+				ssp.CorrelationScheme = &correlationScheme
+			}
+		case "serviceLoadMetrics":
+			if v != nil {
+				var serviceLoadMetrics []ServiceLoadMetricDescription
+				err = json.Unmarshal(*v, &serviceLoadMetrics)
+				if err != nil {
+					return err
+				}
+				ssp.ServiceLoadMetrics = &serviceLoadMetrics
+			}
+		case "servicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				ssp.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "defaultMoveCost":
+			if v != nil {
+				var defaultMoveCost DefaultMoveCost
+				err = json.Unmarshal(*v, &defaultMoveCost)
+				if err != nil {
+					return err
+				}
+				ssp.DefaultMoveCost = defaultMoveCost
+			}
 		}
-		ssp.HasPersistedState = &hasPersistedState
-	}
-
-	v = m["targetReplicaSetSize"]
-	if v != nil {
-		var targetReplicaSetSize int32
-		err = json.Unmarshal(*m["targetReplicaSetSize"], &targetReplicaSetSize)
-		if err != nil {
-			return err
-		}
-		ssp.TargetReplicaSetSize = &targetReplicaSetSize
-	}
-
-	v = m["minReplicaSetSize"]
-	if v != nil {
-		var minReplicaSetSize int32
-		err = json.Unmarshal(*m["minReplicaSetSize"], &minReplicaSetSize)
-		if err != nil {
-			return err
-		}
-		ssp.MinReplicaSetSize = &minReplicaSetSize
-	}
-
-	v = m["replicaRestartWaitDuration"]
-	if v != nil {
-		var replicaRestartWaitDuration date.Time
-		err = json.Unmarshal(*m["replicaRestartWaitDuration"], &replicaRestartWaitDuration)
-		if err != nil {
-			return err
-		}
-		ssp.ReplicaRestartWaitDuration = &replicaRestartWaitDuration
-	}
-
-	v = m["quorumLossWaitDuration"]
-	if v != nil {
-		var quorumLossWaitDuration date.Time
-		err = json.Unmarshal(*m["quorumLossWaitDuration"], &quorumLossWaitDuration)
-		if err != nil {
-			return err
-		}
-		ssp.QuorumLossWaitDuration = &quorumLossWaitDuration
-	}
-
-	v = m["standByReplicaKeepDuration"]
-	if v != nil {
-		var standByReplicaKeepDuration date.Time
-		err = json.Unmarshal(*m["standByReplicaKeepDuration"], &standByReplicaKeepDuration)
-		if err != nil {
-			return err
-		}
-		ssp.StandByReplicaKeepDuration = &standByReplicaKeepDuration
-	}
-
-	v = m["provisioningState"]
-	if v != nil {
-		var provisioningState string
-		err = json.Unmarshal(*m["provisioningState"], &provisioningState)
-		if err != nil {
-			return err
-		}
-		ssp.ProvisioningState = &provisioningState
-	}
-
-	v = m["serviceTypeName"]
-	if v != nil {
-		var serviceTypeName string
-		err = json.Unmarshal(*m["serviceTypeName"], &serviceTypeName)
-		if err != nil {
-			return err
-		}
-		ssp.ServiceTypeName = &serviceTypeName
-	}
-
-	v = m["partitionDescription"]
-	if v != nil {
-		partitionDescription, err := unmarshalBasicPartitionSchemeDescription(*m["partitionDescription"])
-		if err != nil {
-			return err
-		}
-		ssp.PartitionDescription = partitionDescription
-	}
-
-	v = m["serviceKind"]
-	if v != nil {
-		var serviceKind ServiceKind
-		err = json.Unmarshal(*m["serviceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		ssp.ServiceKind = serviceKind
-	}
-
-	v = m["placementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["placementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		ssp.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["correlationScheme"]
-	if v != nil {
-		var correlationScheme []ServiceCorrelationDescription
-		err = json.Unmarshal(*m["correlationScheme"], &correlationScheme)
-		if err != nil {
-			return err
-		}
-		ssp.CorrelationScheme = &correlationScheme
-	}
-
-	v = m["serviceLoadMetrics"]
-	if v != nil {
-		var serviceLoadMetrics []ServiceLoadMetricDescription
-		err = json.Unmarshal(*m["serviceLoadMetrics"], &serviceLoadMetrics)
-		if err != nil {
-			return err
-		}
-		ssp.ServiceLoadMetrics = &serviceLoadMetrics
-	}
-
-	v = m["servicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["servicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		ssp.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["defaultMoveCost"]
-	if v != nil {
-		var defaultMoveCost DefaultMoveCost
-		err = json.Unmarshal(*m["defaultMoveCost"], &defaultMoveCost)
-		if err != nil {
-			return err
-		}
-		ssp.DefaultMoveCost = defaultMoveCost
 	}
 
 	return nil
@@ -2632,15 +2902,6 @@ func (ssp *StatefulServiceProperties) UnmarshalJSON(body []byte) error {
 
 // StatefulServiceUpdateProperties the properties of a stateful service resource for patch operations.
 type StatefulServiceUpdateProperties struct {
-	// PlacementConstraints - The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)".
-	PlacementConstraints     *string                                   `json:"placementConstraints,omitempty"`
-	CorrelationScheme        *[]ServiceCorrelationDescription          `json:"correlationScheme,omitempty"`
-	ServiceLoadMetrics       *[]ServiceLoadMetricDescription           `json:"serviceLoadMetrics,omitempty"`
-	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"servicePlacementPolicies,omitempty"`
-	// DefaultMoveCost - Possible values include: 'Zero', 'Low', 'Medium', 'High'
-	DefaultMoveCost DefaultMoveCost `json:"defaultMoveCost,omitempty"`
-	// ServiceKind - Possible values include: 'ServiceKindBasicServiceUpdatePropertiesServiceKindServiceUpdateProperties', 'ServiceKindBasicServiceUpdatePropertiesServiceKindStateless', 'ServiceKindBasicServiceUpdatePropertiesServiceKindStateful'
-	ServiceKind ServiceKindBasicServiceUpdateProperties `json:"serviceKind,omitempty"`
 	// TargetReplicaSetSize - The target replica set size as a number.
 	TargetReplicaSetSize *int32 `json:"targetReplicaSetSize,omitempty"`
 	// MinReplicaSetSize - The minimum replica set size as a number.
@@ -2651,17 +2912,51 @@ type StatefulServiceUpdateProperties struct {
 	QuorumLossWaitDuration *date.Time `json:"quorumLossWaitDuration,omitempty"`
 	// StandByReplicaKeepDuration - The definition on how long StandBy replicas should be maintained before being removed, represented in ISO 8601 format (hh:mm:ss.s).
 	StandByReplicaKeepDuration *date.Time `json:"standByReplicaKeepDuration,omitempty"`
+	// ServiceKind - Possible values include: 'ServiceKindBasicServiceUpdatePropertiesServiceKindServiceUpdateProperties', 'ServiceKindBasicServiceUpdatePropertiesServiceKindStateless', 'ServiceKindBasicServiceUpdatePropertiesServiceKindStateful'
+	ServiceKind ServiceKindBasicServiceUpdateProperties `json:"serviceKind,omitempty"`
+	// PlacementConstraints - The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)".
+	PlacementConstraints     *string                                   `json:"placementConstraints,omitempty"`
+	CorrelationScheme        *[]ServiceCorrelationDescription          `json:"correlationScheme,omitempty"`
+	ServiceLoadMetrics       *[]ServiceLoadMetricDescription           `json:"serviceLoadMetrics,omitempty"`
+	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"servicePlacementPolicies,omitempty"`
+	// DefaultMoveCost - Possible values include: 'Zero', 'Low', 'Medium', 'High'
+	DefaultMoveCost DefaultMoveCost `json:"defaultMoveCost,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatefulServiceUpdateProperties.
 func (ssup StatefulServiceUpdateProperties) MarshalJSON() ([]byte, error) {
 	ssup.ServiceKind = ServiceKindBasicServiceUpdatePropertiesServiceKindStateful
-	type Alias StatefulServiceUpdateProperties
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssup),
-	})
+	objectMap := make(map[string]interface{})
+	if ssup.TargetReplicaSetSize != nil {
+		objectMap["targetReplicaSetSize"] = ssup.TargetReplicaSetSize
+	}
+	if ssup.MinReplicaSetSize != nil {
+		objectMap["minReplicaSetSize"] = ssup.MinReplicaSetSize
+	}
+	if ssup.ReplicaRestartWaitDuration != nil {
+		objectMap["replicaRestartWaitDuration"] = ssup.ReplicaRestartWaitDuration
+	}
+	if ssup.QuorumLossWaitDuration != nil {
+		objectMap["quorumLossWaitDuration"] = ssup.QuorumLossWaitDuration
+	}
+	if ssup.StandByReplicaKeepDuration != nil {
+		objectMap["standByReplicaKeepDuration"] = ssup.StandByReplicaKeepDuration
+	}
+	objectMap["serviceKind"] = ssup.ServiceKind
+	if ssup.PlacementConstraints != nil {
+		objectMap["placementConstraints"] = ssup.PlacementConstraints
+	}
+	if ssup.CorrelationScheme != nil {
+		objectMap["correlationScheme"] = ssup.CorrelationScheme
+	}
+	if ssup.ServiceLoadMetrics != nil {
+		objectMap["serviceLoadMetrics"] = ssup.ServiceLoadMetrics
+	}
+	if ssup.ServicePlacementPolicies != nil {
+		objectMap["servicePlacementPolicies"] = ssup.ServicePlacementPolicies
+	}
+	objectMap["defaultMoveCost"] = ssup.DefaultMoveCost
+	return json.Marshal(objectMap)
 }
 
 // AsServiceProperties is the BasicServicePropertiesBase implementation for StatefulServiceUpdateProperties.
@@ -2711,115 +3006,107 @@ func (ssup *StatefulServiceUpdateProperties) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["targetReplicaSetSize"]
-	if v != nil {
-		var targetReplicaSetSize int32
-		err = json.Unmarshal(*m["targetReplicaSetSize"], &targetReplicaSetSize)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "targetReplicaSetSize":
+			if v != nil {
+				var targetReplicaSetSize int32
+				err = json.Unmarshal(*v, &targetReplicaSetSize)
+				if err != nil {
+					return err
+				}
+				ssup.TargetReplicaSetSize = &targetReplicaSetSize
+			}
+		case "minReplicaSetSize":
+			if v != nil {
+				var minReplicaSetSize int32
+				err = json.Unmarshal(*v, &minReplicaSetSize)
+				if err != nil {
+					return err
+				}
+				ssup.MinReplicaSetSize = &minReplicaSetSize
+			}
+		case "replicaRestartWaitDuration":
+			if v != nil {
+				var replicaRestartWaitDuration date.Time
+				err = json.Unmarshal(*v, &replicaRestartWaitDuration)
+				if err != nil {
+					return err
+				}
+				ssup.ReplicaRestartWaitDuration = &replicaRestartWaitDuration
+			}
+		case "quorumLossWaitDuration":
+			if v != nil {
+				var quorumLossWaitDuration date.Time
+				err = json.Unmarshal(*v, &quorumLossWaitDuration)
+				if err != nil {
+					return err
+				}
+				ssup.QuorumLossWaitDuration = &quorumLossWaitDuration
+			}
+		case "standByReplicaKeepDuration":
+			if v != nil {
+				var standByReplicaKeepDuration date.Time
+				err = json.Unmarshal(*v, &standByReplicaKeepDuration)
+				if err != nil {
+					return err
+				}
+				ssup.StandByReplicaKeepDuration = &standByReplicaKeepDuration
+			}
+		case "serviceKind":
+			if v != nil {
+				var serviceKind ServiceKindBasicServiceUpdateProperties
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				ssup.ServiceKind = serviceKind
+			}
+		case "placementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				ssup.PlacementConstraints = &placementConstraints
+			}
+		case "correlationScheme":
+			if v != nil {
+				var correlationScheme []ServiceCorrelationDescription
+				err = json.Unmarshal(*v, &correlationScheme)
+				if err != nil {
+					return err
+				}
+				ssup.CorrelationScheme = &correlationScheme
+			}
+		case "serviceLoadMetrics":
+			if v != nil {
+				var serviceLoadMetrics []ServiceLoadMetricDescription
+				err = json.Unmarshal(*v, &serviceLoadMetrics)
+				if err != nil {
+					return err
+				}
+				ssup.ServiceLoadMetrics = &serviceLoadMetrics
+			}
+		case "servicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				ssup.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "defaultMoveCost":
+			if v != nil {
+				var defaultMoveCost DefaultMoveCost
+				err = json.Unmarshal(*v, &defaultMoveCost)
+				if err != nil {
+					return err
+				}
+				ssup.DefaultMoveCost = defaultMoveCost
+			}
 		}
-		ssup.TargetReplicaSetSize = &targetReplicaSetSize
-	}
-
-	v = m["minReplicaSetSize"]
-	if v != nil {
-		var minReplicaSetSize int32
-		err = json.Unmarshal(*m["minReplicaSetSize"], &minReplicaSetSize)
-		if err != nil {
-			return err
-		}
-		ssup.MinReplicaSetSize = &minReplicaSetSize
-	}
-
-	v = m["replicaRestartWaitDuration"]
-	if v != nil {
-		var replicaRestartWaitDuration date.Time
-		err = json.Unmarshal(*m["replicaRestartWaitDuration"], &replicaRestartWaitDuration)
-		if err != nil {
-			return err
-		}
-		ssup.ReplicaRestartWaitDuration = &replicaRestartWaitDuration
-	}
-
-	v = m["quorumLossWaitDuration"]
-	if v != nil {
-		var quorumLossWaitDuration date.Time
-		err = json.Unmarshal(*m["quorumLossWaitDuration"], &quorumLossWaitDuration)
-		if err != nil {
-			return err
-		}
-		ssup.QuorumLossWaitDuration = &quorumLossWaitDuration
-	}
-
-	v = m["standByReplicaKeepDuration"]
-	if v != nil {
-		var standByReplicaKeepDuration date.Time
-		err = json.Unmarshal(*m["standByReplicaKeepDuration"], &standByReplicaKeepDuration)
-		if err != nil {
-			return err
-		}
-		ssup.StandByReplicaKeepDuration = &standByReplicaKeepDuration
-	}
-
-	v = m["serviceKind"]
-	if v != nil {
-		var serviceKind ServiceKindBasicServiceUpdateProperties
-		err = json.Unmarshal(*m["serviceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		ssup.ServiceKind = serviceKind
-	}
-
-	v = m["placementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["placementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		ssup.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["correlationScheme"]
-	if v != nil {
-		var correlationScheme []ServiceCorrelationDescription
-		err = json.Unmarshal(*m["correlationScheme"], &correlationScheme)
-		if err != nil {
-			return err
-		}
-		ssup.CorrelationScheme = &correlationScheme
-	}
-
-	v = m["serviceLoadMetrics"]
-	if v != nil {
-		var serviceLoadMetrics []ServiceLoadMetricDescription
-		err = json.Unmarshal(*m["serviceLoadMetrics"], &serviceLoadMetrics)
-		if err != nil {
-			return err
-		}
-		ssup.ServiceLoadMetrics = &serviceLoadMetrics
-	}
-
-	v = m["servicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["servicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		ssup.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["defaultMoveCost"]
-	if v != nil {
-		var defaultMoveCost DefaultMoveCost
-		err = json.Unmarshal(*m["defaultMoveCost"], &defaultMoveCost)
-		if err != nil {
-			return err
-		}
-		ssup.DefaultMoveCost = defaultMoveCost
 	}
 
 	return nil
@@ -2827,13 +3114,8 @@ func (ssup *StatefulServiceUpdateProperties) UnmarshalJSON(body []byte) error {
 
 // StatelessServiceProperties the properties of a stateless service resource.
 type StatelessServiceProperties struct {
-	// PlacementConstraints - The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)".
-	PlacementConstraints     *string                                   `json:"placementConstraints,omitempty"`
-	CorrelationScheme        *[]ServiceCorrelationDescription          `json:"correlationScheme,omitempty"`
-	ServiceLoadMetrics       *[]ServiceLoadMetricDescription           `json:"serviceLoadMetrics,omitempty"`
-	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"servicePlacementPolicies,omitempty"`
-	// DefaultMoveCost - Possible values include: 'Zero', 'Low', 'Medium', 'High'
-	DefaultMoveCost DefaultMoveCost `json:"defaultMoveCost,omitempty"`
+	// InstanceCount - The instance count.
+	InstanceCount *int32 `json:"instanceCount,omitempty"`
 	// ProvisioningState - The current deployment or provisioning state, which only appears in the response
 	ProvisioningState *string `json:"provisioningState,omitempty"`
 	// ServiceTypeName - The name of the service type
@@ -2841,19 +3123,44 @@ type StatelessServiceProperties struct {
 	PartitionDescription BasicPartitionSchemeDescription `json:"partitionDescription,omitempty"`
 	// ServiceKind - Possible values include: 'ServiceKindServiceProperties', 'ServiceKindStateless', 'ServiceKindStateful'
 	ServiceKind ServiceKind `json:"serviceKind,omitempty"`
-	// InstanceCount - The instance count.
-	InstanceCount *int32 `json:"instanceCount,omitempty"`
+	// PlacementConstraints - The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)".
+	PlacementConstraints     *string                                   `json:"placementConstraints,omitempty"`
+	CorrelationScheme        *[]ServiceCorrelationDescription          `json:"correlationScheme,omitempty"`
+	ServiceLoadMetrics       *[]ServiceLoadMetricDescription           `json:"serviceLoadMetrics,omitempty"`
+	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"servicePlacementPolicies,omitempty"`
+	// DefaultMoveCost - Possible values include: 'Zero', 'Low', 'Medium', 'High'
+	DefaultMoveCost DefaultMoveCost `json:"defaultMoveCost,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatelessServiceProperties.
 func (ssp StatelessServiceProperties) MarshalJSON() ([]byte, error) {
 	ssp.ServiceKind = ServiceKindStateless
-	type Alias StatelessServiceProperties
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssp),
-	})
+	objectMap := make(map[string]interface{})
+	if ssp.InstanceCount != nil {
+		objectMap["instanceCount"] = ssp.InstanceCount
+	}
+	if ssp.ProvisioningState != nil {
+		objectMap["provisioningState"] = ssp.ProvisioningState
+	}
+	if ssp.ServiceTypeName != nil {
+		objectMap["serviceTypeName"] = ssp.ServiceTypeName
+	}
+	objectMap["partitionDescription"] = ssp.PartitionDescription
+	objectMap["serviceKind"] = ssp.ServiceKind
+	if ssp.PlacementConstraints != nil {
+		objectMap["placementConstraints"] = ssp.PlacementConstraints
+	}
+	if ssp.CorrelationScheme != nil {
+		objectMap["correlationScheme"] = ssp.CorrelationScheme
+	}
+	if ssp.ServiceLoadMetrics != nil {
+		objectMap["serviceLoadMetrics"] = ssp.ServiceLoadMetrics
+	}
+	if ssp.ServicePlacementPolicies != nil {
+		objectMap["servicePlacementPolicies"] = ssp.ServicePlacementPolicies
+	}
+	objectMap["defaultMoveCost"] = ssp.DefaultMoveCost
+	return json.Marshal(objectMap)
 }
 
 // AsServiceProperties is the BasicServicePropertiesBase implementation for StatelessServiceProperties.
@@ -2903,104 +3210,97 @@ func (ssp *StatelessServiceProperties) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["instanceCount"]
-	if v != nil {
-		var instanceCount int32
-		err = json.Unmarshal(*m["instanceCount"], &instanceCount)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "instanceCount":
+			if v != nil {
+				var instanceCount int32
+				err = json.Unmarshal(*v, &instanceCount)
+				if err != nil {
+					return err
+				}
+				ssp.InstanceCount = &instanceCount
+			}
+		case "provisioningState":
+			if v != nil {
+				var provisioningState string
+				err = json.Unmarshal(*v, &provisioningState)
+				if err != nil {
+					return err
+				}
+				ssp.ProvisioningState = &provisioningState
+			}
+		case "serviceTypeName":
+			if v != nil {
+				var serviceTypeName string
+				err = json.Unmarshal(*v, &serviceTypeName)
+				if err != nil {
+					return err
+				}
+				ssp.ServiceTypeName = &serviceTypeName
+			}
+		case "partitionDescription":
+			if v != nil {
+				partitionDescription, err := unmarshalBasicPartitionSchemeDescription(*v)
+				if err != nil {
+					return err
+				}
+				ssp.PartitionDescription = partitionDescription
+			}
+		case "serviceKind":
+			if v != nil {
+				var serviceKind ServiceKind
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				ssp.ServiceKind = serviceKind
+			}
+		case "placementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				ssp.PlacementConstraints = &placementConstraints
+			}
+		case "correlationScheme":
+			if v != nil {
+				var correlationScheme []ServiceCorrelationDescription
+				err = json.Unmarshal(*v, &correlationScheme)
+				if err != nil {
+					return err
+				}
+				ssp.CorrelationScheme = &correlationScheme
+			}
+		case "serviceLoadMetrics":
+			if v != nil {
+				var serviceLoadMetrics []ServiceLoadMetricDescription
+				err = json.Unmarshal(*v, &serviceLoadMetrics)
+				if err != nil {
+					return err
+				}
+				ssp.ServiceLoadMetrics = &serviceLoadMetrics
+			}
+		case "servicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				ssp.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "defaultMoveCost":
+			if v != nil {
+				var defaultMoveCost DefaultMoveCost
+				err = json.Unmarshal(*v, &defaultMoveCost)
+				if err != nil {
+					return err
+				}
+				ssp.DefaultMoveCost = defaultMoveCost
+			}
 		}
-		ssp.InstanceCount = &instanceCount
-	}
-
-	v = m["provisioningState"]
-	if v != nil {
-		var provisioningState string
-		err = json.Unmarshal(*m["provisioningState"], &provisioningState)
-		if err != nil {
-			return err
-		}
-		ssp.ProvisioningState = &provisioningState
-	}
-
-	v = m["serviceTypeName"]
-	if v != nil {
-		var serviceTypeName string
-		err = json.Unmarshal(*m["serviceTypeName"], &serviceTypeName)
-		if err != nil {
-			return err
-		}
-		ssp.ServiceTypeName = &serviceTypeName
-	}
-
-	v = m["partitionDescription"]
-	if v != nil {
-		partitionDescription, err := unmarshalBasicPartitionSchemeDescription(*m["partitionDescription"])
-		if err != nil {
-			return err
-		}
-		ssp.PartitionDescription = partitionDescription
-	}
-
-	v = m["serviceKind"]
-	if v != nil {
-		var serviceKind ServiceKind
-		err = json.Unmarshal(*m["serviceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		ssp.ServiceKind = serviceKind
-	}
-
-	v = m["placementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["placementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		ssp.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["correlationScheme"]
-	if v != nil {
-		var correlationScheme []ServiceCorrelationDescription
-		err = json.Unmarshal(*m["correlationScheme"], &correlationScheme)
-		if err != nil {
-			return err
-		}
-		ssp.CorrelationScheme = &correlationScheme
-	}
-
-	v = m["serviceLoadMetrics"]
-	if v != nil {
-		var serviceLoadMetrics []ServiceLoadMetricDescription
-		err = json.Unmarshal(*m["serviceLoadMetrics"], &serviceLoadMetrics)
-		if err != nil {
-			return err
-		}
-		ssp.ServiceLoadMetrics = &serviceLoadMetrics
-	}
-
-	v = m["servicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["servicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		ssp.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["defaultMoveCost"]
-	if v != nil {
-		var defaultMoveCost DefaultMoveCost
-		err = json.Unmarshal(*m["defaultMoveCost"], &defaultMoveCost)
-		if err != nil {
-			return err
-		}
-		ssp.DefaultMoveCost = defaultMoveCost
 	}
 
 	return nil
@@ -3008,6 +3308,10 @@ func (ssp *StatelessServiceProperties) UnmarshalJSON(body []byte) error {
 
 // StatelessServiceUpdateProperties the properties of a stateless service resource for patch operations.
 type StatelessServiceUpdateProperties struct {
+	// InstanceCount - The instance count.
+	InstanceCount *int32 `json:"instanceCount,omitempty"`
+	// ServiceKind - Possible values include: 'ServiceKindBasicServiceUpdatePropertiesServiceKindServiceUpdateProperties', 'ServiceKindBasicServiceUpdatePropertiesServiceKindStateless', 'ServiceKindBasicServiceUpdatePropertiesServiceKindStateful'
+	ServiceKind ServiceKindBasicServiceUpdateProperties `json:"serviceKind,omitempty"`
 	// PlacementConstraints - The placement constraints as a string. Placement constraints are boolean expressions on node properties and allow for restricting a service to particular nodes based on the service requirements. For example, to place a service on nodes where NodeType is blue specify the following: "NodeColor == blue)".
 	PlacementConstraints     *string                                   `json:"placementConstraints,omitempty"`
 	CorrelationScheme        *[]ServiceCorrelationDescription          `json:"correlationScheme,omitempty"`
@@ -3015,21 +3319,30 @@ type StatelessServiceUpdateProperties struct {
 	ServicePlacementPolicies *[]BasicServicePlacementPolicyDescription `json:"servicePlacementPolicies,omitempty"`
 	// DefaultMoveCost - Possible values include: 'Zero', 'Low', 'Medium', 'High'
 	DefaultMoveCost DefaultMoveCost `json:"defaultMoveCost,omitempty"`
-	// ServiceKind - Possible values include: 'ServiceKindBasicServiceUpdatePropertiesServiceKindServiceUpdateProperties', 'ServiceKindBasicServiceUpdatePropertiesServiceKindStateless', 'ServiceKindBasicServiceUpdatePropertiesServiceKindStateful'
-	ServiceKind ServiceKindBasicServiceUpdateProperties `json:"serviceKind,omitempty"`
-	// InstanceCount - The instance count.
-	InstanceCount *int32 `json:"instanceCount,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for StatelessServiceUpdateProperties.
 func (ssup StatelessServiceUpdateProperties) MarshalJSON() ([]byte, error) {
 	ssup.ServiceKind = ServiceKindBasicServiceUpdatePropertiesServiceKindStateless
-	type Alias StatelessServiceUpdateProperties
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ssup),
-	})
+	objectMap := make(map[string]interface{})
+	if ssup.InstanceCount != nil {
+		objectMap["instanceCount"] = ssup.InstanceCount
+	}
+	objectMap["serviceKind"] = ssup.ServiceKind
+	if ssup.PlacementConstraints != nil {
+		objectMap["placementConstraints"] = ssup.PlacementConstraints
+	}
+	if ssup.CorrelationScheme != nil {
+		objectMap["correlationScheme"] = ssup.CorrelationScheme
+	}
+	if ssup.ServiceLoadMetrics != nil {
+		objectMap["serviceLoadMetrics"] = ssup.ServiceLoadMetrics
+	}
+	if ssup.ServicePlacementPolicies != nil {
+		objectMap["servicePlacementPolicies"] = ssup.ServicePlacementPolicies
+	}
+	objectMap["defaultMoveCost"] = ssup.DefaultMoveCost
+	return json.Marshal(objectMap)
 }
 
 // AsServiceProperties is the BasicServicePropertiesBase implementation for StatelessServiceUpdateProperties.
@@ -3079,75 +3392,71 @@ func (ssup *StatelessServiceUpdateProperties) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["instanceCount"]
-	if v != nil {
-		var instanceCount int32
-		err = json.Unmarshal(*m["instanceCount"], &instanceCount)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "instanceCount":
+			if v != nil {
+				var instanceCount int32
+				err = json.Unmarshal(*v, &instanceCount)
+				if err != nil {
+					return err
+				}
+				ssup.InstanceCount = &instanceCount
+			}
+		case "serviceKind":
+			if v != nil {
+				var serviceKind ServiceKindBasicServiceUpdateProperties
+				err = json.Unmarshal(*v, &serviceKind)
+				if err != nil {
+					return err
+				}
+				ssup.ServiceKind = serviceKind
+			}
+		case "placementConstraints":
+			if v != nil {
+				var placementConstraints string
+				err = json.Unmarshal(*v, &placementConstraints)
+				if err != nil {
+					return err
+				}
+				ssup.PlacementConstraints = &placementConstraints
+			}
+		case "correlationScheme":
+			if v != nil {
+				var correlationScheme []ServiceCorrelationDescription
+				err = json.Unmarshal(*v, &correlationScheme)
+				if err != nil {
+					return err
+				}
+				ssup.CorrelationScheme = &correlationScheme
+			}
+		case "serviceLoadMetrics":
+			if v != nil {
+				var serviceLoadMetrics []ServiceLoadMetricDescription
+				err = json.Unmarshal(*v, &serviceLoadMetrics)
+				if err != nil {
+					return err
+				}
+				ssup.ServiceLoadMetrics = &serviceLoadMetrics
+			}
+		case "servicePlacementPolicies":
+			if v != nil {
+				servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*v)
+				if err != nil {
+					return err
+				}
+				ssup.ServicePlacementPolicies = &servicePlacementPolicies
+			}
+		case "defaultMoveCost":
+			if v != nil {
+				var defaultMoveCost DefaultMoveCost
+				err = json.Unmarshal(*v, &defaultMoveCost)
+				if err != nil {
+					return err
+				}
+				ssup.DefaultMoveCost = defaultMoveCost
+			}
 		}
-		ssup.InstanceCount = &instanceCount
-	}
-
-	v = m["serviceKind"]
-	if v != nil {
-		var serviceKind ServiceKindBasicServiceUpdateProperties
-		err = json.Unmarshal(*m["serviceKind"], &serviceKind)
-		if err != nil {
-			return err
-		}
-		ssup.ServiceKind = serviceKind
-	}
-
-	v = m["placementConstraints"]
-	if v != nil {
-		var placementConstraints string
-		err = json.Unmarshal(*m["placementConstraints"], &placementConstraints)
-		if err != nil {
-			return err
-		}
-		ssup.PlacementConstraints = &placementConstraints
-	}
-
-	v = m["correlationScheme"]
-	if v != nil {
-		var correlationScheme []ServiceCorrelationDescription
-		err = json.Unmarshal(*m["correlationScheme"], &correlationScheme)
-		if err != nil {
-			return err
-		}
-		ssup.CorrelationScheme = &correlationScheme
-	}
-
-	v = m["serviceLoadMetrics"]
-	if v != nil {
-		var serviceLoadMetrics []ServiceLoadMetricDescription
-		err = json.Unmarshal(*m["serviceLoadMetrics"], &serviceLoadMetrics)
-		if err != nil {
-			return err
-		}
-		ssup.ServiceLoadMetrics = &serviceLoadMetrics
-	}
-
-	v = m["servicePlacementPolicies"]
-	if v != nil {
-		servicePlacementPolicies, err := unmarshalBasicServicePlacementPolicyDescriptionArray(*m["servicePlacementPolicies"])
-		if err != nil {
-			return err
-		}
-		ssup.ServicePlacementPolicies = &servicePlacementPolicies
-	}
-
-	v = m["defaultMoveCost"]
-	if v != nil {
-		var defaultMoveCost DefaultMoveCost
-		err = json.Unmarshal(*m["defaultMoveCost"], &defaultMoveCost)
-		if err != nil {
-			return err
-		}
-		ssup.DefaultMoveCost = defaultMoveCost
 	}
 
 	return nil
@@ -3156,8 +3465,6 @@ func (ssup *StatelessServiceUpdateProperties) UnmarshalJSON(body []byte) error {
 // UniformInt64RangePartitionSchemeDescription describes a partitioning scheme where an integer range is allocated
 // evenly across a number of partitions.
 type UniformInt64RangePartitionSchemeDescription struct {
-	// PartitionScheme - Possible values include: 'PartitionSchemePartitionSchemeDescription', 'PartitionSchemeNamed', 'PartitionSchemeSingleton', 'PartitionSchemeUniformInt64Range'
-	PartitionScheme PartitionScheme `json:"PartitionScheme,omitempty"`
 	// Count - The number of partitions.
 	Count *int32 `json:"Count,omitempty"`
 	// LowKey - String indicating the lower bound of the partition key range that
@@ -3166,17 +3473,25 @@ type UniformInt64RangePartitionSchemeDescription struct {
 	// HighKey - String indicating the upper bound of the partition key range that
 	// should be split between the partition ‘Count’
 	HighKey *string `json:"HighKey,omitempty"`
+	// PartitionScheme - Possible values include: 'PartitionSchemePartitionSchemeDescription', 'PartitionSchemeNamed', 'PartitionSchemeSingleton', 'PartitionSchemeUniformInt64Range'
+	PartitionScheme PartitionScheme `json:"PartitionScheme,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for UniformInt64RangePartitionSchemeDescription.
 func (ui6rpsd UniformInt64RangePartitionSchemeDescription) MarshalJSON() ([]byte, error) {
 	ui6rpsd.PartitionScheme = PartitionSchemeUniformInt64Range
-	type Alias UniformInt64RangePartitionSchemeDescription
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(ui6rpsd),
-	})
+	objectMap := make(map[string]interface{})
+	if ui6rpsd.Count != nil {
+		objectMap["Count"] = ui6rpsd.Count
+	}
+	if ui6rpsd.LowKey != nil {
+		objectMap["LowKey"] = ui6rpsd.LowKey
+	}
+	if ui6rpsd.HighKey != nil {
+		objectMap["HighKey"] = ui6rpsd.HighKey
+	}
+	objectMap["PartitionScheme"] = ui6rpsd.PartitionScheme
+	return json.Marshal(objectMap)
 }
 
 // AsNamedPartitionSchemeDescription is the BasicPartitionSchemeDescription implementation for UniformInt64RangePartitionSchemeDescription.
@@ -3216,22 +3531,39 @@ func (future VersionDeleteFuture) Result(client VersionClient) (ar autorest.Resp
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.VersionDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("servicefabric.VersionDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("servicefabric.VersionDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "servicefabric.VersionDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.VersionDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.VersionDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -3256,28 +3588,46 @@ func (future VersionPutFuture) Result(client VersionClient) (vr VersionResource,
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.VersionPutFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return vr, autorest.NewError("servicefabric.VersionPutFuture", "Result", "asynchronous operation has not completed")
+		return vr, azure.NewAsyncOpIncompleteError("servicefabric.VersionPutFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		vr, err = client.PutResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "servicefabric.VersionPutFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.VersionPutFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	vr, err = client.PutResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "servicefabric.VersionPutFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
 // VersionResource a version resource for the specified application type name.
 type VersionResource struct {
-	autorest.Response `json:"-"`
+	autorest.Response  `json:"-"`
+	*VersionProperties `json:"properties,omitempty"`
 	// ID - Azure resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Azure resource name.
@@ -3285,8 +3635,7 @@ type VersionResource struct {
 	// Type - Azure resource type.
 	Type *string `json:"type,omitempty"`
 	// Location - Resource location.
-	Location           *string `json:"location,omitempty"`
-	*VersionProperties `json:"properties,omitempty"`
+	Location *string `json:"location,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for VersionResource struct.
@@ -3296,56 +3645,54 @@ func (vr *VersionResource) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties VersionProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var versionProperties VersionProperties
+				err = json.Unmarshal(*v, &versionProperties)
+				if err != nil {
+					return err
+				}
+				vr.VersionProperties = &versionProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				vr.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				vr.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				vr.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				vr.Location = &location
+			}
 		}
-		vr.VersionProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		vr.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		vr.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		vr.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		vr.Location = &location
 	}
 
 	return nil

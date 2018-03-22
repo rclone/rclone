@@ -633,8 +633,8 @@ func (client CertificateOrdersClient) GetCertificatesComplete(ctx context.Contex
 
 // ReissueCertificateOrder sends the reissue certificate order request.
 //
-// resourceGroupName is azure resource group name name is certificate name reissueCertificateOrderRequest is reissue
-// parameters
+// resourceGroupName is azure resource group name name is certificate name reissueCertificateOrderRequest is
+// reissue parameters
 func (client CertificateOrdersClient) ReissueCertificateOrder(ctx context.Context, resourceGroupName string, name string, reissueCertificateOrderRequest ReissueCertificateOrderRequest) (result SetObject, err error) {
 	req, err := client.ReissueCertificateOrderPreparer(ctx, resourceGroupName, name, reissueCertificateOrderRequest)
 	if err != nil {

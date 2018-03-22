@@ -14,8 +14,11 @@ import (
 //
 // The request will not be signed, and will not use your AWS credentials.
 //
-// A "NotFound" error code will be returned if the bucket does not exist in
-// the AWS partition the regionHint belongs to.
+// A "NotFound" error code will be returned if the bucket does not exist in the
+// AWS partition the regionHint belongs to. If the regionHint parameter is an
+// empty string GetBucketRegion will fallback to the ConfigProvider's region
+// config. If the regionHint is empty, and the ConfigProvider does not have a
+// region value, an error will be returned..
 //
 // For example to get the region of a bucket which exists in "eu-central-1"
 // you could provide a region hint of "us-west-2".
@@ -33,9 +36,11 @@ import (
 //    fmt.Printf("Bucket %s is in %s region\n", bucket, region)
 //
 func GetBucketRegion(ctx aws.Context, c client.ConfigProvider, bucket, regionHint string, opts ...request.Option) (string, error) {
-	svc := s3.New(c, &aws.Config{
-		Region: aws.String(regionHint),
-	})
+	var cfg aws.Config
+	if len(regionHint) != 0 {
+		cfg.Region = aws.String(regionHint)
+	}
+	svc := s3.New(c, &cfg)
 	return GetBucketRegionWithClient(ctx, svc, bucket, opts...)
 }
 

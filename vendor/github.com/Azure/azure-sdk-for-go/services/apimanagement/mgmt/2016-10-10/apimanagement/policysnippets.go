@@ -42,15 +42,15 @@ func NewPolicySnippetsClientWithBaseURI(baseURI string, subscriptionID string) P
 
 // ListByService lists all policy snippets.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. scope is
-// policy scope.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// scope is policy scope.
 func (client PolicySnippetsClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, scope PolicyScopeContract) (result PolicySnippetsCollection, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
 			Constraints: []validation.Constraint{{Target: "serviceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "serviceName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.PolicySnippetsClient", "ListByService")
+		return result, validation.NewError("apimanagement.PolicySnippetsClient", "ListByService", err.Error())
 	}
 
 	req, err := client.ListByServicePreparer(ctx, resourceGroupName, serviceName, scope)

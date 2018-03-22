@@ -54,7 +54,7 @@ func (client JobScheduleClient) Create(ctx context.Context, automationAccountNam
 				Chain: []validation.Constraint{{Target: "parameters.JobScheduleCreateProperties.Schedule", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "parameters.JobScheduleCreateProperties.Runbook", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.JobScheduleClient", "Create")
+		return result, validation.NewError("automation.JobScheduleClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, automationAccountName, jobScheduleID, parameters)
@@ -129,7 +129,7 @@ func (client JobScheduleClient) Delete(ctx context.Context, automationAccountNam
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.JobScheduleClient", "Delete")
+		return result, validation.NewError("automation.JobScheduleClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, automationAccountName, jobScheduleID)
@@ -201,7 +201,7 @@ func (client JobScheduleClient) Get(ctx context.Context, automationAccountName s
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.JobScheduleClient", "Get")
+		return result, validation.NewError("automation.JobScheduleClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, jobScheduleID)
@@ -274,7 +274,7 @@ func (client JobScheduleClient) ListByAutomationAccount(ctx context.Context, aut
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.JobScheduleClient", "ListByAutomationAccount")
+		return result, validation.NewError("automation.JobScheduleClient", "ListByAutomationAccount", err.Error())
 	}
 
 	result.fn = client.listByAutomationAccountNextResults

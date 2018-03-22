@@ -43,8 +43,8 @@ func NewDeployedServicePackageHealthsClientWithBaseURI(baseURI string, timeout *
 
 // Get get deployed service package healths
 //
-// nodeName is the name of the node applicationName is the name of the application servicePackageName is the name of
-// the service package eventsHealthStateFilter is the filter of the events health state
+// nodeName is the name of the node applicationName is the name of the application servicePackageName is the name
+// of the service package eventsHealthStateFilter is the filter of the events health state
 func (client DeployedServicePackageHealthsClient) Get(ctx context.Context, nodeName string, applicationName string, servicePackageName string, eventsHealthStateFilter string) (result DeployedServicePackageHealth, err error) {
 	req, err := client.GetPreparer(ctx, nodeName, applicationName, servicePackageName, eventsHealthStateFilter)
 	if err != nil {
@@ -116,8 +116,8 @@ func (client DeployedServicePackageHealthsClient) GetResponder(resp *http.Respon
 
 // Send send deployed service package health
 //
-// nodeName is the name of the node applicationName is the name of the application serviceManifestName is the name of
-// the service manifest deployedServicePackageHealthReport is the report of the deployed service package health
+// nodeName is the name of the node applicationName is the name of the application serviceManifestName is the name
+// of the service manifest deployedServicePackageHealthReport is the report of the deployed service package health
 func (client DeployedServicePackageHealthsClient) Send(ctx context.Context, nodeName string, applicationName string, serviceManifestName string, deployedServicePackageHealthReport DeployedServiceHealthReport) (result String, err error) {
 	req, err := client.SendPreparer(ctx, nodeName, applicationName, serviceManifestName, deployedServicePackageHealthReport)
 	if err != nil {

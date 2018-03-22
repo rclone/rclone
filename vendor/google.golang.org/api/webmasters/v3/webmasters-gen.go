@@ -1613,7 +1613,7 @@ func (c *SitesDeleteCall) Do(opts ...googleapi.CallOption) error {
 	//   ],
 	//   "parameters": {
 	//     "siteUrl": {
-	//       "description": "The URI of the property as defined in Search Console. Examples: http://www.example.com/ or android-app://com.example/",
+	//       "description": "The URI of the property as defined in Search Console. Examples: http://www.example.com/ or android-app://com.example/ Note: for property-sets, use the URI that starts with sc-set: which is used in Search Console URLs.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"
@@ -1747,7 +1747,7 @@ func (c *SitesGetCall) Do(opts ...googleapi.CallOption) (*WmxSite, error) {
 	//   ],
 	//   "parameters": {
 	//     "siteUrl": {
-	//       "description": "The URI of the property as defined in Search Console. Examples: http://www.example.com/ or android-app://com.example/",
+	//       "description": "The URI of the property as defined in Search Console. Examples: http://www.example.com/ or android-app://com.example/ Note: for property-sets, use the URI that starts with sc-set: which is used in Search Console URLs.",
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"

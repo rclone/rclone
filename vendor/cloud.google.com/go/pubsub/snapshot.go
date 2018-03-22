@@ -15,23 +15,25 @@
 package pubsub
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
-	vkit "cloud.google.com/go/pubsub/apiv1"
+	"github.com/golang/protobuf/ptypes"
 	"golang.org/x/net/context"
+	pb "google.golang.org/genproto/googleapis/pubsub/v1"
 )
 
 // Snapshot is a reference to a PubSub snapshot.
-type snapshot struct {
-	s service
+type Snapshot struct {
+	c *Client
 
 	// The fully qualified identifier for the snapshot, in the format "projects/<projid>/snapshots/<snap>"
 	name string
 }
 
 // ID returns the unique identifier of the snapshot within its project.
-func (s *snapshot) ID() string {
+func (s *Snapshot) ID() string {
 	slash := strings.LastIndex(s.name, "/")
 	if slash == -1 {
 		// name is not a fully-qualified name.
@@ -41,44 +43,52 @@ func (s *snapshot) ID() string {
 }
 
 // SnapshotConfig contains the details of a Snapshot.
-type snapshotConfig struct {
-	*snapshot
+type SnapshotConfig struct {
+	*Snapshot
 	Topic      *Topic
 	Expiration time.Time
 }
 
 // Snapshot creates a reference to a snapshot.
-func (c *Client) snapshot(id string) *snapshot {
-	return &snapshot{
-		s:    c.s,
-		name: vkit.SubscriberSnapshotPath(c.projectID, id),
+func (c *Client) Snapshot(id string) *Snapshot {
+	return &Snapshot{
+		c:    c,
+		name: fmt.Sprintf("projects/%s/snapshots/%s", c.projectID, id),
 	}
 }
 
 // Snapshots returns an iterator which returns snapshots for this project.
-func (c *Client) snapshots(ctx context.Context) *snapshotConfigIterator {
-	return &snapshotConfigIterator{
-		next: c.s.listProjectSnapshots(ctx, c.fullyQualifiedProjectName()),
+func (c *Client) Snapshots(ctx context.Context) *SnapshotConfigIterator {
+	it := c.subc.ListSnapshots(ctx, &pb.ListSnapshotsRequest{
+		Project: c.fullyQualifiedProjectName(),
+	})
+	next := func() (*SnapshotConfig, error) {
+		snap, err := it.Next()
+		if err != nil {
+			return nil, err
+		}
+		return toSnapshotConfig(snap, c)
 	}
+	return &SnapshotConfigIterator{next: next}
 }
 
 // SnapshotConfigIterator is an iterator that returns a series of snapshots.
-type snapshotConfigIterator struct {
-	next nextSnapshotFunc
+type SnapshotConfigIterator struct {
+	next func() (*SnapshotConfig, error)
 }
 
 // Next returns the next SnapshotConfig. Its second return value is iterator.Done if there are no more results.
 // Once Next returns iterator.Done, all subsequent calls will return iterator.Done.
-func (snaps *snapshotConfigIterator) Next() (*snapshotConfig, error) {
+func (snaps *SnapshotConfigIterator) Next() (*SnapshotConfig, error) {
 	return snaps.next()
 }
 
 // Delete deletes a snapshot.
-func (snap *snapshot) delete(ctx context.Context) error {
-	return snap.s.deleteSnapshot(ctx, snap.name)
+func (snap *Snapshot) Delete(ctx context.Context) error {
+	return snap.c.subc.DeleteSnapshot(ctx, &pb.DeleteSnapshotRequest{Snapshot: snap.name})
 }
 
-// SeekTime seeks the subscription to a point in time.
+// SeekToTime seeks the subscription to a point in time.
 //
 // Messages retained in the subscription that were published before this
 // time are marked as acknowledged, and messages retained in the
@@ -89,11 +99,19 @@ func (snap *snapshot) delete(ctx context.Context) error {
 // window (or to a point before the system's notion of the subscription
 // creation time), only retained messages will be marked as unacknowledged,
 // and already-expunged messages will not be restored.
-func (s *Subscription) seekToTime(ctx context.Context, t time.Time) error {
-	return s.s.seekToTime(ctx, s.name, t)
+func (s *Subscription) SeekToTime(ctx context.Context, t time.Time) error {
+	ts, err := ptypes.TimestampProto(t)
+	if err != nil {
+		return err
+	}
+	_, err = s.c.subc.Seek(ctx, &pb.SeekRequest{
+		Subscription: s.name,
+		Target:       &pb.SeekRequest_Time{ts},
+	})
+	return err
 }
 
-// Snapshot creates a new snapshot from this subscription.
+// CreateSnapshot creates a new snapshot from this subscription.
 // The snapshot will be for the topic this subscription is subscribed to.
 // If the name is empty string, a unique name is assigned.
 //
@@ -103,17 +121,40 @@ func (s *Subscription) seekToTime(ctx context.Context, t time.Time) error {
 //      unacknowledged when Snapshot returns without error.
 //  (b) Any messages published to the subscription's topic following
 //      Snapshot returning without error.
-func (s *Subscription) createSnapshot(ctx context.Context, name string) (*snapshotConfig, error) {
+func (s *Subscription) CreateSnapshot(ctx context.Context, name string) (*SnapshotConfig, error) {
 	if name != "" {
-		name = vkit.SubscriberSnapshotPath(strings.Split(s.name, "/")[1], name)
+		name = fmt.Sprintf("projects/%s/snapshots/%s", strings.Split(s.name, "/")[1], name)
 	}
-	return s.s.createSnapshot(ctx, name, s.name)
+	snap, err := s.c.subc.CreateSnapshot(ctx, &pb.CreateSnapshotRequest{
+		Name:         name,
+		Subscription: s.name,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return toSnapshotConfig(snap, s.c)
 }
 
-// SeekSnapshot seeks the subscription to a snapshot.
+// SeekToSnapshot seeks the subscription to a snapshot.
 //
-// The snapshot needs not be created from this subscription,
-// but the snapshot must be for the topic this subscription is subscribed to.
-func (s *Subscription) seekToSnapshot(ctx context.Context, snap *snapshot) error {
-	return s.s.seekToSnapshot(ctx, s.name, snap.name)
+// The snapshot need not be created from this subscription,
+// but it must be for the topic this subscription is subscribed to.
+func (s *Subscription) SeekToSnapshot(ctx context.Context, snap *Snapshot) error {
+	_, err := s.c.subc.Seek(ctx, &pb.SeekRequest{
+		Subscription: s.name,
+		Target:       &pb.SeekRequest_Snapshot{snap.name},
+	})
+	return err
+}
+
+func toSnapshotConfig(snap *pb.Snapshot, c *Client) (*SnapshotConfig, error) {
+	exp, err := ptypes.Timestamp(snap.ExpireTime)
+	if err != nil {
+		return nil, err
+	}
+	return &SnapshotConfig{
+		Snapshot:   &Snapshot{c: c, name: snap.Name},
+		Topic:      newTopic(c, snap.Topic),
+		Expiration: exp,
+	}, nil
 }

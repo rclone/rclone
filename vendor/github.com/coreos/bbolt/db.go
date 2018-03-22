@@ -213,10 +213,13 @@ func Open(path string, mode os.FileMode, options *Options) (*DB, error) {
 
 	// Initialize the database if it doesn't exist.
 	if info, err := db.file.Stat(); err != nil {
+		_ = db.close()
 		return nil, err
 	} else if info.Size() == 0 {
 		// Initialize new files with meta pages.
 		if err := db.init(); err != nil {
+			// clean up file descriptor on initialization fail
+			_ = db.close()
 			return nil, err
 		}
 	} else {
@@ -236,6 +239,7 @@ func Open(path string, mode os.FileMode, options *Options) (*DB, error) {
 				db.pageSize = int(m.pageSize)
 			}
 		} else {
+			_ = db.close()
 			return nil, ErrInvalid
 		}
 	}
@@ -441,7 +445,8 @@ func (db *DB) init() error {
 }
 
 // Close releases all database resources.
-// All transactions must be closed before closing the database.
+// It will block waiting for any open transactions to finish
+// before closing the database and returning.
 func (db *DB) Close() error {
 	db.rwlock.Lock()
 	defer db.rwlock.Unlock()

@@ -42,9 +42,9 @@ func NewSubscriptionsClientWithBaseURI(baseURI string, subscriptionID string) Su
 
 // CreateOrUpdate creates a topic subscription.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name. subscriptionName is the subscription name. parameters is parameters supplied to create
-// a subscription resource.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name. subscriptionName is the subscription name. parameters is parameters supplied
+// to create a subscription resource.
 func (client SubscriptionsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, namespaceName string, topicName string, subscriptionName string, parameters SubscriptionCreateOrUpdateParameters) (result SubscriptionResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -61,7 +61,7 @@ func (client SubscriptionsClient) CreateOrUpdate(ctx context.Context, resourceGr
 				{Target: "subscriptionName", Name: validation.MinLength, Rule: 1, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Location", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.SubscriptionsClient", "CreateOrUpdate")
+		return result, validation.NewError("servicebus.SubscriptionsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, namespaceName, topicName, subscriptionName, parameters)
@@ -132,8 +132,8 @@ func (client SubscriptionsClient) CreateOrUpdateResponder(resp *http.Response) (
 
 // Delete deletes a subscription from the specified topic.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name. subscriptionName is the subscription name.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name. subscriptionName is the subscription name.
 func (client SubscriptionsClient) Delete(ctx context.Context, resourceGroupName string, namespaceName string, topicName string, subscriptionName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -148,7 +148,7 @@ func (client SubscriptionsClient) Delete(ctx context.Context, resourceGroupName 
 		{TargetValue: subscriptionName,
 			Constraints: []validation.Constraint{{Target: "subscriptionName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "subscriptionName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.SubscriptionsClient", "Delete")
+		return result, validation.NewError("servicebus.SubscriptionsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, namespaceName, topicName, subscriptionName)
@@ -216,8 +216,8 @@ func (client SubscriptionsClient) DeleteResponder(resp *http.Response) (result a
 
 // Get returns a subscription description for the specified topic.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name. subscriptionName is the subscription name.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name. subscriptionName is the subscription name.
 func (client SubscriptionsClient) Get(ctx context.Context, resourceGroupName string, namespaceName string, topicName string, subscriptionName string) (result SubscriptionResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -232,7 +232,7 @@ func (client SubscriptionsClient) Get(ctx context.Context, resourceGroupName str
 		{TargetValue: subscriptionName,
 			Constraints: []validation.Constraint{{Target: "subscriptionName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "subscriptionName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.SubscriptionsClient", "Get")
+		return result, validation.NewError("servicebus.SubscriptionsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, namespaceName, topicName, subscriptionName)
@@ -301,8 +301,8 @@ func (client SubscriptionsClient) GetResponder(resp *http.Response) (result Subs
 
 // ListAll list all the subscriptions under a specified topic.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name.
 func (client SubscriptionsClient) ListAll(ctx context.Context, resourceGroupName string, namespaceName string, topicName string) (result SubscriptionListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -314,7 +314,7 @@ func (client SubscriptionsClient) ListAll(ctx context.Context, resourceGroupName
 		{TargetValue: topicName,
 			Constraints: []validation.Constraint{{Target: "topicName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "topicName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.SubscriptionsClient", "ListAll")
+		return result, validation.NewError("servicebus.SubscriptionsClient", "ListAll", err.Error())
 	}
 
 	result.fn = client.listAllNextResults

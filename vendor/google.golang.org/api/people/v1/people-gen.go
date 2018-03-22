@@ -1,4 +1,4 @@
-// Package people provides access to the Google People API.
+// Package people provides access to the People API.
 //
 // See https://developers.google.com/people/
 //
@@ -1214,7 +1214,10 @@ func (s *Membership) MarshalJSON() ([]byte, error) {
 }
 
 // ModifyContactGroupMembersRequest: A request to modify an existing
-// contact group's members.
+// contact group's members. Contacts can be
+// removed from any group but they can only be added to a user group
+// or
+// myContacts or starred system groups.
 type ModifyContactGroupMembersRequest struct {
 	// ResourceNamesToAdd: The resource names of the contact people to add
 	// in the form of in the form
@@ -2360,8 +2363,9 @@ func (s *Tagline) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// UpdateContactGroupRequest: A request to update an existing contact
-// group. Only the name can be updated.
+// UpdateContactGroupRequest: A request to update an existing user
+// contact group. All updated fields will
+// be replaced.
 type UpdateContactGroupRequest struct {
 	// ContactGroup: The contact group to update.
 	ContactGroup *ContactGroup `json:"contactGroup,omitempty"`
@@ -3793,7 +3797,9 @@ func (r *PeopleService) Get(resourceName string) *PeopleGetCall {
 // PersonFields sets the optional parameter "personFields":
 // **Required.** A field mask to restrict which fields on the person
 // are
-// returned. Valid values are:
+// returned. Multiple fields can be specified by separating them with
+// commas.
+// Valid values are:
 //
 // * addresses
 // * ageRanges
@@ -3941,7 +3947,7 @@ func (c *PeopleGetCall) Do(opts ...googleapi.CallOption) (*Person, error) {
 	//   ],
 	//   "parameters": {
 	//     "personFields": {
-	//       "description": "**Required.** A field mask to restrict which fields on the person are\nreturned. Valid values are:\n\n* addresses\n* ageRanges\n* biographies\n* birthdays\n* braggingRights\n* coverPhotos\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* memberships\n* metadata\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* photos\n* relations\n* relationshipInterests\n* relationshipStatuses\n* residences\n* skills\n* taglines\n* urls",
+	//       "description": "**Required.** A field mask to restrict which fields on the person are\nreturned. Multiple fields can be specified by separating them with commas.\nValid values are:\n\n* addresses\n* ageRanges\n* biographies\n* birthdays\n* braggingRights\n* coverPhotos\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* memberships\n* metadata\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* photos\n* relations\n* relationshipInterests\n* relationshipStatuses\n* residences\n* skills\n* taglines\n* urls",
 	//       "format": "google-fieldmask",
 	//       "location": "query",
 	//       "type": "string"
@@ -4004,7 +4010,9 @@ func (r *PeopleService) GetBatchGet() *PeopleGetBatchGetCall {
 // PersonFields sets the optional parameter "personFields":
 // **Required.** A field mask to restrict which fields on each person
 // are
-// returned. Valid values are:
+// returned. Multiple fields can be specified by separating them with
+// commas.
+// Valid values are:
 //
 // * addresses
 // * ageRanges
@@ -4166,7 +4174,7 @@ func (c *PeopleGetBatchGetCall) Do(opts ...googleapi.CallOption) (*GetPeopleResp
 	//   "parameterOrder": [],
 	//   "parameters": {
 	//     "personFields": {
-	//       "description": "**Required.** A field mask to restrict which fields on each person are\nreturned. Valid values are:\n\n* addresses\n* ageRanges\n* biographies\n* birthdays\n* braggingRights\n* coverPhotos\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* memberships\n* metadata\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* photos\n* relations\n* relationshipInterests\n* relationshipStatuses\n* residences\n* skills\n* taglines\n* urls",
+	//       "description": "**Required.** A field mask to restrict which fields on each person are\nreturned. Multiple fields can be specified by separating them with commas.\nValid values are:\n\n* addresses\n* ageRanges\n* biographies\n* birthdays\n* braggingRights\n* coverPhotos\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* memberships\n* metadata\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* photos\n* relations\n* relationshipInterests\n* relationshipStatuses\n* residences\n* skills\n* taglines\n* urls",
 	//       "format": "google-fieldmask",
 	//       "location": "query",
 	//       "type": "string"
@@ -4242,12 +4250,13 @@ func (r *PeopleService) UpdateContact(resourceName string, person *Person) *Peop
 // UpdatePersonFields sets the optional parameter "updatePersonFields":
 // **Required.** A field mask to restrict which fields on the person
 // are
-// updated. Valid values are:
+// updated. Multiple fields can be specified by separating them with
+// commas.
+// All updated fields will be replaced. Valid values are:
 //
 // * addresses
 // * biographies
 // * birthdays
-// * braggingRights
 // * emailAddresses
 // * events
 // * genders
@@ -4261,7 +4270,6 @@ func (r *PeopleService) UpdateContact(resourceName string, person *Person) *Peop
 // * phoneNumbers
 // * relations
 // * residences
-// * skills
 // * urls
 func (c *PeopleUpdateContactCall) UpdatePersonFields(updatePersonFields string) *PeopleUpdateContactCall {
 	c.urlParams_.Set("updatePersonFields", updatePersonFields)
@@ -4370,7 +4378,7 @@ func (c *PeopleUpdateContactCall) Do(opts ...googleapi.CallOption) (*Person, err
 	//       "type": "string"
 	//     },
 	//     "updatePersonFields": {
-	//       "description": "**Required.** A field mask to restrict which fields on the person are\nupdated. Valid values are:\n\n* addresses\n* biographies\n* birthdays\n* braggingRights\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* relations\n* residences\n* skills\n* urls",
+	//       "description": "**Required.** A field mask to restrict which fields on the person are\nupdated. Multiple fields can be specified by separating them with commas.\nAll updated fields will be replaced. Valid values are:\n\n* addresses\n* biographies\n* birthdays\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* relations\n* residences\n* urls",
 	//       "format": "google-fieldmask",
 	//       "location": "query",
 	//       "type": "string"
@@ -4430,7 +4438,9 @@ func (c *PeopleConnectionsListCall) PageToken(pageToken string) *PeopleConnectio
 // PersonFields sets the optional parameter "personFields":
 // **Required.** A field mask to restrict which fields on each person
 // are
-// returned. Valid values are:
+// returned. Multiple fields can be specified by separating them with
+// commas.
+// Valid values are:
 //
 // * addresses
 // * ageRanges
@@ -4478,7 +4488,11 @@ func (c *PeopleConnectionsListCall) RequestMaskIncludeField(requestMaskIncludeFi
 // RequestSyncToken sets the optional parameter "requestSyncToken":
 // Whether the response should include a sync token, which can be used
 // to get
-// all changes since the last request.
+// all changes since the last request. For subsequent sync requests use
+// the
+// `sync_token` param instead. Initial sync requests that
+// specify
+// `request_sync_token` have an additional rate limit.
 func (c *PeopleConnectionsListCall) RequestSyncToken(requestSyncToken bool) *PeopleConnectionsListCall {
 	c.urlParams_.Set("requestSyncToken", fmt.Sprint(requestSyncToken))
 	return c
@@ -4498,10 +4512,12 @@ func (c *PeopleConnectionsListCall) SortOrder(sortOrder string) *PeopleConnectio
 	return c
 }
 
-// SyncToken sets the optional parameter "syncToken": A sync token,
+// SyncToken sets the optional parameter "syncToken": A sync token
 // returned by a previous call to `people.connections.list`.
 // Only resources changed since the sync token was created will be
 // returned.
+// Sync requests that specify `sync_token` have an additional rate
+// limit.
 func (c *PeopleConnectionsListCall) SyncToken(syncToken string) *PeopleConnectionsListCall {
 	c.urlParams_.Set("syncToken", syncToken)
 	return c
@@ -4621,7 +4637,7 @@ func (c *PeopleConnectionsListCall) Do(opts ...googleapi.CallOption) (*ListConne
 	//       "type": "string"
 	//     },
 	//     "personFields": {
-	//       "description": "**Required.** A field mask to restrict which fields on each person are\nreturned. Valid values are:\n\n* addresses\n* ageRanges\n* biographies\n* birthdays\n* braggingRights\n* coverPhotos\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* memberships\n* metadata\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* photos\n* relations\n* relationshipInterests\n* relationshipStatuses\n* residences\n* skills\n* taglines\n* urls",
+	//       "description": "**Required.** A field mask to restrict which fields on each person are\nreturned. Multiple fields can be specified by separating them with commas.\nValid values are:\n\n* addresses\n* ageRanges\n* biographies\n* birthdays\n* braggingRights\n* coverPhotos\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* memberships\n* metadata\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* photos\n* relations\n* relationshipInterests\n* relationshipStatuses\n* residences\n* skills\n* taglines\n* urls",
 	//       "format": "google-fieldmask",
 	//       "location": "query",
 	//       "type": "string"
@@ -4633,7 +4649,7 @@ func (c *PeopleConnectionsListCall) Do(opts ...googleapi.CallOption) (*ListConne
 	//       "type": "string"
 	//     },
 	//     "requestSyncToken": {
-	//       "description": "Whether the response should include a sync token, which can be used to get\nall changes since the last request.",
+	//       "description": "Whether the response should include a sync token, which can be used to get\nall changes since the last request. For subsequent sync requests use the\n`sync_token` param instead. Initial sync requests that specify\n`request_sync_token` have an additional rate limit.",
 	//       "location": "query",
 	//       "type": "boolean"
 	//     },
@@ -4655,7 +4671,7 @@ func (c *PeopleConnectionsListCall) Do(opts ...googleapi.CallOption) (*ListConne
 	//       "type": "string"
 	//     },
 	//     "syncToken": {
-	//       "description": "A sync token, returned by a previous call to `people.connections.list`.\nOnly resources changed since the sync token was created will be returned.",
+	//       "description": "A sync token returned by a previous call to `people.connections.list`.\nOnly resources changed since the sync token was created will be returned.\nSync requests that specify `sync_token` have an additional rate limit.",
 	//       "location": "query",
 	//       "type": "string"
 	//     }

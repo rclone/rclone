@@ -223,6 +223,88 @@ func TestBundlerErrors(t *testing.T) {
 	}
 }
 
+// Check that no more than HandlerLimit handlers are active at once.
+func TestConcurrentHandlersMax(t *testing.T) {
+	const handlerLimit = 10
+	var (
+		mu          sync.Mutex
+		active      int
+		maxHandlers int
+	)
+	b := NewBundler(int(0), func(s interface{}) {
+		mu.Lock()
+		active++
+		if active > maxHandlers {
+			maxHandlers = active
+		}
+		if maxHandlers > handlerLimit {
+			t.Errorf("too many handlers running (got %d; want %d)", maxHandlers, handlerLimit)
+		}
+		mu.Unlock()
+		time.Sleep(1 * time.Millisecond) // let the scheduler work
+		mu.Lock()
+		active--
+		mu.Unlock()
+	})
+	b.BundleCountThreshold = 5
+	b.HandlerLimit = 10
+	defer b.Flush()
+
+	more := 0 // extra iterations past saturation
+	for i := 0; more == 0 || i < more; i++ {
+		mu.Lock()
+		m := maxHandlers
+		mu.Unlock()
+		if m >= handlerLimit && more == 0 {
+			// Run past saturation to check that we don't exceed the max.
+			more = 2 * i
+		}
+		b.Add(i, 1)
+	}
+}
+
+// Check that Flush doesn't return until all prior items have been handled.
+func TestConcurrentFlush(t *testing.T) {
+	var (
+		mu    sync.Mutex
+		items = make(map[int]bool)
+	)
+	b := NewBundler(int(0), func(s interface{}) {
+		mu.Lock()
+		for _, i := range s.([]int) {
+			items[i] = true
+		}
+		mu.Unlock()
+		time.Sleep(10 * time.Millisecond)
+	})
+	b.BundleCountThreshold = 5
+	b.HandlerLimit = 10
+	defer b.Flush()
+
+	var wg sync.WaitGroup
+	defer wg.Wait()
+	for i := 0; i < 5000; i++ {
+		b.Add(i, 1)
+		if i%100 == 0 {
+			i := i
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				b.Flush()
+				mu.Lock()
+				defer mu.Unlock()
+				for j := 0; j <= i; j++ {
+					if !items[j] {
+						// Cannot use Fatal, since we're in a non-test goroutine.
+						t.Errorf("flush(%d): item %d not handled", i, j)
+						break
+					}
+				}
+			}()
+		}
+	}
+}
+
 type testHandler struct {
 	mu sync.Mutex
 	b  [][]int

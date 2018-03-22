@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -75,7 +75,7 @@ func ExamplePublisherClient_CreateTopic() {
 	}
 
 	req := &pubsubpb.Topic{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.CreateTopic(ctx, req)
 	if err != nil {
@@ -93,7 +93,7 @@ func ExamplePublisherClient_UpdateTopic() {
 	}
 
 	req := &pubsubpb.UpdateTopicRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.UpdateTopic(ctx, req)
 	if err != nil {
@@ -111,7 +111,7 @@ func ExamplePublisherClient_Publish() {
 	}
 
 	req := &pubsubpb.PublishRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.Publish(ctx, req)
 	if err != nil {
@@ -129,7 +129,7 @@ func ExamplePublisherClient_GetTopic() {
 	}
 
 	req := &pubsubpb.GetTopicRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.GetTopic(ctx, req)
 	if err != nil {
@@ -147,7 +147,7 @@ func ExamplePublisherClient_ListTopics() {
 	}
 
 	req := &pubsubpb.ListTopicsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListTopics(ctx, req)
 	for {
@@ -171,7 +171,7 @@ func ExamplePublisherClient_ListTopicSubscriptions() {
 	}
 
 	req := &pubsubpb.ListTopicSubscriptionsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListTopicSubscriptions(ctx, req)
 	for {
@@ -195,7 +195,7 @@ func ExamplePublisherClient_DeleteTopic() {
 	}
 
 	req := &pubsubpb.DeleteTopicRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	err = c.DeleteTopic(ctx, req)
 	if err != nil {

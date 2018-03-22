@@ -43,21 +43,21 @@ func NewComputePoliciesClientWithBaseURI(baseURI string, subscriptionID string) 
 // CreateOrUpdate creates or updates the specified compute policy. During update, the compute policy with the specified
 // name will be replaced with this new compute policy. An account supports, at most, 50 policies
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account to add or replace the compute policy. computePolicyName is the name
-// of the compute policy to create or update. parameters is parameters supplied to create or update the compute policy.
-// The max degree of parallelism per job property, min priority per job property, or both must be present.
-func (client ComputePoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, accountName string, computePolicyName string, parameters ComputePolicyCreateOrUpdateParameters) (result ComputePolicy, err error) {
+// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Analytics
+// account. computePolicyName is the name of the compute policy to create or update. parameters is parameters
+// supplied to create or update the compute policy. The max degree of parallelism per job property, min priority
+// per job property, or both must be present.
+func (client ComputePoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, accountName string, computePolicyName string, parameters CreateOrUpdateComputePolicyParameters) (result ComputePolicy, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
-			Constraints: []validation.Constraint{{Target: "parameters.ComputePolicyPropertiesCreateParameters", Name: validation.Null, Rule: true,
-				Chain: []validation.Constraint{{Target: "parameters.ComputePolicyPropertiesCreateParameters.ObjectID", Name: validation.Null, Rule: true, Chain: nil},
-					{Target: "parameters.ComputePolicyPropertiesCreateParameters.MaxDegreeOfParallelismPerJob", Name: validation.Null, Rule: false,
-						Chain: []validation.Constraint{{Target: "parameters.ComputePolicyPropertiesCreateParameters.MaxDegreeOfParallelismPerJob", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil}}},
-					{Target: "parameters.ComputePolicyPropertiesCreateParameters.MinPriorityPerJob", Name: validation.Null, Rule: false,
-						Chain: []validation.Constraint{{Target: "parameters.ComputePolicyPropertiesCreateParameters.MinPriorityPerJob", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil}}},
+			Constraints: []validation.Constraint{{Target: "parameters.CreateOrUpdateComputePolicyProperties", Name: validation.Null, Rule: true,
+				Chain: []validation.Constraint{{Target: "parameters.CreateOrUpdateComputePolicyProperties.ObjectID", Name: validation.Null, Rule: true, Chain: nil},
+					{Target: "parameters.CreateOrUpdateComputePolicyProperties.MaxDegreeOfParallelismPerJob", Name: validation.Null, Rule: false,
+						Chain: []validation.Constraint{{Target: "parameters.CreateOrUpdateComputePolicyProperties.MaxDegreeOfParallelismPerJob", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil}}},
+					{Target: "parameters.CreateOrUpdateComputePolicyProperties.MinPriorityPerJob", Name: validation.Null, Rule: false,
+						Chain: []validation.Constraint{{Target: "parameters.CreateOrUpdateComputePolicyProperties.MinPriorityPerJob", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil}}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "account.ComputePoliciesClient", "CreateOrUpdate")
+		return result, validation.NewError("account.ComputePoliciesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, accountName, computePolicyName, parameters)
@@ -82,7 +82,7 @@ func (client ComputePoliciesClient) CreateOrUpdate(ctx context.Context, resource
 }
 
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
-func (client ComputePoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, accountName string, computePolicyName string, parameters ComputePolicyCreateOrUpdateParameters) (*http.Request, error) {
+func (client ComputePoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, accountName string, computePolicyName string, parameters CreateOrUpdateComputePolicyParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"accountName":       autorest.Encode("path", accountName),
 		"computePolicyName": autorest.Encode("path", computePolicyName),
@@ -127,9 +127,8 @@ func (client ComputePoliciesClient) CreateOrUpdateResponder(resp *http.Response)
 
 // Delete deletes the specified compute policy from the specified Data Lake Analytics account
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account from which to delete the compute policy. computePolicyName is the
-// name of the compute policy to delete.
+// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Analytics
+// account. computePolicyName is the name of the compute policy to delete.
 func (client ComputePoliciesClient) Delete(ctx context.Context, resourceGroupName string, accountName string, computePolicyName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName, computePolicyName)
 	if err != nil {
@@ -195,9 +194,8 @@ func (client ComputePoliciesClient) DeleteResponder(resp *http.Response) (result
 
 // Get gets the specified Data Lake Analytics compute policy.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account from which to get the compute policy. computePolicyName is the name
-// of the compute policy to retrieve.
+// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Analytics
+// account. computePolicyName is the name of the compute policy to retrieve.
 func (client ComputePoliciesClient) Get(ctx context.Context, resourceGroupName string, accountName string, computePolicyName string) (result ComputePolicy, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountName, computePolicyName)
 	if err != nil {
@@ -265,8 +263,8 @@ func (client ComputePoliciesClient) GetResponder(resp *http.Response) (result Co
 // ListByAccount lists the Data Lake Analytics compute policies within the specified Data Lake Analytics account. An
 // account supports, at most, 50 policies
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account from which to get the compute policies.
+// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Analytics
+// account.
 func (client ComputePoliciesClient) ListByAccount(ctx context.Context, resourceGroupName string, accountName string) (result ComputePolicyListResultPage, err error) {
 	result.fn = client.listByAccountNextResults
 	req, err := client.ListByAccountPreparer(ctx, resourceGroupName, accountName)
@@ -360,10 +358,10 @@ func (client ComputePoliciesClient) ListByAccountComplete(ctx context.Context, r
 
 // Update updates the specified compute policy.
 //
-// resourceGroupName is the name of the Azure resource group that contains the Data Lake Analytics account. accountName
-// is the name of the Data Lake Analytics account to which to update the compute policy. computePolicyName is the name
-// of the compute policy to update. parameters is parameters supplied to update the compute policy.
-func (client ComputePoliciesClient) Update(ctx context.Context, resourceGroupName string, accountName string, computePolicyName string, parameters *ComputePolicy) (result ComputePolicy, err error) {
+// resourceGroupName is the name of the Azure resource group. accountName is the name of the Data Lake Analytics
+// account. computePolicyName is the name of the compute policy to update. parameters is parameters supplied to
+// update the compute policy.
+func (client ComputePoliciesClient) Update(ctx context.Context, resourceGroupName string, accountName string, computePolicyName string, parameters *UpdateComputePolicyParameters) (result ComputePolicy, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, computePolicyName, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "account.ComputePoliciesClient", "Update", nil, "Failure preparing request")
@@ -386,7 +384,7 @@ func (client ComputePoliciesClient) Update(ctx context.Context, resourceGroupNam
 }
 
 // UpdatePreparer prepares the Update request.
-func (client ComputePoliciesClient) UpdatePreparer(ctx context.Context, resourceGroupName string, accountName string, computePolicyName string, parameters *ComputePolicy) (*http.Request, error) {
+func (client ComputePoliciesClient) UpdatePreparer(ctx context.Context, resourceGroupName string, accountName string, computePolicyName string, parameters *UpdateComputePolicyParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"accountName":       autorest.Encode("path", accountName),
 		"computePolicyName": autorest.Encode("path", computePolicyName),

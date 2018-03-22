@@ -112,8 +112,8 @@ func (client CommitmentAssociationsClient) GetResponder(resp *http.Response) (re
 
 // List get all commitment associations for a parent commitment plan.
 //
-// resourceGroupName is the resource group name. commitmentPlanName is the Azure ML commitment plan name. skipToken is
-// continuation token for pagination.
+// resourceGroupName is the resource group name. commitmentPlanName is the Azure ML commitment plan name. skipToken
+// is continuation token for pagination.
 func (client CommitmentAssociationsClient) List(ctx context.Context, resourceGroupName string, commitmentPlanName string, skipToken string) (result CommitmentAssociationListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, commitmentPlanName, skipToken)

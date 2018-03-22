@@ -42,9 +42,9 @@ func NewBackupSchedulesClientWithBaseURI(baseURI string, subscriptionID string) 
 
 // CreateOrUpdate creates or updates the backup schedule.
 //
-// deviceName is the device name backupPolicyName is the backup policy name. backupScheduleName is the backup schedule
-// name. parameters is the backup schedule. resourceGroupName is the resource group name managerName is the manager
-// name
+// deviceName is the device name backupPolicyName is the backup policy name. backupScheduleName is the backup
+// schedule name. parameters is the backup schedule. resourceGroupName is the resource group name managerName is
+// the manager name
 func (client BackupSchedulesClient) CreateOrUpdate(ctx context.Context, deviceName string, backupPolicyName string, backupScheduleName string, parameters BackupSchedule, resourceGroupName string, managerName string) (result BackupSchedulesCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -57,7 +57,7 @@ func (client BackupSchedulesClient) CreateOrUpdate(ctx context.Context, deviceNa
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.BackupSchedulesClient", "CreateOrUpdate")
+		return result, validation.NewError("storsimple.BackupSchedulesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, deviceName, backupPolicyName, backupScheduleName, parameters, resourceGroupName, managerName)
@@ -131,14 +131,14 @@ func (client BackupSchedulesClient) CreateOrUpdateResponder(resp *http.Response)
 
 // Delete deletes the backup schedule.
 //
-// deviceName is the device name backupPolicyName is the backup policy name. backupScheduleName is the name the backup
-// schedule. resourceGroupName is the resource group name managerName is the manager name
+// deviceName is the device name backupPolicyName is the backup policy name. backupScheduleName is the name the
+// backup schedule. resourceGroupName is the resource group name managerName is the manager name
 func (client BackupSchedulesClient) Delete(ctx context.Context, deviceName string, backupPolicyName string, backupScheduleName string, resourceGroupName string, managerName string) (result BackupSchedulesDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.BackupSchedulesClient", "Delete")
+		return result, validation.NewError("storsimple.BackupSchedulesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, deviceName, backupPolicyName, backupScheduleName, resourceGroupName, managerName)
@@ -216,7 +216,7 @@ func (client BackupSchedulesClient) Get(ctx context.Context, deviceName string, 
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.BackupSchedulesClient", "Get")
+		return result, validation.NewError("storsimple.BackupSchedulesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, deviceName, backupPolicyName, backupScheduleName, resourceGroupName, managerName)
@@ -286,14 +286,14 @@ func (client BackupSchedulesClient) GetResponder(resp *http.Response) (result Ba
 
 // ListByBackupPolicy gets all the backup schedules in a backup policy.
 //
-// deviceName is the device name backupPolicyName is the backup policy name. resourceGroupName is the resource group
-// name managerName is the manager name
+// deviceName is the device name backupPolicyName is the backup policy name. resourceGroupName is the resource
+// group name managerName is the manager name
 func (client BackupSchedulesClient) ListByBackupPolicy(ctx context.Context, deviceName string, backupPolicyName string, resourceGroupName string, managerName string) (result BackupScheduleList, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.BackupSchedulesClient", "ListByBackupPolicy")
+		return result, validation.NewError("storsimple.BackupSchedulesClient", "ListByBackupPolicy", err.Error())
 	}
 
 	req, err := client.ListByBackupPolicyPreparer(ctx, deviceName, backupPolicyName, resourceGroupName, managerName)

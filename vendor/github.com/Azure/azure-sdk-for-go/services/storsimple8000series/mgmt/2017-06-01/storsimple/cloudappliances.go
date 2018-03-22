@@ -48,7 +48,7 @@ func (client CloudAppliancesClient) ListSupportedConfigurations(ctx context.Cont
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.CloudAppliancesClient", "ListSupportedConfigurations")
+		return result, validation.NewError("storsimple.CloudAppliancesClient", "ListSupportedConfigurations", err.Error())
 	}
 
 	req, err := client.ListSupportedConfigurationsPreparer(ctx, resourceGroupName, managerName)
@@ -124,7 +124,7 @@ func (client CloudAppliancesClient) Provision(ctx context.Context, parameters Cl
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.CloudAppliancesClient", "Provision")
+		return result, validation.NewError("storsimple.CloudAppliancesClient", "Provision", err.Error())
 	}
 
 	req, err := client.ProvisionPreparer(ctx, parameters, resourceGroupName, managerName)

@@ -44,15 +44,15 @@ func NewServicesClientWithBaseURI(baseURI string, subscriptionID string) Service
 // CheckNameAvailability checks whether or not the given Search service name is available for use. Search service names
 // must be globally unique since they are part of the service URI (https://<name>.search.windows.net).
 //
-// checkNameAvailabilityInput is the resource name and type to check. clientRequestID is a client-generated GUID value
-// that identifies this request. If specified, this will be included in response information as a way to track the
-// request.
+// checkNameAvailabilityInput is the resource name and type to check. clientRequestID is a client-generated GUID
+// value that identifies this request. If specified, this will be included in response information as a way to
+// track the request.
 func (client ServicesClient) CheckNameAvailability(ctx context.Context, checkNameAvailabilityInput CheckNameAvailabilityInput, clientRequestID *uuid.UUID) (result CheckNameAvailabilityOutput, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: checkNameAvailabilityInput,
 			Constraints: []validation.Constraint{{Target: "checkNameAvailabilityInput.Name", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "checkNameAvailabilityInput.Type", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "search.ServicesClient", "CheckNameAvailability")
+		return result, validation.NewError("search.ServicesClient", "CheckNameAvailability", err.Error())
 	}
 
 	req, err := client.CheckNameAvailabilityPreparer(ctx, checkNameAvailabilityInput, clientRequestID)
@@ -124,14 +124,15 @@ func (client ServicesClient) CheckNameAvailabilityResponder(resp *http.Response)
 // CreateOrUpdate creates or updates a Search service in the given resource group. If the Search service already
 // exists, all properties will be updated with the given values.
 //
-// resourceGroupName is the name of the resource group within the current subscription. You can obtain this value from
-// the Azure Resource Manager API or the portal. searchServiceName is the name of the Azure Search service to create or
-// update. Search service names must only contain lowercase letters, digits or dashes, cannot use dash as the first two
-// or last one characters, cannot contain consecutive dashes, and must be between 2 and 60 characters in length. Search
-// service names must be globally unique since they are part of the service URI (https://<name>.search.windows.net).
-// You cannot change the service name after the service is created. service is the definition of the Search service to
-// create or update. clientRequestID is a client-generated GUID value that identifies this request. If specified, this
-// will be included in response information as a way to track the request.
+// resourceGroupName is the name of the resource group within the current subscription. You can obtain this value
+// from the Azure Resource Manager API or the portal. searchServiceName is the name of the Azure Search service to
+// create or update. Search service names must only contain lowercase letters, digits or dashes, cannot use dash as
+// the first two or last one characters, cannot contain consecutive dashes, and must be between 2 and 60 characters
+// in length. Search service names must be globally unique since they are part of the service URI
+// (https://<name>.search.windows.net). You cannot change the service name after the service is created. service is
+// the definition of the Search service to create or update. clientRequestID is a client-generated GUID value that
+// identifies this request. If specified, this will be included in response information as a way to track the
+// request.
 func (client ServicesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, searchServiceName string, service Service, clientRequestID *uuid.UUID) (result ServicesCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: service,
@@ -144,9 +145,8 @@ func (client ServicesClient) CreateOrUpdate(ctx context.Context, resourceGroupNa
 						Chain: []validation.Constraint{{Target: "service.ServiceProperties.PartitionCount", Name: validation.InclusiveMaximum, Rule: 12, Chain: nil},
 							{Target: "service.ServiceProperties.PartitionCount", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 						}},
-				}},
-				{Target: "service.Sku", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "search.ServicesClient", "CreateOrUpdate")
+				}}}}}); err != nil {
+		return result, validation.NewError("search.ServicesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, searchServiceName, service, clientRequestID)
@@ -221,10 +221,10 @@ func (client ServicesClient) CreateOrUpdateResponder(resp *http.Response) (resul
 
 // Delete deletes a Search service in the given resource group, along with its associated resources.
 //
-// resourceGroupName is the name of the resource group within the current subscription. You can obtain this value from
-// the Azure Resource Manager API or the portal. searchServiceName is the name of the Azure Search service associated
-// with the specified resource group. clientRequestID is a client-generated GUID value that identifies this request. If
-// specified, this will be included in response information as a way to track the request.
+// resourceGroupName is the name of the resource group within the current subscription. You can obtain this value
+// from the Azure Resource Manager API or the portal. searchServiceName is the name of the Azure Search service
+// associated with the specified resource group. clientRequestID is a client-generated GUID value that identifies
+// this request. If specified, this will be included in response information as a way to track the request.
 func (client ServicesClient) Delete(ctx context.Context, resourceGroupName string, searchServiceName string, clientRequestID *uuid.UUID) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, searchServiceName, clientRequestID)
 	if err != nil {
@@ -293,10 +293,10 @@ func (client ServicesClient) DeleteResponder(resp *http.Response) (result autore
 
 // Get gets the Search service with the given name in the given resource group.
 //
-// resourceGroupName is the name of the resource group within the current subscription. You can obtain this value from
-// the Azure Resource Manager API or the portal. searchServiceName is the name of the Azure Search service associated
-// with the specified resource group. clientRequestID is a client-generated GUID value that identifies this request. If
-// specified, this will be included in response information as a way to track the request.
+// resourceGroupName is the name of the resource group within the current subscription. You can obtain this value
+// from the Azure Resource Manager API or the portal. searchServiceName is the name of the Azure Search service
+// associated with the specified resource group. clientRequestID is a client-generated GUID value that identifies
+// this request. If specified, this will be included in response information as a way to track the request.
 func (client ServicesClient) Get(ctx context.Context, resourceGroupName string, searchServiceName string, clientRequestID *uuid.UUID) (result Service, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, searchServiceName, clientRequestID)
 	if err != nil {
@@ -366,9 +366,10 @@ func (client ServicesClient) GetResponder(resp *http.Response) (result Service, 
 
 // ListByResourceGroup gets a list of all Search services in the given resource group.
 //
-// resourceGroupName is the name of the resource group within the current subscription. You can obtain this value from
-// the Azure Resource Manager API or the portal. clientRequestID is a client-generated GUID value that identifies this
-// request. If specified, this will be included in response information as a way to track the request.
+// resourceGroupName is the name of the resource group within the current subscription. You can obtain this value
+// from the Azure Resource Manager API or the portal. clientRequestID is a client-generated GUID value that
+// identifies this request. If specified, this will be included in response information as a way to track the
+// request.
 func (client ServicesClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, clientRequestID *uuid.UUID) (result ServiceListResult, err error) {
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, clientRequestID)
 	if err != nil {
@@ -425,6 +426,82 @@ func (client ServicesClient) ListByResourceGroupSender(req *http.Request) (*http
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
 // closes the http.Response Body.
 func (client ServicesClient) ListByResourceGroupResponder(resp *http.Response) (result ServiceListResult, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// Update updates an existing Search service in the given resource group.
+//
+// resourceGroupName is the name of the resource group within the current subscription. You can obtain this value
+// from the Azure Resource Manager API or the portal. searchServiceName is the name of the Azure Search service to
+// update. service is the definition of the Search service to update. clientRequestID is a client-generated GUID
+// value that identifies this request. If specified, this will be included in response information as a way to
+// track the request.
+func (client ServicesClient) Update(ctx context.Context, resourceGroupName string, searchServiceName string, service Service, clientRequestID *uuid.UUID) (result Service, err error) {
+	req, err := client.UpdatePreparer(ctx, resourceGroupName, searchServiceName, service, clientRequestID)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "search.ServicesClient", "Update", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.UpdateSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "search.ServicesClient", "Update", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.UpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "search.ServicesClient", "Update", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// UpdatePreparer prepares the Update request.
+func (client ServicesClient) UpdatePreparer(ctx context.Context, resourceGroupName string, searchServiceName string, service Service, clientRequestID *uuid.UUID) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"searchServiceName": autorest.Encode("path", searchServiceName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2015-08-19"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsJSON(),
+		autorest.AsPatch(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Search/searchServices/{searchServiceName}", pathParameters),
+		autorest.WithJSON(service),
+		autorest.WithQueryParameters(queryParameters))
+	if clientRequestID != nil {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("x-ms-client-request-id", autorest.String(clientRequestID)))
+	}
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// UpdateSender sends the Update request. The method will close the
+// http.Response Body if it receives an error.
+func (client ServicesClient) UpdateSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// UpdateResponder handles the response to the Update request. The method always
+// closes the http.Response Body.
+func (client ServicesClient) UpdateResponder(resp *http.Response) (result Service, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),

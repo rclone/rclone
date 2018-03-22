@@ -22,13 +22,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws/client/metadata"
 	"github.com/aws/aws-sdk-go/aws/corehandlers"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/signer/v4"
 	"github.com/aws/aws-sdk-go/awstesting"
 	"github.com/aws/aws-sdk-go/awstesting/unit"
 	"github.com/aws/aws-sdk-go/private/protocol/jsonrpc"
 	"github.com/aws/aws-sdk-go/private/protocol/rest"
-	"github.com/aws/aws-sdk-go/aws/defaults"
 )
 
 type testData struct {
@@ -83,7 +83,7 @@ func TestRequestRecoverRetry5xx(t *testing.T) {
 	reqNum := 0
 	reqs := []http.Response{
 		{StatusCode: 500, Body: body(`{"__type":"UnknownError","message":"An error occurred."}`)},
-		{StatusCode: 501, Body: body(`{"__type":"UnknownError","message":"An error occurred."}`)},
+		{StatusCode: 502, Body: body(`{"__type":"UnknownError","message":"An error occurred."}`)},
 		{StatusCode: 200, Body: body(`{"data":"valid"}`)},
 	}
 
@@ -893,7 +893,6 @@ func TestRequest_Presign(t *testing.T) {
 			},
 			SignerFn: func(r *request.Request) {
 				r.HTTPRequest.URL = mustParseURL("https://endpoint/presignedURL")
-				fmt.Println("url", r.HTTPRequest.URL.String())
 				if r.NotHoist {
 					r.Error = fmt.Errorf("expect NotHoist to be cleared")
 				}
@@ -961,7 +960,7 @@ func TestRequest_Presign(t *testing.T) {
 		}
 	}
 }
-  
+
 func TestNew_EndpointWithDefaultPort(t *testing.T) {
 	endpoint := "https://estest.us-east-1.es.amazonaws.com:443"
 	expectedRequestHost := "estest.us-east-1.es.amazonaws.com"
@@ -983,7 +982,7 @@ func TestNew_EndpointWithDefaultPort(t *testing.T) {
 
 func TestSanitizeHostForHeader(t *testing.T) {
 	cases := []struct {
-		url            string
+		url                 string
 		expectedRequestHost string
 	}{
 		{"https://estest.us-east-1.es.amazonaws.com:443", "estest.us-east-1.es.amazonaws.com"},
@@ -999,6 +998,124 @@ func TestSanitizeHostForHeader(t *testing.T) {
 
 		if h := r.Host; h != c.expectedRequestHost {
 			t.Errorf("expect %v host, got %q", c.expectedRequestHost, h)
-    }
-  }
+		}
+	}
+}
+
+func TestRequestWillRetry_ByBody(t *testing.T) {
+	svc := awstesting.NewClient()
+
+	cases := []struct {
+		WillRetry   bool
+		HTTPMethod  string
+		Body        io.ReadSeeker
+		IsReqNoBody bool
+	}{
+		{
+			WillRetry:   true,
+			HTTPMethod:  "GET",
+			Body:        bytes.NewReader([]byte{}),
+			IsReqNoBody: true,
+		},
+		{
+			WillRetry:   true,
+			HTTPMethod:  "GET",
+			Body:        bytes.NewReader(nil),
+			IsReqNoBody: true,
+		},
+		{
+			WillRetry:  true,
+			HTTPMethod: "POST",
+			Body:       bytes.NewReader([]byte("abc123")),
+		},
+		{
+			WillRetry:  true,
+			HTTPMethod: "POST",
+			Body:       aws.ReadSeekCloser(bytes.NewReader([]byte("abc123"))),
+		},
+		{
+			WillRetry:   true,
+			HTTPMethod:  "GET",
+			Body:        aws.ReadSeekCloser(bytes.NewBuffer(nil)),
+			IsReqNoBody: true,
+		},
+		{
+			WillRetry:   true,
+			HTTPMethod:  "POST",
+			Body:        aws.ReadSeekCloser(bytes.NewBuffer(nil)),
+			IsReqNoBody: true,
+		},
+		{
+			WillRetry:  false,
+			HTTPMethod: "POST",
+			Body:       aws.ReadSeekCloser(bytes.NewBuffer([]byte("abc123"))),
+		},
+	}
+
+	for i, c := range cases {
+		req := svc.NewRequest(&request.Operation{
+			Name:       "Operation",
+			HTTPMethod: c.HTTPMethod,
+			HTTPPath:   "/",
+		}, nil, nil)
+		req.SetReaderBody(c.Body)
+		req.Build()
+
+		req.Error = fmt.Errorf("some error")
+		req.Retryable = aws.Bool(true)
+		req.HTTPResponse = &http.Response{
+			StatusCode: 500,
+		}
+
+		if e, a := c.IsReqNoBody, request.NoBody == req.HTTPRequest.Body; e != a {
+			t.Errorf("%d, expect request to be no body, %t, got %t, %T", i, e, a, req.HTTPRequest.Body)
+		}
+
+		if e, a := c.WillRetry, req.WillRetry(); e != a {
+			t.Errorf("%d, expect %t willRetry, got %t", i, e, a)
+		}
+
+		if req.Error == nil {
+			t.Fatalf("%d, expect error, got none", i)
+		}
+		if e, a := "some error", req.Error.Error(); !strings.Contains(a, e) {
+			t.Errorf("%d, expect %q error in %q", i, e, a)
+		}
+		if e, a := 0, req.RetryCount; e != a {
+			t.Errorf("%d, expect retry count to be %d, got %d", i, e, a)
+		}
+	}
+}
+
+func Test501NotRetrying(t *testing.T) {
+	reqNum := 0
+	reqs := []http.Response{
+		{StatusCode: 500, Body: body(`{"__type":"UnknownError","message":"An error occurred."}`)},
+		{StatusCode: 501, Body: body(`{"__type":"NotImplemented","message":"An error occurred."}`)},
+		{StatusCode: 200, Body: body(`{"data":"valid"}`)},
+	}
+
+	s := awstesting.NewClient(aws.NewConfig().WithMaxRetries(10))
+	s.Handlers.Validate.Clear()
+	s.Handlers.Unmarshal.PushBack(unmarshal)
+	s.Handlers.UnmarshalError.PushBack(unmarshalError)
+	s.Handlers.Send.Clear() // mock sending
+	s.Handlers.Send.PushBack(func(r *request.Request) {
+		r.HTTPResponse = &reqs[reqNum]
+		reqNum++
+	})
+	out := &testData{}
+	r := s.NewRequest(&request.Operation{Name: "Operation"}, nil, out)
+	err := r.Send()
+	if err == nil {
+		t.Fatal("expect error, but got none")
+	}
+
+	aerr := err.(awserr.Error)
+	if e, a := "NotImplemented", aerr.Code(); e != a {
+		t.Errorf("expected error code %q, but received %q", e, a)
+	}
+	if e, a := 1, int(r.RetryCount); e != a {
+		t.Errorf("expect %d retry count, got %d", e, a)
+	}
 }

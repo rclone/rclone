@@ -44,6 +44,16 @@ func (qu *QingStorUnpacker) UnpackHTTPRequest(o *data.Operation, r *http.Respons
 		return err
 	}
 
+	// Close body for every API except GetObject and ImageProcess.
+	if o.APIName != "GET Object" && o.APIName != "Image Process" && r.Body != nil {
+		err = r.Body.Close()
+		if err != nil {
+			return err
+		}
+
+		r.Body = nil
+	}
+
 	return nil
 }
 

@@ -1,7 +1,4 @@
-FROM ubuntu:16.04
-
-# Use the most recent ubuntu sources
-RUN echo 'deb http://en.archive.ubuntu.com/ubuntu/ artful main universe' >> /etc/apt/sources.list
+FROM ubuntu:17.10
 
 # Dependencies to get the git sources and go binaries
 RUN apt-get update && apt-get install -y \
@@ -12,15 +9,15 @@ RUN apt-get update && apt-get install -y \
 # Get the git sources. If not cached, this takes O(5 minutes).
 WORKDIR /git
 RUN git config --global advice.detachedHead false
-# Linux Kernel: Released 03 Sep 2017
-RUN git clone --branch v4.13 --depth 1 https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux
-# GNU C library: Released 02 Aug 2017 (we should try to get a secure way to clone this)
-RUN git clone --branch glibc-2.26 --depth 1 git://sourceware.org/git/glibc.git
+# Linux Kernel: Released 28 Jan 2018
+RUN git clone --branch v4.15 --depth 1 https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux
+# GNU C library: Released 01 Feb 2018 (we should try to get a secure way to clone this)
+RUN git clone --branch glibc-2.27 --depth 1 git://sourceware.org/git/glibc.git
 
-# Get Go 1.9.2
-ENV GOLANG_VERSION 1.9.2
+# Get Go 1.10
+ENV GOLANG_VERSION 1.10
 ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 de874549d9a8d8d8062be05808509c09a88a248e77ec14eb77453530829ac02b
+ENV GOLANG_DOWNLOAD_SHA256 b5a64335f1490277b585832d1f6c7f8c6c11206cba5cd3f771dcb87b98ad1a33
 
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz \
     && echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - \
@@ -31,7 +28,7 @@ ENV PATH /usr/local/go/bin:$PATH
 
 # Linux and Glibc build dependencies
 RUN apt-get update && apt-get install -y \
-        gawk make python \
+        bison gawk make python \
         gcc gcc-multilib \
         gettext texinfo \
     && rm -rf /var/lib/apt/lists/*

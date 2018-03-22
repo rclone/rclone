@@ -47,7 +47,7 @@ func (client JobStreamClient) Get(ctx context.Context, automationAccountName str
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.JobStreamClient", "Get")
+		return result, validation.NewError("automation.JobStreamClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, jobID, jobStreamID)
@@ -122,7 +122,7 @@ func (client JobStreamClient) ListByJob(ctx context.Context, automationAccountNa
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.JobStreamClient", "ListByJob")
+		return result, validation.NewError("automation.JobStreamClient", "ListByJob", err.Error())
 	}
 
 	result.fn = client.listByJobNextResults

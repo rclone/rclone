@@ -25,8 +25,7 @@ import (
 )
 
 // OperationsClient is the the Microsoft Azure management API provides create, read, update, and delete functionality
-// for Azure PostgreSQL resources including servers, databases, firewall rules, VNET rules, log files and
-// configurations.
+// for Azure PostgreSQL resources including servers, databases, firewall rules, log files and configurations.
 type OperationsClient struct {
 	BaseClient
 }

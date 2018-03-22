@@ -80,26 +80,27 @@ func (c *Container) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				c.Name = &name
+			}
+		case "properties":
+			if v != nil {
+				var containerProperties ContainerProperties
+				err = json.Unmarshal(*v, &containerProperties)
+				if err != nil {
+					return err
+				}
+				c.ContainerProperties = &containerProperties
+			}
 		}
-		c.Name = &name
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties ContainerProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		c.ContainerProperties = &properties
 	}
 
 	return nil
@@ -121,7 +122,8 @@ type ContainerEvent struct {
 
 // ContainerGroup a container group.
 type ContainerGroup struct {
-	autorest.Response `json:"-"`
+	autorest.Response         `json:"-"`
+	*ContainerGroupProperties `json:"properties,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - The resource name.
@@ -131,8 +133,31 @@ type ContainerGroup struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags                      *map[string]*string `json:"tags,omitempty"`
-	*ContainerGroupProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for ContainerGroup.
+func (cg ContainerGroup) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cg.ContainerGroupProperties != nil {
+		objectMap["properties"] = cg.ContainerGroupProperties
+	}
+	if cg.ID != nil {
+		objectMap["id"] = cg.ID
+	}
+	if cg.Name != nil {
+		objectMap["name"] = cg.Name
+	}
+	if cg.Type != nil {
+		objectMap["type"] = cg.Type
+	}
+	if cg.Location != nil {
+		objectMap["location"] = cg.Location
+	}
+	if cg.Tags != nil {
+		objectMap["tags"] = cg.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ContainerGroup struct.
@@ -142,66 +167,63 @@ func (cg *ContainerGroup) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ContainerGroupProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var containerGroupProperties ContainerGroupProperties
+				err = json.Unmarshal(*v, &containerGroupProperties)
+				if err != nil {
+					return err
+				}
+				cg.ContainerGroupProperties = &containerGroupProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				cg.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				cg.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				cg.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				cg.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				cg.Tags = tags
+			}
 		}
-		cg.ContainerGroupProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		cg.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		cg.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		cg.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		cg.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		cg.Tags = &tags
 	}
 
 	return nil
@@ -433,7 +455,28 @@ type Resource struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // ResourceLimits the resource limits.

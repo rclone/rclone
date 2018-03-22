@@ -54,7 +54,7 @@ func (client ViewsClient) CreateOrUpdate(ctx context.Context, resourceGroupName 
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.View", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.View.Definition", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "customerinsights.ViewsClient", "CreateOrUpdate")
+		return result, validation.NewError("customerinsights.ViewsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, hubName, viewName, parameters)
@@ -261,8 +261,8 @@ func (client ViewsClient) GetResponder(resp *http.Response) (result ViewResource
 
 // ListByHub gets all available views for given user in the specified hub.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. userID is the user ID. Use * to
-// retreive hub level views.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. userID is the user ID. Use
+// * to retreive hub level views.
 func (client ViewsClient) ListByHub(ctx context.Context, resourceGroupName string, hubName string, userID string) (result ViewListResultPage, err error) {
 	result.fn = client.listByHubNextResults
 	req, err := client.ListByHubPreparer(ctx, resourceGroupName, hubName, userID)

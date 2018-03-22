@@ -1421,7 +1421,6 @@ func (c *Support) ResolveCaseWithContext(ctx aws.Context, input *ResolveCaseInpu
 	return out, req.Send()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/AddAttachmentsToSetRequest
 type AddAttachmentsToSetInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1475,7 +1474,6 @@ func (s *AddAttachmentsToSetInput) SetAttachments(v []*Attachment) *AddAttachmen
 
 // The ID and expiry time of the attachment set returned by the AddAttachmentsToSet
 // operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/AddAttachmentsToSetResponse
 type AddAttachmentsToSetOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1512,7 +1510,6 @@ func (s *AddAttachmentsToSetOutput) SetExpiryTime(v string) *AddAttachmentsToSet
 }
 
 // To be written.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/AddCommunicationToCaseRequest
 type AddCommunicationToCaseInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1585,7 +1582,6 @@ func (s *AddCommunicationToCaseInput) SetCommunicationBody(v string) *AddCommuni
 }
 
 // The result of the AddCommunicationToCase operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/AddCommunicationToCaseResponse
 type AddCommunicationToCaseOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1611,7 +1607,6 @@ func (s *AddCommunicationToCaseOutput) SetResult(v bool) *AddCommunicationToCase
 
 // An attachment to a case communication. The attachment consists of the file
 // name and the content of the file.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/Attachment
 type Attachment struct {
 	_ struct{} `type:"structure"`
 
@@ -1648,7 +1643,6 @@ func (s *Attachment) SetFileName(v string) *Attachment {
 
 // The file name and ID of an attachment to a case communication. You can use
 // the ID to retrieve the attachment with the DescribeAttachment operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/AttachmentDetails
 type AttachmentDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -1717,7 +1711,6 @@ func (s *AttachmentDetails) SetFileName(v string) *AttachmentDetails {
 //    * submittedBy. The email address of the account that submitted the case.
 //
 //    * timeCreated. The time the case was created, in ISO-8601 format.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/CaseDetails
 type CaseDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -1849,7 +1842,6 @@ func (s *CaseDetails) SetTimeCreated(v string) *CaseDetails {
 // A JSON-formatted name/value pair that represents the category name and category
 // code of the problem, selected from the DescribeServices response for each
 // AWS service.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/Category
 type Category struct {
 	_ struct{} `type:"structure"`
 
@@ -1885,7 +1877,6 @@ func (s *Category) SetName(v string) *Category {
 // A communication associated with an AWS Support case. The communication consists
 // of the case ID, the message body, attachment information, the account email
 // address, and the date and time of the communication.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/Communication
 type Communication struct {
 	_ struct{} `type:"structure"`
 
@@ -1946,7 +1937,6 @@ func (s *Communication) SetTimeCreated(v string) *Communication {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/CreateCaseRequest
 type CreateCaseInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2076,7 +2066,6 @@ func (s *CreateCaseInput) SetSubject(v string) *CreateCaseInput {
 
 // The AWS Support case ID returned by a successful completion of the CreateCase
 // operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/CreateCaseResponse
 type CreateCaseOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2101,7 +2090,6 @@ func (s *CreateCaseOutput) SetCaseId(v string) *CreateCaseOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeAttachmentRequest
 type DescribeAttachmentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2143,7 +2131,6 @@ func (s *DescribeAttachmentInput) SetAttachmentId(v string) *DescribeAttachmentI
 
 // The content and file name of the attachment returned by the DescribeAttachment
 // operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeAttachmentResponse
 type DescribeAttachmentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2167,7 +2154,6 @@ func (s *DescribeAttachmentOutput) SetAttachment(v *Attachment) *DescribeAttachm
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeCasesRequest
 type DescribeCasesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2285,7 +2271,6 @@ func (s *DescribeCasesInput) SetNextToken(v string) *DescribeCasesInput {
 
 // Returns an array of CaseDetails objects and a nextToken that defines a point
 // for pagination in the result set.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeCasesResponse
 type DescribeCasesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2318,7 +2303,6 @@ func (s *DescribeCasesOutput) SetNextToken(v string) *DescribeCasesOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeCommunicationsRequest
 type DescribeCommunicationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2400,7 +2384,6 @@ func (s *DescribeCommunicationsInput) SetNextToken(v string) *DescribeCommunicat
 }
 
 // The communications returned by the DescribeCommunications operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeCommunicationsResponse
 type DescribeCommunicationsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2433,7 +2416,6 @@ func (s *DescribeCommunicationsOutput) SetNextToken(v string) *DescribeCommunica
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeServicesRequest
 type DescribeServicesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2469,7 +2451,6 @@ func (s *DescribeServicesInput) SetServiceCodeList(v []*string) *DescribeService
 }
 
 // The list of AWS services returned by the DescribeServices operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeServicesResponse
 type DescribeServicesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2493,7 +2474,6 @@ func (s *DescribeServicesOutput) SetServices(v []*Service) *DescribeServicesOutp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeSeverityLevelsRequest
 type DescribeSeverityLevelsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2520,7 +2500,6 @@ func (s *DescribeSeverityLevelsInput) SetLanguage(v string) *DescribeSeverityLev
 }
 
 // The list of severity levels returned by the DescribeSeverityLevels operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeSeverityLevelsResponse
 type DescribeSeverityLevelsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2545,7 +2524,6 @@ func (s *DescribeSeverityLevelsOutput) SetSeverityLevels(v []*SeverityLevel) *De
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeTrustedAdvisorCheckRefreshStatusesRequest
 type DescribeTrustedAdvisorCheckRefreshStatusesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2588,7 +2566,6 @@ func (s *DescribeTrustedAdvisorCheckRefreshStatusesInput) SetCheckIds(v []*strin
 
 // The statuses of the Trusted Advisor checks returned by the DescribeTrustedAdvisorCheckRefreshStatuses
 // operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeTrustedAdvisorCheckRefreshStatusesResponse
 type DescribeTrustedAdvisorCheckRefreshStatusesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2614,7 +2591,6 @@ func (s *DescribeTrustedAdvisorCheckRefreshStatusesOutput) SetStatuses(v []*Trus
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeTrustedAdvisorCheckResultRequest
 type DescribeTrustedAdvisorCheckResultInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2666,7 +2642,6 @@ func (s *DescribeTrustedAdvisorCheckResultInput) SetLanguage(v string) *Describe
 
 // The result of the Trusted Advisor check returned by the DescribeTrustedAdvisorCheckResult
 // operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeTrustedAdvisorCheckResultResponse
 type DescribeTrustedAdvisorCheckResultOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2690,7 +2665,6 @@ func (s *DescribeTrustedAdvisorCheckResultOutput) SetResult(v *TrustedAdvisorChe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeTrustedAdvisorCheckSummariesRequest
 type DescribeTrustedAdvisorCheckSummariesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2731,7 +2705,6 @@ func (s *DescribeTrustedAdvisorCheckSummariesInput) SetCheckIds(v []*string) *De
 
 // The summaries of the Trusted Advisor checks returned by the DescribeTrustedAdvisorCheckSummaries
 // operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeTrustedAdvisorCheckSummariesResponse
 type DescribeTrustedAdvisorCheckSummariesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2757,7 +2730,6 @@ func (s *DescribeTrustedAdvisorCheckSummariesOutput) SetSummaries(v []*TrustedAd
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeTrustedAdvisorChecksRequest
 type DescribeTrustedAdvisorChecksInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2800,7 +2772,6 @@ func (s *DescribeTrustedAdvisorChecksInput) SetLanguage(v string) *DescribeTrust
 
 // Information about the Trusted Advisor checks returned by the DescribeTrustedAdvisorChecks
 // operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/DescribeTrustedAdvisorChecksResponse
 type DescribeTrustedAdvisorChecksOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2827,7 +2798,6 @@ func (s *DescribeTrustedAdvisorChecksOutput) SetChecks(v []*TrustedAdvisorCheckD
 }
 
 // The five most recent communications associated with the case.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/RecentCaseCommunications
 type RecentCaseCommunications struct {
 	_ struct{} `type:"structure"`
 
@@ -2860,7 +2830,6 @@ func (s *RecentCaseCommunications) SetNextToken(v string) *RecentCaseCommunicati
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/RefreshTrustedAdvisorCheckRequest
 type RefreshTrustedAdvisorCheckInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2902,7 +2871,6 @@ func (s *RefreshTrustedAdvisorCheckInput) SetCheckId(v string) *RefreshTrustedAd
 }
 
 // The current refresh status of a Trusted Advisor check.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/RefreshTrustedAdvisorCheckResponse
 type RefreshTrustedAdvisorCheckOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2929,7 +2897,6 @@ func (s *RefreshTrustedAdvisorCheckOutput) SetStatus(v *TrustedAdvisorCheckRefre
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/ResolveCaseRequest
 type ResolveCaseInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2955,7 +2922,6 @@ func (s *ResolveCaseInput) SetCaseId(v string) *ResolveCaseInput {
 }
 
 // The status of the case returned by the ResolveCase operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/ResolveCaseResponse
 type ResolveCaseOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2989,7 +2955,6 @@ func (s *ResolveCaseOutput) SetInitialCaseStatus(v string) *ResolveCaseOutput {
 }
 
 // Information about an AWS service returned by the DescribeServices operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/Service
 type Service struct {
 	_ struct{} `type:"structure"`
 
@@ -3037,7 +3002,6 @@ func (s *Service) SetName(v string) *Service {
 
 // A code and name pair that represent a severity level that can be applied
 // to a support case.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/SeverityLevel
 type SeverityLevel struct {
 	_ struct{} `type:"structure"`
 
@@ -3073,7 +3037,6 @@ func (s *SeverityLevel) SetName(v string) *SeverityLevel {
 
 // The container for summary information that relates to the category of the
 // Trusted Advisor check.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/TrustedAdvisorCategorySpecificSummary
 type TrustedAdvisorCategorySpecificSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -3099,7 +3062,6 @@ func (s *TrustedAdvisorCategorySpecificSummary) SetCostOptimizing(v *TrustedAdvi
 }
 
 // The description and metadata for a Trusted Advisor check.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/TrustedAdvisorCheckDescription
 type TrustedAdvisorCheckDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -3175,7 +3137,6 @@ func (s *TrustedAdvisorCheckDescription) SetName(v string) *TrustedAdvisorCheckD
 }
 
 // The refresh status of a Trusted Advisor check.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/TrustedAdvisorCheckRefreshStatus
 type TrustedAdvisorCheckRefreshStatus struct {
 	_ struct{} `type:"structure"`
 
@@ -3226,7 +3187,6 @@ func (s *TrustedAdvisorCheckRefreshStatus) SetStatus(v string) *TrustedAdvisorCh
 }
 
 // The results of a Trusted Advisor check returned by DescribeTrustedAdvisorCheckResult.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/TrustedAdvisorCheckResult
 type TrustedAdvisorCheckResult struct {
 	_ struct{} `type:"structure"`
 
@@ -3312,7 +3272,6 @@ func (s *TrustedAdvisorCheckResult) SetTimestamp(v string) *TrustedAdvisorCheckR
 
 // A summary of a Trusted Advisor check result, including the alert status,
 // last refresh, and number of resources examined.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/TrustedAdvisorCheckSummary
 type TrustedAdvisorCheckSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -3396,7 +3355,6 @@ func (s *TrustedAdvisorCheckSummary) SetTimestamp(v string) *TrustedAdvisorCheck
 
 // The estimated cost savings that might be realized if the recommended actions
 // are taken.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/TrustedAdvisorCostOptimizingSummary
 type TrustedAdvisorCostOptimizingSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -3436,7 +3394,6 @@ func (s *TrustedAdvisorCostOptimizingSummary) SetEstimatedPercentMonthlySavings(
 }
 
 // Contains information about a resource identified by a Trusted Advisor check.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/TrustedAdvisorResourceDetail
 type TrustedAdvisorResourceDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -3509,7 +3466,6 @@ func (s *TrustedAdvisorResourceDetail) SetStatus(v string) *TrustedAdvisorResour
 
 // Details about AWS resources that were analyzed in a call to Trusted Advisor
 // DescribeTrustedAdvisorCheckSummaries.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/support-2013-04-15/TrustedAdvisorResourcesSummary
 type TrustedAdvisorResourcesSummary struct {
 	_ struct{} `type:"structure"`
 

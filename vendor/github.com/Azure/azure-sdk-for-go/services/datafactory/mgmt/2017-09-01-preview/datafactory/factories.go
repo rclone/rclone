@@ -43,7 +43,8 @@ func NewFactoriesClientWithBaseURI(baseURI string, subscriptionID string) Factor
 
 // CancelPipelineRun cancel a pipeline run by its run ID.
 //
-// resourceGroupName is the resource group name. factoryName is the factory name. runID is the pipeline run identifier.
+// resourceGroupName is the resource group name. factoryName is the factory name. runID is the pipeline run
+// identifier.
 func (client FactoriesClient) CancelPipelineRun(ctx context.Context, resourceGroupName string, factoryName string, runID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -54,7 +55,7 @@ func (client FactoriesClient) CancelPipelineRun(ctx context.Context, resourceGro
 			Constraints: []validation.Constraint{{Target: "factoryName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "factoryName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "factoryName", Name: validation.Pattern, Rule: `^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.FactoriesClient", "CancelPipelineRun")
+		return result, validation.NewError("datafactory.FactoriesClient", "CancelPipelineRun", err.Error())
 	}
 
 	req, err := client.CancelPipelineRunPreparer(ctx, resourceGroupName, factoryName, runID)
@@ -136,7 +137,7 @@ func (client FactoriesClient) CreateOrUpdate(ctx context.Context, resourceGroupN
 		{TargetValue: factory,
 			Constraints: []validation.Constraint{{Target: "factory.Identity", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "factory.Identity.Type", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.FactoriesClient", "CreateOrUpdate")
+		return result, validation.NewError("datafactory.FactoriesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, factoryName, factory)
@@ -216,7 +217,7 @@ func (client FactoriesClient) Delete(ctx context.Context, resourceGroupName stri
 			Constraints: []validation.Constraint{{Target: "factoryName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "factoryName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "factoryName", Name: validation.Pattern, Rule: `^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.FactoriesClient", "Delete")
+		return result, validation.NewError("datafactory.FactoriesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, factoryName)
@@ -293,7 +294,7 @@ func (client FactoriesClient) Get(ctx context.Context, resourceGroupName string,
 			Constraints: []validation.Constraint{{Target: "factoryName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "factoryName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "factoryName", Name: validation.Pattern, Rule: `^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.FactoriesClient", "Get")
+		return result, validation.NewError("datafactory.FactoriesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, factoryName)
@@ -457,7 +458,7 @@ func (client FactoriesClient) ListByResourceGroup(ctx context.Context, resourceG
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.FactoriesClient", "ListByResourceGroup")
+		return result, validation.NewError("datafactory.FactoriesClient", "ListByResourceGroup", err.Error())
 	}
 
 	result.fn = client.listByResourceGroupNextResults
@@ -563,7 +564,7 @@ func (client FactoriesClient) Update(ctx context.Context, resourceGroupName stri
 			Constraints: []validation.Constraint{{Target: "factoryName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "factoryName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "factoryName", Name: validation.Pattern, Rule: `^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.FactoriesClient", "Update")
+		return result, validation.NewError("datafactory.FactoriesClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, factoryName, factoryUpdateParameters)

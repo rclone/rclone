@@ -44,9 +44,9 @@ func NewProcessesClientWithBaseURI(baseURI string, subscriptionID string) Proces
 // Get returns the specified process.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
-// containing the resources of interest. machineName is machine resource name. processName is process resource name.
-// timestamp is UTC date and time specifying a time instance relative to which to evaluate a resource. When not
-// specified, the service uses DateTime.UtcNow.
+// containing the resources of interest. machineName is machine resource name. processName is process resource
+// name. timestamp is UTC date and time specifying a time instance relative to which to evaluate a resource. When
+// not specified, the service uses DateTime.UtcNow.
 func (client ProcessesClient) Get(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, processName string, timestamp *date.Time) (result Process, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -63,7 +63,7 @@ func (client ProcessesClient) Get(ctx context.Context, resourceGroupName string,
 		{TargetValue: processName,
 			Constraints: []validation.Constraint{{Target: "processName", Name: validation.MaxLength, Rule: 128, Chain: nil},
 				{Target: "processName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.ProcessesClient", "Get")
+		return result, validation.NewError("servicemap.ProcessesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, workspaceName, machineName, processName, timestamp)
@@ -136,10 +136,10 @@ func (client ProcessesClient) GetResponder(resp *http.Response) (result Process,
 // GetLiveness obtains the liveness status of the process during the specified time interval.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
-// containing the resources of interest. machineName is machine resource name. processName is process resource name.
-// startTime is UTC date and time specifying the start time of an interval. When not specified the service uses
-// DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an interval. When not specified the
-// service uses DateTime.UtcNow
+// containing the resources of interest. machineName is machine resource name. processName is process resource
+// name. startTime is UTC date and time specifying the start time of an interval. When not specified the service
+// uses DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an interval. When not
+// specified the service uses DateTime.UtcNow
 func (client ProcessesClient) GetLiveness(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, processName string, startTime *date.Time, endTime *date.Time) (result Liveness, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -156,7 +156,7 @@ func (client ProcessesClient) GetLiveness(ctx context.Context, resourceGroupName
 		{TargetValue: processName,
 			Constraints: []validation.Constraint{{Target: "processName", Name: validation.MaxLength, Rule: 128, Chain: nil},
 				{Target: "processName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.ProcessesClient", "GetLiveness")
+		return result, validation.NewError("servicemap.ProcessesClient", "GetLiveness", err.Error())
 	}
 
 	req, err := client.GetLivenessPreparer(ctx, resourceGroupName, workspaceName, machineName, processName, startTime, endTime)
@@ -232,10 +232,10 @@ func (client ProcessesClient) GetLivenessResponder(resp *http.Response) (result 
 // ListAcceptingPorts returns a collection of ports on which this process is accepting
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
-// containing the resources of interest. machineName is machine resource name. processName is process resource name.
-// startTime is UTC date and time specifying the start time of an interval. When not specified the service uses
-// DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an interval. When not specified the
-// service uses DateTime.UtcNow
+// containing the resources of interest. machineName is machine resource name. processName is process resource
+// name. startTime is UTC date and time specifying the start time of an interval. When not specified the service
+// uses DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an interval. When not
+// specified the service uses DateTime.UtcNow
 func (client ProcessesClient) ListAcceptingPorts(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, processName string, startTime *date.Time, endTime *date.Time) (result PortCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -252,7 +252,7 @@ func (client ProcessesClient) ListAcceptingPorts(ctx context.Context, resourceGr
 		{TargetValue: processName,
 			Constraints: []validation.Constraint{{Target: "processName", Name: validation.MaxLength, Rule: 128, Chain: nil},
 				{Target: "processName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.ProcessesClient", "ListAcceptingPorts")
+		return result, validation.NewError("servicemap.ProcessesClient", "ListAcceptingPorts", err.Error())
 	}
 
 	result.fn = client.listAcceptingPortsNextResults
@@ -356,10 +356,10 @@ func (client ProcessesClient) ListAcceptingPortsComplete(ctx context.Context, re
 // ListConnections returns a collection of connections terminating or originating at the specified process
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
-// containing the resources of interest. machineName is machine resource name. processName is process resource name.
-// startTime is UTC date and time specifying the start time of an interval. When not specified the service uses
-// DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an interval. When not specified the
-// service uses DateTime.UtcNow
+// containing the resources of interest. machineName is machine resource name. processName is process resource
+// name. startTime is UTC date and time specifying the start time of an interval. When not specified the service
+// uses DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an interval. When not
+// specified the service uses DateTime.UtcNow
 func (client ProcessesClient) ListConnections(ctx context.Context, resourceGroupName string, workspaceName string, machineName string, processName string, startTime *date.Time, endTime *date.Time) (result ConnectionCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -376,7 +376,7 @@ func (client ProcessesClient) ListConnections(ctx context.Context, resourceGroup
 		{TargetValue: processName,
 			Constraints: []validation.Constraint{{Target: "processName", Name: validation.MaxLength, Rule: 128, Chain: nil},
 				{Target: "processName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.ProcessesClient", "ListConnections")
+		return result, validation.NewError("servicemap.ProcessesClient", "ListConnections", err.Error())
 	}
 
 	result.fn = client.listConnectionsNextResults

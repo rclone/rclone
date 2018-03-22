@@ -10,16 +10,18 @@
 [[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
-  revision = "d8ed2627bdf02c080bf22230dbb337003b7aba2d"
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/stretchr/objx"
   packages = ["."]
-  revision = "cbeaeb16a013161a98496fad62933b1d21786672"
+  revision = "facf9a85c22f48d2f52f2380e4efce1768749a89"
+  version = "v0.1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6bd8fb1f11a0d3df245fc01bd8853f6dac40b83457e780f7978ca30244647c7b"
+  inputs-digest = "448ddae4702c6aded2555faafd390c537789bb1c483f70b0431e6634f73f2090"
   solver-name = "gps-cdcl"
   solver-version = 1

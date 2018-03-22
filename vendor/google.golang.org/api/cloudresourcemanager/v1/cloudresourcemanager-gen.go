@@ -1,4 +1,4 @@
-// Package cloudresourcemanager provides access to the Google Cloud Resource Manager API.
+// Package cloudresourcemanager provides access to the Cloud Resource Manager API.
 //
 // See https://cloud.google.com/resource-manager
 //
@@ -175,7 +175,7 @@ func (s *Ancestor) MarshalJSON() ([]byte, error) {
 // log_types
 // specified in each AuditConfig are enabled, and the exempted_members
 // in each
-// AuditConfig are exempted.
+// AuditLogConfig are exempted.
 //
 // Example Policy with multiple AuditConfigs:
 //
@@ -1542,11 +1542,14 @@ type Organization struct {
 	// @OutputOnly
 	CreationTime string `json:"creationTime,omitempty"`
 
-	// DisplayName: A friendly string to be used to refer to the
-	// Organization in the UI.
-	// Assigned by the server, set to the primary domain of the G
-	// Suite
-	// customer that owns the organization.
+	// DisplayName: A human-readable string that refers to the Organization
+	// in the
+	// GCP Console UI. This string is set by the server and cannot
+	// be
+	// changed. The string will be set to the primary domain (for
+	// example,
+	// "google.com") of the G Suite customer that owns the
+	// organization.
 	// @OutputOnly
 	DisplayName string `json:"displayName,omitempty"`
 
@@ -1610,8 +1613,8 @@ func (s *Organization) MarshalJSON() ([]byte, error) {
 // descendants will
 // be deleted.
 type OrganizationOwner struct {
-	// DirectoryCustomerId: The Google for Work customer id used in the
-	// Directory API.
+	// DirectoryCustomerId: The G Suite customer id used in the Directory
+	// API.
 	DirectoryCustomerId string `json:"directoryCustomerId,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "DirectoryCustomerId")
@@ -1968,7 +1971,7 @@ type SearchOrganizationsRequest struct {
 	//
 	// Organizations may be filtered by `owner.directoryCustomerId` or
 	// by
-	// `domain`, where the domain is a Google for Work domain, for
+	// `domain`, where the domain is a G Suite domain, for
 	// example:
 	//
 	// |Filter|Description|
@@ -5573,7 +5576,8 @@ type ProjectsCreateCall struct {
 // permission
 // `resourcemanager.projects.create` on the specified parent for the
 // new
-// project.
+// project. The parent is identified by a specified ResourceId,
+// which must include both an ID and a type, such as organization.
 func (r *ProjectsService) Create(project *Project) *ProjectsCreateCall {
 	c := &ProjectsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
@@ -5663,7 +5667,7 @@ func (c *ProjectsCreateCall) Do(opts ...googleapi.CallOption) (*Operation, error
 	}
 	return ret, nil
 	// {
-	//   "description": "Request that a new Project be created. The result is an Operation which\ncan be used to track the creation process. It is automatically deleted\nafter a few hours, so there is no need to call DeleteOperation.\n\nOur SLO permits Project creation to take up to 30 seconds at the 90th\npercentile. As of 2016-08-29, we are observing 6 seconds 50th percentile\nlatency. 95th percentile latency is around 11 seconds. We recommend\npolling at the 5th second with an exponential backoff.\n\nAuthorization requires the Google IAM permission\n`resourcemanager.projects.create` on the specified parent for the new\nproject.",
+	//   "description": "Request that a new Project be created. The result is an Operation which\ncan be used to track the creation process. It is automatically deleted\nafter a few hours, so there is no need to call DeleteOperation.\n\nOur SLO permits Project creation to take up to 30 seconds at the 90th\npercentile. As of 2016-08-29, we are observing 6 seconds 50th percentile\nlatency. 95th percentile latency is around 11 seconds. We recommend\npolling at the 5th second with an exponential backoff.\n\nAuthorization requires the Google IAM permission\n`resourcemanager.projects.create` on the specified parent for the new\nproject. The parent is identified by a specified ResourceId,\nwhich must include both an ID and a type, such as organization.",
 	//   "flatPath": "v1/projects",
 	//   "httpMethod": "POST",
 	//   "id": "cloudresourcemanager.projects.create",
@@ -5695,11 +5699,8 @@ type ProjectsDeleteCall struct {
 
 // Delete: Marks the Project identified by the specified
 // `project_id` (for example, `my-project-123`) for deletion.
-// This method will only affect the Project if the following criteria
-// are met:
-//
-// + The Project does not have a billing account associated with it.
-// + The Project has a lifecycle state of
+// This method will only affect the Project if it has a lifecycle state
+// of
 // ACTIVE.
 //
 // This method changes the Project's lifecycle state from
@@ -5806,7 +5807,7 @@ func (c *ProjectsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
 	}
 	return ret, nil
 	// {
-	//   "description": "Marks the Project identified by the specified\n`project_id` (for example, `my-project-123`) for deletion.\nThis method will only affect the Project if the following criteria are met:\n\n+ The Project does not have a billing account associated with it.\n+ The Project has a lifecycle state of\nACTIVE.\n\nThis method changes the Project's lifecycle state from\nACTIVE\nto DELETE_REQUESTED.\nThe deletion starts at an unspecified time,\nat which point the Project is no longer accessible.\n\nUntil the deletion completes, you can check the lifecycle state\nchecked by retrieving the Project with GetProject,\nand the Project remains visible to ListProjects.\nHowever, you cannot update the project.\n\nAfter the deletion completes, the Project is not retrievable by\nthe  GetProject and\nListProjects methods.\n\nThe caller must have modify permissions for this Project.",
+	//   "description": "Marks the Project identified by the specified\n`project_id` (for example, `my-project-123`) for deletion.\nThis method will only affect the Project if it has a lifecycle state of\nACTIVE.\n\nThis method changes the Project's lifecycle state from\nACTIVE\nto DELETE_REQUESTED.\nThe deletion starts at an unspecified time,\nat which point the Project is no longer accessible.\n\nUntil the deletion completes, you can check the lifecycle state\nchecked by retrieving the Project with GetProject,\nand the Project remains visible to ListProjects.\nHowever, you cannot update the project.\n\nAfter the deletion completes, the Project is not retrievable by\nthe  GetProject and\nListProjects methods.\n\nThe caller must have modify permissions for this Project.",
 	//   "flatPath": "v1/projects/{projectId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "cloudresourcemanager.projects.delete",

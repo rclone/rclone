@@ -15,7 +15,8 @@
     "ListInputSecurityGroups": "Produces a list of Input Security Groups for an account",
     "ListInputs": "Produces list of inputs that have been created",
     "StartChannel": "Starts an existing channel",
-    "StopChannel": "Stops a running channel"
+    "StopChannel": "Stops a running channel",
+    "UpdateChannel": "Updates a channel."
   },
   "shapes": {
     "AacCodingMode": {
@@ -146,7 +147,7 @@
     "AudioChannelMapping": {
       "base": null,
       "refs": {
-        "ListOfAudioChannelMapping$member": null
+        "__listOfAudioChannelMapping$member": null
       }
     },
     "AudioCodecSettings": {
@@ -158,7 +159,7 @@
     "AudioDescription": {
       "base": null,
       "refs": {
-        "ListOfAudioDescription$member": null
+        "__listOfAudioDescription$member": null
       }
     },
     "AudioDescriptionAudioTypeControl": {
@@ -224,7 +225,7 @@
     "AudioSelector": {
       "base": null,
       "refs": {
-        "ListOfAudioSelector$member": null
+        "__listOfAudioSelector$member": null
       }
     },
     "AudioSelectorSettings": {
@@ -261,6 +262,11 @@
       "base": null,
       "refs": {
         "AvailConfiguration$AvailSettings": "Ad avail settings."
+      }
+    },
+    "BadGatewayException": {
+      "base": null,
+      "refs": {
       }
     },
     "BadRequestException": {
@@ -331,7 +337,7 @@
     "CaptionDescription": {
       "base": "Output groups for this Live Event. Output groups contain information about where streams should be distributed.",
       "refs": {
-        "ListOfCaptionDescription$member": null
+        "__listOfCaptionDescription$member": null
       }
     },
     "CaptionDestinationSettings": {
@@ -343,13 +349,13 @@
     "CaptionLanguageMapping": {
       "base": "Maps a caption channel to an ISO 693-2 language code (http://www.loc.gov/standards/iso639-2), with an optional description.",
       "refs": {
-        "ListOfCaptionLanguageMapping$member": null
+        "__listOfCaptionLanguageMapping$member": null
       }
     },
     "CaptionSelector": {
       "base": "Output groups for this Live Event. Output groups contain information about where streams should be distributed.",
       "refs": {
-        "ListOfCaptionSelector$member": null
+        "__listOfCaptionSelector$member": null
       }
     },
     "CaptionSelectorSettings": {
@@ -361,7 +367,8 @@
     "Channel": {
       "base": null,
       "refs": {
-        "CreateChannelResultModel$Channel": null
+        "CreateChannelResultModel$Channel": null,
+        "UpdateChannelResultModel$Channel": null
       }
     },
     "ChannelConfigurationValidationError": {
@@ -372,7 +379,7 @@
     "ChannelEgressEndpoint": {
       "base": null,
       "refs": {
-        "ListOfChannelEgressEndpoint$member": null
+        "__listOfChannelEgressEndpoint$member": null
       }
     },
     "ChannelState": {
@@ -385,7 +392,7 @@
     "ChannelSummary": {
       "base": null,
       "refs": {
-        "ListOfChannelSummary$member": null
+        "__listOfChannelSummary$member": null
       }
     },
     "ConflictException": {
@@ -619,7 +626,8 @@
       "base": null,
       "refs": {
         "Channel$EncoderSettings": null,
-        "CreateChannel$EncoderSettings": null
+        "CreateChannel$EncoderSettings": null,
+        "UpdateChannel$EncoderSettings": "The encoder settings for this channel."
       }
     },
     "FecOutputIncludeFec": {
@@ -641,6 +649,11 @@
       }
     },
     "ForbiddenException": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GatewayTimeoutException": {
       "base": null,
       "refs": {
       }
@@ -786,7 +799,7 @@
     "HlsAdMarkers": {
       "base": null,
       "refs": {
-        "ListOfHlsAdMarkers$member": null
+        "__listOfHlsAdMarkers$member": null
       }
     },
     "HlsAkamaiHttpTransferMode": {
@@ -894,7 +907,7 @@
     "HlsMode": {
       "base": null,
       "refs": {
-        "HlsGroupSettings$Mode": "If set to \"vod\", keeps and indexes all segments starting with the first segment.  If set to \"live\" segments will age out and only the last keepSegments number of segments will be retained."
+        "HlsGroupSettings$Mode": "If \"vod\", all segments are indexed and kept permanently in the destination and manifest. If \"live\", only the number segments specified in keepSegments and indexNSegments are kept; newer segments replace older segments, which may prevent players from rewinding all the way to the beginning of the event.\n\nVOD mode uses HLS EXT-X-PLAYLIST-TYPE of EVENT while the channel is running, converting it to a \"VOD\" type manifest on completion of the stream."
       }
     },
     "HlsOutputSelection": {
@@ -961,19 +974,25 @@
       "base": null,
       "refs": {
         "CreateInputResultModel$Input": null,
-        "ListOfInput$member": null
+        "__listOfInput$member": null
       }
     },
     "InputAttachment": {
       "base": null,
       "refs": {
-        "ListOfInputAttachment$member": null
+        "__listOfInputAttachment$member": null
       }
     },
     "InputChannelLevel": {
       "base": null,
       "refs": {
-        "ListOfInputChannelLevel$member": null
+        "__listOfInputChannelLevel$member": null
+      }
+    },
+    "InputCodec": {
+      "base": "codec in increasing order of complexity",
+      "refs": {
+        "InputSpecification$Codec": "Input codec"
       }
     },
     "InputDeblockFilter": {
@@ -989,15 +1008,15 @@
       }
     },
     "InputDestination": {
-      "base": "Settings for a PUSH type input",
+      "base": "The settings for a PUSH type input.",
       "refs": {
-        "ListOfInputDestination$member": null
+        "__listOfInputDestination$member": null
       }
     },
     "InputDestinationRequest": {
-      "base": "Endpoint settings for a PUSH type input",
+      "base": "Endpoint settings for a PUSH type input.",
       "refs": {
-        "ListOfInputDestinationRequest$member": null
+        "__listOfInputDestinationRequest$member": null
       }
     },
     "InputFilter": {
@@ -1049,11 +1068,23 @@
         "InputLossBehavior$InputLossImageType": "Indicates whether to substitute a solid color or a slate into the output after input loss exceeds blackFrameMsec."
       }
     },
+    "InputMaximumBitrate": {
+      "base": "Maximum input bitrate in megabits per second. Bitrates up to 50 Mbps are supported currently.",
+      "refs": {
+        "InputSpecification$MaximumBitrate": "Maximum input bitrate, categorized coarsely"
+      }
+    },
+    "InputResolution": {
+      "base": "Input resolution based on lines of vertical resolution in the input; SD is less than 720 lines, HD is 720 to 1080 lines, UHD is greater than 1080 lines\n",
+      "refs": {
+        "InputSpecification$Resolution": "Input resolution, categorized coarsely"
+      }
+    },
     "InputSecurityGroup": {
       "base": "An Input Security Group",
       "refs": {
         "CreateInputSecurityGroupResultModel$SecurityGroup": null,
-        "ListOfInputSecurityGroup$member": null
+        "__listOfInputSecurityGroup$member": null
       }
     },
     "InputSecurityGroupWhitelistRequest": {
@@ -1068,9 +1099,9 @@
       }
     },
     "InputSource": {
-      "base": "Settings for a PULL type input",
+      "base": "The settings for a PULL type input.",
       "refs": {
-        "ListOfInputSource$member": null
+        "__listOfInputSource$member": null
       }
     },
     "InputSourceEndBehavior": {
@@ -1080,9 +1111,18 @@
       }
     },
     "InputSourceRequest": {
-      "base": "Settings for for a PULL type input",
+      "base": "Settings for for a PULL type input.",
       "refs": {
-        "ListOfInputSourceRequest$member": null
+        "__listOfInputSourceRequest$member": null
+      }
+    },
+    "InputSpecification": {
+      "base": null,
+      "refs": {
+        "Channel$InputSpecification": null,
+        "ChannelSummary$InputSpecification": null,
+        "CreateChannel$InputSpecification": "Specification of input for this channel (max. bitrate, resolution, codec, etc.)",
+        "UpdateChannel$InputSpecification": "Specification of input for this channel (max. bitrate, resolution, codec, etc.)"
       }
     },
     "InputState": {
@@ -1101,13 +1141,13 @@
     "InputWhitelistRule": {
       "base": "Whitelist rule",
       "refs": {
-        "ListOfInputWhitelistRule$member": null
+        "__listOfInputWhitelistRule$member": null
       }
     },
     "InputWhitelistRuleCidr": {
       "base": "An IPv4 CIDR to whitelist.",
       "refs": {
-        "ListOfInputWhitelistRuleCidr$member": null
+        "__listOfInputWhitelistRuleCidr$member": null
       }
     },
     "InternalServerErrorException": {
@@ -1149,171 +1189,6 @@
     "ListInputsResultModel": {
       "base": null,
       "refs": {
-      }
-    },
-    "ListOfAudioChannelMapping": {
-      "base": null,
-      "refs": {
-        "RemixSettings$ChannelMappings": "Mapping of input channels to output channels, with appropriate gain adjustments."
-      }
-    },
-    "ListOfAudioDescription": {
-      "base": null,
-      "refs": {
-        "EncoderSettings$AudioDescriptions": null
-      }
-    },
-    "ListOfAudioSelector": {
-      "base": null,
-      "refs": {
-        "InputSettings$AudioSelectors": "Used to select the audio stream to decode for inputs that have multiple available."
-      }
-    },
-    "ListOfCaptionDescription": {
-      "base": null,
-      "refs": {
-        "EncoderSettings$CaptionDescriptions": "Settings for caption decriptions"
-      }
-    },
-    "ListOfCaptionLanguageMapping": {
-      "base": null,
-      "refs": {
-        "HlsGroupSettings$CaptionLanguageMappings": "Mapping of up to 4 caption channels to caption languages.  Is only meaningful if captionLanguageSetting is set to \"insert\"."
-      }
-    },
-    "ListOfCaptionSelector": {
-      "base": null,
-      "refs": {
-        "InputSettings$CaptionSelectors": "Used to select the caption input to use for inputs that have multiple available."
-      }
-    },
-    "ListOfChannelEgressEndpoint": {
-      "base": null,
-      "refs": {
-        "Channel$EgressEndpoints": "The endpoints where outgoing connections initiate from",
-        "ChannelSummary$EgressEndpoints": "The endpoints where outgoing connections initiate from"
-      }
-    },
-    "ListOfChannelSummary": {
-      "base": null,
-      "refs": {
-        "ListChannelsResultModel$Channels": null
-      }
-    },
-    "ListOfHlsAdMarkers": {
-      "base": null,
-      "refs": {
-        "HlsGroupSettings$AdMarkers": "Choose one or more ad marker types to pass SCTE35 signals through to this group of Apple HLS outputs."
-      }
-    },
-    "ListOfInput": {
-      "base": null,
-      "refs": {
-        "ListInputsResultModel$Inputs": null
-      }
-    },
-    "ListOfInputAttachment": {
-      "base": null,
-      "refs": {
-        "Channel$InputAttachments": "List of input attachments for channel.",
-        "ChannelSummary$InputAttachments": "List of input attachments for channel.",
-        "CreateChannel$InputAttachments": "List of input attachments for channel."
-      }
-    },
-    "ListOfInputChannelLevel": {
-      "base": null,
-      "refs": {
-        "AudioChannelMapping$InputChannelLevels": "Indices and gain values for each input channel that should be remixed into this output channel."
-      }
-    },
-    "ListOfInputDestination": {
-      "base": null,
-      "refs": {
-        "Input$Destinations": "List of destinations of input (PULL-type)"
-      }
-    },
-    "ListOfInputDestinationRequest": {
-      "base": null,
-      "refs": {
-        "CreateInput$Destinations": "settings required for PUSH-type inputs; one per redundancy group.\nOnly one of sources and destinations can be specified.\nNote: there are currently no settings required for PUSH-type inputs\n"
-      }
-    },
-    "ListOfInputSecurityGroup": {
-      "base": null,
-      "refs": {
-        "ListInputSecurityGroupsResultModel$InputSecurityGroups": "List of input security groups"
-      }
-    },
-    "ListOfInputSource": {
-      "base": null,
-      "refs": {
-        "Input$Sources": "List of sources of input (PULL-type)"
-      }
-    },
-    "ListOfInputSourceRequest": {
-      "base": null,
-      "refs": {
-        "CreateInput$Sources": "settings required for PULL-type inputs; one per redundancy group\nOnly one of sources and destinations can be specified\n"
-      }
-    },
-    "ListOfInputWhitelistRule": {
-      "base": null,
-      "refs": {
-        "InputSecurityGroup$WhitelistRules": "Whitelist rules and their sync status"
-      }
-    },
-    "ListOfInputWhitelistRuleCidr": {
-      "base": null,
-      "refs": {
-        "InputSecurityGroupWhitelistRequest$WhitelistRules": "List of IPv4 CIDR addresses to whitelist"
-      }
-    },
-    "ListOfOutput": {
-      "base": null,
-      "refs": {
-        "OutputGroup$Outputs": null
-      }
-    },
-    "ListOfOutputDestination": {
-      "base": null,
-      "refs": {
-        "Channel$Destinations": "A list of destinations of the channel. For UDP outputs, there is one\ndestination per output. For other types (HLS, for example), there is\none destination per packager.\n",
-        "ChannelSummary$Destinations": "A list of destinations of the channel. For UDP outputs, there is one\ndestination per output. For other types (HLS, for example), there is\none destination per packager.\n",
-        "CreateChannel$Destinations": null
-      }
-    },
-    "ListOfOutputDestinationSettings": {
-      "base": null,
-      "refs": {
-        "OutputDestination$Settings": "Destination settings for output; one for each redundant encoder."
-      }
-    },
-    "ListOfOutputGroup": {
-      "base": null,
-      "refs": {
-        "EncoderSettings$OutputGroups": null
-      }
-    },
-    "ListOfValidationError": {
-      "base": null,
-      "refs": {
-        "ChannelConfigurationValidationError$ValidationErrors": "A collection of validation error responses from attempting to create a channel with a bouquet of settings."
-      }
-    },
-    "ListOfVideoDescription": {
-      "base": null,
-      "refs": {
-        "EncoderSettings$VideoDescriptions": null
-      }
-    },
-    "ListOf__string": {
-      "base": null,
-      "refs": {
-        "CreateInput$InputSecurityGroups": "A list of security groups referenced by IDs to attach to the input.",
-        "Input$AttachedChannels": "List of channel IDs that that input is attached to (currently an input can only be attached to one channel)",
-        "Input$SecurityGroups": "List of IDs for all the security groups attached to the input.",
-        "Output$AudioDescriptionNames": "The names of the AudioDescriptions used as audio sources for this output.",
-        "Output$CaptionDescriptionNames": "The names of the CaptionDescriptions used as caption sources for this output."
       }
     },
     "M2tsAbsentInputAudioBehavior": {
@@ -1499,25 +1374,25 @@
     "Output": {
       "base": "Output settings. There can be multiple outputs within a group.",
       "refs": {
-        "ListOfOutput$member": null
+        "__listOfOutput$member": null
       }
     },
     "OutputDestination": {
       "base": null,
       "refs": {
-        "ListOfOutputDestination$member": null
+        "__listOfOutputDestination$member": null
       }
     },
     "OutputDestinationSettings": {
       "base": null,
       "refs": {
-        "ListOfOutputDestinationSettings$member": null
+        "__listOfOutputDestinationSettings$member": null
       }
     },
     "OutputGroup": {
       "base": "Output groups for this Live Event. Output groups contain information about where streams should be distributed.",
       "refs": {
-        "ListOfOutputGroup$member": null
+        "__listOfOutputGroup$member": null
       }
     },
     "OutputGroupSettings": {
@@ -1765,10 +1640,20 @@
       "refs": {
       }
     },
+    "UpdateChannel": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateChannelResultModel": {
+      "base": "The updated channel's description.",
+      "refs": {
+      }
+    },
     "ValidationError": {
       "base": null,
       "refs": {
-        "ListOfValidationError$member": null
+        "__listOfValidationError$member": null
       }
     },
     "VideoCodecSettings": {
@@ -1780,7 +1665,7 @@
     "VideoDescription": {
       "base": "Video settings for this stream.",
       "refs": {
-        "ListOfVideoDescription$member": null
+        "__listOfVideoDescription$member": null
       }
     },
     "VideoDescriptionRespondToAfd": {
@@ -1843,87 +1728,65 @@
         "AacSettings$Bitrate": "Average bitrate in bits/second. Valid values depend on rate control mode and profile.",
         "AacSettings$SampleRate": "Sample rate in Hz. Valid values depend on rate control mode and profile.",
         "Ac3Settings$Bitrate": "Average bitrate in bits/second. Valid bitrates depend on the coding mode.",
-        "AudioNormalizationSettings$TargetLkfs": "Target LKFS(loudness) to adjust volume to. If no value is entered, a default value will be used according to the chosen algorithm.  The CALM Act (1770-1) recommends a target of -24 LKFS. The EBU R-128 specification (1770-2) recommends a target of -23 LKFS.",
         "Eac3Settings$Bitrate": "Average bitrate in bits/second. Valid bitrates depend on the coding mode.",
         "Eac3Settings$LoRoCenterMixLevel": "Left only/Right only center mix level. Only used for 3/2 coding mode.",
         "Eac3Settings$LoRoSurroundMixLevel": "Left only/Right only surround mix level. Only used for 3/2 coding mode.",
         "Eac3Settings$LtRtCenterMixLevel": "Left total/Right total center mix level. Only used for 3/2 coding mode.",
         "Eac3Settings$LtRtSurroundMixLevel": "Left total/Right total surround mix level. Only used for 3/2 coding mode.",
-        "H264Settings$GopSize": "GOP size (keyframe interval) in units of either frames or seconds per gopSizeUnits. Must be greater than zero.",
-        "M2tsSettings$FragmentTime": "The length in seconds of each fragment. Only used with EBP markers.",
-        "M2tsSettings$NullPacketBitrate": "Value in bits per second of extra null packets to insert into the transport stream. This can be used if a downstream encryption system requires periodic null packets.",
-        "M2tsSettings$SegmentationTime": "The length in seconds of each segment. Required unless markers is set to None_.",
         "Mp2Settings$Bitrate": "Average bitrate in bits/second.",
         "Mp2Settings$SampleRate": "Sample rate in Hz."
+      }
+    },
+    "__doubleMin0": {
+      "base": null,
+      "refs": {
+        "M2tsSettings$FragmentTime": "The length in seconds of each fragment. Only used with EBP markers.",
+        "M2tsSettings$NullPacketBitrate": "Value in bits per second of extra null packets to insert into the transport stream. This can be used if a downstream encryption system requires periodic null packets."
+      }
+    },
+    "__doubleMin1": {
+      "base": null,
+      "refs": {
+        "H264Settings$GopSize": "GOP size (keyframe interval) in units of either frames or seconds per gopSizeUnits. Must be greater than zero.",
+        "M2tsSettings$SegmentationTime": "The length in seconds of each segment. Required unless markers is set to None_."
+      }
+    },
+    "__doubleMinNegative59Max0": {
+      "base": null,
+      "refs": {
+        "AudioNormalizationSettings$TargetLkfs": "Target LKFS(loudness) to adjust volume to. If no value is entered, a default value will be used according to the chosen algorithm.  The CALM Act (1770-1) recommends a target of -24 LKFS. The EBU R-128 specification (1770-2) recommends a target of -23 LKFS."
       }
     },
     "__integer": {
       "base": null,
       "refs": {
-        "Ac3Settings$Dialnorm": "Sets the dialnorm for the output. If excluded and input audio is Dolby Digital, dialnorm will be passed through.",
-        "ArchiveGroupSettings$RolloverInterval": "Number of seconds to write to archive file before closing and starting a new one.",
-        "AudioChannelMapping$OutputChannel": "The index of the output channel being produced.",
-        "AudioPidSelection$Pid": "Selects a specific PID from within a source.",
-        "BurnInDestinationSettings$BackgroundOpacity": "Specifies the opacity of the background rectangle. 255 is opaque; 0 is transparent. Leaving this parameter out is equivalent to setting it to 0 (transparent).  All burn-in and DVB-Sub font settings must match.",
-        "BurnInDestinationSettings$FontOpacity": "Specifies the opacity of the burned-in captions. 255 is opaque; 0 is transparent.  All burn-in and DVB-Sub font settings must match.",
-        "BurnInDestinationSettings$FontResolution": "Font resolution in DPI (dots per inch); default is 96 dpi.  All burn-in and DVB-Sub font settings must match.",
-        "BurnInDestinationSettings$OutlineSize": "Specifies font outline size in pixels. This option is not valid for source captions that are either 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
-        "BurnInDestinationSettings$ShadowOpacity": "Specifies the opacity of the shadow. 255 is opaque; 0 is transparent. Leaving this parameter out is equivalent to setting it to 0 (transparent).  All burn-in and DVB-Sub font settings must match.",
         "BurnInDestinationSettings$ShadowXOffset": "Specifies the horizontal offset of the shadow relative to the captions in pixels. A value of -2 would result in a shadow offset 2 pixels to the left.  All burn-in and DVB-Sub font settings must match.",
         "BurnInDestinationSettings$ShadowYOffset": "Specifies the vertical offset of the shadow relative to the captions in pixels. A value of -2 would result in a shadow offset 2 pixels above the text.  All burn-in and DVB-Sub font settings must match.",
-        "BurnInDestinationSettings$XPosition": "Specifies the horizontal position of the caption relative to the left side of the output in pixels. A value of 10 would result in the captions starting 10 pixels from the left of the output. If no explicit xPosition is provided, the horizontal caption position will be determined by the alignment parameter.  All burn-in and DVB-Sub font settings must match.",
-        "BurnInDestinationSettings$YPosition": "Specifies the vertical position of the caption relative to the top of the output in pixels. A value of 10 would result in the captions starting 10 pixels from the top of the output. If no explicit yPosition is provided, the caption will be positioned towards the bottom of the output.  All burn-in and DVB-Sub font settings must match.",
-        "CaptionLanguageMapping$CaptionChannel": "Channel to insert closed captions.  Each channel mapping must have a unique channel number (maximum of 4)",
         "Channel$PipelinesRunningCount": "The number of currently healthy pipelines.",
         "ChannelSummary$PipelinesRunningCount": "The number of currently healthy pipelines.",
-        "DvbNitSettings$NetworkId": "The numeric value placed in the Network Information Table (NIT).",
-        "DvbNitSettings$RepInterval": "The number of milliseconds between instances of this table in the output transport stream.",
-        "DvbSdtSettings$RepInterval": "The number of milliseconds between instances of this table in the output transport stream.",
-        "DvbSubDestinationSettings$BackgroundOpacity": "Specifies the opacity of the background rectangle. 255 is opaque; 0 is transparent. Leaving this parameter blank is equivalent to setting it to 0 (transparent).  All burn-in and DVB-Sub font settings must match.",
-        "DvbSubDestinationSettings$FontOpacity": "Specifies the opacity of the burned-in captions. 255 is opaque; 0 is transparent.  All burn-in and DVB-Sub font settings must match.",
-        "DvbSubDestinationSettings$FontResolution": "Font resolution in DPI (dots per inch); default is 96 dpi.  All burn-in and DVB-Sub font settings must match.",
-        "DvbSubDestinationSettings$OutlineSize": "Specifies font outline size in pixels. This option is not valid for source captions that are either 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
-        "DvbSubDestinationSettings$ShadowOpacity": "Specifies the opacity of the shadow. 255 is opaque; 0 is transparent. Leaving this parameter blank is equivalent to setting it to 0 (transparent).  All burn-in and DVB-Sub font settings must match.",
         "DvbSubDestinationSettings$ShadowXOffset": "Specifies the horizontal offset of the shadow relative to the captions in pixels. A value of -2 would result in a shadow offset 2 pixels to the left.  All burn-in and DVB-Sub font settings must match.",
         "DvbSubDestinationSettings$ShadowYOffset": "Specifies the vertical offset of the shadow relative to the captions in pixels. A value of -2 would result in a shadow offset 2 pixels above the text.  All burn-in and DVB-Sub font settings must match.",
-        "DvbSubDestinationSettings$XPosition": "Specifies the horizontal position of the caption relative to the left side of the output in pixels. A value of 10 would result in the captions starting 10 pixels from the left of the output. If no explicit xPosition is provided, the horizontal caption position will be determined by the alignment parameter.  This option is not valid for source captions that are STL, 608/embedded or teletext. These source settings are already pre-defined by the caption stream.  All burn-in and DVB-Sub font settings must match.",
-        "DvbSubDestinationSettings$YPosition": "Specifies the vertical position of the caption relative to the top of the output in pixels. A value of 10 would result in the captions starting 10 pixels from the top of the output. If no explicit yPosition is provided, the caption will be positioned towards the bottom of the output.  This option is not valid for source captions that are STL, 608/embedded or teletext.  These source settings are already pre-defined by the caption stream.  All burn-in and DVB-Sub font settings must match.",
-        "DvbSubSourceSettings$Pid": "When using DVB-Sub with Burn-In or SMPTE-TT, use this PID for the source content. Unused for DVB-Sub passthrough. All DVB-Sub content is passed through, regardless of selectors.",
-        "DvbTdtSettings$RepInterval": "The number of milliseconds between instances of this table in the output transport stream.",
-        "Eac3Settings$Dialnorm": "Sets the dialnorm for the output. If blank and input audio is Dolby Digital Plus, dialnorm will be passed through.",
-        "EmbeddedSourceSettings$Source608ChannelNumber": "Specifies the 608/708 channel number within the video track from which to extract captions. Unused for passthrough.",
-        "EmbeddedSourceSettings$Source608TrackNumber": "This field is unused and deprecated.",
-        "FecOutputSettings$ColumnDepth": "Parameter D from SMPTE 2022-1. The height of the FEC protection matrix.  The number of transport stream packets per column error correction packet. Must be between 4 and 20, inclusive.",
-        "FecOutputSettings$RowLength": "Parameter L from SMPTE 2022-1. The width of the FEC protection matrix.  Must be between 1 and 20, inclusive. If only Column FEC is used, then larger values increase robustness.  If Row FEC is used, then this is the number of transport stream packets per row error correction packet, and the value must be between 4 and 20, inclusive, if includeFec is columnAndRow. If includeFec is column, this value must be 1 to 20, inclusive.",
-        "GlobalConfiguration$InitialAudioGain": "Value to set the initial audio gain for the Live Event.",
-        "H264Settings$Bitrate": "Average bitrate in bits/second. Required for VBR, CBR, and ABR. For MS Smooth outputs, bitrates must be unique when rounded down to the nearest multiple of 1000.",
-        "H264Settings$BufFillPct": "Percentage of the buffer that should initially be filled (HRD buffer model).",
-        "H264Settings$BufSize": "Size of buffer (HRD buffer model) in bits/second.",
         "H264Settings$FramerateDenominator": "Framerate denominator.",
         "H264Settings$FramerateNumerator": "Framerate numerator - framerate is a fraction, e.g. 24000 / 1001 = 23.976 fps.",
-        "H264Settings$GopClosedCadence": "Frequency of closed GOPs. In streaming applications, it is recommended that this be set to 1 so a decoder joining mid-stream will receive an IDR frame as quickly as possible. Setting this value to 0 will break output segmenting.",
-        "H264Settings$GopNumBFrames": "Number of B-frames between reference frames.",
-        "H264Settings$MaxBitrate": "Maximum bitrate in bits/second (for VBR mode only).",
-        "H264Settings$MinIInterval": "Only meaningful if sceneChangeDetect is set to enabled.  Enforces separation between repeated (cadence) I-frames and I-frames inserted by Scene Change Detection. If a scene change I-frame is within I-interval frames of a cadence I-frame, the GOP is shrunk and/or stretched to the scene change I-frame. GOP stretch requires enabling lookahead as well as setting I-interval. The normal cadence resumes for the next GOP. Note: Maximum GOP stretch = GOP size + Min-I-interval - 1",
-        "H264Settings$NumRefFrames": "Number of reference frames to use. The encoder may use more than requested if using B-frames and/or interlaced encoding.",
-        "H264Settings$ParDenominator": "Pixel Aspect Ratio denominator.",
         "H264Settings$ParNumerator": "Pixel Aspect Ratio numerator.",
-        "H264Settings$Slices": "Number of slices per picture. Must be less than or equal to the number of macroblock rows for progressive pictures, and less than or equal to half the number of macroblock rows for interlaced pictures.\nThis field is optional; when no value is specified the encoder will choose the number of slices based on encode resolution.",
-        "H264Settings$Softness": "Softness. Selects quantizer matrix, larger values reduce high-frequency content in the encoded image.",
+        "VideoDescription$Height": "Output video height (in pixels). Leave blank to use source video height. If left blank, width must also be unspecified.",
+        "VideoDescription$Width": "Output video width (in pixels). Leave out to use source video width.  If left out, height must also be left out. Display aspect ratio is always preserved by letterboxing or pillarboxing when necessary."
+      }
+    },
+    "__integerMin0": {
+      "base": null,
+      "refs": {
+        "BurnInDestinationSettings$XPosition": "Specifies the horizontal position of the caption relative to the left side of the output in pixels. A value of 10 would result in the captions starting 10 pixels from the left of the output. If no explicit xPosition is provided, the horizontal caption position will be determined by the alignment parameter.  All burn-in and DVB-Sub font settings must match.",
+        "BurnInDestinationSettings$YPosition": "Specifies the vertical position of the caption relative to the top of the output in pixels. A value of 10 would result in the captions starting 10 pixels from the top of the output. If no explicit yPosition is provided, the caption will be positioned towards the bottom of the output.  All burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$XPosition": "Specifies the horizontal position of the caption relative to the left side of the output in pixels. A value of 10 would result in the captions starting 10 pixels from the left of the output. If no explicit xPosition is provided, the horizontal caption position will be determined by the alignment parameter.  This option is not valid for source captions that are STL, 608/embedded or teletext. These source settings are already pre-defined by the caption stream.  All burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$YPosition": "Specifies the vertical position of the caption relative to the top of the output in pixels. A value of 10 would result in the captions starting 10 pixels from the top of the output. If no explicit yPosition is provided, the caption will be positioned towards the bottom of the output.  This option is not valid for source captions that are STL, 608/embedded or teletext.  These source settings are already pre-defined by the caption stream.  All burn-in and DVB-Sub font settings must match.",
+        "H264Settings$BufSize": "Size of buffer (HRD buffer model) in bits/second.",
+        "H264Settings$GopClosedCadence": "Frequency of closed GOPs. In streaming applications, it is recommended that this be set to 1 so a decoder joining mid-stream will receive an IDR frame as quickly as possible. Setting this value to 0 will break output segmenting.",
         "HlsAkamaiSettings$ConnectionRetryInterval": "Number of seconds to wait before retrying connection to the CDN if the connection is lost.",
-        "HlsAkamaiSettings$FilecacheDuration": "Size in seconds of file cache for streaming outputs.",
         "HlsAkamaiSettings$NumRetries": "Number of retry attempts that will be made before the Live Event is put into an error state.",
-        "HlsAkamaiSettings$RestartDelay": "If a streaming output fails, number of seconds to wait until a restart is initiated. A value of 0 means never restart.",
         "HlsBasicPutSettings$ConnectionRetryInterval": "Number of seconds to wait before retrying connection to the CDN if the connection is lost.",
-        "HlsBasicPutSettings$FilecacheDuration": "Size in seconds of file cache for streaming outputs.",
         "HlsBasicPutSettings$NumRetries": "Number of retry attempts that will be made before the Live Event is put into an error state.",
-        "HlsBasicPutSettings$RestartDelay": "If a streaming output fails, number of seconds to wait until a restart is initiated. A value of 0 means never restart.",
-        "HlsGroupSettings$IndexNSegments": "Number of segments to keep in the playlist (.m3u8) file. mode must be \"vod\" for this setting to have an effect, and this number should be less than or equal to keepSegments.",
-        "HlsGroupSettings$KeepSegments": "Number of segments to retain in the destination directory. mode must be \"live\" for this setting to have an effect.",
         "HlsGroupSettings$MinSegmentLength": "When set, minimumSegmentLength is enforced by looking ahead and back within the specified range for a nearby avail and extending the segment size if needed.",
-        "HlsGroupSettings$ProgramDateTimePeriod": "Period of insertion of EXT-X-PROGRAM-DATE-TIME entry, in seconds.",
-        "HlsGroupSettings$SegmentLength": "Length of MPEG-2 Transport Stream segments to create (in seconds). Note that segments will end on the next keyframe after this number of seconds, so actual segment length may be longer.",
-        "HlsGroupSettings$SegmentsPerSubdirectory": "Number of segments to write to a subdirectory before starting a new one. directoryStructure must be subdirectoryPerStream for this setting to have an effect.",
         "HlsGroupSettings$TimedMetadataId3Period": "Timed Metadata interval in seconds.",
         "HlsGroupSettings$TimestampDeltaMilliseconds": "Provides an extra millisecond delta offset to fine tune the timestamps.",
         "HlsInputSettings$Bandwidth": "When specified the HLS stream with the m3u8 BANDWIDTH that most closely matches this value will be chosen, otherwise the highest bandwidth stream in the m3u8 will be chosen.  The bitrate is specified in bits per second, as in an HLS manifest.",
@@ -1931,52 +1794,440 @@
         "HlsInputSettings$Retries": "The number of consecutive times that attempts to read a manifest or segment must fail before the input is considered unavailable.",
         "HlsInputSettings$RetryInterval": "The number of seconds between retries when an attempt to read a manifest or segment fails.",
         "HlsMediaStoreSettings$ConnectionRetryInterval": "Number of seconds to wait before retrying connection to the CDN if the connection is lost.",
-        "HlsMediaStoreSettings$FilecacheDuration": "Size in seconds of file cache for streaming outputs.",
         "HlsMediaStoreSettings$NumRetries": "Number of retry attempts that will be made before the Live Event is put into an error state.",
-        "HlsMediaStoreSettings$RestartDelay": "If a streaming output fails, number of seconds to wait until a restart is initiated. A value of 0 means never restart.",
         "HlsWebdavSettings$ConnectionRetryInterval": "Number of seconds to wait before retrying connection to the CDN if the connection is lost.",
-        "HlsWebdavSettings$FilecacheDuration": "Size in seconds of file cache for streaming outputs.",
         "HlsWebdavSettings$NumRetries": "Number of retry attempts that will be made before the Live Event is put into an error state.",
-        "HlsWebdavSettings$RestartDelay": "If a streaming output fails, number of seconds to wait until a restart is initiated. A value of 0 means never restart.",
-        "InputChannelLevel$Gain": "Remixing value. Units are in dB and acceptable values are within the range from -60 (mute) and 6 dB.",
-        "InputChannelLevel$InputChannel": "The index of the input channel used as a source.",
-        "InputLossBehavior$BlackFrameMsec": "On input loss, the number of milliseconds to substitute black into the output before switching to the frame specified by inputLossImageType.  A value x, where 0 <= x <= 1,000,000 and a value of 1,000,000 will be interpreted as infinite.",
-        "InputLossBehavior$RepeatFrameMsec": "On input loss, the number of milliseconds to repeat the previous picture before substituting black into the output.  A value x, where 0 <= x <= 1,000,000 and a value of 1,000,000 will be interpreted as infinite.",
-        "InputSettings$FilterStrength": "Adjusts the magnitude of filtering from 1 (minimal) to 5 (strongest).",
         "M2tsSettings$AudioFramesPerPes": "The number of audio frames to insert for each PES packet.",
         "M2tsSettings$Bitrate": "The output bitrate of the transport stream in bits per second. Setting to 0 lets the muxer automatically determine the appropriate bitrate.",
-        "M2tsSettings$EbpLookaheadMs": "When set, enforces that Encoder Boundary Points do not come within the specified time interval of each other by looking ahead at input video. If another EBP is going to come in within the specified time interval, the current EBP is not emitted, and the segment is \"stretched\" to the next marker.  The lookahead value does not add latency to the system. The Live Event must be configured elsewhere to create sufficient latency to make the lookahead accurate.",
-        "M2tsSettings$PatInterval": "The number of milliseconds between instances of this table in the output transport stream.  Valid values are 0, 10..1000.",
-        "M2tsSettings$PcrPeriod": "Maximum time in milliseconds between Program Clock Reference (PCRs) inserted into the transport stream.",
-        "M2tsSettings$PmtInterval": "The number of milliseconds between instances of this table in the output transport stream. Valid values are 0, 10..1000.",
-        "M2tsSettings$ProgramNum": "The value of the program number field in the Program Map Table.",
-        "M2tsSettings$TransportStreamId": "The value of the transport stream ID field in the Program Map Table.",
         "M3u8Settings$AudioFramesPerPes": "The number of audio frames to insert for each PES packet.",
-        "M3u8Settings$PatInterval": "The number of milliseconds between instances of this table in the output transport stream. A value of \\\"0\\\" writes out the PMT once per segment file.",
-        "M3u8Settings$PcrPeriod": "Maximum time in milliseconds between Program Clock References (PCRs) inserted into the transport stream.",
-        "M3u8Settings$PmtInterval": "The number of milliseconds between instances of this table in the output transport stream. A value of \\\"0\\\" writes out the PMT once per segment file.",
-        "M3u8Settings$ProgramNum": "The value of the program number field in the Program Map Table.",
-        "M3u8Settings$TransportStreamId": "The value of the transport stream ID field in the Program Map Table.",
         "MsSmoothGroupSettings$ConnectionRetryInterval": "Number of seconds to wait before retrying connection to the IIS server if the connection is lost. Content will be cached during this time and the cache will be be delivered to the IIS server once the connection is re-established.",
         "MsSmoothGroupSettings$FilecacheDuration": "Size in seconds of file cache for streaming outputs.",
-        "MsSmoothGroupSettings$FragmentLength": "Length of mp4 fragments to generate (in seconds). Fragment length must be compatible with GOP size and framerate.",
         "MsSmoothGroupSettings$NumRetries": "Number of retry attempts.",
         "MsSmoothGroupSettings$RestartDelay": "Number of seconds before initiating a restart due to output failure, due to exhausting the numRetries on one segment, or exceeding filecacheDuration.",
+        "UdpGroupSettings$TimedMetadataId3Period": "Timed Metadata interval in seconds."
+      }
+    },
+    "__integerMin0Max10": {
+      "base": null,
+      "refs": {
+        "BurnInDestinationSettings$OutlineSize": "Specifies font outline size in pixels. This option is not valid for source captions that are either 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$OutlineSize": "Specifies font outline size in pixels. This option is not valid for source captions that are either 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match."
+      }
+    },
+    "__integerMin0Max100": {
+      "base": null,
+      "refs": {
+        "H264Settings$BufFillPct": "Percentage of the buffer that should initially be filled (HRD buffer model).",
+        "VideoDescription$Sharpness": "Changes the width of the anti-alias filter kernel used for scaling. Only applies if scaling is being performed and antiAlias is set to true. 0 is the softest setting, 100 the sharpest, and 50 recommended for most content."
+      }
+    },
+    "__integerMin0Max1000": {
+      "base": null,
+      "refs": {
+        "M2tsSettings$PatInterval": "The number of milliseconds between instances of this table in the output transport stream.  Valid values are 0, 10..1000.",
+        "M2tsSettings$PmtInterval": "The number of milliseconds between instances of this table in the output transport stream. Valid values are 0, 10..1000.",
+        "M3u8Settings$PatInterval": "The number of milliseconds between instances of this table in the output transport stream. A value of \\\"0\\\" writes out the PMT once per segment file.",
+        "M3u8Settings$PmtInterval": "The number of milliseconds between instances of this table in the output transport stream. A value of \\\"0\\\" writes out the PMT once per segment file."
+      }
+    },
+    "__integerMin0Max10000": {
+      "base": null,
+      "refs": {
+        "M2tsSettings$EbpLookaheadMs": "When set, enforces that Encoder Boundary Points do not come within the specified time interval of each other by looking ahead at input video. If another EBP is going to come in within the specified time interval, the current EBP is not emitted, and the segment is \"stretched\" to the next marker.  The lookahead value does not add latency to the system. The Live Event must be configured elsewhere to create sufficient latency to make the lookahead accurate.",
         "MsSmoothGroupSettings$SendDelayMs": "Outputs that are \"output locked\" can use this delay. Assign a delay to the output that is \"secondary\".  Do not assign a delay to the \"primary\" output. The delay means that the primary output will always reach the downstream system before the secondary, which helps ensure that the downstream system always uses the primary output. (If there were no delay, the downstream system might flip-flop between whichever output happens to arrive first.) If the primary fails, the downstream system will switch to the secondary output. When the primary is restarted, the downstream system will switch back to the primary (because once again it is always arriving first)",
-        "RemixSettings$ChannelsIn": "Number of input channels to be used.",
-        "RemixSettings$ChannelsOut": "Number of output channels to be produced.\nValid values: 1, 2, 4, 6, 8",
-        "Scte20SourceSettings$Source608ChannelNumber": "Specifies the 608/708 channel number within the video track from which to extract captions. Unused for passthrough.",
-        "Scte27SourceSettings$Pid": "The pid field is used in conjunction with the caption selector languageCode field as follows:\n  - Specify PID and Language: Extracts captions from that PID; the language is \"informational\".\n  - Specify PID and omit Language: Extracts the specified PID.\n  - Omit PID and specify Language: Extracts the specified language, whichever PID that happens to be.\n  - Omit PID and omit Language: Valid only if source is DVB-Sub that is being passed through; all languages will be passed through.",
-        "Scte35SpliceInsert$AdAvailOffset": "When specified, this offset (in milliseconds) is added to the input Ad Avail PTS time. This only applies to embedded SCTE 104/35 messages and does not apply to OOB messages.",
-        "Scte35TimeSignalApos$AdAvailOffset": "When specified, this offset (in milliseconds) is added to the input Ad Avail PTS time. This only applies to embedded SCTE 104/35 messages and does not apply to OOB messages.",
-        "TimecodeConfig$SyncThreshold": "Threshold in frames beyond which output timecode is resynchronized to the input timecode. Discrepancies below this threshold are permitted to avoid unnecessary discontinuities in the output timecode. No timecode sync when this is not specified.",
-        "UdpGroupSettings$TimedMetadataId3Period": "Timed Metadata interval in seconds.",
-        "UdpOutputSettings$BufferMsec": "UDP output buffering in milliseconds. Larger values increase latency through the transcoder but simultaneously assist the transcoder in maintaining a constant, low-jitter UDP/RTP output while accommodating clock recovery, input switching, input disruptions, picture reordering, etc.",
-        "VideoDescription$Height": "Output video height (in pixels). Leave blank to use source video height. If left blank, width must also be unspecified.",
-        "VideoDescription$Sharpness": "Changes the width of the anti-alias filter kernel used for scaling. Only applies if scaling is being performed and antiAlias is set to true. 0 is the softest setting, 100 the sharpest, and 50 recommended for most content.",
-        "VideoDescription$Width": "Output video width (in pixels). Leave out to use source video width.  If left out, height must also be left out. Display aspect ratio is always preserved by letterboxing or pillarboxing when necessary.",
-        "VideoSelectorPid$Pid": "Selects a specific PID from within a video source.",
+        "UdpOutputSettings$BufferMsec": "UDP output buffering in milliseconds. Larger values increase latency through the transcoder but simultaneously assist the transcoder in maintaining a constant, low-jitter UDP/RTP output while accommodating clock recovery, input switching, input disruptions, picture reordering, etc."
+      }
+    },
+    "__integerMin0Max1000000": {
+      "base": null,
+      "refs": {
+        "InputLossBehavior$BlackFrameMsec": "On input loss, the number of milliseconds to substitute black into the output before switching to the frame specified by inputLossImageType.  A value x, where 0 <= x <= 1,000,000 and a value of 1,000,000 will be interpreted as infinite.",
+        "InputLossBehavior$RepeatFrameMsec": "On input loss, the number of milliseconds to repeat the previous picture before substituting black into the output.  A value x, where 0 <= x <= 1,000,000 and a value of 1,000,000 will be interpreted as infinite."
+      }
+    },
+    "__integerMin0Max128": {
+      "base": null,
+      "refs": {
+        "H264Settings$Softness": "Softness. Selects quantizer matrix, larger values reduce high-frequency content in the encoded image."
+      }
+    },
+    "__integerMin0Max15": {
+      "base": null,
+      "refs": {
+        "HlsAkamaiSettings$RestartDelay": "If a streaming output fails, number of seconds to wait until a restart is initiated. A value of 0 means never restart.",
+        "HlsBasicPutSettings$RestartDelay": "If a streaming output fails, number of seconds to wait until a restart is initiated. A value of 0 means never restart.",
+        "HlsMediaStoreSettings$RestartDelay": "If a streaming output fails, number of seconds to wait until a restart is initiated. A value of 0 means never restart.",
+        "HlsWebdavSettings$RestartDelay": "If a streaming output fails, number of seconds to wait until a restart is initiated. A value of 0 means never restart.",
+        "InputChannelLevel$InputChannel": "The index of the input channel used as a source."
+      }
+    },
+    "__integerMin0Max255": {
+      "base": null,
+      "refs": {
+        "BurnInDestinationSettings$BackgroundOpacity": "Specifies the opacity of the background rectangle. 255 is opaque; 0 is transparent. Leaving this parameter out is equivalent to setting it to 0 (transparent).  All burn-in and DVB-Sub font settings must match.",
+        "BurnInDestinationSettings$FontOpacity": "Specifies the opacity of the burned-in captions. 255 is opaque; 0 is transparent.  All burn-in and DVB-Sub font settings must match.",
+        "BurnInDestinationSettings$ShadowOpacity": "Specifies the opacity of the shadow. 255 is opaque; 0 is transparent. Leaving this parameter out is equivalent to setting it to 0 (transparent).  All burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$BackgroundOpacity": "Specifies the opacity of the background rectangle. 255 is opaque; 0 is transparent. Leaving this parameter blank is equivalent to setting it to 0 (transparent).  All burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$FontOpacity": "Specifies the opacity of the burned-in captions. 255 is opaque; 0 is transparent.  All burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$ShadowOpacity": "Specifies the opacity of the shadow. 255 is opaque; 0 is transparent. Leaving this parameter blank is equivalent to setting it to 0 (transparent).  All burn-in and DVB-Sub font settings must match."
+      }
+    },
+    "__integerMin0Max30": {
+      "base": null,
+      "refs": {
+        "H264Settings$MinIInterval": "Only meaningful if sceneChangeDetect is set to enabled.  Enforces separation between repeated (cadence) I-frames and I-frames inserted by Scene Change Detection. If a scene change I-frame is within I-interval frames of a cadence I-frame, the GOP is shrunk and/or stretched to the scene change I-frame. GOP stretch requires enabling lookahead as well as setting I-interval. The normal cadence resumes for the next GOP. Note: Maximum GOP stretch = GOP size + Min-I-interval - 1"
+      }
+    },
+    "__integerMin0Max3600": {
+      "base": null,
+      "refs": {
+        "HlsGroupSettings$ProgramDateTimePeriod": "Period of insertion of EXT-X-PROGRAM-DATE-TIME entry, in seconds."
+      }
+    },
+    "__integerMin0Max500": {
+      "base": null,
+      "refs": {
+        "M2tsSettings$PcrPeriod": "Maximum time in milliseconds between Program Clock Reference (PCRs) inserted into the transport stream.",
+        "M3u8Settings$PcrPeriod": "Maximum time in milliseconds between Program Clock References (PCRs) inserted into the transport stream."
+      }
+    },
+    "__integerMin0Max600": {
+      "base": null,
+      "refs": {
+        "HlsAkamaiSettings$FilecacheDuration": "Size in seconds of file cache for streaming outputs.",
+        "HlsBasicPutSettings$FilecacheDuration": "Size in seconds of file cache for streaming outputs.",
+        "HlsMediaStoreSettings$FilecacheDuration": "Size in seconds of file cache for streaming outputs.",
+        "HlsWebdavSettings$FilecacheDuration": "Size in seconds of file cache for streaming outputs."
+      }
+    },
+    "__integerMin0Max65535": {
+      "base": null,
+      "refs": {
+        "M2tsSettings$ProgramNum": "The value of the program number field in the Program Map Table.",
+        "M2tsSettings$TransportStreamId": "The value of the transport stream ID field in the Program Map Table.",
+        "M3u8Settings$ProgramNum": "The value of the program number field in the Program Map Table.",
+        "M3u8Settings$TransportStreamId": "The value of the transport stream ID field in the Program Map Table."
+      }
+    },
+    "__integerMin0Max65536": {
+      "base": null,
+      "refs": {
+        "DvbNitSettings$NetworkId": "The numeric value placed in the Network Information Table (NIT).",
         "VideoSelectorProgramId$ProgramId": "Selects a specific program from within a multi-program transport stream. If the program doesn't exist, the first program within the transport stream will be selected by default."
+      }
+    },
+    "__integerMin0Max7": {
+      "base": null,
+      "refs": {
+        "AudioChannelMapping$OutputChannel": "The index of the output channel being produced.",
+        "H264Settings$GopNumBFrames": "Number of B-frames between reference frames."
+      }
+    },
+    "__integerMin0Max8191": {
+      "base": null,
+      "refs": {
+        "AudioPidSelection$Pid": "Selects a specific PID from within a source.",
+        "VideoSelectorPid$Pid": "Selects a specific PID from within a video source."
+      }
+    },
+    "__integerMin1": {
+      "base": null,
+      "refs": {
+        "ArchiveGroupSettings$RolloverInterval": "Number of seconds to write to archive file before closing and starting a new one.",
+        "DvbSubSourceSettings$Pid": "When using DVB-Sub with Burn-In or SMPTE-TT, use this PID for the source content. Unused for DVB-Sub passthrough. All DVB-Sub content is passed through, regardless of selectors.",
+        "H264Settings$ParDenominator": "Pixel Aspect Ratio denominator.",
+        "HlsGroupSettings$KeepSegments": "If mode is \"live\", the number of TS segments to retain in the destination directory. If mode is \"vod\", this parameter has no effect.",
+        "HlsGroupSettings$SegmentLength": "Length of MPEG-2 Transport Stream segments to create (in seconds). Note that segments will end on the next keyframe after this number of seconds, so actual segment length may be longer.",
+        "HlsGroupSettings$SegmentsPerSubdirectory": "Number of segments to write to a subdirectory before starting a new one. directoryStructure must be subdirectoryPerStream for this setting to have an effect.",
+        "MsSmoothGroupSettings$FragmentLength": "Length of mp4 fragments to generate (in seconds). Fragment length must be compatible with GOP size and framerate.",
+        "Scte27SourceSettings$Pid": "The pid field is used in conjunction with the caption selector languageCode field as follows:\n  - Specify PID and Language: Extracts captions from that PID; the language is \"informational\".\n  - Specify PID and omit Language: Extracts the specified PID.\n  - Omit PID and specify Language: Extracts the specified language, whichever PID that happens to be.\n  - Omit PID and omit Language: Valid only if source is DVB-Sub that is being passed through; all languages will be passed through."
+      }
+    },
+    "__integerMin1000": {
+      "base": null,
+      "refs": {
+        "H264Settings$Bitrate": "Average bitrate in bits/second. Required for VBR, CBR, and ABR. For MS Smooth outputs, bitrates must be unique when rounded down to the nearest multiple of 1000.",
+        "H264Settings$MaxBitrate": "Maximum bitrate in bits/second (for VBR mode only)."
+      }
+    },
+    "__integerMin1000Max30000": {
+      "base": null,
+      "refs": {
+        "DvbTdtSettings$RepInterval": "The number of milliseconds between instances of this table in the output transport stream."
+      }
+    },
+    "__integerMin1Max1000000": {
+      "base": null,
+      "refs": {
+        "TimecodeConfig$SyncThreshold": "Threshold in frames beyond which output timecode is resynchronized to the input timecode. Discrepancies below this threshold are permitted to avoid unnecessary discontinuities in the output timecode. No timecode sync when this is not specified."
+      }
+    },
+    "__integerMin1Max16": {
+      "base": null,
+      "refs": {
+        "RemixSettings$ChannelsIn": "Number of input channels to be used."
+      }
+    },
+    "__integerMin1Max20": {
+      "base": null,
+      "refs": {
+        "FecOutputSettings$RowLength": "Parameter L from SMPTE 2022-1. The width of the FEC protection matrix.  Must be between 1 and 20, inclusive. If only Column FEC is used, then larger values increase robustness.  If Row FEC is used, then this is the number of transport stream packets per row error correction packet, and the value must be between 4 and 20, inclusive, if includeFec is columnAndRow. If includeFec is column, this value must be 1 to 20, inclusive."
+      }
+    },
+    "__integerMin1Max31": {
+      "base": null,
+      "refs": {
+        "Ac3Settings$Dialnorm": "Sets the dialnorm for the output. If excluded and input audio is Dolby Digital, dialnorm will be passed through.",
+        "Eac3Settings$Dialnorm": "Sets the dialnorm for the output. If blank and input audio is Dolby Digital Plus, dialnorm will be passed through."
+      }
+    },
+    "__integerMin1Max32": {
+      "base": null,
+      "refs": {
+        "H264Settings$Slices": "Number of slices per picture. Must be less than or equal to the number of macroblock rows for progressive pictures, and less than or equal to half the number of macroblock rows for interlaced pictures.\nThis field is optional; when no value is specified the encoder will choose the number of slices based on encode resolution."
+      }
+    },
+    "__integerMin1Max4": {
+      "base": null,
+      "refs": {
+        "CaptionLanguageMapping$CaptionChannel": "The closed caption channel being described by this CaptionLanguageMapping.  Each channel mapping must have a unique channel number (maximum of 4)",
+        "EmbeddedSourceSettings$Source608ChannelNumber": "Specifies the 608/708 channel number within the video track from which to extract captions. Unused for passthrough.",
+        "Scte20SourceSettings$Source608ChannelNumber": "Specifies the 608/708 channel number within the video track from which to extract captions. Unused for passthrough."
+      }
+    },
+    "__integerMin1Max5": {
+      "base": null,
+      "refs": {
+        "EmbeddedSourceSettings$Source608TrackNumber": "This field is unused and deprecated.",
+        "InputSettings$FilterStrength": "Adjusts the magnitude of filtering from 1 (minimal) to 5 (strongest)."
+      }
+    },
+    "__integerMin1Max6": {
+      "base": null,
+      "refs": {
+        "H264Settings$NumRefFrames": "Number of reference frames to use. The encoder may use more than requested if using B-frames and/or interlaced encoding."
+      }
+    },
+    "__integerMin1Max8": {
+      "base": null,
+      "refs": {
+        "RemixSettings$ChannelsOut": "Number of output channels to be produced.\nValid values: 1, 2, 4, 6, 8"
+      }
+    },
+    "__integerMin25Max10000": {
+      "base": null,
+      "refs": {
+        "DvbNitSettings$RepInterval": "The number of milliseconds between instances of this table in the output transport stream."
+      }
+    },
+    "__integerMin25Max2000": {
+      "base": null,
+      "refs": {
+        "DvbSdtSettings$RepInterval": "The number of milliseconds between instances of this table in the output transport stream."
+      }
+    },
+    "__integerMin3": {
+      "base": null,
+      "refs": {
+        "HlsGroupSettings$IndexNSegments": "If mode is \"live\", the number of segments to retain in the manifest (.m3u8) file. This number must be less than or equal to keepSegments. If mode is \"vod\", this parameter has no effect."
+      }
+    },
+    "__integerMin4Max20": {
+      "base": null,
+      "refs": {
+        "FecOutputSettings$ColumnDepth": "Parameter D from SMPTE 2022-1. The height of the FEC protection matrix.  The number of transport stream packets per column error correction packet. Must be between 4 and 20, inclusive."
+      }
+    },
+    "__integerMin96Max600": {
+      "base": null,
+      "refs": {
+        "BurnInDestinationSettings$FontResolution": "Font resolution in DPI (dots per inch); default is 96 dpi.  All burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$FontResolution": "Font resolution in DPI (dots per inch); default is 96 dpi.  All burn-in and DVB-Sub font settings must match."
+      }
+    },
+    "__integerMinNegative1000Max1000": {
+      "base": null,
+      "refs": {
+        "Scte35SpliceInsert$AdAvailOffset": "When specified, this offset (in milliseconds) is added to the input Ad Avail PTS time. This only applies to embedded SCTE 104/35 messages and does not apply to OOB messages.",
+        "Scte35TimeSignalApos$AdAvailOffset": "When specified, this offset (in milliseconds) is added to the input Ad Avail PTS time. This only applies to embedded SCTE 104/35 messages and does not apply to OOB messages."
+      }
+    },
+    "__integerMinNegative60Max6": {
+      "base": null,
+      "refs": {
+        "InputChannelLevel$Gain": "Remixing value. Units are in dB and acceptable values are within the range from -60 (mute) and 6 dB."
+      }
+    },
+    "__integerMinNegative60Max60": {
+      "base": null,
+      "refs": {
+        "GlobalConfiguration$InitialAudioGain": "Value to set the initial audio gain for the Live Event."
+      }
+    },
+    "__listOfAudioChannelMapping": {
+      "base": null,
+      "refs": {
+        "RemixSettings$ChannelMappings": "Mapping of input channels to output channels, with appropriate gain adjustments."
+      }
+    },
+    "__listOfAudioDescription": {
+      "base": null,
+      "refs": {
+        "EncoderSettings$AudioDescriptions": null
+      }
+    },
+    "__listOfAudioSelector": {
+      "base": null,
+      "refs": {
+        "InputSettings$AudioSelectors": "Used to select the audio stream to decode for inputs that have multiple available."
+      }
+    },
+    "__listOfCaptionDescription": {
+      "base": null,
+      "refs": {
+        "EncoderSettings$CaptionDescriptions": "Settings for caption decriptions"
+      }
+    },
+    "__listOfCaptionLanguageMapping": {
+      "base": null,
+      "refs": {
+        "HlsGroupSettings$CaptionLanguageMappings": "Mapping of up to 4 caption channels to caption languages.  Is only meaningful if captionLanguageSetting is set to \"insert\"."
+      }
+    },
+    "__listOfCaptionSelector": {
+      "base": null,
+      "refs": {
+        "InputSettings$CaptionSelectors": "Used to select the caption input to use for inputs that have multiple available."
+      }
+    },
+    "__listOfChannelEgressEndpoint": {
+      "base": null,
+      "refs": {
+        "Channel$EgressEndpoints": "The endpoints where outgoing connections initiate from",
+        "ChannelSummary$EgressEndpoints": "The endpoints where outgoing connections initiate from"
+      }
+    },
+    "__listOfChannelSummary": {
+      "base": null,
+      "refs": {
+        "ListChannelsResultModel$Channels": null
+      }
+    },
+    "__listOfHlsAdMarkers": {
+      "base": null,
+      "refs": {
+        "HlsGroupSettings$AdMarkers": "Choose one or more ad marker types to pass SCTE35 signals through to this group of Apple HLS outputs."
+      }
+    },
+    "__listOfInput": {
+      "base": null,
+      "refs": {
+        "ListInputsResultModel$Inputs": null
+      }
+    },
+    "__listOfInputAttachment": {
+      "base": null,
+      "refs": {
+        "Channel$InputAttachments": "List of input attachments for channel.",
+        "ChannelSummary$InputAttachments": "List of input attachments for channel.",
+        "CreateChannel$InputAttachments": "List of input attachments for channel."
+      }
+    },
+    "__listOfInputChannelLevel": {
+      "base": null,
+      "refs": {
+        "AudioChannelMapping$InputChannelLevels": "Indices and gain values for each input channel that should be remixed into this output channel."
+      }
+    },
+    "__listOfInputDestination": {
+      "base": null,
+      "refs": {
+        "Input$Destinations": "A list of the destinations of the input (PUSH-type)."
+      }
+    },
+    "__listOfInputDestinationRequest": {
+      "base": null,
+      "refs": {
+        "CreateInput$Destinations": "Destination settings for PUSH type inputs."
+      }
+    },
+    "__listOfInputSecurityGroup": {
+      "base": null,
+      "refs": {
+        "ListInputSecurityGroupsResultModel$InputSecurityGroups": "List of input security groups"
+      }
+    },
+    "__listOfInputSource": {
+      "base": null,
+      "refs": {
+        "Input$Sources": "A list of the sources of the input (PULL-type)."
+      }
+    },
+    "__listOfInputSourceRequest": {
+      "base": null,
+      "refs": {
+        "CreateInput$Sources": "The source URLs for a PULL-type input. Every PULL type input needs\nexactly two source URLs for redundancy.\nOnly specify sources for PULL type Inputs. Leave Destinations empty.\n"
+      }
+    },
+    "__listOfInputWhitelistRule": {
+      "base": null,
+      "refs": {
+        "InputSecurityGroup$WhitelistRules": "Whitelist rules and their sync status"
+      }
+    },
+    "__listOfInputWhitelistRuleCidr": {
+      "base": null,
+      "refs": {
+        "InputSecurityGroupWhitelistRequest$WhitelistRules": "List of IPv4 CIDR addresses to whitelist"
+      }
+    },
+    "__listOfOutput": {
+      "base": null,
+      "refs": {
+        "OutputGroup$Outputs": null
+      }
+    },
+    "__listOfOutputDestination": {
+      "base": null,
+      "refs": {
+        "Channel$Destinations": "A list of destinations of the channel. For UDP outputs, there is one\ndestination per output. For other types (HLS, for example), there is\none destination per packager.\n",
+        "ChannelSummary$Destinations": "A list of destinations of the channel. For UDP outputs, there is one\ndestination per output. For other types (HLS, for example), there is\none destination per packager.\n",
+        "CreateChannel$Destinations": null,
+        "UpdateChannel$Destinations": "A list of output destinations for this channel."
+      }
+    },
+    "__listOfOutputDestinationSettings": {
+      "base": null,
+      "refs": {
+        "OutputDestination$Settings": "Destination settings for output; one for each redundant encoder."
+      }
+    },
+    "__listOfOutputGroup": {
+      "base": null,
+      "refs": {
+        "EncoderSettings$OutputGroups": null
+      }
+    },
+    "__listOfValidationError": {
+      "base": null,
+      "refs": {
+        "ChannelConfigurationValidationError$ValidationErrors": "A collection of validation error responses from attempting to create a channel with a bouquet of settings."
+      }
+    },
+    "__listOfVideoDescription": {
+      "base": null,
+      "refs": {
+        "EncoderSettings$VideoDescriptions": null
+      }
+    },
+    "__listOf__string": {
+      "base": null,
+      "refs": {
+        "CreateInput$InputSecurityGroups": "A list of security groups referenced by IDs to attach to the input.",
+        "Input$AttachedChannels": "A list of channel IDs that that input is attached to (currently an input can only be attached to one channel).",
+        "Input$SecurityGroups": "A list of IDs for all the security groups attached to the input.",
+        "Output$AudioDescriptionNames": "The names of the AudioDescriptions used as audio sources for this output.",
+        "Output$CaptionDescriptionNames": "The names of the CaptionDescriptions used as caption sources for this output."
       }
     },
     "__string": {
@@ -1986,20 +2237,17 @@
         "ArchiveOutputSettings$Extension": "Output file extension. If excluded, this will be auto-selected from the container type.",
         "ArchiveOutputSettings$NameModifier": "String concatenated to the end of the destination filename.  Required for multiple outputs of the same type.",
         "AudioDescription$AudioSelectorName": "The name of the AudioSelector used as the source for this AudioDescription.",
-        "AudioDescription$LanguageCode": "Indicates the language of the audio output track. Only used if languageControlMode is useConfigured, or there is no ISO 639 language code specified in the input.",
         "AudioDescription$Name": "The name of this AudioDescription. Outputs will use this name to uniquely identify this AudioDescription.  Description names should be unique within this Live Event.",
         "AudioDescription$StreamName": "Used for MS Smooth and Apple HLS outputs. Indicates the name displayed by the player (eg. English, or Director Commentary).",
         "AudioLanguageSelection$LanguageCode": "Selects a specific three-letter language code from within an audio source.",
         "AudioOnlyHlsSettings$AudioGroupId": "Specifies the group to which the audio Rendition belongs.",
         "AudioSelector$Name": "The name of this AudioSelector. AudioDescriptions will use this name to uniquely identify this Selector.  Selector names should be unique per input.",
-        "BlackoutSlate$NetworkId": "Provides Network ID that matches EIDR ID format (e.g., \"10.XXXX/XXXX-XXXX-XXXX-XXXX-XXXX-C\").",
+        "BadGatewayException$Message": null,
         "BurnInDestinationSettings$FontSize": "When set to 'auto' fontSize will scale depending on the size of the output.  Giving a positive integer will specify the exact font size in points.  All burn-in and DVB-Sub font settings must match.",
         "CaptionDescription$CaptionSelectorName": "Specifies which input caption selector to use as a caption source when generating output captions. This field should match a captionSelector name.",
         "CaptionDescription$LanguageCode": "ISO 639-2 three-digit code: http://www.loc.gov/standards/iso639-2/",
         "CaptionDescription$LanguageDescription": "Human readable information to indicate captions available for players (eg. English, or Spanish).",
         "CaptionDescription$Name": "Name of the caption description.  Used to associate a caption description with an output.  Names must be unique within an event.",
-        "CaptionLanguageMapping$LanguageCode": "Three character ISO 639-2 language code (see http://www.loc.gov/standards/iso639-2)",
-        "CaptionLanguageMapping$LanguageDescription": "Textual description of language",
         "CaptionSelector$LanguageCode": "When specified this field indicates the three letter language code of the caption track to extract from the source.",
         "CaptionSelector$Name": "Name identifier for a caption selector.  This name is used to associate this caption selector with one or more caption descriptions.  Names must be unique within an event.",
         "Channel$Arn": "The unique arn of the channel.",
@@ -2014,43 +2262,38 @@
         "ChannelSummary$RoleArn": "The Amazon Resource Name (ARN) of the role assumed when running the Channel.",
         "CreateChannel$Name": "Name of channel.",
         "CreateChannel$RequestId": "Unique request ID to be specified. This is needed to prevent retries from\ncreating multiple resources.\n",
-        "CreateChannel$Reserved": "Reserved for future use.",
+        "CreateChannel$Reserved": "Deprecated field that's only usable by whitelisted customers.",
         "CreateChannel$RoleArn": "An optional Amazon Resource Name (ARN) of the role to assume when running the Channel.",
         "CreateInput$Name": "Name of the input.",
-        "CreateInput$RequestId": "Unique identifier of the request to ensure the request is handled\nexactly once in case of retries\n",
-        "DvbNitSettings$NetworkName": "The network name text placed in the networkNameDescriptor inside the Network Information Table. Maximum length is 256 characters.",
-        "DvbSdtSettings$ServiceName": "The service name placed in the serviceDescriptor in the Service Description Table. Maximum length is 256 characters.",
-        "DvbSdtSettings$ServiceProviderName": "The service provider name placed in the serviceDescriptor in the Service Description Table. Maximum length is 256 characters.",
+        "CreateInput$RequestId": "Unique identifier of the request to ensure the request is handled\nexactly once in case of retries.\n",
         "DvbSubDestinationSettings$FontSize": "When set to auto fontSize will scale depending on the size of the output.  Giving a positive integer will specify the exact font size in points.  All burn-in and DVB-Sub font settings must match.",
+        "GatewayTimeoutException$Message": null,
         "HlsAkamaiSettings$Salt": "Salt for authenticated Akamai.",
         "HlsAkamaiSettings$Token": "Token parameter for authenticated akamai. If not specified, _gda_ is used.",
         "HlsGroupSettings$BaseUrlContent": "A partial URI prefix that will be prepended to each output in the media .m3u8 file. Can be used if base manifest is delivered from a different URL than the main .m3u8 file.",
         "HlsGroupSettings$BaseUrlManifest": "A partial URI prefix that will be prepended to each output in the media .m3u8 file. Can be used if base manifest is delivered from a different URL than the main .m3u8 file.",
-        "HlsGroupSettings$ConstantIv": "For use with encryptionType. This is a 128-bit, 16-byte hex value represented by a 32-character text string. If ivSource is set to \"explicit\" then this parameter is required and is used as the IV for encryption.",
         "HlsGroupSettings$KeyFormat": "The value specifies how the key is represented in the resource identified by the URI.  If parameter is absent, an implicit value of \"identity\" is used.  A reverse DNS string can also be given.",
         "HlsGroupSettings$KeyFormatVersions": "Either a single positive integer version value or a slash delimited list of version values (1/2/3).",
-        "HlsOutputSettings$NameModifier": "String concatenated to the end of the destination filename. Accepts \\\"Format Identifiers\\\":#formatIdentifierParameters.",
         "HlsOutputSettings$SegmentModifier": "String concatenated to end of segment filenames.",
-        "Input$Arn": "Unique ARN of input (generated, immutable)",
-        "Input$Id": "generated ID of input (unique for user account, immutable)",
-        "Input$Name": "user-assigned name (mutable)",
+        "Input$Arn": "The Unique ARN of the input (generated, immutable).",
+        "Input$Id": "The generated ID of the input (unique for user account, immutable).",
+        "Input$Name": "The user-assigned name (This is a mutable value).",
         "InputAttachment$InputId": "The ID of the input",
-        "InputDestination$Ip": "system-generated static IP address of endpoint.\nRemains fixed for the lifetime of the input\n",
-        "InputDestination$Port": "port for input",
+        "InputDestination$Ip": "The system-generated static IP address of endpoint.\nIt remains fixed for the lifetime of the input.\n",
+        "InputDestination$Port": "The port number for the input.",
         "InputDestination$Url": "This represents the endpoint that the customer stream will be\npushed to.\n",
         "InputDestinationRequest$StreamName": "A unique name for the location the RTMP stream is being pushed\nto.\n",
         "InputLocation$PasswordParam": "key used to extract the password from EC2 Parameter store",
         "InputLocation$Uri": "Uniform Resource Identifier - This should be a path to a file accessible to the Live system (eg. a http:// URI) depending on the output type. For example, a rtmpEndpoint should have a uri simliar to: \"rtmp://fmsserver/live\".",
         "InputLocation$Username": "Username if credentials are required to access a file or publishing point.  This can be either a plaintext username, or a reference to an AWS parameter store name from which the username can be retrieved.  AWS Parameter store format: \"ssm://<parameter name>\"",
-        "InputLossBehavior$InputLossImageColor": "When input loss image type is \"color\" this field specifies the color to use. Value: 6 hex characters representing the values of RGB.",
         "InputSecurityGroup$Arn": "Unique ARN of Input Security Group",
         "InputSecurityGroup$Id": "The Id of the Input Security Group",
-        "InputSource$PasswordParam": "key used to extract the password from EC2 Parameter store",
+        "InputSource$PasswordParam": "The key used to extract the password from EC2 Parameter store.",
         "InputSource$Url": "This represents the customer's source URL where stream is\npulled from.\n",
-        "InputSource$Username": "username for input source",
-        "InputSourceRequest$PasswordParam": "key used to extract the password from EC2 Parameter store",
+        "InputSource$Username": "The username for the input source.",
+        "InputSourceRequest$PasswordParam": "The key used to extract the password from EC2 Parameter store.",
         "InputSourceRequest$Url": "This represents the customer's source URL where stream is\npulled from.\n",
-        "InputSourceRequest$Username": "username for input source",
+        "InputSourceRequest$Username": "The username for the input source.",
         "InputWhitelistRule$Cidr": "The IPv4 CIDR that's whitelisted.",
         "InputWhitelistRuleCidr$Cidr": "The IPv4 CIDR to whitelist",
         "InternalServiceError$Message": null,
@@ -2059,12 +2302,11 @@
         "ListChannelsResultModel$NextToken": null,
         "ListInputSecurityGroupsResultModel$NextToken": null,
         "ListInputsResultModel$NextToken": null,
-        "ListOf__string$member": null,
         "M2tsSettings$AribCaptionsPid": "Packet Identifier (PID) for ARIB Captions in the transport stream. Can be entered as a decimal or hexadecimal value.  Valid values are 32 (or 0x20)..8182 (or 0x1ff6).",
         "M2tsSettings$AudioPids": "Packet Identifier (PID) of the elementary audio stream(s) in the transport stream. Multiple values are accepted, and can be entered in ranges and/or by comma separation. Can be entered as decimal or hexadecimal values. Each PID specified must be in the range of 32 (or 0x20)..8182 (or 0x1ff6).",
         "M2tsSettings$DvbSubPids": "Packet Identifier (PID) for input source DVB Subtitle data to this output. Multiple values are accepted, and can be entered in ranges and/or by comma separation. Can be entered as decimal or hexadecimal values.  Each PID specified must be in the range of 32 (or 0x20)..8182 (or 0x1ff6).",
         "M2tsSettings$DvbTeletextPid": "Packet Identifier (PID) for input source DVB Teletext data to this output. Can be entered as a decimal or hexadecimal value.  Valid values are 32 (or 0x20)..8182 (or 0x1ff6).",
-        "M2tsSettings$EcmPid": "Packet Identifier (PID) for ECM in the transport stream. Only enabled when Simulcrypt is enabled. Can be entered as a decimal or hexadecimal value.  Valid values are 32 (or 0x20)..8182 (or 0x1ff6).",
+        "M2tsSettings$EcmPid": "This field is unused and deprecated.",
         "M2tsSettings$EtvPlatformPid": "Packet Identifier (PID) for input source ETV Platform data to this output. Can be entered as a decimal or hexadecimal value.  Valid values are 32 (or 0x20)..8182 (or 0x1ff6).",
         "M2tsSettings$EtvSignalPid": "Packet Identifier (PID) for input source ETV Signal data to this output. Can be entered as a decimal or hexadecimal value.  Valid values are 32 (or 0x20)..8182 (or 0x1ff6).",
         "M2tsSettings$KlvDataPids": "Packet Identifier (PID) for input source KLV data to this output. Multiple values are accepted, and can be entered in ranges and/or by comma separation. Can be entered as decimal or hexadecimal values.  Each PID specified must be in the range of 32 (or 0x20)..8182 (or 0x1ff6).",
@@ -2075,7 +2317,7 @@
         "M2tsSettings$TimedMetadataPid": "Packet Identifier (PID) of the timed metadata stream in the transport stream. Can be entered as a decimal or hexadecimal value.  Valid values are 32 (or 0x20)..8182 (or 0x1ff6).",
         "M2tsSettings$VideoPid": "Packet Identifier (PID) of the elementary video stream in the transport stream. Can be entered as a decimal or hexadecimal value.  Valid values are 32 (or 0x20)..8182 (or 0x1ff6).",
         "M3u8Settings$AudioPids": "Packet Identifier (PID) of the elementary audio stream(s) in the transport stream. Multiple values are accepted, and can be entered in ranges and/or by comma separation. Can be entered as decimal or hexadecimal values.",
-        "M3u8Settings$EcmPid": "ThePlatform-protected transport streams using 'microsoft' as Target Client include an ECM stream. This ECM stream contains the size, IV, and PTS of every sample in the transport stream.  This stream PID is specified here. This PID has no effect on non ThePlatform-protected streams.",
+        "M3u8Settings$EcmPid": "This parameter is unused and deprecated.",
         "M3u8Settings$PcrPid": "Packet Identifier (PID) of the Program Clock Reference (PCR) in the transport stream. When no value is given, the encoder will assign the same value as the Video PID. Can be entered as a decimal or hexadecimal value.",
         "M3u8Settings$PmtPid": "Packet Identifier (PID) for the Program Map Table (PMT) in the transport stream. Can be entered as a decimal or hexadecimal value.",
         "M3u8Settings$Scte35Pid": "Packet Identifier (PID) of the SCTE-35 stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
@@ -2084,22 +2326,75 @@
         "MsSmoothGroupSettings$EventId": "MS Smooth event ID to be sent to the IIS server.\n\nShould only be specified if eventIdMode is set to useConfigured.",
         "MsSmoothGroupSettings$TimestampOffset": "Timestamp offset for the event.  Only used if timestampOffsetMode is set to useConfiguredOffset.",
         "MsSmoothOutputSettings$NameModifier": "String concatenated to the end of the destination filename.  Required for multiple outputs of the same type.",
-        "Output$OutputName": "The name used to identify an output.",
         "Output$VideoDescriptionName": "The name of the VideoDescription used as the source for this output.",
         "OutputDestination$Id": "User-specified id. This is used in an output group or an output.",
         "OutputDestinationSettings$PasswordParam": "key used to extract the password from EC2 Parameter store",
         "OutputDestinationSettings$Url": "A URL specifying a destination",
         "OutputDestinationSettings$Username": "username for destination",
-        "OutputGroup$Name": "Custom output group name optionally defined by the user.  Only letters, numbers, and the underscore character allowed; only 32 characters allowed.",
         "OutputLocationRef$DestinationRefId": null,
         "ResourceConflict$Message": null,
         "ResourceNotFound$Message": null,
         "StandardHlsSettings$AudioRenditionSets": "List all the audio groups that are used with the video output stream. Input all the audio GROUP-IDs that are associated to the video, separate by ','.",
-        "StaticKeySettings$StaticKeyValue": "Static key value as a 32 character hexadecimal string.",
         "TeletextSourceSettings$PageNumber": "Specifies the teletext page number within the data stream from which to extract captions. Range of 0x100 (256) to 0x8FF (2303). Unused for passthrough. Should be specified as a hexadecimal string with no \"0x\" prefix.",
+        "UpdateChannel$Name": "The name of the channel.",
+        "UpdateChannel$RoleArn": "An optional Amazon Resource Name (ARN) of the role to assume when running the Channel. If you do not specify this on an update call but the role was previously set that role will be removed.",
         "ValidationError$ElementPath": null,
         "ValidationError$ErrorMessage": null,
-        "VideoDescription$Name": "The name of this VideoDescription. Outputs will use this name to uniquely identify this Description.  Description names should be unique within this Live Event."
+        "VideoDescription$Name": "The name of this VideoDescription. Outputs will use this name to uniquely identify this Description.  Description names should be unique within this Live Event.",
+        "__listOf__string$member": null
+      }
+    },
+    "__stringMax32": {
+      "base": null,
+      "refs": {
+        "OutputGroup$Name": "Custom output group name optionally defined by the user.  Only letters, numbers, and the underscore character allowed; only 32 characters allowed."
+      }
+    },
+    "__stringMin1": {
+      "base": null,
+      "refs": {
+        "CaptionLanguageMapping$LanguageDescription": "Textual description of language",
+        "HlsOutputSettings$NameModifier": "String concatenated to the end of the destination filename. Accepts \\\"Format Identifiers\\\":#formatIdentifierParameters."
+      }
+    },
+    "__stringMin1Max255": {
+      "base": null,
+      "refs": {
+        "Output$OutputName": "The name used to identify an output."
+      }
+    },
+    "__stringMin1Max256": {
+      "base": null,
+      "refs": {
+        "DvbNitSettings$NetworkName": "The network name text placed in the networkNameDescriptor inside the Network Information Table. Maximum length is 256 characters.",
+        "DvbSdtSettings$ServiceName": "The service name placed in the serviceDescriptor in the Service Description Table. Maximum length is 256 characters.",
+        "DvbSdtSettings$ServiceProviderName": "The service provider name placed in the serviceDescriptor in the Service Description Table. Maximum length is 256 characters."
+      }
+    },
+    "__stringMin32Max32": {
+      "base": null,
+      "refs": {
+        "HlsGroupSettings$ConstantIv": "For use with encryptionType. This is a 128-bit, 16-byte hex value represented by a 32-character text string. If ivSource is set to \"explicit\" then this parameter is required and is used as the IV for encryption.",
+        "StaticKeySettings$StaticKeyValue": "Static key value as a 32 character hexadecimal string."
+      }
+    },
+    "__stringMin34Max34": {
+      "base": null,
+      "refs": {
+        "BlackoutSlate$NetworkId": "Provides Network ID that matches EIDR ID format (e.g., \"10.XXXX/XXXX-XXXX-XXXX-XXXX-XXXX-C\")."
+      }
+    },
+    "__stringMin3Max3": {
+      "base": null,
+      "refs": {
+        "AudioDescription$LanguageCode": "Indicates the language of the audio output track. Only used if languageControlMode is useConfigured, or there is no ISO 639 language code specified in the input.",
+        "CaptionLanguageMapping$LanguageCode": "Three character ISO 639-2 language code (see http://www.loc.gov/standards/iso639-2)"
+      }
+    },
+    "__stringMin6Max6": {
+      "base": null,
+      "refs": {
+        "InputLossBehavior$InputLossImageColor": "When input loss image type is \"color\" this field specifies the color to use. Value: 6 hex characters representing the values of RGB."
       }
     }
   }

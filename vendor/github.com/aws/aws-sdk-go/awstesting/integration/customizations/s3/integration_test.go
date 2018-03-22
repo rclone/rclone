@@ -1,64 +1,19 @@
 // +build integration
 
-// Package s3_test runs integration tests for S3
-package s3_test
+// Package s3 runs integration tests for S3
+package s3
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/awstesting/integration"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
-
-var bucketName *string
-var svc *s3.S3
-
-func TestMain(m *testing.M) {
-	setup()
-	defer teardown() // only called if we panic
-	result := m.Run()
-	teardown()
-	os.Exit(result)
-}
-
-// Create a bucket for testing
-func setup() {
-	svc = s3.New(integration.Session)
-	bucketName = aws.String(
-		fmt.Sprintf("aws-sdk-go-integration-%d-%s", time.Now().Unix(), integration.UniqueID()))
-
-	for i := 0; i < 10; i++ {
-		_, err := svc.CreateBucket(&s3.CreateBucketInput{Bucket: bucketName})
-		if err == nil {
-			break
-		}
-	}
-
-	for {
-		_, err := svc.HeadBucket(&s3.HeadBucketInput{Bucket: bucketName})
-		if err == nil {
-			break
-		}
-		time.Sleep(1 * time.Second)
-	}
-}
-
-// Delete the bucket
-func teardown() {
-	resp, _ := svc.ListObjects(&s3.ListObjectsInput{Bucket: bucketName})
-	for _, o := range resp.Contents {
-		svc.DeleteObject(&s3.DeleteObjectInput{Bucket: bucketName, Key: o.Key})
-	}
-	svc.DeleteBucket(&s3.DeleteBucketInput{Bucket: bucketName})
-}
 
 func TestWriteToObject(t *testing.T) {
 	_, err := svc.PutObject(&s3.PutObjectInput{
@@ -109,7 +64,7 @@ func TestPresignedGetPut(t *testing.T) {
 	var putresp *http.Response
 	putresp, err = http.DefaultClient.Do(puthttpreq)
 	if err != nil {
-		t.Errorf("expect no error, got %v", err)
+		t.Errorf("expect put with presign url no error, got %v", err)
 	}
 	if e, a := 200, putresp.StatusCode; e != a {
 		t.Errorf("expect %v, got %v", e, a)

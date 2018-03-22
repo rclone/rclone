@@ -1322,7 +1322,6 @@ func (c *ResourceGroups) UpdateGroupQueryWithContext(ctx aws.Context, input *Upd
 	return out, req.Send()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/CreateGroupInput
 type CreateGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1410,7 +1409,6 @@ func (s *CreateGroupInput) SetTags(v map[string]*string) *CreateGroupInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/CreateGroupOutput
 type CreateGroupOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1452,7 +1450,6 @@ func (s *CreateGroupOutput) SetTags(v map[string]*string) *CreateGroupOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/DeleteGroupInput
 type DeleteGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1494,7 +1491,6 @@ func (s *DeleteGroupInput) SetGroupName(v string) *DeleteGroupInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/DeleteGroupOutput
 type DeleteGroupOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1518,7 +1514,6 @@ func (s *DeleteGroupOutput) SetGroup(v *Group) *DeleteGroupOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/GetGroupInput
 type GetGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1560,7 +1555,6 @@ func (s *GetGroupInput) SetGroupName(v string) *GetGroupInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/GetGroupOutput
 type GetGroupOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1584,7 +1578,6 @@ func (s *GetGroupOutput) SetGroup(v *Group) *GetGroupOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/GetGroupQueryInput
 type GetGroupQueryInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1626,7 +1619,6 @@ func (s *GetGroupQueryInput) SetGroupName(v string) *GetGroupQueryInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/GetGroupQueryOutput
 type GetGroupQueryOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1650,7 +1642,6 @@ func (s *GetGroupQueryOutput) SetGroupQuery(v *GroupQuery) *GetGroupQueryOutput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/GetTagsInput
 type GetTagsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1690,7 +1681,6 @@ func (s *GetTagsInput) SetArn(v string) *GetTagsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/GetTagsOutput
 type GetTagsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1724,7 +1714,6 @@ func (s *GetTagsOutput) SetTags(v map[string]*string) *GetTagsOutput {
 }
 
 // A resource group.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/Group
 type Group struct {
 	_ struct{} `type:"structure"`
 
@@ -1772,7 +1761,6 @@ func (s *Group) SetName(v string) *Group {
 
 // The underlying resource query of a resource group. Resources that match query
 // results are part of the group.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/GroupQuery
 type GroupQuery struct {
 	_ struct{} `type:"structure"`
 
@@ -1811,7 +1799,6 @@ func (s *GroupQuery) SetResourceQuery(v *ResourceQuery) *GroupQuery {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/ListGroupResourcesInput
 type ListGroupResourcesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1877,7 +1864,6 @@ func (s *ListGroupResourcesInput) SetNextToken(v string) *ListGroupResourcesInpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/ListGroupResourcesOutput
 type ListGroupResourcesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1912,7 +1898,6 @@ func (s *ListGroupResourcesOutput) SetResourceIdentifiers(v []*ResourceIdentifie
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/ListGroupsInput
 type ListGroupsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1961,7 +1946,6 @@ func (s *ListGroupsInput) SetNextToken(v string) *ListGroupsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/ListGroupsOutput
 type ListGroupsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1996,7 +1980,6 @@ func (s *ListGroupsOutput) SetNextToken(v string) *ListGroupsOutput {
 }
 
 // The ARN of a resource, and its resource type.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/ResourceIdentifier
 type ResourceIdentifier struct {
 	_ struct{} `type:"structure"`
 
@@ -2030,7 +2013,6 @@ func (s *ResourceIdentifier) SetResourceType(v string) *ResourceIdentifier {
 }
 
 // The query that is used to define a resource group or a search for resources.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/ResourceQuery
 type ResourceQuery struct {
 	_ struct{} `type:"structure"`
 
@@ -2090,7 +2072,6 @@ func (s *ResourceQuery) SetType(v string) *ResourceQuery {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/SearchResourcesInput
 type SearchResourcesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2159,7 +2140,6 @@ func (s *SearchResourcesInput) SetResourceQuery(v *ResourceQuery) *SearchResourc
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/SearchResourcesOutput
 type SearchResourcesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2194,7 +2174,6 @@ func (s *SearchResourcesOutput) SetResourceIdentifiers(v []*ResourceIdentifier) 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/TagInput
 type TagInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2249,7 +2228,6 @@ func (s *TagInput) SetTags(v map[string]*string) *TagInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/TagOutput
 type TagOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2282,7 +2260,6 @@ func (s *TagOutput) SetTags(v map[string]*string) *TagOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/UntagInput
 type UntagInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2335,7 +2312,6 @@ func (s *UntagInput) SetKeys(v []*string) *UntagInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/UntagOutput
 type UntagOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2368,7 +2344,6 @@ func (s *UntagOutput) SetKeys(v []*string) *UntagOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/UpdateGroupInput
 type UpdateGroupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2421,7 +2396,6 @@ func (s *UpdateGroupInput) SetGroupName(v string) *UpdateGroupInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/UpdateGroupOutput
 type UpdateGroupOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2445,7 +2419,6 @@ func (s *UpdateGroupOutput) SetGroup(v *Group) *UpdateGroupOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/UpdateGroupQueryInput
 type UpdateGroupQueryInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2507,7 +2480,6 @@ func (s *UpdateGroupQueryInput) SetResourceQuery(v *ResourceQuery) *UpdateGroupQ
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resource-groups-2017-11-27/UpdateGroupQueryOutput
 type UpdateGroupQueryOutput struct {
 	_ struct{} `type:"structure"`
 

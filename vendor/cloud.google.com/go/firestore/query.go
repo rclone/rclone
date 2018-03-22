@@ -43,8 +43,13 @@ type Query struct {
 	offset                 int32
 	limit                  *wrappers.Int32Value
 	startVals, endVals     []interface{}
+	startDoc, endDoc       *DocumentSnapshot
 	startBefore, endBefore bool
 	err                    error
+}
+
+func (q *Query) collectionPath() string {
+	return q.parentPath + "/documents/" + q.collectionID
 }
 
 // DocumentID is the special field name representing the ID of a document
@@ -65,18 +70,17 @@ func (q Query) Select(paths ...string) Query {
 		}
 		fps = append(fps, fp)
 	}
-	if fps == nil {
-		q.selection = []FieldPath{{DocumentID}}
-	} else {
-		q.selection = fps
-	}
-	return q
+	return q.SelectPaths(fps...)
 }
 
 // SelectPaths returns a new Query that specifies the field paths
 // to return from the result documents.
 func (q Query) SelectPaths(fieldPaths ...FieldPath) Query {
-	q.selection = fieldPaths
+	if len(fieldPaths) == 0 {
+		q.selection = []FieldPath{{DocumentID}}
+	} else {
+		q.selection = fieldPaths
+	}
 	return q
 }
 
@@ -128,7 +132,7 @@ func (q Query) OrderBy(path string, dir Direction) Query {
 		q.err = err
 		return q
 	}
-	q.orders = append(append([]order(nil), q.orders...), order{fp, dir})
+	q.orders = append(q.copyOrders(), order{fp, dir})
 	return q
 }
 
@@ -136,8 +140,12 @@ func (q Query) OrderBy(path string, dir Direction) Query {
 // returned. A Query can have multiple OrderBy/OrderByPath specifications.
 // OrderByPath appends the specification to the list of existing ones.
 func (q Query) OrderByPath(fp FieldPath, dir Direction) Query {
-	q.orders = append(append([]order(nil), q.orders...), order{fp, dir})
+	q.orders = append(q.copyOrders(), order{fp, dir})
 	return q
+}
+
+func (q *Query) copyOrders() []order {
+	return append([]order(nil), q.orders...)
 }
 
 // Offset returns a new Query that specifies the number of initial results to skip.
@@ -155,8 +163,13 @@ func (q Query) Limit(n int) Query {
 }
 
 // StartAt returns a new Query that specifies that results should start at
-// the document with the given field values. The field path corresponding to
-// each value is taken from the corresponding OrderBy call. For example, in
+// the document with the given field values.
+//
+// If StartAt is called with a single DocumentSnapshot, its field values are used.
+// The DocumentSnapshot must have all the fields mentioned in the OrderBy clauses.
+//
+// Otherwise, StartAt should be called with one field value for each OrderBy clause,
+// in the order that they appear. For example, in
 //   q.OrderBy("X", Asc).OrderBy("Y", Desc).StartAt(1, 2)
 // results will begin at the first document where X = 1 and Y = 2.
 //
@@ -167,8 +180,9 @@ func (q Query) Limit(n int) Query {
 //   client.Collection("States").OrderBy(DocumentID, firestore.Asc).StartAt("NewYork")
 //
 // Calling StartAt overrides a previous call to StartAt or StartAfter.
-func (q Query) StartAt(fieldValues ...interface{}) Query {
-	q.startVals, q.startBefore = fieldValues, true
+func (q Query) StartAt(docSnapshotOrFieldValues ...interface{}) Query {
+	q.startBefore = true
+	q.startVals, q.startDoc, q.err = q.processCursorArg("StartAt", docSnapshotOrFieldValues)
 	return q
 }
 
@@ -176,8 +190,9 @@ func (q Query) StartAt(fieldValues ...interface{}) Query {
 // the document with the given field values. See Query.StartAt for more information.
 //
 // Calling StartAfter overrides a previous call to StartAt or StartAfter.
-func (q Query) StartAfter(fieldValues ...interface{}) Query {
-	q.startVals, q.startBefore = fieldValues, false
+func (q Query) StartAfter(docSnapshotOrFieldValues ...interface{}) Query {
+	q.startBefore = false
+	q.startVals, q.startDoc, q.err = q.processCursorArg("StartAfter", docSnapshotOrFieldValues)
 	return q
 }
 
@@ -185,8 +200,9 @@ func (q Query) StartAfter(fieldValues ...interface{}) Query {
 // document with the given field values. See Query.StartAt for more information.
 //
 // Calling EndAt overrides a previous call to EndAt or EndBefore.
-func (q Query) EndAt(fieldValues ...interface{}) Query {
-	q.endVals, q.endBefore = fieldValues, false
+func (q Query) EndAt(docSnapshotOrFieldValues ...interface{}) Query {
+	q.endBefore = false
+	q.endVals, q.endDoc, q.err = q.processCursorArg("EndAt", docSnapshotOrFieldValues)
 	return q
 }
 
@@ -194,9 +210,22 @@ func (q Query) EndAt(fieldValues ...interface{}) Query {
 // the document with the given field values. See Query.StartAt for more information.
 //
 // Calling EndBefore overrides a previous call to EndAt or EndBefore.
-func (q Query) EndBefore(fieldValues ...interface{}) Query {
-	q.endVals, q.endBefore = fieldValues, true
+func (q Query) EndBefore(docSnapshotOrFieldValues ...interface{}) Query {
+	q.endBefore = true
+	q.endVals, q.endDoc, q.err = q.processCursorArg("EndBefore", docSnapshotOrFieldValues)
 	return q
+}
+
+func (q *Query) processCursorArg(name string, docSnapshotOrFieldValues []interface{}) ([]interface{}, *DocumentSnapshot, error) {
+	for _, e := range docSnapshotOrFieldValues {
+		if ds, ok := e.(*DocumentSnapshot); ok {
+			if len(docSnapshotOrFieldValues) == 1 {
+				return nil, ds, nil
+			}
+			return nil, nil, fmt.Errorf("firestore: a document snapshot must be the only argument to %s", name)
+		}
+	}
+	return docSnapshotOrFieldValues, nil, nil
 }
 
 func (q Query) query() *Query { return &q }
@@ -245,33 +274,79 @@ func (q Query) toProto() (*pb.StructuredQuery, error) {
 			cf.Filters = append(cf.Filters, pf)
 		}
 	}
-	for _, ord := range q.orders {
+	orders := q.orders
+	if q.startDoc != nil || q.endDoc != nil {
+		orders = q.adjustOrders()
+	}
+	for _, ord := range orders {
 		po, err := ord.toProto()
 		if err != nil {
 			return nil, err
 		}
 		p.OrderBy = append(p.OrderBy, po)
 	}
-	// StartAt and EndAt must have values that correspond exactly to the explicit order-by fields.
-	if len(q.startVals) != 0 {
-		vals, err := q.toPositionValues(q.startVals)
-		if err != nil {
-			return nil, err
-		}
-		p.StartAt = &pb.Cursor{Values: vals, Before: q.startBefore}
+
+	cursor, err := q.toCursor(q.startVals, q.startDoc, q.startBefore, orders)
+	if err != nil {
+		return nil, err
 	}
-	if len(q.endVals) != 0 {
-		vals, err := q.toPositionValues(q.endVals)
-		if err != nil {
-			return nil, err
-		}
-		p.EndAt = &pb.Cursor{Values: vals, Before: q.endBefore}
+	p.StartAt = cursor
+	cursor, err = q.toCursor(q.endVals, q.endDoc, q.endBefore, orders)
+	if err != nil {
+		return nil, err
 	}
+	p.EndAt = cursor
 	return p, nil
 }
 
+// If there is a start/end that uses a Document Snapshot, we may need to adjust the OrderBy
+// clauses that the user provided: we add OrderBy(__name__) if it isn't already present, and
+// we make sure we don't invalidate the original query by adding an OrderBy for inequality filters.
+func (q *Query) adjustOrders() []order {
+	// If the user is already ordering by document ID, don't change anything.
+	for _, ord := range q.orders {
+		if ord.isDocumentID() {
+			return q.orders
+		}
+	}
+	// If there are OrderBy clauses, append an OrderBy(DocumentID), using the direction of the last OrderBy clause.
+	if len(q.orders) > 0 {
+		return append(q.copyOrders(), order{
+			fieldPath: FieldPath{DocumentID},
+			dir:       q.orders[len(q.orders)-1].dir,
+		})
+	}
+	// If there are no OrderBy clauses but there is an inequality, add an OrderBy clause
+	// for the field of the first inequality.
+	var orders []order
+	for _, f := range q.filters {
+		if f.op != "==" {
+			orders = []order{{fieldPath: f.fieldPath, dir: Asc}}
+			break
+		}
+	}
+	// Add an ascending OrderBy(DocumentID).
+	return append(orders, order{fieldPath: FieldPath{DocumentID}, dir: Asc})
+}
+
+func (q *Query) toCursor(fieldValues []interface{}, ds *DocumentSnapshot, before bool, orders []order) (*pb.Cursor, error) {
+	var vals []*pb.Value
+	var err error
+	if ds != nil {
+		vals, err = q.docSnapshotToCursorValues(ds, orders)
+	} else if len(fieldValues) != 0 {
+		vals, err = q.fieldValuesToCursorValues(fieldValues)
+	} else {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &pb.Cursor{Values: vals, Before: before}, nil
+}
+
 // toPositionValues converts the field values to protos.
-func (q *Query) toPositionValues(fieldValues []interface{}) ([]*pb.Value, error) {
+func (q *Query) fieldValuesToCursorValues(fieldValues []interface{}) ([]*pb.Value, error) {
 	if len(fieldValues) != len(q.orders) {
 		return nil, errors.New("firestore: number of field values in StartAt/StartAfter/EndAt/EndBefore does not match number of OrderBy fields")
 	}
@@ -279,12 +354,14 @@ func (q *Query) toPositionValues(fieldValues []interface{}) ([]*pb.Value, error)
 	var err error
 	for i, ord := range q.orders {
 		fval := fieldValues[i]
-		if len(ord.fieldPath) == 1 && ord.fieldPath[0] == DocumentID {
+		if ord.isDocumentID() {
+			// TODO(jba): support DocumentRefs as well as strings.
+			// TODO(jba): error if document ref does not belong to the right collection.
 			docID, ok := fval.(string)
 			if !ok {
 				return nil, fmt.Errorf("firestore: expected doc ID for DocumentID field, got %T", fval)
 			}
-			vals[i] = &pb.Value{&pb.Value_ReferenceValue{q.parentPath + "/documents/" + q.collectionID + "/" + docID}}
+			vals[i] = &pb.Value{&pb.Value_ReferenceValue{q.collectionPath() + "/" + docID}}
 		} else {
 			var sawTransform bool
 			vals[i], sawTransform, err = toProtoValue(reflect.ValueOf(fval))
@@ -294,6 +371,27 @@ func (q *Query) toPositionValues(fieldValues []interface{}) ([]*pb.Value, error)
 			if sawTransform {
 				return nil, errors.New("firestore: ServerTimestamp disallowed in query value")
 			}
+		}
+	}
+	return vals, nil
+}
+
+func (q *Query) docSnapshotToCursorValues(ds *DocumentSnapshot, orders []order) ([]*pb.Value, error) {
+	// TODO(jba): error if doc snap does not belong to the right collection.
+	vals := make([]*pb.Value, len(orders))
+	for i, ord := range orders {
+		if ord.isDocumentID() {
+			dp, qp := ds.Ref.Parent.Path, q.collectionPath()
+			if dp != qp {
+				return nil, fmt.Errorf("firestore: document snapshot for %s passed to query on %s", dp, qp)
+			}
+			vals[i] = &pb.Value{&pb.Value_ReferenceValue{ds.Ref.Path}}
+		} else {
+			val, err := valueAtPath(ord.fieldPath, ds.proto.Fields)
+			if err != nil {
+				return nil, err
+			}
+			vals[i] = val
 		}
 	}
 	return vals, nil
@@ -345,6 +443,10 @@ func (f filter) toProto() (*pb.StructuredQuery_Filter, error) {
 type order struct {
 	fieldPath FieldPath
 	dir       Direction
+}
+
+func (r order) isDocumentID() bool {
+	return len(r.fieldPath) == 1 && r.fieldPath[0] == DocumentID
 }
 
 func (r order) toProto() (*pb.StructuredQuery_Order, error) {

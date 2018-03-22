@@ -159,7 +159,7 @@ func main() {
 	generateTestProgram(t, fns, "Crypt")
 	generateTestProgram(t, fns, "Crypt", suffix("2"))
 	generateTestProgram(t, fns, "Crypt", suffix("3"))
-	generateTestProgram(t, fns, "Sftp")
+	generateTestProgram(t, fns, "Sftp", buildConstraint("!plan9,go1.8"))
 	generateTestProgram(t, fns, "FTP")
 	generateTestProgram(t, fns, "Box")
 	generateTestProgram(t, fns, "QingStor", buildConstraint("!plan9,go1.7"))

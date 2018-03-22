@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// This package is OBSOLETE. See https://godoc.org/go.opencensus.io/trace.
+//
 // Package trace is a Google Stackdriver Trace library.
 //
 // This package is still experimental and subject to change.
-//
 // See https://cloud.google.com/trace/api/#data_model for a discussion of traces
 // and spans.
 //

@@ -1,4 +1,4 @@
-// Package dataflow provides access to the Google Dataflow API.
+// Package dataflow provides access to the Dataflow API.
 //
 // See https://cloud.google.com/dataflow
 //
@@ -767,6 +767,8 @@ type CounterMetadata struct {
 	//   "SET" - Aggregated value is a set of unique contributed values.
 	//   "DISTRIBUTION" - Aggregated value captures statistics about a
 	// distribution.
+	//   "LATEST_VALUE" - Aggregated value tracks the latest value of a
+	// variable.
 	Kind string `json:"kind,omitempty"`
 
 	// OtherUnits: A string referring to the unit type.
@@ -954,6 +956,9 @@ type CounterUpdate struct {
 
 	// Integer: Integer value for Sum, Max, Min.
 	Integer *SplitInt64 `json:"integer,omitempty"`
+
+	// IntegerGauge: Gauge data
+	IntegerGauge *IntegerGauge `json:"integerGauge,omitempty"`
 
 	// IntegerList: List of integers, for Set.
 	IntegerList *IntegerList `json:"integerList,omitempty"`
@@ -2064,6 +2069,39 @@ type InstructionOutput struct {
 
 func (s *InstructionOutput) MarshalJSON() ([]byte, error) {
 	type NoMethod InstructionOutput
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// IntegerGauge: A metric value representing temporal values of a
+// variable.
+type IntegerGauge struct {
+	// Timestamp: The time at which this value was measured. Measured as
+	// msecs from epoch.
+	Timestamp string `json:"timestamp,omitempty"`
+
+	// Value: The value of the variable represented by this gauge.
+	Value *SplitInt64 `json:"value,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Timestamp") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Timestamp") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *IntegerGauge) MarshalJSON() ([]byte, error) {
+	type NoMethod IntegerGauge
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3262,6 +3300,8 @@ type NameAndKind struct {
 	//   "SET" - Aggregated value is a set of unique contributed values.
 	//   "DISTRIBUTION" - Aggregated value captures statistics about a
 	// distribution.
+	//   "LATEST_VALUE" - Aggregated value tracks the latest value of a
+	// variable.
 	Kind string `json:"kind,omitempty"`
 
 	// Name: Name of the counter.
@@ -3946,9 +3986,19 @@ type RuntimeEnvironment struct {
 	// available to your pipeline during execution, from 1 to 1000.
 	MaxWorkers int64 `json:"maxWorkers,omitempty"`
 
+	// Network: Network to which VMs will be assigned.  If empty or
+	// unspecified,
+	// the service will use the network "default".
+	Network string `json:"network,omitempty"`
+
 	// ServiceAccountEmail: The email address of the service account to run
 	// the job as.
 	ServiceAccountEmail string `json:"serviceAccountEmail,omitempty"`
+
+	// Subnetwork: Subnetwork to which VMs will be assigned, if desired.
+	// Expected to be of
+	// the form "regions/REGION/subnetworks/SUBNETWORK".
+	Subnetwork string `json:"subnetwork,omitempty"`
 
 	// TempLocation: The Cloud Storage path to use for temporary files.
 	// Must be a valid Cloud Storage URL, beginning with `gs://`.
@@ -6096,6 +6146,67 @@ func (s *WorkerHealthReportResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// WorkerLifecycleEvent: A report of an event in a worker's
+// lifecycle.
+// The proto contains one event, because the worker is expected
+// to
+// asynchronously send each message immediately after the event.
+// Due to this asynchrony, messages may arrive out of order (or
+// missing), and it
+// is up to the consumer to interpret.
+// The timestamp of the event is in the enclosing WorkerMessage proto.
+type WorkerLifecycleEvent struct {
+	// ContainerStartTime: The start time of this container. All events will
+	// report this so that
+	// events can be grouped together across container/VM restarts.
+	ContainerStartTime string `json:"containerStartTime,omitempty"`
+
+	// Event: The event being reported.
+	//
+	// Possible values:
+	//   "UNKNOWN_EVENT" - Invalid event.
+	//   "OS_START" - The time the VM started.
+	//   "CONTAINER_START" - Our container code starts running. Multiple
+	// containers could be
+	// distinguished with WorkerMessage.labels if desired.
+	//   "NETWORK_UP" - The worker has a functional external network
+	// connection.
+	//   "STAGING_FILES_DOWNLOAD_START" - Started downloading staging files.
+	//   "STAGING_FILES_DOWNLOAD_FINISH" - Finished downloading all staging
+	// files.
+	//   "SDK_INSTALL_START" - For applicable SDKs, started installation of
+	// SDK and worker packages.
+	//   "SDK_INSTALL_FINISH" - Finished installing SDK.
+	Event string `json:"event,omitempty"`
+
+	// Metadata: Other stats that can accompany an event. E.g.
+	// { "downloaded_bytes" : "123456" }
+	Metadata map[string]string `json:"metadata,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ContainerStartTime")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ContainerStartTime") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *WorkerLifecycleEvent) MarshalJSON() ([]byte, error) {
+	type NoMethod WorkerLifecycleEvent
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // WorkerMessage: WorkerMessage provides information to the backend
 // about a worker.
 type WorkerMessage struct {
@@ -6118,6 +6229,9 @@ type WorkerMessage struct {
 
 	// WorkerHealthReport: The health of a worker.
 	WorkerHealthReport *WorkerHealthReport `json:"workerHealthReport,omitempty"`
+
+	// WorkerLifecycleEvent: Record of worker lifecycle events.
+	WorkerLifecycleEvent *WorkerLifecycleEvent `json:"workerLifecycleEvent,omitempty"`
 
 	// WorkerMessageCode: A worker message code.
 	WorkerMessageCode *WorkerMessageCode `json:"workerMessageCode,omitempty"`
