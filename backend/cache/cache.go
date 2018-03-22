@@ -337,6 +337,9 @@ func NewFs(name, rootPath string) (fs.Fs, error) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGHUP)
 	atexit.Register(func() {
+		if plexURL != "" {
+			f.plexConnector.closeWebsocket()
+		}
 		f.StopBackgroundRunners()
 	})
 	go func() {
