@@ -14,10 +14,16 @@ import (
 	"github.com/jlaffaye/ftp"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
+)
+
+// Globals
+var (
+	maxConnections *int
 )
 
 // Register with Fs
@@ -51,6 +57,7 @@ func init() {
 			},
 		},
 	})
+	maxConnections = flags.IntP("ftp-max-connections", "", 0, "Maximum number of parallel FTP connections.")
 }
 
 // Fs represents a remote FTP server
@@ -62,8 +69,9 @@ type Fs struct {
 	user     string
 	pass     string
 	dialAddr string
-	poolMu   sync.Mutex
-	pool     []*ftp.ServerConn
+	poolN    int               // current number of connections
+	poolCnd  *sync.Cond        // pool cond/mutex
+	pool     []*ftp.ServerConn // avaible idle connections
 }
 
 // Object describes an FTP file
@@ -103,17 +111,26 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
+func (f *Fs) poolDecrement() {
+	f.poolCnd.L.Lock()
+	f.poolN--
+	f.poolCnd.L.Unlock()
+	f.poolCnd.Signal()
+}
+
 // Open a new connection to the FTP server.
 func (f *Fs) ftpConnection() (*ftp.ServerConn, error) {
 	fs.Debugf(f, "Connecting to FTP server")
 	c, err := ftp.DialTimeout(f.dialAddr, fs.Config.ConnectTimeout)
 	if err != nil {
 		fs.Errorf(f, "Error while Dialing %s: %s", f.dialAddr, err)
+		f.poolDecrement()
 		return nil, errors.Wrap(err, "ftpConnection Dial")
 	}
 	err = c.Login(f.user, f.pass)
 	if err != nil {
 		_ = c.Quit()
+		f.poolDecrement()
 		fs.Errorf(f, "Error while Logging in into %s: %s", f.dialAddr, err)
 		return nil, errors.Wrap(err, "ftpConnection Login")
 	}
@@ -122,12 +139,22 @@ func (f *Fs) ftpConnection() (*ftp.ServerConn, error) {
 
 // Get an FTP connection from the pool, or open a new one
 func (f *Fs) getFtpConnection() (c *ftp.ServerConn, err error) {
-	f.poolMu.Lock()
+	f.poolCnd.L.Lock()
 	if len(f.pool) > 0 {
 		c = f.pool[0]
 		f.pool = f.pool[1:]
 	}
-	f.poolMu.Unlock()
+	for c == nil && *maxConnections > 0 && f.poolN >= *maxConnections {
+		f.poolCnd.Wait()
+		if len(f.pool) > 0 {
+			c = f.pool[0]
+			f.pool = f.pool[1:]
+		}
+	}
+	if c == nil {
+		f.poolN++
+	}
+	f.poolCnd.L.Unlock()
 	if c != nil {
 		return c, nil
 	}
@@ -151,13 +178,15 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 			if nopErr != nil {
 				fs.Debugf(f, "Connection failed, closing: %v", nopErr)
 				_ = c.Quit()
+				f.poolDecrement()
 				return
 			}
 		}
 	}
-	f.poolMu.Lock()
+	f.poolCnd.L.Lock()
 	f.pool = append(f.pool, c)
-	f.poolMu.Unlock()
+	f.poolCnd.L.Unlock()
+	f.poolCnd.Signal()
 }
 
 // NewFs contstructs an Fs from the path, container:path
@@ -210,6 +239,8 @@ func NewFs(name, root string) (ff fs.Fs, err error) {
 		user:     user,
 		pass:     pass,
 		dialAddr: dialAddr,
+		poolN:    0,
+		poolCnd:  sync.NewCond(&sync.Mutex{}),
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
