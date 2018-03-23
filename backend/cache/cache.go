@@ -518,7 +518,16 @@ func (f *Fs) httpExpireRemote(in rc.Params) (out rc.Params, err error) {
 
 // receiveChangeNotify is a wrapper to notifications sent from the wrapped FS about changed files
 func (f *Fs) receiveChangeNotify(forgetPath string, entryType fs.EntryType) {
-	fs.Debugf(f, "notify: expiring cache for '%v'", forgetPath)
+	if crypt, yes := f.isWrappedByCrypt(); yes {
+		decryptedPath, err := crypt.DecryptFileName(forgetPath)
+		if err == nil {
+			fs.Infof(decryptedPath, "received cache expiry notification")
+		} else {
+			fs.Infof(forgetPath, "received cache expiry notification")
+		}
+	} else {
+		fs.Infof(forgetPath, "received cache expiry notification")
+	}
 	// notify upstreams too (vfs)
 	f.notifyChangeUpstream(forgetPath, entryType)
 
