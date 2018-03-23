@@ -24,8 +24,8 @@ if [ -n "$1" ]; then
 fi
 
 
-#create tmp directory and move to it
-tmp_dir=`mktemp -d`; cd $tmp_dir
+#create tmp directory and move to it with macOS compatibility fallback
+tmp_dir=`mktemp -d 2>/dev/null || mktemp -d -t 'rclone-install'`; cd $tmp_dir
 
 
 #make sure unzip tool is available and choose one to work with
