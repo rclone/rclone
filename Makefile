@@ -66,6 +66,10 @@ ifdef FULL_TESTS
 	go get -u github.com/tools/godep
 endif
 
+# Get the release dependencies
+release_dep:
+	go get -u github.com/goreleaser/nfpm
+
 # Update dependencies
 update:
 	go get -u github.com/golang/dep/cmd/dep

@@ -13,6 +13,7 @@ Making a release
   * git status - to check for new man pages - git add them
   * git commit -a -v -m "Version v1.XX"
   * make retag
+  * make release_dep
   * # Set the GOPATH for a current stable go compiler
   * make cross
   * git checkout docs/content/commands # to undo date changes in commands
