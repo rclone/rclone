@@ -28,7 +28,7 @@ var (
 	MaxReadAhead       fs.SizeSuffix = 128 * 1024
 	ExtraOptions       []string
 	ExtraFlags         []string
-	AttrTimeout        = 0 * time.Second // how long the kernel caches attribute for
+	AttrTimeout        = 1 * time.Second // how long the kernel caches attribute for
 )
 
 // Check is folder is empty
@@ -150,12 +150,30 @@ for solutions to make ` + commandName + ` mount more reliable.
 You can use the flag --attr-timeout to set the time the kernel caches
 the attributes (size, modification time etc) for directory entries.
 
-The default is 0s - no caching - which is recommended for filesystems
-which can change outside the control of the kernel.
+The default is "1s" which caches files just long enough to avoid
+too many callbacks to rclone from the kernel.
 
-If you set it higher ('1s' or '1m' say) then the kernel will call back
-to rclone less often making it more efficient, however there may be
-strange effects when files change on the remote.
+In theory 0s should be the correct value for filesystems which can
+change outside the control of the kernel. However this causes quite a
+few problems such as
+[rclone using too much memory](https://github.com/ncw/rclone/issues/2157),
+[rclone not serving files to samba](https://forum.rclone.org/t/rclone-1-39-vs-1-40-mount-issue/5112)
+and [excessive time listing directories](https://github.com/ncw/rclone/issues/2095#issuecomment-371141147).
+
+The kernel can cache the info about a file for the time given by
+"--attr-timeout". You may see corruption if the remote file changes
+length during this window.  It will show up as either a truncated file
+or a file with garbage on the end.  With "--attr-timeout 1s" this is
+very unlikely but not impossible.  The higher you set "--attr-timeout"
+the more likely it is.  The default setting of "1s" is the lowest
+setting which mitigates the problems above.
+
+If you set it higher ('10s' or '1m' say) then the kernel will call
+back to rclone less often making it more efficient, however there is
+more chance of the corruption issue above.
+
+If files don't change on the remote outside of the control of rclone
+then there is no chance of corruption.
 
 This is the same as setting the attr_timeout option in mount.fuse.
 
