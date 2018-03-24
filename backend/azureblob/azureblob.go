@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path"
 	"regexp"
 	"strconv"
@@ -59,10 +60,16 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "account",
-			Help: "Storage Account Name",
+			Help: "Storage Account Name (leave blank to use connection string or SAS URL)",
 		}, {
 			Name: "key",
-			Help: "Storage Account Key",
+			Help: "Storage Account Key (leave blank to use connection string or SAS URL)",
+		}, {
+			Name: "connection_string",
+			Help: "Connection string (leave blank if using account/key or SAS URL)",
+		}, {
+			Name: "sas_url",
+			Help: "SAS URL for container level access only\n(leave blank if using account/key or connection string)",
 		}, {
 			Name: "endpoint",
 			Help: "Endpoint for the service - leave blank normally.",
@@ -79,7 +86,6 @@ type Fs struct {
 	root             string       // the path we are working on if any
 	features         *fs.Features // optional features
 	account          string       // account name
-	key              []byte       // auth key
 	endpoint         string       // name of the starting api endpoint
 	bc               *storage.BlobStorageClient
 	cc               *storage.Container
@@ -183,23 +189,35 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, err
 	}
 	account := config.FileGet(name, "account")
-	if account == "" {
-		return nil, errors.New("account not found")
-	}
 	key := config.FileGet(name, "key")
-	if key == "" {
-		return nil, errors.New("key not found")
-	}
-	keyBytes, err := base64.StdEncoding.DecodeString(key)
-	if err != nil {
-		return nil, errors.Errorf("malformed storage account key: %v", err)
-	}
-
+	connectionString := config.FileGet(name, "connection_string")
+	sasURL := config.FileGet(name, "sas_url")
 	endpoint := config.FileGet(name, "endpoint", storage.DefaultBaseURL)
 
-	client, err := storage.NewClient(account, key, endpoint, apiVersion, true)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to make azure storage client")
+	var client storage.Client
+	switch {
+	case account != "" && key != "":
+		client, err = storage.NewClient(account, key, endpoint, apiVersion, true)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to make azure storage client from account/key")
+		}
+	case connectionString != "":
+		client, err = storage.NewClientFromConnectionString(connectionString)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to make azure storage client from connection string")
+		}
+	case sasURL != "":
+		URL, err := url.Parse(sasURL)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to parse SAS URL")
+		}
+		container, err := storage.GetContainerReferenceFromSASURI(*URL)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to make azure storage client from SAS URL")
+		}
+		client = *container.Client()
+	default:
+		return nil, errors.New("Need account+key or connectionString or sasURL")
 	}
 	client.HTTPClient = fshttp.NewClient(fs.Config)
 	bc := client.GetBlobService()
@@ -209,7 +227,6 @@ func NewFs(name, root string) (fs.Fs, error) {
 		container:   container,
 		root:        directory,
 		account:     account,
-		key:         keyBytes,
 		endpoint:    endpoint,
 		bc:          &bc,
 		cc:          bc.GetContainerReference(container),
