@@ -36,6 +36,7 @@ import (
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/sharing"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/flags"
@@ -126,13 +127,14 @@ func init() {
 
 // Fs represents a remote dropbox server
 type Fs struct {
-	name           string       // name of this remote
-	root           string       // the path we are working on
-	features       *fs.Features // optional features
-	srv            files.Client // the connection to the dropbox server
-	slashRoot      string       // root with "/" prefix, lowercase
-	slashRootSlash string       // root with "/" prefix and postfix, lowercase
-	pacer          *pacer.Pacer // To pace the API calls
+	name           string         // name of this remote
+	root           string         // the path we are working on
+	features       *fs.Features   // optional features
+	srv            files.Client   // the connection to the dropbox server
+	sharingClient  sharing.Client // as above, but for generating sharing links
+	slashRoot      string         // root with "/" prefix, lowercase
+	slashRootSlash string         // root with "/" prefix and postfix, lowercase
+	pacer          *pacer.Pacer   // To pace the API calls
 }
 
 // Object describes a dropbox object
@@ -210,11 +212,13 @@ func NewFs(name, root string) (fs.Fs, error) {
 		Client:   oAuthClient,    // maybe???
 	}
 	srv := files.New(config)
+	sharingClient := sharing.New(config)
 
 	f := &Fs{
-		name:  name,
-		srv:   srv,
-		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		name:          name,
+		srv:           srv,
+		sharingClient: sharingClient,
+		pacer:         pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
@@ -640,6 +644,52 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	return dstObj, nil
 }
 
+// PublicLink adds a "readable by anyone with link" permission on the given file or folder.
+func (f *Fs) PublicLink(fileName string) (link string, err error) {
+	absPath := "/" + path.Join(f.Root(), fileName)
+	fs.Debugf(f, "attempting to share '%s' (absolute path: %s)", fileName, absPath)
+	createArg := sharing.CreateSharedLinkWithSettingsArg{
+		Path: absPath,
+	}
+	var linkRes sharing.IsSharedLinkMetadata
+	err = f.pacer.Call(func() (bool, error) {
+		linkRes, err = f.sharingClient.CreateSharedLinkWithSettings(&createArg)
+		return shouldRetry(err)
+	})
+
+	if err != nil && strings.Contains(err.Error(), sharing.CreateSharedLinkWithSettingsErrorSharedLinkAlreadyExists) {
+		fs.Debugf(absPath, "has a public link already, attempting to retrieve it")
+		listArg := sharing.ListSharedLinksArg{
+			Path:       absPath,
+			DirectOnly: true,
+		}
+		var listRes *sharing.ListSharedLinksResult
+		err = f.pacer.Call(func() (bool, error) {
+			listRes, err = f.sharingClient.ListSharedLinks(&listArg)
+			return shouldRetry(err)
+		})
+		if err != nil {
+			return
+		}
+		if len(listRes.Links) == 0 {
+			err = errors.New("Dropbox says the sharing link already exists, but list came back empty.")
+			return
+		}
+		linkRes = listRes.Links[0]
+	}
+	if err == nil {
+		switch res := linkRes.(type) {
+		case *sharing.FileLinkMetadata:
+			link = res.Url
+		case *sharing.FolderLinkMetadata:
+			link = res.Url
+		default:
+			err = fmt.Errorf("Don't know how to extract link, response has unknown format: %T", res)
+		}
+	}
+	return
+}
+
 // DirMove moves src, srcRemote to this remote at dstRemote
 // using server side move operations.
 //
@@ -975,11 +1025,12 @@ func (o *Object) Remove() (err error) {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs          = (*Fs)(nil)
-	_ fs.Copier      = (*Fs)(nil)
-	_ fs.Purger      = (*Fs)(nil)
-	_ fs.PutStreamer = (*Fs)(nil)
-	_ fs.Mover       = (*Fs)(nil)
-	_ fs.DirMover    = (*Fs)(nil)
-	_ fs.Object      = (*Object)(nil)
+	_ fs.Fs           = (*Fs)(nil)
+	_ fs.Copier       = (*Fs)(nil)
+	_ fs.Purger       = (*Fs)(nil)
+	_ fs.PutStreamer  = (*Fs)(nil)
+	_ fs.Mover        = (*Fs)(nil)
+	_ fs.PublicLinker = (*Fs)(nil)
+	_ fs.DirMover     = (*Fs)(nil)
+	_ fs.Object       = (*Object)(nil)
 )

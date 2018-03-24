@@ -34,7 +34,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	"google.golang.org/api/drive/v3"
+	drive "google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
 )
 
@@ -1091,6 +1091,46 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	return dstObj, nil
 }
 
+// PublicLink adds a "readable by anyone with link" permission on the given file or folder.
+func (f *Fs) PublicLink(fileName string) (link string, err error) {
+	id := ""
+	if fileName == "" || strings.HasSuffix(fileName, "/") {
+		dir := strings.TrimRight(fileName, "/")
+		fs.Debugf(f, "attempting to share directory '%s'", dir)
+		id, err = f.dirCache.FindDir(dir, false)
+		if err != nil {
+			return
+		}
+	} else {
+		fs.Debugf(f, "attempting to share single file '%s'", fileName)
+		o := &Object{
+			fs:     f,
+			remote: fileName,
+		}
+		if err = o.readMetaData(); err != nil {
+			return
+		}
+		id = o.id
+	}
+
+	permission := &drive.Permission{
+		AllowFileDiscovery: false,
+		Role:               "reader",
+		Type:               "anyone",
+	}
+
+	err = f.pacer.Call(func() (bool, error) {
+		// TODO: On TeamDrives this might fail if lacking permissions to change ACLs.
+		// Need to either check `canShare` attribute on the object or see if a sufficient permission is already present.
+		_, err = f.svc.Permissions.Create(id, permission).Fields(googleapi.Field("id")).SupportsTeamDrives(f.isTeamDrive).Do()
+		return shouldRetry(err)
+	})
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("https://drive.google.com/open?id=%s", id), nil
+}
+
 // DirMove moves src, srcRemote to this remote at dstRemote
 // using server side move operations.
 //
@@ -1593,6 +1633,7 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)
+	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = &Object{}

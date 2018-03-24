@@ -244,6 +244,16 @@ func NewFsSrc(args []string) fs.Fs {
 	return fsrc
 }
 
+// NewFsSrcWithFile creates a new src fs, optionally pointing to a file, from the arguments
+func NewFsSrcWithFile(args []string) (fs.Fs, string) {
+	srcRemote, fileName := fspath.RemoteSplit(args[0])
+	fsrc, err := fs.NewFs(srcRemote)
+	if err != nil {
+		log.Fatalf("Failed to create file system for %q: %v", srcRemote, err)
+	}
+	return fsrc, fileName
+}
+
 // NewFsDst creates a new dst fs from the arguments
 //
 // Dst fs-es can't point to single files
