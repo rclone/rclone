@@ -551,24 +551,28 @@ func NewFs(name, path string) (fs.Fs, error) {
 	if err != nil {
 		// Assume it is a file
 		newRoot, remote := dircache.SplitPath(root)
-		newF := *f
-		newF.dirCache = dircache.New(newRoot, f.rootFolderID, &newF)
-		newF.root = newRoot
+		tempF := *f
+		tempF.dirCache = dircache.New(newRoot, f.rootFolderID, &tempF)
+		tempF.root = newRoot
 		// Make new Fs which is the parent
-		err = newF.dirCache.FindRoot(false)
+		err = tempF.dirCache.FindRoot(false)
 		if err != nil {
 			// No root so return old f
 			return f, nil
 		}
-		entries, err := newF.List("")
+		entries, err := tempF.List("")
 		if err != nil {
 			// unable to list folder so return old f
 			return f, nil
 		}
 		for _, e := range entries {
 			if _, isObject := e.(fs.Object); isObject && e.Remote() == remote {
-				// return an error with an fs which points to the parent
-				return &newF, fs.ErrorIsFile
+				// XXX: update the old f here instead of returning tempF, since
+				// `features` were already filled with functions having *f as a receiver.
+				// See https://github.com/ncw/rclone/pull/2176#discussion_r176917344
+				f.dirCache = tempF.dirCache
+				f.root = tempF.root
+				return f, fs.ErrorIsFile
 			}
 		}
 		// File doesn't exist so return old f
@@ -1093,14 +1097,9 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
 func (f *Fs) PublicLink(remote string) (link string, err error) {
-	id := ""
-	if remote == "" || strings.HasSuffix(remote, "/") {
-		dir := strings.TrimRight(remote, "/")
-		fs.Debugf(f, "attempting to share directory '%s'", dir)
-		id, err = f.dirCache.FindDir(dir, false)
-		if err != nil {
-			return
-		}
+	id, err := f.dirCache.FindDir(remote, false)
+	if err == nil {
+		fs.Debugf(f, "attempting to share directory '%s'", remote)
 	} else {
 		fs.Debugf(f, "attempting to share single file '%s'", remote)
 		o := &Object{

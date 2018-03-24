@@ -28,9 +28,9 @@ without account.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
-		fsrc, srcFileName := cmd.NewFsSrcWithFile(args)
+		fsrc, remote := cmd.NewFsFile(args[0])
 		cmd.Run(false, false, command, func() error {
-			link, err := operations.PublicLink(fsrc, srcFileName)
+			link, err := operations.PublicLink(fsrc, remote)
 			if err != nil {
 				return err
 			}

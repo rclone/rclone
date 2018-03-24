@@ -960,7 +960,7 @@ func TestPublicLink(t *testing.T) {
 	require.NotEqual(t, "", link1, "Link should not be empty")
 
 	// sharing directory for the first time
-	path := path.Dir(file2.Path) + "/"
+	path := path.Dir(file2.Path)
 	link3, err := doPublicLink(path)
 	require.NoError(t, err)
 	require.NotEqual(t, "", link3, "Link should not be empty")
