@@ -645,9 +645,9 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
-func (f *Fs) PublicLink(fileName string) (link string, err error) {
-	absPath := "/" + path.Join(f.Root(), fileName)
-	fs.Debugf(f, "attempting to share '%s' (absolute path: %s)", fileName, absPath)
+func (f *Fs) PublicLink(remote string) (link string, err error) {
+	absPath := "/" + path.Join(f.Root(), remote)
+	fs.Debugf(f, "attempting to share '%s' (absolute path: %s)", remote, absPath)
 	createArg := sharing.CreateSharedLinkWithSettingsArg{
 		Path: absPath,
 	}
@@ -672,7 +672,7 @@ func (f *Fs) PublicLink(fileName string) (link string, err error) {
 			return
 		}
 		if len(listRes.Links) == 0 {
-			err = errors.New("Dropbox says the sharing link already exists, but list came back empty.")
+			err = errors.New("Dropbox says the sharing link already exists, but list came back empty")
 			return
 		}
 		linkRes = listRes.Links[0]

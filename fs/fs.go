@@ -329,7 +329,7 @@ type Features struct {
 	DirCacheFlush func()
 
 	// PublicLink generates a public link to the remote path (usually readable by anyone)
-	PublicLink func(fileName string) (string, error)
+	PublicLink func(remote string) (string, error)
 
 	// Put in to the remote path with the modTime given of the given size
 	//
@@ -651,7 +651,7 @@ type PutStreamer interface {
 // PublicLinker is an optional interface for Fs
 type PublicLinker interface {
 	// PublicLink generates a public link to the remote path (usually readable by anyone)
-	PublicLink(fileName string) (string, error)
+	PublicLink(remote string) (string, error)
 }
 
 // MergeDirser is an option interface for Fs

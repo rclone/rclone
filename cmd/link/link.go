@@ -34,7 +34,7 @@ without account.
 			if err != nil {
 				return err
 			}
-			fmt.Printf("public link:\n%s\n", link)
+			fmt.Println(link)
 			return nil
 		})
 	},

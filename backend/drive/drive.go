@@ -1092,20 +1092,20 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
-func (f *Fs) PublicLink(fileName string) (link string, err error) {
+func (f *Fs) PublicLink(remote string) (link string, err error) {
 	id := ""
-	if fileName == "" || strings.HasSuffix(fileName, "/") {
-		dir := strings.TrimRight(fileName, "/")
+	if remote == "" || strings.HasSuffix(remote, "/") {
+		dir := strings.TrimRight(remote, "/")
 		fs.Debugf(f, "attempting to share directory '%s'", dir)
 		id, err = f.dirCache.FindDir(dir, false)
 		if err != nil {
 			return
 		}
 	} else {
-		fs.Debugf(f, "attempting to share single file '%s'", fileName)
+		fs.Debugf(f, "attempting to share single file '%s'", remote)
 		o := &Object{
 			fs:     f,
-			remote: fileName,
+			remote: remote,
 		}
 		if err = o.readMetaData(); err != nil {
 			return
