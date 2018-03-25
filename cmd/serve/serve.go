@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/ncw/rclone/cmd"
+	"github.com/ncw/rclone/cmd/serve/ftp"
 	"github.com/ncw/rclone/cmd/serve/http"
 	"github.com/ncw/rclone/cmd/serve/restic"
 	"github.com/ncw/rclone/cmd/serve/webdav"
@@ -14,6 +15,7 @@ func init() {
 	Command.AddCommand(http.Command)
 	Command.AddCommand(webdav.Command)
 	Command.AddCommand(restic.Command)
+	Command.AddCommand(ftp.Command)
 	cmd.Root.AddCommand(Command)
 }
 
