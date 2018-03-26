@@ -143,3 +143,4 @@ Contributors
   * wolfv <wolfv6@users.noreply.github.com>
   * Dave Pedu <dave@davepedu.com>
   * Stefan Lindblom <lindblom@spotify.com>
+  * seuffert <oliver@seuffert.biz>
