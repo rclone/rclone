@@ -1095,6 +1095,41 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	return dstObj, nil
 }
 
+// PublicLink adds a "readable by anyone with link" permission on the given file or folder.
+func (f *Fs) PublicLink(remote string) (link string, err error) {
+	id, err := f.dirCache.FindDir(remote, false)
+	if err == nil {
+		fs.Debugf(f, "attempting to share directory '%s'", remote)
+	} else {
+		fs.Debugf(f, "attempting to share single file '%s'", remote)
+		o := &Object{
+			fs:     f,
+			remote: remote,
+		}
+		if err = o.readMetaData(); err != nil {
+			return
+		}
+		id = o.id
+	}
+
+	permission := &drive.Permission{
+		AllowFileDiscovery: false,
+		Role:               "reader",
+		Type:               "anyone",
+	}
+
+	err = f.pacer.Call(func() (bool, error) {
+		// TODO: On TeamDrives this might fail if lacking permissions to change ACLs.
+		// Need to either check `canShare` attribute on the object or see if a sufficient permission is already present.
+		_, err = f.svc.Permissions.Create(id, permission).Fields(googleapi.Field("id")).SupportsTeamDrives(f.isTeamDrive).Do()
+		return shouldRetry(err)
+	})
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("https://drive.google.com/open?id=%s", id), nil
+}
+
 // DirMove moves src, srcRemote to this remote at dstRemote
 // using server side move operations.
 //
@@ -1597,6 +1632,7 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)
+	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = &Object{}

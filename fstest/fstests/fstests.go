@@ -948,6 +948,62 @@ func TestFsIsFileNotFound(t *testing.T) {
 	fstest.CheckListing(t, fileRemote, []fstest.Item{})
 }
 
+// TestPublicLink tests creation of sharable, public links
+func TestPublicLink(t *testing.T) {
+	skipIfNotOk(t)
+
+	doPublicLink := remote.Features().PublicLink
+	if doPublicLink == nil {
+		t.Skip("FS has no PublicLinker interface")
+	}
+
+	// if object not found
+	link, err := doPublicLink(file1.Path + "_does_not_exist")
+	require.Error(t, err, "Expected to get error when file doesn't exist")
+	require.Equal(t, "", link, "Expected link to be empty on error")
+
+	// sharing file for the first time
+	link1, err := doPublicLink(file1.Path)
+	require.NoError(t, err)
+	require.NotEqual(t, "", link1, "Link should not be empty")
+
+	link2, err := doPublicLink(file2.Path)
+	require.NoError(t, err)
+	require.NotEqual(t, "", link2, "Link should not be empty")
+
+	require.NotEqual(t, link1, link2, "Links to different files should differ")
+
+	// sharing file for the 2nd time
+	link1, err = doPublicLink(file1.Path)
+	require.NoError(t, err)
+	require.NotEqual(t, "", link1, "Link should not be empty")
+
+	// sharing directory for the first time
+	path := path.Dir(file2.Path)
+	link3, err := doPublicLink(path)
+	require.NoError(t, err)
+	require.NotEqual(t, "", link3, "Link should not be empty")
+
+	// sharing directory for the second time
+	link3, err = doPublicLink(path)
+	require.NoError(t, err)
+	require.NotEqual(t, "", link3, "Link should not be empty")
+
+	// sharing the "root" directory in a subremote
+	subRemote, _, removeSubRemote, err := fstest.RandomRemote(RemoteName, false)
+	require.NoError(t, err)
+	defer removeSubRemote()
+	// ensure sub remote isn't empty
+	buf := bytes.NewBufferString("somecontent")
+	obji := object.NewStaticObjectInfo("somefile", time.Now(), int64(buf.Len()), true, nil, nil)
+	_, err = subRemote.Put(buf, obji)
+	require.NoError(t, err)
+
+	link4, err := subRemote.Features().PublicLink("")
+	require.NoError(t, err, "Sharing root in a sub-remote should work")
+	require.NotEqual(t, "", link4, "Link should not be empty")
+}
+
 // TestObjectRemove tests Remove
 func TestObjectRemove(t *testing.T) {
 	skipIfNotOk(t)

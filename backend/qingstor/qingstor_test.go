@@ -71,6 +71,7 @@ func TestObjectUpdate(t *testing.T)        { fstests.TestObjectUpdate(t) }
 func TestObjectStorable(t *testing.T)      { fstests.TestObjectStorable(t) }
 func TestFsIsFile(t *testing.T)            { fstests.TestFsIsFile(t) }
 func TestFsIsFileNotFound(t *testing.T)    { fstests.TestFsIsFileNotFound(t) }
+func TestPublicLink(t *testing.T)          { fstests.TestPublicLink(t) }
 func TestObjectRemove(t *testing.T)        { fstests.TestObjectRemove(t) }
 func TestFsPutStream(t *testing.T)         { fstests.TestFsPutStream(t) }
 func TestObjectPurge(t *testing.T)         { fstests.TestObjectPurge(t) }

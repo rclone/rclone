@@ -21,6 +21,7 @@ import (
 	_ "github.com/ncw/rclone/cmd/genautocomplete"
 	_ "github.com/ncw/rclone/cmd/gendocs"
 	_ "github.com/ncw/rclone/cmd/info"
+	_ "github.com/ncw/rclone/cmd/link"
 	_ "github.com/ncw/rclone/cmd/listremotes"
 	_ "github.com/ncw/rclone/cmd/ls"
 	_ "github.com/ncw/rclone/cmd/lsd"

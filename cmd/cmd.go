@@ -141,10 +141,10 @@ func ShowVersion() {
 	fmt.Printf("- go version: %s\n", runtime.Version())
 }
 
-// newFsFile creates a dst Fs from a name but may point to a file.
+// NewFsFile creates a dst Fs from a name but may point to a file.
 //
 // It returns a string with the file name if points to a file
-func newFsFile(remote string) (fs.Fs, string) {
+func NewFsFile(remote string) (fs.Fs, string) {
 	fsInfo, configName, fsPath, err := fs.ParseRemote(remote)
 	if err != nil {
 		fs.CountError(err)
@@ -169,7 +169,7 @@ func newFsFile(remote string) (fs.Fs, string) {
 //
 // This can point to a file
 func newFsSrc(remote string) (fs.Fs, string) {
-	f, fileName := newFsFile(remote)
+	f, fileName := NewFsFile(remote)
 	if fileName != "" {
 		if !filter.Active.InActive() {
 			err := errors.Errorf("Can't limit to single files when using filters: %v", remote)
