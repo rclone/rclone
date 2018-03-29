@@ -30,12 +30,14 @@ import (
 )
 
 var (
-	stdio bool
+	stdio      bool
+	appendOnly bool
 )
 
 func init() {
 	httpflags.AddFlags(Command.Flags())
 	Command.Flags().BoolVar(&stdio, "stdio", false, "run an HTTP2 server on stdin/stdout")
+	Command.Flags().BoolVar(&appendOnly, "append-only", false, "disallow deletion of repository data")
 }
 
 // Command definition for cobra
@@ -355,6 +357,16 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request, remote strin
 
 // delete the remote
 func (s *server) deleteObject(w http.ResponseWriter, r *http.Request, remote string) {
+	if appendOnly {
+		parts := strings.Split(r.URL.Path, "/")
+
+		// if path doesn't end in "/locks/:name", disallow the operation
+		if len(parts) < 2 || parts[len(parts)-2] != "locks" {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+	}
+
 	o, err := s.f.NewObject(remote)
 	if err != nil {
 		fs.Debugf(remote, "Delete request error: %v", err)
