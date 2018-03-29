@@ -551,28 +551,25 @@ func NewFs(name, path string) (fs.Fs, error) {
 	if err != nil {
 		// Assume it is a file
 		newRoot, remote := dircache.SplitPath(root)
-		tempF := *f
-		tempF.dirCache = dircache.New(newRoot, f.rootFolderID, &tempF)
-		tempF.root = newRoot
+		newF := *f
+		newF.dirCache = dircache.New(newRoot, f.rootFolderID, &newF)
+		newF.root = newRoot
 		// Make new Fs which is the parent
-		err = tempF.dirCache.FindRoot(false)
+		err = newF.dirCache.FindRoot(false)
 		if err != nil {
 			// No root so return old f
 			return f, nil
 		}
-		entries, err := tempF.List("")
+		entries, err := newF.List("")
 		if err != nil {
 			// unable to list folder so return old f
 			return f, nil
 		}
 		for _, e := range entries {
 			if _, isObject := e.(fs.Object); isObject && e.Remote() == remote {
-				// XXX: update the old f here instead of returning tempF, since
-				// `features` were already filled with functions having *f as a receiver.
-				// See https://github.com/ncw/rclone/pull/2176#discussion_r176917344
-				f.dirCache = tempF.dirCache
-				f.root = tempF.root
-				return f, fs.ErrorIsFile
+				// return an error with an fs which points to the parent
+				return &newF, fs.ErrorIsFile
+
 			}
 		}
 		// File doesn't exist so return old f
