@@ -1125,12 +1125,14 @@ func (o *Object) uploadFragment(url string, start int64, totalSize int64, chunk 
 	err = o.fs.pacer.Call(func() (bool, error) {
 		_, _ = chunk.Seek(0, 0)
 		resp, err = o.fs.srv.Call(&opts)
+		if resp != nil {
+			defer fs.CheckClose(resp.Body, &err)
+		}
 		retry, err := shouldRetry(resp, err)
 		if !retry && resp != nil {
 			if resp.StatusCode == 200 || resp.StatusCode == 201 {
 				// we are done :)
 				// read the item
-				defer fs.CheckClose(resp.Body, &err)
 				info = &api.Item{}
 				return false, json.NewDecoder(resp.Body).Decode(info)
 			}

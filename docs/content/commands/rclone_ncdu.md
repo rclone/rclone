@@ -30,6 +30,7 @@ Here are the keys - press '?' to toggle the help on and off
      c toggle counts
      g toggle graph
      n,s,C sort by name,size,count
+     ^L refresh screen
      ? to toggle help on and off
      q/ESC/c-C to quit
 

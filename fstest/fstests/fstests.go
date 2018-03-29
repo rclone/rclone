@@ -704,6 +704,11 @@ func TestFsChangeNotify(t *testing.T) {
 	dirChanges := []string{}
 	objChanges := []string{}
 	quitChannel := doChangeNotify(func(x string, e fs.EntryType) {
+		fs.Debugf(nil, "doChangeNotify(%q, %+v)", x, e)
+		if strings.HasPrefix(x, file1.Path[:5]) || strings.HasPrefix(x, file2.Path[:5]) {
+			fs.Debugf(nil, "Ignoring notify for file1 or file2: %q, %v", x, e)
+			return
+		}
 		if e == fs.EntryDirectory {
 			dirChanges = append(dirChanges, x)
 		} else if e == fs.EntryObject {
@@ -712,24 +717,38 @@ func TestFsChangeNotify(t *testing.T) {
 	}, time.Second)
 	defer func() { close(quitChannel) }()
 
+	var dirs []string
 	for _, idx := range []int{1, 3, 2} {
-		err = operations.Mkdir(remote, fmt.Sprintf("dir/subdir%d", idx))
+		dir := fmt.Sprintf("dir/subdir%d", idx)
+		err = operations.Mkdir(remote, dir)
 		require.NoError(t, err)
+		dirs = append(dirs, dir)
 	}
 
 	contents := fstest.RandomString(100)
 	buf := bytes.NewBufferString(contents)
 
+	var objs []fs.Object
 	for _, idx := range []int{2, 4, 3} {
 		obji := object.NewStaticObjectInfo(fmt.Sprintf("dir/file%d", idx), time.Now(), int64(buf.Len()), true, nil, nil)
-		_, err = remote.Put(buf, obji)
+		o, err := remote.Put(buf, obji)
 		require.NoError(t, err)
+		objs = append(objs, o)
 	}
 
 	time.Sleep(3 * time.Second)
 
 	assert.Equal(t, []string{"dir/subdir1", "dir/subdir3", "dir/subdir2"}, dirChanges)
 	assert.Equal(t, []string{"dir/file2", "dir/file4", "dir/file3"}, objChanges)
+
+	// tidy up afterwards
+	for _, o := range objs {
+		assert.NoError(t, o.Remove())
+	}
+	dirs = append(dirs, "dir")
+	for _, dir := range dirs {
+		assert.NoError(t, remote.Rmdir(dir))
+	}
 }
 
 // TestObjectString tests the Object String method
