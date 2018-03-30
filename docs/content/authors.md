@@ -146,3 +146,4 @@ Contributors
   * seuffert <oliver@seuffert.biz>
   * gbadanahatti <37121690+gbadanahatti@users.noreply.github.com>
   * Keith Goldfarb <barkofdelight@gmail.com>
+  * Steve Kriss <steve@heptio.com>
