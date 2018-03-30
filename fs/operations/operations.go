@@ -915,7 +915,7 @@ func ListDir(f fs.Fs, w io.Writer) error {
 		}
 		entries.ForDir(func(dir fs.Directory) {
 			if dir != nil {
-				syncFprintf(w, "%12d %13s %9d %s\n", dir.Size(), dir.ModTime().Format("2006-01-02 15:04:05"), dir.Items(), dir.Remote())
+				syncFprintf(w, "%12d %13s %9d %s\n", dir.Size(), dir.ModTime().Local().Format("2006-01-02 15:04:05"), dir.Items(), dir.Remote())
 			}
 		})
 		return nil
@@ -1080,7 +1080,7 @@ func dedupeInteractive(remote string, objs []fs.Object) {
 		if err != nil {
 			md5sum = err.Error()
 		}
-		fmt.Printf("  %d: %12d bytes, %s, md5sum %32s\n", i+1, o.Size(), o.ModTime().Format("2006-01-02 15:04:05.000000000"), md5sum)
+		fmt.Printf("  %d: %12d bytes, %s, md5sum %32s\n", i+1, o.Size(), o.ModTime().Local().Format("2006-01-02 15:04:05.000000000"), md5sum)
 	}
 	switch config.Command([]string{"sSkip and do nothing", "kKeep just one (choose which in next step)", "rRename all to be different (by changing file.jpg to file-1.jpg)"}) {
 	case 's':
@@ -1676,7 +1676,7 @@ func (l *ListFormat) SetOutput(output []func() string) {
 
 // AddModTime adds file's Mod Time to output
 func (l *ListFormat) AddModTime() {
-	l.AppendOutput(func() string { return l.entry.ModTime().Format("2006-01-02 15:04:05") })
+	l.AppendOutput(func() string { return l.entry.ModTime().Local().Format("2006-01-02 15:04:05") })
 }
 
 // AddSize adds file's size to output
