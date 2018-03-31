@@ -535,28 +535,28 @@ func (f *Fs) receiveChangeNotify(forgetPath string, entryType fs.EntryType) {
 	if entryType == fs.EntryObject {
 		co := NewObject(f, forgetPath)
 		err := f.cache.GetObject(co)
-		if err != nil {
-			fs.Debugf(f, "ignoring change notification for non cached entry %v", co)
-			return
-		}
-		// expire the entry
-		co.CacheTs = time.Now().Add(f.fileAge * -1)
-		err = f.cache.AddObject(co)
-		if err != nil {
-			fs.Errorf(forgetPath, "notify: error expiring '%v': %v", co, err)
+		if err == nil {
+			// expire the entry
+			co.CacheTs = time.Now().Add(f.fileAge * -1)
+			err = f.cache.AddObject(co)
+			if err != nil {
+				fs.Debugf(forgetPath, "notify: error expiring '%v': %v", co, err)
+			} else {
+				fs.Debugf(forgetPath, "notify: expired %v", co)
+			}
 		} else {
-			fs.Debugf(forgetPath, "notify: expired %v", co)
+			fs.Debugf(f, "ignoring change notification for non cached entry %v", co)
 		}
 		cd = NewDirectory(f, cleanPath(path.Dir(co.Remote())))
 	} else {
 		cd = NewDirectory(f, forgetPath)
-		// we expire the dir
-		err := f.cache.ExpireDir(cd)
-		if err != nil {
-			fs.Errorf(forgetPath, "notify: error expiring '%v': %v", cd, err)
-		} else {
-			fs.Debugf(forgetPath, "notify: expired '%v'", cd)
-		}
+	}
+	// we expire the dir
+	err := f.cache.ExpireDir(cd)
+	if err != nil {
+		fs.Debugf(forgetPath, "notify: error expiring '%v': %v", cd, err)
+	} else {
+		fs.Debugf(forgetPath, "notify: expired '%v'", cd)
 	}
 
 	f.notifiedMu.Lock()
