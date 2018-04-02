@@ -65,14 +65,60 @@ func checkRequest(t testing.TB, f http.HandlerFunc, req *http.Request, want []wa
 	}
 }
 
+// TestRequest is a sequence of HTTP requests with (optional) tests for the response.
+type TestRequest struct {
+	req  *http.Request
+	want []wantFunc
+}
+
+// createOverwriteDeleteSeq returns a sequence which will create a new file at
+// path, and then try to overwrite and delete it.
+func createOverwriteDeleteSeq(t testing.TB, path string) []TestRequest {
+	// add a file, try to overwrite and delete it
+	req := []TestRequest{
+		{
+			req:  newRequest(t, "GET", path, nil),
+			want: []wantFunc{wantCode(http.StatusNotFound)},
+		},
+		{
+			req:  newRequest(t, "POST", path, strings.NewReader("foobar test config")),
+			want: []wantFunc{wantCode(http.StatusOK)},
+		},
+		{
+			req: newRequest(t, "GET", path, nil),
+			want: []wantFunc{
+				wantCode(http.StatusOK),
+				wantBody("foobar test config"),
+			},
+		},
+		{
+			req:  newRequest(t, "POST", path, strings.NewReader("other config")),
+			want: []wantFunc{wantCode(http.StatusForbidden)},
+		},
+		{
+			req: newRequest(t, "GET", path, nil),
+			want: []wantFunc{
+				wantCode(http.StatusOK),
+				wantBody("foobar test config"),
+			},
+		},
+		{
+			req:  newRequest(t, "DELETE", path, nil),
+			want: []wantFunc{wantCode(http.StatusForbidden)},
+		},
+		{
+			req: newRequest(t, "GET", path, nil),
+			want: []wantFunc{
+				wantCode(http.StatusOK),
+				wantBody("foobar test config"),
+			},
+		},
+	}
+	return req
+}
+
 // TestResticHandler runs tests on the restic handler code, especially in append-only mode.
 func TestResticHandler(t *testing.T) {
-	// each test is a sequence of HTTP requests with (optional) tests for the response
-	type TestRequest struct {
-		req  *http.Request
-		want []wantFunc
-	}
-
 	buf := make([]byte, 32)
 	_, err := io.ReadFull(rand.Reader, buf)
 	if err != nil {
@@ -83,48 +129,8 @@ func TestResticHandler(t *testing.T) {
 	var tests = []struct {
 		seq []TestRequest
 	}{
-		{
-			// add a file, try to overwrite and delete it
-			[]TestRequest{
-				{
-					req:  newRequest(t, "GET", "/config", nil),
-					want: []wantFunc{wantCode(http.StatusNotFound)},
-				},
-				{
-					req:  newRequest(t, "POST", "/config", strings.NewReader("foobar test config")),
-					want: []wantFunc{wantCode(http.StatusOK)},
-				},
-				{
-					req: newRequest(t, "GET", "/config", nil),
-					want: []wantFunc{
-						wantCode(http.StatusOK),
-						wantBody("foobar test config"),
-					},
-				},
-				{
-					req:  newRequest(t, "POST", "/config", strings.NewReader("other config")),
-					want: []wantFunc{wantCode(http.StatusForbidden)},
-				},
-				{
-					req: newRequest(t, "GET", "/config", nil),
-					want: []wantFunc{
-						wantCode(http.StatusOK),
-						wantBody("foobar test config"),
-					},
-				},
-				{
-					req:  newRequest(t, "DELETE", "/config", nil),
-					want: []wantFunc{wantCode(http.StatusForbidden)},
-				},
-				{
-					req: newRequest(t, "GET", "/config", nil),
-					want: []wantFunc{
-						wantCode(http.StatusOK),
-						wantBody("foobar test config"),
-					},
-				},
-			},
-		},
+		{createOverwriteDeleteSeq(t, "/config")},
+		{createOverwriteDeleteSeq(t, "/data/"+randomID)},
 		{
 			// ensure we can add and remove lock files
 			[]TestRequest{
