@@ -180,7 +180,11 @@ func TestResticHandler(t *testing.T) {
 	}()
 
 	// globally set append-only mode
+	prev := appendOnly
 	appendOnly = true
+	defer func() {
+		appendOnly = prev // reset when done
+	}()
 
 	// make a new file system in the temp dir
 	f := cmd.NewFsSrc([]string{tempdir})
