@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"time"
 
@@ -24,10 +25,11 @@ var Help = `
 
 Use --addr to specify which IP address and port the server should
 listen on, eg --addr 1.2.3.4:8000 or --addr :8080 to listen to all
-IPs.  By default it only listens on localhost.
+IPs.  By default it only listens on localhost.  You can use port
+:0 to let the OS choose an available port.
 
 If you set --addr to listen on a public or LAN accessible IP address
-then using Authentication if advised - see the next section for info.
+then using Authentication is advised - see the next section for info.
 
 --server-read-timeout and --server-write-timeout can be used to
 control the timeouts on the server.  Note that this is the total time
@@ -98,6 +100,8 @@ var DefaultOpt = Options{
 type Server struct {
 	Opt             Options
 	handler         http.Handler // original handler
+	listener        net.Listener
+	waitChan        chan struct{} // for waiting on the listener to close
 	httpServer      *http.Server
 	basicPassHashed string
 	useSSL          bool // if server is configured for SSL/TLS
@@ -178,15 +182,27 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 	return s
 }
 
-// Serve runs the server - doesn't return
-func (s *Server) Serve() {
-	var err error
-	if s.useSSL {
-		err = s.httpServer.ListenAndServeTLS(s.Opt.SslCert, s.Opt.SslKey)
-	} else {
-		err = s.httpServer.ListenAndServe()
+// Serve runs the server - returns an error only if
+// the listener was not started; does not block, so
+// use s.Wait() to block on the listener indefinitely.
+func (s *Server) Serve() error {
+	ln, err := net.Listen("tcp", s.httpServer.Addr)
+	if err != nil {
+		return err
 	}
-	log.Printf("Error while serving HTTP: %v", err)
+	s.listener = ln
+	s.waitChan = make(chan struct{})
+	if s.useSSL {
+		go s.httpServer.ServeTLS(s.listener, s.Opt.SslCert, s.Opt.SslKey)
+	} else {
+		go s.httpServer.Serve(s.listener)
+	}
+	return nil
+}
+
+// Wait blocks while the listener is open.
+func (s *Server) Wait() {
+	<-s.waitChan
 }
 
 // Close shuts the running server down
@@ -194,7 +210,9 @@ func (s *Server) Close() {
 	err := closeServer(s.httpServer)
 	if err != nil {
 		log.Printf("Error on closing HTTP server: %v", err)
+		return
 	}
+	close(s.waitChan)
 }
 
 // URL returns the serving address of this server
@@ -203,5 +221,11 @@ func (s *Server) URL() string {
 	if s.useSSL {
 		proto = "https"
 	}
-	return fmt.Sprintf("%s://%s/", proto, s.Opt.ListenAddr)
+	addr := s.Opt.ListenAddr
+	if s.listener != nil {
+		// prefer actual listener address; required if using 0-port
+		// (i.e. port assigned by operating system)
+		addr = s.listener.Addr().String()
+	}
+	return fmt.Sprintf("%s://%s/", proto, addr)
 }
