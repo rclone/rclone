@@ -3,7 +3,6 @@
 package restic
 
 import (
-	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"io"
@@ -16,42 +15,35 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // declare a few helper functions
 
-// wantFunc tests the HTTP response in res and calls t.Error() if something is incorrect.
+// wantFunc tests the HTTP response in res and marks the test as errored if something is incorrect.
 type wantFunc func(t testing.TB, res *httptest.ResponseRecorder)
 
-// newRequest returns a new HTTP request with the given params. On error, t.Fatal is called.
+// newRequest returns a new HTTP request with the given params. On error, the
+// test is marked as failed.
 func newRequest(t testing.TB, method, path string, body io.Reader) *http.Request {
 	req, err := http.NewRequest(method, path, body)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	return req
 }
 
 // wantCode returns a function which checks that the response has the correct HTTP status code.
 func wantCode(code int) wantFunc {
 	return func(t testing.TB, res *httptest.ResponseRecorder) {
-		if res.Code != code {
-			t.Errorf("wrong response code, want %v, got %v", code, res.Code)
-		}
+		assert.Equal(t, code, res.Code)
 	}
 }
 
 // wantBody returns a function which checks that the response has the data in the body.
 func wantBody(body string) wantFunc {
 	return func(t testing.TB, res *httptest.ResponseRecorder) {
-		if res.Body == nil {
-			t.Errorf("body is nil, want %q", body)
-			return
-		}
-
-		if !bytes.Equal(res.Body.Bytes(), []byte(body)) {
-			t.Errorf("wrong response body, want:\n  %q\ngot:\n  %q", body, res.Body.Bytes())
-		}
+		assert.NotNil(t, res.Body)
+		assert.Equal(t, res.Body.Bytes(), []byte(body))
 	}
 }
 
@@ -121,9 +113,7 @@ func createOverwriteDeleteSeq(t testing.TB, path string) []TestRequest {
 func TestResticHandler(t *testing.T) {
 	buf := make([]byte, 32)
 	_, err := io.ReadFull(rand.Reader, buf)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	randomID := hex.EncodeToString(buf)
 
 	var tests = []struct {
@@ -167,16 +157,12 @@ func TestResticHandler(t *testing.T) {
 
 	// setup rclone with a local backend in a temporary directory
 	tempdir, err := ioutil.TempDir("", "rclone-restic-test-")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	// make sure the tempdir is properly removed
 	defer func() {
 		err := os.RemoveAll(tempdir)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}()
 
 	// globally set append-only mode
