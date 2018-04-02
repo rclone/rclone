@@ -109,7 +109,7 @@ upload_website:	website
 	rclone -v sync docs/public memstore:www-rclone-org
 
 tarball:
-	git archive -9 --format=tar.gz --prefix=rclone-$(TAG) -o build/rclone-$(TAG).tar.gz $(TAG)
+	git archive -9 --format=tar.gz --prefix=rclone-$(TAG)/ -o build/rclone-$(TAG).tar.gz $(TAG)
 
 sign_upload:
 	cd build && md5sum rclone-* | gpg --clearsign > MD5SUMS
