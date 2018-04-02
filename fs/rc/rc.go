@@ -58,8 +58,12 @@ func newServer(opt *Options) *server {
 
 // serve runs the http server - doesn't return
 func (s *server) serve() {
+	err := s.srv.Serve()
+	if err != nil {
+		fs.Errorf(nil, "Opening listener: %v", err)
+	}
 	fs.Logf(nil, "Serving remote control on %s", s.srv.URL())
-	s.srv.Serve()
+	s.srv.Wait()
 }
 
 // handler reads incoming requests and dispatches them

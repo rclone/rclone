@@ -192,11 +192,17 @@ func (s *Server) Serve() error {
 	}
 	s.listener = ln
 	s.waitChan = make(chan struct{})
-	if s.useSSL {
-		go s.httpServer.ServeTLS(s.listener, s.Opt.SslCert, s.Opt.SslKey)
-	} else {
-		go s.httpServer.Serve(s.listener)
-	}
+	go func() {
+		var err error
+		if s.useSSL {
+			err = s.httpServer.ServeTLS(s.listener, s.Opt.SslCert, s.Opt.SslKey)
+		} else {
+			err = s.httpServer.Serve(s.listener)
+		}
+		if err != nil {
+			log.Printf("Error on serving HTTP server: %v", err)
+		}
+	}()
 	return nil
 }
 
