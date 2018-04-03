@@ -499,17 +499,12 @@ func (f *Fs) httpExpireRemote(in rc.Params) (out rc.Params, err error) {
 		return out, nil
 	}
 	// expire the entry
-	co.CacheTs = time.Now().Add(f.fileAge * -1)
-	err = f.cache.AddObject(co)
+	err = f.cache.ExpireObject(co, withData)
 	if err != nil {
 		return out, errors.WithMessage(err, "error expiring file")
 	}
 	// notify vfs too
 	f.notifyChangeUpstream(co.Remote(), fs.EntryObject)
-	if withData {
-		// safe to ignore as the file might not have been open
-		_ = os.RemoveAll(path.Join(f.cache.dataPath, co.abs()))
-	}
 
 	out["status"] = "ok"
 	out["message"] = fmt.Sprintf("cached file cleared: %v", remote)
@@ -537,8 +532,7 @@ func (f *Fs) receiveChangeNotify(forgetPath string, entryType fs.EntryType) {
 		err := f.cache.GetObject(co)
 		if err == nil {
 			// expire the entry
-			co.CacheTs = time.Now().Add(f.fileAge * -1)
-			err = f.cache.AddObject(co)
+			err = f.cache.ExpireObject(co, true)
 			if err != nil {
 				fs.Debugf(forgetPath, "notify: error expiring '%v': %v", co, err)
 			} else {

@@ -400,6 +400,16 @@ func (b *Persistent) RemoveObject(fp string) error {
 	})
 }
 
+// ExpireObject will flush an Object and all its data if desired
+func (b *Persistent) ExpireObject(co *Object, withData bool) error {
+	co.CacheTs = time.Now().Add(co.CacheFs.fileAge * -1)
+	err := b.AddObject(co)
+	if withData {
+		_ = os.RemoveAll(path.Join(b.dataPath, co.abs()))
+	}
+	return err
+}
+
 // HasEntry confirms the existence of a single entry (dir or object)
 func (b *Persistent) HasEntry(remote string) bool {
 	dir, name := path.Split(remote)
