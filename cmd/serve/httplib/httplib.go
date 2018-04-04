@@ -195,7 +195,26 @@ func (s *Server) Serve() error {
 	go func() {
 		var err error
 		if s.useSSL {
-			err = s.httpServer.ServeTLS(s.listener, s.Opt.SslCert, s.Opt.SslKey)
+			// hacky hack to get this to work with old Go versions, which
+			// don't have ServeTLS on http.Server; see PR #2194.
+			type tlsServer interface {
+				ServeTLS(ln net.Listener, cert, key string) error
+			}
+			srvIface := interface{}(s.httpServer)
+			if tlsSrv, ok := srvIface.(tlsServer); ok {
+				// yay -- we get easy TLS support with HTTP/2
+				err = tlsSrv.ServeTLS(s.listener, s.Opt.SslCert, s.Opt.SslKey)
+			} else {
+				// oh well -- we can still do TLS but might not have HTTP/2
+				tlsConfig := new(tls.Config)
+				tlsConfig.Certificates = make([]tls.Certificate, 1)
+				tlsConfig.Certificates[0], err = tls.LoadX509KeyPair(s.Opt.SslCert, s.Opt.SslKey)
+				if err != nil {
+					log.Printf("Error loading key pair: %v", err)
+				}
+				tlsLn := tls.NewListener(s.listener, tlsConfig)
+				err = s.httpServer.Serve(tlsLn)
+			}
 		} else {
 			err = s.httpServer.Serve(s.listener)
 		}
