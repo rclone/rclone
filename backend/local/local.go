@@ -421,7 +421,7 @@ func (f *Fs) readPrecision() (precision time.Duration) {
 
 		// If it matches - have found the precision
 		// fmt.Println("compare", fi.ModTime(), t)
-		if fi.ModTime() == t {
+		if fi.ModTime().Equal(t) {
 			// fmt.Println("Precision detected as", duration)
 			return duration
 		}
@@ -678,8 +678,11 @@ func (file *localOpenFile) Read(p []byte) (n int, err error) {
 	if err != nil {
 		return 0, errors.Wrap(err, "can't read status of source file while transferring")
 	}
-	if file.o.size != fi.Size() || file.o.modTime != fi.ModTime() {
-		return 0, errors.New("can't copy - source file is being updated")
+	if file.o.size != fi.Size() {
+		return 0, errors.Errorf("can't copy - source file is being updated (size changed from %d to %d)", file.o.size, fi.Size())
+	}
+	if !file.o.modTime.Equal(fi.ModTime()) {
+		return 0, errors.Errorf("can't copy - source file is being updated (mod time changed from %v to %v)", file.o.modTime, fi.ModTime())
 	}
 
 	n, err = file.in.Read(p)
