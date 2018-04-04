@@ -314,6 +314,7 @@ func (r *Handle) Close() error {
 			waitIdx++
 		}
 	}
+	r.memory.db.Flush()
 
 	fs.Debugf(r, "cache reader closed %v", r.offset)
 	return nil
