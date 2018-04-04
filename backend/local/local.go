@@ -837,7 +837,7 @@ func (o *Object) lstat() error {
 
 // Remove an object
 func (o *Object) Remove() error {
-	return os.Remove(o.path)
+	return remove(o.path)
 }
 
 // Return the directory and file from an OS path. Assumes
