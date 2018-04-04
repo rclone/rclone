@@ -220,6 +220,7 @@ func init() {
 			}},
 		}},
 	})
+	flags.VarP(&s3ChunkSize, "s3-chunk-size", "", "Chunk size to use for uploading")
 }
 
 // Constants
@@ -237,6 +238,7 @@ var (
 	// Flags
 	s3ACL          = flags.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
 	s3StorageClass = flags.StringP("s3-storage-class", "", "", "Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA)")
+	s3ChunkSize    = fs.SizeSuffix(s3manager.MinUploadPartSize)
 )
 
 // Fs represents a remote s3 server
@@ -426,6 +428,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 	if *s3StorageClass != "" {
 		f.storageClass = *s3StorageClass
+	}
+	if s3ChunkSize < fs.SizeSuffix(s3manager.MinUploadPartSize) {
+		return nil, errors.Errorf("s3 chunk size must be >= %v", fs.SizeSuffix(s3manager.MinUploadPartSize))
 	}
 	if f.root != "" {
 		f.root += "/"
@@ -1040,7 +1045,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		u.Concurrency = 2
 		u.LeavePartsOnError = false
 		u.S3 = o.fs.c
-		u.PartSize = s3manager.MinUploadPartSize
+		u.PartSize = int64(s3ChunkSize)
 
 		if size == -1 {
 			// Make parts as small as possible while still being able to upload to the
