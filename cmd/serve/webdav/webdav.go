@@ -88,8 +88,12 @@ func newWebDAV(f fs.Fs, opt *httplib.Options) *WebDAV {
 
 // serve runs the http server - doesn't return
 func (w *WebDAV) serve() {
+	err := w.srv.Serve()
+	if err != nil {
+		fs.Errorf(w.f, "Opening listener: %v", err)
+	}
 	fs.Logf(w.f, "WebDav Server started on %s", w.srv.URL())
-	w.srv.Serve()
+	w.srv.Wait()
 }
 
 // logRequest is called by the webdav module on every request

@@ -169,8 +169,12 @@ func newServer(f fs.Fs, opt *httplib.Options) *server {
 
 // serve runs the http server - doesn't return
 func (s *server) serve() {
+	err := s.srv.Serve()
+	if err != nil {
+		fs.Errorf(s.f, "Opening listener: %v", err)
+	}
 	fs.Logf(s.f, "Serving restic REST API on %s", s.srv.URL())
-	s.srv.Serve()
+	s.srv.Wait()
 }
 
 var matchData = regexp.MustCompile("(?:^|/)data/([^/]{2,})$")
