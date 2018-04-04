@@ -316,6 +316,16 @@ func (s *server) getObject(w http.ResponseWriter, r *http.Request, remote string
 
 // postObject posts an object to the repository
 func (s *server) postObject(w http.ResponseWriter, r *http.Request, remote string) {
+	if appendOnly {
+		// make sure the file does not exist yet
+		_, err := s.f.NewObject(remote)
+		if err == nil {
+			fs.Errorf(remote, "Post request: file already exists, refusing to overwrite in append-only mode")
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+	}
+
 	// fs.Debugf(s.f, "content length = %d", r.ContentLength)
 	if r.ContentLength >= 0 {
 		// Size known use Put
