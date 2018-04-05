@@ -240,11 +240,9 @@ func NewFs(name, root string) (fs.Fs, error) {
 // Sets root in f
 func (f *Fs) setRoot(root string) {
 	f.root = strings.Trim(root, "/")
-	lowerCaseRoot := strings.ToLower(f.root)
-
-	f.slashRoot = "/" + lowerCaseRoot
+	f.slashRoot = "/" + f.root
 	f.slashRootSlash = f.slashRoot
-	if lowerCaseRoot != "" {
+	if f.root != "" {
 		f.slashRootSlash += "/"
 	}
 }
