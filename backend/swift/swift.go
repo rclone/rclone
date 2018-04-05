@@ -720,7 +720,7 @@ func (o *Object) readMetaData() (err error) {
 // LastModified returned in the http headers
 func (o *Object) ModTime() time.Time {
 	if fs.Config.UseServerModTime {
-		return o.info.lastModified
+		return o.info.LastModified
 	}
 	err := o.readMetaData()
 	if err != nil {
