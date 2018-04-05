@@ -118,6 +118,11 @@ check that parameter passing is working properly.
 This returns an error with the input as part of its error string.
 Useful for testing error handling.
 
+### rc/pid: Return PID of current process
+
+This returns PID of current process.
+Useful for stopping rclone process.
+
 ### rc/list: List all the registered remote control commands
 
 This lists all the registered remote control commands as a JSON map in

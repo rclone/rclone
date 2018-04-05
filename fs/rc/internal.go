@@ -2,7 +2,11 @@
 
 package rc
 
-import "github.com/pkg/errors"
+import (
+	"os"
+
+	"github.com/pkg/errors"
+)
 
 func init() {
 	Add(Call{
@@ -30,6 +34,14 @@ Useful for testing error handling.`,
 This lists all the registered remote control commands as a JSON map in
 the commands response.`,
 	})
+	Add(Call{
+		Path:  "rc/pid",
+		Fn:    rcPid,
+		Title: "Return PID of current process",
+		Help: `
+This returns PID of current process.
+Useful for stopping rclone process.`,
+	})
 }
 
 // Echo the input to the ouput parameters
@@ -46,5 +58,12 @@ func rcError(in Params) (out Params, err error) {
 func rcList(in Params) (out Params, err error) {
 	out = make(Params)
 	out["commands"] = registry.list()
+	return out, nil
+}
+
+// Return PID of current process
+func rcPid(in Params) (out Params, err error) {
+	out = make(Params)
+	out["pid"] = os.Getpid()
 	return out, nil
 }
