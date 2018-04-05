@@ -608,7 +608,9 @@ func (f *Fs) Mkdir(dir string) error {
 	if f.bucketOK {
 		return nil
 	}
-	_, err := f.svc.Buckets.Get(f.bucket).Do()
+	// List something from the bucket to see if it exists.  Doing it like this enables the use of a
+	// service account that only has the "Storage Object Admin" role.  See #2193 for details.
+	_, err := f.svc.Objects.List(f.bucket).MaxResults(1).Do()
 	if err == nil {
 		// Bucket already exists
 		f.bucketOK = true
