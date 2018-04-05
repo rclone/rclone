@@ -27,6 +27,7 @@ Rclone is a command line program to sync files and directories to and from
   * Hubic
   * Microsoft Azure Blob Storage
   * Microsoft OneDrive
+  * Online.net C14
   * Openstack Swift / Rackspace cloud files / Memset Memstore / OVH / Oracle Cloud Storage
   * pCloud
   * QingStor
