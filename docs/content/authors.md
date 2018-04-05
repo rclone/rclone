@@ -150,3 +150,4 @@ Contributors
   * Chih-Hsuan Yen <yan12125@gmail.com>
   * Alexander Neumann <fd0@users.noreply.github.com>
   * Matt Holt <mholt@users.noreply.github.com>
+  * Eri Bastos <bastos.eri@gmail.com>
