@@ -25,7 +25,6 @@ of path_display and all will be well.
 */
 
 import (
-	"crypto/md5"
 	"fmt"
 	"io"
 	"log"
@@ -806,20 +805,6 @@ func (o *Object) readEntryAndSetMetadata() error {
 // Returns the remote path for the object
 func (o *Object) remotePath() string {
 	return o.fs.slashRootSlash + o.remote
-}
-
-// Returns the key for the metadata database for a given path
-func metadataKey(path string) string {
-	// NB File system is case insensitive
-	path = strings.ToLower(path)
-	hash := md5.New()
-	_, _ = hash.Write([]byte(path))
-	return fmt.Sprintf("%x", hash.Sum(nil))
-}
-
-// Returns the key for the metadata database
-func (o *Object) metadataKey() string {
-	return metadataKey(o.remotePath())
 }
 
 // readMetaData gets the info if it hasn't already been fetched
