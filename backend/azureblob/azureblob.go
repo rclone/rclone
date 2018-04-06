@@ -1,7 +1,4 @@
 // Package azureblob provides an interface to the Microsoft Azure blob object storage system
-
-// +build go1.7
-
 package azureblob
 
 import (

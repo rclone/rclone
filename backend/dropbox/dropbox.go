@@ -1,7 +1,4 @@
 // Package dropbox provides an interface to Dropbox object storage
-
-// +build go1.7
-
 package dropbox
 
 // FIXME dropbox for business would be quite easy to add

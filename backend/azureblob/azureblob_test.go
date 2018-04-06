@@ -2,9 +2,6 @@
 //
 // Automatically generated - DO NOT EDIT
 // Regenerate with: make gen_tests
-
-// +build go1.7
-
 package azureblob_test
 
 import (
