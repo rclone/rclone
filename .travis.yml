@@ -4,11 +4,10 @@ dist: trusty
 os:
 - linux
 go:
-- 1.6.4
 - 1.7.6
 - 1.8.7
 - 1.9.3
-- "1.10"
+- "1.10.1"
 - tip
 before_install:
 - if [[ $TRAVIS_OS_NAME == linux ]]; then sudo modprobe fuse ; sudo chmod 666 /dev/fuse ; sudo chown root:$USER /etc/fuse.conf ; fi
@@ -39,7 +38,7 @@ matrix:
   - go: tip
   include:
   - os: osx
-    go: "1.10"
+    go: "1.10.1"
     env: GOTAGS=""
 deploy:
   provider: script
@@ -47,5 +46,5 @@ deploy:
   skip_cleanup: true
   on:
     all_branches: true
-    go: "1.10"
+    go: "1.10.1"
     condition: $TRAVIS_OS_NAME == linux && $TRAVIS_PULL_REQUEST == false

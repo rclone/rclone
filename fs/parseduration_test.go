@@ -49,7 +49,7 @@ func TestDurationString(t *testing.T) {
 		in   time.Duration
 		want string
 	}{
-		// {time.Duration(0), "0s"}, doesn't work on go1.6
+		{time.Duration(0), "0s"},
 		{time.Second, "1s"},
 		{time.Minute, "1m0s"},
 		{time.Duration(DurationOff), "off"},

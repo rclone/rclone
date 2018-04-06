@@ -250,7 +250,7 @@ func cleanAuths(buf []byte) []byte {
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	// Get transactions per second token first if limiting
 	if tpsBucket != nil {
-		tbErr := tpsBucket.Wait(context.Background()) // FIXME switch to req.Context() when we drop go1.6 support
+		tbErr := tpsBucket.Wait(req.Context())
 		if tbErr != nil {
 			fs.Errorf(nil, "HTTP token bucket error: %v", err)
 		}
