@@ -107,9 +107,9 @@ func (cr *ChunkedReader) RangeSeek(offset int64, whence int, length int64) (int6
 
 	size := cr.o.Size()
 	switch whence {
-	case 0:
+	case io.SeekStart:
 		cr.offset = 0
-	case 2:
+	case io.SeekEnd:
 		cr.offset = size
 	}
 	cr.chunkOffset = cr.offset + offset

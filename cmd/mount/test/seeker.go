@@ -32,11 +32,11 @@ func randomSeekTest(size int64, in1, in2 *os.File, file1, file2 string) {
 	}
 	log.Printf("Reading %d from %d", blockSize, start)
 
-	_, err := in1.Seek(start, 0)
+	_, err := in1.Seek(start, io.SeekStart)
 	if err != nil {
 		log.Fatalf("Seek failed on %q: %v", file1, err)
 	}
-	_, err = in2.Seek(start, 0)
+	_, err = in2.Seek(start, io.SeekStart)
 	if err != nil {
 		log.Fatalf("Seek failed on %q: %v", file2, err)
 	}

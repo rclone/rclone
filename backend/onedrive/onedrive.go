@@ -1123,7 +1123,7 @@ func (o *Object) uploadFragment(url string, start int64, totalSize int64, chunk 
 	//	var response api.UploadFragmentResponse
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
-		_, _ = chunk.Seek(0, 0)
+		_, _ = chunk.Seek(0, io.SeekStart)
 		resp, err = o.fs.srv.Call(&opts)
 		if resp != nil {
 			defer fs.CheckClose(resp.Body, &err)

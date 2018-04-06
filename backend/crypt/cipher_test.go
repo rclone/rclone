@@ -1016,7 +1016,7 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 			if offset+limit > len(plaintext) {
 				continue
 			}
-			_, err := fh.RangeSeek(int64(offset), 0, int64(limit))
+			_, err := fh.RangeSeek(int64(offset), io.SeekStart, int64(limit))
 			assert.NoError(t, err)
 
 			check(fh, offset, limit)
@@ -1083,7 +1083,7 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 		}
 		fh, err := c.DecryptDataSeek(testOpen, 0, -1)
 		assert.NoError(t, err)
-		gotOffset, err := fh.RangeSeek(test.offset, 0, test.limit)
+		gotOffset, err := fh.RangeSeek(test.offset, io.SeekStart, test.limit)
 		assert.NoError(t, err)
 		assert.Equal(t, gotOffset, test.offset)
 	}

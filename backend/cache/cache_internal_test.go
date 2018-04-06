@@ -1526,7 +1526,7 @@ func (r *run) randomReader(t *testing.T, size int64) io.ReadCloser {
 	}
 	data := r.randomBytes(t, int64(left))
 	_, _ = f.Write(data)
-	_, _ = f.Seek(int64(0), 0)
+	_, _ = f.Seek(int64(0), io.SeekStart)
 	r.tempFiles = append(r.tempFiles, f)
 
 	return f
@@ -1653,7 +1653,7 @@ func (r *run) readDataFromRemote(t *testing.T, f fs.Fs, remote string, offset, e
 		if err != nil {
 			return checkSample, err
 		}
-		_, _ = f.Seek(offset, 0)
+		_, _ = f.Seek(offset, io.SeekStart)
 		totalRead, err := io.ReadFull(f, checkSample)
 		checkSample = checkSample[:totalRead]
 		if err == io.EOF || err == io.ErrUnexpectedEOF {

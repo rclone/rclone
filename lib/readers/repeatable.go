@@ -24,11 +24,11 @@ func (r *RepeatableReader) Seek(offset int64, whence int) (int64, error) {
 	var abs int64
 	cacheLen := int64(len(r.b))
 	switch whence {
-	case 0: //io.SeekStart
+	case io.SeekStart:
 		abs = offset
-	case 1: //io.SeekCurrent
+	case io.SeekCurrent:
 		abs = r.i + offset
-	case 2: //io.SeekEnd
+	case io.SeekEnd:
 		abs = cacheLen + offset
 	default:
 		return 0, errors.New("fs.RepeatableReader.Seek: invalid whence")
