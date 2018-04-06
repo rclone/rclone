@@ -108,6 +108,16 @@ func setDefaults(a, b interface{}) {
 	}
 }
 
+// dial with context and timeouts
+func dialContextTimeout(ctx context.Context, network, address string, ci *fs.ConfigInfo) (net.Conn, error) {
+	dialer := NewDialer(ci)
+	c, err := dialer.DialContext(ctx, network, address)
+	if err != nil {
+		return c, err
+	}
+	return newTimeoutConn(c, ci.Timeout)
+}
+
 // NewTransport returns an http.RoundTripper with the correct timeouts
 func NewTransport(ci *fs.ConfigInfo) http.RoundTripper {
 	noTransport.Do(func() {
@@ -121,13 +131,11 @@ func NewTransport(ci *fs.ConfigInfo) http.RoundTripper {
 		t.ResponseHeaderTimeout = ci.Timeout
 		t.TLSClientConfig = &tls.Config{InsecureSkipVerify: ci.InsecureSkipVerify}
 		t.DisableCompression = ci.NoGzip
-		// Set in http_old.go initTransport
-		//   t.Dial
-		// Set in http_new.go initTransport
-		//   t.DialContext
-		//   t.IdelConnTimeout
-		//   t.ExpectContinueTimeout
-		initTransport(ci, t)
+		t.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return dialContextTimeout(ctx, network, addr, ci)
+		}
+		t.IdleConnTimeout = 60 * time.Second
+		t.ExpectContinueTimeout = ci.ConnectTimeout
 		// Wrap that http.Transport in our own transport
 		transport = newTransport(ci, t)
 	})

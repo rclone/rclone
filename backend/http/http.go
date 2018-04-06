@@ -2,9 +2,6 @@
 //
 // It treats HTML pages served from the endpoint as directory
 // listings, and includes any links found as files.
-
-// +build go1.7
-
 package http
 
 import (

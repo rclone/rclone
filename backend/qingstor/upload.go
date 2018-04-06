@@ -1,6 +1,6 @@
 // Upload object to QingStor
 
-// +build !plan9,go1.7
+// +build !plan9
 
 package qingstor
 

@@ -9,6 +9,7 @@ package rc
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
 
@@ -64,6 +65,13 @@ func (s *server) serve() {
 	}
 	fs.Logf(nil, "Serving remote control on %s", s.srv.URL())
 	s.srv.Wait()
+}
+
+// WriteJSON writes JSON in out to w
+func WriteJSON(w io.Writer, out Params) error {
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "\t")
+	return enc.Encode(out)
 }
 
 // handler reads incoming requests and dispatches them
