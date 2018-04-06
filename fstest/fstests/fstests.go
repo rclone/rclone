@@ -1010,7 +1010,8 @@ func TestObjectRemove(t *testing.T) {
 	obj := findObject(t, file1.Path)
 	err := obj.Remove()
 	require.NoError(t, err)
-	fstest.CheckListing(t, remote, []fstest.Item{file2})
+	// check listing without modtime as TestPublicLink may change the modtime
+	fstest.CheckListingWithPrecision(t, remote, []fstest.Item{file2}, nil, fs.ModTimeNotSupported)
 }
 
 // TestFsPutStream tests uploading files when size is not known in advance
