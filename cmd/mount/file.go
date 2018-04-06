@@ -3,6 +3,7 @@
 package mount
 
 import (
+	"io"
 	"time"
 
 	"bazil.org/fuse"
@@ -74,7 +75,7 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 	}
 
 	// See if seeking is supported and set FUSE hint accordingly
-	if _, err = handle.Seek(0, 1); err != nil {
+	if _, err = handle.Seek(0, io.SeekCurrent); err != nil {
 		resp.Flags |= fuse.OpenNonSeekable
 	}
 

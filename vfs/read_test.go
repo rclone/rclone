@@ -87,25 +87,25 @@ func TestReadFileHandleSeek(t *testing.T) {
 	assert.Equal(t, "0", readString(t, fh, 1))
 
 	// 0 means relative to the origin of the file,
-	n, err := fh.Seek(5, 0)
+	n, err := fh.Seek(5, io.SeekStart)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(5), n)
 	assert.Equal(t, "5", readString(t, fh, 1))
 
 	// 1 means relative to the current offset
-	n, err = fh.Seek(-3, 1)
+	n, err = fh.Seek(-3, io.SeekCurrent)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(3), n)
 	assert.Equal(t, "3", readString(t, fh, 1))
 
 	// 2 means relative to the end.
-	n, err = fh.Seek(-3, 2)
+	n, err = fh.Seek(-3, io.SeekEnd)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(13), n)
 	assert.Equal(t, "d", readString(t, fh, 1))
 
 	// Seek off the end
-	n, err = fh.Seek(100, 0)
+	n, err = fh.Seek(100, io.SeekStart)
 	assert.NoError(t, err)
 
 	// Get the error on read
@@ -116,7 +116,7 @@ func TestReadFileHandleSeek(t *testing.T) {
 
 	// Check if noSeek is set we get an error
 	fh.noSeek = true
-	_, err = fh.Seek(0, 0)
+	_, err = fh.Seek(0, io.SeekStart)
 	assert.Equal(t, ESPIPE, err)
 
 	// Close

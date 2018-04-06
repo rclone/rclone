@@ -2,6 +2,7 @@
 package log
 
 import (
+	"io"
 	"log"
 	"os"
 	"reflect"
@@ -71,7 +72,7 @@ func InitLogging() {
 		if err != nil {
 			log.Fatalf("Failed to open log file: %v", err)
 		}
-		_, err = f.Seek(0, os.SEEK_END)
+		_, err = f.Seek(0, io.SeekEnd)
 		if err != nil {
 			fs.Errorf(nil, "Failed to seek log file to end: %v", err)
 		}

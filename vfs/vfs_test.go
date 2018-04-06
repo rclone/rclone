@@ -3,6 +3,7 @@
 package vfs
 
 import (
+	"io"
 	"os"
 	"testing"
 
@@ -58,7 +59,7 @@ func TestVFSbaseHandle(t *testing.T) {
 	_, err = fh.Readdirnames(0)
 	assert.Equal(t, ENOSYS, err)
 
-	_, err = fh.Seek(0, 0)
+	_, err = fh.Seek(0, io.SeekStart)
 	assert.Equal(t, ENOSYS, err)
 
 	_, err = fh.Stat()

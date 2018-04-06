@@ -732,7 +732,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	wrappedFd := readers.NewLimitedReadCloser(fd, limit)
 	if offset != 0 {
 		// seek the object
-		_, err = fd.Seek(offset, 0)
+		_, err = fd.Seek(offset, io.SeekStart)
 		// don't attempt to make checksums
 		return wrappedFd, err
 	}

@@ -894,7 +894,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 	chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		// seek to the start in case this is a retry
-		if _, err = chunk.Seek(0, 0); err != nil {
+		if _, err = chunk.Seek(0, io.SeekStart); err != nil {
 			return false, nil
 		}
 		res, err = o.fs.srv.UploadSessionStart(&files.UploadSessionStartArg{}, chunk)
@@ -930,7 +930,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 		chunk = readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
 		err = o.fs.pacer.Call(func() (bool, error) {
 			// seek to the start in case this is a retry
-			if _, err = chunk.Seek(0, 0); err != nil {
+			if _, err = chunk.Seek(0, io.SeekStart); err != nil {
 				return false, nil
 			}
 			err = o.fs.srv.UploadSessionAppendV2(&appendArg, chunk)
@@ -953,7 +953,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 	chunk = readers.NewRepeatableReaderBuffer(in, buf)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		// seek to the start in case this is a retry
-		if _, err = chunk.Seek(0, 0); err != nil {
+		if _, err = chunk.Seek(0, io.SeekStart); err != nil {
 			return false, nil
 		}
 		entry, err = o.fs.srv.UploadSessionFinish(args, chunk)

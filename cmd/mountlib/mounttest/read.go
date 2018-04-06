@@ -66,7 +66,7 @@ func TestReadChecksum(t *testing.T) {
 	_, err = io.ReadFull(fd, buf)
 	assert.NoError(t, err)
 	// read at end
-	_, err = fd.Seek(int64(len(b)-len(buf)), 0)
+	_, err = fd.Seek(int64(len(b)-len(buf)), io.SeekStart)
 	assert.NoError(t, err)
 	_, err = io.ReadFull(fd, buf)
 	assert.NoError(t, err)
@@ -89,7 +89,7 @@ func TestReadSeek(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Seek to half way
-	_, err = fd.Seek(5, 0)
+	_, err = fd.Seek(5, io.SeekStart)
 	assert.NoError(t, err)
 
 	buf, err := ioutil.ReadAll(fd)
@@ -97,7 +97,7 @@ func TestReadSeek(t *testing.T) {
 	assert.Equal(t, buf, []byte("HELLO"))
 
 	// Test seeking to the end
-	_, err = fd.Seek(10, 0)
+	_, err = fd.Seek(10, io.SeekStart)
 	assert.NoError(t, err)
 
 	buf, err = ioutil.ReadAll(fd)
@@ -105,7 +105,7 @@ func TestReadSeek(t *testing.T) {
 	assert.Equal(t, buf, []byte(""))
 
 	// Test seeking beyond the end
-	_, err = fd.Seek(1000000, 0)
+	_, err = fd.Seek(1000000, io.SeekStart)
 	assert.NoError(t, err)
 
 	buf, err = ioutil.ReadAll(fd)
@@ -113,7 +113,7 @@ func TestReadSeek(t *testing.T) {
 	assert.Equal(t, buf, []byte(""))
 
 	// Now back to the start
-	_, err = fd.Seek(0, 0)
+	_, err = fd.Seek(0, io.SeekStart)
 	assert.NoError(t, err)
 
 	buf, err = ioutil.ReadAll(fd)

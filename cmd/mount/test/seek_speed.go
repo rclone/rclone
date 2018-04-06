@@ -27,7 +27,7 @@ func randomSeekTest(size int64, in *os.File, name string) {
 	}
 	log.Printf("Reading %d from %d", blockSize, start)
 
-	_, err := in.Seek(start, 0)
+	_, err := in.Seek(start, io.SeekStart)
 	if err != nil {
 		log.Fatalf("Seek failed on %q: %v", name, err)
 	}

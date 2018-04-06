@@ -4,7 +4,6 @@ package cache
 
 import (
 	"io"
-	"os"
 	"path"
 	"sync"
 	"time"
@@ -223,7 +222,7 @@ func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
 		case *fs.RangeOption:
 			offset, limit = x.Decode(o.Size())
 		}
-		_, err = cacheReader.Seek(offset, os.SEEK_SET)
+		_, err = cacheReader.Seek(offset, io.SeekStart)
 		if err != nil {
 			return nil, err
 		}

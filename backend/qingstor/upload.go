@@ -130,12 +130,12 @@ func (u *uploader) init() {
 	u.totalSize = -1
 	switch r := u.cfg.body.(type) {
 	case io.Seeker:
-		pos, _ := r.Seek(0, 1)
+		pos, _ := r.Seek(0, io.SeekCurrent)
 		defer func() {
-			_, _ = r.Seek(pos, 0)
+			_, _ = r.Seek(pos, io.SeekStart)
 		}()
 
-		n, err := r.Seek(0, 2)
+		n, err := r.Seek(0, io.SeekEnd)
 		if err != nil {
 			return
 		}

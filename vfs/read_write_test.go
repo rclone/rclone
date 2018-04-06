@@ -123,11 +123,11 @@ func TestRWFileHandleSeek(t *testing.T) {
 	assert.Equal(t, fh.opened, false)
 
 	// Check null seeks don't open the file
-	n, err := fh.Seek(0, 0)
+	n, err := fh.Seek(0, io.SeekStart)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(0), n)
 	assert.Equal(t, fh.opened, false)
-	n, err = fh.Seek(0, 1)
+	n, err = fh.Seek(0, io.SeekCurrent)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(0), n)
 	assert.Equal(t, fh.opened, false)
@@ -135,25 +135,25 @@ func TestRWFileHandleSeek(t *testing.T) {
 	assert.Equal(t, "0", rwReadString(t, fh, 1))
 
 	// 0 means relative to the origin of the file,
-	n, err = fh.Seek(5, 0)
+	n, err = fh.Seek(5, io.SeekStart)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(5), n)
 	assert.Equal(t, "5", rwReadString(t, fh, 1))
 
 	// 1 means relative to the current offset
-	n, err = fh.Seek(-3, 1)
+	n, err = fh.Seek(-3, io.SeekCurrent)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(3), n)
 	assert.Equal(t, "3", rwReadString(t, fh, 1))
 
 	// 2 means relative to the end.
-	n, err = fh.Seek(-3, 2)
+	n, err = fh.Seek(-3, io.SeekEnd)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(13), n)
 	assert.Equal(t, "d", rwReadString(t, fh, 1))
 
 	// Seek off the end
-	n, err = fh.Seek(100, 0)
+	n, err = fh.Seek(100, io.SeekStart)
 	assert.NoError(t, err)
 
 	// Get the error on read
@@ -290,7 +290,7 @@ func TestRWFileHandleMethodsWrite(t *testing.T) {
 	assert.Equal(t, "file1", node.Name())
 
 	offset := func() int64 {
-		n, err := fh.Seek(0, 1)
+		n, err := fh.Seek(0, io.SeekCurrent)
 		require.NoError(t, err)
 		return n
 	}
@@ -362,7 +362,7 @@ func TestRWFileHandleWriteAt(t *testing.T) {
 	defer cleanup(t, r, vfs)
 
 	offset := func() int64 {
-		n, err := fh.Seek(0, 1)
+		n, err := fh.Seek(0, io.SeekCurrent)
 		require.NoError(t, err)
 		return n
 	}

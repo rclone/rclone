@@ -159,7 +159,7 @@ func (rx *resumableUpload) transferStatus() (start int64, err error) {
 
 // Transfer a chunk - caller must call googleapi.CloseBody(res) if err == nil || res != nil
 func (rx *resumableUpload) transferChunk(start int64, chunk io.ReadSeeker, chunkSize int64) (int, error) {
-	_, _ = chunk.Seek(0, 0)
+	_, _ = chunk.Seek(0, io.SeekStart)
 	req := rx.makeRequest(start, chunk, chunkSize)
 	res, err := rx.f.client.Do(req)
 	if err != nil {

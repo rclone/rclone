@@ -110,7 +110,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 	// Can we seek it directly?
 	if do, ok := oldReader.(io.Seeker); !reopen && ok {
 		fs.Debugf(fh.remote, "ReadFileHandle.seek from %d to %d (io.Seeker)", fh.offset, offset)
-		_, err = do.Seek(offset, 0)
+		_, err = do.Seek(offset, io.SeekStart)
 		if err != nil {
 			fs.Debugf(fh.remote, "ReadFileHandle.Read io.Seeker failed: %v", err)
 			return err
@@ -144,9 +144,9 @@ func (fh *ReadFileHandle) Seek(offset int64, whence int) (n int64, err error) {
 	}
 	size := fh.size
 	switch whence {
-	case 0:
+	case io.SeekStart:
 		fh.roffset = 0
-	case 2:
+	case io.SeekEnd:
 		fh.roffset = size
 	}
 	fh.roffset += offset

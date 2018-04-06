@@ -32,7 +32,7 @@ func TestRepeatableReader(t *testing.T) {
 
 	// Test Seek Back to start
 	dst = make([]byte, 10)
-	pos, err = r.Seek(0, 0)
+	pos, err = r.Seek(0, io.SeekStart)
 	assert.Nil(t, err)
 	require.Equal(t, 0, int(pos))
 
@@ -58,13 +58,13 @@ func TestRepeatableReader(t *testing.T) {
 	buf = bytes.NewBuffer(b)
 	r = NewRepeatableReader(buf)
 	// Should not allow seek past cache index
-	pos, err = r.Seek(5, 1)
+	pos, err = r.Seek(5, io.SeekCurrent)
 	assert.NotNil(t, err)
 	assert.Equal(t, "fs.RepeatableReader.Seek: offset is unavailable", err.Error())
 	assert.Equal(t, 0, int(pos))
 
 	// Should not allow seek to negative position start
-	pos, err = r.Seek(-1, 1)
+	pos, err = r.Seek(-1, io.SeekCurrent)
 	assert.NotNil(t, err)
 	assert.Equal(t, "fs.RepeatableReader.Seek: negative position", err.Error())
 	assert.Equal(t, 0, int(pos))
@@ -78,15 +78,15 @@ func TestRepeatableReader(t *testing.T) {
 	// Should seek from index with io.SeekCurrent(1) whence
 	dst = make([]byte, 5)
 	_, _ = r.Read(dst)
-	pos, err = r.Seek(-3, 1)
+	pos, err = r.Seek(-3, io.SeekCurrent)
 	assert.Nil(t, err)
 	require.Equal(t, 2, int(pos))
-	pos, err = r.Seek(1, 1)
+	pos, err = r.Seek(1, io.SeekCurrent)
 	assert.Nil(t, err)
 	require.Equal(t, 3, int(pos))
 
 	// Should seek from cache end with io.SeekEnd(2) whence
-	pos, err = r.Seek(-3, 2)
+	pos, err = r.Seek(-3, io.SeekEnd)
 	assert.Nil(t, err)
 	require.Equal(t, 2, int(pos))
 

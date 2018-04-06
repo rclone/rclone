@@ -905,7 +905,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		return nil, errors.Wrap(err, "Open failed")
 	}
 	if offset > 0 {
-		off, err := sftpFile.Seek(offset, 0)
+		off, err := sftpFile.Seek(offset, io.SeekStart)
 		if err != nil || off != offset {
 			return nil, errors.Wrap(err, "Open Seek failed")
 		}

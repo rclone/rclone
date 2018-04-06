@@ -68,7 +68,7 @@ func seekTest(n int, file string) {
 		}
 		log.Printf("%s: Reading %d from %d", file, blockSize, start)
 
-		_, err = in.Seek(start, 0)
+		_, err = in.Seek(start, io.SeekStart)
 		if err != nil {
 			log.Fatalf("Seek failed on %q: %v", file, err)
 		}
