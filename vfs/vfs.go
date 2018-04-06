@@ -19,6 +19,7 @@
 package vfs
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -28,7 +29,6 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/log"
-	"golang.org/x/net/context" // switch to "context" when we stop supporting go1.6
 )
 
 // DefaultOpt is the default values uses for Opt

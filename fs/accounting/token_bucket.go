@@ -1,13 +1,13 @@
 package accounting
 
 import (
+	"context"
 	"sync"
 	"time"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/rc"
 	"github.com/pkg/errors"
-	"golang.org/x/net/context" // switch to "context" when we stop supporting go1.6
 	"golang.org/x/time/rate"
 )
 

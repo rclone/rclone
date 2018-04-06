@@ -3,6 +3,7 @@ package fshttp
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"net"
 	"net/http"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
-	"golang.org/x/net/context" // switch to "context" when we stop supporting go1.6
 	"golang.org/x/time/rate"
 )
 
