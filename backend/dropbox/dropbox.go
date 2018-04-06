@@ -836,7 +836,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 	// Dropbox doesn't have a way of doing this so returning this
 	// error will cause the file to be deleted first then
 	// re-uploaded to set the time.
-	return fs.ErrorCantSetModTime
+	return fs.ErrorCantSetModTimeWithoutDelete
 }
 
 // Storable returns whether this object is storable
