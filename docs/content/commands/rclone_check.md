@@ -110,7 +110,7 @@ rclone check source:path dest:path [flags]
       --ignore-checksum                     Skip post copy check of checksums.
       --ignore-existing                     Skip all files that exist on destination
       --ignore-size                         Ignore size when skipping use mod-time or checksum.
-  -I, --ignore-times                        Don't skip files that match size and time - transfer all files
+  -I, --ignore-times                        Don't skip files that match size and time
       --immutable                           Do not modify files. Fail if existing files have been modified.
       --include stringArray                 Include files matching pattern
       --include-from stringArray            Read include patterns from file
