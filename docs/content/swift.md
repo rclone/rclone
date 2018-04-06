@@ -248,6 +248,19 @@ This remote supports `--fast-list` which allows you to use fewer
 transactions in exchange for more memory. See the [rclone
 docs](/docs/#fast-list) for more details.
 
+### --update and --use-server-modtime ###
+
+As noted below, the modified time is stored on metadata on the object. It is
+used by default for all operations that require checking the time a file was
+last updated. It allows rclone to treat the remote more like a true filesystem,
+but it is inefficient because it requires an extra API call to retrieve the
+metadata.
+
+For many operations, the time the object was last uploaded to the remote is
+sufficient to determine if it is "dirty". By using `--update` along with
+`--use-server-modtime`, you can avoid the extra API call and simply upload
+files whose local modtime is newer than the time it was last uploaded.
+
 ### Specific options ###
 
 Here are the command line options specific to this cloud storage
