@@ -130,7 +130,7 @@ There are some file names such as `thumbs.db` which Dropbox can't
 store.  There is a full list of them in the ["Ignored Files" section
 of this document](https://www.dropbox.com/en/help/145).  Rclone will
 issue an error message `File name disallowed - not uploading` if it
-attempt to upload one of those file names, but the sync won't fail.
+attempts to upload one of those file names, but the sync won't fail.
 
 If you have more than 10,000 files in a directory then `rclone purge
 dropbox:dir` will return the error `Failed to purge: There are too
