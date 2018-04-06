@@ -1,6 +1,7 @@
 package oauthutil
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -16,7 +17,6 @@ import (
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/pkg/errors"
 	"github.com/skratchdot/open-golang/open"
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
 

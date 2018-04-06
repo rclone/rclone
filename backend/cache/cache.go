@@ -3,18 +3,17 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
-
-	"os"
-
-	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/ncw/rclone/backend/crypt"
 	"github.com/ncw/rclone/fs"
@@ -26,7 +25,6 @@ import (
 	"github.com/ncw/rclone/fs/walk"
 	"github.com/ncw/rclone/lib/atexit"
 	"github.com/pkg/errors"
-	"golang.org/x/net/context"
 	"golang.org/x/time/rate"
 )
 

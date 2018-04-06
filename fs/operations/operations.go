@@ -3,6 +3,7 @@ package operations
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -26,7 +27,6 @@ import (
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
-	"golang.org/x/net/context"
 )
 
 // CheckHashes checks the two files to see if they have common

@@ -2,6 +2,7 @@
 package sync
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"sync"
@@ -14,7 +15,6 @@ import (
 	"github.com/ncw/rclone/fs/march"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/pkg/errors"
-	"golang.org/x/net/context"
 )
 
 type syncCopyMove struct {

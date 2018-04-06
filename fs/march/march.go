@@ -2,6 +2,7 @@
 package march
 
 import (
+	"context"
 	"path"
 	"sort"
 	"strings"
@@ -11,7 +12,6 @@ import (
 	"github.com/ncw/rclone/fs/filter"
 	"github.com/ncw/rclone/fs/list"
 	"github.com/ncw/rclone/fs/walk"
-	"golang.org/x/net/context"
 	"golang.org/x/text/unicode/norm"
 )
 
