@@ -193,9 +193,6 @@ startdev:
 	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(LAST_TAG)-DEV\"\n" | gofmt > fs/version.go
 	git commit -m "Start $(LAST_TAG)-DEV development" fs/version.go
 
-gen_tests:
-	cd fstest/fstests && go generate
-
 winzip:
 	zip -9 rclone-$(TAG).zip rclone.exe
 
