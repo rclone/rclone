@@ -303,8 +303,7 @@ Getting going
 Unit tests
 
   * Create a config entry called `TestRemote` for the unit tests to use
-  * Add your fs to the end of `fstest/fstests/gen_tests.go`
-  * generate `backend/remote/remote_test.go` unit tests `cd fstest/fstests; go generate`
+  * Create a `backend/remote/remote_test.go` - copy and adjust your example remote
   * Make sure all tests pass with `go test -v`
 
 Integration tests
