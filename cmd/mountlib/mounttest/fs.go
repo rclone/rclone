@@ -37,11 +37,10 @@ var (
 	mountFn MountFn
 )
 
-// TestMain drives the tests
-func TestMain(m *testing.M, fn MountFn) {
+// RunTests runs all the tests against all the VFS cache modes
+func RunTests(t *testing.T, fn MountFn) {
 	mountFn = fn
 	flag.Parse()
-	var rc int
 	cacheModes := []vfs.CacheMode{
 		vfs.CacheModeOff,
 		vfs.CacheModeMinimal,
@@ -52,14 +51,36 @@ func TestMain(m *testing.M, fn MountFn) {
 	for _, cacheMode := range cacheModes {
 		run.cacheMode(cacheMode)
 		log.Printf("Starting test run with cache mode %v", cacheMode)
-		rc = m.Run()
-		log.Printf("Finished test run with cache mode %v", cacheMode)
-		if rc != 0 {
+		ok := t.Run(fmt.Sprintf("CacheMode=%v", cacheMode), func(t *testing.T) {
+			t.Run("TestDirLs", TestDirLs)
+			t.Run("TestDirCreateAndRemoveDir", TestDirCreateAndRemoveDir)
+			t.Run("TestDirCreateAndRemoveFile", TestDirCreateAndRemoveFile)
+			t.Run("TestDirRenameFile", TestDirRenameFile)
+			t.Run("TestDirRenameEmptyDir", TestDirRenameEmptyDir)
+			t.Run("TestDirRenameFullDir", TestDirRenameFullDir)
+			t.Run("TestDirModTime", TestDirModTime)
+			t.Run("TestDirCacheFlush", TestDirCacheFlush)
+			t.Run("TestDirCacheFlushOnDirRename", TestDirCacheFlushOnDirRename)
+			t.Run("TestFileModTime", TestFileModTime)
+			t.Run("TestFileModTimeWithOpenWriters", TestFileModTimeWithOpenWriters)
+			t.Run("TestMount", TestMount)
+			t.Run("TestRoot", TestRoot)
+			t.Run("TestReadByByte", TestReadByByte)
+			t.Run("TestReadChecksum", TestReadChecksum)
+			t.Run("TestReadFileDoubleClose", TestReadFileDoubleClose)
+			t.Run("TestReadSeek", TestReadSeek)
+			t.Run("TestWriteFileNoWrite", TestWriteFileNoWrite)
+			t.Run("TestWriteFileWrite", TestWriteFileWrite)
+			t.Run("TestWriteFileOverwrite", TestWriteFileOverwrite)
+			t.Run("TestWriteFileDoubleClose", TestWriteFileDoubleClose)
+			t.Run("TestWriteFileFsync", TestWriteFileFsync)
+		})
+		log.Printf("Finished test run with cache mode %v (ok=%v)", cacheMode, ok)
+		if !ok {
 			break
 		}
 	}
 	run.Finalise()
-	os.Exit(rc)
 }
 
 // Run holds the remotes for a test run
