@@ -247,7 +247,7 @@ func translateErrorFile(err error) error {
 	switch errX := err.(type) {
 	case *textproto.Error:
 		switch errX.Code {
-		case ftp.StatusFileUnavailable:
+		case ftp.StatusFileUnavailable, ftp.StatusFileActionIgnored:
 			err = fs.ErrorObjectNotFound
 		}
 	}
