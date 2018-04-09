@@ -120,6 +120,18 @@ $ rclone -L ls /tmp/a
         6 b/one
 ```
 
+#### --local-no-check-updated ####
+
+Don't check to see if the files change during upload.
+
+Normally rclone checks the size and modification time of files as they
+are being uploaded and aborts with a message which starts `can't copy
+- source file is being updated` if the file changes during upload.
+
+However on some file systems this modification time check may fail (eg
+[Glusterfs #2206](https://github.com/ncw/rclone/issues/2206)) so this
+check can be disabled with this flag.
+
 #### --local-no-unicode-normalization ####
 
 This flag is deprecated now.  Rclone no longer normalizes unicode file
