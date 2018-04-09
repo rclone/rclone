@@ -51,7 +51,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Complaint Storage Providers (AWS, Ceph, Dreamhost, IBM COS, Minio)",
+		Description: "Amazon S3 Compliant Storage Providers (AWS, Ceph, Dreamhost, IBM COS, Minio)",
 		NewFs:       NewFs,
 		Options: []fs.Option{ {
                        Name: "Provider",
