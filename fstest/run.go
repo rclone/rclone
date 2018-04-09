@@ -107,12 +107,20 @@ func newRun() *Run {
 	return r
 }
 
-// dirsToRemove sorts by string length
-type dirsToRemove []string
-
-func (d dirsToRemove) Len() int           { return len(d) }
-func (d dirsToRemove) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
-func (d dirsToRemove) Less(i, j int) bool { return len(d[i]) > len(d[j]) }
+// run f(), retrying it until it returns with no error or the limit
+// expires and it calls t.Fatalf
+func retry(t *testing.T, what string, f func() error) {
+	var err error
+	for try := 1; try <= *ListRetries; try++ {
+		err = f()
+		if err == nil {
+			return
+		}
+		t.Logf("%s failed - try %d/%d: %v", what, try, *ListRetries, err)
+		time.Sleep(time.Second)
+	}
+	t.Logf("%s failed: %v", what, err)
+}
 
 // NewRun initialise the remote and local for testing and returns a
 // run object.  Call this from the tests.
@@ -130,7 +138,7 @@ func NewRun(t *testing.T) *Run {
 		r = new(Run)
 		*r = *oneRun
 		r.cleanRemote = func() {
-			var toDelete dirsToRemove
+			var toDelete []string
 			err := walk.Walk(r.Fremote, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
 				if err != nil {
 					if err == fs.ErrorDirNotFound {
@@ -141,10 +149,7 @@ func NewRun(t *testing.T) *Run {
 				for _, entry := range entries {
 					switch x := entry.(type) {
 					case fs.Object:
-						err = x.Remove()
-						if err != nil {
-							t.Errorf("Error removing file %q: %v", x.Remote(), err)
-						}
+						retry(t, fmt.Sprintf("removing file %q", x.Remote()), x.Remove)
 					case fs.Directory:
 						toDelete = append(toDelete, x.Remote())
 					}
@@ -155,12 +160,12 @@ func NewRun(t *testing.T) *Run {
 				return
 			}
 			require.NoError(t, err)
-			sort.Sort(toDelete)
-			for _, dir := range toDelete {
-				err := r.Fremote.Rmdir(dir)
-				if err != nil {
-					t.Errorf("Error removing dir %q: %v", dir, err)
-				}
+			sort.Strings(toDelete)
+			for i := len(toDelete) - 1; i >= 0; i-- {
+				dir := toDelete[i]
+				retry(t, fmt.Sprintf("removing dir %q", dir), func() error {
+					return r.Fremote.Rmdir(dir)
+				})
 			}
 			// Check remote is empty
 			CheckListingWithPrecision(t, r.Fremote, []Item{}, []string{}, r.Fremote.Precision())
