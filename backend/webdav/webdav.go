@@ -28,6 +28,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hensur/onedrive-cookie-test/odrvcookie"
+
 	"github.com/ncw/rclone/backend/webdav/api"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
@@ -327,6 +329,16 @@ func (f *Fs) setQuirks(vendor string) {
 	case "nextcloud":
 		f.precision = time.Second
 		f.useOCMtime = true
+	case "sharepoint":
+		// To mount sharepoint, two Cookies are required
+		// They have to be set instead of BasicAuth
+		f.srv.RemoveHeader("Authorization") // We don't need this Header if using cookies
+		spCk := odrvcookie.New(f.user, f.pass, f.endpointURL)
+		spCookies, err := spCk.Cookies()
+		if err != nil {
+			fmt.Println("Error occured fetching cookies")
+		}
+		f.srv.SetCookie(&spCookies.FedAuth, &spCookies.RtFa)
 	case "other":
 	default:
 		fs.Debugf(f, "Unknown vendor %q", vendor)
