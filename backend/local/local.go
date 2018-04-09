@@ -28,6 +28,7 @@ var (
 	followSymlinks = flags.BoolP("copy-links", "L", false, "Follow symlinks and copy the pointed to item.")
 	skipSymlinks   = flags.BoolP("skip-links", "", false, "Don't warn about skipped symlinks.")
 	noUTFNorm      = flags.BoolP("local-no-unicode-normalization", "", false, "Don't apply unicode normalization to paths and filenames")
+	noCheckUpdated = flags.BoolP("local-no-check-updated", "", false, "Don't check to see if the files change during upload")
 )
 
 // Constants
@@ -673,16 +674,18 @@ type localOpenFile struct {
 
 // Read bytes from the object - see io.Reader
 func (file *localOpenFile) Read(p []byte) (n int, err error) {
-	// Check if file has the same size and modTime
-	fi, err := file.fd.Stat()
-	if err != nil {
-		return 0, errors.Wrap(err, "can't read status of source file while transferring")
-	}
-	if file.o.size != fi.Size() {
-		return 0, errors.Errorf("can't copy - source file is being updated (size changed from %d to %d)", file.o.size, fi.Size())
-	}
-	if !file.o.modTime.Equal(fi.ModTime()) {
-		return 0, errors.Errorf("can't copy - source file is being updated (mod time changed from %v to %v)", file.o.modTime, fi.ModTime())
+	if !*noCheckUpdated {
+		// Check if file has the same size and modTime
+		fi, err := file.fd.Stat()
+		if err != nil {
+			return 0, errors.Wrap(err, "can't read status of source file while transferring")
+		}
+		if file.o.size != fi.Size() {
+			return 0, errors.Errorf("can't copy - source file is being updated (size changed from %d to %d)", file.o.size, fi.Size())
+		}
+		if !file.o.modTime.Equal(fi.ModTime()) {
+			return 0, errors.Errorf("can't copy - source file is being updated (mod time changed from %v to %v)", file.o.modTime, fi.ModTime())
+		}
 	}
 
 	n, err = file.in.Read(p)
