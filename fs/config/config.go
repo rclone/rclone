@@ -684,7 +684,8 @@ func RemoteConfig(name string) {
 }
 
 // ChooseOption asks the user to choose an option
-func ChooseOption(o *fs.Option) string {
+func ChooseOption(o *fs.Option, name string) string {
+        var subProvider = getConfigData().MustValue(name, "Provider", "")
 	fmt.Println(o.Help)
 	if o.IsPassword {
 		actions := []string{"yYes type in my own password", "gGenerate random password"}
@@ -726,8 +727,17 @@ func ChooseOption(o *fs.Option) string {
 		var values []string
 		var help []string
 		for _, example := range o.Examples {
-			values = append(values, example.Value)
-			help = append(help, example.Help)
+                  if (example.Provider != "") {
+                    if strings.Contains(example.Provider, subProvider) {
+                        values = append(values, example.Value)
+                        help = append(help, example.Help)
+                     } else {
+			continue
+		    }
+                  } else {
+                        values = append(values, example.Value)
+                        help = append(help, example.Help)
+                    }
 		}
 		return Choose(o.Name, values, help, true)
 	}
@@ -836,11 +846,18 @@ func NewRemoteName() (name string) {
 
 // NewRemote make a new remote from its name
 func NewRemote(name string) {
-	newType := ChooseOption(fsOption())
+	newType := ChooseOption(fsOption(), name)
 	getConfigData().SetValue(name, "type", newType)
 	fs := fs.MustFind(newType)
 	for _, option := range fs.Options {
-		getConfigData().SetValue(name, option.Name, ChooseOption(&option))
+		var subProvider = getConfigData().MustValue(name, "Provider", "")
+		if (option.Provider != "") {
+                    if strings.Contains(option.Provider, subProvider) {
+		      getConfigData().SetValue(name, option.Name, ChooseOption(&option, name))
+		  }
+                } else {
+		   getConfigData().SetValue(name, option.Name, ChooseOption(&option, name))
+		}
 	}
 	RemoteConfig(name)
 	if OkRemote(name) {
@@ -854,14 +871,24 @@ func NewRemote(name string) {
 func EditRemote(fs *fs.RegInfo, name string) {
 	ShowRemote(name)
 	fmt.Printf("Edit remote\n")
+	var subProvider = ""
 	for {
 		for _, option := range fs.Options {
 			key := option.Name
 			value := FileGet(name, key)
+			if strings.Compare(key, "Provider") == 0 {
+			   subProvider = value
+			   continue
+			}
+			if (option.Provider != "")  {
+                           if !(strings.Contains(option.Provider, subProvider)) {
+				continue
+			   }
+			}
 			fmt.Printf("Value %q = %q\n", key, value)
 			fmt.Printf("Edit? (y/n)>\n")
 			if Confirm() {
-				newValue := ChooseOption(&option)
+				newValue := ChooseOption(&option, name)
 				getConfigData().SetValue(name, key, newValue)
 			}
 		}
