@@ -80,6 +80,14 @@ func (api *Client) SetHeader(key, value string) *Client {
 	return api
 }
 
+// RemoveHeader unsets a header for all requests
+func (api *Client) RemoveHeader(key string) *Client {
+	api.mu.Lock()
+	defer api.mu.Unlock()
+	delete(api.headers, key)
+	return api
+}
+
 // SignerFn is used to sign an outgoing request
 type SignerFn func(*http.Request) error
 
@@ -97,6 +105,19 @@ func (api *Client) SetUserPass(UserName, Password string) *Client {
 	req, _ := http.NewRequest("GET", "http://example.com", nil)
 	req.SetBasicAuth(UserName, Password)
 	api.SetHeader("Authorization", req.Header.Get("Authorization"))
+	return api
+}
+
+// SetCookie creates an Cookies Header for all requests with the supplied
+// cookies passed in.
+// All cookies have to be supplied at once, all cookies will be overwritten
+// on a new call to the method
+func (api *Client) SetCookie(cks ...*http.Cookie) *Client {
+	req, _ := http.NewRequest("GET", "http://example.com", nil)
+	for _, ck := range cks {
+		req.AddCookie(ck)
+	}
+	api.SetHeader("Cookie", req.Header.Get("Cookie"))
 	return api
 }
 
