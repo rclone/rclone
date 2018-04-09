@@ -875,7 +875,7 @@ func TestListFormat(t *testing.T) {
 
 	list.SetOutput(nil)
 	list.AddModTime()
-	assert.Equal(t, items[0].ModTime().Format("2006-01-02 15:04:05"), operations.ListFormatted(&items[0], &list))
+	assert.Equal(t, items[0].ModTime().Local().Format("2006-01-02 15:04:05"), operations.ListFormatted(&items[0], &list))
 
 	list.SetOutput(nil)
 	list.AddSize()
@@ -885,8 +885,8 @@ func TestListFormat(t *testing.T) {
 	list.AddModTime()
 	list.SetDirSlash(true)
 	list.SetSeparator("__SEP__")
-	assert.Equal(t, "1__SEP__a__SEP__"+items[0].ModTime().Format("2006-01-02 15:04:05"), operations.ListFormatted(&items[0], &list))
-	assert.Equal(t, fmt.Sprintf("%d", items[1].Size())+"__SEP__subdir/__SEP__"+items[1].ModTime().Format("2006-01-02 15:04:05"), operations.ListFormatted(&items[1], &list))
+	assert.Equal(t, "1__SEP__a__SEP__"+items[0].ModTime().Local().Format("2006-01-02 15:04:05"), operations.ListFormatted(&items[0], &list))
+	assert.Equal(t, fmt.Sprintf("%d", items[1].Size())+"__SEP__subdir/__SEP__"+items[1].ModTime().Local().Format("2006-01-02 15:04:05"), operations.ListFormatted(&items[1], &list))
 
 	for _, test := range []struct {
 		ht   hash.Type
