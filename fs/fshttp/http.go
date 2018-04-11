@@ -126,7 +126,8 @@ func NewTransport(ci *fs.ConfigInfo) http.RoundTripper {
 		t := new(http.Transport)
 		setDefaults(t, http.DefaultTransport.(*http.Transport))
 		t.Proxy = http.ProxyFromEnvironment
-		t.MaxIdleConnsPerHost = 4 * (ci.Checkers + ci.Transfers + 1)
+		t.MaxIdleConnsPerHost = 2 * (ci.Checkers + ci.Transfers + 1)
+		t.MaxIdleConns = 2 * t.MaxIdleConnsPerHost
 		t.TLSHandshakeTimeout = ci.ConnectTimeout
 		t.ResponseHeaderTimeout = ci.Timeout
 		t.TLSClientConfig = &tls.Config{InsecureSkipVerify: ci.InsecureSkipVerify}
