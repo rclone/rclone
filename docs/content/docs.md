@@ -953,6 +953,17 @@ only.
 Dump the filters to the output.  Useful to see exactly what include
 and exclude options are filtering on.
 
+#### --dump goroutines ####
+
+This dumps a list of the running go-routines at the end of the command
+to standard output.
+
+#### --dump openfiles ####
+
+This dumps a list of the open files at the end of the command.  It
+uses the `lsof` command to do that so you'll need that installed to
+use it.
+
 ### --memprofile=FILE ###
 
 Write memory profile to file. This can be analysed with `go tool pprof`.
