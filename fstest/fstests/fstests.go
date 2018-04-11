@@ -290,7 +290,7 @@ func Run(t *testing.T, opt *Opt) {
 		assert.Error(t, err, "Expecting error on Rmdir non existent")
 	})
 
-	// TestFsMkdir tests tests making a directory
+	// TestFsMkdir tests making a directory
 	t.Run("TestFsMkdir", func(t *testing.T) {
 		skipIfNotOk(t)
 
