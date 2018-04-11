@@ -1487,6 +1487,12 @@ func (o *Object) httpResponse(method string, options []fs.OpenOption) (req *http
 	fs.OpenOptionAddHTTPHeaders(req.Header, options)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		res, err = o.fs.client.Do(req)
+		if err == nil {
+			err = googleapi.CheckResponse(res)
+			if err != nil {
+				_ = res.Body.Close() // ignore error
+			}
+		}
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -1532,14 +1538,9 @@ var _ io.ReadCloser = &openFile{}
 
 // Open an object for read
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	req, res, err := o.httpResponse("GET", options)
+	_, res, err := o.httpResponse("GET", options)
 	if err != nil {
-		return nil, err
-	}
-	_, isRanging := req.Header["Range"]
-	if !(res.StatusCode == http.StatusOK || (isRanging && res.StatusCode == http.StatusPartialContent)) {
-		_ = res.Body.Close() // ignore error
-		return nil, errors.Errorf("bad response: %d: %s", res.StatusCode, res.Status)
+		return nil, errors.Wrap(err, "open file failed")
 	}
 	// If it is a document, update the size with what we are
 	// reading as it can change from the HEAD in the listing to
