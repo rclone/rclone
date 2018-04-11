@@ -18,6 +18,8 @@ const (
 	DumpResponses
 	DumpAuth
 	DumpFilters
+	DumpGoRoutines
+	DumpOpenFiles
 )
 
 var dumpFlags = []struct {
@@ -30,6 +32,8 @@ var dumpFlags = []struct {
 	{DumpResponses, "responses"},
 	{DumpAuth, "auth"},
 	{DumpFilters, "filters"},
+	{DumpGoRoutines, "goroutines"},
+	{DumpOpenFiles, "openfiles"},
 }
 
 // DumpFlagsList is a list of dump flags used in the help
