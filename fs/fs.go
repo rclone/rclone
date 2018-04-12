@@ -83,6 +83,7 @@ type RegInfo struct {
 type Option struct {
 	Name       string
 	Help       string
+	Provider string
 	Optional   bool
 	IsPassword bool
 	Examples   OptionExamples `json:",omitempty"`
@@ -98,7 +99,7 @@ func (os OptionExamples) Len() int { return len(os) }
 func (os OptionExamples) Swap(i, j int) { os[i], os[j] = os[j], os[i] }
 
 // Less is part of sort.Interface.
-func (os OptionExamples) Less(i, j int) bool { return os[i].Help < os[j].Help }
+	func (os OptionExamples) Less(i, j int) bool { return os[i].Help < os[j].Help }
 
 // Sort sorts an OptionExamples
 func (os OptionExamples) Sort() { sort.Sort(os) }
@@ -107,6 +108,7 @@ func (os OptionExamples) Sort() { sort.Sort(os) }
 type OptionExample struct {
 	Value string
 	Help  string
+	Provider string
 }
 
 // Register a filesystem

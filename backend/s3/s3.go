@@ -51,12 +51,43 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 (also Dreamhost, Ceph, Minio, IBM COS)",
+		Description: "Amazon S3 Compliant Storage Providers (AWS, Ceph, Dreamhost, IBM COS, Minio)",
 		NewFs:       NewFs,
-		// AWS endpoints: http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region
-		Options: []fs.Option{{
+		Options: []fs.Option{ {
+                       Name: "Provider",
+                        Help: "Choose the S3 provider.",
+                        Examples: []fs.OptionExample {
+                        {
+                                Value:"AWS",
+                                Help: "Choose this option to configure Storage to AWS S3",
+                        },
+                        {
+                                Value:"Ceph",
+                                Help: "Choose this option to configure Storage to Ceph Systems",
+                        },
+                        {
+                                Value: "Dreamhost",
+                                Help: " Choose this option to configure Storage to Dreamhost",
+                        },
+                        {  
+                                Value: "IBMCOS",
+                                Help: "Choose this option to the configure Storage to IBM COS S3",
+                        },
+                        {
+                                Value: "Minio",
+                                Help: "Choose this option to the configure Storage to Minio",
+                        },
+                        {
+                                Value: "Other",
+                                Help: "Choose this option to the configure any other S3 Storage",
+                        },
+
+                 },
+                },
+			{
 			Name: "env_auth",
 			Help: "Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.",
+			Provider: "AWS,Ceph,Dreamhost,Minio,Other",
 			Examples: []fs.OptionExample{
 				{
 					Value: "false",
@@ -69,24 +100,30 @@ func init() {
 		}, {
 			Name: "access_key_id",
 			Help: "AWS Access Key ID - leave blank for anonymous access or runtime credentials.",
+			Provider: "AWS,Ceph,Dreamhost,IBMCOS,Minio,Other",
 		}, {
 			Name: "secret_access_key",
 			Help: "AWS Secret Access Key (password) - leave blank for anonymous access or runtime credentials.",
+			Provider: "AWS,Ceph,Dreamhost,IBMCOS,Minio,Other",
 		}, {
 			Name: "region",
 			Help: "Region to connect to.  Leave blank if you are using an S3 clone and you don't have a region.",
+			Provider: "AWS,Ceph,Dreamhost,Minio,Other",
 			Examples: []fs.OptionExample{{
 				Value: "us-east-1",
 				Help:  "The default endpoint - a good choice if you are unsure.\nUS Region, Northern Virginia or Pacific Northwest.\nLeave location constraint empty.",
 			}, {
 				Value: "us-east-2",
 				Help:  "US East (Ohio) Region\nNeeds location constraint us-east-2.",
+
 			}, {
 				Value: "us-west-2",
 				Help:  "US West (Oregon) Region\nNeeds location constraint us-west-2.",
+
 			}, {
 				Value: "us-west-1",
 				Help:  "US West (Northern California) Region\nNeeds location constraint us-west-1.",
+
 			}, {
 				Value: "ca-central-1",
 				Help:  "Canada (Central) Region\nNeeds location constraint ca-central-1.",
@@ -124,12 +161,124 @@ func init() {
 		}, {
 			Name: "endpoint",
 			Help: "Endpoint for S3 API.\nLeave blank if using AWS to use the default endpoint for the region.\nSpecify if using an S3 clone such as Ceph.",
+			Provider: "AWS,Ceph,Dreamhost,Minio,Other",
 		}, {
+                        Name: "endpoint",
+                        Help: "Endpoint for IBM COS S3 API.\nSpecify if using an IBM COS On Premise.",
+                        Provider: "IBMCOS",
+			Examples: []fs.OptionExample {{
+				Value: "s3-api.us-geo.objectstorage.softlayer.net",
+				Help: "US Cross Region Endpoint",
+			}, {
+                               Value: "s3-api.dal.us-geo.objectstorage.softlayer.net",
+                                Help: "US Cross Region Dallas Endpoint",
+                        }, {
+                               Value: "s3-api.wdc-us-geo.objectstorage.softlayer.net",
+                                Help: "US Cross Region Washington DC Endpoint",
+                        }, {
+                               Value: "s3-api.sjc-us-geo.objectstorage.softlayer.net",
+                                Help: "US Cross Region San Jose Endpoint",
+                        }, {
+                               Value: "s3-api.us-geo.objectstorage.service.networklayer.com",
+                                Help: "US Cross Region Private Endpoint",
+                        }, {
+                               Value: "s3-api.dal-us-geo.objectstorage.service.networklayer.com",
+                                Help: "US Cross Region Dallas Private Endpoint",
+                        }, {
+                               Value: "s3-api.wdc-us-geo.objectstorage.service.networklayer.com",
+                                Help: "US Cross Region Washington DC Private Endpoint",
+                        }, {
+                               Value: "s3-api.sjc-us-geo.objectstorage.service.networklayer.com",
+                                Help: "US Cross Region San Jose Private Endpoint",
+                        }, {
+                               Value: "s3.us-east.objectstorage.softlayer.net",
+                                Help: "US Region East Endpoint",
+                        }, {
+                               Value: "s3.us-east.objectstorage.service.networklayer.com",
+                                Help: "US Region East Private Endpoint",
+                        }, {
+                               Value: "s3.us-south.objectstorage.softlayer.net",
+                                Help: "US Region South Endpoint",
+                        }, {
+                               Value: "s3.us-south.objectstorage.service.networklayer.com",
+                                Help: "US Region South Private Endpoint",
+                        }, {
+                               Value: "s3.eu-geo.objectstorage.softlayer.net",
+                               Help: "EU Cross Region Endpoint",
+                        }, {
+                              Value: "s3.fra-eu-geo.objectstorage.softlayer.net",
+                               Help: "EU Cross Region Frankfurt Endpoint",
+                        }, {
+                             Value: "s3.mil-eu-geo.objectstorage.softlayer.net",
+                               Help: "EU Cross Region Milan Endpoint",
+                        }, {
+                             Value: "s3.ams-eu-geo.objectstorage.softlayer.net",
+                               Help: "EU Cross Region Amsterdam Endpoint",
+                        }, {
+                               Value: "s3.eu-geo.objectstorage.service.networklayer.com",
+                               Help: "EU Cross Region Private Endpoint",
+                        }, {
+                              Value: "s3.fra-eu-geo.objectstorage.service.networklayer.com",
+                               Help: "EU Cross Region Frankfurt Private Endpoint",
+                        }, {
+                             Value: "s3.mil-eu-geo.objectstorage.service.networklayer.com",
+                               Help: "EU Cross Region Milan Private Endpoint",
+                        }, {
+                             Value: "s3.ams-eu-geo.objectstorage.service.networklayer.com",
+                               Help: "EU Cross Region Amsterdam Private Endpoint",
+                        }, {
+                            Value: "s3.eu-gb.objectstorage.softlayer.net",
+                               Help: "Great Britan Endpoint",
+                        }, {
+                            Value: "s3.eu-gb.objectstorage.service.networklayer.com",
+                               Help: "Great Britan Private Endpoint",
+                        }, {
+                            Value: "s3.ap-geo.objectstorage.softlayer.net",
+                               Help: "APAC Cross Regional Endpoint",
+                        }, {
+                            Value: "s3.tok-ap-geo.objectstorage.softlayer.net",
+                               Help: "APAC Cross Regional Tokyo Endpoint",
+                        }, {
+                            Value: "s3.hkg-ap-geo.objectstorage.softlayer.net",
+                               Help: "APAC Cross Regional HongKong Endpoint",
+                        }, {
+                            Value: "s3.seo-ap-geo.objectstorage.softlayer.net",
+                               Help: "APAC Cross Regional Seoul Endpoint",
+                        }, {
+                            Value: "s3.ap-geo.objectstorage.service.networklayer.com",
+                               Help: "APAC Cross Regional Private Endpoint",
+                        }, {
+                            Value: "s3.tok-ap-geo.objectstorage.service.networklayer.com",
+                               Help: "APAC Cross Regional Tokyo Private Endpoint",
+                        }, {
+                            Value: "s3.hkg-ap-geo.objectstorage.service.networklayer.com",
+                               Help: "APAC Cross Regional HongKong Private Endpoint",
+                        }, {
+                            Value: "s3.seo-ap-geo.objectstorage.service.networklayer.com",
+                               Help: "APAC Cross Regional Seoul Private Endpoint",
+                        }, {
+
+                           Value: "s3.mel01.objectstorage.softlayer.net",
+                               Help: "Melbourne Single Site Endpoint",
+                        }, {
+                            Value: "s3.mel01.objectstorage.service.networklayer.com",
+                               Help: "Melbourne Single Site Private Endpoint",
+                        }, {
+                            Value: "s3.tor01.objectstorage.softlayer.net",
+                               Help: "Toronto Single Site Endpoint",
+                        }, {
+                            Value: "s3.tor01.objectstorage.service.networklayer.com",
+                               Help: "Toronto Single Site Private Endpoint",
+
+			}},
+                }, {
 			Name: "location_constraint",
 			Help: "Location constraint - must be set to match the Region. Used when creating buckets only.",
+			Provider: "AWS,Ceph,Dreamhost,Minio",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Empty for US Region, Northern Virginia or Pacific Northwest.",
+	                        Provider: "AWS,Ceph,Dreamhost,Minio,Other",
 			}, {
 				Value: "us-east-2",
 				Help:  "US East (Ohio) Region.",
@@ -171,30 +320,156 @@ func init() {
 				Help:  "South America (Sao Paulo) Region.",
 			}},
 		}, {
+                        Name: "location_constraint",
+                        Help: "Location constraint - must match endpoint when using IBM Cloud Public. For on-prem COS, do not make a selection from this list, hit enter",
+                        Provider: "IBMCOS",
+                        Examples: []fs.OptionExample{{
+				Value: "us-standard",
+				Help: "US Cross Region Standard",
+			}, {
+                                Value: "us-vault",
+                                Help: "US Cross Region Vault",
+			}, {
+                                Value: "us-cold",
+                                Help: "US Cross Region Cold",
+			}, {
+                                 Value: "us-flex",
+                                 Help: "US Cross Region Flex",
+			}, {
+                                Value: "us-east-standard",
+                                Help: "US East Region Standard",
+                        }, {
+                                Value: "us-east-vault",
+                                Help: "US East Region Vault",
+                        }, {
+                                Value: "us-east-cold",
+                                Help: "US East Region Cold",
+                        }, {
+                                 Value: "us-east-flex",
+                                 Help: "US East Region Flex",
+                        }, {    
+                                Value: "us-south-standard",
+                                Help: "US Sout hRegion Standard",
+                        }, {
+                                Value: "us-south-vault",
+                                Help: "US South Region Vault",
+                        }, {
+                                Value: "us-south-cold",
+                                Help: "US South Region Cold",
+                        }, {
+                                Value: "us-south-flex",
+                                Help: "US South Region Flex",
+                        },  {    
+                                Value: "eu-standard",
+                                Help: "EU Cross Region Standard",
+                        }, {
+                                Value: "eu-vault",
+                                Help: "EU Cross Region Vault",
+                        }, {
+                                Value: "eu-cold",
+                                Help: "EU Cross Region Cold",
+                        }, {
+                                Value: "eu-flex",
+                                Help: "EU Cross Region Flex",
+                        },  {    
+                                Value: "eu-gb-standard",
+                                Help: "Great Britan Standard",
+                        }, {
+                                Value: "eu-gb-vault",
+                                Help: "Great Britan Vault",
+                        }, {
+                                Value: "eu-gb-cold",
+                                Help: "Great Britan Cold",
+                        }, {
+                                Value: "eu-gb-flex",
+                                Help: "Great Britan Flex",
+                        },  {    
+                                Value: "ap-standard",
+                                Help: "APAC Standard",
+                        }, {
+                                Value: "ap-vault",
+                                Help: "APAC Vault",
+                        }, {
+                                Value: "ap-cold",
+                                Help: "APAC Cold",
+                        }, {
+                                Value: "ap-flex",
+                                Help: "APAC Flex",
+                        },  {    
+                                Value: "mel01-standard",
+                                Help: "Melbourne Standard",
+                        }, {
+                                Value: "mel01-vault",
+                                Help: "Melbourne Vault",
+                        }, {
+                                Value: "mel01-cold",
+                                Help: "Melbourne Cold",
+                        }, {
+                                Value: "mel01-flex",
+                                Help: "Melbourne Flex",
+                        },  {    
+                                Value: "tor01-standard",
+                                Help: "Toronto Standard",
+                        }, {
+                                Value: "tor01-vault",
+                                Help: "Toronto Vault",
+                        }, {
+                                Value: "tor01-cold",
+                                Help: "Toronto Cold",
+                        }, {
+                                Value: "tor01-flex",
+                                Help: "Toronto Flex",
+
+                        }},
+		}, {
 			Name: "acl",
 			Help: "Canned ACL used when creating buckets and/or storing objects in S3.\nFor more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl",
+                        Provider: "AWS,Ceph,Dreamhost,IBMCOS,Minio,Other",
 			Examples: []fs.OptionExample{{
 				Value: "private",
 				Help:  "Owner gets FULL_CONTROL. No one else has access rights (default).",
+	                        Provider: "AWS,Ceph,Dreamhost,Minio,Other",
 			}, {
 				Value: "public-read",
 				Help:  "Owner gets FULL_CONTROL. The AllUsers group gets READ access.",
+                        	Provider: "AWS,Ceph,Dreamhost,Minio,Other",
 			}, {
 				Value: "public-read-write",
 				Help:  "Owner gets FULL_CONTROL. The AllUsers group gets READ and WRITE access.\nGranting this on a bucket is generally not recommended.",
+	                        Provider: "AWS,Ceph,Dreamhost,Minio,Other",
 			}, {
 				Value: "authenticated-read",
 				Help:  "Owner gets FULL_CONTROL. The AuthenticatedUsers group gets READ access.",
+	                        Provider: "AWS,Ceph,Dreamhost,Minio,Other",
 			}, {
 				Value: "bucket-owner-read",
 				Help:  "Object owner gets FULL_CONTROL. Bucket owner gets READ access.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
+	                        Provider: "AWS,Ceph,Dreamhost,Minio,Other",
 			}, {
 				Value: "bucket-owner-full-control",
 				Help:  "Both the object owner and the bucket owner get FULL_CONTROL over the object.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
-			}},
-		}, {
+	                        Provider: "AWS,Ceph,Dreamhost,Minio,Other",
+			}, {
+                                Value: "private",
+                                Help:  "Owner gets FULL_CONTROL. No one else has access rights (default). This acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise COS",
+                                Provider: "IBMCOS",
+                       }, {
+                                Value: "public-read",
+                                Help:  "Owner gets FULL_CONTROL. The AllUsers group gets READ access. This acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise IBM COS",
+                                Provider: "IBMCOS",
+                      }, {
+                                Value: "public-read-write",
+                                Help:  "Owner gets FULL_CONTROL. The AllUsers group gets READ and WRITE access. This acl is available on IBM Cloud (Infra), On-Premise IBM COS",
+                                Provider: "IBMCOS",
+                    }, {      
+                                Value: "authenticated-read",
+                                Help:  "Owner gets FULL_CONTROL. The AuthenticatedUsers group gets READ access. Not supported on Buckets. This acl is available on IBM Cloud (Infra) and On-Premise IBM COS",
+                                Provider: "IBMCOS",
+                          }},
+		},  {
 			Name: "server_side_encryption",
 			Help: "The server-side encryption algorithm used when storing this object in S3.",
+			Provider: "AWS,Ceph,Dreamhost,Minio,Other",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "None",
@@ -205,12 +480,14 @@ func init() {
 		}, {
 			Name: "storage_class",
 			Help: "The storage class to use when storing objects in S3.",
+			Provider: "AWS,Ceph,Dreamhost,Minio,Other",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Default",
 			}, {
 				Value: "STANDARD",
 				Help:  "Standard storage class",
+				
 			}, {
 				Value: "REDUCED_REDUNDANCY",
 				Help:  "Reduced redundancy storage class",
