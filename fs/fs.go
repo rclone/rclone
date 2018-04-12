@@ -83,6 +83,7 @@ type RegInfo struct {
 type Option struct {
 	Name       string
 	Help       string
+	Provider   string
 	Optional   bool
 	IsPassword bool
 	Examples   OptionExamples `json:",omitempty"`
@@ -105,8 +106,9 @@ func (os OptionExamples) Sort() { sort.Sort(os) }
 
 // OptionExample describes an example for an Option
 type OptionExample struct {
-	Value string
-	Help  string
+	Value    string
+	Help     string
+	Provider string
 }
 
 // Register a filesystem
