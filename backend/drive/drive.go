@@ -885,9 +885,9 @@ func (f *Fs) MergeDirs(dirs []fs.Directory) error {
 			}
 		}
 		// rmdir (into trash) the now empty source directory
+		fs.Infof(srcDir, "removing empty directory")
 		err = f.rmdir(srcDir.ID(), true)
 		if err != nil {
-			fs.Infof(srcDir, "removing empty directory")
 			return errors.Wrapf(err, "MergDirs move failed to rmdir %q", srcDir)
 		}
 	}
