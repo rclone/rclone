@@ -83,6 +83,7 @@ type RegInfo struct {
 type Option struct {
 	Name       string
 	Help       string
+	Provider   string
 	Optional   bool
 	IsPassword bool
 	Examples   OptionExamples `json:",omitempty"`
@@ -105,8 +106,9 @@ func (os OptionExamples) Sort() { sort.Sort(os) }
 
 // OptionExample describes an example for an Option
 type OptionExample struct {
-	Value string
-	Help  string
+	Value    string
+	Help     string
+	Provider string
 }
 
 // Register a filesystem
@@ -327,7 +329,6 @@ type Features struct {
 	// DirCacheFlush resets the directory cache - used in testing
 	// as an optional interface
 	DirCacheFlush func()
-
 	// PublicLink generates a public link to the remote path (usually readable by anyone)
 	PublicLink func(remote string) (string, error)
 
