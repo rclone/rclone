@@ -683,9 +683,39 @@ func RemoteConfig(name string) {
 	}
 }
 
+// matchProvider returns true if provider matches the providerConfig string.
+//
+// The providerConfig string can either be a list of providers to
+// match, or if it starts with "!" it will be a list of providers not
+// to match.
+//
+// If either providerConfig or provider is blank then it will return true
+func matchProvider(providerConfig, provider string) bool {
+	if providerConfig == "" || provider == "" {
+		return true
+	}
+	negate := false
+	if strings.HasPrefix(providerConfig, "!") {
+		providerConfig = providerConfig[1:]
+		negate = true
+	}
+	providers := strings.Split(providerConfig, ",")
+	matched := false
+	for _, p := range providers {
+		if p == provider {
+			matched = true
+			break
+		}
+	}
+	if negate {
+		return !matched
+	}
+	return matched
+}
+
 // ChooseOption asks the user to choose an option
 func ChooseOption(o *fs.Option, name string) string {
-	var subProvider = getConfigData().MustValue(name, "Provider", "")
+	var subProvider = getConfigData().MustValue(name, fs.ConfigProvider, "")
 	fmt.Println(o.Help)
 	if o.IsPassword {
 		actions := []string{"yYes type in my own password", "gGenerate random password"}
@@ -727,14 +757,7 @@ func ChooseOption(o *fs.Option, name string) string {
 		var values []string
 		var help []string
 		for _, example := range o.Examples {
-			if example.Provider != "" {
-				if strings.Contains(example.Provider, subProvider) {
-					values = append(values, example.Value)
-					help = append(help, example.Help)
-				} else {
-					continue
-				}
-			} else {
+			if matchProvider(example.Provider, subProvider) {
 				values = append(values, example.Value)
 				help = append(help, example.Help)
 			}
@@ -848,14 +871,10 @@ func NewRemoteName() (name string) {
 func NewRemote(name string) {
 	newType := ChooseOption(fsOption(), name)
 	getConfigData().SetValue(name, "type", newType)
-	fs := fs.MustFind(newType)
-	for _, option := range fs.Options {
-		var subProvider = getConfigData().MustValue(name, "Provider", "")
-		if option.Provider != "" {
-			if strings.Contains(option.Provider, subProvider) {
-				getConfigData().SetValue(name, option.Name, ChooseOption(&option, name))
-			}
-		} else {
+	ri := fs.MustFind(newType)
+	for _, option := range ri.Options {
+		subProvider := getConfigData().MustValue(name, fs.ConfigProvider, "")
+		if matchProvider(option.Provider, subProvider) {
 			getConfigData().SetValue(name, option.Name, ChooseOption(&option, name))
 		}
 	}
@@ -864,32 +883,30 @@ func NewRemote(name string) {
 		SaveConfig()
 		return
 	}
-	EditRemote(fs, name)
+	EditRemote(ri, name)
 }
 
 // EditRemote gets the user to edit a remote
-func EditRemote(fs *fs.RegInfo, name string) {
+func EditRemote(ri *fs.RegInfo, name string) {
 	ShowRemote(name)
 	fmt.Printf("Edit remote\n")
-	var subProvider = ""
+	subProvider := getConfigData().MustValue(name, fs.ConfigProvider, "")
 	for {
-		for _, option := range fs.Options {
+		for _, option := range ri.Options {
 			key := option.Name
 			value := FileGet(name, key)
-			if strings.Compare(key, "Provider") == 0 {
-				subProvider = value
+			if !matchProvider(option.Provider, subProvider) {
 				continue
-			}
-			if option.Provider != "" {
-				if !(strings.Contains(option.Provider, subProvider)) {
-					continue
-				}
 			}
 			fmt.Printf("Value %q = %q\n", key, value)
 			fmt.Printf("Edit? (y/n)>\n")
 			if Confirm() {
 				newValue := ChooseOption(&option, name)
 				getConfigData().SetValue(name, key, newValue)
+				// Update subProvider if it changed
+				if key == fs.ConfigProvider {
+					subProvider = newValue
+				}
 			}
 		}
 		if OkRemote(name) {
