@@ -67,6 +67,7 @@ type ConfigInfo struct {
 	StreamingUploadCutoff SizeSuffix
 	StatsFileNameLength   int
 	AskPassword           bool
+	UseServerModTime      bool
 }
 
 // NewConfig creates a new config with everything set to the default

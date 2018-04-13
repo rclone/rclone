@@ -719,6 +719,9 @@ func (o *Object) readMetaData() (err error) {
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime() time.Time {
+	if fs.Config.UseServerModTime {
+		return o.info.LastModified
+	}
 	err := o.readMetaData()
 	if err != nil {
 		fs.Debugf(o, "Failed to read metadata: %s", err)
