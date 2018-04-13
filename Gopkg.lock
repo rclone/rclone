@@ -325,6 +325,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/t3rm1n4l/go-mega"
+  packages = ["."]
+  revision = "4e68b16e97ffc3b77abacbf727817a4d48fb0b66"
+
+[[projects]]
+  branch = "master"
   name = "github.com/xanzy/ssh-agent"
   packages = ["."]
   revision = "ba9c9e33906f58169366275e3450db66139a31a9"
@@ -475,6 +481,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "50d82f1173802259032be4dddb962f1b7ed8eebdbc24c73febcde47d8deecb30"
+  inputs-digest = "09939c0d5f32998497c8304c84dd5c397c88816d235441d87f5306ae5db43b8a"
   solver-name = "gps-cdcl"
   solver-version = 1

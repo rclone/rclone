@@ -1,0 +1,29 @@
+language: go
+sudo: false
+osx_image: xcode7.3
+os:
+- linux
+go:
+- 1.6.4
+- 1.7.6
+- 1.8.7
+- 1.9.5
+- "1.10.1"
+- tip
+install:
+- make build_dep
+script:
+- make check
+- make test
+matrix:
+  allow_failures:
+  - go: tip
+  include:
+  - os: osx
+    go: "1.10.1"
+env:
+  global:
+  - secure: RzsF80V1i69FVJwKSF8WrFzk5bRUKtPxRkhjiLOO0b1usFg0EIY6XFp3s/VTR6oT91LRXml3Bp7wHHrkPvGnHyUyuxj6loj3gIrsX8cZHUtjyQX/Szfi9MOJpbdJvfCcHByEh9YGldAz//9zvEo5oGuI29Luur3cv+BJNJElmHg=
+  - secure: Eu3kWJbxpKyioitPQo75gI3gL/HKEHVMdp6YLxxcmlrbG2xyXdlFhTB2YkkmnC8jNvf7XJWdtYnhlWM9MrNY1fUiRyGSAmpSlzzCa9XQ9lCv0hUH57+D3PAcH6gdgKn6q1iOk26CxOCKAHVaj5xdDMIyCc4mD+sLyTDQhBIHABc=
+notifications:
+  email: false
