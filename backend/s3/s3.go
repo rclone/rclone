@@ -217,6 +217,9 @@ func init() {
 			}, {
 				Value: "STANDARD_IA",
 				Help:  "Standard Infrequent Access storage class",
+			}, {
+				Value: "ONEZONE_IA",
+				Help:  "One Zone Infrequent Access storage class",
 			}},
 		}},
 	})
@@ -237,7 +240,7 @@ const (
 var (
 	// Flags
 	s3ACL          = flags.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
-	s3StorageClass = flags.StringP("s3-storage-class", "", "", "Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA)")
+	s3StorageClass = flags.StringP("s3-storage-class", "", "", "Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA|ONEZONE_IA)")
 	s3ChunkSize    = fs.SizeSuffix(s3manager.MinUploadPartSize)
 )
 
