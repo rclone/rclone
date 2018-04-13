@@ -148,3 +148,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/sevlyar/go-daemon"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/t3rm1n4l/go-mega"
