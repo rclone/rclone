@@ -128,9 +128,18 @@ func (rs *RequestServer) Serve() error {
 
 		pkt, err = makePacket(rxPacket{fxp(pktType), pktBytes})
 		if err != nil {
-			debug("makePacket err: %v", err)
-			rs.conn.Close() // shuts down recvPacket
-			break
+			switch errors.Cause(err) {
+			case errUnknownExtendedPacket:
+				if err := rs.serverConn.sendError(pkt, ErrSshFxOpUnsupported); err != nil {
+					debug("failed to send err packet: %v", err)
+					rs.conn.Close() // shuts down recvPacket
+					break
+				}
+			default:
+				debug("makePacket err: %v", err)
+				rs.conn.Close() // shuts down recvPacket
+				break
+			}
 		}
 
 		pktChan <- pkt

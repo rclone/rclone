@@ -198,24 +198,29 @@ func (p sshFxpTestBadExtendedPacket) MarshalBinary() ([]byte, error) {
 }
 
 // test that errors are sent back when we request an invalid extended packet operation
+// this validates the following rfc draft is followed https://tools.ietf.org/html/draft-ietf-secsh-filexfer-extensions-00
 func TestInvalidExtendedPacket(t *testing.T) {
 	client, server := clientServerPair(t)
 	defer client.Close()
 	defer server.Close()
 
 	badPacket := sshFxpTestBadExtendedPacket{client.nextID(), "thisDoesn'tExist", "foobar"}
-	_, _, err := client.clientConn.sendPacket(badPacket)
-	if err == nil {
-		t.Fatal("expected error from bad packet")
+	typ, data, err := client.clientConn.sendPacket(badPacket)
+	if err != nil {
+		t.Fatalf("unexpected error from sendPacket: %s", err)
+	}
+	if typ != ssh_FXP_STATUS {
+		t.Fatalf("received non-FPX_STATUS packet: %v", typ)
 	}
 
-	// try to stat a file; the client should have shut down.
-	filePath := "/etc/passwd"
-	_, err = client.Stat(filePath)
-	if err == nil {
-		t.Fatal("expected error from closed connection")
+	err = unmarshalStatus(badPacket.id(), data)
+	statusErr, ok := err.(*StatusError)
+	if !ok {
+		t.Fatal("failed to convert error from unmarshalStatus to *StatusError")
 	}
-
+	if statusErr.Code != ssh_FX_OP_UNSUPPORTED {
+		t.Errorf("statusErr.Code => %d, wanted %d", statusErr.Code, ssh_FX_OP_UNSUPPORTED)
+	}
 }
 
 // test that server handles concurrent requests correctly

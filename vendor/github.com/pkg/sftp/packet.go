@@ -874,10 +874,18 @@ type sshFxpExtendedPacket struct {
 	}
 }
 
-func (p sshFxpExtendedPacket) id() uint32     { return p.ID }
-func (p sshFxpExtendedPacket) readonly() bool { return p.SpecificPacket.readonly() }
+func (p sshFxpExtendedPacket) id() uint32 { return p.ID }
+func (p sshFxpExtendedPacket) readonly() bool {
+	if p.SpecificPacket == nil {
+		return true
+	}
+	return p.SpecificPacket.readonly()
+}
 
 func (p sshFxpExtendedPacket) respond(svr *Server) error {
+	if p.SpecificPacket == nil {
+		return nil
+	}
 	return p.SpecificPacket.respond(svr)
 }
 
@@ -897,7 +905,7 @@ func (p *sshFxpExtendedPacket) UnmarshalBinary(b []byte) error {
 	case "posix-rename@openssh.com":
 		p.SpecificPacket = &sshFxpExtendedPacketPosixRename{}
 	default:
-		return errUnknownExtendedPacket
+		return errors.Wrapf(errUnknownExtendedPacket, "packet type %v", p.SpecificPacket)
 	}
 
 	return p.SpecificPacket.UnmarshalBinary(bOrig)

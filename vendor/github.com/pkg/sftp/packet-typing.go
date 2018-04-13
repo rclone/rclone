@@ -127,7 +127,9 @@ func makePacket(p rxPacket) (requestPacket, error) {
 		return nil, errors.Errorf("unhandled packet type: %s", p.pktType)
 	}
 	if err := pkt.UnmarshalBinary(p.pktBytes); err != nil {
-		return nil, err
+		// Return partially unpacked packet to allow callers to return
+		// error messages appropriately with necessary id() method.
+		return pkt, err
 	}
 	return pkt, nil
 }
