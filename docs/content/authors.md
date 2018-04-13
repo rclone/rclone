@@ -154,3 +154,4 @@ Contributors
   * Michael P. Dubner <pywebmail@list.ru>
   * Antoine GIRARD <sapk@users.noreply.github.com>
   * Mateusz Piotrowski <mpp302@gmail.com>
+  * Animosity022 <animosity22@users.noreply.github.com>
