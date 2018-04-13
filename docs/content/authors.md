@@ -153,3 +153,4 @@ Contributors
   * Eri Bastos <bastos.eri@gmail.com>
   * Michael P. Dubner <pywebmail@list.ru>
   * Antoine GIRARD <sapk@users.noreply.github.com>
+  * Mateusz Piotrowski <mpp302@gmail.com>
