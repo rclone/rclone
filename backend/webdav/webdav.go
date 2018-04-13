@@ -237,6 +237,11 @@ func addSlash(s string) string {
 	return s
 }
 
+// removeLeadingSlash makes sure no path begins with a slash
+func removeLeadingSlash(s string) string {
+	return strings.TrimLeft(s, "/")
+}
+
 // filePath returns a file path (f.root, file)
 func (f *Fs) filePath(file string) string {
 	return rest.URLPathEscape(path.Join(f.root, file))
@@ -244,7 +249,7 @@ func (f *Fs) filePath(file string) string {
 
 // dirPath returns a directory path (f.root, dir)
 func (f *Fs) dirPath(dir string) string {
-	return addSlash(f.filePath(dir))
+	return addSlash(removeLeadingSlash(f.filePath(dir)))
 }
 
 // filePath returns a file path (f.root, remote)
@@ -391,7 +396,7 @@ type listAllFn func(string, bool, *api.Prop) bool
 func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
 	opts := rest.Opts{
 		Method: "PROPFIND",
-		Path:   f.dirPath(dir), // FIXME Should not start with /
+		Path:   f.dirPath(dir),
 		ExtraHeaders: map[string]string{
 			"Depth": "1",
 		},
