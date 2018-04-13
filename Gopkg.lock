@@ -139,8 +139,14 @@
   packages = [
     "dropbox",
     "dropbox/async",
+    "dropbox/common",
     "dropbox/file_properties",
-    "dropbox/files"
+    "dropbox/files",
+    "dropbox/sharing",
+    "dropbox/team_common",
+    "dropbox/team_policies",
+    "dropbox/users",
+    "dropbox/users_common"
   ]
   revision = "f0b3f3ded6d415a94e83e9a514fb8025e4e6be31"
 
@@ -254,8 +260,8 @@
 [[projects]]
   name = "github.com/pkg/sftp"
   packages = ["."]
-  revision = "49488377fa2f14143ba3067cf7555f60f6c7b550"
-  version = "1.5.0"
+  revision = "43ec6c679d353f6e077d3965dc74f6d996eb4a09"
+  version = "1.5.1"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -375,7 +381,8 @@
     "idna",
     "lex/httplex",
     "webdav",
-    "webdav/internal/xml"
+    "webdav/internal/xml",
+    "websocket"
   ]
   revision = "92b859f39abd2d91a854c9f9c4621b2f5054a92d"
 
@@ -468,6 +475,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a91eff17e50d8733124875c68dbe771833cb9d8d07d545ba75fc4dd561f9bfe2"
+  inputs-digest = "50d82f1173802259032be4dddb962f1b7ed8eebdbc24c73febcde47d8deecb30"
   solver-name = "gps-cdcl"
   solver-version = 1
