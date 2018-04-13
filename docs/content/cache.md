@@ -288,7 +288,7 @@ Flag to clear all the cached data for this remote before.
 #### --cache-chunk-size=SIZE ####
 
 The size of a chunk (partial file data). Use lower numbers for slower
-connections.
+connections. If the chunk size is changed, any downloaded chunks will be invalid and cache-chunk-path will need to be cleared or unexpected EOF errors will occur.
 
 **Default**: 5M
 
