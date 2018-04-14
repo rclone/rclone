@@ -204,8 +204,14 @@ func (dc *DirCache) _findDir(path string, create bool) (pathID string, err error
 
 // FindPath finds the leaf and directoryID from a path
 //
+// Do not call FindPath with the root directory - it will return an error
+//
 // If create is set parent directories will be created if they don't exist
 func (dc *DirCache) FindPath(path string, create bool) (leaf, directoryID string, err error) {
+	if path == "" {
+		err = errors.New("internal error: can't call FindPath with root directory")
+		return
+	}
 	dc.mu.Lock()
 	defer dc.mu.Unlock()
 	directory, leaf := SplitPath(path)

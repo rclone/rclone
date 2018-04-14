@@ -626,6 +626,9 @@ func Run(t *testing.T, opt *Opt) {
 		fstest.CheckListing(t, remote, []fstest.Item{file1, file2})
 		// 1: file name.txt
 		// 2: hello sausage?/../z.txt
+
+		// Tidy up moveTest directory
+		require.NoError(t, remote.Rmdir("moveTest"))
 	})
 
 	// Move src to this remote using server side move operations.
@@ -664,21 +667,38 @@ func Run(t *testing.T, opt *Opt) {
 
 		// check remotes
 		// FIXME: Prints errors.
-		fstest.CheckListing(t, remote, []fstest.Item{})
+		// remote should not exist here
+		_, err = remote.List("")
+		require.Equal(t, fs.ErrorDirNotFound, errors.Cause(err))
+		//fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, remote.Precision())
 		file1Copy := file1
 		file1Copy.Path = path.Join(newName, file1.Path)
 		file2Copy := file2
 		file2Copy.Path = path.Join(newName, file2.Path)
 		file2Copy.WinPath = path.Join(newName, file2.WinPath)
-		fstest.CheckListing(t, newRemote, []fstest.Item{file2Copy, file1Copy})
+		fstest.CheckListingWithPrecision(t, newRemote, []fstest.Item{file2Copy, file1Copy}, []string{
+			"new_name",
+			"new_name/sub_new_name",
+			"new_name/sub_new_name/hello? sausage",
+			"new_name/sub_new_name/hello? sausage/êé",
+			"new_name/sub_new_name/hello? sausage/êé/Hello, 世界",
+			"new_name/sub_new_name/hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
+		}, newRemote.Precision())
 
 		// move it back
 		err = doDirMove(newRemote, newName, "")
 		require.NoError(t, err)
 
 		// check remotes
-		fstest.CheckListing(t, remote, []fstest.Item{file2, file1})
-		fstest.CheckListing(t, newRemote, []fstest.Item{})
+		fstest.CheckListingWithPrecision(t, remote, []fstest.Item{file2, file1}, []string{
+			"hello? sausage",
+			"hello? sausage/êé",
+			"hello? sausage/êé/Hello, 世界",
+			"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
+		}, remote.Precision())
+		fstest.CheckListingWithPrecision(t, newRemote, []fstest.Item{}, []string{
+			"new_name",
+		}, newRemote.Precision())
 	})
 
 	// TestFsRmdirFull tests removing a non empty directory

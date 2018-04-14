@@ -1195,10 +1195,16 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	}
 
 	// Find ID of src parent
-	_, srcDirectoryID, err := srcFs.dirCache.FindPath(srcRemote, false)
+	var srcDirectoryID string
+	if srcRemote == "" {
+		srcDirectoryID, err = srcFs.dirCache.RootParentID()
+	} else {
+		_, srcDirectoryID, err = srcFs.dirCache.FindPath(srcRemote, false)
+	}
 	if err != nil {
 		return err
 	}
+
 	// Find ID of src
 	srcID, err := srcFs.dirCache.FindDir(srcRemote, false)
 	if err != nil {
