@@ -73,6 +73,9 @@ func init() {
 				Value: "owncloud",
 				Help:  "Owncloud",
 			}, {
+				Value: "sharepoint",
+				Help:  "Sharepoint",
+			}, {
 				Value: "other",
 				Help:  "Other site/service or software",
 			}},

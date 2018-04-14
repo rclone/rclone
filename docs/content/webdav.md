@@ -82,7 +82,9 @@ Choose a number from below, or type in your own value
    \ "nextcloud"
  2 / Owncloud
    \ "owncloud"
- 3 / Other site/service or software
+ 3 / Sharepoint
+   \ "sharepoint"
+ 4 / Other site/service or software
    \ "other"
 vendor> 1
 User name
@@ -171,3 +173,44 @@ If you are using `put.io` with `rclone mount` then use the
 mount.
 
 For more help see [the put.io webdav docs](http://help.put.io/apps-and-integrations/ftp-and-webdav).
+
+## Sharepoint ##
+
+Can be used with Sharepoint provided by OneDrive for Business
+or Office365 Education Accounts.
+This feature is only needed for a few of these Accounts,
+mostly Office365 Education ones. These accounts are sometimes not
+verified by the domain owner [github#1975](https://github.com/ncw/rclone/issues/1975)
+
+This means that these accounts can't be added using the official
+API (other Accounts should work with the "onedrive" option). However,
+it is possible to access them using webdav.
+
+To use a sharepoint remote with rclone, add it like this:
+First, you need to get your remote's URL:
+
+- Go [here](https://onedrive.live.com/about/en-us/signin/)
+  to open your OneDrive or to sign in
+- Now take a look a your address bar, the URL should look like this:
+  `https://[YOUR-DOMAIN]-my.sharepoint.com/personal/[YOUR-EMAIL]/_layouts/15/onedrive.aspx`
+
+You'll only need this URL upto the email address. After that, you'll
+most likely want to add "/Documents". That subdirectory contains
+the actual data stored on your OneDrive.
+
+Add the remote to rclone like this:
+Configure the `url` as `https://[YOUR-DOMAIN]-my.sharepoint.com/personal/[YOUR-EMAIL]/Documents`
+and use your normal account email and password for `user` and `pass`.
+If you have 2FA enabled, you have to generate an app password.
+Set the `vendor` to `sharepoint`.
+
+Your config file should look like this:
+
+```
+[sharepoint]
+type = webdav
+url = https://[YOUR-DOMAIN]-my.sharepoint.com/personal/[YOUR-EMAIL]/Documents
+vendor = other
+user = YourEmailAddress
+pass = encryptedpassword
+```
