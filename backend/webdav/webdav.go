@@ -28,9 +28,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hensur/onedrive-cookie-test/odrvcookie"
-
 	"github.com/ncw/rclone/backend/webdav/api"
+	"github.com/ncw/rclone/backend/webdav/odrvcookie"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/obscure"
