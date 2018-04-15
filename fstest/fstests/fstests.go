@@ -35,22 +35,11 @@ type InternalTester interface {
 	InternalTest(*testing.T)
 }
 
-// winPath converts a path into a windows safe path
-func winPath(s string) string {
-	return strings.Map(func(r rune) rune {
-		switch r {
-		case '<', '>', '"', '|', '?', '*', ':':
-			return '_'
-		}
-		return r
-	}, s)
-}
-
 // dirsToNames returns a sorted list of names
 func dirsToNames(dirs []fs.Directory) []string {
 	names := []string{}
 	for _, dir := range dirs {
-		names = append(names, winPath(fstest.Normalize(dir.Remote())))
+		names = append(names, fstest.WinPath(fstest.Normalize(dir.Remote())))
 	}
 	sort.Strings(names)
 	return names
@@ -60,7 +49,7 @@ func dirsToNames(dirs []fs.Directory) []string {
 func objsToNames(objs []fs.Object) []string {
 	names := []string{}
 	for _, obj := range objs {
-		names = append(names, winPath(fstest.Normalize(obj.Remote())))
+		names = append(names, fstest.WinPath(fstest.Normalize(obj.Remote())))
 	}
 	sort.Strings(names)
 	return names
@@ -217,7 +206,7 @@ func Run(t *testing.T, opt *Opt) {
 		// Remove bad characters from Windows file name if set
 		if opt.SkipBadWindowsCharacters {
 			t.Logf("Removing bad windows characters from test file")
-			file2.Path = winPath(file2.Path)
+			file2.Path = fstest.WinPath(file2.Path)
 		}
 
 		fstest.Initialise()
@@ -410,7 +399,7 @@ func Run(t *testing.T, opt *Opt) {
 			for i := 1; i <= *fstest.ListRetries; i++ {
 				objs, dirs, err := walk.GetAll(remote, dir, true, 1)
 				if errors.Cause(err) == fs.ErrorDirNotFound {
-					objs, dirs, err = walk.GetAll(remote, winPath(dir), true, 1)
+					objs, dirs, err = walk.GetAll(remote, fstest.WinPath(dir), true, 1)
 				}
 				require.NoError(t, err)
 				objNames = objsToNames(objs)
@@ -433,13 +422,13 @@ func Run(t *testing.T, opt *Opt) {
 			dir = path.Dir(dir)
 			if dir == "." {
 				dir = ""
-				expectedObjNames = append(expectedObjNames, winPath(file1.Path))
+				expectedObjNames = append(expectedObjNames, fstest.WinPath(file1.Path))
 			}
 			if deepest {
-				expectedObjNames = append(expectedObjNames, winPath(file2.Path))
+				expectedObjNames = append(expectedObjNames, fstest.WinPath(file2.Path))
 				deepest = false
 			} else {
-				expectedDirNames = append(expectedDirNames, winPath(child))
+				expectedDirNames = append(expectedDirNames, fstest.WinPath(child))
 			}
 			list(dir, expectedDirNames, expectedObjNames)
 		}
