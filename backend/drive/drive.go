@@ -54,15 +54,16 @@ const (
 // Globals
 var (
 	// Flags
-	driveAuthOwnerOnly  = flags.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user.")
-	driveUseTrash       = flags.BoolP("drive-use-trash", "", true, "Send files to the trash instead of deleting permanently.")
-	driveSkipGdocs      = flags.BoolP("drive-skip-gdocs", "", false, "Skip google documents in all listings.")
-	driveSharedWithMe   = flags.BoolP("drive-shared-with-me", "", false, "Only show files that are shared with me")
-	driveTrashedOnly    = flags.BoolP("drive-trashed-only", "", false, "Only show files that are in the trash")
-	driveExtensions     = flags.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
-	driveUseCreatedDate = flags.BoolP("drive-use-created-date", "", false, "Use created date instead of modified date.")
-	driveListChunk      = flags.Int64P("drive-list-chunk", "", 1000, "Size of listing chunk 100-1000. 0 to disable.")
-	driveImpersonate    = flags.StringP("drive-impersonate", "", "", "Impersonate this user when using a service account.")
+	driveAuthOwnerOnly   = flags.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user.")
+	driveUseTrash        = flags.BoolP("drive-use-trash", "", true, "Send files to the trash instead of deleting permanently.")
+	driveSkipGdocs       = flags.BoolP("drive-skip-gdocs", "", false, "Skip google documents in all listings.")
+	driveSharedWithMe    = flags.BoolP("drive-shared-with-me", "", false, "Only show files that are shared with me")
+	driveTrashedOnly     = flags.BoolP("drive-trashed-only", "", false, "Only show files that are in the trash")
+	driveExtensions      = flags.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
+	driveUseCreatedDate  = flags.BoolP("drive-use-created-date", "", false, "Use created date instead of modified date.")
+	driveListChunk       = flags.Int64P("drive-list-chunk", "", 1000, "Size of listing chunk 100-1000. 0 to disable.")
+	driveImpersonate     = flags.StringP("drive-impersonate", "", "", "Impersonate this user when using a service account.")
+	driveAlternateExport = flags.BoolP("drive-alternate-export", "", false, "Use alternate export URLs for google documents export.")
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
 	chunkSize         = fs.SizeSuffix(8 * 1024 * 1024)
@@ -757,6 +758,18 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			}
 			obj := o.(*Object)
 			obj.url = fmt.Sprintf("%sfiles/%s/export?mimeType=%s", f.svc.BasePath, item.Id, url.QueryEscape(exportMimeType))
+			if *driveAlternateExport {
+				switch item.MimeType {
+				case "application/vnd.google-apps.drawing":
+					obj.url = fmt.Sprintf("https://docs.google.com/drawings/d/%s/export/%s", item.Id, extension)
+				case "application/vnd.google-apps.document":
+					obj.url = fmt.Sprintf("https://docs.google.com/document/d/%s/export?format=%s", item.Id, extension)
+				case "application/vnd.google-apps.spreadsheet":
+					obj.url = fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/export?format=%s", item.Id, extension)
+				case "application/vnd.google-apps.presentation":
+					obj.url = fmt.Sprintf("https://docs.google.com/presentation/d/%s/export/%s", item.Id, extension)
+				}
+			}
 			obj.isDocument = true
 			obj.mimeType = exportMimeType
 			obj.bytes = -1
