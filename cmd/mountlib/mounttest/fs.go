@@ -215,7 +215,7 @@ func (r *Run) cacheMode(cacheMode vfs.CacheMode) {
 		log.Printf("Failed to cleanup the VFS cache: %v", err)
 	}
 	// Reset the cache mode
-	r.vfs.Opt.CacheMode = cacheMode
+	r.vfs.SetCacheMode(cacheMode)
 	// Flush the directory cache
 	r.vfs.FlushDirCache()
 
