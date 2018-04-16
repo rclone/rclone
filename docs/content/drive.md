@@ -414,6 +414,17 @@ Here are the possible extensions with their corresponding mime types.
 | xlsx | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | Microsoft Office Spreadsheet |
 | zip  | application/zip | A ZIP file of HTML, Images CSS |
 
+#### --drive-alternate-export ####
+
+If this option is set this instructs rclone to use an alternate set of
+export URLs for drive documents.  Users have reported that the
+official export URLs can't export large documents, whereas these
+unofficial ones can.
+
+See rclone issue [#2243](https://github.com/ncw/rclone/issues/2243) for background,
+[this google drive issue](https://issuetracker.google.com/issues/36761333) and
+[this helpful post](https://www.labnol.org/internet/direct-links-for-google-drive/28356/).
+
 #### --drive-impersonate user ####
 
 When using a service account, this instructs rclone to impersonate the user passed in.
