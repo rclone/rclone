@@ -189,10 +189,11 @@ func (f *Fs) url(remote string) string {
 	return f.endpointURL + rest.URLPathEscape(remote)
 }
 
-func parseInt64(s string) int64 {
+// parse s into an int64, on failure return def
+func parseInt64(s string, def int64) int64 {
 	n, e := strconv.ParseInt(s, 10, 64)
 	if e != nil {
-		return 0
+		return def
 	}
 	return n
 }
@@ -409,7 +410,7 @@ func (o *Object) stat() error {
 	if err != nil {
 		t = timeUnset
 	}
-	o.size = parseInt64(res.Header.Get("Content-Length"))
+	o.size = parseInt64(res.Header.Get("Content-Length"), -1)
 	o.modTime = t
 	o.contentType = res.Header.Get("Content-Type")
 	return nil
