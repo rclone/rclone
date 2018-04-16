@@ -1051,7 +1051,7 @@ func (f *Fs) CleanUp() error {
 }
 
 // About gets quota information
-func (f *Fs) About() error {
+func (f *Fs) About() (*fs.Usage, error) {
 	var about *drive.About
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
@@ -1059,18 +1059,19 @@ func (f *Fs) About() error {
 		return shouldRetry(err)
 	})
 	if err != nil {
-		fs.Errorf(f, "Failed to get Drive storageQuota: %v", err)
-		return nil
+		return nil, errors.Wrap(err, "failed to get Drive storageQuota")
 	}
-	quota := float64(about.StorageQuota.Limit) / (1 << 30)
-	usagetotal := float64(about.StorageQuota.Usage) / (1 << 30)
-	usagedrive := float64(about.StorageQuota.UsageInDrive) / (1 << 30)
-	usagetrash := float64(about.StorageQuota.UsageInDriveTrash) / (1 << 30)
-	fmt.Printf("Quota: %.0f GiB | Used: %.1f GiB (Trash: %.1f GiB) | Available: %.1f GiB | Usage: %d%%\n",
-		quota, usagedrive, usagetrash, quota-usagedrive, int((usagedrive/quota)*100))
-	fmt.Printf("Space used in other Google services (such as Gmail): %.2f GiB\n",
-		usagetotal-usagedrive)
-	return nil
+	q := about.StorageQuota
+	usage := &fs.Usage{
+		Used:    fs.NewUsageValue(q.UsageInDrive),           // bytes in use
+		Trashed: fs.NewUsageValue(q.UsageInDriveTrash),      // bytes in trash
+		Other:   fs.NewUsageValue(q.Usage - q.UsageInDrive), // other usage eg gmail in drive
+	}
+	if q.Limit > 0 {
+		usage.Total = fs.NewUsageValue(q.Limit)          // quota of bytes that can be used
+		usage.Free = fs.NewUsageValue(q.Limit - q.Usage) // bytes which can be uploaded before reaching the quota
+	}
+	return usage, nil
 }
 
 // Move src to this remote using server side move operations.
@@ -1664,6 +1665,7 @@ var (
 	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.MergeDirser     = (*Fs)(nil)
+	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
-	_ fs.MimeTyper       = &Object{}
+	_ fs.MimeTyper       = (*Object)(nil)
 )

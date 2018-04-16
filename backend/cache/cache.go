@@ -1414,14 +1414,11 @@ func (f *Fs) CleanUp() error {
 }
 
 // About gets quota information from the Fs
-func (f *Fs) About() error {
-	f.CleanUpCache(false)
-
+func (f *Fs) About() (*fs.Usage, error) {
 	do := f.Fs.Features().About
 	if do == nil {
-		return nil
+		return nil, errors.New("About not supported")
 	}
-
 	return do()
 }
 

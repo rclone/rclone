@@ -50,10 +50,10 @@ type IdentitySet struct {
 
 // Quota groups storage space quota-related information on OneDrive into a single structure.
 type Quota struct {
-	Total     int    `json:"total"`
-	Used      int    `json:"used"`
-	Remaining int    `json:"remaining"`
-	Deleted   int    `json:"deleted"`
+	Total     int64  `json:"total"`
+	Used      int64  `json:"used"`
+	Remaining int64  `json:"remaining"`
+	Deleted   int64  `json:"deleted"`
 	State     string `json:"state"` // normal | nearing | critical | exceeded
 }
 
