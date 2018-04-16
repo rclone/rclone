@@ -33,6 +33,7 @@ import (
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/sharing"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/flags"
@@ -128,6 +129,7 @@ type Fs struct {
 	features       *fs.Features   // optional features
 	srv            files.Client   // the connection to the dropbox server
 	sharingClient  sharing.Client // as above, but for generating sharing links
+	users          users.Client   // as above, but for accessing user information
 	slashRoot      string         // root with "/" prefix, lowercase
 	slashRootSlash string         // root with "/" prefix and postfix, lowercase
 	pacer          *pacer.Pacer   // To pace the API calls
@@ -209,11 +211,13 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 	srv := files.New(config)
 	sharingClient := sharing.New(config)
+	users := users.New(config)
 
 	f := &Fs{
 		name:          name,
 		srv:           srv,
 		sharingClient: sharingClient,
+		users:         users,
 		pacer:         pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
 	f.features = (&fs.Features{
@@ -727,6 +731,33 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	return nil
 }
 
+// About gets quota information
+func (f *Fs) About() (usage *fs.Usage, err error) {
+	var q *users.SpaceUsage
+	err = f.pacer.Call(func() (bool, error) {
+		q, err = f.users.GetSpaceUsage()
+		return shouldRetry(err)
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "about failed")
+	}
+	var total uint64
+	if q.Allocation != nil {
+		if q.Allocation.Individual != nil {
+			total += q.Allocation.Individual.Allocated
+		}
+		if q.Allocation.Team != nil {
+			total += q.Allocation.Team.Allocated
+		}
+	}
+	usage = &fs.Usage{
+		Total: fs.NewUsageValue(int64(total)),          // quota of bytes that can be used
+		Used:  fs.NewUsageValue(int64(q.Used)),         // bytes in use
+		Free:  fs.NewUsageValue(int64(total - q.Used)), // bytes which can be uploaded before reaching the quota
+	}
+	return usage, nil
+}
+
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.Dropbox)
@@ -1012,5 +1043,6 @@ var (
 	_ fs.Mover        = (*Fs)(nil)
 	_ fs.PublicLinker = (*Fs)(nil)
 	_ fs.DirMover     = (*Fs)(nil)
+	_ fs.Abouter      = (*Fs)(nil)
 	_ fs.Object       = (*Object)(nil)
 )

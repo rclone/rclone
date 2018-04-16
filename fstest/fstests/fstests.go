@@ -1079,6 +1079,23 @@ func Run(t *testing.T, opt *Opt) {
 		file.Check(t, obj, remote.Precision())
 	})
 
+	// TestAbout tests the About optional interface
+	t.Run("TestObjectAbout", func(t *testing.T) {
+		skipIfNotOk(t)
+
+		// Check have About
+		doAbout := remote.Features().About
+		if doAbout == nil {
+			t.Skip("FS does not support About")
+		}
+
+		// Can't really check the output much!
+		usage, err := doAbout()
+		require.NoError(t, err)
+		require.NotNil(t, usage)
+		assert.NotEqual(t, int64(0), usage.Total)
+	})
+
 	// TestObjectPurge tests Purge
 	t.Run("TestObjectPurge", func(t *testing.T) {
 		skipIfNotOk(t)

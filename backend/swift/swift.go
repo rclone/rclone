@@ -498,6 +498,24 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	return list.Flush()
 }
 
+// About gets quota information
+func (f *Fs) About() (*fs.Usage, error) {
+	containers, err := f.c.ContainersAll(nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "container listing failed")
+	}
+	var total, objects int64
+	for _, c := range containers {
+		total += c.Bytes
+		objects += c.Count
+	}
+	usage := &fs.Usage{
+		Used:    fs.NewUsageValue(total),   // bytes in use
+		Objects: fs.NewUsageValue(objects), // objects in use
+	}
+	return usage, nil
+}
+
 // Put the object into the container
 //
 // Copy the reader in to the new object which is returned

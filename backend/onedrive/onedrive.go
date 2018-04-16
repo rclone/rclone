@@ -922,6 +922,31 @@ func (f *Fs) DirCacheFlush() {
 	f.dirCache.ResetRoot()
 }
 
+// About gets quota information
+func (f *Fs) About() (usage *fs.Usage, err error) {
+	var drive api.Drive
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "",
+	}
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(&opts, nil, &drive)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "about failed")
+	}
+	q := drive.Quota
+	usage = &fs.Usage{
+		Total:   fs.NewUsageValue(q.Total),     // quota of bytes that can be used
+		Used:    fs.NewUsageValue(q.Used),      // bytes in use
+		Trashed: fs.NewUsageValue(q.Deleted),   // bytes in trash
+		Free:    fs.NewUsageValue(q.Remaining), // bytes which can be uploaded before reaching the quota
+	}
+	return usage, nil
+}
+
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.SHA1)
@@ -1273,6 +1298,7 @@ var (
 	_ fs.Mover  = (*Fs)(nil)
 	// _ fs.DirMover = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = &Object{}
 )

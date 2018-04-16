@@ -262,6 +262,25 @@ type ListRCallback func(entries DirEntries) error
 // ListRFn is defines the call used to recursively list a directory
 type ListRFn func(dir string, callback ListRCallback) error
 
+// NewUsageValue makes a valid value
+func NewUsageValue(value int64) *int64 {
+	p := new(int64)
+	*p = value
+	return p
+}
+
+// Usage is returned by the About call
+//
+// If a value is nil then it isn't supported by that backend
+type Usage struct {
+	Total   *int64 `json:"total,omitempty"`   // quota of bytes that can be used
+	Used    *int64 `json:"used,omitempty"`    // bytes in use
+	Trashed *int64 `json:"trashed,omitempty"` // bytes in trash
+	Other   *int64 `json:"other,omitempty"`   // other usage eg gmail in drive
+	Free    *int64 `json:"free,omitempty"`    // bytes which can be uploaded before reaching the quota
+	Objects *int64 `json:"objects,omitempty"` // objects in the storage system
+}
+
 // Features describe the optional features of the Fs
 type Features struct {
 	// Feature flags, whether Fs
@@ -378,8 +397,8 @@ type Features struct {
 	// of listing recursively that doing a directory traversal.
 	ListR ListRFn
 
-	// Get quota information from the Fs
-	About func() error
+	// About gets quota information from the Fs
+	About func() (*Usage, error)
 }
 
 // Disable nil's out the named feature.  If it isn't found then it
@@ -718,7 +737,7 @@ type RangeSeeker interface {
 // Abouter is an optional interface for Fs
 type Abouter interface {
 	// About gets quota information from the Fs
-	About() error
+	About() (*Usage, error)
 }
 
 // ObjectsChan is a channel of Objects

@@ -452,6 +452,15 @@ func (f *Fs) CleanUp() error {
 	return do()
 }
 
+// About gets quota information from the Fs
+func (f *Fs) About() (*fs.Usage, error) {
+	do := f.Fs.Features().About
+	if do == nil {
+		return nil, errors.New("About not supported")
+	}
+	return do()
+}
+
 // UnWrap returns the Fs that this Fs is wrapping
 func (f *Fs) UnWrap() fs.Fs {
 	return f.Fs
@@ -699,6 +708,7 @@ var (
 	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.UnWrapper       = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
+	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.ObjectInfo      = (*ObjectInfo)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.ObjectUnWrapper = (*Object)(nil)

@@ -151,3 +151,35 @@ type ChecksumFileResult struct {
 	Hashes
 	Metadata Item `json:"metadata"`
 }
+
+// UserInfo is returned from /userinfo
+type UserInfo struct {
+	Error
+	Cryptosetup           bool   `json:"cryptosetup"`
+	Plan                  int    `json:"plan"`
+	CryptoSubscription    bool   `json:"cryptosubscription"`
+	PublicLinkQuota       int64  `json:"publiclinkquota"`
+	Email                 string `json:"email"`
+	UserID                int    `json:"userid"`
+	Result                int    `json:"result"`
+	Quota                 int64  `json:"quota"`
+	TrashRevretentionDays int    `json:"trashrevretentiondays"`
+	Premium               bool   `json:"premium"`
+	PremiumLifetime       bool   `json:"premiumlifetime"`
+	EmailVerified         bool   `json:"emailverified"`
+	UsedQuota             int64  `json:"usedquota"`
+	Language              string `json:"language"`
+	Business              bool   `json:"business"`
+	CryptoLifetime        bool   `json:"cryptolifetime"`
+	Registered            string `json:"registered"`
+	Journey               struct {
+		Claimed bool `json:"claimed"`
+		Steps   struct {
+			VerifyMail    bool `json:"verifymail"`
+			UploadFile    bool `json:"uploadfile"`
+			AutoUpload    bool `json:"autoupload"`
+			DownloadApp   bool `json:"downloadapp"`
+			DownloadDrive bool `json:"downloaddrive"`
+		} `json:"steps"`
+	} `json:"journey"`
+}
