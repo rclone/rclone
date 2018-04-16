@@ -537,9 +537,10 @@ const (
 // Globals
 var (
 	// Flags
-	s3ACL          = flags.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
-	s3StorageClass = flags.StringP("s3-storage-class", "", "", "Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA|ONEZONE_IA)")
-	s3ChunkSize    = fs.SizeSuffix(s3manager.MinUploadPartSize)
+	s3ACL             = flags.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
+	s3StorageClass    = flags.StringP("s3-storage-class", "", "", "Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA|ONEZONE_IA)")
+	s3ChunkSize       = fs.SizeSuffix(s3manager.MinUploadPartSize)
+	s3DisableChecksum = flags.BoolP("s3-disable-checksum", "", false, "Don't store MD5 checksum with object metadata")
 )
 
 // Fs represents a remote s3 server
@@ -1370,7 +1371,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		metaMtime: aws.String(swift.TimeToFloatString(modTime)),
 	}
 
-	if size > uploader.PartSize {
+	if !*s3DisableChecksum && size > uploader.PartSize {
 		hash, err := src.Hash(hash.MD5)
 
 		if err == nil && matchMd5.MatchString(hash) {
