@@ -640,6 +640,11 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 		// * Secret Access Key: AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY
 		&credentials.EnvProvider{},
 
+		// A SharedCredentialsProvider retrieves credentials
+		// from the current user's home directory.  It checks
+		// AWS_SHARED_CREDENTIALS_FILE and AWS_PROFILE too.
+		&credentials.SharedCredentialsProvider{},
+
 		// Pick up IAM role if we're in an ECS task
 		defaults.RemoteCredProvider(*def.Config, def.Handlers),
 
