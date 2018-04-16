@@ -21,8 +21,9 @@ func cleanup(t *testing.T, r *fstest.Run, vfs *VFS) {
 
 // Open a file for write
 func rwHandleCreateReadOnly(t *testing.T, r *fstest.Run) (*VFS, *RWFileHandle) {
-	vfs := New(r.Fremote, nil)
-	vfs.Opt.CacheMode = CacheModeFull
+	opt := DefaultOpt
+	opt.CacheMode = CacheModeFull
+	vfs := New(r.Fremote, &opt)
 
 	file1 := r.WriteObject("dir/file1", "0123456789abcdef", t1)
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -37,8 +38,9 @@ func rwHandleCreateReadOnly(t *testing.T, r *fstest.Run) (*VFS, *RWFileHandle) {
 
 // Open a file for write
 func rwHandleCreateWriteOnly(t *testing.T, r *fstest.Run) (*VFS, *RWFileHandle) {
-	vfs := New(r.Fremote, nil)
-	vfs.Opt.CacheMode = CacheModeFull
+	opt := DefaultOpt
+	opt.CacheMode = CacheModeFull
+	vfs := New(r.Fremote, &opt)
 
 	h, err := vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE, 0777)
 	require.NoError(t, err)
@@ -555,10 +557,11 @@ func testRWFileHandleOpenTest(t *testing.T, vfs *VFS, test *openTest) {
 
 func TestRWFileHandleOpenTests(t *testing.T) {
 	r := fstest.NewRun(t)
-	vfs := New(r.Fremote, nil)
+	opt := DefaultOpt
+	opt.CacheMode = CacheModeFull
+	vfs := New(r.Fremote, &opt)
 	defer cleanup(t, r, vfs)
 
-	vfs.Opt.CacheMode = CacheModeFull
 	for _, test := range openTests {
 		testRWFileHandleOpenTest(t, vfs, &test)
 	}

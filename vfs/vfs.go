@@ -224,19 +224,29 @@ func New(f fs.Fs, opt *Options) *VFS {
 		}
 	}
 
-	// Create the cache
-	ctx, cancel := context.WithCancel(context.Background())
-	vfs.cancel = cancel
-	cache, err := newCache(ctx, f, &vfs.Opt) // FIXME pass on context or get from Opt?
-	if err != nil {
-		// FIXME
-		panic(fmt.Sprintf("failed to create local cache: %v", err))
-	}
-	vfs.cache = cache
+	vfs.SetCacheMode(vfs.Opt.CacheMode)
 
 	// add the remote control
 	vfs.addRC()
 	return vfs
+}
+
+// SetCacheMode change the cache mode
+func (vfs *VFS) SetCacheMode(cacheMode CacheMode) {
+	vfs.Shutdown()
+	vfs.cache = nil
+	if vfs.Opt.CacheMode > CacheModeOff {
+		ctx, cancel := context.WithCancel(context.Background())
+		cache, err := newCache(ctx, vfs.f, &vfs.Opt) // FIXME pass on context or get from Opt?
+		if err != nil {
+			fs.Errorf(nil, "Failed to create vfs cache - disabling: %v", err)
+			vfs.Opt.CacheMode = CacheModeOff
+			cancel()
+			return
+		}
+		vfs.cancel = cancel
+		vfs.cache = cache
+	}
 }
 
 // Shutdown stops any background go-routines
@@ -249,6 +259,9 @@ func (vfs *VFS) Shutdown() {
 
 // CleanUp deletes the contents of the on disk cache
 func (vfs *VFS) CleanUp() error {
+	if vfs.Opt.CacheMode == CacheModeOff {
+		return nil
+	}
 	return vfs.cache.cleanUp()
 }
 
