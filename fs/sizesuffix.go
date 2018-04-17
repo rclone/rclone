@@ -22,18 +22,24 @@ func (x SizeSuffix) string() (string, string) {
 		return "off", ""
 	case x == 0:
 		return "0", ""
-	case x < 1024:
+	case x < 1<<10:
 		scaled = float64(x)
 		suffix = ""
-	case x < 1024*1024:
-		scaled = float64(x) / 1024
+	case x < 1<<20:
+		scaled = float64(x) / (1 << 10)
 		suffix = "k"
-	case x < 1024*1024*1024:
-		scaled = float64(x) / 1024 / 1024
+	case x < 1<<30:
+		scaled = float64(x) / (1 << 20)
 		suffix = "M"
-	default:
-		scaled = float64(x) / 1024 / 1024 / 1024
+	case x < 1<<40:
+		scaled = float64(x) / (1 << 30)
 		suffix = "G"
+	case x < 1<<50:
+		scaled = float64(x) / (1 << 40)
+		suffix = "T"
+	default:
+		scaled = float64(x) / (1 << 50)
+		suffix = "P"
 	}
 	if math.Floor(scaled) == scaled {
 		return fmt.Sprintf("%.0f", scaled), suffix
@@ -80,6 +86,10 @@ func (x *SizeSuffix) Set(s string) error {
 		multiplier = 1 << 20
 	case 'g', 'G':
 		multiplier = 1 << 30
+	case 't', 'T':
+		multiplier = 1 << 40
+	case 'p', 'P':
+		multiplier = 1 << 50
 	default:
 		return errors.Errorf("bad suffix %q", suffix)
 	}
