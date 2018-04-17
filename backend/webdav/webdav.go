@@ -341,10 +341,7 @@ func (f *Fs) setQuirks(vendor string) {
 		// They have to be set instead of BasicAuth
 		f.srv.RemoveHeader("Authorization") // We don't need this Header if using cookies
 		spCk := odrvcookie.New(f.user, f.pass, f.endpointURL)
-		spCookies, err := spCk.Cookies()
-		if err != nil {
-			fmt.Println("Error occured fetching cookies")
-		}
+		spCookies := spCk.Cookies()
 		f.srv.SetCookie(&spCookies.FedAuth, &spCookies.RtFa)
 	case "other":
 	default:
