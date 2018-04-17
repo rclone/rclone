@@ -251,3 +251,43 @@ func TestVFSRename(t *testing.T) {
 	err = vfs.Rename("file0", "not found/file0")
 	assert.Equal(t, os.ErrNotExist, err)
 }
+
+func TestVFSStatfs(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	vfs := New(r.Fremote, nil)
+
+	// pre-conditions
+	assert.Nil(t, vfs.usage)
+	assert.True(t, vfs.usageTime.IsZero())
+
+	// read
+	total, used, free := vfs.Statfs()
+	require.NotNil(t, vfs.usage)
+	assert.False(t, vfs.usageTime.IsZero())
+	if vfs.usage.Total != nil {
+		assert.Equal(t, *vfs.usage.Total, total)
+	} else {
+		assert.Equal(t, -1, total)
+	}
+	if vfs.usage.Free != nil {
+		assert.Equal(t, *vfs.usage.Free, free)
+	} else {
+		assert.Equal(t, -1, free)
+	}
+	if vfs.usage.Used != nil {
+		assert.Equal(t, *vfs.usage.Used, used)
+	} else {
+		assert.Equal(t, -1, used)
+	}
+
+	// read cached
+	oldUsage := vfs.usage
+	oldTime := vfs.usageTime
+	total2, used2, free2 := vfs.Statfs()
+	assert.Equal(t, oldUsage, vfs.usage)
+	assert.Equal(t, total, total2)
+	assert.Equal(t, used, used2)
+	assert.Equal(t, free, free2)
+	assert.Equal(t, oldTime, vfs.usageTime)
+}

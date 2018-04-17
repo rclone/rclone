@@ -24,6 +24,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -165,11 +166,14 @@ var (
 
 // VFS represents the top level filing system
 type VFS struct {
-	f      fs.Fs
-	root   *Dir
-	Opt    Options
-	cache  *cache
-	cancel context.CancelFunc
+	f         fs.Fs
+	root      *Dir
+	Opt       Options
+	cache     *cache
+	cancel    context.CancelFunc
+	usageMu   sync.Mutex
+	usageTime time.Time
+	usage     *fs.Usage
 }
 
 // Options is options for creating the vfs
@@ -451,4 +455,41 @@ func (vfs *VFS) Rename(oldName, newName string) error {
 		return err
 	}
 	return nil
+}
+
+// Statfs returns into about the filing system if known
+//
+// The values will be -1 if they aren't known
+//
+// This information is cached for the DirCacheTime interval
+func (vfs *VFS) Statfs() (total, used, free int64) {
+	// defer log.Trace("/", "")("total=%d, used=%d, free=%d", &total, &used, &free)
+	vfs.usageMu.Lock()
+	defer vfs.usageMu.Unlock()
+	total, used, free = -1, -1, -1
+	doAbout := vfs.f.Features().About
+	if doAbout == nil {
+		return
+	}
+	if vfs.usageTime.IsZero() || time.Since(vfs.usageTime) >= vfs.Opt.DirCacheTime {
+		var err error
+		vfs.usage, err = doAbout()
+		vfs.usageTime = time.Now()
+		if err != nil {
+			fs.Errorf(vfs.f, "Statfs failed: %v", err)
+			return
+		}
+	}
+	if u := vfs.usage; u != nil {
+		if u.Total != nil {
+			total = *u.Total
+		}
+		if u.Free != nil {
+			free = *u.Free
+		}
+		if u.Used != nil {
+			used = *u.Used
+		}
+	}
+	return
 }
