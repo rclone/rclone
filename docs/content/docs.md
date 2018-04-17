@@ -227,9 +227,9 @@ fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid
 time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
 Options which use SIZE use kByte by default.  However, a suffix of `b`
-for bytes, `k` for kBytes, `M` for MBytes and `G` for GBytes may be
-used.  These are the binary units, eg 1, 2\*\*10, 2\*\*20, 2\*\*30
-respectively.
+for bytes, `k` for kBytes, `M` for MBytes, `G` for GBytes, `T` for
+TBytes and `P` for PBytes may be used.  These are the binary units, eg
+1, 2\*\*10, 2\*\*20, 2\*\*30 respectively.
 
 ### --backup-dir=DIR ###
 
