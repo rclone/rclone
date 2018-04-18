@@ -303,7 +303,6 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, err
 	}
 
-
 	if root != "" {
 		// Check to see if the root actually an existing file
 		remote := path.Base(root)
