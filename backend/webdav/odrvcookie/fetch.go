@@ -4,7 +4,6 @@ package odrvcookie
 import (
 	"bytes"
 	"encoding/xml"
-	"fmt"
 	"html/template"
 	"net/http"
 	"net/http/cookiejar"
@@ -13,6 +12,8 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/pkg/errors"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -90,28 +91,30 @@ func New(pUser, pPass, pEndpoint string) CookieAuth {
 
 // Cookies creates a CookieResponse. It fetches the auth token and then
 // retrieves the Cookies
-func (ca *CookieAuth) Cookies() CookieResponse {
-	return ca.getSPCookie(ca.getSPToken())
+func (ca *CookieAuth) Cookies() (*CookieResponse, error) {
+	tokenResp, err := ca.getSPToken()
+	if err != nil {
+		return nil, err
+	}
+	return ca.getSPCookie(tokenResp)
 }
 
-func (ca *CookieAuth) getSPCookie(conf *SuccessResponse) CookieResponse {
+func (ca *CookieAuth) getSPCookie(conf *SuccessResponse) (*CookieResponse, error) {
 	spRoot, err := url.Parse(ca.endpoint)
 	if err != nil {
-		errs := fmt.Sprintf("Error while contructing endpoint URL: %v", err.Error())
-		panic(errs)
+		return nil, errors.Wrap(err, "Error while contructing endpoint URL")
 	}
 
 	u, err := url.Parse("https://" + spRoot.Host + "/_forms/default.aspx?wa=wsignin1.0")
 	if err != nil {
-		errs := fmt.Sprintf("Error while contructing login URL: %v", err.Error())
-		panic(errs)
+		return nil, errors.Wrap(err, "Error while constructing login URL")
 	}
 
 	// To authenticate with davfs or anything else we need two cookies (rtFa and FedAuth)
 	// In order to get them we use the token we got earlier and a cookieJar
 	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	client := &http.Client{
@@ -120,8 +123,7 @@ func (ca *CookieAuth) getSPCookie(conf *SuccessResponse) CookieResponse {
 
 	// Send the previously aquired Token as a Post parameter
 	if _, err = client.Post(u.String(), "text/xml", strings.NewReader(conf.Succ.Token)); err != nil {
-		errs := fmt.Sprintf("Error while grabbing cookies from endpoint: %v", err.Error())
-		panic(errs)
+		return nil, errors.Wrap(err, "Error while grabbing cookies from endpoint: %v")
 	}
 
 	cookieResponse := CookieResponse{}
@@ -135,10 +137,10 @@ func (ca *CookieAuth) getSPCookie(conf *SuccessResponse) CookieResponse {
 			}
 		}
 	}
-	return cookieResponse
+	return &cookieResponse, nil
 }
 
-func (ca *CookieAuth) getSPToken() (conf *SuccessResponse) {
+func (ca *CookieAuth) getSPToken() (conf *SuccessResponse, err error) {
 	reqData := map[string]interface{}{
 		"Username": ca.user,
 		"Password": ca.pass,
@@ -149,29 +151,27 @@ func (ca *CookieAuth) getSPToken() (conf *SuccessResponse) {
 
 	buf := &bytes.Buffer{}
 	if err := t.Execute(buf, reqData); err != nil {
-		errs := fmt.Sprintf("Error while filling auth token template: %v", err.Error())
-		panic(errs)
+		return nil, errors.Wrap(err, "Error while filling auth token template")
 	}
 
 	// Create and execute the first request which returns an auth token for the sharepoint service
 	// With this token we can authenticate on the login page and save the returned cookies
 	req, err := http.NewRequest("POST", "https://login.microsoftonline.com/extSTS.srf", buf)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	client := &http.Client{}
+	client := fshttp.NewClient(fs.Config)
 	resp, err := client.Do(req)
 	if err != nil {
-		errs := fmt.Sprintf("Error while logging in to endpoint: %v", err.Error())
-		panic(errs)
+		return nil, errors.Wrap(err, "Error while logging in to endpoint")
 	}
 	defer fs.CheckClose(resp.Body, &err)
 
 	respBuf := bytes.Buffer{}
 	_, err = respBuf.ReadFrom(resp.Body)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	s := respBuf.Bytes()
 
@@ -179,8 +179,7 @@ func (ca *CookieAuth) getSPToken() (conf *SuccessResponse) {
 	err = xml.Unmarshal(s, conf)
 	if err != nil {
 		// FIXME: Try to parse with FailedResponse struct (check for server error code)
-		errs := fmt.Sprintf("Error while reading endpoint response: %v", err.Error())
-		panic(errs)
+		return nil, errors.Wrap(err, "Error while reading endpoint response")
 	}
 
 	return
