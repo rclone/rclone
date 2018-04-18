@@ -191,7 +191,7 @@ First, you need to get your remote's URL:
 
 - Go [here](https://onedrive.live.com/about/en-us/signin/)
   to open your OneDrive or to sign in
-- Now take a look a your address bar, the URL should look like this:
+- Now take a look at your address bar, the URL should look like this:
   `https://[YOUR-DOMAIN]-my.sharepoint.com/personal/[YOUR-EMAIL]/_layouts/15/onedrive.aspx`
 
 You'll only need this URL upto the email address. After that, you'll
