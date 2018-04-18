@@ -86,7 +86,7 @@ Use the --json flag for a computer readable output, eg
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
-		cmd.Run(true, false, command, func() error {
+		cmd.Run(false, false, command, func() error {
 			doAbout := f.Features().About
 			if doAbout == nil {
 				return errors.Errorf("%v doesn't support about", f)
