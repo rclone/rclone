@@ -5,6 +5,7 @@
 package sftp
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -733,40 +734,44 @@ func (o *Object) Remote() string {
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(r hash.Type) (string, error) {
-	if r == hash.MD5 && o.md5sum != nil {
-		return *o.md5sum, nil
-	} else if r == hash.SHA1 && o.sha1sum != nil {
-		return *o.sha1sum, nil
+	var hashCmd string
+	if r == hash.MD5 {
+		if o.md5sum != nil {
+			return *o.md5sum, nil
+		}
+		hashCmd = "md5sum"
+	} else if r == hash.SHA1 {
+		if o.sha1sum != nil {
+			return *o.sha1sum, nil
+		}
+		hashCmd = "sha1sum"
+	} else {
+		return "", hash.ErrUnsupported
 	}
 
 	c, err := o.fs.getSftpConnection()
 	if err != nil {
-		return "", errors.Wrap(err, "Hash")
+		return "", errors.Wrap(err, "Hash get SFTP connection")
 	}
 	session, err := c.sshClient.NewSession()
 	o.fs.putSftpConnection(&c, err)
 	if err != nil {
-		o.fs.cachedHashes = nil // Something has changed on the remote system
-		return "", hash.ErrUnsupported
+		return "", errors.Wrap(err, "Hash put SFTP connection")
 	}
 
-	err = hash.ErrUnsupported
-	var outputBytes []byte
+	var stdout, stderr bytes.Buffer
+	session.Stdout = &stdout
+	session.Stderr = &stderr
 	escapedPath := shellEscape(o.path())
-	if r == hash.MD5 {
-		outputBytes, err = session.Output("md5sum " + escapedPath)
-	} else if r == hash.SHA1 {
-		outputBytes, err = session.Output("sha1sum " + escapedPath)
-	}
-
+	err = session.Run(hashCmd + " " + escapedPath)
 	if err != nil {
-		o.fs.cachedHashes = nil // Something has changed on the remote system
 		_ = session.Close()
-		return "", hash.ErrUnsupported
+		fs.Debugf(o, "Failed to calculate %v hash: %v (%s)", r, err, bytes.TrimSpace(stderr.Bytes()))
+		return "", nil
 	}
 
 	_ = session.Close()
-	str := parseHash(outputBytes)
+	str := parseHash(stdout.Bytes())
 	if r == hash.MD5 {
 		o.md5sum = &str
 	} else if r == hash.SHA1 {
