@@ -74,7 +74,7 @@ func init() {
 			Optional: true,
 		}, {
 			Name:     "use_insecure_cipher",
-			Help:     "Enable the user of the aes128-cbc cipher. This cipher is insecure and may allow plaintext data to be recovered by an attacker..",
+			Help:     "Enable the user of the aes128-cbc cipher. This cipher is insecure and may allow plaintext data to be recovered by an attacker.",
 			Optional: true,
 			Examples: []fs.OptionExample{
 				{
@@ -87,7 +87,7 @@ func init() {
 			},
 		}, {
 			Name:     "disable_hashcheck",
-			Help:     "Disable the exectution of SSH commands to determine if remote file hashing is available, leave blank unless you know what you are doing.",
+			Help:     "Disable the execution of SSH commands to determine if remote file hashing is available, leave blank unless you know what you are doing.",
 			Optional: true,
 		}},
 	}
