@@ -883,7 +883,7 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 		return errors.Wrapf(fs.ErrorNotAFile, "%q is %q", o.remote, info.Type)
 	}
 	o.hasMetaData = true
-	o.size = info.Size
+	o.size = int64(info.Size)
 	o.sha1 = info.SHA1
 	o.modTime = info.ModTime()
 	o.id = info.ID
