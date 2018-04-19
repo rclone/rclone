@@ -74,18 +74,18 @@ const (
 
 // Item describes a folder or a file as returned by Get Folder Items and others
 type Item struct {
-	Type              string `json:"type"`
-	ID                string `json:"id"`
-	SequenceID        string `json:"sequence_id"`
-	Etag              string `json:"etag"`
-	SHA1              string `json:"sha1"`
-	Name              string `json:"name"`
-	Size              int64  `json:"size"`
-	CreatedAt         Time   `json:"created_at"`
-	ModifiedAt        Time   `json:"modified_at"`
-	ContentCreatedAt  Time   `json:"content_created_at"`
-	ContentModifiedAt Time   `json:"content_modified_at"`
-	ItemStatus        string `json:"item_status"` // active, trashed if the file has been moved to the trash, and deleted if the file has been permanently deleted
+	Type              string  `json:"type"`
+	ID                string  `json:"id"`
+	SequenceID        string  `json:"sequence_id"`
+	Etag              string  `json:"etag"`
+	SHA1              string  `json:"sha1"`
+	Name              string  `json:"name"`
+	Size              float64 `json:"size"` // box returns this in xEyy format for very large numbers - see #2261
+	CreatedAt         Time    `json:"created_at"`
+	ModifiedAt        Time    `json:"modified_at"`
+	ContentCreatedAt  Time    `json:"content_created_at"`
+	ContentModifiedAt Time    `json:"content_modified_at"`
+	ItemStatus        string  `json:"item_status"` // active, trashed if the file has been moved to the trash, and deleted if the file has been permanently deleted
 }
 
 // ModTime returns the modification time of the item
