@@ -87,7 +87,7 @@ func init() {
 			},
 		}, {
 			Name:     "disable_hashcheck",
-			Help:     "Disable the execution of SSH commands to determine if remote file hashing is available, leave blank to disable unless you know what you are doing.",
+			Help:     "Disable the execution of SSH commands to determine if remote file hashing is available. Leave blank or set to false to enable hashing (recommended), set to true to disable hashing.",
 			Optional: true,
 		}},
 	}

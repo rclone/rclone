@@ -167,10 +167,11 @@ your RClone backend configuration to disable this behaviour.
 
 SFTP supports checksums if the same login has shell access and `md5sum`
 or `sha1sum` as well as `echo` are in the remote's PATH.
-This remote check can be disabled by setting the configuration option
-`disable_hashcheck` to a blank value. This may be required if you're connecting to SFTP servers
+This remote checksumming (file hashing) is recommended and enabled by default.
+Disabling the checksumming may be required if you are connecting to SFTP servers
 which are not under your control, and to which the execution of remote commands
-is prohibited.
+is prohibited.  Set the configuration option `disable_hashcheck` to `true` to
+disable checksumming.
 
 The only ssh agent supported under Windows is Putty's pageant.
 
