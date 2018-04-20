@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/ncw/rclone/backend/dropbox/dbhash"
+	"github.com/ncw/rclone/backend/onedrive/quickxorhash"
 	"github.com/pkg/errors"
 )
 
@@ -31,19 +32,24 @@ const (
 	// https://www.dropbox.com/developers/reference/content-hash
 	Dropbox
 
+	// QuickXorHash indicates Microsoft onedrive hash
+	// https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash
+	QuickXorHash
+
 	// None indicates no hashes are supported
 	None Type = 0
 )
 
 // Supported returns a set of all the supported hashes by
 // HashStream and MultiHasher.
-var Supported = NewHashSet(MD5, SHA1, Dropbox)
+var Supported = NewHashSet(MD5, SHA1, Dropbox, QuickXorHash)
 
 // Width returns the width in characters for any HashType
 var Width = map[Type]int{
-	MD5:     32,
-	SHA1:    40,
-	Dropbox: 64,
+	MD5:          32,
+	SHA1:         40,
+	Dropbox:      64,
+	QuickXorHash: 40,
 }
 
 // Stream will calculate hashes of all supported hash types.
@@ -81,6 +87,8 @@ func (h Type) String() string {
 		return "SHA-1"
 	case Dropbox:
 		return "DropboxHash"
+	case QuickXorHash:
+		return "QuickXorHash"
 	default:
 		err := fmt.Sprintf("internal error: unknown hash type: 0x%x", int(h))
 		panic(err)
@@ -98,6 +106,8 @@ func (h *Type) Set(s string) error {
 		*h = SHA1
 	case "DropboxHash":
 		*h = Dropbox
+	case "QuickXorHash":
+		*h = QuickXorHash
 	default:
 		return errors.Errorf("Unknown hash type %q", s)
 	}
@@ -126,6 +136,8 @@ func fromTypes(set Set) (map[Type]hash.Hash, error) {
 			hashers[t] = sha1.New()
 		case Dropbox:
 			hashers[t] = dbhash.New()
+		case QuickXorHash:
+			hashers[t] = quickxorhash.New()
 		default:
 			err := fmt.Sprintf("internal error: Unsupported hash type %v", t)
 			panic(err)

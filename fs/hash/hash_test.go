@@ -69,18 +69,20 @@ var hashTestSet = []hashTest{
 	{
 		input: []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
 		output: map[hash.Type]string{
-			hash.MD5:     "bf13fc19e5151ac57d4252e0e0f87abe",
-			hash.SHA1:    "3ab6543c08a75f292a5ecedac87ec41642d12166",
-			hash.Dropbox: "214d2fcf3566e94c99ad2f59bd993daca46d8521a0c447adf4b324f53fddc0c7",
+			hash.MD5:          "bf13fc19e5151ac57d4252e0e0f87abe",
+			hash.SHA1:         "3ab6543c08a75f292a5ecedac87ec41642d12166",
+			hash.Dropbox:      "214d2fcf3566e94c99ad2f59bd993daca46d8521a0c447adf4b324f53fddc0c7",
+			hash.QuickXorHash: "0110c000085000031c0001095ec00218d0000700",
 		},
 	},
 	// Empty data set
 	{
 		input: []byte{},
 		output: map[hash.Type]string{
-			hash.MD5:     "d41d8cd98f00b204e9800998ecf8427e",
-			hash.SHA1:    "da39a3ee5e6b4b0d3255bfef95601890afd80709",
-			hash.Dropbox: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+			hash.MD5:          "d41d8cd98f00b204e9800998ecf8427e",
+			hash.SHA1:         "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+			hash.Dropbox:      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+			hash.QuickXorHash: "0000000000000000000000000000000000000000",
 		},
 	},
 }
@@ -95,13 +97,13 @@ func TestMultiHasher(t *testing.T) {
 		for k, v := range sums {
 			expect, ok := test.output[k]
 			require.True(t, ok, "test output for hash not found")
-			assert.Equal(t, v, expect)
+			assert.Equal(t, expect, v)
 		}
 		// Test that all are present
 		for k, v := range test.output {
 			expect, ok := sums[k]
 			require.True(t, ok, "test output for hash not found")
-			assert.Equal(t, v, expect)
+			assert.Equal(t, expect, v)
 		}
 	}
 }
@@ -151,8 +153,8 @@ func TestHashStreamTypes(t *testing.T) {
 }
 
 func TestHashSetStringer(t *testing.T) {
-	h := hash.NewHashSet(hash.SHA1, hash.MD5, hash.Dropbox)
-	assert.Equal(t, h.String(), "[MD5, SHA-1, DropboxHash]")
+	h := hash.NewHashSet(hash.SHA1, hash.MD5, hash.Dropbox, hash.QuickXorHash)
+	assert.Equal(t, h.String(), "[MD5, SHA-1, DropboxHash, QuickXorHash]")
 	h = hash.NewHashSet(hash.SHA1)
 	assert.Equal(t, h.String(), "[SHA-1]")
 	h = hash.NewHashSet()
