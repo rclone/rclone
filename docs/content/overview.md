@@ -29,7 +29,7 @@ Here is an overview of the major features of each cloud storage system.
 | Hubic                        | MD5         | Yes     | No               | No              | R/W       |
 | Mega                         | -           | No      | No               | Yes             | -         |
 | Microsoft Azure Blob Storage | MD5         | Yes     | No               | No              | R/W       |
-| Microsoft OneDrive           | SHA1        | Yes     | Yes              | No              | R         |
+| Microsoft OneDrive           | SHA1 ‡‡     | Yes     | Yes              | No              | R         |
 | Openstack Swift              | MD5         | Yes     | No               | No              | R/W       |
 | pCloud                       | MD5, SHA1   | Yes     | No               | No              | W         |
 | QingStor                     | MD5         | No      | No               | No              | R/W       |
@@ -56,6 +56,10 @@ This is an SHA256 sum of all the 4MB block SHA256s.
 or `sha1sum` as well as `echo` are in the remote's PATH.
 
 †† WebDAV supports modtimes when used with Owncloud and Nextcloud only.
+
+‡‡ Microsoft OneDrive Personal supports SHA1 hashes, whereas OneDrive
+for business and SharePoint server support Microsoft's own
+[QuickXorHash](https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash).
 
 ### ModTime ###
 

@@ -133,8 +133,11 @@ OneDrive allows modification times to be set on objects accurate to 1
 second.  These will be used to detect whether objects need syncing or
 not.
 
-One drive supports SHA1 type hashes, so you can use `--checksum` flag.
+OneDrive personal supports SHA1 type hashes. OneDrive for business and
+Sharepoint Server support
+[QuickXorHash](https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash).
 
+For all types of OneDrive you can use the `--checksum` flag.
 
 ### Deleting files ###
 

@@ -3,6 +3,8 @@
 package onedrive
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -245,14 +247,15 @@ type Fs struct {
 //
 // Will definitely have info but maybe not meta
 type Object struct {
-	fs          *Fs       // what this object is part of
-	remote      string    // The remote path
-	hasMetaData bool      // whether info below has been set
-	size        int64     // size of the object
-	modTime     time.Time // modification time of the object
-	id          string    // ID of the object
-	sha1        string    // SHA-1 of the object content
-	mimeType    string    // Content-Type of object from server (may not be as uploaded)
+	fs           *Fs       // what this object is part of
+	remote       string    // The remote path
+	hasMetaData  bool      // whether info below has been set
+	size         int64     // size of the object
+	modTime      time.Time // modification time of the object
+	id           string    // ID of the object
+	sha1         string    // SHA-1 of the object content
+	quickxorhash string    // QuickXorHash of the object content
+	mimeType     string    // Content-Type of object from server (may not be as uploaded)
 }
 
 // ------------------------------------------------------------
@@ -949,6 +952,9 @@ func (f *Fs) About() (usage *fs.Usage, err error) {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
+	if f.isBusiness {
+		return hash.Set(hash.QuickXorHash)
+	}
 	return hash.Set(hash.SHA1)
 }
 
@@ -979,6 +985,12 @@ func (o *Object) srvPath() string {
 
 // Hash returns the SHA-1 of an object returning a lowercase hex string
 func (o *Object) Hash(t hash.Type) (string, error) {
+	if o.fs.isBusiness {
+		if t != hash.QuickXorHash {
+			return "", hash.ErrUnsupported
+		}
+		return o.quickxorhash, nil
+	}
 	if t != hash.SHA1 {
 		return "", hash.ErrUnsupported
 	}
@@ -1003,17 +1015,21 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 	o.hasMetaData = true
 	o.size = info.Size
 
-	// Docs: https://dev.onedrive.com/facets/hashes_facet.htm
+	// Docs: https://docs.microsoft.com/en-us/onedrive/developer/rest-api/resources/hashes
 	//
-	// The docs state both that the hashes are returned as hex
-	// strings, and as base64 strings. Testing reveals they are in
-	// fact uppercase hex strings.
-	//
-	// In OneDrive for Business, SHA1 and CRC32 hash values are not returned for files.
+	// We use SHA1 for onedrive personal and QuickXorHash for onedrive for business
 	if info.File != nil {
 		o.mimeType = info.File.MimeType
 		if info.File.Hashes.Sha1Hash != "" {
 			o.sha1 = strings.ToLower(info.File.Hashes.Sha1Hash)
+		}
+		if info.File.Hashes.QuickXorHash != "" {
+			h, err := base64.StdEncoding.DecodeString(info.File.Hashes.QuickXorHash)
+			if err != nil {
+				fs.Errorf(o, "Failed to decode QuickXorHash %q: %v", info.File.Hashes.QuickXorHash, err)
+			} else {
+				o.quickxorhash = hex.EncodeToString(h)
+			}
 		}
 	}
 	if info.FileSystemInfo != nil {
