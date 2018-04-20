@@ -266,9 +266,8 @@ func translateErrorDir(err error) error {
 	return err
 }
 
-// NewObject finds the Object at remote.  If it can't be found
-// it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (o fs.Object, err error) {
+// findItem finds a directory entry for the name in its parent directory
+func (f *Fs) findItem(remote string) (entry *ftp.Entry, err error) {
 	// defer fs.Trace(remote, "")("o=%v, err=%v", &o, &err)
 	fullPath := path.Join(f.root, remote)
 	dir := path.Dir(fullPath)
@@ -276,30 +275,56 @@ func (f *Fs) NewObject(remote string) (o fs.Object, err error) {
 
 	c, err := f.getFtpConnection()
 	if err != nil {
-		return nil, errors.Wrap(err, "NewObject")
+		return nil, errors.Wrap(err, "findItem")
 	}
 	files, err := c.List(dir)
 	f.putFtpConnection(&c, err)
 	if err != nil {
 		return nil, translateErrorFile(err)
 	}
-	for i, file := range files {
-		if file.Type != ftp.EntryTypeFolder && file.Name == base {
-			o := &Object{
-				fs:     f,
-				remote: remote,
-			}
-			info := &FileInfo{
-				Name:    remote,
-				Size:    files[i].Size,
-				ModTime: files[i].Time,
-			}
-			o.info = info
-
-			return o, nil
+	for _, file := range files {
+		if file.Name == base {
+			return file, nil
 		}
 	}
+	return nil, nil
+}
+
+// NewObject finds the Object at remote.  If it can't be found
+// it returns the error fs.ErrorObjectNotFound.
+func (f *Fs) NewObject(remote string) (o fs.Object, err error) {
+	// defer fs.Trace(remote, "")("o=%v, err=%v", &o, &err)
+	entry, err := f.findItem(remote)
+	if err != nil {
+		return nil, errors.Wrap(err, "NewObject")
+	}
+	if entry != nil && entry.Type != ftp.EntryTypeFolder {
+		o := &Object{
+			fs:     f,
+			remote: remote,
+		}
+		info := &FileInfo{
+			Name:    remote,
+			Size:    entry.Size,
+			ModTime: entry.Time,
+		}
+		o.info = info
+
+		return o, nil
+	}
 	return nil, fs.ErrorObjectNotFound
+}
+
+// dirExists checks the directory pointed to by remote exists or not
+func (f *Fs) dirExists(remote string) (exists bool, err error) {
+	entry, err := f.findItem(remote)
+	if err != nil {
+		return false, errors.Wrap(err, "dirExists")
+	}
+	if entry != nil && entry.Type == ftp.EntryTypeFolder {
+		return true, nil
+	}
+	return false, nil
 }
 
 // List the objects and directories in dir into entries.  The
@@ -321,6 +346,18 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	f.putFtpConnection(&c, err)
 	if err != nil {
 		return nil, translateErrorDir(err)
+	}
+	// Annoyingly FTP returns success for a directory which
+	// doesn't exist, so check it really doesn't exist if no
+	// entries found.
+	if len(files) == 0 {
+		exists, err := f.dirExists(dir)
+		if err != nil {
+			return nil, errors.Wrap(err, "list")
+		}
+		if !exists {
+			return nil, fs.ErrorDirNotFound
+		}
 	}
 	for i := range files {
 		object := files[i]
