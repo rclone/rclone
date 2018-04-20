@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/backend/webdav/api"
+	"github.com/ncw/rclone/backend/webdav/odrvcookie"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/obscure"
@@ -70,6 +71,9 @@ func init() {
 			}, {
 				Value: "owncloud",
 				Help:  "Owncloud",
+			}, {
+				Value: "sharepoint",
+				Help:  "Sharepoint",
 			}, {
 				Value: "other",
 				Help:  "Other site/service or software",
@@ -235,6 +239,11 @@ func addSlash(s string) string {
 	return s
 }
 
+// removeLeadingSlash makes sure no path begins with a slash
+func removeLeadingSlash(s string) string {
+	return strings.TrimLeft(s, "/")
+}
+
 // filePath returns a file path (f.root, file)
 func (f *Fs) filePath(file string) string {
 	return rest.URLPathEscape(path.Join(f.root, file))
@@ -242,7 +251,7 @@ func (f *Fs) filePath(file string) string {
 
 // dirPath returns a directory path (f.root, dir)
 func (f *Fs) dirPath(dir string) string {
-	return addSlash(f.filePath(dir))
+	return addSlash(removeLeadingSlash(f.filePath(dir)))
 }
 
 // filePath returns a file path (f.root, remote)
@@ -289,7 +298,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 		CanHaveEmptyDirectories: true,
 	}).Fill(f)
 	f.srv.SetErrorHandler(errorHandler)
-	f.setQuirks(vendor)
+	err = f.setQuirks(vendor)
+	if err != nil {
+		return nil, err
+	}
 
 	if root != "" {
 		// Check to see if the root actually an existing file
@@ -314,7 +326,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 }
 
 // setQuirks adjusts the Fs for the vendor passed in
-func (f *Fs) setQuirks(vendor string) {
+func (f *Fs) setQuirks(vendor string) error {
 	if vendor == "" {
 		vendor = "other"
 	}
@@ -327,6 +339,16 @@ func (f *Fs) setQuirks(vendor string) {
 	case "nextcloud":
 		f.precision = time.Second
 		f.useOCMtime = true
+	case "sharepoint":
+		// To mount sharepoint, two Cookies are required
+		// They have to be set instead of BasicAuth
+		f.srv.RemoveHeader("Authorization") // We don't need this Header if using cookies
+		spCk := odrvcookie.New(f.user, f.pass, f.endpointURL)
+		spCookies, err := spCk.Cookies()
+		if err != nil {
+			return err
+		}
+		f.srv.SetCookie(&spCookies.FedAuth, &spCookies.RtFa)
 	case "other":
 	default:
 		fs.Debugf(f, "Unknown vendor %q", vendor)
@@ -336,6 +358,7 @@ func (f *Fs) setQuirks(vendor string) {
 	if !f.canStream {
 		f.features.PutStream = nil
 	}
+	return nil
 }
 
 // Return an Object from a path
@@ -379,7 +402,7 @@ type listAllFn func(string, bool, *api.Prop) bool
 func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
 	opts := rest.Opts{
 		Method: "PROPFIND",
-		Path:   f.dirPath(dir), // FIXME Should not start with /
+		Path:   f.dirPath(dir),
 		ExtraHeaders: map[string]string{
 			"Depth": "1",
 		},
