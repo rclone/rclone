@@ -335,6 +335,27 @@ func Run(t *testing.T, opt *Opt) {
 		TestFsListDirEmpty(t)
 	})
 
+	// TestFsListDirNotFound tests listing the directories from an empty directory
+	TestFsListDirNotFound := func(t *testing.T) {
+		skipIfNotOk(t)
+		objs, dirs, err := walk.GetAll(remote, "does not exist", true, 1)
+		if !remote.Features().CanHaveEmptyDirectories {
+			if err != fs.ErrorDirNotFound {
+				assert.NoError(t, err)
+				assert.Equal(t, 0, len(objs)+len(dirs))
+			}
+		} else {
+			assert.Equal(t, fs.ErrorDirNotFound, err)
+		}
+	}
+	t.Run("TestFsListDirNotFound", TestFsListDirNotFound)
+
+	// TestFsListRDirNotFound tests listing the directories from an empty directory using ListR
+	t.Run("TestFsListRDirNotFound", func(t *testing.T) {
+		defer skipIfNotListR(t)()
+		TestFsListDirNotFound(t)
+	})
+
 	// TestFsNewObjectNotFound tests not finding a object
 	t.Run("TestFsNewObjectNotFound", func(t *testing.T) {
 		skipIfNotOk(t)
@@ -666,10 +687,9 @@ func Run(t *testing.T, opt *Opt) {
 		require.NoError(t, err)
 
 		// check remotes
-		// FIXME: Prints errors.
 		// remote should not exist here
 		_, err = remote.List("")
-		require.Equal(t, fs.ErrorDirNotFound, errors.Cause(err))
+		assert.Equal(t, fs.ErrorDirNotFound, errors.Cause(err))
 		//fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, remote.Precision())
 		file1Copy := file1
 		file1Copy.Path = path.Join(newName, file1.Path)
