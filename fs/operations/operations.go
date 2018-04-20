@@ -840,7 +840,7 @@ func ListLong(f fs.Fs, w io.Writer) error {
 //
 // Lists in parallel which may get them out of order
 func Md5sum(f fs.Fs, w io.Writer) error {
-	return hashLister(hash.MD5, f, w)
+	return HashLister(hash.MD5, f, w)
 }
 
 // Sha1sum list the Fs to the supplied writer
@@ -849,7 +849,7 @@ func Md5sum(f fs.Fs, w io.Writer) error {
 //
 // Lists in parallel which may get them out of order
 func Sha1sum(f fs.Fs, w io.Writer) error {
-	return hashLister(hash.SHA1, f, w)
+	return HashLister(hash.SHA1, f, w)
 }
 
 // DropboxHashSum list the Fs to the supplied writer
@@ -858,7 +858,7 @@ func Sha1sum(f fs.Fs, w io.Writer) error {
 //
 // Lists in parallel which may get them out of order
 func DropboxHashSum(f fs.Fs, w io.Writer) error {
-	return hashLister(hash.Dropbox, f, w)
+	return HashLister(hash.Dropbox, f, w)
 }
 
 // hashSum returns the human readable hash for ht passed in.  This may
@@ -876,7 +876,8 @@ func hashSum(ht hash.Type, o fs.Object) string {
 	return sum
 }
 
-func hashLister(ht hash.Type, f fs.Fs, w io.Writer) error {
+// HashLister does a md5sum equivalent for the hash type passed in
+func HashLister(ht hash.Type, f fs.Fs, w io.Writer) error {
 	return ListFn(f, func(o fs.Object) {
 		sum := hashSum(ht, o)
 		syncFprintf(w, "%*s  %s\n", hash.Width[ht], sum, o.Remote())
