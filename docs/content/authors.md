@@ -125,7 +125,7 @@ Contributors
   * Jon Fautley <jon@dead.li>
   * lewapm <32110057+lewapm@users.noreply.github.com>
   * Yassine Imounachen <yassine256@gmail.com>
-  * Chris Redekop <chris-redekop@users.noreply.github.com>
+  * Chris Redekop <chris-redekop@users.noreply.github.com> <chris.redekop@gmail.com>
   * Jon Fautley <jon@adenoid.appstal.co.uk>
   * Will Gunn <WillGunn@users.noreply.github.com>
   * Lucas Bremgartner <lucas@bremis.ch>
