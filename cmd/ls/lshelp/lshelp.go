@@ -19,4 +19,8 @@ There are several related list commands
 Note that ` + "`ls`,`lsl`,`lsd`" + ` all recurse by default - use "--max-depth 1" to stop the recursion.
 
 The other list commands ` + "`lsf`,`lsjson`" + ` do not recurse by default - use "-R" to make them recurse.
+
+Listing a non existent directory will produce an error except for
+remotes which can't have empty directories (eg s3, swift, gcs, etc -
+the bucket based remotes).
 `
