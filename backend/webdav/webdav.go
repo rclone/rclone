@@ -256,6 +256,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if !strings.HasSuffix(endpoint, "/") {
 		endpoint += "/"
 	}
+	root = strings.Trim(root, "/")
 
 	user := config.FileGet(name, "user")
 	pass := config.FileGet(name, "pass")
