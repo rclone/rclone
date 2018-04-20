@@ -157,3 +157,4 @@ Contributors
   * Animosity022 <animosity22@users.noreply.github.com>
   * Peter Baumgartner <pete@lincolnloop.com>
   * Craig Rachel <craig@craigrachel.com>
+  * Michael G. Noll <miguno@users.noreply.github.com>
