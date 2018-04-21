@@ -90,6 +90,7 @@ Dedupe can be run non interactively using the ` + "`" + `--dedupe-mode` + "`" + 
   * ` + "`" + `--dedupe-mode first` + "`" + ` - removes identical files then keeps the first one.
   * ` + "`" + `--dedupe-mode newest` + "`" + ` - removes identical files then keeps the newest one.
   * ` + "`" + `--dedupe-mode oldest` + "`" + ` - removes identical files then keeps the oldest one.
+  * ` + "`" + `--dedupe-mode largest` + "`" + ` - removes identical files then keeps the largest one.
   * ` + "`" + `--dedupe-mode rename` + "`" + ` - removes identical files then renames the rest to be different.
 
 For example to rename all the identically named photos in your Google Photos directory, do
