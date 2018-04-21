@@ -95,6 +95,13 @@ func (s *StatsInfo) Bytes(bytes int64) {
 	s.bytes += bytes
 }
 
+// GetBytes returns the number of bytes transferred so far
+func (s *StatsInfo) GetBytes() int64 {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	return s.bytes
+}
+
 // Errors updates the stats for errors
 func (s *StatsInfo) Errors(errors int64) {
 	s.lock.Lock()

@@ -536,6 +536,13 @@ files not recursed through are considered excluded and will be deleted
 on the destination.  Test first with `--dry-run` if you are not sure
 what will happen.
 
+### --max-transfer=SIZE ###
+
+Rclone will stop transferring when it has reached the size specified.
+Defaults to off.
+
+When the limit is reached all transfers will stop immediately.
+
 ### --modify-window=TIME ###
 
 When checking whether a file has been modified, this is the maximum

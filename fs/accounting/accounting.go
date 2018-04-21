@@ -10,7 +10,13 @@ import (
 	"github.com/VividCortex/ewma"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/asyncreader"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/pkg/errors"
 )
+
+// ErrorMaxTransferLimitReached is returned from Read when the max
+// transfer limit is reached.
+var ErrorMaxTransferLimitReached = fserrors.FatalError(errors.New("Max transfer limit reached as set by --max-transfer"))
 
 // Account limits and accounts for one transfer
 type Account struct {
@@ -27,6 +33,7 @@ type Account struct {
 	name    string
 	statmu  sync.Mutex         // Separate mutex for stat values.
 	bytes   int64              // Total number of bytes read
+	max     int64              // if >=0 the max number of bytes to transfer
 	start   time.Time          // Start time of first read
 	lpTime  time.Time          // Time of last average measurement
 	lpBytes int                // Number of bytes read since last measurement
@@ -48,6 +55,7 @@ func NewAccountSizeName(in io.ReadCloser, size int64, name string) *Account {
 		exit:   make(chan struct{}),
 		avg:    ewma.NewMovingAverage(),
 		lpTime: time.Now(),
+		max:    int64(fs.Config.MaxTransfer),
 	}
 	go acc.averageLoop()
 	Stats.inProgress.set(acc.name, acc)
@@ -131,8 +139,12 @@ func (acc *Account) averageLoop() {
 
 // read bytes from the io.Reader passed in and account them
 func (acc *Account) read(in io.Reader, p []byte) (n int, err error) {
-	// Set start time.
 	acc.statmu.Lock()
+	if acc.max >= 0 && Stats.GetBytes() >= acc.max {
+		acc.statmu.Unlock()
+		return 0, ErrorMaxTransferLimitReached
+	}
+	// Set start time.
 	if acc.start.IsZero() {
 		acc.start = time.Now()
 	}
