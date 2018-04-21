@@ -131,6 +131,22 @@ func TestDeduplicateOldest(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1)
 }
 
+func TestDeduplicateLargest(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	skipIfCantDedupe(t, r.Fremote)
+
+	file1 := r.WriteUncheckedObject("one", "This is one", t1)
+	file2 := r.WriteUncheckedObject("one", "This is one too", t2)
+	file3 := r.WriteUncheckedObject("one", "This is another one", t3)
+	r.CheckWithDuplicates(t, file1, file2, file3)
+
+	err := operations.Deduplicate(r.Fremote, operations.DeduplicateLargest)
+	require.NoError(t, err)
+
+	fstest.CheckItems(t, r.Fremote, file3)
+}
+
 func TestDeduplicateRename(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
