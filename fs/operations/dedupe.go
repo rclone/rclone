@@ -119,6 +119,7 @@ const (
 	DeduplicateNewest                             // choose the newest object
 	DeduplicateOldest                             // choose the oldest object
 	DeduplicateRename                             // rename the objects
+	DeduplicateLargest							  // choose the largest object
 )
 
 func (x DeduplicateMode) String() string {
@@ -135,6 +136,8 @@ func (x DeduplicateMode) String() string {
 		return "oldest"
 	case DeduplicateRename:
 		return "rename"
+	case DeduplicateLargest:
+		return "largest"
 	}
 	return "unknown"
 }
@@ -154,6 +157,8 @@ func (x *DeduplicateMode) Set(s string) error {
 		*x = DeduplicateOldest
 	case "rename":
 		*x = DeduplicateRename
+	case "largest":
+		*x = DeduplicateLargest
 	default:
 		return errors.Errorf("Unknown mode for dedupe %q.", s)
 	}
@@ -260,6 +265,7 @@ func Deduplicate(f fs.Fs, mode DeduplicateMode) error {
 	if err != nil {
 		return err
 	}
+
 	for remote, objs := range files {
 		if len(objs) > 1 {
 			fs.Logf(remote, "Found %d duplicates - deleting identical copies", len(objs))
@@ -281,6 +287,17 @@ func Deduplicate(f fs.Fs, mode DeduplicateMode) error {
 				dedupeDeleteAllButOne(0, remote, objs)
 			case DeduplicateRename:
 				dedupeRename(remote, objs)
+			case DeduplicateLargest:
+				size,largest,largestIndex := int64(0),int64(-1),-1
+				for i, obj := range objs {
+					size = obj.Size()
+					if size > largest {
+						largest,largestIndex = size,i
+					}
+				}
+				if largestIndex > -1 {
+					dedupeDeleteAllButOne(largestIndex, remote, objs)
+				}
 			case DeduplicateSkip:
 				// skip
 			default:
