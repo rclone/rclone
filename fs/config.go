@@ -71,6 +71,7 @@ type ConfigInfo struct {
 	StatsFileNameLength   int
 	AskPassword           bool
 	UseServerModTime      bool
+	MaxTransfer           SizeSuffix
 }
 
 // NewConfig creates a new config with everything set to the default
@@ -98,6 +99,7 @@ func NewConfig() *ConfigInfo {
 	c.StatsFileNameLength = 40
 	c.AskPassword = true
 	c.TPSLimitBurst = 1
+	c.MaxTransfer = -1
 
 	return c
 }

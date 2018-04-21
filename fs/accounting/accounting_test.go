@@ -7,7 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/asyncreader"
+	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -180,4 +182,29 @@ func TestAccountAccounter(t *testing.T) {
 	assert.True(t, unwrapped == in2)
 	assert.True(t, wrap(in3) == in3)
 
+}
+
+func TestAccountMaxTransfer(t *testing.T) {
+	old := fs.Config.MaxTransfer
+	fs.Config.MaxTransfer = 15
+	defer func() {
+		fs.Config.MaxTransfer = old
+	}()
+	Stats.ResetCounters()
+
+	in := ioutil.NopCloser(bytes.NewBuffer(make([]byte, 100)))
+	acc := NewAccountSizeName(in, 1, "test")
+
+	var b = make([]byte, 10)
+
+	n, err := acc.Read(b)
+	assert.Equal(t, 10, n)
+	assert.NoError(t, err)
+	n, err = acc.Read(b)
+	assert.Equal(t, 10, n)
+	assert.NoError(t, err)
+	n, err = acc.Read(b)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, ErrorMaxTransferLimitReached, err)
+	assert.True(t, fserrors.IsFatalError(err))
 }
