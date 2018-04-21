@@ -224,10 +224,18 @@ func (s *syncCopyMove) pairChecker(in fs.ObjectPairChan, out fs.ObjectPairChan, 
 							} else {
 								// If successful zero out the dst as it is no longer there and copy the file
 								pair.Dst = nil
-								out <- pair
+								select {
+								case <-s.ctx.Done():
+									return
+								case out <- pair:
+								}
 							}
 						} else {
-							out <- pair
+							select {
+							case <-s.ctx.Done():
+								return
+							case out <- pair:
+							}
 						}
 					}
 				} else {
@@ -261,7 +269,11 @@ func (s *syncCopyMove) pairRenamer(in fs.ObjectPairChan, out fs.ObjectPairChan, 
 			src := pair.Src
 			if !s.tryRename(src) {
 				// pass on if not renamed
-				out <- pair
+				select {
+				case <-s.ctx.Done():
+					return
+				case out <- pair:
+				}
 			}
 		case <-s.ctx.Done():
 			return
@@ -407,6 +419,7 @@ func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
 	// Delete the spare files
 	toDelete := make(fs.ObjectsChan, fs.Config.Transfers)
 	go func() {
+	outer:
 		for remote, o := range s.dstFiles {
 			if checkSrcMap {
 				_, exists := s.srcFiles[remote]
@@ -417,7 +430,11 @@ func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
 			if s.aborting() {
 				break
 			}
-			toDelete <- o
+			select {
+			case <-s.ctx.Done():
+				break outer
+			case toDelete <- o:
+			}
 		}
 		close(toDelete)
 	}()
@@ -612,7 +629,11 @@ func (s *syncCopyMove) run() error {
 		s.makeRenameMap()
 		// Attempt renames for all the files which don't have a matching dst
 		for _, src := range s.renameCheck {
-			s.toBeRenamed <- fs.ObjectPair{Src: src, Dst: nil}
+			select {
+			case <-s.ctx.Done():
+				break
+			case s.toBeRenamed <- fs.ObjectPair{Src: src, Dst: nil}:
+			}
 		}
 	}
 
@@ -646,6 +667,9 @@ func (s *syncCopyMove) run() error {
 		//delete empty subdirectories that were part of the move
 		s.processError(deleteEmptyDirectories(s.fsrc, s.srcEmptyDirs))
 	}
+
+	// cancel the context to free resources
+	s.cancel()
 	return s.currentError()
 }
 
@@ -663,7 +687,11 @@ func (s *syncCopyMove) DstOnly(dst fs.DirEntry) (recurse bool) {
 			s.dstFiles[x.Remote()] = x
 			s.dstFilesMu.Unlock()
 		case fs.DeleteModeDuring, fs.DeleteModeOnly:
-			s.deleteFilesCh <- x
+			select {
+			case <-s.ctx.Done():
+				return
+			case s.deleteFilesCh <- x:
+			}
 		default:
 			panic(fmt.Sprintf("unexpected delete mode %d", s.deleteMode))
 		}
@@ -692,10 +720,18 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 	case fs.Object:
 		if s.trackRenames {
 			// Save object to check for a rename later
-			s.trackRenamesCh <- x
+			select {
+			case <-s.ctx.Done():
+				return
+			case s.trackRenamesCh <- x:
+			}
 		} else {
 			// No need to check since doesn't exist
-			s.toBeUploaded <- fs.ObjectPair{Src: x, Dst: nil}
+			select {
+			case <-s.ctx.Done():
+				return
+			case s.toBeUploaded <- fs.ObjectPair{Src: x, Dst: nil}:
+			}
 		}
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
@@ -719,7 +755,11 @@ func (s *syncCopyMove) Match(dst, src fs.DirEntry) (recurse bool) {
 		}
 		dstX, ok := dst.(fs.Object)
 		if ok {
-			s.toBeChecked <- fs.ObjectPair{Src: srcX, Dst: dstX}
+			select {
+			case <-s.ctx.Done():
+				return
+			case s.toBeChecked <- fs.ObjectPair{Src: srcX, Dst: dstX}:
+			}
 		} else {
 			// FIXME src is file, dst is directory
 			err := errors.New("can't overwrite directory with file")
