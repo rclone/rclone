@@ -162,7 +162,13 @@ func (f testStatFS) Attr(ctx context.Context, a *fuse.Attr) error {
 
 func (f testStatFS) Statfs(ctx context.Context, req *fuse.StatfsRequest, resp *fuse.StatfsResponse) error {
 	resp.Blocks = 42
+	resp.Bfree = 10
+	resp.Bavail = 3
 	resp.Files = 13
+	resp.Ffree = 11
+	resp.Bsize = 1000
+	resp.Namelen = 34
+	resp.Frsize = 7
 	return nil
 }
 
@@ -193,8 +199,26 @@ func TestStatfs(t *testing.T) {
 		if g, e := st.Blocks, uint64(42); g != e {
 			t.Errorf("got Blocks = %d; want %d", g, e)
 		}
+		if g, e := st.Bfree, uint64(10); g != e {
+			t.Errorf("got Bfree = %d; want %d", g, e)
+		}
+		if g, e := st.Bavail, uint64(3); g != e {
+			t.Errorf("got Bavail = %d; want %d", g, e)
+		}
 		if g, e := st.Files, uint64(13); g != e {
 			t.Errorf("got Files = %d; want %d", g, e)
+		}
+		if g, e := st.Ffree, uint64(11); g != e {
+			t.Errorf("got Ffree = %d; want %d", g, e)
+		}
+		if g, e := st.Bsize, int64(1000); g != e {
+			t.Errorf("got Bsize = %d; want %d", g, e)
+		}
+		if g, e := st.Namelen, int64(34); g != e {
+			t.Errorf("got Namelen = %d; want %d", g, e)
+		}
+		if g, e := st.Frsize, int64(7); g != e {
+			t.Errorf("got Frsize = %d; want %d", g, e)
 		}
 	}
 
