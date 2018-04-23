@@ -36,7 +36,7 @@ This lists all the registered remote control commands as a JSON map in
 the commands response.`,
 	})
 	Add(Call{
-		Path:  "rc/pid",
+		Path:  "core/pid",
 		Fn:    rcPid,
 		Title: "Return PID of current process",
 		Help: `
@@ -46,7 +46,7 @@ Useful for stopping rclone process.`,
 	Add(Call{
 		Path:  "core/memstats",
 		Fn:    rcMemStats,
-		Title: "Returns the memory statistics of the running program",
+		Title: "Returns the memory statistics",
 		Help: `
 This returns the memory statistics of the running program.  What the values mean
 are explained in the go docs: https://golang.org/pkg/runtime/#MemStats
