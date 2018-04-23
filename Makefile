@@ -92,6 +92,9 @@ MANUAL.txt:	MANUAL.md
 commanddocs: rclone
 	rclone gendocs docs/content/commands/
 
+rcdocs: rclone
+	bin/make_rc_docs.sh
+
 install: rclone
 	install -d ${DESTDIR}/usr/bin
 	install -t ${DESTDIR}/usr/bin ${GOPATH}/bin/rclone

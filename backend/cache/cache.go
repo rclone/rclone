@@ -429,6 +429,11 @@ Purge a remote from the cache backend. Supports either a directory or a file.
 Params:
   - remote = path to remote (required)
   - withData = true/false to delete cached data (chunks) as well (optional)
+
+Eg
+
+    rclone rc cache/expire remote=path/to/sub/folder/
+    rclone rc cache/expire remote=/ withData=true 
 `,
 	})
 

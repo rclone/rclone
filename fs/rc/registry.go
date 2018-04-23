@@ -3,6 +3,7 @@
 package rc
 
 import (
+	"sort"
 	"strings"
 	"sync"
 
@@ -54,12 +55,17 @@ func (r *Registry) get(path string) *Call {
 	return r.call[path]
 }
 
-// get a list of all calls
+// get a list of all calls in alphabetical order
 func (r *Registry) list() (out []*Call) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	for _, call := range r.call {
-		out = append(out, call)
+	var keys []string
+	for key := range r.call {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		out = append(out, r.call[key])
 	}
 	return out
 }

@@ -149,8 +149,8 @@ This sets the bandwidth limit to that passed in.
 
 Eg
 
-    rclone core/bwlimit rate=1M
-    rclone core/bwlimit rate=off
+    rclone rc core/bwlimit rate=1M
+    rclone rc core/bwlimit rate=off
 
 The format of the parameter is exactly the same as passed to --bwlimit
 except only one bandwidth may be specified.
