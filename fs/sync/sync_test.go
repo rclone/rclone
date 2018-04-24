@@ -1109,3 +1109,37 @@ func TestSyncImmutable(t *testing.T) {
 	fstest.CheckItems(t, r.Flocal, file2)
 	fstest.CheckItems(t, r.Fremote, file1)
 }
+
+// Test that aborting on max upload works
+func TestAbort(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	if r.Fremote.Name() != "local" {
+		t.Skip("This test only runs on local")
+	}
+
+	oldMaxTransfer := fs.Config.MaxTransfer
+	oldTransfers := fs.Config.Transfers
+	oldCheckers := fs.Config.Checkers
+	fs.Config.MaxTransfer = 3 * 1024
+	fs.Config.Transfers = 1
+	fs.Config.Checkers = 1
+	defer func() {
+		fs.Config.MaxTransfer = oldMaxTransfer
+		fs.Config.Transfers = oldTransfers
+		fs.Config.Checkers = oldCheckers
+	}()
+
+	// Create file on source
+	file1 := r.WriteFile("file1", string(make([]byte, 5*1024)), t1)
+	file2 := r.WriteFile("file2", string(make([]byte, 2*1024)), t1)
+	file3 := r.WriteFile("file3", string(make([]byte, 3*1024)), t1)
+	fstest.CheckItems(t, r.Flocal, file1, file2, file3)
+	fstest.CheckItems(t, r.Fremote)
+
+	accounting.Stats.ResetCounters()
+
+	err := Sync(r.Fremote, r.Flocal)
+	assert.Equal(t, accounting.ErrorMaxTransferLimitReached, err)
+}
