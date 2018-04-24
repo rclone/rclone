@@ -104,6 +104,9 @@ case $OS_type in
   arm*)
     OS_type='arm'
     ;;
+  aarch64)
+    OS_type='arm64'
+    ;;
   *)
     echo 'OS type not supported'
     exit 2
