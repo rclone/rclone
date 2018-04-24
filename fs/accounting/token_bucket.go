@@ -115,6 +115,19 @@ func limitBandwidth(n int) {
 	tokenBucketMu.Unlock()
 }
 
+// SetBwLimit sets the current bandwidth limit
+func SetBwLimit(bandwidth fs.SizeSuffix) {
+	tokenBucketMu.Lock()
+	defer tokenBucketMu.Unlock()
+	if bandwidth > 0 {
+		tokenBucket = newTokenBucket(bandwidth)
+		fs.Logf(nil, "Bandwidth limit set to %v", bandwidth)
+	} else {
+		tokenBucket = nil
+		fs.Logf(nil, "Bandwidth limit reset to unlimited")
+	}
+}
+
 // Remote control for the token bucket
 func init() {
 	rc.Add(rc.Call{
@@ -137,10 +150,7 @@ func init() {
 				return out, errors.New("need exactly 1 bandwidth setting")
 			}
 			bw := bws[0]
-			tokenBucketMu.Lock()
-			tokenBucket = newTokenBucket(bw.Bandwidth)
-			tokenBucketMu.Unlock()
-			fs.Logf(nil, "Bandwidth limit set to %v", bw.Bandwidth)
+			SetBwLimit(bw.Bandwidth)
 			return rc.Params{"rate": bw.Bandwidth.String()}, nil
 		},
 		Title: "Set the bandwidth limit.",
