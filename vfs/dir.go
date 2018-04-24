@@ -191,6 +191,9 @@ func (d *Dir) _readDir() error {
 	found := make(map[string]struct{})
 	for _, entry := range entries {
 		name := path.Base(entry.Remote())
+		if name == "." || name == ".." {
+			continue
+		}
 		node := d.items[name]
 		found[name] = struct{}{}
 		switch item := entry.(type) {
