@@ -61,9 +61,7 @@ build_dep:
 ifdef FULL_TESTS
 	go get -u github.com/kisielk/errcheck
 	go get -u golang.org/x/tools/cmd/goimports
-	-#go get -u golang.org/x/lint/golint
-	-#temporary workaround for https://github.com/golang/lint/issues/397
-	[ -d "$$GOPATH/src/golang.org/x/lint" ] || ( mkdir -p $$GOPATH/src/golang.org/x && git clone --depth 1 https://github.com/golang/lint.git $$GOPATH/src/golang.org/x/lint && go get -u github.com/golang/lint/golint )
+	go get -u github.com/golang/lint/golint
 	go get -u github.com/inconshreveable/mousetrap
 	go get -u github.com/tools/godep
 endif
