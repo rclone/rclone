@@ -91,7 +91,7 @@ Contributors
   * John Papandriopoulos <jpap@users.noreply.github.com>
   * Zhiming Wang <zmwangx@gmail.com>
   * Andy Pilate <cubox@cubox.me>
-  * Oliver Heyme <olihey@googlemail.com> <olihey@users.noreply.github.com>
+  * Oliver Heyme <olihey@googlemail.com> <olihey@users.noreply.github.com> <de8olihe@lego.com>
   * wuyu <wuyu@yunify.com>
   * Andrei Dragomir <adragomi@adobe.com>
   * Christian Brüggemann <mail@cbruegg.com>
@@ -159,3 +159,4 @@ Contributors
   * Craig Rachel <craig@craigrachel.com>
   * Michael G. Noll <miguno@users.noreply.github.com>
   * hensur <me@hensur.de>
+  * Oliver Heyme <de8olihe@lego.com>
