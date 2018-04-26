@@ -23,9 +23,9 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.StringArrayVarP(flagSet, &Opt.IncludeRule, "include", "", nil, "Include files matching pattern")
 	flags.StringArrayVarP(flagSet, &Opt.IncludeFrom, "include-from", "", nil, "Read include patterns from file")
 	flags.StringArrayVarP(flagSet, &Opt.FilesFrom, "files-from", "", nil, "Read list of source-file names from file")
-	flags.FVarP(flagSet, &Opt.MinAge, "min-age", "", "Don't transfer any file younger than this in s or suffix ms|s|m|h|d|w|M|y")
-	flags.FVarP(flagSet, &Opt.MaxAge, "max-age", "", "Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y")
-	flags.FVarP(flagSet, &Opt.MinSize, "min-size", "", "Don't transfer any file smaller than this in k or suffix b|k|M|G")
-	flags.FVarP(flagSet, &Opt.MaxSize, "max-size", "", "Don't transfer any file larger than this in k or suffix b|k|M|G")
+	flags.FVarP(flagSet, &Opt.MinAge, "min-age", "", "Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y")
+	flags.FVarP(flagSet, &Opt.MaxAge, "max-age", "", "Only transfer files younger than this in s or suffix ms|s|m|h|d|w|M|y")
+	flags.FVarP(flagSet, &Opt.MinSize, "min-size", "", "Only transfer files bigger than this in k or suffix b|k|M|G")
+	flags.FVarP(flagSet, &Opt.MaxSize, "max-size", "", "Only transfer files smaller than this in k or suffix b|k|M|G")
 	//cvsExclude     = BoolP("cvs-exclude", "C", false, "Exclude files in the same way CVS does")
 }
