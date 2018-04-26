@@ -446,12 +446,8 @@ func newPacer() *pacer.Pacer {
 	return pacer.New().SetMinSleep(minSleep).SetPacer(pacer.GoogleDrivePacer)
 }
 
-func getServiceAccountClient(keyJsonfilePath string) (*http.Client, error) {
-	data, err := ioutil.ReadFile(os.ExpandEnv(keyJsonfilePath))
-	if err != nil {
-		return nil, errors.Wrap(err, "error opening credentials file")
-	}
-	conf, err := google.JWTConfigFromJSON(data, driveConfig.Scopes...)
+func getServiceAccountClient(credentialsData []byte) (*http.Client, error) {
+	conf, err := google.JWTConfigFromJSON(credentialsData, driveConfig.Scopes...)
 	if err != nil {
 		return nil, errors.Wrap(err, "error processing credentials")
 	}
@@ -466,9 +462,18 @@ func createOAuthClient(name string) (*http.Client, error) {
 	var oAuthClient *http.Client
 	var err error
 
-	serviceAccountPath := config.FileGet(name, "service_account_file")
-	if serviceAccountPath != "" {
-		oAuthClient, err = getServiceAccountClient(serviceAccountPath)
+	// try loading service account credentials from env variable, then from a file
+	serviceAccountCreds := []byte(config.FileGet(name, "service_account_credentials"))
+	if len(serviceAccountCreds) == 0 {
+		serviceAccountPath := config.FileGet(name, "service_account_file")
+		loadedCreds, err := ioutil.ReadFile(os.ExpandEnv(serviceAccountPath))
+		if err != nil {
+			log.Fatalf("Error opening service account credentials file: %v", err)
+		}
+		serviceAccountCreds = loadedCreds
+	}
+	if len(serviceAccountCreds) > 0 {
+		oAuthClient, err = getServiceAccountClient(serviceAccountCreds)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create oauth client from service account")
 		}

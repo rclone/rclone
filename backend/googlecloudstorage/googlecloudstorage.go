@@ -277,12 +277,8 @@ func parsePath(path string) (bucket, directory string, err error) {
 	return
 }
 
-func getServiceAccountClient(keyJsonfilePath string) (*http.Client, error) {
-	data, err := ioutil.ReadFile(os.ExpandEnv(keyJsonfilePath))
-	if err != nil {
-		return nil, errors.Wrap(err, "error opening credentials file")
-	}
-	conf, err := google.JWTConfigFromJSON(data, storageConfig.Scopes...)
+func getServiceAccountClient(credentialsData []byte) (*http.Client, error) {
+	conf, err := google.JWTConfigFromJSON(credentialsData, storageConfig.Scopes...)
 	if err != nil {
 		return nil, errors.Wrap(err, "error processing credentials")
 	}
@@ -295,9 +291,18 @@ func NewFs(name, root string) (fs.Fs, error) {
 	var oAuthClient *http.Client
 	var err error
 
-	serviceAccountPath := config.FileGet(name, "service_account_file")
-	if serviceAccountPath != "" {
-		oAuthClient, err = getServiceAccountClient(serviceAccountPath)
+	// try loading service account credentials from env variable, then from a file
+	serviceAccountCreds := []byte(config.FileGet(name, "service_account_credentials"))
+	if len(serviceAccountCreds) == 0 {
+		serviceAccountPath := config.FileGet(name, "service_account_file")
+		loadedCreds, err := ioutil.ReadFile(os.ExpandEnv(serviceAccountPath))
+		if err != nil {
+			log.Fatalf("Error opening service account credentials file: %v", err)
+		}
+		serviceAccountCreds = loadedCreds
+	}
+	if len(serviceAccountCreds) > 0 {
+		oAuthClient, err = getServiceAccountClient(serviceAccountCreds)
 		if err != nil {
 			log.Fatalf("Failed configuring Google Cloud Storage Service Account: %v", err)
 		}

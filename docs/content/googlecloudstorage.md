@@ -212,7 +212,9 @@ are what rclone will use for authentication.
 To use a Service Account instead of OAuth2 token flow, enter the path
 to your Service Account credentials at the `service_account_file`
 prompt and rclone won't use the browser based authentication
-flow.
+flow. If you'd rather stuff the contents of the file into an
+environment variable, you can set `service_account_credentials` with
+the actual contents of the file instead.
 
 ### --fast-list ###
 

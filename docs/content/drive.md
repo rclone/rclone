@@ -202,7 +202,9 @@ actively logged-in users, for example build machines.
 To use a Service Account instead of OAuth2 token flow, enter the path
 to your Service Account credentials at the `service_account_file`
 prompt during `rclone config` and rclone won't use the browser based
-authentication flow.
+authentication flow. If you'd rather stuff the contents of the file
+into an environment variable, you can set `service_account_credentials`
+with the actual contents of the file instead.
 
 #### Use case - Google Apps/G-suite account and individual Drive ####
 
