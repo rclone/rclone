@@ -259,7 +259,7 @@ func translateErrorDir(err error) error {
 	switch errX := err.(type) {
 	case *textproto.Error:
 		switch errX.Code {
-		case ftp.StatusFileUnavailable:
+		case ftp.StatusFileUnavailable, ftp.StatusFileActionIgnored:
 			err = fs.ErrorDirNotFound
 		}
 	}
@@ -296,7 +296,7 @@ func (f *Fs) NewObject(remote string) (o fs.Object, err error) {
 	// defer fs.Trace(remote, "")("o=%v, err=%v", &o, &err)
 	entry, err := f.findItem(remote)
 	if err != nil {
-		return nil, errors.Wrap(err, "NewObject")
+		return nil, err
 	}
 	if entry != nil && entry.Type != ftp.EntryTypeFolder {
 		o := &Object{
@@ -475,6 +475,13 @@ func (f *Fs) mkdir(abspath string) error {
 	}
 	err = c.MakeDir(abspath)
 	f.putFtpConnection(&c, err)
+	switch errX := err.(type) {
+	case *textproto.Error:
+		switch errX.Code {
+		case ftp.StatusFileUnavailable: // dir already exists: see issue #2181
+			err = nil
+		}
+	}
 	return err
 }
 
