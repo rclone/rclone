@@ -155,6 +155,11 @@ Here are the command line options specific to this remote.
 
 Ask for the SFTP password if needed when no password has been configured.
 
+#### --ssh-path-override ####
+
+Override path used by SSH connection. Allows checksum calculation when
+SFTP and SSH paths are different.
+
 ### Modified time ###
 
 Modified times are stored on the server to 1 second precision.
