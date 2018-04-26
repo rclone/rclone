@@ -476,6 +476,10 @@ This can be useful for tracking down problems with syncs in
 combination with the `-v` flag.  See the [Logging section](#logging)
 for more info.
 
+Note that if you are using the `logrotate` program to manage rclone's
+logs, then you should use the `copytruncate` option as rclone doesn't
+have a signal to rotate logs.
+
 ### --log-level LEVEL ###
 
 This sets the log level for rclone.  The default log level is `NOTICE`.
