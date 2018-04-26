@@ -6,7 +6,9 @@ OpenDrive reserved characters
 The following characters are OpenDrive reserved characters, and can't
 be used in OpenDrive folder and file names.
 
-\\ / : * ? \" < > |"
+\ / : * ? " < > |
+
+OpenDrive files and folders can't have leading or trailing spaces also.
 
 */
 
@@ -19,7 +21,7 @@ import (
 
 // charMap holds replacements for characters
 //
-// Onedrive has a restricted set of characters compared to other cloud
+// OpenDrive has a restricted set of characters compared to other cloud
 // storage systems, so we to map these to the FULLWIDTH unicode
 // equivalents
 //
@@ -27,23 +29,18 @@ import (
 var (
 	charMap = map[rune]rune{
 		'\\': '＼', // FULLWIDTH REVERSE SOLIDUS
+		':':  '：', // FULLWIDTH COLON
 		'*':  '＊', // FULLWIDTH ASTERISK
+		'?':  '？', // FULLWIDTH QUESTION MARK
+		'"':  '＂', // FULLWIDTH QUOTATION MARK
 		'<':  '＜', // FULLWIDTH LESS-THAN SIGN
 		'>':  '＞', // FULLWIDTH GREATER-THAN SIGN
-		'?':  '？', // FULLWIDTH QUESTION MARK
-		':':  '：', // FULLWIDTH COLON
 		'|':  '｜', // FULLWIDTH VERTICAL LINE
-		'#':  '＃', // FULLWIDTH NUMBER SIGN
-		'%':  '％', // FULLWIDTH PERCENT SIGN
-		'"':  '＂', // FULLWIDTH QUOTATION MARK - not on the list but seems to be reserved
-		'.':  '．', // FULLWIDTH FULL STOP
-		'~':  '～', // FULLWIDTH TILDE
 		' ':  '␠', // SYMBOL FOR SPACE
 	}
-	invCharMap           map[rune]rune
-	fixEndingInPeriod    = regexp.MustCompile(`\.(/|$)`)
-	fixStartingWithTilde = regexp.MustCompile(`(/|^)~`)
 	fixStartingWithSpace = regexp.MustCompile(`(/|^) `)
+	fixEndingWithSpace   = regexp.MustCompile(` (/|$)`)
+	invCharMap           map[rune]rune
 )
 
 func init() {
@@ -57,15 +54,12 @@ func init() {
 // replaceReservedChars takes a path and substitutes any reserved
 // characters in it
 func replaceReservedChars(in string) string {
-	// Folder names can't end with a period '.'
-	in = fixEndingInPeriod.ReplaceAllString(in, string(charMap['.'])+"$1")
-	// OneDrive for Business file or folder names cannot begin with a tilde '~'
-	in = fixStartingWithTilde.ReplaceAllString(in, "$1"+string(charMap['~']))
-	// Apparently file names can't start with space either
+	// Filenames can't start with space
 	in = fixStartingWithSpace.ReplaceAllString(in, "$1"+string(charMap[' ']))
-	// Replace reserved characters
+	// Filenames can't end with space
+	in = fixEndingWithSpace.ReplaceAllString(in, string(charMap[' '])+"$1")
 	return strings.Map(func(c rune) rune {
-		if replacement, ok := charMap[c]; ok && c != '.' && c != '~' && c != ' ' {
+		if replacement, ok := charMap[c]; ok && c != ' ' {
 			return replacement
 		}
 		return c
