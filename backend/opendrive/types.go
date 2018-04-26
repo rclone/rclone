@@ -2,7 +2,21 @@ package opendrive
 
 import (
 	"encoding/json"
+	"fmt"
 )
+
+// Error describes an openDRIVE error response
+type Error struct {
+	Info struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+	} `json:"error"`
+}
+
+// Error statisfies the error interface
+func (e *Error) Error() string {
+	return fmt.Sprintf("%s (Error %d)", e.Info.Message, e.Info.Code)
+}
 
 // Account describes a OpenDRIVE account
 type Account struct {
@@ -57,13 +71,13 @@ type Folder struct {
 }
 
 type createFolder struct {
-	SessionID           string  `json:"session_id"`
+	SessionID           string `json:"session_id"`
 	FolderName          string `json:"folder_name"`
 	FolderSubParent     string `json:"folder_sub_parent"`
-	FolderIsPublic      int64  `json:"folder_is_public"`     // (0 = private, 1 = public, 2 = hidden)
-	FolderPublicUpl     int64 `json:"folder_public_upl"`     // (0 = disabled, 1 = enabled)
-	FolderPublicDisplay int64 `json:"folder_public_display"` // (0 = disabled, 1 = enabled)
-	FolderPublicDnl     int64 `json:"folder_public_dnl"`     // (0 = disabled, 1 = enabled).
+	FolderIsPublic      int64  `json:"folder_is_public"`      // (0 = private, 1 = public, 2 = hidden)
+	FolderPublicUpl     int64  `json:"folder_public_upl"`     // (0 = disabled, 1 = enabled)
+	FolderPublicDisplay int64  `json:"folder_public_display"` // (0 = disabled, 1 = enabled)
+	FolderPublicDnl     int64  `json:"folder_public_dnl"`     // (0 = disabled, 1 = enabled).
 }
 
 type createFolderResponse struct {
@@ -78,19 +92,20 @@ type createFolderResponse struct {
 	Link          string `json:"Link"`
 }
 
-type moveFolder struct {
-	SessionID   string `json:"session_id"`
-	FolderID    string `json:"folder_id"`
-	DstFolderID string `json:"dst_folder_id"`
-	Move        string `json:"move"`
+type moveCopyFolder struct {
+	SessionID     string `json:"session_id"`
+	FolderID      string `json:"folder_id"`
+	DstFolderID   string `json:"dst_folder_id"`
+	Move          string `json:"move"`
+	NewFolderName string `json:"new_folder_name"` // New name for destination folder.
 }
 
-type moveFolderResponse struct {
+type moveCopyFolderResponse struct {
 	FolderID string `json:"FolderID"`
 }
 
 type removeFolder struct {
-	SessionID string  `json:"session_id"`
+	SessionID string `json:"session_id"`
 	FolderID  string `json:"folder_id"`
 }
 
@@ -117,15 +132,16 @@ type File struct {
 	EditOnline        int    `json:"EditOnline"`
 }
 
-type copyFile struct {
+type moveCopyFile struct {
 	SessionID         string `json:"session_id"`
 	SrcFileID         string `json:"src_file_id"`
 	DstFolderID       string `json:"dst_folder_id"`
 	Move              string `json:"move"`
 	OverwriteIfExists string `json:"overwrite_if_exists"`
+	NewFileName       string `json:"new_file_name"` // New name for destination file.
 }
 
-type copyFileResponse struct {
+type moveCopyFileResponse struct {
 	FileID string `json:"FileID"`
 	Size   string `json:"Size"`
 }
@@ -196,4 +212,3 @@ type permissions struct {
 	FileID       string `json:"file_id"`
 	FileIsPublic int64  `json:"file_ispublic"`
 }
-
