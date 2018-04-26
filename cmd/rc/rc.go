@@ -14,6 +14,7 @@ import (
 	"github.com/ncw/rclone/fs/rc"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 var (
@@ -57,6 +58,14 @@ func doCall(path string, in rc.Params) (out rc.Params, err error) {
 	// Do HTTP request
 	client := fshttp.NewClient(fs.Config)
 	url := url
+	// set the user use --rc-addr as well as --url
+	if rcAddrFlag := pflag.Lookup("rc-addr"); rcAddrFlag != nil && rcAddrFlag.Changed {
+		url = rcAddrFlag.Value.String()
+		if strings.HasPrefix(url, ":") {
+			url = "localhost" + url
+		}
+		url = "http://" + url + "/"
+	}
 	if !strings.HasSuffix(url, "/") {
 		url += "/"
 	}
