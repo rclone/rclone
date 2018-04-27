@@ -158,7 +158,16 @@ Ask for the SFTP password if needed when no password has been configured.
 #### --ssh-path-override ####
 
 Override path used by SSH connection. Allows checksum calculation when
-SFTP and SSH paths are different.
+SFTP and SSH paths are different. This issue affects among others Synology
+NAS boxes.
+
+Shared folders can be found in directories representing volumes
+
+    rclone sync /home/local/directory remote:/directory --ssh-path-override /volume2/directory
+
+Home directory can be found in a shared folder called `homes`
+
+    rclone sync /home/local/directory remote:/home/directory --ssh-path-override /volume1/homes/USER/directory
 
 ### Modified time ###
 
