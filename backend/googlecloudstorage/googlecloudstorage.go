@@ -297,19 +297,19 @@ func NewFs(name, root string) (fs.Fs, error) {
 		serviceAccountPath := config.FileGet(name, "service_account_file")
 		loadedCreds, err := ioutil.ReadFile(os.ExpandEnv(serviceAccountPath))
 		if err != nil {
-			log.Fatalf("Error opening service account credentials file: %v", err)
+			return nil, errors.Wrap(err, "error opening service account credentials file")
 		}
 		serviceAccountCreds = loadedCreds
 	}
 	if len(serviceAccountCreds) > 0 {
 		oAuthClient, err = getServiceAccountClient(serviceAccountCreds)
 		if err != nil {
-			log.Fatalf("Failed configuring Google Cloud Storage Service Account: %v", err)
+			return nil, errors.Wrap(err, "failed configuring Google Cloud Storage Service Account")
 		}
 	} else {
 		oAuthClient, _, err = oauthutil.NewClient(name, storageConfig)
 		if err != nil {
-			log.Fatalf("Failed to configure Google Cloud Storage: %v", err)
+			return nil, errors.Wrap(err, "failed to configure Google Cloud Storage")
 		}
 	}
 
