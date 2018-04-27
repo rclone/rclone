@@ -464,6 +464,40 @@ func deleteEmptyDirectories(f fs.Fs, entries fs.DirEntries) error {
 	return nil
 }
 
+// This copies the empty directories in the slice passed in and logs
+// any errors copying the directories
+func copyEmptyDirectories(f fs.Fs, entries fs.DirEntries) error {
+	if len(entries) == 0 {
+		return nil
+	}
+
+	var okCount int
+	for i := len(entries) - 1; i >= 0; i-- {
+		entry := entries[i]
+		dir, ok := entry.(fs.Directory)
+		if ok {
+			err := f.Mkdir(dir.Remote())
+			if err != nil {
+				fs.Errorf(fs.LogDirName(f, dir.Remote()), "Failed to Mkdir: %v", err)
+				accounting.Stats.Error(err)
+			} else {
+				okCount++
+			}
+		} else {
+			fs.Errorf(f, "Not a directory: %v", entry)
+		}
+	}
+
+	if accounting.Stats.Errored() {
+		fs.Debugf(f, "failed to copy %d directories", accounting.Stats.GetErrors())
+	}
+
+	if okCount > 0 {
+		fs.Debugf(f, "copied %d directories", okCount)
+	}
+	return nil
+}
+
 // renameHash makes a string with the size and the hash for rename detection
 //
 // it may return an empty string in which case no hash could be made
@@ -621,6 +655,9 @@ func (s *syncCopyMove) run() error {
 	s.stopRenamers()
 	s.stopTransfers()
 	s.stopDeleters()
+
+	// Create empty fsrc subdirectories in fdst
+	s.processError(copyEmptyDirectories(s.fdst, s.srcEmptyDirs))
 
 	// Delete files after
 	if s.deleteMode == fs.DeleteModeAfter {
