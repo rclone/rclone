@@ -68,7 +68,7 @@ endif
 
 # Get the release dependencies
 release_dep:
-	go get -u github.com/goreleaser/nfpm
+	go get -u github.com/goreleaser/nfpm/...
 	go get -u github.com/aktau/github-release
 
 # Update dependencies
