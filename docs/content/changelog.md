@@ -1,12 +1,104 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2018-03-19"
+date: "2018-04-28"
 ---
 
 Changelog
 ---------
 
+  * v1.41 - 2018-04-28
+    * New backends
+      * Mega support added
+      * Webdav now supports SharePoint cookie authentication (hensur)
+    * New commands
+      * link: create public link to files and folders (Stefan Breunig)
+      * about: gets quota info from a remote (a-roussos, ncw)
+      * hashsum: a generic tool for any hash to produce md5sum like output
+    * New Features
+      * lsd: Add -R flag and fix and update docs for all ls commands
+      * ncdu: added a "refresh" key - CTRL-L (Keith Goldfarb)
+      * serve restic: Add append-only mode (Steve Kriss)
+      * serve restic: Disallow overwriting files in append-only mode (Alexander Neumann)
+      * serve restic: Print actual listener address (Matt Holt)
+      * size: Add --json flag (Matthew Holt)
+      * sync: implement --ignore-errors (Mateusz Pabian)
+      * dedupe: Add dedupe largest functionality (Richard Yang)
+      * fs: Extend SizeSuffix to include TB and PB for rclone about
+      * fs: add --dump goroutines and --dump openfiles for debugging
+      * rc: implement core/memstats to print internal memory usage info
+      * rc: new call rc/pid (Michael P. Dubner)
+    * Compile
+      * Drop support for go1.6
+    * Release
+      * Fix `make tarball` (Chih-Hsuan Yen)
+    * Bug Fixes
+      * filter: fix --min-age and --max-age together check
+      * fs: limit MaxIdleConns and MaxIdleConnsPerHost in transport
+      * lsd,lsf: make sure all times we output are in local time
+      * rc: fix setting bwlimit to unlimited
+      * rc: take note of the --rc-addr flag too as per the docs
+    * Mount
+      * Use About to return the correct disk total/used/free (eg in `df`)
+      * Set `--attr-timeout default` to `1s` - fixes:
+        * rclone using too much memory
+        * rclone not serving files to samba
+        * excessive time listing directories
+      * Fix `df -i` (upstream fix)
+    * VFS
+      * Filter files `.` and `..` from directory listing
+      * Only make the VFS cache if --vfs-cache-mode > Off
+    * Local
+      * Add --local-no-check-updated to disable updated file checks
+      * Retry remove on Windows sharing violation error
+    * Cache
+      * Flush the memory cache after close
+      * Purge file data on notification
+      * Always forget parent dir for notifications
+      * Integrate with Plex websocket
+      * Add rc cache/stats (seuffert)
+      * Add info log on notification 
+    * Box
+      * Fix failure reading large directories - parse file/directory size as float
+    * Dropbox
+      * Fix crypt+obfuscate on dropbox
+      * Fix repeatedly uploading the same files
+    * FTP
+      * Work around strange response from box FTP server
+      * More workarounds for FTP servers to fix mkParentDir error
+      * Fix no error on listing non-existent directory
+    * Google Cloud Storage
+      * Add service_account_credentials (Matt Holt)
+      * Detect bucket presence by listing it - minimises permissions needed
+      * Ignore zero length directory markers
+    * Google Drive
+      * Add service_account_credentials (Matt Holt)
+      * Fix directory move leaving a hardlinked directory behind
+      * Return proper google errors when Opening files
+      * When initialized with a filepath, optional features used incorrect root path (Stefan Breunig)
+    * HTTP
+      * Fix sync for servers which don't return Content-Length in HEAD
+    * Onedrive
+      * Add QuickXorHash support for OneDrive for business
+      * Fix socket leak in multipart session upload
+    * S3
+      * Look in S3 named profile files for credentials
+      * Add `--s3-disable-checksum` to disable checksum uploading (Chris Redekop)
+      * Hierarchical configuration support (Giri Badanahatti)
+      * Add in config for all the supported S3 providers
+      * Add One Zone Infrequent Access storage class (Craig Rachel)
+      * Add --use-server-modtime support (Peter Baumgartner)
+      * Add --s3-chunk-size option to control multipart uploads
+      * Ignore zero length directory markers
+    * SFTP
+      * Update docs to match code, fix typos and clarify disable_hashcheck prompt (Michael G. Noll)
+      * Update docs with Synology quirks
+      * Fail soft with a debug on hash failure
+    * Swift
+      * Add --use-server-modtime support (Peter Baumgartner)
+    * Webdav
+      * Support SharePoint cookie authentication (hensur)
+      * Strip leading and trailing / off root
   * v1.40 - 2018-03-19
     * New backends
       * Alias backend to create aliases for existing remote names (Fabian Möller)

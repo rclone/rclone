@@ -1,5 +1,5 @@
 ---
-date: 2018-03-19T10:05:30Z
+date: 2018-04-28T11:44:58+01:00
 title: "rclone mount"
 slug: rclone_mount
 url: /commands/rclone_mount/
@@ -99,12 +99,30 @@ for solutions to make mount mount more reliable.
 You can use the flag --attr-timeout to set the time the kernel caches
 the attributes (size, modification time etc) for directory entries.
 
-The default is 0s - no caching - which is recommended for filesystems
-which can change outside the control of the kernel.
+The default is "1s" which caches files just long enough to avoid
+too many callbacks to rclone from the kernel.
 
-If you set it higher ('1s' or '1m' say) then the kernel will call back
-to rclone less often making it more efficient, however there may be
-strange effects when files change on the remote.
+In theory 0s should be the correct value for filesystems which can
+change outside the control of the kernel. However this causes quite a
+few problems such as
+[rclone using too much memory](https://github.com/ncw/rclone/issues/2157),
+[rclone not serving files to samba](https://forum.rclone.org/t/rclone-1-39-vs-1-40-mount-issue/5112)
+and [excessive time listing directories](https://github.com/ncw/rclone/issues/2095#issuecomment-371141147).
+
+The kernel can cache the info about a file for the time given by
+"--attr-timeout". You may see corruption if the remote file changes
+length during this window.  It will show up as either a truncated file
+or a file with garbage on the end.  With "--attr-timeout 1s" this is
+very unlikely but not impossible.  The higher you set "--attr-timeout"
+the more likely it is.  The default setting of "1s" is the lowest
+setting which mitigates the problems above.
+
+If you set it higher ('10s' or '1m' say) then the kernel will call
+back to rclone less often making it more efficient, however there is
+more chance of the corruption issue above.
+
+If files don't change on the remote outside of the control of rclone
+then there is no chance of corruption.
 
 This is the same as setting the attr_timeout option in mount.fuse.
 
@@ -245,7 +263,7 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --allow-non-empty                    Allow mounting over a non-empty directory.
       --allow-other                        Allow access to other users.
       --allow-root                         Allow access to root user.
-      --attr-timeout duration              Time for which file/directory attributes are cached.
+      --attr-timeout duration              Time for which file/directory attributes are cached. (default 1s)
       --daemon                             Run mount as a daemon (background mode).
       --debug-fuse                         Debug the FUSE internals - needs -v.
       --default-permissions                Makes kernel enforce access control based on the file mode.
@@ -328,7 +346,7 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --drive-use-trash                     Send files to the trash instead of deleting permanently. (default true)
       --dropbox-chunk-size int              Upload chunk size. Max 150M. (default 48M)
   -n, --dry-run                             Do a trial run with no permanent changes
-      --dump string                         List of items to dump from: headers,bodies,requests,responses,auth,filters
+      --dump string                         List of items to dump from: headers,bodies,requests,responses,auth,filters,goroutines,openfiles
       --dump-bodies                         Dump HTTP headers and bodies - may contain sensitive info
       --dump-headers                        Dump HTTP bodies - may contain sensitive info
       --exclude stringArray                 Exclude files matching pattern
@@ -341,23 +359,26 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --gcs-location string                 Default location for buckets (us|eu|asia|us-central1|us-east1|us-east4|us-west1|asia-east1|asia-noetheast1|asia-southeast1|australia-southeast1|europe-west1|europe-west2).
       --gcs-storage-class string            Default storage class for buckets (MULTI_REGIONAL|REGIONAL|STANDARD|NEARLINE|COLDLINE|DURABLE_REDUCED_AVAILABILITY).
       --ignore-checksum                     Skip post copy check of checksums.
+      --ignore-errors                       delete even if there are I/O errors
       --ignore-existing                     Skip all files that exist on destination
       --ignore-size                         Ignore size when skipping use mod-time or checksum.
   -I, --ignore-times                        Don't skip files that match size and time - transfer all files
       --immutable                           Do not modify files. Fail if existing files have been modified.
       --include stringArray                 Include files matching pattern
       --include-from stringArray            Read include patterns from file
+      --local-no-check-updated              Don't check to see if the files change during upload
       --local-no-unicode-normalization      Don't apply unicode normalization to paths and filenames
       --log-file string                     Log everything to this file
       --log-level string                    Log level DEBUG|INFO|NOTICE|ERROR (default "NOTICE")
       --low-level-retries int               Number of low level retries to do. (default 10)
-      --max-age duration                    Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
+      --max-age duration                    Only transfer files younger than this in s or suffix ms|s|m|h|d|w|M|y (default off)
       --max-delete int                      When synchronizing, limit the number of deletes (default -1)
       --max-depth int                       If set limits the recursion depth to this. (default -1)
-      --max-size int                        Don't transfer any file larger than this in k or suffix b|k|M|G (default off)
+      --max-size int                        Only transfer files smaller than this in k or suffix b|k|M|G (default off)
+      --mega-debug                          If set then output more debug from mega.
       --memprofile string                   Write memory profile to file
-      --min-age duration                    Don't transfer any file younger than this in s or suffix ms|s|m|h|d|w|M|y (default off)
-      --min-size int                        Don't transfer any file smaller than this in k or suffix b|k|M|G (default off)
+      --min-age duration                    Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
+      --min-size int                        Only transfer files bigger than this in k or suffix b|k|M|G (default off)
       --modify-window duration              Max time diff to be considered the same (default 1ns)
       --no-check-certificate                Do not verify the server SSL certificate. Insecure.
       --no-gzip-encoding                    Don't set Accept-Encoding: gzip.
@@ -380,7 +401,9 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --rc-user string                      User name for authentication.
       --retries int                         Retry operations this many times if they fail (default 3)
       --s3-acl string                       Canned ACL used when creating buckets and/or storing objects in S3
-      --s3-storage-class string             Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA)
+      --s3-chunk-size int                   Chunk size to use for uploading (default 5M)
+      --s3-disable-checksum                 Don't store MD5 checksum with object metadata
+      --s3-storage-class string             Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA|ONEZONE_IA)
       --sftp-ask-password                   Allow asking for SFTP password when needed.
       --size-only                           Skip based on size only, not mod-time or checksum
       --skip-links                          Don't warn about skipped symlinks.
@@ -399,12 +422,13 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --track-renames                       When synchronizing, track file renames and do a server side move if possible
       --transfers int                       Number of file transfers to run in parallel. (default 4)
   -u, --update                              Skip files that are newer on the destination.
-      --user-agent string                   Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.40")
+      --use-server-modtime                  Use server modified time instead of object metadata
+      --user-agent string                   Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.41")
   -v, --verbose count                       Print lots more stuff (repeat for more)
 ```
 
 ### SEE ALSO
 
-* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.40
+* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.41
 
-###### Auto generated by spf13/cobra on 19-Mar-2018
+###### Auto generated by spf13/cobra on 28-Apr-2018

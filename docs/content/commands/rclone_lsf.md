@@ -1,5 +1,5 @@
 ---
-date: 2018-03-19T10:05:30Z
+date: 2018-04-28T11:44:58+01:00
 title: "rclone lsf"
 slug: rclone_lsf
 url: /commands/rclone_lsf/
@@ -16,6 +16,15 @@ standard output in a form which is easy to parse by scripts.  By
 default this will just be the names of the objects and directories,
 one per line.  The directories will have a / suffix.
 
+Eg
+
+    $ rclone lsf swift:bucket
+    bevajer5jef
+    canole
+    diwogej7
+    ferejej3gux/
+    fubuwic
+
 Use the --format option to control what gets listed.  By default this
 is just the path, but you can use these parameters to control the
 output:
@@ -28,6 +37,15 @@ output:
 So if you wanted the path, size and modification time, you would use
 --format "pst", or maybe --format "tsp" to put the path last.
 
+Eg
+
+    $ rclone lsf  --format "tsp" swift:bucket
+    2016-06-25 18:55:41;60295;bevajer5jef
+    2016-06-25 18:55:43;90613;canole
+    2016-06-25 18:55:43;94467;diwogej7
+    2018-04-26 08:50:45;0;ferejej3gux/
+    2016-06-25 18:55:40;37600;fubuwic
+
 If you specify "h" in the format you will get the MD5 hash by default,
 use the "--hash" flag to change which hash you want.  Note that this
 can be returned as an empty string if it isn't available on the object
@@ -39,11 +57,30 @@ For example to emulate the md5sum command you can use
 
     rclone lsf -R --hash MD5 --format hp --separator "  " --files-only .
 
+Eg
+
+    $ rclone lsf -R --hash MD5 --format hp --separator "  " --files-only swift:bucket 
+    7908e352297f0f530b84a756f188baa3  bevajer5jef
+    cd65ac234e6fea5925974a51cdd865cc  canole
+    03b5341b4f234b9d984d03ad076bae91  diwogej7
+    8fd37c3810dd660778137ac3a66cc06d  fubuwic
+    99713e14a4c4ff553acaf1930fad985b  gixacuh7ku
+
 (Though "rclone md5sum ." is an easier way of typing this.)
 
 By default the separator is ";" this can be changed with the
 --separator flag.  Note that separators aren't escaped in the path so
 putting it last is a good strategy.
+
+Eg
+
+    $ rclone lsf  --separator "," --format "tshp" swift:bucket
+    2016-06-25 18:55:41,60295,7908e352297f0f530b84a756f188baa3,bevajer5jef
+    2016-06-25 18:55:43,90613,cd65ac234e6fea5925974a51cdd865cc,canole
+    2016-06-25 18:55:43,94467,03b5341b4f234b9d984d03ad076bae91,diwogej7
+    2018-04-26 08:52:53,0,,ferejej3gux/
+    2016-06-25 18:55:40,37600,8fd37c3810dd660778137ac3a66cc06d,fubuwic
+
 
 Any of the filtering options can be applied to this commmand.
 
@@ -59,9 +96,13 @@ There are several related list commands
 `lsf` is designed to be human and machine readable.
 `lsjson` is designed to be machine readable.
 
-Note that `ls`,`lsl`,`lsd` all recurse by default - use "--max-depth 1" to stop the recursion.
+Note that `ls` and `lsl` recurse by default - use "--max-depth 1" to stop the recursion.
 
-The other list commands `lsf`,`lsjson` do not recurse by default - use "-R" to make them recurse.
+The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default - use "-R" to make them recurse.
+
+Listing a non existent directory will produce an error except for
+remotes which can't have empty directories (eg s3, swift, gcs, etc -
+the bucket based remotes).
 
 
 ```
@@ -141,7 +182,7 @@ rclone lsf remote:path [flags]
       --drive-use-trash                     Send files to the trash instead of deleting permanently. (default true)
       --dropbox-chunk-size int              Upload chunk size. Max 150M. (default 48M)
   -n, --dry-run                             Do a trial run with no permanent changes
-      --dump string                         List of items to dump from: headers,bodies,requests,responses,auth,filters
+      --dump string                         List of items to dump from: headers,bodies,requests,responses,auth,filters,goroutines,openfiles
       --dump-bodies                         Dump HTTP headers and bodies - may contain sensitive info
       --dump-headers                        Dump HTTP bodies - may contain sensitive info
       --exclude stringArray                 Exclude files matching pattern
@@ -154,23 +195,26 @@ rclone lsf remote:path [flags]
       --gcs-location string                 Default location for buckets (us|eu|asia|us-central1|us-east1|us-east4|us-west1|asia-east1|asia-noetheast1|asia-southeast1|australia-southeast1|europe-west1|europe-west2).
       --gcs-storage-class string            Default storage class for buckets (MULTI_REGIONAL|REGIONAL|STANDARD|NEARLINE|COLDLINE|DURABLE_REDUCED_AVAILABILITY).
       --ignore-checksum                     Skip post copy check of checksums.
+      --ignore-errors                       delete even if there are I/O errors
       --ignore-existing                     Skip all files that exist on destination
       --ignore-size                         Ignore size when skipping use mod-time or checksum.
   -I, --ignore-times                        Don't skip files that match size and time - transfer all files
       --immutable                           Do not modify files. Fail if existing files have been modified.
       --include stringArray                 Include files matching pattern
       --include-from stringArray            Read include patterns from file
+      --local-no-check-updated              Don't check to see if the files change during upload
       --local-no-unicode-normalization      Don't apply unicode normalization to paths and filenames
       --log-file string                     Log everything to this file
       --log-level string                    Log level DEBUG|INFO|NOTICE|ERROR (default "NOTICE")
       --low-level-retries int               Number of low level retries to do. (default 10)
-      --max-age duration                    Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
+      --max-age duration                    Only transfer files younger than this in s or suffix ms|s|m|h|d|w|M|y (default off)
       --max-delete int                      When synchronizing, limit the number of deletes (default -1)
       --max-depth int                       If set limits the recursion depth to this. (default -1)
-      --max-size int                        Don't transfer any file larger than this in k or suffix b|k|M|G (default off)
+      --max-size int                        Only transfer files smaller than this in k or suffix b|k|M|G (default off)
+      --mega-debug                          If set then output more debug from mega.
       --memprofile string                   Write memory profile to file
-      --min-age duration                    Don't transfer any file younger than this in s or suffix ms|s|m|h|d|w|M|y (default off)
-      --min-size int                        Don't transfer any file smaller than this in k or suffix b|k|M|G (default off)
+      --min-age duration                    Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
+      --min-size int                        Only transfer files bigger than this in k or suffix b|k|M|G (default off)
       --modify-window duration              Max time diff to be considered the same (default 1ns)
       --no-check-certificate                Do not verify the server SSL certificate. Insecure.
       --no-gzip-encoding                    Don't set Accept-Encoding: gzip.
@@ -193,7 +237,9 @@ rclone lsf remote:path [flags]
       --rc-user string                      User name for authentication.
       --retries int                         Retry operations this many times if they fail (default 3)
       --s3-acl string                       Canned ACL used when creating buckets and/or storing objects in S3
-      --s3-storage-class string             Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA)
+      --s3-chunk-size int                   Chunk size to use for uploading (default 5M)
+      --s3-disable-checksum                 Don't store MD5 checksum with object metadata
+      --s3-storage-class string             Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA|ONEZONE_IA)
       --sftp-ask-password                   Allow asking for SFTP password when needed.
       --size-only                           Skip based on size only, not mod-time or checksum
       --skip-links                          Don't warn about skipped symlinks.
@@ -212,12 +258,13 @@ rclone lsf remote:path [flags]
       --track-renames                       When synchronizing, track file renames and do a server side move if possible
       --transfers int                       Number of file transfers to run in parallel. (default 4)
   -u, --update                              Skip files that are newer on the destination.
-      --user-agent string                   Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.40")
+      --use-server-modtime                  Use server modified time instead of object metadata
+      --user-agent string                   Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.41")
   -v, --verbose count                       Print lots more stuff (repeat for more)
 ```
 
 ### SEE ALSO
 
-* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.40
+* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.41
 
-###### Auto generated by spf13/cobra on 19-Mar-2018
+###### Auto generated by spf13/cobra on 28-Apr-2018

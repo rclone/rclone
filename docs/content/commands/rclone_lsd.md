@@ -1,5 +1,5 @@
 ---
-date: 2018-03-19T10:05:30Z
+date: 2018-04-28T11:44:58+01:00
 title: "rclone lsd"
 slug: rclone_lsd
 url: /commands/rclone_lsd/
@@ -11,8 +11,27 @@ List all directories/containers/buckets in the path.
 ### Synopsis
 
 
-Lists the directories in the source path to standard output. Recurses
-by default.
+Lists the directories in the source path to standard output. Does not
+recurse by default.  Use the -R flag to recurse.
+
+This command lists the total size of the directory (if known, -1 if
+not), the modification time (if known, the current time if not), the
+number of objects in the directory (if known, -1 if not) and the name
+of the directory, Eg
+
+    $ rclone lsd swift:
+          494000 2018-04-26 08:43:20     10000 10000files
+              65 2018-04-26 08:43:20         1 1File
+
+Or
+
+    $ rclone lsd drive:test
+              -1 2016-10-17 17:41:53        -1 1000files
+              -1 2017-01-03 14:40:54        -1 2500files
+              -1 2017-07-08 14:39:28        -1 4000files
+
+If you just want the directory names use "rclone lsf --dirs-only".
+
 
 Any of the filtering options can be applied to this commmand.
 
@@ -28,9 +47,13 @@ There are several related list commands
 `lsf` is designed to be human and machine readable.
 `lsjson` is designed to be machine readable.
 
-Note that `ls`,`lsl`,`lsd` all recurse by default - use "--max-depth 1" to stop the recursion.
+Note that `ls` and `lsl` recurse by default - use "--max-depth 1" to stop the recursion.
 
-The other list commands `lsf`,`lsjson` do not recurse by default - use "-R" to make them recurse.
+The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default - use "-R" to make them recurse.
+
+Listing a non existent directory will produce an error except for
+remotes which can't have empty directories (eg s3, swift, gcs, etc -
+the bucket based remotes).
 
 
 ```
@@ -40,7 +63,8 @@ rclone lsd remote:path [flags]
 ### Options
 
 ```
-  -h, --help   help for lsd
+  -h, --help        help for lsd
+  -R, --recursive   Recurse into the listing.
 ```
 
 ### Options inherited from parent commands
@@ -103,7 +127,7 @@ rclone lsd remote:path [flags]
       --drive-use-trash                     Send files to the trash instead of deleting permanently. (default true)
       --dropbox-chunk-size int              Upload chunk size. Max 150M. (default 48M)
   -n, --dry-run                             Do a trial run with no permanent changes
-      --dump string                         List of items to dump from: headers,bodies,requests,responses,auth,filters
+      --dump string                         List of items to dump from: headers,bodies,requests,responses,auth,filters,goroutines,openfiles
       --dump-bodies                         Dump HTTP headers and bodies - may contain sensitive info
       --dump-headers                        Dump HTTP bodies - may contain sensitive info
       --exclude stringArray                 Exclude files matching pattern
@@ -116,23 +140,26 @@ rclone lsd remote:path [flags]
       --gcs-location string                 Default location for buckets (us|eu|asia|us-central1|us-east1|us-east4|us-west1|asia-east1|asia-noetheast1|asia-southeast1|australia-southeast1|europe-west1|europe-west2).
       --gcs-storage-class string            Default storage class for buckets (MULTI_REGIONAL|REGIONAL|STANDARD|NEARLINE|COLDLINE|DURABLE_REDUCED_AVAILABILITY).
       --ignore-checksum                     Skip post copy check of checksums.
+      --ignore-errors                       delete even if there are I/O errors
       --ignore-existing                     Skip all files that exist on destination
       --ignore-size                         Ignore size when skipping use mod-time or checksum.
   -I, --ignore-times                        Don't skip files that match size and time - transfer all files
       --immutable                           Do not modify files. Fail if existing files have been modified.
       --include stringArray                 Include files matching pattern
       --include-from stringArray            Read include patterns from file
+      --local-no-check-updated              Don't check to see if the files change during upload
       --local-no-unicode-normalization      Don't apply unicode normalization to paths and filenames
       --log-file string                     Log everything to this file
       --log-level string                    Log level DEBUG|INFO|NOTICE|ERROR (default "NOTICE")
       --low-level-retries int               Number of low level retries to do. (default 10)
-      --max-age duration                    Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
+      --max-age duration                    Only transfer files younger than this in s or suffix ms|s|m|h|d|w|M|y (default off)
       --max-delete int                      When synchronizing, limit the number of deletes (default -1)
       --max-depth int                       If set limits the recursion depth to this. (default -1)
-      --max-size int                        Don't transfer any file larger than this in k or suffix b|k|M|G (default off)
+      --max-size int                        Only transfer files smaller than this in k or suffix b|k|M|G (default off)
+      --mega-debug                          If set then output more debug from mega.
       --memprofile string                   Write memory profile to file
-      --min-age duration                    Don't transfer any file younger than this in s or suffix ms|s|m|h|d|w|M|y (default off)
-      --min-size int                        Don't transfer any file smaller than this in k or suffix b|k|M|G (default off)
+      --min-age duration                    Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
+      --min-size int                        Only transfer files bigger than this in k or suffix b|k|M|G (default off)
       --modify-window duration              Max time diff to be considered the same (default 1ns)
       --no-check-certificate                Do not verify the server SSL certificate. Insecure.
       --no-gzip-encoding                    Don't set Accept-Encoding: gzip.
@@ -155,7 +182,9 @@ rclone lsd remote:path [flags]
       --rc-user string                      User name for authentication.
       --retries int                         Retry operations this many times if they fail (default 3)
       --s3-acl string                       Canned ACL used when creating buckets and/or storing objects in S3
-      --s3-storage-class string             Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA)
+      --s3-chunk-size int                   Chunk size to use for uploading (default 5M)
+      --s3-disable-checksum                 Don't store MD5 checksum with object metadata
+      --s3-storage-class string             Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA|ONEZONE_IA)
       --sftp-ask-password                   Allow asking for SFTP password when needed.
       --size-only                           Skip based on size only, not mod-time or checksum
       --skip-links                          Don't warn about skipped symlinks.
@@ -174,12 +203,13 @@ rclone lsd remote:path [flags]
       --track-renames                       When synchronizing, track file renames and do a server side move if possible
       --transfers int                       Number of file transfers to run in parallel. (default 4)
   -u, --update                              Skip files that are newer on the destination.
-      --user-agent string                   Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.40")
+      --use-server-modtime                  Use server modified time instead of object metadata
+      --user-agent string                   Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.41")
   -v, --verbose count                       Print lots more stuff (repeat for more)
 ```
 
 ### SEE ALSO
 
-* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.40
+* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.41
 
-###### Auto generated by spf13/cobra on 19-Mar-2018
+###### Auto generated by spf13/cobra on 28-Apr-2018
