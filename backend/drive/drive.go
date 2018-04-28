@@ -464,8 +464,8 @@ func createOAuthClient(name string) (*http.Client, error) {
 
 	// try loading service account credentials from env variable, then from a file
 	serviceAccountCreds := []byte(config.FileGet(name, "service_account_credentials"))
-	if len(serviceAccountCreds) == 0 {
-		serviceAccountPath := config.FileGet(name, "service_account_file")
+	serviceAccountPath := config.FileGet(name, "service_account_file")
+	if len(serviceAccountCreds) == 0 && serviceAccountPath != "" {
 		loadedCreds, err := ioutil.ReadFile(os.ExpandEnv(serviceAccountPath))
 		if err != nil {
 			return nil, errors.Wrap(err, "error opening service account credentials file")
