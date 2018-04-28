@@ -1,45 +1,35 @@
 ---
 date: 2018-04-28T11:44:58+01:00
-title: "rclone move"
-slug: rclone_move
-url: /commands/rclone_move/
+title: "rclone link"
+slug: rclone_link
+url: /commands/rclone_link/
 ---
-## rclone move
+## rclone link
 
-Move files from source to dest.
+Generate public link to file/folder.
 
 ### Synopsis
 
 
-Moves the contents of the source directory to the destination
-directory. Rclone will error if the source and destination overlap and
-the remote does not support a server side directory move operation.
+rclone link will create or retrieve a public link to the given file or folder.
 
-If no filters are in use and if possible this will server side move
-`source:path` into `dest:path`. After this `source:path` will no
-longer longer exist.
+    rclone link remote:path/to/file
+    rclone link remote:path/to/folder/
 
-Otherwise for each file in `source:path` selected by the filters (if
-any) this will move it into `dest:path`.  If possible a server side
-move will be used, otherwise it will copy it (server side if possible)
-into `dest:path` then delete the original (if no errors on copy) in
-`source:path`.
-
-If you want to delete empty source directories after move, use the --delete-empty-src-dirs flag.
-
-**Important**: Since this can cause data loss, test first with the
---dry-run flag.
+If successful, the last line of the output will contain the link. Exact
+capabilities depend on the remote, but the link will always be created with
+the least constraints – e.g. no expiry, no password protection, accessible
+without account.
 
 
 ```
-rclone move source:path dest:path [flags]
+rclone link remote:path [flags]
 ```
 
 ### Options
 
 ```
-      --delete-empty-src-dirs   Delete empty source dirs after move
-  -h, --help                    help for move
+  -h, --help   help for link
 ```
 
 ### Options inherited from parent commands

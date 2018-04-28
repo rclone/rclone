@@ -1,45 +1,69 @@
 ---
 date: 2018-04-28T11:44:58+01:00
-title: "rclone move"
-slug: rclone_move
-url: /commands/rclone_move/
+title: "rclone about"
+slug: rclone_about
+url: /commands/rclone_about/
 ---
-## rclone move
+## rclone about
 
-Move files from source to dest.
+Get quota information from the remote.
 
 ### Synopsis
 
 
-Moves the contents of the source directory to the destination
-directory. Rclone will error if the source and destination overlap and
-the remote does not support a server side directory move operation.
+Get quota information from the remote, like bytes used/free/quota and bytes
+used in the trash. Not supported by all remotes.
 
-If no filters are in use and if possible this will server side move
-`source:path` into `dest:path`. After this `source:path` will no
-longer longer exist.
+This will print to stdout something like this:
 
-Otherwise for each file in `source:path` selected by the filters (if
-any) this will move it into `dest:path`.  If possible a server side
-move will be used, otherwise it will copy it (server side if possible)
-into `dest:path` then delete the original (if no errors on copy) in
-`source:path`.
+    Total:   17G
+    Used:    7.444G
+    Free:    1.315G
+    Trashed: 100.000M
+    Other:   8.241G
 
-If you want to delete empty source directories after move, use the --delete-empty-src-dirs flag.
+Where the fields are:
 
-**Important**: Since this can cause data loss, test first with the
---dry-run flag.
+  * Total: total size available.
+  * Used: total size used
+  * Free: total amount this user could upload.
+  * Trashed: total amount in the trash
+  * Other: total amount in other storage (eg Gmail, Google Photos)
+  * Objects: total number of objects in the storage
+
+Note that not all the backends provide all the fields - they will be
+missing if they are not known for that backend.  Where it is known
+that the value is unlimited the value will also be omitted.
+
+Use the --full flag to see the numbers written out in full, eg
+
+    Total:   18253611008
+    Used:    7993453766
+    Free:    1411001220
+    Trashed: 104857602
+    Other:   8849156022
+
+Use the --json flag for a computer readable output, eg
+
+    {
+        "total": 18253611008,
+        "used": 7993453766,
+        "trashed": 104857602,
+        "other": 8849156022,
+        "free": 1411001220
+    }
 
 
 ```
-rclone move source:path dest:path [flags]
+rclone about remote: [flags]
 ```
 
 ### Options
 
 ```
-      --delete-empty-src-dirs   Delete empty source dirs after move
-  -h, --help                    help for move
+      --full   Full numbers instead of SI units
+  -h, --help   help for about
+      --json   Format output as JSON
 ```
 
 ### Options inherited from parent commands
