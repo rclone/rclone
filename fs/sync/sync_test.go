@@ -79,32 +79,6 @@ func TestCopyWithDepth(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2)
 }
 
-// Test copy empty directories
-func TestCopyEmptyDirectories(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
-	err := operations.Mkdir(r.Flocal, "sub dir2")
-	require.NoError(t, err)
-	r.Mkdir(r.Fremote)
-
-	err = CopyDir(r.Fremote, r.Flocal)
-	require.NoError(t, err)
-
-	fstest.CheckListingWithPrecision(
-		t,
-		r.Fremote,
-		[]fstest.Item{
-			file1,
-		},
-		[]string{
-			"sub dir",
-			"sub dir2",
-		},
-		fs.Config.ModifyWindow,
-	)
-}
-
 // Test a server side copy if possible, or the backup path if not
 func TestServerSideCopy(t *testing.T) {
 	r := fstest.NewRun(t)
