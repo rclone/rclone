@@ -162,3 +162,4 @@ Contributors
   * Oliver Heyme <de8olihe@lego.com>
   * Richard Yang <richard@yenforyang.com>
   * Piotr Oleszczyk <piotr.oleszczyk@gmail.com>
+  * Rodrigo <rodarima@gmail.com>
