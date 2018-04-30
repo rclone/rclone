@@ -354,7 +354,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 func CheckArgs(MinArgs, MaxArgs int, cmd *cobra.Command, args []string) {
 	if len(args) < MinArgs {
 		_ = cmd.Usage()
-		fmt.Fprintf(os.Stderr, "Command %s needs %d arguments mininum\n", cmd.Name(), MinArgs)
+		fmt.Fprintf(os.Stderr, "Command %s needs %d arguments minimum\n", cmd.Name(), MinArgs)
 		// os.Exit(1)
 		resolveExitCode(errorNotEnoughArguments)
 	} else if len(args) > MaxArgs {
