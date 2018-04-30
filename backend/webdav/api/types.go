@@ -65,8 +65,8 @@ type Prop struct {
 	Modified Time      `xml:"DAV: prop>getlastmodified,omitempty"`
 }
 
-// Parse a status of the form "HTTP/1.1 200 OK",
-var parseStatus = regexp.MustCompile(`^HTTP/[0-9.]+\s+(\d+)\s+(.*)$`)
+// Parse a status of the form "HTTP/1.1 200 OK" or "HTTP/1.1 200"
+var parseStatus = regexp.MustCompile(`^HTTP/[0-9.]+\s+(\d+)`)
 
 // StatusOK examines the Status and returns an OK flag
 func (p *Prop) StatusOK() bool {
@@ -75,7 +75,7 @@ func (p *Prop) StatusOK() bool {
 		return true
 	}
 	match := parseStatus.FindStringSubmatch(p.Status[0])
-	if len(match) < 3 {
+	if len(match) < 2 {
 		return false
 	}
 	code, err := strconv.Atoi(match[1])
