@@ -41,6 +41,7 @@ var (
 
 	// Flags
 	sftpAskPassword = flags.BoolP("sftp-ask-password", "", false, "Allow asking for SFTP password when needed.")
+	sshPathOverride = flags.StringP("ssh-path-override", "", "", "Override path used by SSH connection.")
 )
 
 func init() {
@@ -763,6 +764,9 @@ func (o *Object) Hash(r hash.Type) (string, error) {
 	session.Stdout = &stdout
 	session.Stderr = &stderr
 	escapedPath := shellEscape(o.path())
+	if *sshPathOverride != "" {
+		escapedPath = shellEscape(path.Join(*sshPathOverride, o.remote))
+	}
 	err = session.Run(hashCmd + " " + escapedPath)
 	if err != nil {
 		_ = session.Close()
