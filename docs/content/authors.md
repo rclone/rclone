@@ -163,3 +163,4 @@ Contributors
   * Richard Yang <richard@yenforyang.com>
   * Piotr Oleszczyk <piotr.oleszczyk@gmail.com>
   * Rodrigo <rodarima@gmail.com>
+  * NoLooseEnds <NoLooseEnds@users.noreply.github.com>
