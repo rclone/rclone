@@ -1327,7 +1327,12 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), pollInter
 				continue
 			}
 
-			if change.File != nil && change.File.MimeType != driveFolderType {
+			if change.File != nil {
+				changeType := fs.EntryDirectory
+				if change.File.MimeType != driveFolderType {
+					changeType = fs.EntryObject
+				}
+
 				// translate the parent dir of this object
 				if len(change.File.Parents) > 0 {
 					if path, ok := f.dirCache.GetInv(change.File.Parents[0]); ok {
@@ -1338,10 +1343,10 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), pollInter
 							path = change.File.Name
 						}
 						// this will now clear the actual file too
-						pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryObject})
+						pathsToClear = append(pathsToClear, entryType{path: path, entryType: changeType})
 					}
 				} else { // a true root object that is changed
-					pathsToClear = append(pathsToClear, entryType{path: change.File.Name, entryType: fs.EntryObject})
+					pathsToClear = append(pathsToClear, entryType{path: change.File.Name, entryType: changeType})
 				}
 			}
 		}
